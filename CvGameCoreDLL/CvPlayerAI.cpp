@@ -11303,7 +11303,18 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			}
 		}
 	}
-	iValue += ((kCivic.isNoUnhealthyPopulation()) ? (getTotalPopulation() / 3) : 0);
+/*
+** K-Mod.
+** The evaluation of my new unhealthiness modifier is just as shonky as everything else here...
+** I guess I'll just test it and see how much the AI likes the new environmentalism!
+** Ideally it should base the value on average unhealthiness, number of cities, and global warming effects
+*/
+	//iValue += ((kCivic.isNoUnhealthyPopulation()) ? (getTotalPopulation() / 3) : 0);
+	//iValue += (-kCivic.getUnhealthyPopulationModifier() * getTotalPopulation()) / 100;
+	iValue += (getNumCities() * 6 * AI_getHealthWeight((20*-kCivic.getUnhealthyPopulationModifier())/100, 1))  / 100;
+	// c.f	iValue += (getNumCities() * 6 * AI_getHealthWeight(kCivic.getExtraHealth(), 1)) / 100;
+	// and just pretend all cities have 20 population. (remember that we also like the reduced polution...)
+// K-Mod end
 	if (bWarPlan)
 	{
 		iValue += ((kCivic.getExpInBorderModifier() * getNumMilitaryUnits()) / 200);

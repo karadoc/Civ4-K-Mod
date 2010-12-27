@@ -5289,7 +5289,8 @@ m_iStateReligionBuildingProductionModifier(0),
 m_iStateReligionFreeExperience(0),
 m_iExpInBorderModifier(0),
 m_bMilitaryFoodProduction(false),
-m_bNoUnhealthyPopulation(false),
+//m_bNoUnhealthyPopulation(false), //...
+m_iUnhealthyPopulationModifier(0), // K-Mod
 m_bBuildingOnlyHealthy(false),
 m_bNoForeignTrade(false),
 m_bNoCorporations(false),
@@ -5530,10 +5531,22 @@ bool CvCivicInfo::isMilitaryFoodProduction() const
 	return m_bMilitaryFoodProduction;
 }
 
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+/* original bts code
 bool CvCivicInfo::isNoUnhealthyPopulation() const
 {
 	return m_bNoUnhealthyPopulation;
+}*/
+int CvCivicInfo::getUnhealthyPopulationModifier() const
+{
+	return m_iUnhealthyPopulationModifier;
 }
+/*
+** K-Mod end
+*/
 
 bool CvCivicInfo::isBuildingOnlyHealthy() const
 {
@@ -5745,7 +5758,8 @@ void CvCivicInfo::read(FDataStreamBase* stream)
 	stream->Read(&m_iExpInBorderModifier);
 
 	stream->Read(&m_bMilitaryFoodProduction);
-	stream->Read(&m_bNoUnhealthyPopulation);
+	//stream->Read(&m_bNoUnhealthyPopulation);
+	stream->Read(&m_iUnhealthyPopulationModifier); // K-Mod
 	stream->Read(&m_bBuildingOnlyHealthy);								
 	stream->Read(&m_bNoForeignTrade);
 	stream->Read(&m_bNoCorporations);
@@ -5867,7 +5881,8 @@ void CvCivicInfo::write(FDataStreamBase* stream)
 	stream->Write(m_iExpInBorderModifier);
 
 	stream->Write(m_bMilitaryFoodProduction);
-	stream->Write(m_bNoUnhealthyPopulation);
+	//stream->Write(m_bNoUnhealthyPopulation);
+	stream->Write(m_iUnhealthyPopulationModifier); // K-Mod
 	stream->Write(m_bBuildingOnlyHealthy);								
 	stream->Write(m_bNoForeignTrade);
 	stream->Write(m_bNoCorporations);
@@ -5944,7 +5959,8 @@ bool CvCivicInfo::read(CvXMLLoadUtility* pXML)
 	pXML->GetChildXmlValByName(&m_iHappyPerMilitaryUnit, "iHappyPerMilitaryUnit");
 	pXML->GetChildXmlValByName(&m_bMilitaryFoodProduction, "bMilitaryFoodProduction");
 	pXML->GetChildXmlValByName(&m_iMaxConscript, "iMaxConscript");
-	pXML->GetChildXmlValByName(&m_bNoUnhealthyPopulation, "bNoUnhealthyPopulation");
+	//pXML->GetChildXmlValByName(&m_bNoUnhealthyPopulation, "bNoUnhealthyPopulation");
+	pXML->GetChildXmlValByName(&m_iUnhealthyPopulationModifier, "iUnhealthyPopulationModifier"); // K-Mod
 	pXML->GetChildXmlValByName(&m_bBuildingOnlyHealthy, "bBuildingOnlyHealthy");
 	pXML->GetChildXmlValByName(&m_iLargestCityHappiness, "iLargestCityHappiness");
 	pXML->GetChildXmlValByName(&m_iWarWearinessModifier, "iWarWearinessModifier");
@@ -6466,7 +6482,8 @@ m_bGovernmentCenter(false),
 m_bGoldenAge(false),
 m_bMapCentering(false),
 m_bNoUnhappiness(false),
-m_bNoUnhealthyPopulation(false),
+//m_bNoUnhealthyPopulation(false),
+m_iUnhealthyPopulationModifier(0), // K-Mod
 m_bBuildingOnlyHealthy(false),			
 m_bNeverCapture(false),					
 m_bNukeImmune(false),					
@@ -7113,10 +7130,22 @@ bool CvBuildingInfo::isNoUnhappiness() const
 	return m_bNoUnhappiness;
 }
 
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+/* original bts code
 bool CvBuildingInfo::isNoUnhealthyPopulation() const
 {
 	return m_bNoUnhealthyPopulation;
+}*/
+int CvBuildingInfo::getUnhealthyPopulationModifier() const
+{
+	return m_iUnhealthyPopulationModifier;
 }
+/*
+** K-Mod end
+*/
 
 bool CvBuildingInfo::isBuildingOnlyHealthy() const
 {
@@ -7718,7 +7747,8 @@ void CvBuildingInfo::read(FDataStreamBase* stream)
 	stream->Read(&m_bGoldenAge);
 	stream->Read(&m_bMapCentering);
 	stream->Read(&m_bNoUnhappiness);
-	stream->Read(&m_bNoUnhealthyPopulation);
+	//stream->Read(&m_bNoUnhealthyPopulation);
+	stream->Read(&m_iUnhealthyPopulationModifier); // K-Mod
 	stream->Read(&m_bBuildingOnlyHealthy);
 	stream->Read(&m_bNeverCapture);
 	stream->Read(&m_bNukeImmune);
@@ -8065,7 +8095,8 @@ void CvBuildingInfo::write(FDataStreamBase* stream)
 	stream->Write(m_bGoldenAge);
 	stream->Write(m_bMapCentering);
 	stream->Write(m_bNoUnhappiness);
-	stream->Write(m_bNoUnhealthyPopulation);
+	//stream->Write(m_bNoUnhealthyPopulation);
+	stream->Write(m_iUnhealthyPopulationModifier); // K-Mod
 	stream->Write(m_bBuildingOnlyHealthy);
 	stream->Write(m_bNeverCapture);
 	stream->Write(m_bNukeImmune);
@@ -8318,7 +8349,8 @@ bool CvBuildingInfo::read(CvXMLLoadUtility* pXML)
 	pXML->GetChildXmlValByName(&m_bAllowsNukes, "bAllowsNukes");
 	pXML->GetChildXmlValByName(&m_bMapCentering, "bMapCentering");
 	pXML->GetChildXmlValByName(&m_bNoUnhappiness, "bNoUnhappiness");
-	pXML->GetChildXmlValByName(&m_bNoUnhealthyPopulation, "bNoUnhealthyPopulation");
+	//pXML->GetChildXmlValByName(&m_bNoUnhealthyPopulation, "bNoUnhealthyPopulation");
+	pXML->GetChildXmlValByName(&m_iUnhealthyPopulationModifier, "iUnhealthyPopulationModifier"); // K-Mod
 	pXML->GetChildXmlValByName(&m_bBuildingOnlyHealthy, "bBuildingOnlyHealthy");
 	pXML->GetChildXmlValByName(&m_bNeverCapture, "bNeverCapture");
 	pXML->GetChildXmlValByName(&m_bNukeImmune, "bNukeImmune");

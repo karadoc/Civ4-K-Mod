@@ -469,9 +469,20 @@ public:
 	bool isNoUnhappiness() const;																					// Exposed to Python
 	void changeNoUnhappinessCount(int iChange);
 
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+	/* original bts code
 	int getNoUnhealthyPopulationCount() const;
 	bool isNoUnhealthyPopulation() const;																	// Exposed to Python
-	void changeNoUnhealthyPopulationCount(int iChange);
+	void changeNoUnhealthyPopulationCount(int iChange); */
+	int getUnhealthyPopulationModifier() const; // Exposed to Python
+	void changeUnhealthyPopulationModifier(int iChange);
+/*
+** K-Mod end
+*/
+
 
 	int getBuildingOnlyHealthyCount() const;
 	bool isBuildingOnlyHealthy() const;																		// Exposed to Python
@@ -1072,7 +1083,8 @@ protected:
 	int m_iExtraHappiness;
 	int m_iExtraHealth;
 	int m_iNoUnhappinessCount;
-	int m_iNoUnhealthyPopulationCount;
+	//int m_iNoUnhealthyPopulationCount;
+	int m_iUnhealthyPopulationModifier; // K-Mod
 	int m_iBuildingOnlyHealthyCount;
 	int m_iFood;
 	int m_iFoodKept;

@@ -441,7 +441,8 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_iExtraHappiness = 0;
 	m_iExtraHealth = 0;
 	m_iNoUnhappinessCount = 0;
-	m_iNoUnhealthyPopulationCount = 0;
+	//m_iNoUnhealthyPopulationCount = 0;
+	m_iUnhealthyPopulationModifier = 0; // K-Mod
 	m_iBuildingOnlyHealthyCount = 0;
 	m_iFood = 0;
 	m_iFoodKept = 0;
@@ -3825,7 +3826,8 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bObsolet
 		changePowerCount(((GC.getBuildingInfo(eBuilding).isPower()) ? iChange : 0), GC.getBuildingInfo(eBuilding).isDirtyPower());
 		changeGovernmentCenterCount((GC.getBuildingInfo(eBuilding).isGovernmentCenter()) ? iChange : 0);
 		changeNoUnhappinessCount((GC.getBuildingInfo(eBuilding).isNoUnhappiness()) ? iChange : 0);
-		changeNoUnhealthyPopulationCount((GC.getBuildingInfo(eBuilding).isNoUnhealthyPopulation()) ? iChange : 0);
+		//changeNoUnhealthyPopulationCount((GC.getBuildingInfo(eBuilding).isNoUnhealthyPopulation()) ? iChange : 0);
+		changeUnhealthyPopulationModifier(GC.getBuildingInfo(eBuilding).getUnhealthyPopulationModifier() * iChange); // K-Mod
 		changeBuildingOnlyHealthyCount((GC.getBuildingInfo(eBuilding).isBuildingOnlyHealthy()) ? iChange : 0);
 
 		for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -4492,12 +4494,25 @@ int CvCity::extraFreeSpecialists() const
 
 int CvCity::unhealthyPopulation(bool bNoAngry, int iExtra) const
 {
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+	/* original bts code
 	if (isNoUnhealthyPopulation())
 	{
 		return 0;
 	}
 
 	return std::max(0, ((getPopulation() + iExtra - ((bNoAngry) ? angryPopulation(iExtra) : 0))));
+	*/
+	int iUnhealth = getPopulation() + iExtra - ((bNoAngry)? angryPopulation(iExtra) : 0);
+	iUnhealth *= std::max(0, 100+getUnhealthyPopulationModifier());
+	iUnhealth /= 100;
+	return std::max(0, iUnhealth);
+/*
+** K-Mod end
+*/
 }
 
 
@@ -6610,12 +6625,22 @@ int CvCity::getAdditionalHealthByBuilding(BuildingTypes eBuilding, int& iGood, i
 			}
 		}
 	}
-
+	/*
+	** K-Mod, 27/dec/10, karadoc
+	** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+	*/
+	/* original bts code
 	// No Unhealthiness from Population
 	if (kBuilding.isNoUnhealthyPopulation())
 	{
 		iBad -= getPopulation();
-	}
+	} */
+
+	// Modified unhealthiness from population
+	iBad += (getPopulation() * std::max(-100, kBuilding.getUnhealthyPopulationModifier()))/100;
+	/*
+	** K-Mod end
+	*/
 
 	return iGood - iBad - iStarting;
 }
@@ -7030,7 +7055,11 @@ void CvCity::changeNoUnhappinessCount(int iChange)
 	}
 }
 
-
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+/* original bts code
 int CvCity::getNoUnhealthyPopulationCount()	const																	
 {
 	return m_iNoUnhealthyPopulationCount;
@@ -7057,7 +7086,21 @@ void CvCity::changeNoUnhealthyPopulationCount(int iChange)
 
 		AI_setAssignWorkDirty(true);
 	}
+} */
+
+int CvCity::getUnhealthyPopulationModifier() const
+{
+	return m_iUnhealthyPopulationModifier + GET_PLAYER(getOwnerINLINE()).getUnhealthyPopulationModifier();
 }
+
+
+void CvCity::changeUnhealthyPopulationModifier(int iChange)
+{
+	m_iUnhealthyPopulationModifier += iChange;
+}
+/*
+** K-Mod end
+*/
 
 
 int CvCity::getBuildingOnlyHealthyCount() const																	
@@ -12674,7 +12717,8 @@ void CvCity::read(FDataStreamBase* pStream)
 	pStream->Read(&m_iExtraHappiness);
 	pStream->Read(&m_iExtraHealth);
 	pStream->Read(&m_iNoUnhappinessCount);
-	pStream->Read(&m_iNoUnhealthyPopulationCount);
+	//pStream->Read(&m_iNoUnhealthyPopulationCount);
+	pStream->Read(&m_iUnhealthyPopulationModifier); // K-Mod
 	pStream->Read(&m_iBuildingOnlyHealthyCount);
 	pStream->Read(&m_iFood);
 	pStream->Read(&m_iFoodKept);
@@ -12912,7 +12956,8 @@ void CvCity::write(FDataStreamBase* pStream)
 	pStream->Write(m_iExtraHappiness);
 	pStream->Write(m_iExtraHealth);
 	pStream->Write(m_iNoUnhappinessCount);
-	pStream->Write(m_iNoUnhealthyPopulationCount);
+	//pStream->Write(m_iNoUnhealthyPopulationCount);
+	pStream->Write(m_iUnhealthyPopulationModifier); // K-Mod	
 	pStream->Write(m_iBuildingOnlyHealthyCount);
 	pStream->Write(m_iFood);
 	pStream->Write(m_iFoodKept);

@@ -282,7 +282,8 @@ public:
 
 	int getMaxConscript();
 	int getOverflowResearch();
-	bool isNoUnhealthyPopulation();
+	//bool isNoUnhealthyPopulation();
+	int getUnhealthyPopulationModifier(); // K-Mod
 	bool getExpInBorderModifier();
 	bool isBuildingOnlyHealthy();
 

@@ -729,7 +729,8 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 	m_iMaxConscript = 0;
 	m_iHighestUnitLevel = 1;
 	m_iOverflowResearch = 0;
-	m_iNoUnhealthyPopulationCount = 0;
+	//m_iNoUnhealthyPopulationCount = 0;
+	m_iUnhealthyPopulationModifier = 0; // K-Mod
 	m_iExpInBorderModifier = 0;
 	m_iBuildingOnlyHealthyCount = 0;
 	m_iDistanceMaintenanceModifier = 0;
@@ -9622,18 +9623,20 @@ void CvPlayer::changeOverflowResearch(int iChange)
 	setOverflowResearch(getOverflowResearch() + iChange);
 }
 
-
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+/* original bts code
 int CvPlayer::getNoUnhealthyPopulationCount() const
 {
 	return m_iNoUnhealthyPopulationCount;
 }
 
-
 bool CvPlayer::isNoUnhealthyPopulation() const																		
 {
 	return (getNoUnhealthyPopulationCount() > 0);
 }
-
 
 void CvPlayer::changeNoUnhealthyPopulationCount(int iChange)
 {
@@ -9644,8 +9647,21 @@ void CvPlayer::changeNoUnhealthyPopulationCount(int iChange)
 
 		AI_makeAssignWorkDirty();
 	}
+}*/
+
+int CvPlayer::getUnhealthyPopulationModifier() const
+{
+	return m_iUnhealthyPopulationModifier;
 }
 
+
+void CvPlayer::changeUnhealthyPopulationModifier(int iChange)
+{
+	m_iUnhealthyPopulationModifier += iChange;
+}
+/*
+** K-Mod end
+*/
 
 int CvPlayer::getExpInBorderModifier() const
 {
@@ -16898,7 +16914,8 @@ void CvPlayer::processCivics(CivicTypes eCivic, int iChange)
 	changeHappyPerMilitaryUnit(GC.getCivicInfo(eCivic).getHappyPerMilitaryUnit() * iChange);
 	changeMilitaryFoodProductionCount((GC.getCivicInfo(eCivic).isMilitaryFoodProduction()) ? iChange : 0);
 	changeMaxConscript(getWorldSizeMaxConscript(eCivic) * iChange);
-	changeNoUnhealthyPopulationCount((GC.getCivicInfo(eCivic).isNoUnhealthyPopulation()) ? iChange : 0);
+	//changeNoUnhealthyPopulationCount((GC.getCivicInfo(eCivic).isNoUnhealthyPopulation()) ? iChange : 0);
+	changeUnhealthyPopulationModifier(GC.getCivicInfo(eCivic).getUnhealthyPopulationModifier() * iChange); // K-Mod
 	changeBuildingOnlyHealthyCount((GC.getCivicInfo(eCivic).isBuildingOnlyHealthy()) ? iChange : 0);
 	changeLargestCityHappiness(GC.getCivicInfo(eCivic).getLargestCityHappiness() * iChange);
 	changeWarWearinessModifier(GC.getCivicInfo(eCivic).getWarWearinessModifier() * iChange);
@@ -17060,7 +17077,8 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(&m_iMaxConscript);
 	pStream->Read(&m_iHighestUnitLevel);
 	pStream->Read(&m_iOverflowResearch);
-	pStream->Read(&m_iNoUnhealthyPopulationCount);
+	//pStream->Read(&m_iNoUnhealthyPopulationCount);
+	pStream->Read(&m_iUnhealthyPopulationModifier); // K-Mod
 	pStream->Read(&m_iExpInBorderModifier);
 	pStream->Read(&m_iBuildingOnlyHealthyCount);
 	pStream->Read(&m_iDistanceMaintenanceModifier);
@@ -17523,7 +17541,8 @@ void CvPlayer::write(FDataStreamBase* pStream)
 	pStream->Write(m_iMaxConscript);
 	pStream->Write(m_iHighestUnitLevel);
 	pStream->Write(m_iOverflowResearch);
-	pStream->Write(m_iNoUnhealthyPopulationCount);
+	//pStream->Write(m_iNoUnhealthyPopulationCount);
+	pStream->Write(m_iUnhealthyPopulationModifier); // K-Mod
 	pStream->Write(m_iExpInBorderModifier);
 	pStream->Write(m_iBuildingOnlyHealthyCount);
 	pStream->Write(m_iDistanceMaintenanceModifier);

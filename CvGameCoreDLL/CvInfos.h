@@ -1336,7 +1336,8 @@ public:
 	int getExpInBorderModifier() const;				// Exposed to Python
 
 	bool isMilitaryFoodProduction() const;				// Exposed to Python
-	bool isNoUnhealthyPopulation() const;				// Exposed to Python
+	//bool isNoUnhealthyPopulation() const;				// Exposed to Python
+	int getUnhealthyPopulationModifier() const;	// K-Mod, Exposed to Python
 	bool isBuildingOnlyHealthy() const;				// Exposed to Python
 	bool isNoForeignTrade() const;				// Exposed to Python
 	bool isNoCorporations() const;				// Exposed to Python
@@ -1418,7 +1419,8 @@ protected:
 	int m_iExpInBorderModifier;
 
 	bool m_bMilitaryFoodProduction;
-	bool m_bNoUnhealthyPopulation;
+	//bool m_bNoUnhealthyPopulation; // ...
+	int m_iUnhealthyPopulationModifier; // K-Mod
 	bool m_bBuildingOnlyHealthy;
 	bool m_bNoForeignTrade;
 	bool m_bNoCorporations;
@@ -1649,7 +1651,8 @@ public:
 	bool isGoldenAge() const;				// Exposed to Python
 	bool isMapCentering() const;				// Exposed to Python
 	bool isNoUnhappiness() const;				// Exposed to Python
-	bool isNoUnhealthyPopulation() const;				// Exposed to Python
+	//bool isNoUnhealthyPopulation() const;				// Exposed to Python
+	int getUnhealthyPopulationModifier() const;	// K-Mod, Exposed to Python
 	bool isBuildingOnlyHealthy() const;				// Exposed to Python
 	bool isNeverCapture() const;				// Exposed to Python
 	bool isNukeImmune() const;				// Exposed to Python
@@ -1856,7 +1859,8 @@ protected:
 	bool m_bGoldenAge;
 	bool m_bMapCentering;
 	bool m_bNoUnhappiness;
-	bool m_bNoUnhealthyPopulation;
+	//bool m_bNoUnhealthyPopulation; // ...
+	int m_iUnhealthyPopulationModifier; // K-Mod
 	bool m_bBuildingOnlyHealthy;			
 	bool m_bNeverCapture;					
 	bool m_bNukeImmune;					

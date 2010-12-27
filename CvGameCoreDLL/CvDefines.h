@@ -31,7 +31,7 @@
 ** K-Mod, 18/dec/10, karadoc
 ** global warming pollution flags for use in the CvPlayer::calculateGwPollution function
 */
-#define POLLUTION_POPULATION		1
+#define POLLUTION_POPULATION	1
 #define POLLUTION_BUILDINGS		2
 #define POLLUTION_BONUS			4
 #define POLLUTION_POWER			8

@@ -1142,10 +1142,22 @@ bool CyCity::isNoUnhappiness()
 	return m_pCity ? m_pCity->isNoUnhappiness() : false;
 }
 
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+/* original bts code
 bool CyCity::isNoUnhealthyPopulation()
 {
 	return m_pCity ? m_pCity->isNoUnhealthyPopulation() : false;
+}*/
+int CyCity::getUnhealthyPopulationModifier()
+{
+	return m_pCity ? m_pCity->getUnhealthyPopulationModifier() : 0;
 }
+/*
+** K-Mod end
+*/
 
 bool CyCity::isBuildingOnlyHealthy()
 {

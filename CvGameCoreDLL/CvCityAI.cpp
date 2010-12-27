@@ -3694,7 +3694,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 /************************************************************************************************/
 			}
 
-			if (((iFocusFlags & BUILDINGFOCUS_HEALTHY) || (iPass > 0)) && !isNoUnhealthyPopulation())
+			//if (((iFocusFlags & BUILDINGFOCUS_HEALTHY) || (iPass > 0)) && !isNoUnhealthyPopulation())
+			if ((iFocusFlags & BUILDINGFOCUS_HEALTHY) || iPass > 0) // K-Mod
 			{
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      02/24/10                          jdog5000 & Fuyu     */

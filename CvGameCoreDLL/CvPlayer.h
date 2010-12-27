@@ -511,9 +511,19 @@ public:
 	void setOverflowResearch(int iNewValue);																														// Exposed to Python
 	void changeOverflowResearch(int iChange);																														// Exposed to Python
 
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+	/* original bts code
 	int getNoUnhealthyPopulationCount() const;
 	bool isNoUnhealthyPopulation() const;																																			// Exposed to Python
-	void changeNoUnhealthyPopulationCount(int iChange);
+	void changeNoUnhealthyPopulationCount(int iChange); */
+	int getUnhealthyPopulationModifier() const; // Exposed to Python
+	void changeUnhealthyPopulationModifier(int iChange);
+/*
+** K-Mod end
+*/
 
 	int getExpInBorderModifier() const;
 	void changeExpInBorderModifier(int iChange);
@@ -1162,7 +1172,8 @@ protected:
 	int m_iMaxConscript;
 	int m_iHighestUnitLevel;
 	int m_iOverflowResearch;
-	int m_iNoUnhealthyPopulationCount;
+	//int m_iNoUnhealthyPopulationCount;
+	int m_iUnhealthyPopulationModifier; // K-Mod
 	int m_iExpInBorderModifier;
 	int m_iBuildingOnlyHealthyCount;
 	int m_iDistanceMaintenanceModifier;

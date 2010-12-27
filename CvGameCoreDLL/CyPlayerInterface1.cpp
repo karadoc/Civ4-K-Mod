@@ -269,7 +269,8 @@ void CyPlayerPythonInterface1(python::class_<CyPlayer>& x)
 
 		.def("getMaxConscript", &CyPlayer::getMaxConscript, "int ()")
 		.def("getOverflowResearch", &CyPlayer::getOverflowResearch, "int ()")
-		.def("isNoUnhealthyPopulation", &CyPlayer::isNoUnhealthyPopulation, "bool ()")
+		//.def("isNoUnhealthyPopulation", &CyPlayer::isNoUnhealthyPopulation, "bool ()")
+		.def("getUnhealthyPopulationModifier", &CyPlayer::getUnhealthyPopulationModifier, "int ()") // K-Mod
 		.def("getExpInBorderModifier", &CyPlayer::getExpInBorderModifier, "bool ()")
 		.def("isBuildingOnlyHealthy", &CyPlayer::isBuildingOnlyHealthy, "bool ()")
 

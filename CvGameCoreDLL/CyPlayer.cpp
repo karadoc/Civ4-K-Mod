@@ -1174,10 +1174,22 @@ int CyPlayer::getOverflowResearch()
 	return m_pPlayer ? m_pPlayer->getOverflowResearch() : 0;
 }
 
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+/* original bts code
 bool CyPlayer::isNoUnhealthyPopulation()
 {
 	return m_pPlayer ? m_pPlayer->isNoUnhealthyPopulation() : false;
+}*/
+int CyPlayer::getUnhealthyPopulationModifier()
+{
+	return m_pPlayer ? m_pPlayer->getUnhealthyPopulationModifier() : 0;
 }
+/*
+** K-Mod end
+*/
 
 bool CyPlayer::getExpInBorderModifier()
 {

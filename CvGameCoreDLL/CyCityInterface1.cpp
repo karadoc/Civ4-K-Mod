@@ -247,7 +247,8 @@ void CyCityPythonInterface1(python::class_<CyCity>& x)
 		.def("getHappinessTimer", &CyCity::getHappinessTimer, "int () - Temporary Happiness timer")
 		.def("changeHappinessTimer", &CyCity::changeHappinessTimer, "void (iChange) - adjust Happiness timer by iChange")
 		.def("isNoUnhappiness", &CyCity::isNoUnhappiness, "bool () - is the city unaffected by unhappiness?")
-		.def("isNoUnhealthyPopulation", &CyCity::isNoUnhealthyPopulation, "bool () - is the city unaffected by unhealthiness?")
+		//.def("isNoUnhealthyPopulation", &CyCity::isNoUnhealthyPopulation, "bool () - is the city unaffected by unhealthiness?")
+		.def("getUnhealthyPopulationModifier", &CyCity::getUnhealthyPopulationModifier, "int () - percentage modifier to unhealthiness due to city population") // K-Mod
 		.def("isBuildingOnlyHealthy", &CyCity::isBuildingOnlyHealthy, "bool () - is the city ?")
 
 		.def("getFood", &CyCity::getFood, "int () - stored food")

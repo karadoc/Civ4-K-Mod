@@ -257,7 +257,8 @@ public:
 	int getHappinessTimer();
 	void changeHappinessTimer(int iChange);
 	bool isNoUnhappiness();
-	bool isNoUnhealthyPopulation();
+	// bool isNoUnhealthyPopulation();
+	int getUnhealthyPopulationModifier(); // K-Mod
 
 	bool isBuildingOnlyHealthy();
 

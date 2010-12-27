@@ -5229,11 +5229,35 @@ void CvGameTextMgr::parseCivicInfo(CvWStringBuffer &szHelpText, CivicTypes eCivi
 	}
 
 	//	Population Unhealthiness
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+	/* original bts code
 	if (GC.getCivicInfo(eCivic).isNoUnhealthyPopulation())
 	{
 		szHelpText.append(NEWLINE);
 		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_NO_POP_UNHEALTHY"));
 	}
+	*/
+	if (GC.getCivicInfo(eCivic).getUnhealthyPopulationModifier() != 0)
+	{
+		// If the modifier is less than -100, display the old NoUnhealth. text
+		// Note: this could be techinically inaccurate if we combine this modifier with a positive modifier
+		if (GC.getCivicInfo(eCivic).getUnhealthyPopulationModifier() <= -100)
+		{
+			szHelpText.append(NEWLINE);
+			szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_NO_POP_UNHEALTHY"));
+		}
+		else
+		{
+			szHelpText.append(NEWLINE);
+			szHelpText.append(gDLL->getText("TXT_KEY_UNHEALTHY_POP_MODIFIER", GC.getCivicInfo(eCivic).getUnhealthyPopulationModifier()));
+		}
+	}
+/*
+** K-Mod end
+*/
 
 	//	Building Unhealthiness
 	if (GC.getCivicInfo(eCivic).isBuildingOnlyHealthy())
@@ -7539,13 +7563,35 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 		szBuffer.append(NEWLINE);
 		szBuffer.append(gDLL->getText("TXT_KEY_BUILDING_NO_UNHAPPY"));
 	}
-
+/*
+** K-Mod, 27/dec/10, karadoc
+** replaced NoUnhealthyPopulation with UnhealthyPopulationModifier
+*/
+	/* original bts code
 	if (kBuilding.isNoUnhealthyPopulation())
 	{
 		szBuffer.append(NEWLINE);
 		szBuffer.append(gDLL->getText("TXT_KEY_BUILDING_NO_UNHEALTHY_POP"));
 	}
-
+	*/
+	if (kBuilding.getUnhealthyPopulationModifier() != 0)
+	{
+		// If the modifier is less than -100, display the old NoUnhealth. text
+		// Note: this could be techinically inaccurate if we combine this modifier with a positive modifier
+		if (kBuilding.getUnhealthyPopulationModifier() <= -100)
+		{
+			szBuffer.append(NEWLINE);
+			szBuffer.append(gDLL->getText("TXT_KEY_CIVIC_NO_POP_UNHEALTHY"));
+		}
+		else
+		{
+			szBuffer.append(NEWLINE);
+			szBuffer.append(gDLL->getText("TXT_KEY_UNHEALTHY_POP_MODIFIER", kBuilding.getUnhealthyPopulationModifier()));
+		}
+	}
+/*
+** K-Mod end
+*/
 	if (kBuilding.isBuildingOnlyHealthy())
 	{
 		szBuffer.append(NEWLINE);
