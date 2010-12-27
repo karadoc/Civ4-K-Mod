@@ -39,13 +39,4 @@
 		<Italian>[COLOR_WARNING_TEXT]Richiede [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal totali)[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_WARNING_TEXT]Requiere [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal en total)[COLOR_REVERT]</Spanish>
 	</TEXT>
-	<!-- K-Mod trade culture -->
-	<TEXT>
-		<Tag>TXT_KEY_MISC_HELP_TRADE_CULTURE</Tag>
-		<English>[ICON_BULLET]%s1[ICON_CULTURE] from [ICON_TRADE]</English>
-		<French>[ICON_BULLET]%s1[ICON_CULTURE] ([ICON_TRADE])</French>
-		<German>[ICON_BULLET]%s1[ICON_CULTURE] durch [ICON_TRADE]</German>
-		<Italian>[ICON_BULLET]%s1[ICON_CULTURE] dalla [ICON_TRADE]</Italian>
-		<Spanish>[ICON_BULLET]%s1[ICON_CULTURE] por [ICON_TRADE]</Spanish>
-	</TEXT>
 </Civ4GameText>

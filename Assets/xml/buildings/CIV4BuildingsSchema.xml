@@ -104,7 +104,7 @@
 	<ElementType name="bAllowsNukes" content="textOnly" dt:type="boolean"/>
 	<ElementType name="bMapCentering" content="textOnly" dt:type="boolean"/>
 	<ElementType name="bNoUnhappiness" content="textOnly" dt:type="boolean"/>
-	<ElementType name="bNoUnhealthyPopulation" content="textOnly" dt:type="boolean"/>
+	<ElementType name="iUnhealthyPopulationModifier" content="textOnly" dt:type="int"/>
 	<ElementType name="bBuildingOnlyHealthy" content="textOnly" dt:type="boolean"/>
 	<ElementType name="bNeverCapture" content="textOnly" dt:type="boolean"/>
 	<ElementType name="bNukeImmune" content="textOnly" dt:type="boolean"/>
@@ -434,7 +434,7 @@
 		<element type="bAllowsNukes"/>
 		<element type="bMapCentering"/>
 		<element type="bNoUnhappiness"/>
-		<element type="bNoUnhealthyPopulation"/>
+		<element type="iUnhealthyPopulationModifier"/>
 		<element type="bBuildingOnlyHealthy"/>
 		<element type="bNeverCapture"/>
 		<element type="bNukeImmune"/>

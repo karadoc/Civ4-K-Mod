@@ -640,7 +640,7 @@
 	<ElementType name="iHappyPerMilitaryUnit" content="textOnly" dt:type="int"/>
 	<ElementType name="bMilitaryFoodProduction" content="textOnly" dt:type="boolean"/>
 	<ElementType name="iMaxConscript" content="textOnly" dt:type="int"/>
-	<ElementType name="bNoUnhealthyPopulation" content="textOnly" dt:type="boolean"/>
+	<ElementType name="iUnhealthyPopulationModifier" content="textOnly" dt:type="int"/>
 	<ElementType name="iExpInBorderModifier" content="textOnly" dt:type="int"/>
 	<ElementType name="bBuildingOnlyHealthy" content="textOnly" dt:type="boolean"/>
 	<ElementType name="iLargestCityHappiness" content="textOnly" dt:type="int"/>
@@ -774,7 +774,7 @@
 		<element type="iHappyPerMilitaryUnit"/>
 		<element type="bMilitaryFoodProduction"/>
 		<element type="iMaxConscript"/>
-		<element type="bNoUnhealthyPopulation"/>
+		<element type="iUnhealthyPopulationModifier"/>
 		<element type="iExpInBorderModifier"/>
 		<element type="bBuildingOnlyHealthy"/>
 		<element type="iLargestCityHappiness"/>

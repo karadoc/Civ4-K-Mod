@@ -631,7 +631,7 @@ class EconomicsAdvisor:
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Potential events per turn" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iGlobalWarmingRolls) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 
-		if (iGwEventTally > 0):
+		if (iGwEventTally >= 0):
 			yLocation += 1.5 * self.Y_SPACING
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Event tally" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iGwEventTally) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
