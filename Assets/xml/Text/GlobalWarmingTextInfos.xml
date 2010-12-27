@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- edited with XMLSPY v2004 rel. 2 U (http://www.xmlspy.com) by XMLSPY 2004 Professional Ed. Release 2, Installed Multi + SMP for 3 users (Firaxis Games) -->
+<!-- Sid Meier's Civilization 4 -->
+<!-- Copyright Firaxis Games 2005 -->
+<!-- -->
+<!-- Game Text Infos -->
+<Civ4GameText xmlns="http://www.firaxis.com">
+	<TEXT>
+		<Tag>TXT_KEY_MISC_NUCLEAR_WINTER_NEAR_CITY</Tag>
+		<English>Radioactive dust fills the skies near %s1_CityName!</English>
+		<French>*Hiver nucléaire* Alerte ! R&#233;chauffement plan&#233;taire pr&#232;s de %s1_CityName !</French>
+		<German>*Kernwinter* Nahe der Stadt %s1_CityName zeigen sich Auswirkungen der globalen Erw&#228;rmung!</German>
+		<Italian>*Inverno nucleare* Gli effetti del riscaldamento globale colpiscono %s1_CityName!</Italian>
+		<Spanish>*Invierno nuclear* El calentamiento global causa efecto cerca de %s1_CityName.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_GAME_OPTION_RISING_SEAS</Tag>
+		<English>Rising Seas</English>
+		<French>Mers Er Hausse</French>
+		<German>Steigende Meere</German>
+		<Italian>Mari Aumentanti</Italian>
+		<Spanish>Mares De Levantamiento</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_GAME_OPTION_RISING_SEAS_HELP</Tag>
+		<English>Global warming can raise sea level.</English>
+		<French>Le rechauffement global peut soulever le niveau de la mer.</French>
+		<German>Die globale Erwarmung kann Meeresspiegel anheben.</German>
+		<Italian>Il riscaldamento globale puo sollevare il livello del mare.</Italian>
+		<Spanish>El calentamiento del planeta puede levantar nivel del mar.</Spanish>
+	</TEXT>
+	<!-- K-Mod text [[ unused tags]]
+	<TEXT>
+		<Tag>TXT_KEY_DOMESTIC_ADVISOR_CITY</Tag>
+		<English>Cities</English>
+		<French>Villes</French>
+		<German>Städte</German>
+		<Italian>Città</Italian>
+		<Spanish>Ciudades</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_DOMESTIC_ADVISOR_ENVIRONMENT</Tag>
+		<English>Environment</English>
+		<French>Environnement</French>
+		<German>Umwelt</German>
+		<Italian>Ambiente</Italian>
+		<Spanish>Medio Ambiente</Spanish>
+	</TEXT>
+	[end of unused tags] -->
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENTAL_ADVISOR_TITLE</Tag>
+		<English>Environmental Advisor</English>
+		<French>Environnement</French>
+		<German>Umwelt</German>
+		<Italian>Ambiente</Italian>
+		<Spanish>Medio Ambiente</Spanish>
+	</TEXT>
+	<!-- TODO: get translations for the following keys. -->
+	<TEXT>
+		<Tag>TXT_KEY_MISC_GLOBAL_WARMING_ACTIVE</Tag>
+		<English>Worldwide pollution has reached the sustainability threshold.</English>
+		<French>Worldwide pollution has reached the sustainability threshold.</French>
+		<German>Worldwide pollution has reached the sustainability threshold.</German>
+		<Italian>Worldwide pollution has reached the sustainability threshold.</Italian>
+		<Spanish>Worldwide pollution has reached the sustainability threshold.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_POPUP_ENVIRONMENTAL_ADVISOR</Tag>
+		<English>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. We have appointed an environmental advisor to provide you with further information. (See the economics screen; F2)</English>
+		<French>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. We have appointed an environmental advisor to provide you with further information. (See the economics screen; F2)</French>
+		<German>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. We have appointed an environmental advisor to provide you with further information. (See the economics screen; F2)</German>
+		<Italian>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. We have appointed an environmental advisor to provide you with further information. (See the economics screen; F2)</Italian>
+		<Spanish>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. We have appointed an environmental advisor to provide you with further information. (See the economics screen; F2)</Spanish>
+	</TEXT>	
+	<!-- K-Mod end -->	
+</Civ4GameText>

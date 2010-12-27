@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- edited with XMLSPY v2004 rel. 2 U (http://www.xmlspy.com) by XMLSPY 2004 Professional Ed. Release 2, Installed Multi + SMP for 3 users (Firaxis Games) -->
+<!-- Sid Meier's Civilization 4 -->
+<!-- Copyright Firaxis Games 2005 -->
+<!-- -->
+<!-- Game Text - New -->
+<Civ4GameText xmlns="http://www.firaxis.com">
+	<TEXT>
+		<Tag>TXT_KEY_MISC_SHIFT_ALT_PREPARE_WAR</Tag>
+		<English>(&lt;SHIFT>+&lt;ALT> to toggle War Plan)</English>
+		<French>(&lt;SHIFT>+&lt;ALT> pour commuter le plan de guerre)</French>
+		<German>(&lt;SHIFT>+&lt;ALT> Kriegs-Plan umschalten)</German>
+		<Italian>(&lt;SHIFT>+&lt;ALT> per commutare programma di guerra)</Italian>
+		<Spanish>(&lt;SHIFT>+&lt;ALT> para mostrar el plan de la guerra)</Spanish>
+		<Finnish>(&lt;SHIFT>+&lt;ALT> to toggle War Plan)</Finnish>
+	</TEXT>
+</Civ4GameText>

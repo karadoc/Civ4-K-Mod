@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- Game options for new features in Better BTS AI -->
+<!-- by jdog5000 -->
+<!-- -->
+<Civ4Defines xmlns="x-schema:CIV4GlobalDefinesSchema.xml">
+	<Define>
+		<!-- Better BTS AI: Use new air combat mechanics -->
+		<DefineName>BBAI_AIR_COMBAT</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Allow AI to use Space victory strategy logic if space race victory is enabled -->
+		<DefineName>BBAI_VICTORY_STRATEGY_SPACE</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Allow AI to use Conquest victory strategy logic if conquest victory is enabled  -->
+		<DefineName>BBAI_VICTORY_STRATEGY_CONQUEST</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Allow AI to use Domination victory strategy logic if domination victory is enabled  -->
+		<DefineName>BBAI_VICTORY_STRATEGY_DOMINATION</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Allow AI to use Culture victory strategy logic if culture victory is enabled  -->
+		<DefineName>BBAI_VICTORY_STRATEGY_CULTURE</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Allow AI to use Diplomacy victory strategy logic if diplomacy victory is enabled  -->
+		<DefineName>BBAI_VICTORY_STRATEGY_DIPLOMACY</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Vassals of human player build some extra military units (recommended for multiplayer only) -->
+		<DefineName>BBAI_HUMAN_VASSAL_WAR_BUILD</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Changes behavior of defensive pacts (Def: 0) :
+			0 : Default BTS
+			1 : Defensive pacts do not cancel when a player has war declared on them
+			2 : Turns defensive pacts into alliances, so they are now also offensive pacts.  Plus pacts
+				do not cancel when war is declared.  Does not change name/description in game.
+		 -->
+		<DefineName>BBAI_DEFENSIVE_PACT_BEHAVIOR</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Better BTS AI: Allows human player to offer themselves as vassal to an AI.  The AI has been taught to value this appropriately.  (Def: 0) -->
+		<DefineName>BBAI_HUMAN_AS_VASSAL_OPTION</DefineName>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+</Civ4Defines>

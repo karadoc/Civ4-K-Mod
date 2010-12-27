@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- edited with XMLSPY v2004 rel. 2 U (http://www.xmlspy.com) by XMLSPY 2004 Professional Ed. Release 2, Installed Multi + SMP for 3 users (Firaxis Games) -->
+<!-- Sid Meier's Civilization 4 -->
+<!-- Copyright Firaxis Games 2005 -->
+<!-- -->
+<!-- Game Text - New -->
+<Civ4GameText xmlns="http://www.firaxis.com">
+	<TEXT>
+		<Tag>TXT_KEY_TERRAIN_TURN_DAMAGE</Tag>
+		<English>[NEWLINE][ICON_BULLET]%D1%% damage/turn</English>
+		<French>[NEWLINE][ICON_BULLET]%D1%% dommage/tour</French>
+		<German>[NEWLINE][ICON_BULLET]%D1%% schaden/runde</German>
+		<Italian>[NEWLINE][ICON_BULLET]%D1%% danni/turno</Italian>
+		<Spanish>[NEWLINE][ICON_BULLET]%D1%% da&#241;o/turno</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_TERRAIN_TURN_HEALING</Tag>
+		<English>[NEWLINE][ICON_BULLET]%D1%% healing/turn</English>
+		<French>[NEWLINE][ICON_BULLET]%D1%% soigner/tour</French>
+		<German>[NEWLINE][ICON_BULLET]%D1%% heilen/runde</German>
+		<Italian>[NEWLINE][ICON_BULLET]%D1%% cura/turno</Italian>
+		<Spanish>[NEWLINE][ICON_BULLET]%D1%% cura/turno</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUILDING_REQUIRES_NUM_SPECIAL_BUILDINGS</Tag>
+		<!-- %s1_Name = Can be Buildings, Units, etc -->
+		<English>[COLOR_WARNING_TEXT]Requires [LINK=literal]%s1_Name[\LINK] (%d2_NumCurr/%d3_NumTotal Total)[COLOR_REVERT]</English>
+		<French>[COLOR_WARNING_TEXT]Requiert : [LINK=literal]%s1_Name[\LINK] (%d2_NumCurr/%d3_NumTotal au total)[COLOR_REVERT]</French>
+		<German>[COLOR_WARNING_TEXT]Erfordert: [LINK=literal]%s1_Name[\LINK] (%d2_NumCurr/%d3_NumTotal gesamt)[COLOR_REVERT]</German>
+		<Italian>[COLOR_WARNING_TEXT]Richiede [LINK=literal]%s1_Name[\LINK] (%d2_NumCurr/%d3_NumTotal totali)[COLOR_REVERT]</Italian>
+		<Spanish>[COLOR_WARNING_TEXT]Requiere [LINK=literal]%s1_Name[\LINK] (%d2_NumCurr de un total de %d3_NumTotal)[COLOR_REVERT]</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUILDING_REQUIRES_NUM_SPECIAL_BUILDINGS_NO_CITY</Tag>
+		<!-- %s1_Name = Can be Buildings, Units, etc -->
+		<English>[COLOR_WARNING_TEXT]Requires [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal Total)[COLOR_REVERT]</English>
+		<French>[COLOR_WARNING_TEXT]Requiert : [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal au total)[COLOR_REVERT]</French>
+		<German>[COLOR_WARNING_TEXT]Erfordert: [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal gesamt)[COLOR_REVERT]</German>
+		<Italian>[COLOR_WARNING_TEXT]Richiede [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal totali)[COLOR_REVERT]</Italian>
+		<Spanish>[COLOR_WARNING_TEXT]Requiere [LINK=literal]%s1_Name[\LINK] (%d2_NumTotal en total)[COLOR_REVERT]</Spanish>
+	</TEXT>
+	<!-- K-Mod trade culture -->
+	<TEXT>
+		<Tag>TXT_KEY_MISC_HELP_TRADE_CULTURE</Tag>
+		<English>[ICON_BULLET]%s1[ICON_CULTURE] from [ICON_TRADE]</English>
+		<French>[ICON_BULLET]%s1[ICON_CULTURE] ([ICON_TRADE])</French>
+		<German>[ICON_BULLET]%s1[ICON_CULTURE] durch [ICON_TRADE]</German>
+		<Italian>[ICON_BULLET]%s1[ICON_CULTURE] dalla [ICON_TRADE]</Italian>
+		<Spanish>[ICON_BULLET]%s1[ICON_CULTURE] por [ICON_TRADE]</Spanish>
+	</TEXT>
+</Civ4GameText>

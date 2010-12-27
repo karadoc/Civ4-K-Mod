@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<!-- Sid Meier's Civilization 4 Beyond the Sword -->
+<!-- Modified by the RevolutionDCM Team -->
+<!-- Game Text -->
+<!-- -->
+<Civ4GameText xmlns="http://www.firaxis.com">
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_CANCEL</Tag>
+		<English>Cancel</English>
+		<French>Annuler</French>
+		<German>Abbrechen</German>
+		<Italian>Annullamento</Italian>
+		<Spanish>Cancelar</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_PICK_CIV</Tag>
+		<English>Pick a civ</English>
+		<French>Choisir une civilisation</French>
+		<German>W&#228;hlen Sie eine Civ aus</German>
+		<Italian>Selezioni un civ</Italian>
+		<Spanish>Elige una civilización</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_CIV_DIED</Tag>
+		<English>Your civ has died.[NEWLINE]Would you like to lead another civ?[NEWLINE]</English>
+		<French>Votre civilisation est morte.[NEWLINE]Voulez-vous diriger une autre civilisation ?[NEWLINE]</French>
+		<German>Ihre Civ ist gestorben.[NEWLINE]M&#246;chten Sie eine andere Civ f&#252;hren?[NEWLINE]</German>
+		<Italian>Il vostro civ &#232; morto.[NEWLINE]gradite condurre un altro civ?[NEWLINE]</Italian>
+		<Spanish>Tu civilización ha muerto.[NEWLINE]¿Le gustaría dirigir otra civilización?[NEWLINE]</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_TAKE_CONTROL_CIV</Tag>
+		<English>Take control of this civ ...</English>
+		<French>Prendre le contrôle de la civilisation ...</French>
+		<German>Kontrollieren Sie diese Civ ...</German>
+		<Italian>Prenda il controllo di questo civ ...</Italian>
+		<Spanish>Coge el control de esta civilización ...</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_OF_THE</Tag>
+		<English>%s of the %s</English>
+		<French>%s des %s</French>
+		<German>%s von %s</German>
+		<Italian>%s del %s</Italian>
+		<Spanish>%s del %s</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_NOW_CONTROL</Tag>
+		<English>You now control the %s</English>
+		<French>Vous dirigez maintenant les %s</French>
+		<German>Sie steuern jetzt %s</German>
+		<Italian>Ora controllate %s</Italian>
+		<Spanish>Ahora controlas %s</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_NONE</Tag>
+		<English>None</English>
+		<French>Aucun</French>
+		<German>Kein</German>
+		<Italian>Nessuno</Italian>
+		<Spanish>Ninguna</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_TURN_ON</Tag>
+		<English>Turn on AI Auto Control?</English>
+		<French>Basculer en mode Jeu Automatique ?</French>
+		<German>AI-Autosteuerung einschalten?</German>
+		<Italian>Accenda il controllo dell'automobile di AI?</Italian>
+		<Spanish>¿Activar el Auto Control de la IA?</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_TURNS</Tag>
+		<English>How many turns would you like the AI to control?</English>
+		<French>Combien de tours souhaitez-vous que l'ordinateur joue en mode Jeu Automatique ?</French>
+		<German>Wieviele Runden m&#246;chten Sie die AI kontrollieren lassen?</German>
+		<Italian>Wieviele Umdrehungen wurden, m&#246;gen Sie den AI steuern</Italian>
+		<Spanish>¿Cuántos turnos quieres que coja el control la IA?</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_AUTOMATION</Tag>
+		<English>Choose type of automation</English>
+		<French>Choisissez le type d'automatisation</French>
+		<German>W&#228;hlen Sie die Art der Automatisierung</German>
+		<Italian>Scelga il tipo di automazione</Italian>
+		<Spanish>Elige tipo de automatización</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_NO</Tag>
+		<English>No automation</English>
+		<French>Pas d'automatisation</French>
+		<German>Keine Automatisierung</German>
+		<Italian>Nessun'automazione</Italian>
+		<Spanish>Sin automatización</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_LIMIT_DIPLO</Tag>
+		<English>Limit diplomacy changes</English>
+		<French>Limiter des changements de diplomatie</French>
+		<German>Diplomatie&#228;nderungen begrenzen</German>
+		<Italian>Limit diplomacy changes</Italian>
+		<Spanish>Limitar cambios de la diplomacia</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_FULLY</Tag>
+		<English>Fully Automate</English>
+		<French>Complètement automatique</French>
+		<German>Vollst&#228;ndige Automatisierung</German>
+		<Italian>Completamente automatizzi</Italian>
+		<Spanish>Completada la Automatización</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_UNIT</Tag>
+		<English>Automate unit moves only (not fully tested)</English>
+		<French>Déplacement des unités seulement (Pas encore testé à fond)</French>
+		<German>Nur Einheitenz&#252;ge automatisieren (noch nicht vollst&#228;ndig getestet)</German>
+		<Italian>Automatisieren Sie nur Ma&#223;einheitsbewegungen (nicht v&#246;llig gepr&#252;ft)</Italian>
+		<Spanish>La unidad automatizada se mueve solo (sin terminar de probar)</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_DEBUG</Tag>
+		<English>Debug Mode (will reveal entire world!!!)</English>
+		<French>Mode Debug (Révellera la carte du monde !!!)</French>
+		<German>Fehlerpr&#252;fungsmodus (deckt ganze Welt auf!!!)</German>
+		<Italian>Metta a punto il modo (riveler&#224; il mondo intero!!!)</Italian>
+		<Spanish>Modo Debug (¡¡¡Revelará el mundo entero!!!)</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_NEW_LEADER</Tag>
+		<English>There is a new leader!!!</English>
+		<French>Il y a un nouveau leader !!!</French>
+		<German>Es gibt einen neuen Anf&#252;hrer!!!</German>
+		<Italian>Ci &#232; un nuovo capo!!!</Italian>
+		<Spanish>¡¡¡Hay un nuevo líder!!!</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_ABDICATE</Tag>
+		<English>Old age has finally caught up with you and you decide to abdicate rule.</English>
+		<French>La vieillesse a fini par vous rattrapper et vous avez décidez d'abandonner le pouvoir.</French>
+		<German>Hohes Alter hat Sie schlie&#223;lich eingeholt und Sie entscheiden sich, die Herrschaft abzugeben.</German>
+		<Italian>La vecchiaia infine ha preso con voi e decidete alla regola abdicata.</Italian>
+		<Spanish>Los viejos tiempos finalmente te han alcanzado y decides abdicar del poder.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_USURPATOR</Tag>
+		<English>Terrible news:[NEWLINE][NEWLINE]Coniving rivals have overthrown you in a coup![NEWLINE]A little to much "Let them eat cake" perhaps?</English>
+		<French>Terrible nouvelle :[NEWLINE][NEWLINE]Vos amis politiques se sont révélés être vos rivaux et vous ont destitué ![NEWLINE]Peut-être leur avez-vous un peu trop fait confiance ?</French>
+		<German>Schreckliche Neuigkeiten:[NEWLINE][NEWLINE]Hinterh&#228;ltige Rivalen haben Sie gest&#252;rzt![NEWLINE]Etwas zu viel "Sollen sie doch Kuchen essen" m&#246;glicherweise?</German>
+		<Italian>Notizie terribili:[NEWLINE][NEWLINE]I rivali di Coniving lo hanno rovesciato in un colpo![NEWLINEPoco a molto &quot; Lascili mangiare il cake&quot; forse?</Italian>
+		<Spanish>Terribles noticias:[NEWLINE][NEWLINE]¡Unos conspiradores rivales han dado un golpe de estado![NEWLINE]¿Puede que a lo mejor hayas sido demasiado permisivo?</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_AIAUTOPLAY_GOOD_NEWS</Tag>
+		<English>[NEWLINE][NEWLINE]However, there is good news![NEWLINE]Mystical advisors report that you will be reincarnated and return to power in %d turns.[NEWLINE][NEWLINE]In the meantime, you can only hope your successor proves worthy.</English>
+		<French>[NEWLINE][NEWLINE]Toutefois, il y a une bonne nouvelle ![NEWLINE]Les astrologues prédisent votre réincarnation et votre retour au pouvoir dans %d tours.[NEWLINE][NEWLINE]En attendant, vous n'avez plus qu'à espérer que votre successeur agira correctement.</French>
+		<German>[NEWLINE] [NEWLINE] Es gibt allerdings auch gute Nachrichten! [NEWLINE] Geheimnisvolle Berater berichten, dass Sie wiedergeboren und in %d Runden wieder an die Macht gelangen werden. [NEWLINE] [NEWLINE] In der Zwischenzeit k&#246;nnen Sie nur hoffen, dass Ihr Nachfolger sich Ihrer w&#252;rdig erweist.</German>
+		<Italian>[NEWLINE] [NEWLINE] tuttavia, ci sono buone notizie! [NEWLINE] i consiglieri Mystical segnalano che sarete reincarnato e di ritorno per alimentare alle girate di %d. [NEWLINE] [NEWLINE] nel frattempo, potete sperare soltanto che il vostro successore dimostri degno.</Italian>
+		<Spanish>[NEWLINE][NEWLINE]¡No obstante, también hay buenas noticias![NEWLINE]Los astrólogos vaticinaron vuestra reencarnación y retorno al poder en %d turnos.[NEWLINE][NEWLINE]Mientras tanto, solo podeis esperar que vuestro sucesor este a la altura.</Spanish>
+	</TEXT>
+</Civ4GameText>

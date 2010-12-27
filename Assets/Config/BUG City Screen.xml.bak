@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!--
+	BUG City Screen
+	by EmperorFool, Dresden, Chinese American, Ruff_Hi, TheLopez, Sevo
+	
+	Collects all of the various main interface mods.
+	
+	Copyright (c) 2008 The BUG Mod.
+-->
+<mod id="CityScreen" 
+	 name="BUG City Screen" 
+	 author="EmperorFool, Chinese American, TheLopez, Ruff_Hi, Sevo" 
+	 version="3.0" 
+	 date="07/11/2008"
+	 url="http://forums.civfanatics.com/forumdisplay.php?f=268">
+	 
+	<options id="CityScreen" file="BUG City Screen.ini">
+		<section id="City Screen">
+			<!-- Raw Yields by EmperorFool (inspired by Raw Commerce by Sevo) -->
+			<option id="RawYields" key="Raw Yields" 
+					type="boolean" default="False" 
+					get="isShowRawYields" dirtyBit="CityScreen"/>
+			<list   id="RawYieldsView" key="Raw Yields View" 
+					type="int" default="0" listType="string" 
+					values="Trade Routes|Food|Production|Commerce" 
+					get="getRawYieldsDefaultView" dirtyBit="CityScreen">
+				<choice id="TradeRoutes" get="isRawYieldsDefaultViewTradeRoutes"/>
+				<choice id="Food" get="isRawYieldsDefaultViewFood"/>
+				<choice id="Production" get="isRawYieldsDefaultViewProduction"/>
+				<choice id="Commerce" get="isRawYieldsDefaultViewCommerce"/>
+			</list>
+			<list   id="RawYieldsTiles" key="Raw Yields Tiles" 
+					type="int" default="0" listType="string" 
+					values="Worked|City|Owned" 
+					get="getRawYieldsDefaultTiles" dirtyBit="CityScreen">
+				<choice id="Worked" get="isRawYieldsDefaultTilesWorked"/>
+				<choice id="City" get="isRawYieldsDefaultTilesCity"/>
+				<choice id="Owned" get="isRawYieldsDefaultTilesOwned"/>
+				<!--choice id="All" get="isRawYieldsDefaultTilesAll"/-->
+			</list>
+			
+			<!-- FoodAssist by EmperorFool -->
+			<option id="FoodAssist" key="FoodAssist" 
+					type="boolean" default="False" 
+					get="isShowFoodAssist" dirtyBit="CityScreen"/>
+			
+			<!-- WhipAssist by EmperorFool, Dresden -->
+			<option id="WhipAssist" key="WhipAssist" 
+					type="boolean" default="False" 
+					get="isShowWhipAssist" dirtyBit="CityScreen"/>
+			<option id="WhipAssistOverflowCountCurrentProduction" key="WhipAssist Overflow Count Current Production" 
+					type="boolean" default="False" 
+					get="isWhipAssistOverflowCountCurrentProduction" dirtyBit="CityScreen"/>
+			
+			<!-- Culture Turns by Chinese American -->
+			<option id="CultureTurns" key="Culture Turns" 
+					type="boolean" default="False" 
+					get="isShowCultureTurns" dirtyBit="CityScreen"/>
+			
+			<!-- Great Person Info by Chinese American, EmperorFool -->
+			<option id="GreatPersonTurns" key="Great Person Turns" 
+					type="boolean" default="False" 
+					get="isShowGreatPersonTurns" dirtyBit="CityScreen"/>
+			<option id="GreatPersonInfo" key="Great Person Info" 
+					type="boolean" default="False" 
+					get="isShowCityGreatPersonInfo" dirtyBit="CityScreen"/>
+			
+			<!-- Anger Counter by Ruff_Hi -->
+			<option id="Anger_Counter" key="Anger Counter" 
+					type="boolean" default="False" 
+					get="isShowAngerCounter" dirtyBit="CityScreen"/>
+			
+			<!-- Show Only Present and Extra Religions/Corporations by johny smith -->
+			<option id="OnlyPresentReligions" key="Only Present Religions" 
+					type="boolean" default="False" 
+					get="isShowOnlyPresentReligions" dirtyBit="CityScreen"/>
+			<option id="OnlyPresentCorporations" key="Only Present Corporations" 
+					type="boolean" default="False" 
+					get="isShowOnlyPresentCorporations" dirtyBit="CityScreen"/>
+			
+			<!-- Specialist Stacker by TheLopez -->
+			<!-- Specialist Chevrons by Ruff_Hi -->
+			<list   id="Specialists" key="City Specialists" 
+					type="int" default="2" listType="string" 
+					values="Default|Stacker|Chevron" 
+					get="getCitySpecialist" dirtyBit="CityScreen">
+				<choice id="Default" get="isCitySpecialist_Default"/>
+				<choice id="Stacker" get="isCitySpecialist_Stacker"/>
+				<choice id="Chevron" get="isCitySpecialist_Chevron"/>
+			</list>
+			
+			<!-- Production Started by EmperorFool -->
+			<option id="ProductionStarted" key="Production Started" 
+					type="boolean" default="False" dirtyBit="InfoPane" get="isShowProductionStarted"/>
+			
+			<!-- Production Decay by EmperorFool [BULL] DISABLED -->			
+			<!-- Production Popup by EmperorFool DISABLED -->			
+		</section>
+	</options>
+</mod>
