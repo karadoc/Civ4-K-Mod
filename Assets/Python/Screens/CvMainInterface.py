@@ -3660,7 +3660,7 @@ class CvMainInterface:
 						self.pBarProductionBar.drawTickMarks(screen, pHeadSelectedCity.getProduction(), pHeadSelectedCity.getProductionNeeded(), iFirst, iRate, False)
 
 						HURRY_WHIP = gc.getInfoTypeForString("HURRY_POPULATION")
-						if pHeadSelectedCity.canHurry(HURRY_WHIP, False):
+						if pHeadSelectedCity.canHurry(HURRY_WHIP, True): # K-Mod, changed from False to True
 							iRate = pHeadSelectedCity.hurryProduction(HURRY_WHIP) / pHeadSelectedCity.hurryPopulation(HURRY_WHIP)
 							self.pBarProductionBar_Whip.drawTickMarks(screen, pHeadSelectedCity.getProduction(), pHeadSelectedCity.getProductionNeeded(), iFirst, iRate, True)
 # BUG - Progress Bar - Tick Marks - end

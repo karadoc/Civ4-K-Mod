@@ -37,6 +37,7 @@
 		<DefineName>WARM_FEATURE</DefineName>
 		<DefineTextVal>FEATURE_JUNGLE</DefineTextVal>
 	</Define>
+	<!-- The power health entries have not been changed
 	<Define>
 		<DefineName>POWER_HEALTH_CHANGE</DefineName>
 		<iDefineIntVal>-2</iDefineIntVal>
@@ -44,16 +45,20 @@
 	<Define>
 		<DefineName>DIRTY_POWER_HEALTH_CHANGE</DefineName>
 		<iDefineIntVal>-2</iDefineIntVal>
-	</Define>
+	</Define>-->
 	<!-- warming prob and winter prob are out of 1000, not pecent. (winter is currently disabled) -->
 	<Define>
 		<DefineName>GLOBAL_WARMING_PROB</DefineName>
 		<iDefineIntVal>20</iDefineIntVal>
 	</Define>
 	<Define>
+		<DefineName>GLOBAL_WARMING_BASE_UNHAPPINESS</DefineName>
+		<iDefineIntVal>6</iDefineIntVal>
+	</Define>
+	<!--<Define>
 		<DefineName>NUCLEAR_WINTER_PROB</DefineName>
 		<iDefineIntVal>20</iDefineIntVal>
-	</Define>
+	</Define> -->
 	<Define>
 		<DefineName>GLOBAL_WARMING_FOREST</DefineName>
 		<iDefineIntVal>25</iDefineIntVal>
@@ -74,12 +79,12 @@
 		<DefineName>GLOBAL_WARMING_POPULATION_WEIGHT</DefineName>
 		<iDefineIntVal>10</iDefineIntVal>
 	</Define>
-	<Define>
+	<!--<Define>
 		<DefineName>GLOBAL_WARMING_NUKE_WEIGHT</DefineName>
 		<iDefineIntVal>50</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>BONUS_OBSOLETE_VALUE_MODIFIER</DefineName>
 		<iDefineIntVal>150</iDefineIntVal>
-	</Define>
+	</Define>-->
 </Civ4Defines>
