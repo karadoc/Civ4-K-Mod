@@ -248,6 +248,7 @@ public:
 	void setGwEventTally(int iNewValue);
 	void changeGwEventTally(int iChange);
 
+	int calculateGlobalPollution() const; // Exposed to Python
 	int calculateGwLandDefence(PlayerTypes ePlayer = NO_PLAYER /* global */) const; // Exposed to Python
 	int calculateGwSustainabilityThreshold(PlayerTypes ePlayer = NO_PLAYER /* global */) const; // Exposed to Python
 /*

@@ -7241,6 +7241,11 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 		szBuffer.append(szTempBuffer);
 
 		int iHappiness;
+/*
+** K-Mod, 30/dec/10, karadoc
+** changed so that conditional happiness is double-reported. (such as happiness from state-religion buildings, or culture slider)
+*/
+		/* original bts code
 		if (NULL != pCity)
 		{
 			iHappiness = pCity->getBuildingHappiness(eBuilding);
@@ -7248,7 +7253,15 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 		else
 		{
 			iHappiness = kBuilding.getHappiness();
-		}		
+		}*/
+		iHappiness = kBuilding.getHappiness();
+		//if (ePlayer != NO_PLAYER) (This happiness is already reported as well (eg, nationhood barracks)
+		//{
+			//iHappiness += GET_PLAYER(ePlayer).getExtraBuildingHappiness(eBuilding);
+		//}
+/*
+** K-Mod end
+*/
 
 		if (iHappiness != 0)
 		{
@@ -7257,6 +7270,11 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 		}
 
 		int iHealth;
+/*
+** K-Mod, 30/dec/10, karadoc
+** changed so that conditional healthiness is not counted. (such as healthiness from public transport with environmentalism)
+*/
+		/* original bts code
 		if (NULL != pCity)
 		{
 			iHealth = pCity->getBuildingGoodHealth(eBuilding);
@@ -7282,7 +7300,11 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 		if (NULL != pCity)
 		{
 			iHealth = pCity->getBuildingBadHealth(eBuilding);
-		}
+		}*/
+		iHealth = kBuilding.getHealth();
+/*
+** K-Mod end
+*/
 		if (iHealth != 0)
 		{
 			szTempBuffer.Format(L", +%d%c", abs(iHealth), ((iHealth > 0) ? gDLL->getSymbolID(HEALTHY_CHAR): gDLL->getSymbolID(UNHEALTHY_CHAR)));
@@ -7312,6 +7334,19 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 			{
 				aiCommerces[iI] = kBuilding.getCommerceChange(iI);
 				aiCommerces[iI] += kBuilding.getObsoleteSafeCommerceChange(iI);
+/*
+** K-Mod, 30/dec/10, karadoc
+** added relgious building bonus info
+*/
+				if (ePlayer != NO_PLAYER &&
+					kBuilding.getReligionType() != NO_RELIGION &&
+					kBuilding.getReligionType() == GET_PLAYER(ePlayer).getStateReligion())
+				{
+					aiCommerces[iI] = GET_PLAYER(ePlayer).getStateReligionBuildingCommerce((CommerceTypes)iI);
+				}
+/*
+** K-Mod end
+*/
 			}
 		}
 		setCommerceChangeHelp(szBuffer, L", ", L"", L"", aiCommerces, false, false);
@@ -7947,6 +7982,11 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 
 	setCommerceChangeHelp(szBuffer, L"", L"", gDLL->getText("TXT_KEY_BUILDING_PER_SPECIALIST_ALL_CITIES").c_str(), kBuilding.getSpecialistExtraCommerceArray());
 
+/*
+** K-Mod, 30/dec/10, karadoc
+** Changed to always say state religion, rather than the particular religion that happens to be the current state religion.
+*/
+	/* original bts code
 	if (ePlayer != NO_PLAYER && GET_PLAYER(ePlayer).getStateReligion() != NO_RELIGION)
 	{
 		szTempBuffer = gDLL->getText("TXT_KEY_BUILDING_FROM_ALL_REL_BUILDINGS", GC.getReligionInfo(GET_PLAYER(ePlayer).getStateReligion()).getChar());
@@ -7954,7 +7994,11 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 	else
 	{
 		szTempBuffer = gDLL->getText("TXT_KEY_BUILDING_STATE_REL_BUILDINGS");
-	}
+	}*/
+	szTempBuffer = gDLL->getText("TXT_KEY_BUILDING_STATE_REL_BUILDINGS");
+/*
+** K-Mod end
+*/
 	setCommerceChangeHelp(szBuffer, L"", L"", szTempBuffer, kBuilding.getStateReligionCommerceArray());
 
 	for (iI = 0; iI < NUM_COMMERCE_TYPES; ++iI)
@@ -9210,6 +9254,20 @@ void CvGameTextMgr::setBadHealthHelp(CvWStringBuffer &szBuffer, CvCity& city)
 		if (iHealth > 0)
 		{
 			szBuffer.append(gDLL->getText("TXT_KEY_MISC_HEALTH_FROM_POP", iHealth));
+/*
+** K-Mod, 29/dec/10, karadoc
+** added modifier text
+*/
+			if (city.getUnhealthyPopulationModifier() != 0)
+			{
+				wchar szTempBuffer[1024];
+
+				swprintf(szTempBuffer, 1024, L" (%+d%%)", city.getUnhealthyPopulationModifier());
+				szBuffer.append(szTempBuffer);
+			}
+/*
+** K-Mod end
+*/
 			szBuffer.append(NEWLINE);
 		}
 
@@ -9569,6 +9627,21 @@ void CvGameTextMgr::setAngerHelp(CvWStringBuffer &szBuffer, CvCity& city)
 			szBuffer.append(NEWLINE);
 		}
 		iOldAnger = iNewAnger;
+/*
+** K-Mod, 30/dec/10, karadoc
+** Global warming unhappiness
+*/
+		iNewAnger += std::max(0, GET_PLAYER(city.getOwnerINLINE()).calculateGwUnhappiness());
+		iAnger = ((iNewAnger - iOldAnger) + std::min(0, iOldAnger));
+		if (iAnger > 0)
+		{
+			szBuffer.append(gDLL->getText("TXT_KEY_ANGER_GLOBAL_WARMING", iAnger));
+			szBuffer.append(NEWLINE);
+		}
+		iOldAnger = iNewAnger;
+/*
+** K-Mod end
+*/
 
 		szBuffer.append(L"-----------------------\n");
 

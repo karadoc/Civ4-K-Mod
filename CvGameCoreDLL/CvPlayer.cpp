@@ -7222,7 +7222,7 @@ int CvPlayer::calculateTotalCityUnhealthiness() const
 
 /*
 ** K-Mod, 18/dec/10, karadoc
-** new function to calculate the pollution output of a civ.
+** calculate the pollution output of a civ.
 ** iTypes is a bit-field whos members are POLLUTION_POPULTION, _BUILDINGS, _BONUS, _POWER. (and _ALL)
 */
 int CvPlayer::calculatePollution(int iTypes) const
@@ -7246,6 +7246,34 @@ int CvPlayer::calculatePollution(int iTypes) const
 	}
 
 	return iTotal;
+}
+
+/*
+** calculate unhappiness due to the state of global warming
+*/
+int CvPlayer::calculateGwUnhappiness() const
+{
+	//PROFILE_FUNC(); // I don't know how to use this yet.
+
+	if (GC.getGameINLINE().getGlobalWarmingIndex() <= 0)
+		return 0;
+
+	// player unhappiness = global unhappiness * (local pollution / local threshold) / (global pollution / global threshold)
+	// global unhappiness = base rate * (1-(1-warming prob)^(rolls/map_size * max turns))
+	//  = base rate (1-(1-warming prob)^(index / map_size) (with some factor in the exponent to make it better...)
+	// That was the original plan at least... lets try something a bit simplier with a similar shape
+	// iBase = base_rate * 1 - 1/(1+prob*index/map_size); (note, the prob factor of 1000 inside the prob is included)
+	int iGlobalPollution = GC.getGameINLINE().calculateGlobalPollution();
+
+	int iGlobalThreatRating = 100-100/(1+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / GC.getMapINLINE().getLandPlots()));
+	int iResponsibilityFactor = (100*calculatePollution()*GC.getGameINLINE().calculateGwSustainabilityThreshold()) / (GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()) * iGlobalPollution);
+
+	int iUnhappiness = GC.getDefineINT("GLOBAL_WARMING_BASE_UNHAPPINESS");
+	iUnhappiness *= iGlobalThreatRating;
+	iUnhappiness *= iResponsibilityFactor;
+	iUnhappiness = ROUND_DIVIDE(iUnhappiness, 10000);// div, 100 * 100
+
+	return iUnhappiness;
 }
 /*
 ** K-Mod end

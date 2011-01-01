@@ -564,6 +564,11 @@ int CyGame::getGwEventTally() const
 	return (NULL != m_pGame ? m_pGame->getGwEventTally() : -1);
 }
 
+int CyGame::calculateGlobalPollution() const
+{
+	return (NULL != m_pGame ? m_pGame->calculateGlobalPollution() : 0);
+}
+
 int CyGame::calculateGwLandDefence(int /* PlayerTypes */ ePlayer) const
 {
 	return (NULL != m_pGame ? m_pGame->calculateGwLandDefence((PlayerTypes)ePlayer) : 0);

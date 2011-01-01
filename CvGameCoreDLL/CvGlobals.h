@@ -22,6 +22,12 @@
 		snprintf(acOut, 256, "Index in %s expected to be < %d. (value: %d)", fnString, upper, index);\
 		FAssertMsg(index < upper, acOut);\
 	}
+
+// Created the following function for rounded integer division
+static inline int ROUND_DIVIDE(int a, int b)
+{
+	return (a+((b*a>0)?1:-1)*(b/2)) / b;
+}
 /*
 ** K-Mod end
 */

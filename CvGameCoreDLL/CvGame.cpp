@@ -3964,6 +3964,20 @@ void CvGame::changeGwEventTally(int iChange)
 	setGwEventTally(getGwEventTally() + iChange);
 }
 
+// worldwide pollution
+int CvGame::calculateGlobalPollution() const
+{
+	int iGlobalPollution = 0;
+	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes) iPlayer);
+		if (kPlayer.isAlive())
+		{
+			iGlobalPollution += kPlayer.calculatePollution();
+		}
+	}
+	return iGlobalPollution;
+}
 
 // if ePlayer == NO_PLAYER, all features are counted. Otherwise, only count features owned by the specified player.
 int CvGame::calculateGwLandDefence(PlayerTypes ePlayer) const
@@ -6060,16 +6074,7 @@ void CvGame::doGlobalWarming()
 	/*
 	** Calculate change in GW index
 	*/
-	int iGlobalWarmingValue = 0;
-	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
-	{
-		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes) iPlayer);
-		if (kPlayer.isAlive())
-		{
-			iGlobalWarmingValue += kPlayer.calculatePollution();
-		}
-	}
-
+	int iGlobalWarmingValue = GC.getGameINLINE().calculateGlobalPollution();
 
 	int iGlobalWarmingDefense = calculateGwSustainabilityThreshold(); // Natural global defence
 	iGlobalWarmingDefense+= calculateGwLandDefence(); // defence from features (forests & jungles)
@@ -6176,10 +6181,10 @@ void CvGame::doGlobalWarming()
 				}
 
 				{// GWMod stepped terrain changes M.A.
-					/* (disabled by K-Mod)
+					// Rising seas
 					if (pPlot->getTerrainType() == eBarrenTerrain)
 					{
-						if (isOption(GAMEOPTION_RISING_SEAS))
+						// if (isOption(GAMEOPTION_RISING_SEAS)) (always enabled)
 						{
 							if (pPlot->isCoastalLand())
 							{
@@ -6191,7 +6196,7 @@ void CvGame::doGlobalWarming()
 							}
 						}
 					}					
-					else */if (pPlot->getTerrainType() == eDryTerrain)
+					else if (pPlot->getTerrainType() == eDryTerrain)
 					{
 						pPlot->setTerrainType(eBarrenTerrain);
 						bChanged = true;
@@ -6303,7 +6308,10 @@ void CvGame::doGlobalWarming()
 CvPlot* CvGame::getRandGWPlot(int iPool)
 {
 	CvPlot* pBestPlot = NULL;
+	CvPlot* pTestPlot = NULL;
+	TerrainTypes eTerrain;
 	int iBestScore = -1; // higher score means better target plot
+	int iTestScore;
 	int i;
 
 	const TerrainTypes eFrozenTerrain = ((TerrainTypes)(GC.getDefineINT("FROZEN_TERRAIN")));
@@ -6311,17 +6319,40 @@ CvPlot* CvGame::getRandGWPlot(int iPool)
 	const TerrainTypes eTemperateTerrain = ((TerrainTypes)(GC.getDefineINT("TEMPERATE_TERRAIN")));
 	const TerrainTypes eDryTerrain = ((TerrainTypes)(GC.getDefineINT("DRY_TERRAIN")));
 
+	const FeatureTypes eColdFeature = ((FeatureTypes)(GC.getDefineINT("COLD_FEATURE")));
+
 	// Currently we just choose the coldest tile; but I may include other tests in future versions
 	for (i = 0; i < iPool; i++)
 	{
-		CvPlot* pTestPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
-		int iTestScore;
+		// I want to be able to select a water tile with ice on it; so I can't just exclude water completely...
+		//CvPlot* pTestPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
+		for (int j = 0; j < 100; j++)
+		{
+			pTestPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_NOT_CITY);
+
+			if (pTestPlot == NULL)
+				break; // already checked 100 plots in the syncRandPlot funciton, so just give up.
+
+			// check for ice
+			if (pTestPlot->getFeatureType() == eColdFeature)
+			{
+				// pretend it's frozen terrain
+				eTerrain = eFrozenTerrain;
+				break;
+			}
+			// check for ordinary land plots
+			if (!pTestPlot->isWater())
+			{
+				eTerrain = pTestPlot->getTerrainType();
+				break;
+			}
+			// not a suitable plot, try again.
+		}
 
 		if (pTestPlot == NULL)
 			continue;
 
 		// if only I could do this with a switch...
-		TerrainTypes eTerrain = pTestPlot->getTerrainType();
 
 		if (eTerrain == eFrozenTerrain)
 			iTestScore = 4;

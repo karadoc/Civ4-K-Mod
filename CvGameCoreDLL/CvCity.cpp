@@ -4400,6 +4400,7 @@ int CvCity::unhappyLevel(int iExtra) const
 		iUnhappiness -= std::min(0, GC.getHandicapInfo(getHandicapType()).getHappyBonus());
 		iUnhappiness += std::max(0, getVassalUnhappiness());
 		iUnhappiness += std::max(0, getEspionageHappinessCounter());
+		iUnhappiness += std::max(0, GET_PLAYER(getOwnerINLINE()).calculateGwUnhappiness()); // K-Mod
 	}
 
 	return std::max(0, iUnhappiness);
@@ -4508,7 +4509,7 @@ int CvCity::unhealthyPopulation(bool bNoAngry, int iExtra) const
 	*/
 	int iUnhealth = getPopulation() + iExtra - ((bNoAngry)? angryPopulation(iExtra) : 0);
 	iUnhealth *= std::max(0, 100+getUnhealthyPopulationModifier());
-	iUnhealth /= 100;
+	iUnhealth = ROUND_DIVIDE(iUnhealth, 100);
 	return std::max(0, iUnhealth);
 /*
 ** K-Mod end
@@ -6637,7 +6638,7 @@ int CvCity::getAdditionalHealthByBuilding(BuildingTypes eBuilding, int& iGood, i
 	} */
 
 	// Modified unhealthiness from population
-	iBad += (getPopulation() * std::max(-100, kBuilding.getUnhealthyPopulationModifier()))/100;
+	iBad += ROUND_DIVIDE(getPopulation() * std::max(-100, kBuilding.getUnhealthyPopulationModifier()), 100);
 	/*
 	** K-Mod end
 	*/

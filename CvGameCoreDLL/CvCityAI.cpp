@@ -3485,15 +3485,63 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	int iBadHealth = std::max(0, -iHealthLevel);
 
 	int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 6) ? 6 : 3;
-	int iHealthModifier = (iHealthLevel < iHappinessLevel && iHealthLevel <= 4) ? 4 : 2;
 	if (iHappinessLevel >= 10)
 	{
 		iHappyModifier = 1;
 	}
+/*
+** K-Mod, 29/dec/10, karadoc
+** Rewrite of health evalulation
+*/
+	/* original code
+	int iHealthModifier = (iHealthLevel < iHappinessLevel && iHealthLevel <= 4) ? 4 : 2;
 	if (iHealthLevel >= 8)
 	{
 		iHealthModifier = 0;
+	}*/
+	int iHealthModifier;
+
+	if (iHealthLevel >= 8)
+	{
+		// No effect in the near future
+		iHealthModifier = 2;
 	}
+	else
+	{
+		if (iHealthLevel < 0 && iHealthLevel <= iHappinessLevel)
+		{
+			// Health is negative, and worse than happiness
+			if (iFoodDifference < 0)
+				// Causing starvation
+				iHealthModifier = 14;
+			else
+			{
+				if (iFoodDifference >= iHappinessLevel)
+				{
+					// growth probably capped by happiness anyway
+					iHealthModifier = 8;
+				}
+				else
+					// Currently slowing growth
+					iHealthModifier = 10;
+			}
+		}
+		else
+		{
+			// either health is positive, or more than happiness
+			if (iHealthLevel < iHappinessLevel && iHealthLevel <= 4)
+			{
+				// Not currently a problem, but maybe the bottleneck on future growth
+				iHealthModifier = 6;
+			}
+			else
+				// not reducing growth, and not the bottleneck on future growth
+				iHealthModifier = 4;
+		}
+	}
+/*
+** K-Mod end
+*/
 
 	bool bProvidesPower = (kBuilding.isPower() || ((kBuilding.getPowerBonus() != NO_BONUS) && hasBonus((BonusTypes)(kBuilding.getPowerBonus()))) || kBuilding.isAreaCleanPower());
 /************************************************************************************************/
@@ -3704,7 +3752,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 /************************************************************************************************/
 				int iGood, iBad = 0;
 				int iBuildingActualHealth = getAdditionalHealthByBuilding(eBuilding,iGood,iBad);
-
+/*
+** K-Mod, 29/dec/10, karadoc
+** rewrote the evaluation of building health. (also see changes to iHealthModifier above)
+*/
+				/* original
 				if( iBuildingActualHealth < 0 )
 				{
 					// Building causes net decrease in city health
@@ -3719,7 +3771,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					// Building causes net increase in city health
 					iValue += (std::min(iBuildingActualHealth, iBadHealth) * 10)
 						+ (std::max(0, iBuildingActualHealth - iBadHealth) * iHealthModifier);
-				}
+				}*/
+				iValue += iBuildingActualHealth * iHealthModifier;
+/*
+** K-Mod end
+*/
 
 				iValue += (kBuilding.getAreaHealth() * (iNumCitiesInArea-1) * 4);
 				iValue += (kBuilding.getGlobalHealth() * iNumCities * 4);
