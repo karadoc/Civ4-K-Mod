@@ -69,6 +69,7 @@ public:
 	void updateCenterUnit();
 
 	void verifyUnitValidPlot();
+	void forceBumpUnits(); // K-Mod
 
 	void nukeExplosion(int iRange, CvUnit* pNukeUnit = NULL);																							// Exposed to Python
 

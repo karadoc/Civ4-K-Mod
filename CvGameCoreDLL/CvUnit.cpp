@@ -2968,7 +2968,8 @@ void CvUnit::move(CvPlot* pPlot, bool bShow)
 }
 
 // false if unit is killed
-bool CvUnit::jumpToNearestValidPlot()
+// K-Mod, 2/jan/11, karadoc - added 'bForceMove' argument to following function
+bool CvUnit::jumpToNearestValidPlot(bool bForceMove)
 {
 	CvCity* pNearestCity;
 	CvPlot* pLoopPlot;
@@ -3002,6 +3003,10 @@ bool CvUnit::jumpToNearestValidPlot()
 						if (pLoopPlot->isRevealed(getTeam(), false))
 						{
 							iValue = (plotDistance(getX_INLINE(), getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) * 2);
+							// K-mod, 2/jan/11, karadoc - bForceMove functionality
+							if (bForceMove && iValue == 0)
+								continue;
+							// K-Mod end
 
 							if (pNearestCity != NULL)
 							{

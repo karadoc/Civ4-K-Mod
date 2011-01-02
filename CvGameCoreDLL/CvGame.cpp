@@ -6126,7 +6126,6 @@ void CvGame::doGlobalWarming()
 	TerrainTypes eTemperateTerrain = ((TerrainTypes)(GC.getDefineINT("TEMPERATE_TERRAIN")));
 	TerrainTypes eDryTerrain = ((TerrainTypes)(GC.getDefineINT("DRY_TERRAIN")));
 	TerrainTypes eBarrenTerrain = ((TerrainTypes)(GC.getDefineINT("BARREN_TERRAIN")));
-	TerrainTypes eShallowsTerrain = ((TerrainTypes)(GC.getDefineINT("SHALLOW_WATER_TERRAIN")));
 
 	FeatureTypes eColdFeature = ((FeatureTypes)(GC.getDefineINT("COLD_FEATURE")));
 	FeatureTypes eTemperateFeature = ((FeatureTypes)(GC.getDefineINT("TEMPERATE_FEATURE")));
@@ -6190,7 +6189,8 @@ void CvGame::doGlobalWarming()
 							{
 								if (!pPlot->isHills() && !pPlot->isPeak())
 								{
-									pPlot->setTerrainType(eShallowsTerrain);
+									pPlot->forceBumpUnits();
+									pPlot->setPlotType(PLOT_OCEAN);
 									bChanged = true;
 								}
 							}
@@ -6224,7 +6224,7 @@ void CvGame::doGlobalWarming()
 					if (!pPlot->canHaveImprovement(pPlot->getImprovementType()))
 						pPlot->setImprovementType(NO_IMPROVEMENT);
 
-					CvCity* pCity = GC.getMapINLINE().findCity(pPlot->getX_INLINE(), pPlot->getY_INLINE());
+					CvCity* pCity = GC.getMapINLINE().findCity(pPlot->getX_INLINE(), pPlot->getY_INLINE(), NO_PLAYER, NO_TEAM, false);
 					if (pCity != NULL)
 					{
 						if (pPlot->isVisible(pCity->getTeam(), false))
@@ -6309,7 +6309,7 @@ CvPlot* CvGame::getRandGWPlot(int iPool)
 {
 	CvPlot* pBestPlot = NULL;
 	CvPlot* pTestPlot = NULL;
-	TerrainTypes eTerrain;
+	TerrainTypes eTerrain = NO_TERRAIN;
 	int iBestScore = -1; // higher score means better target plot
 	int iTestScore;
 	int i;
@@ -6349,7 +6349,7 @@ CvPlot* CvGame::getRandGWPlot(int iPool)
 			// not a suitable plot, try again.
 		}
 
-		if (pTestPlot == NULL)
+		if (pTestPlot == NULL || j == 100)
 			continue;
 
 		// if only I could do this with a switch...

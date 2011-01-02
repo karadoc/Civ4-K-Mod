@@ -7253,7 +7253,7 @@ int CvPlayer::calculatePollution(int iTypes) const
 */
 int CvPlayer::calculateGwUnhappiness() const
 {
-	//PROFILE_FUNC(); // I don't know how to use this yet.
+	//PROFILE_FUNC();
 
 	if (GC.getGameINLINE().getGlobalWarmingIndex() <= 0)
 		return 0;
@@ -7262,15 +7262,19 @@ int CvPlayer::calculateGwUnhappiness() const
 	// global unhappiness = base rate * (1-(1-warming prob)^(rolls/map_size * max turns))
 	//  = base rate (1-(1-warming prob)^(index / map_size) (with some factor in the exponent to make it better...)
 	// That was the original plan at least... lets try something a bit simplier with a similar shape
-	// iBase = base_rate * 1 - 1/(1+prob*index/map_size); (note, the prob factor of 1000 inside the prob is included)
+	// iBase = base_rate * 1 - 1/(1+prob*index/map_size);
 	int iGlobalPollution = GC.getGameINLINE().calculateGlobalPollution();
 
-	int iGlobalThreatRating = 100-100/(1+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / GC.getMapINLINE().getLandPlots()));
-	int iResponsibilityFactor = (100*calculatePollution()*GC.getGameINLINE().calculateGwSustainabilityThreshold()) / (GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()) * iGlobalPollution);
+	// Note: watch out for integer overflow and rounding errors.
+	int iGwSeverityRating = 100-100000/(1000+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / GC.getMapINLINE().getLandPlots()));
 
-	int iUnhappiness = GC.getDefineINT("GLOBAL_WARMING_BASE_UNHAPPINESS");
-	iUnhappiness *= iGlobalThreatRating;
-	iUnhappiness *= iResponsibilityFactor;
+	int iResponsibilityFactor =	100*calculatePollution();
+	iResponsibilityFactor /= std::max(1, GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()));
+	iResponsibilityFactor *= GC.getGameINLINE().calculateGwSustainabilityThreshold();
+	iResponsibilityFactor /= std::max(1, iGlobalPollution);
+
+
+	int iUnhappiness = GC.getDefineINT("GLOBAL_WARMING_BASE_UNHAPPINESS") * iGwSeverityRating * iResponsibilityFactor;
 	iUnhappiness = ROUND_DIVIDE(iUnhappiness, 10000);// div, 100 * 100
 
 	return iUnhappiness;

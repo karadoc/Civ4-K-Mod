@@ -26,7 +26,7 @@
 // Created the following function for rounded integer division
 static inline int ROUND_DIVIDE(int a, int b)
 {
-	return (a+((b*a>0)?1:-1)*(b/2)) / b;
+	return (a+((a/b>0)?1:-1)*(b/2)) / b;
 }
 /*
 ** K-Mod end

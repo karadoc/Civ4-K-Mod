@@ -884,6 +884,63 @@ void CvPlot::verifyUnitValidPlot()
 	}
 }
 
+/*
+** K-Mod, 2/jan/11, karadoc
+** forceBumpUnits() forces all units off the plot, onto a nearby plot
+*/
+void CvPlot::forceBumpUnits()
+{
+	// Note: this function is almost certainly not optimal.
+	// I just took the code from another function and I don't want to mess it up.
+	std::vector<CvUnit*> aUnits;
+	CLLNode<IDInfo>* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (NULL != pLoopUnit)
+		{
+			aUnits.push_back(pLoopUnit);
+		}
+	}
+
+	std::vector<CvUnit*>::iterator it = aUnits.begin();
+	while (it != aUnits.end())
+	{
+		CvUnit* pLoopUnit = *it;
+		bool bErased = false;
+
+		if (pLoopUnit != NULL)
+		{
+			if (pLoopUnit->atPlot(this))
+			{
+				if (!(pLoopUnit->isCargo()))
+				{
+					if (!(pLoopUnit->isCombat()))
+					{
+						if (!pLoopUnit->jumpToNearestValidPlot(true))
+						{
+							bErased = true;
+						}
+					}
+				}
+			}
+		}
+
+		if (bErased)
+		{
+			it = aUnits.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
+/*
+** K-Mod end
+*/
 
 void CvPlot::nukeExplosion(int iRange, CvUnit* pNukeUnit)
 {

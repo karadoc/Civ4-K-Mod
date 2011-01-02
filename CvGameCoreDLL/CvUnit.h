@@ -110,7 +110,8 @@ public:
 	void attackForDamage(CvUnit *pDefender, int attackerDamageChange, int defenderDamageChange);
 	void fightInterceptor(const CvPlot* pPlot, bool bQuick);
 	void move(CvPlot* pPlot, bool bShow);
-	bool jumpToNearestValidPlot();																																// Exposed to Python
+	// K-Mod, 2/jan/11, karadoc - added 'bForceMove' argument to following function
+	bool jumpToNearestValidPlot(bool bForceMove = false);																																// Exposed to Python
 
 	bool canAutomate(AutomateTypes eAutomate) const;																							// Exposed to Python
 	void automate(AutomateTypes eAutomate);
