@@ -5367,7 +5367,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						break;
 
 					case UNITAI_CITY_DEFENSE:
-						iMilitaryValue += ((bWarPlan) ? 800 : 400);
+						iMilitaryValue += ((bWarPlan) ? 800 : 500); // K-Mod :400 -> :500
 						iMilitaryValue += ((!bCapitalAlone) ? 400 : 200);
 						iUnitValue += ((iHasMetCount > 0) ? 800 : 200);
 						break;

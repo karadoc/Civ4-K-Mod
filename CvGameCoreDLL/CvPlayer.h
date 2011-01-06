@@ -267,7 +267,7 @@ public:
 	int calculateTotalCityUnhealthiness() const;																													// Exposed to Python
 
 	int calculatePollution(int iTypes = POLLUTION_ALL) const; // K-Mod, Exposed to Python
-	int calculateGwUnhappiness() const; // K-Mod
+	int calculateGwPercentAnger() const; // K-Mod, Exposed to Python
 
 	int calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iBaseUnitCost, int& iMilitaryCost, int& iExtraCost) const;
 	int calculateUnitCost() const;																																				// Exposed to Python

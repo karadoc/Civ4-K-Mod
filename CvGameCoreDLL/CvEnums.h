@@ -540,6 +540,19 @@ enum WidgetTypes					// Exposed to Python
 	WIDGET_GLOBELAYER,
 	WIDGET_GLOBELAYER_OPTION,
 	WIDGET_GLOBELAYER_TOGGLE,
+/*
+** K-Mod, 5/jan/11, karadoc
+** environmental advisor widgets. Note: this apparently breaks WIDGET_CLOSE_SCREEN if it is defined out of order. =\
+*/
+	WIDGET_HELP_POLLUTION_OFFSETS,
+	WIDGET_HELP_POLLUTION_SOURCE,
+	WIDGET_HELP_SUSTAINABILITY_THRESHOLD,
+	WIDGET_HELP_GW_RELATIVE_CONTRIBUTION,
+	WIDGET_HELP_GW_INDEX,
+	WIDGET_HELP_GW_UNHAPPY,
+/*
+** K-Mod end
+*/
 
 #ifdef _USRDLL
 	NUM_WIDGET_TYPES

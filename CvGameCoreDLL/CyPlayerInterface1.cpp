@@ -140,6 +140,7 @@ void CyPlayerPythonInterface1(python::class_<CyPlayer>& x)
 		.def("calculateTotalCommerce", &CyPlayer::calculateTotalCommerce, "int ()")
 		.def("calculateResearchRate", &CyPlayer::calculateResearchRate, "int (int /*TechTypes*/ eTech)")
 		.def("calculatePollution", &CyPlayer::calculatePollution, "int (int /*PollutionFlags*/ iTypes)") // K-Mod
+		.def("calculateGwPercentAnger", &CyPlayer::calculateGwPercentAnger, "int ()") // K-Mod
 		.def("calculateBaseNetResearch", &CyPlayer::calculateBaseNetResearch, "int ()")
 		.def("calculateResearchModifier", &CyPlayer::calculateResearchModifier, "int (int /*TechTypes*/ eTech)")
 		.def("isResearch", &CyPlayer::isResearch, "bool ()")

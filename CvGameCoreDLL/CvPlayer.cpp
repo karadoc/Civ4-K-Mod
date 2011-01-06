@@ -7230,7 +7230,7 @@ int CvPlayer::calculatePollution(int iTypes) const
 	int iTotal = 0;
 
 	int iBuildingWeight = ((iTypes & POLLUTION_BUILDINGS) == 0)?0 :GC.getDefineINT("GLOBAL_WARMING_BUILDING_WEIGHT");
-	int iBonusWeight = ((iTypes & POLLUTION_BONUS) == 0)?0 :GC.getDefineINT("GLOBAL_WARMING_BONUS_WEIGHT");
+	int iBonusWeight = ((iTypes & POLLUTION_BONUSES) == 0)?0 :GC.getDefineINT("GLOBAL_WARMING_BONUS_WEIGHT");
 	int iPowerWeight = ((iTypes & POLLUTION_POWER) == 0)?0 :GC.getDefineINT("GLOBAL_WARMING_POWER_WEIGHT");
 	int iPopWeight = ((iTypes & POLLUTION_POPULATION) == 0)?0 :GC.getDefineINT("GLOBAL_WARMING_POPULATION_WEIGHT");
 
@@ -7251,7 +7251,7 @@ int CvPlayer::calculatePollution(int iTypes) const
 /*
 ** calculate unhappiness due to the state of global warming
 */
-int CvPlayer::calculateGwUnhappiness() const
+int CvPlayer::calculateGwPercentAnger() const
 {
 	//PROFILE_FUNC();
 
@@ -7262,22 +7262,26 @@ int CvPlayer::calculateGwUnhappiness() const
 	// global unhappiness = base rate * (1-(1-warming prob)^(rolls/map_size * max turns))
 	//  = base rate (1-(1-warming prob)^(index / map_size) (with some factor in the exponent to make it better...)
 	// That was the original plan at least... lets try something a bit simplier with a similar shape
-	// iBase = base_rate * 1 - 1/(1+prob*index/map_size);
+	// iBase = base_rate * 100 - 100000/(1000+a*prob*index/map_size);, where 'a' is a balance parameter.
 	int iGlobalPollution = GC.getGameINLINE().calculateGlobalPollution();
 
 	// Note: watch out for integer overflow and rounding errors.
-	int iGwSeverityRating = 100-100000/(1000+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / GC.getMapINLINE().getLandPlots()));
+	int iGwSeverityRating = 100-100000/(1000+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (4*GC.getMapINLINE().getLandPlots())));
+	// a = 1000/4
 
 	int iResponsibilityFactor =	100*calculatePollution();
 	iResponsibilityFactor /= std::max(1, GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()));
 	iResponsibilityFactor *= GC.getGameINLINE().calculateGwSustainabilityThreshold();
 	iResponsibilityFactor /= std::max(1, iGlobalPollution);
+	// square it, to increase its importance
+	iResponsibilityFactor *= iResponsibilityFactor;
+	iResponsibilityFactor /= 100;
 
 
-	int iUnhappiness = GC.getDefineINT("GLOBAL_WARMING_BASE_UNHAPPINESS") * iGwSeverityRating * iResponsibilityFactor;
-	iUnhappiness = ROUND_DIVIDE(iUnhappiness, 10000);// div, 100 * 100
+	int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
+	iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100
 
-	return iUnhappiness;
+	return iAngerPercent;
 }
 /*
 ** K-Mod end

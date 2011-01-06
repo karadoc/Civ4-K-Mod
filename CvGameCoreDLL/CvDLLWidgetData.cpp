@@ -573,7 +573,31 @@ void CvDLLWidgetData::parseHelp(CvWStringBuffer &szBuffer, CvWidgetDataStruct &w
 	case WIDGET_COMMERCE_MOD_HELP:
 		parseCommerceModHelp(widgetDataStruct, szBuffer);
 		break;
-
+/*
+** K-Mod, 5/jan/11, karadoc
+** environmental advisor widgets
+*/
+	case WIDGET_HELP_POLLUTION_OFFSETS:
+		parsePollutionOffsetsHelp(widgetDataStruct, szBuffer);
+		break;
+	case WIDGET_HELP_POLLUTION_SOURCE:
+		parsePollutionHelp(widgetDataStruct, szBuffer);
+		break;
+	case WIDGET_HELP_SUSTAINABILITY_THRESHOLD:
+		szBuffer.assign(gDLL->getText("TXT_KEY_SUSTAINABILITY_THRESHOLD_HELP"));
+		break;
+	case WIDGET_HELP_GW_RELATIVE_CONTRIBUTION:
+		szBuffer.assign(gDLL->getText("TXT_KEY_GW_RELATIVE_CONTRIBUTION_HELP"));
+		break;
+	case WIDGET_HELP_GW_INDEX:
+		szBuffer.assign(gDLL->getText("TXT_KEY_GW_INDEX_HELP"));
+		break;
+	case WIDGET_HELP_GW_UNHAPPY:
+		szBuffer.assign(gDLL->getText("TXT_KEY_GW_UNHAPPY_HELP"));
+		break;
+/*
+** K-Mod end
+*/
 	}
 }
 
@@ -1304,18 +1328,23 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 		if( gDLL->shiftKey() )
 		{
 			// Warning: use of this is not multiplayer compatible
-			if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()))
+// K-Mod, karadoc: since it isn't MP compatible, I'm going to disable it in multiplayer mode...
+			if (!GC.getGameINLINE().isGameMultiPlayer()) // K-Mod
 			{
-				if( GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_getWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()) == WARPLAN_PREPARING_TOTAL) 
+				if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()))
 				{
-					GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), NO_WARPLAN);
+					if( GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_getWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()) == WARPLAN_PREPARING_TOTAL) 
+					{
+						GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), NO_WARPLAN);
+					}
+					else
+					{
+						GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), WARPLAN_PREPARING_TOTAL);
+					}
+					gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 				}
-				else
-				{
-					GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), WARPLAN_PREPARING_TOTAL);
-				}
-				gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 			}
+// K-Mod end
 		}
 		else
 		{
@@ -5530,3 +5559,53 @@ void CvDLLWidgetData::parseScoreHelp(CvWidgetDataStruct& widgetDataStruct, CvWSt
 	GAMETEXT.setScoreHelp(szBuffer, (PlayerTypes)widgetDataStruct.m_iData1);
 }
 
+/*
+** K-Mod, 5/jan/11, karadoc
+** Environmental advisor mouse-over text
+*/
+void CvDLLWidgetData::parsePollutionOffsetsHelp(CvWidgetDataStruct &widgetDataStruct, CvWStringBuffer &szBuffer)
+{
+	szBuffer.append(gDLL->getText("TXT_KEY_POLLUTION_OFFSETS_HELP"));
+
+	for (int iI = 0; iI < GC.getNumFeatureInfos(); ++iI)
+	{
+		int iWarmingDefence = GC.getFeatureInfo((FeatureTypes)iI).getWarmingDefense();
+
+		if (iWarmingDefence != 0)
+		{
+			szBuffer.append(NEWLINE);
+			szBuffer.append(gDLL->getText("TXT_KEY_OFFSET_PER_FEATURE", -iWarmingDefence, GC.getFeatureInfo((FeatureTypes)iI).getTextKeyWide()));
+		}
+	}
+}
+
+void CvDLLWidgetData::parsePollutionHelp(CvWidgetDataStruct &widgetDataStruct, CvWStringBuffer &szBuffer)
+{
+	int iFlags = (int)widgetDataStruct.m_iData1;
+
+	szBuffer.append(gDLL->getText("TXT_KEY_POLLUTION")+":");
+
+	if (iFlags & POLLUTION_POPULATION)
+	{
+		szBuffer.append(NEWLINE);
+		szBuffer.append(gDLL->getText("TXT_KEY_POLLUTION_FROM_POPULATION", GC.getDefineINT("GLOBAL_WARMING_POPULATION_WEIGHT")));
+	}
+	if (iFlags & POLLUTION_BUILDINGS)
+	{
+		szBuffer.append(NEWLINE);
+		szBuffer.append(gDLL->getText("TXT_KEY_POLLUTION_FROM_BUILDINGS", GC.getDefineINT("GLOBAL_WARMING_BUILDING_WEIGHT")));
+	}
+	if (iFlags & POLLUTION_BONUSES)
+	{
+		szBuffer.append(NEWLINE);
+		szBuffer.append(gDLL->getText("TXT_KEY_POLLUTION_FROM_BONUSES", GC.getDefineINT("GLOBAL_WARMING_BONUS_WEIGHT")));
+	}
+	if (iFlags & POLLUTION_POWER)
+	{
+		szBuffer.append(NEWLINE);
+		szBuffer.append(gDLL->getText("TXT_KEY_POLLUTION_FROM_POWER", GC.getDefineINT("GLOBAL_WARMING_POWER_WEIGHT")));
+	}
+}
+/*
+** K-Mod end
+*/

@@ -4377,6 +4377,14 @@ int CvCity::unhappyLevel(int iExtra) const
 		iAngerPercent += getConscriptPercentAnger(iExtra);
 		iAngerPercent += getDefyResolutionPercentAnger(iExtra);
 		iAngerPercent += getWarWearinessPercentAnger();
+/*
+** K-Mod, 5/jan/11, karadoc
+** global warming anger _percent_; as part per 100.
+** Unfortunately, people who made the rest of the game used anger percent to mean part per 1000
+** so I have to multiply my GwPercentAnger by 10 to make it fit in.
+*/
+		iAngerPercent += std::max(0, GET_PLAYER(getOwnerINLINE()).calculateGwPercentAnger()*10);
+// K-Mod end
 
 		for (iI = 0; iI < GC.getNumCivicInfos(); iI++)
 		{
@@ -4400,7 +4408,6 @@ int CvCity::unhappyLevel(int iExtra) const
 		iUnhappiness -= std::min(0, GC.getHandicapInfo(getHandicapType()).getHappyBonus());
 		iUnhappiness += std::max(0, getVassalUnhappiness());
 		iUnhappiness += std::max(0, getEspionageHappinessCounter());
-		iUnhappiness += std::max(0, GET_PLAYER(getOwnerINLINE()).calculateGwUnhappiness()); // K-Mod
 	}
 
 	return std::max(0, iUnhappiness);
@@ -6542,6 +6549,10 @@ int CvCity::getAdditionalHappinessByBuilding(BuildingTypes eBuilding, int& iGood
 
 		iBad += iNewUnhappiness - iCurrentUnhappiness;
 	}
+	
+	// K-Mod TODO: think about how you might include change to global warming anger
+	// also, this function doesn't take into account the possibility of the city already having 'NoUnhappiness'.
+	// therefore the results will be inaccurate if the city has the globe theatre, for example.
 
 	// No Unhappiness
 	if (kBuilding.isNoUnhappiness())

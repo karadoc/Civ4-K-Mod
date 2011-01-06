@@ -568,6 +568,11 @@ int CyPlayer::calculatePollution(int iTypes) const
 {
 	return m_pPlayer ? m_pPlayer->calculatePollution(iTypes) : 0;
 }
+
+int CyPlayer::calculateGwPercentAnger() const
+{
+	return m_pPlayer ? m_pPlayer->calculateGwPercentAnger() : 0;
+}
 /*
 ** K-Mod end
 */

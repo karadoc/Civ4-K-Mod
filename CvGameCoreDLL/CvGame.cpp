@@ -4006,11 +4006,10 @@ int CvGame::calculateGwLandDefence(PlayerTypes ePlayer) const
 // again, NO_PLAYER means everyone
 int CvGame::calculateGwSustainabilityThreshold(PlayerTypes ePlayer) const
 {
-	// Todo: make the GW global threshold an xml variable
-	// defence should depend on map size
-	// probably-per-hit, or hits-per-gm-total should depend on game speed
-	// Kludge: for the time being, I'm going to make up a defense based on the estimate of 1 pop per land tile
-	int iGlobalThreshold = GC.getMapINLINE().getLandPlots() * 10; // expect each pop to give ~10
+	// expect each pop to give ~10 pollution per turn at the time we cross the threshold, and ~1 pop per land tile...
+	// so default resistance should be around 10 per tile.
+	int iGlobalThreshold = GC.getMapINLINE().getLandPlots() * GC.getDefineINT("GLOBAL_WARMING_RESISTANCE");
+	
 	// maybe we should add some points for coastal tiles as well, so that watery maps don't get too much warming
 
 	if (ePlayer == NO_PLAYER)
