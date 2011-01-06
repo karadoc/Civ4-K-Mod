@@ -46,23 +46,25 @@
 		<DefineName>DIRTY_POWER_HEALTH_CHANGE</DefineName>
 		<iDefineIntVal>-2</iDefineIntVal>
 	</Define>-->
-	<!-- warming prob and winter prob are out of 1000, not pecent. (winter is currently disabled) -->
+	<!-- warming prob is out of 1000, not pecent. -->
 	<Define>
 		<DefineName>GLOBAL_WARMING_PROB</DefineName>
 		<iDefineIntVal>20</iDefineIntVal>
 	</Define>
+	<!-- global warming threshold is # land plots * resistance. -->
 	<Define>
-		<DefineName>GLOBAL_WARMING_BASE_UNHAPPINESS</DefineName>
-		<iDefineIntVal>6</iDefineIntVal>
+		<DefineName>GLOBAL_WARMING_RESISTANCE</DefineName>
+		<iDefineIntVal>10</iDefineIntVal>
 	</Define>
-	<!--<Define>
-		<DefineName>NUCLEAR_WINTER_PROB</DefineName>
-		<iDefineIntVal>20</iDefineIntVal>
-	</Define> -->
+	<Define>
+		<DefineName>GLOBAL_WARMING_BASE_ANGER_PERCENT</DefineName>
+		<iDefineIntVal>30</iDefineIntVal>
+	</Define>
+	<!-- unused
 	<Define>
 		<DefineName>GLOBAL_WARMING_FOREST</DefineName>
 		<iDefineIntVal>25</iDefineIntVal>
-	</Define>
+	</Define> -->
 	<Define>
 		<DefineName>GLOBAL_WARMING_BUILDING_WEIGHT</DefineName>
 		<iDefineIntVal>20</iDefineIntVal>

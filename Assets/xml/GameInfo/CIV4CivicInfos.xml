@@ -1376,7 +1376,7 @@
 			<iStateReligionGreatPeopleRateModifier>0</iStateReligionGreatPeopleRateModifier>
 			<iDistanceMaintenanceModifier>0</iDistanceMaintenanceModifier>
 			<iNumCitiesMaintenanceModifier>0</iNumCitiesMaintenanceModifier>
-			<iCorporationMaintenanceModifier>25</iCorporationMaintenanceModifier>
+			<iCorporationMaintenanceModifier>0</iCorporationMaintenanceModifier>
 			<iExtraHealth>0</iExtraHealth>
 			<iFreeExperience>0</iFreeExperience>
 			<iWorkerSpeedModifier>0</iWorkerSpeedModifier>
@@ -1418,7 +1418,12 @@
 			<Hurrys/>
 			<SpecialBuildingNotRequireds/>
 			<SpecialistValids/>
-			<BuildingHappinessChanges/>
+			<BuildingHappinessChanges>
+				<BuildingHappinessChange>
+					<BuildingType>BUILDINGCLASS_PUBLIC_TRANSPORTATION</BuildingType>
+					<iHappinessChange>1</iHappinessChange>
+				</BuildingHappinessChange>
+			</BuildingHappinessChanges>
 			<BuildingHealthChanges/>
 			<FeatureHappinessChanges/>
 			<ImprovementYieldChanges>
