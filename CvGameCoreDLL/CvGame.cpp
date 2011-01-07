@@ -6137,7 +6137,7 @@ void CvGame::doGlobalWarming()
 	for (int iI = 0; iI < iGlobalWarmingRolls; iI++)
 	{
 		// note, warming prob out of 1000, not percent.
-		int iLeftOdds = 1000*100/GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+		int iLeftOdds = 10*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
 		if (getSorenRandNum(iLeftOdds, "Global Warming") < GC.getDefineINT("GLOBAL_WARMING_PROB"))
 		{
 			//CvPlot* pPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
