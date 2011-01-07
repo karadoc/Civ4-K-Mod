@@ -481,7 +481,7 @@ class EconomicsAdvisor:
 		#yLocation += 1.5 * self.Y_SPACING
 		
 		#iglobalWarming = CyGame().getGlobalWarmingIndex()
-		#iglobalWarmingRolls = CyGame().getGlobalWarmingRolls()
+		#iglobalWarmingRolls = CyGame().getGlobalWarmingChances()
 		#screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Global Warming" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		#screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iglobalWarming) + "("+unicode(iglobalWarmingRolls)+")" + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		##
@@ -516,14 +516,14 @@ class EconomicsAdvisor:
 
 		
 		iGlobalWarmingIndex = game.getGlobalWarmingIndex()
-		iGlobalWarmingRolls = game.getGlobalWarmingRolls()
+		iGlobalWarmingRolls = game.getGlobalWarmingChances()
 		iGwEventTally = game.getGwEventTally()
 
 		# calculate expected number events per turn. Prob is out of 1000, so we divide by 1000 and multiply by 100 to get percent.
-		#fWarmingPercent = float(game.getGlobalWarmingRolls() * gc.getDefineINT("GLOBAL_WARMING_PROB")) / 10.0
+		#fWarmingPercent = float(game.getGlobalWarmingChances() * gc.getDefineINT("GLOBAL_WARMING_PROB")) / (10.0*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())
 		
 		# calculate the 'severity rating' as used in the GW unhappiness calculation
-		iSeverityRating = 100-100000/(1000+(gc.getDefineINT("GLOBAL_WARMING_PROB") * iGlobalWarmingIndex / (4*CyMap().getLandPlots())))
+		iSeverityRating = 100-100000/(1000+(gc.getDefineINT("GLOBAL_WARMING_PROB") * iGlobalWarmingIndex / (4*CyMap().getLandPlots()*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())))
 		
 		#szText = u"GLOBAL WARMING SEVERITY RATING: %d" % iSeverityRating
 		szText = u"GLOBAL WARMING SEVERITY RATING: "
@@ -663,7 +663,7 @@ class EconomicsAdvisor:
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iGlobalWarmingIndex) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_INDEX, -1, -1 )
 
 		yLocation += 1.5 * self.Y_SPACING
-		fExpectedEvents = 1.0 * iGlobalWarmingRolls * gc.getDefineINT("GLOBAL_WARMING_PROB") / 1000.0
+		fExpectedEvents = 1.0 * iGlobalWarmingRolls * gc.getDefineINT("GLOBAL_WARMING_PROB") / (1000.0 * CyMap().getLandPlots()*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Expected Events per Turn" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + u"%0.1f" % fExpectedEvents + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 
@@ -677,6 +677,12 @@ class EconomicsAdvisor:
 			yLocation += 1.5 * self.Y_SPACING
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Local Anger Level" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_UNHAPPY, -1, -1 )
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iGwPercentAnger) + "%</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_UNHAPPY, -1, -1 )			
+		
+		# test
+		#yLocation += 1.5 * self.Y_SPACING
+		#screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "max turns" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_INDEX, -1, -1 )
+		#screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(game.getMaxTurns()) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_INDEX, -1, -1 )
+
 
 		return 0
 
