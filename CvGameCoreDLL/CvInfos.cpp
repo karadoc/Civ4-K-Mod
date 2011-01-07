@@ -1577,6 +1577,7 @@ m_iLayerAnimationPath(ANIMATIONPATH_NONE),
 m_iPrereqPromotion(NO_PROMOTION),
 m_iPrereqOrPromotion1(NO_PROMOTION),
 m_iPrereqOrPromotion2(NO_PROMOTION),
+m_iPrereqOrPromotion3(NO_PROMOTION), // K-Mod
 m_iTechPrereq(NO_TECH),
 m_iStateReligionPrereq(NO_RELIGION),
 m_iVisibilityChange(0),
@@ -1682,6 +1683,21 @@ void CvPromotionInfo::setPrereqOrPromotion2(int i)
 {
 	m_iPrereqOrPromotion2 = i;
 }
+/*
+** K-Mod, 7/jan/11, karadoc
+*/
+int CvPromotionInfo::getPrereqOrPromotion3() const			
+{
+	return m_iPrereqOrPromotion3;
+}
+
+void CvPromotionInfo::setPrereqOrPromotion3(int i)				
+{
+	m_iPrereqOrPromotion3 = i;
+}
+/*
+** K-Mod end
+*/
 
 int CvPromotionInfo::getTechPrereq() const	
 {
@@ -1965,10 +1981,11 @@ void CvPromotionInfo::read(FDataStreamBase* stream)
 	uint uiFlag=0;
 	stream->Read(&uiFlag);		// flag for expansion
 	
-	stream->Read(&m_iLayerAnimationPath);			
-	stream->Read(&m_iPrereqPromotion);			
-	stream->Read(&m_iPrereqOrPromotion1);			
-	stream->Read(&m_iPrereqOrPromotion2);			
+	stream->Read(&m_iLayerAnimationPath);
+	stream->Read(&m_iPrereqPromotion);
+	stream->Read(&m_iPrereqOrPromotion1);
+	stream->Read(&m_iPrereqOrPromotion2);
+	stream->Read(&m_iPrereqOrPromotion3); // K-Mod
 
 	stream->Read(&m_iTechPrereq);							
 	stream->Read(&m_iStateReligionPrereq);							
@@ -2059,10 +2076,11 @@ void CvPromotionInfo::write(FDataStreamBase* stream)
 	uint uiFlag = 0;
 	stream->Write(uiFlag);		// flag for expansion
 
-	stream->Write(m_iLayerAnimationPath);			
-	stream->Write(m_iPrereqPromotion);			
-	stream->Write(m_iPrereqOrPromotion1);			
-	stream->Write(m_iPrereqOrPromotion2);			
+	stream->Write(m_iLayerAnimationPath);
+	stream->Write(m_iPrereqPromotion);
+	stream->Write(m_iPrereqOrPromotion1);
+	stream->Write(m_iPrereqOrPromotion2);
+	stream->Write(m_iPrereqOrPromotion3); // K-Mod
 
 	stream->Write(m_iTechPrereq);							
 	stream->Write(m_iStateReligionPrereq);							
@@ -2205,6 +2223,14 @@ bool CvPromotionInfo::readPass2(CvXMLLoadUtility* pXML)
 	m_iPrereqOrPromotion1 = GC.getInfoTypeForString(szTextVal);
 	pXML->GetChildXmlValByName(szTextVal, "PromotionPrereqOr2");
 	m_iPrereqOrPromotion2 = GC.getInfoTypeForString(szTextVal);
+/*
+** K-Mod, 7/jan/11, karadoc
+*/
+	pXML->GetChildXmlValByName(szTextVal, "PromotionPrereqOr3");
+	m_iPrereqOrPromotion3 = GC.getInfoTypeForString(szTextVal);
+/*
+** K-Mod end
+*/
 
 	return true;
 }

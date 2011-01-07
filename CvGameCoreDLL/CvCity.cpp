@@ -4926,7 +4926,17 @@ int CvCity::cultureStrength(PlayerTypes ePlayer) const
 		}
 	}
 
+/*
+** K-Mod, 7/jan/11, karadoc
+** changed so that culture strength asymptotes as the attacking culture approaches 100%
+*/
+	/* original bts code
 	iStrength *= std::max(0, (((GC.getDefineINT("REVOLT_TOTAL_CULTURE_MODIFIER") * (plot()->getCulture(ePlayer) - plot()->getCulture(getOwnerINLINE()) + 1)) / (plot()->getCulture(ePlayer) + 1)) + 100));
+	*/
+	iStrength *= std::max(0, (GC.getDefineINT("REVOLT_TOTAL_CULTURE_MODIFIER") * (plot()->getCulture(ePlayer) - plot()->getCulture(getOwnerINLINE()))) / (plot()->getCulture(getOwnerINLINE()) + 1) + 100);
+/*
+** K-Mod end
+*/
 	iStrength /= 100;
 
 	if (GET_PLAYER(ePlayer).getStateReligion() != NO_RELIGION)
@@ -14434,6 +14444,7 @@ void CvCity::liberate(bool bConquest)
 		int iOldOwnerCulture = getCultureTimes100(eOwner);
 		int iOldMasterLand = 0;
 		int iOldVassalLand = 0;
+		bool bPreviouslyOwned = isEverOwned(ePlayer); // K-Mod, for use below
 		if (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(GET_PLAYER(eOwner).getTeam()))
 		{
 			iOldMasterLand = GET_TEAM(GET_PLAYER(eOwner).getTeam()).getTotalLand();
@@ -14470,7 +14481,16 @@ void CvCity::liberate(bool bConquest)
 			CvCity* pCity = pPlot->getPlotCity();
 			if (NULL != pCity)
 			{
-				pCity->setCultureTimes100(ePlayer, pCity->getCultureTimes100(ePlayer) + iOldOwnerCulture / 2, true, true);
+/*
+** K-Mod, 7/jan/11, karadoc
+** This mechanic was exploitable. Players could increase their culture indefinitely in a single turn by gifting cities backwards and forwards.
+** I've attempted to close the exploit.
+*/
+				if (!bPreviouslyOwned) // K-Mod
+					pCity->setCultureTimes100(ePlayer, pCity->getCultureTimes100(ePlayer) + iOldOwnerCulture / 2, true, true);
+/*
+** K-Mod end
+*/
 			}
 
 			if (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isAVassal())
@@ -14558,6 +14578,7 @@ PlayerTypes CvCity::getLiberationPlayer(bool bConquest) const
 						|| GET_TEAM(GET_PLAYER((PlayerTypes)iPlayer).getTeam()).isVassal(getTeam()) 
 						|| GET_TEAM(getTeam()).isVassal(GET_PLAYER((PlayerTypes)iPlayer).getTeam()))
 					{
+						// K-Mod: I don't see why the total culture should be used in this way. (I haven't changed anything)
 						iCultureTimes100 *= 2;
 						iCultureTimes100 = (iCultureTimes100 + iTotalCultureTimes100) / 2;
 					}

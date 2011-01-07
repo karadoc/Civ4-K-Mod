@@ -4702,7 +4702,23 @@ void CvDLLWidgetData::parseNationalityHelp(CvWidgetDataStruct &widgetDataStruct,
 
 				if (iCityStrength > iGarrison)
 				{
-					swprintf(szTempBuffer, L"%.2f", std::max(0.0f, (1.0f - (((float)iGarrison) / ((float)iCityStrength)))) * ((float)(std::min(100.0f, ((float)pHeadSelectedCity->getRevoltTestProbability())))));
+/*
+** K-Mod, 6/jan/11, karadoc
+** changed text to reflect changes made in CvPlot.doCulture().
+*/
+/* for reference, here are the revolt tests
+int iLeftOdds = GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+if (GC.getGameINLINE().getSorenRandNum(iLeftOdds, "Revolt #1") < pCity->getRevoltTestProbability())
+if ((GC.getGameINLINE().getSorenRandNum(iCityStrength+2*iGarrison, "Revolt #2") > 3*iGarrison) || pCity->isBarbarian())
+*/
+					// The probability is thus
+					float fRevoltProb = (float)(iCityStrength-iGarrison)/(iCityStrength+2*iGarrison) * (float)pHeadSelectedCity->getRevoltTestProbability() / GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+					/* original bts code
+					swprintf(szTempBuffer, L"%.2f", std::max(0.0f, (1.0f - (((float)iGarrison) / ((float)iCityStrength)))) * ((float)(std::min(100.0f, ((float)pHeadSelectedCity->getRevoltTestProbability())))));*/
+					swprintf(szTempBuffer, L"%.2f", 100*fRevoltProb);
+/*
+** K-Mod end
+*/
 					szBuffer.append(NEWLINE);
 					szBuffer.append(gDLL->getText("TXT_KEY_MISC_CHANCE_OF_REVOLT", szTempBuffer));
 				}

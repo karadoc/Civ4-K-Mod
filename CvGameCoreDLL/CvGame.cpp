@@ -3943,9 +3943,12 @@ void CvGame::changeGlobalWarmingIndex(int iChange)
 	setGlobalWarmingIndex(getGlobalWarmingIndex() + iChange);
 }
 
-int CvGame::getGlobalWarmingRolls() const
+int CvGame::getGlobalWarmingChances() const
 {
-	// TODO: make the rolls/index factor an xml parameter that depends on game speed (maybe)
+	// Note: this is the number of chances global warming has to strike in the current turn
+	// as you can see, I've scaled it by the number of turns in the game. The probability per chance is also scaled like this.
+	// I estimate that the global warming index will actually be roughly proportional to the number of turns in the game
+	// so by scaling the chances, and the probability per chance, I hope to get roughly the same number of actually events per game
 	return getGlobalWarmingIndex()/(getMaxTurns());
 }
 
@@ -6105,7 +6108,6 @@ void CvGame::doGlobalWarming()
 				CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_TEXT);
 				if (pInfo != NULL)
 				{
-					//pInfo->setText(gDLL->getText("TXT_KEY_MISC_GLOBAL_WARMING_ACTIVE") + "\n" + gDLL->getText("TXT_KEY_POPUP_ENVIRONMENTAL_ADVISOR"));
 					pInfo->setText(gDLL->getText("TXT_KEY_POPUP_ENVIRONMENTAL_ADVISOR"));
 					gDLL->getInterfaceIFace()->addPopup(pInfo, (PlayerTypes)iI);
 				}
@@ -6117,7 +6119,7 @@ void CvGame::doGlobalWarming()
 	/*
 	** Apply the effects of GW
 	*/
-	int iGlobalWarmingRolls = getGlobalWarmingRolls();
+	int iGlobalWarmingRolls = getGlobalWarmingChances();
 
 	TerrainTypes eWarmingTerrain = ((TerrainTypes)(GC.getDefineINT("GLOBAL_WARMING_TERRAIN")));
 	TerrainTypes eFrozenTerrain = ((TerrainTypes)(GC.getDefineINT("FROZEN_TERRAIN")));
@@ -6135,7 +6137,8 @@ void CvGame::doGlobalWarming()
 	for (int iI = 0; iI < iGlobalWarmingRolls; iI++)
 	{
 		// note, warming prob out of 1000, not percent.
-		if (getSorenRandNum(1000, "Global Warming") < GC.getDefineINT("GLOBAL_WARMING_PROB"))
+		int iLeftOdds = 1000*100/GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+		if (getSorenRandNum(iLeftOdds, "Global Warming") < GC.getDefineINT("GLOBAL_WARMING_PROB"))
 		{
 			//CvPlot* pPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
 

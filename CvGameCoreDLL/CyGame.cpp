@@ -554,9 +554,9 @@ int CyGame::getGlobalWarmingIndex() const
 	return (NULL != m_pGame ? m_pGame->getGlobalWarmingIndex() : 0);
 }
 
-int CyGame::getGlobalWarmingRolls() const
+int CyGame::getGlobalWarmingChances() const
 {
-	return (NULL != m_pGame ? m_pGame->getGlobalWarmingRolls() : 0);
+	return (NULL != m_pGame ? m_pGame->getGlobalWarmingChances() : 0);
 }
 
 int CyGame::getGwEventTally() const

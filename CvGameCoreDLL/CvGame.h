@@ -243,7 +243,7 @@ public:
 	int getGlobalWarmingIndex() const;								// Exposed to Python
 	void setGlobalWarmingIndex(int iNewValue);
 	void changeGlobalWarmingIndex(int iChange);
-	int getGlobalWarmingRolls() const;							// Exposed to Python
+	int getGlobalWarmingChances() const;							// Exposed to Python
 	int getGwEventTally() const;							// Exposed to Python
 	void setGwEventTally(int iNewValue);
 	void changeGwEventTally(int iChange);

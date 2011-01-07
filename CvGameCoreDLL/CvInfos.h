@@ -447,6 +447,16 @@ public:
 	void setPrereqOrPromotion1(int i);				// Exposed to Python
 	int getPrereqOrPromotion2() const;				// Exposed to Python
 	void setPrereqOrPromotion2(int i);				// Exposed to Python
+/*
+** K-Mod, 7/jan/11, karadoc
+** note: these functions are not 'exposed to python'
+** and despite what the above comments say, the 'set' functions for prereqs 1 and 2 aren't either!
+*/
+	int getPrereqOrPromotion3() const;
+	void setPrereqOrPromotion3(int i);
+/*
+** K-Mod end
+*/
 
 	int getTechPrereq() const;				// Exposed to Python
 	int getStateReligionPrereq() const;				// Exposed to Python
@@ -521,6 +531,7 @@ protected:
 	int m_iPrereqPromotion;
 	int m_iPrereqOrPromotion1;
 	int m_iPrereqOrPromotion2;
+	int m_iPrereqOrPromotion3; // K-Mod
 
 	int m_iTechPrereq;							
 	int m_iStateReligionPrereq;							

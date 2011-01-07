@@ -142,7 +142,7 @@ public:
 	void setAIAutoPlay(int iNewValue);
 
 	int getGlobalWarmingIndex() const;	// K-Mod
-	int getGlobalWarmingRolls() const;	// K-Mod
+	int getGlobalWarmingChances() const;	// K-Mod
 	int getGwEventTally() const;		// K-Mod
 	int calculateGlobalPollution() const; // K-Mod
 	int calculateGwLandDefence(int /* PlayerTypes */ ePlayer) const; // K-Mod

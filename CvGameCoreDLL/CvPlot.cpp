@@ -8699,12 +8699,28 @@ void CvPlot::doCulture()
 			{
 				if (!(pCity->isOccupation()))
 				{
-					if (GC.getGameINLINE().getSorenRandNum(100, "Revolt #1") < pCity->getRevoltTestProbability())
+/*
+** K-Mod, 6/jan/11, karadoc
+** Introduced gamespeed scaling to the first revolt test
+** changed the second revolt test so that small garrisons have a relatively bigger effect
+** (but I've also changed cultureStrength() so that it can be asymptotically large)
+*/
+					/* original bts code
+					if (GC.getGameINLINE().getSorenRandNum(100, "Revolt #1") < pCity->getRevoltTestProbability()) */
+					int iLeftOdds = GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+					if (GC.getGameINLINE().getSorenRandNum(iLeftOdds, "Revolt #1") < pCity->getRevoltTestProbability())
+// K-Mod end (1 / 2)
 					{
 						iCityStrength = pCity->cultureStrength(eCulturalOwner);
 						iGarrison = pCity->cultureGarrison(eCulturalOwner);
 
-						if ((GC.getGameINLINE().getSorenRandNum(iCityStrength, "Revolt #2") > iGarrison) || pCity->isBarbarian())
+						/* original bts code
+						if ((GC.getGameINLINE().getSorenRandNum(iCityStrength, "Revolt #2") > iGarrison) || pCity->isBarbarian())*/
+						// Note: Pr( [0, S+2G] > 3G) = (S-G)/(S+2*G).   c.f. (S-G)/S
+						if ((GC.getGameINLINE().getSorenRandNum(iCityStrength+2*iGarrison, "Revolt #2") > 3*iGarrison) || pCity->isBarbarian())
+/*
+** K-Mod end (2 / 2)
+*/
 						{
 							CLinkList<IDInfo> oldUnits;
 

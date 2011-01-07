@@ -131,7 +131,7 @@ void CyGamePythonInterface()
 		.def("setAIAutoPlay", &CyGame::setAIAutoPlay)
 
 		.def("getGlobalWarmingIndex", &CyGame::getGlobalWarmingIndex)	// K-Mod
-		.def("getGlobalWarmingRolls", &CyGame::getGlobalWarmingRolls)	// K-Mod
+		.def("getGlobalWarmingChances", &CyGame::getGlobalWarmingChances)	// K-Mod
 		.def("getGwEventTally", &CyGame::getGwEventTally)				// K-Mod
 		.def("calculateGlobalPollution", &CyGame::calculateGlobalPollution) // K-Mod
 		.def("calculateGwLandDefence", &CyGame::calculateGwLandDefence)	// K-Mod
