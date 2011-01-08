@@ -1,0 +1,107 @@
+K-Mod, version 0.9 (beta)
+
+This document is a rough list of differences between K-Mod and standard Civ4:BtS. There may be things missing.
+
+
+== Built-in mods ==
+ + Actual quotes
+ + Better AI (customised)
+ + BUG (butchered)
+ + unofficial patch
+
+== Civics ==
+ + serfdom: +1 commerce farms & plantations, -1 commerce from towns [I want to make serfdom a useful mid-game civic]
+ + Vassalage: -25% number of cities maintenance
+ + State property: high upkeep (up from low)
+ + free speech: from +100% culture to +50%. [now that culture is more powerful, this needed a nerf.]
+ + Environmentalism: removed health bonuses, replaced with -30% unhealthiness from population
+
+== Traits ==
+ + protective: +100% build rate for security bureau
+ + aggressive: +100% build rate for jails (and mausoleum)
+
+== Culture ==
+ + trade route culture: trade routes give plot culture in addition to commerce. The amount of culture given by the trade route is 1% * trade city's culture level * trade city's culture rate. The culture belongs to the owner of the trade city, not the local city; and it is not counted towards the culture of the city itself – it only effects the plots around the city.
+ + changed plot culture mechanics: cultural influence extends 3 steps beyond the border. Outer ring of cultural influence gets 100% of the city culture; the city tile itself gets 1000%; the rate varies quadratically in between.
+ + instant boosts to culture (such as great works and espionage missions) now apply the appropriate amount of plot culture with their city culture
+ + change culture from great works from a flat 4000 to 800 * era. [to reduce the power of the early culture bombs – but it's worth 
+
+pointing out that early culture bombs are still very powerful]
+ + Reduced culture of many buildings: 
+ + reduced the culture from most of the great wonders
+ + Sistine chapel state religion culture bonus changed from +5 to +3 [culture is more powerful now; so this building needed to be nerfed]
+ + sushi co. now produces 1.5 culture per resource, down from 2 culture per resource. [still the most powerful corp...]
+ + colosseum cost 80 -> 100, now gives 20% culture rate bonus. [I wanted a early culture multiplier that would apply to all cities.]
+ + religious building culture multiplier down from 50% to 40% [to de-emphisize the role religion plays in culture; and the balance the colosseum buff]
+
+
+== Misc balance changes ==
+ + industrial park cost from 200 to 250, 1 free engineer to 2 free engineers. [pollution hurts more now, so this building needed a buff]
+ + jail, from +4 espionage -> +2. [+4 and +50% was too powerful for a relatively early game building which has other benefits]
+ + Eiffle tower now comes with mass media instead of radio [to make mass media more appealing, and make free broadcasting towers less weird]
+ + ironclad, from 2 moves to 3. [the ironclad was frustratingly slow... with this buff it is still slower than galleons]
+ + public transport, removed health bonuses, replaced with -15% unhealthiness from population, [thinking of raising cost from 150->200.]
+ + stone henge no longer goes obsolete [I felt that this wonder was actually disadvantageous, because the 'free' monuments disappeared and 
+
+thus robbed the owner of late-game culture]
+ + tech requirements for corporations changed: civ jewellers: corporation, sushi co: refrigeration, cereal mills: medicine, creative 
+
+constructions: steel, standard ethanol: combustion [in my experience, sushi and mining inc are always by far the most powerful 
+
+corporations. My goal with changing the prereqs is to make the weaker corps more viable.]
+ + space elevator bonus from +50 spaceship production -> +100%. [building this wonder is almost never worth the hammers/research... I 
+
+suspect that even with this massive buff it will still be too weak to be worthwhile.]
+ + free commando promotion for great spy [just like a normal spy]
+ + slightly reduced the tech rate for everything in the later eras (slowed research), using the BBAI defaults
+ + work boats no long count as military units
+ + all promotions that have a combat promotion as an optional prereq also now have the equivalent drill promotion as an optional prereq. 
+
+(march, blitz, etc)
+ + leadership promotion now gives 50% protection vs revolt (in addition to +100% experience gained)
+
+
+== Minor mechanics changes ==
+ + Nuclear meltdowns: no longer destroy other buildings or population. Can still create fallout. [meltdowns were far too powerful]
+ + The count of vassal cities is now halved in the number of cities maintenance calculation. [To make vassalizing more attractive]
+ + "Number of cities" maintenance cost is no longer capped (ignores the caps set in the xml) [to weaken the power of huge civs]
+ + Distance maintenance modifiers no longer effect the cap on colony maintenance. [So that 'State Property' does not remove colony maintenance.]
+ + removed attitude averaging between vassals and masters [I felt the previous behaviour was unintuitive, undocumented, and discouraged vassalizing]
+ + made it possible to pillage ones own roads [for consistency; and because it's sometimes useful. eg. when you are trying to grow a forest]
+ + preventing a cultural revolt with a military garrison is now more difficult (asymptotically more difficult)
+ + changed the scaling of revolt chance with military garrison (from linear, to something else... small garrisons are relatively more effective than they were before).
+ + removed the free liberation culture for cities that have already been owned [to prevent an exploit]
+
+
+== Misc ==
+ + fixed some bugs in the standard game and in the BUG mod.
+ + made some adjustments to the AI; now will build more workers, tech less predictably, be less afraid of buildings that cause unhealthiness, etc.
+ + reduced rounding errors in plot culture.
+ + added an 'environmental advisor' as a tab on the financial advisor screen; it displays most of the relevant information related to pollution and global warming.
+ + added religion bonus information to the mouse-over text in the city-screen for buildings being constructed. (eg. university of sankore bonus on temples)
+ + removed the double-reporting of conditional happiness and healthiness from mouse-over text on buildings. (eg. happiness from theatre with culture slider, happiness from barracks with nationhood, etc. These bonuses are now displayed once, not twice.)
+ + changed text for bonuses from an arbitrary state-religion (eg university of sankore) to always say 'state religion' rather than a particular region.
+ + added global warming unhappiness; depends on global warming index, current global pollution rate, current local pollution rate, land size. added mouse over text in city screen, and so on.
+ + global warming can turn coastal desert tiles into ocean. When this happens, units will be bumped to a nearby tile
+ + removed the extra space in "unit can " list for unit descriptions (eg. work boats)
+
+== New culture system ==
+Perceived problems with the old system:
+In the old system, plot culture was essentially dominated by 'free culture' from cities. The actual culture output of a city had very little effect other than to increase the culture level of the city. In a culture war (where two civs attempt to push each other's borders back with culture) the culture slider wasn't much use, because the culture output of a city had a relatively minor role on plot culture. 
+
+Two cities would almost always be able to culture press a solo city even when the solo city had much more culture output than the combined total of the two cities. "Culture bombs" did almost nothing, and using spies to spread culture had essentially the same effect on plot culture as a great artist culture bomb! And culture was only useful in border cities (and in the top three culture cities when trying to get a cultural victory).
+
+My solutions:
+Plot culture is now primarily determined by the culture output of cities. The 'free' culture has been reduced to almost nothing. (I haven't completely removed free culture because otherwise it would be too easy for civs with the cultural trait to culture press in the early game.) Instant boosts to culture, such as great works and espionage missions, now apply as much plot culture as if the city had produced the culture in the normal way. Finally, plot culture from a city now extends a couple of squares beyond the borders of the city, and so cities don't need to be right on the border of the civilization to contribute to a culture war.
+
+== New global warming system ==
+In standard BtS, global warming is a bit of a joke. It is triggered by the wrong things, you can't really do much to prevent it, and it hits the world in a harsh and unintuitive way. I've completely changed it.
+
+In short, it works like this:
+Every point of unhealthiness is counted across the world. If this total is more than some threshold amount then global warming becomes possible, and the likelihood increases as long as the unhealthiness total is above the threshold. There is an environmental advisor which can tell you all the details (on the same screen as the financial advisor).
+
+When global warming strikes, it no longer removes the tile improvement, and it doesn't turn the tile straight into desert, so each strike is far less severe than in original BtS. Also, global warming is more likely to strike cold tiles before hot tiles. eg. The ice caps are likely to melt before your plains get turned into desert.
+
+Positive healthiness (eg. from hospitals) does not reduce the global warming pollution, but a environmentalism and public transport have been changed so that they do reduce unhealthiness rather than increase healthiness.
+
+As global warming becomes more likely, civilizations start to get a happiness penalty which is based on their relative contribution to global pollution.
