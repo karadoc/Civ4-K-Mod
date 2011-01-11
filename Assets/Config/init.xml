@@ -178,7 +178,7 @@
 		<tab module="BugNJAGCOptionsTab"/>
 		
 		<tab module="BugPleOptionsTab"/>
-		<tab module="BugACOOptionsTab"/>
+		<!--<tab module="BugACOOptionsTab"/>-->
 		<tab module="BugUnitNameOptionsTab"/>
 		
 		<tab module="BugAutologOptionsTab"/>

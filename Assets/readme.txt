@@ -1,6 +1,19 @@
+This is K-Mod version 0.91.
+If you have any questions, comments, suggetsions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.91 changelist
+
+ + fixed a K-Mod bug that caused some cultural revolts to last much longer than they should.
+ + changed the length of cultural revolts 3 + 2*(number of previous revolts), so that they get longer each time. [previously it depended on the current era, the highest population of the city, and the number of adjacent plots owned by the player.
+
+
+---
+
 K-Mod, version 0.9 (beta)
 
-This document is a rough list of differences between K-Mod and standard Civ4:BtS. There may be things missing.
+A list of differences between K-Mod v0.9 and standard Civ4:BtS. There may be things missing.
 
 
 == Built-in mods ==
@@ -14,7 +27,7 @@ This document is a rough list of differences between K-Mod and standard Civ4:BtS
  + Vassalage: -25% number of cities maintenance
  + State property: high upkeep (up from low)
  + free speech: from +100% culture to +50%. [now that culture is more powerful, this needed a nerf.]
- + Environmentalism: removed health bonuses, replaced with -30% unhealthiness from population
+ + Environmentalism: removed health bonuses, replaced with -30% unhealthiness from population, removed the corp maintanence penalty.
 
 == Traits ==
  + protective: +100% build rate for security bureau

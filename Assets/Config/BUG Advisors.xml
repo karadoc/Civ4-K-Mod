@@ -82,7 +82,7 @@
 					type="boolean" default="False" 
 					get="isGraphsLogScale"/>
 			<option id="BugStatsTab" key="Improvements" 
-					type="boolean" default="True" 
+					type="boolean" default="False" 
 					get="isShowImprovements"/>
 			<option id="BugInfoWonders" key="Wonders" 
 					type="boolean" default="False" 
