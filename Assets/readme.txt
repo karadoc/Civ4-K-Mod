@@ -1,12 +1,22 @@
-This is K-Mod version 0.91.
+This is K-Mod version 0.92.
 If you have any questions, comments, suggetsions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.92 changelist *
+
+ + Fixed a bug that would cause K-Mod to crash when playing with time victory disabled
+ + Removed all the custom map scripts that previously came with the mod. (These scripts have nothing to do with K-Mod.)
+ + Fixed a bug that was preventing promotions with three 'or' prerequisites from being displayed.
+ + Added third promotion 'or' prerequisite information to the civilopedia (and sevopedia)
+ + Changed the tech chooser bulb preference list to only show techs that have not already been researched
 
 --
 
 v0.91 changelist
 
  + fixed a K-Mod bug that caused some cultural revolts to last much longer than they should.
- + changed the length of cultural revolts 3 + 2*(number of previous revolts), so that they get longer each time. [previously it depended on the current era, the highest population of the city, and the number of adjacent plots owned by the player.
+ + changed the length of cultural revolts 3 + 2*(number of previous revolts), so that the system is simplier. [previously it depended on the current era, the highest population of the city, and the number of adjacent plots owned by the player]
 
 
 ---

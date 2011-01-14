@@ -63,6 +63,10 @@
 		<iDefineIntVal>10</iDefineIntVal>
 	</Define>
 	<Define>
+		<DefineName>GLOBAL_WARMING_INDEX_PER_CHANCE</DefineName>
+		<iDefineIntVal>450</iDefineIntVal>
+	</Define>
+	<Define>
 		<DefineName>GLOBAL_WARMING_BASE_ANGER_PERCENT</DefineName>
 		<iDefineIntVal>30</iDefineIntVal>
 	</Define>

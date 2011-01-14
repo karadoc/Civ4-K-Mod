@@ -523,7 +523,7 @@ class EconomicsAdvisor:
 		#fWarmingPercent = float(game.getGlobalWarmingChances() * gc.getDefineINT("GLOBAL_WARMING_PROB")) / (10.0*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())
 		
 		# calculate the 'severity rating' as used in the GW unhappiness calculation
-		iSeverityRating = 100-100000/(1000+(gc.getDefineINT("GLOBAL_WARMING_PROB") * iGlobalWarmingIndex / (4*CyMap().getLandPlots()*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())))
+		iSeverityRating = 100-100000/(1000+(gc.getDefineINT("GLOBAL_WARMING_PROB") * iGlobalWarmingIndex / (max(1,4*CyMap().getLandPlots()*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent()))))
 		
 		#szText = u"GLOBAL WARMING SEVERITY RATING: %d" % iSeverityRating
 		szText = u"GLOBAL WARMING SEVERITY RATING: "

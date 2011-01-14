@@ -579,6 +579,9 @@ class PromotionsGraph(UnitUpgradesGraph):
 			self.addUpgradePath(graph, unitB, unitA)
 			unitC = gc.getPromotionInfo(unitA).getPrereqOrPromotion2()
 			self.addUpgradePath(graph, unitC, unitA)
+			# K-Mod, extra prereq
+			unitE = gc.getPromotionInfo(unitA).getPrereqOrPromotion3()
+			self.addUpgradePath(graph, unitE, unitA)
 		
 	def unitToString(self, unit):
 		return gc.getPromotionInfo(unit).getDescription() + ":%d"%(unit, )

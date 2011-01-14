@@ -99,6 +99,7 @@ class SevoPediaPromotion:
 			screen.attachImageButton(panelName, "", gc.getPromotionInfo(ePromo).getButton(), GenericButtonSizes.BUTTON_SIZE_CUSTOM, WidgetTypes.WIDGET_PEDIA_JUMP_TO_PROMOTION, ePromo, 1, False)
 		ePromoOr1 = gc.getPromotionInfo(self.iPromotion).getPrereqOrPromotion1()
 		ePromoOr2 = gc.getPromotionInfo(self.iPromotion).getPrereqOrPromotion2()
+		ePromoOr3 = gc.getPromotionInfo(self.iPromotion).getPrereqOrPromotion3() # K-Mod
 		if (ePromoOr1 > -1):
 			if (ePromo > -1):
 				screen.attachLabel(panelName, "", localText.getText("TXT_KEY_AND", ()))
@@ -110,6 +111,12 @@ class SevoPediaPromotion:
 				screen.attachImageButton(panelName, "", gc.getPromotionInfo(ePromoOr2).getButton(), GenericButtonSizes.BUTTON_SIZE_CUSTOM, WidgetTypes.WIDGET_PEDIA_JUMP_TO_PROMOTION, ePromoOr2, 1, False)
 				if (ePromo > -1):
 					screen.attachLabel(panelName, "", ")")
+			# K-Mod, extra prereq
+			if (ePromoOr3 > -1):
+				screen.attachLabel(panelName, "", localText.getText("TXT_KEY_OR", ()))
+				screen.attachImageButton(panelName, "", gc.getPromotionInfo(ePromoOr3).getButton(), GenericButtonSizes.BUTTON_SIZE_CUSTOM, WidgetTypes.WIDGET_PEDIA_JUMP_TO_PROMOTION, ePromoOr3, 1, False)
+				if (ePromo > -1):
+					screen.attachLabel(panelName, "", ")")			
 		eTech = gc.getPromotionInfo(self.iPromotion).getTechPrereq()
 		if (eTech > -1):
 			screen.attachImageButton(panelName, "", gc.getTechInfo(eTech).getButton(), GenericButtonSizes.BUTTON_SIZE_CUSTOM, WidgetTypes.WIDGET_PEDIA_JUMP_TO_TECH, eTech, 1, False)

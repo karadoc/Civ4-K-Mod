@@ -57,7 +57,8 @@ def resetTechPrefs(args=[]):
 	CvScreensInterface.techChooser.resetTechPrefs()
 
 def getAllTechPrefsHover(widgetType, iData1, iData2, bOption):
-	return buildTechPrefsHover("TXT_KEY_BUG_TECH_PREFS_ALL", CvScreensInterface.techChooser.pPrefs.getAllFlavorTechs(iData1))
+	#return buildTechPrefsHover("TXT_KEY_BUG_TECH_PREFS_ALL", CvScreensInterface.techChooser.pPrefs.getAllFlavorTechs(iData1))
+	return buildTechPrefsHover("TXT_KEY_BUG_TECH_PREFS_ALL", CvScreensInterface.techChooser.pPrefs.getRemainingFlavorTechs(iData1)) # K-Mod
 
 def getCurrentTechPrefsHover(widgetType, iData1, iData2, bOption):
 	return buildTechPrefsHover("TXT_KEY_BUG_TECH_PREFS_CURRENT", CvScreensInterface.techChooser.pPrefs.getCurrentFlavorTechs(iData1))
