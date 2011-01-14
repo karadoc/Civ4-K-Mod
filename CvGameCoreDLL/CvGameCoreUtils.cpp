@@ -305,6 +305,12 @@ bool isPromotionValid(PromotionTypes ePromotion, UnitTypes eUnit, bool bLeader)
 
 	PromotionTypes ePrereq1 = (PromotionTypes)kPromotion.getPrereqOrPromotion1();
 	PromotionTypes ePrereq2 = (PromotionTypes)kPromotion.getPrereqOrPromotion2();
+/*
+** K-Mod, 14/jan/11, karadoc
+** third optional preq.
+*/
+	PromotionTypes ePrereq3 = (PromotionTypes)kPromotion.getPrereqOrPromotion3();
+	/* original bts code
 	if (NO_PROMOTION != ePrereq1 || NO_PROMOTION != ePrereq2)
 	{
 		bool bValid = false;
@@ -322,13 +328,26 @@ bool isPromotionValid(PromotionTypes ePromotion, UnitTypes eUnit, bool bLeader)
 			{
 				bValid = true;
 			}
-		}
+		}*/
+	if (ePrereq1 != NO_PROMOTION || ePrereq2 != NO_PROMOTION || ePrereq3 != NO_PROMOTION)
+	{
+		bool bValid = false;
+
+		if (ePrereq1 != NO_PROMOTION && isPromotionValid(ePrereq1, eUnit, bLeader))
+			bValid = true;
+		if (ePrereq2 != NO_PROMOTION && isPromotionValid(ePrereq2, eUnit, bLeader))
+			bValid = true;
+		if (ePrereq3 != NO_PROMOTION && isPromotionValid(ePrereq3, eUnit, bLeader))
+			bValid = true;
 
 		if (!bValid)
 		{
 			return false;
 		}
 	}
+/*
+** K-Mod end
+*/
 
 	return true;
 }

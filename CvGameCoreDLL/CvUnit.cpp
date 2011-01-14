@@ -11573,6 +11573,11 @@ bool CvUnit::canAcquirePromotion(PromotionTypes ePromotion) const
 		}
 	}
 
+/*
+** K-Mod, 14/jan/11, karadoc
+** third optional prereq
+*/
+	/* original bts code
 	if (GC.getPromotionInfo(ePromotion).getPrereqOrPromotion1() != NO_PROMOTION)
 	{
 		if (!isHasPromotion((PromotionTypes)(GC.getPromotionInfo(ePromotion).getPrereqOrPromotion1())))
@@ -11582,7 +11587,30 @@ bool CvUnit::canAcquirePromotion(PromotionTypes ePromotion) const
 				return false;
 			}
 		}
+	}*/
+
+	PromotionTypes ePrereq1 = (PromotionTypes)GC.getPromotionInfo(ePromotion).getPrereqOrPromotion1();
+	PromotionTypes ePrereq2 = (PromotionTypes)GC.getPromotionInfo(ePromotion).getPrereqOrPromotion2();
+	PromotionTypes ePrereq3 = (PromotionTypes)GC.getPromotionInfo(ePromotion).getPrereqOrPromotion3();
+	if (ePrereq1 != NO_PROMOTION || ePrereq2 != NO_PROMOTION || ePrereq3 != NO_PROMOTION)
+	{
+		bool bValid = false;
+
+		if (ePrereq1 != NO_PROMOTION && isHasPromotion(ePrereq1))
+			bValid = true;
+		if (ePrereq2 != NO_PROMOTION && isHasPromotion(ePrereq2))
+			bValid = true;
+		if (ePrereq3 != NO_PROMOTION && isHasPromotion(ePrereq3))
+			bValid = true;
+
+		if (!bValid)
+		{
+			return false;
+		}
 	}
+/*
+** K-Mod end
+*/
 
 	if (GC.getPromotionInfo(ePromotion).getTechPrereq() != NO_TECH)
 	{

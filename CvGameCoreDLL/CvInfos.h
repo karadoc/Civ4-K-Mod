@@ -449,10 +449,10 @@ public:
 	void setPrereqOrPromotion2(int i);				// Exposed to Python
 /*
 ** K-Mod, 7/jan/11, karadoc
-** note: these functions are not 'exposed to python'
-** and despite what the above comments say, the 'set' functions for prereqs 1 and 2 aren't either!
+** note: none of the prereq 'set' functions are 'exposed to python'
+** despite what the above comments say
 */
-	int getPrereqOrPromotion3() const;
+	int getPrereqOrPromotion3() const; // Exposed to Python
 	void setPrereqOrPromotion3(int i);
 /*
 ** K-Mod end

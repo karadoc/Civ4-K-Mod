@@ -3949,7 +3949,10 @@ int CvGame::getGlobalWarmingChances() const
 	// as you can see, I've scaled it by the number of turns in the game. The probability per chance is also scaled like this.
 	// I estimate that the global warming index will actually be roughly proportional to the number of turns in the game
 	// so by scaling the chances, and the probability per chance, I hope to get roughly the same number of actually events per game
-	return getGlobalWarmingIndex()/(getMaxTurns());
+	int iIndexPerChance = GC.getDefineINT("GLOBAL_WARMING_INDEX_PER_CHANCE");
+	iIndexPerChance*=GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+	iIndexPerChance/=100;
+	return ROUND_DIVIDE(getGlobalWarmingIndex(), std::max(1, iIndexPerChance));
 }
 
 int CvGame::getGwEventTally() const
@@ -4025,7 +4028,7 @@ int CvGame::calculateGwSustainabilityThreshold(PlayerTypes ePlayer) const
 	CvPlayer& kPlayer = GET_PLAYER(ePlayer);
 	if (kPlayer.isAlive())
 	{
-		return iGlobalThreshold * kPlayer.getTotalLand() / GC.getMapINLINE().getLandPlots();
+		return iGlobalThreshold * kPlayer.getTotalLand() / std::max(1, GC.getMapINLINE().getLandPlots());
 	}
 	else
 		return 0;

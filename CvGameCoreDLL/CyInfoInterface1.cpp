@@ -105,6 +105,7 @@ void CyInfoPythonInterface1()
 		.def("getPrereqPromotion", &CvPromotionInfo::getPrereqPromotion, "int ()")
 		.def("getPrereqOrPromotion1", &CvPromotionInfo::getPrereqOrPromotion1, "int ()")
 		.def("getPrereqOrPromotion2", &CvPromotionInfo::getPrereqOrPromotion2, "int ()")
+		.def("getPrereqOrPromotion3", &CvPromotionInfo::getPrereqOrPromotion3, "int ()") // K-Mod
 		.def("getActionInfoIndex", &CvPromotionInfo::getActionInfoIndex, "int ()")
 
 		.def("getTechPrereq", &CvPromotionInfo::getTechPrereq, "int ()")

@@ -7266,7 +7266,7 @@ int CvPlayer::calculateGwPercentAnger() const
 	int iGlobalPollution = GC.getGameINLINE().calculateGlobalPollution();
 
 	// Note: watch out for integer overflow and rounding errors.
-	int iGwSeverityRating = 100-100000/(1000+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots())));
+	int iGwSeverityRating = 100-100000/(1000+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
 	// a = 1000/4
 
 	int iResponsibilityFactor =	100*calculatePollution();
