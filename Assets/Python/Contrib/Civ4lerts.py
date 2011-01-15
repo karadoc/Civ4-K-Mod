@@ -817,10 +817,18 @@ class RefusesToTalk(AbstractStatefulAlert):
 	def __init__(self, eventManager):
 		AbstractStatefulAlert.__init__(self, eventManager)
 		eventManager.addEventHandler("BeginActivePlayerTurn", self.onBeginActivePlayerTurn)
-		eventManager.addEventHandler("changeWar", self.onChangeWar)
-		eventManager.addEventHandler("cityRazed", self.onCityRazed)
-		eventManager.addEventHandler("DealCanceled", self.onDealCanceled)
-		eventManager.addEventHandler("EmbargoAccepted", self.onEmbargoAccepted)
+##
+# K-Mod, 15/jan/11, karadoc
+# I've disabled the following event handlers, because apparently the arugment list isn't what the author of this code thought it was.
+# (Note: I've only tested OnDealCanceled. But I don't trust the other's either.)
+##
+#		eventManager.addEventHandler("changeWar", self.onChangeWar)
+#		eventManager.addEventHandler("cityRazed", self.onCityRazed)
+#		eventManager.addEventHandler("DealCanceled", self.onDealCanceled)
+#		eventManager.addEventHandler("EmbargoAccepted", self.onEmbargoAccepted)
+##
+# K-Mod end
+##
 
 	def onBeginActivePlayerTurn(self, argsList):
 		self.check()
