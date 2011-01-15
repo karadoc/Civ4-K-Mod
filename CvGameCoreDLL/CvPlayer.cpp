@@ -7258,21 +7258,18 @@ int CvPlayer::calculateGwPercentAnger() const
 	if (GC.getGameINLINE().getGlobalWarmingIndex() <= 0)
 		return 0;
 
-	// player unhappiness = global unhappiness * (local pollution / local threshold) / (global pollution / global threshold)
-	// global unhappiness = base rate * (1-(1-warming prob)^(rolls/map_size * max turns))
-	//  = base rate (1-(1-warming prob)^(index / map_size) (with some factor in the exponent to make it better...)
-	// That was the original plan at least... lets try something a bit simplier with a similar shape
-	// iBase = base_rate * 100 - 100000/(1000+a*prob*index/map_size);, where 'a' is a balance parameter.
+	// player unhappiness = base rate * severity rating * responsibility factor
+
 	int iGlobalPollution = GC.getGameINLINE().calculateGlobalPollution();
+	int iGwSeverityRating = GC.getGameINLINE().calculateGwSeverityRating();
+	int iLocalDefence = GC.getGameINLINE().calculateGwLandDefence(getID());
+	int iGlobalDefence = GC.getGameINLINE().calculateGwLandDefence(NO_PLAYER);
 
-	// Note: watch out for integer overflow and rounding errors.
-	int iGwSeverityRating = 100-100000/(1000+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
-	// a = 1000/4
 
-	int iResponsibilityFactor =	100*calculatePollution();
+	int iResponsibilityFactor =	100*(calculatePollution() - iLocalDefence);
 	iResponsibilityFactor /= std::max(1, GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()));
 	iResponsibilityFactor *= GC.getGameINLINE().calculateGwSustainabilityThreshold();
-	iResponsibilityFactor /= std::max(1, iGlobalPollution);
+	iResponsibilityFactor /= std::max(1, iGlobalPollution - iGlobalDefence);
 	// square it, to increase its importance
 	iResponsibilityFactor *= iResponsibilityFactor;
 	iResponsibilityFactor /= 100;

@@ -4033,6 +4033,19 @@ int CvGame::calculateGwSustainabilityThreshold(PlayerTypes ePlayer) const
 	else
 		return 0;
 }
+
+int CvGame::calculateGwSeverityRating() const
+{
+	// originally I wanted something like this:
+	// (1-(1-warming prob)^(rolls/map_size * max turns))
+	// (with some factor in the exponent to make it better...)
+	// but since that is impractical, I've just made an ad-hoc formula with a similar shape.
+
+	// Note: watch out for integer overflow and rounding errors.
+	//int iRating = 100-100000/(1000+(100 * GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
+	// return 100-100000/(1000+(GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,(4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots())/(100 * GC.getDefineINT("GLOBAL_WARMING_PROB"))))));
+	return 100-1000/(10+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
+}
 /*
 ** K-mod end
 */

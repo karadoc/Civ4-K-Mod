@@ -147,6 +147,7 @@ public:
 	int calculateGlobalPollution() const; // K-Mod
 	int calculateGwLandDefence(int /* PlayerTypes */ ePlayer) const; // K-Mod
 	int calculateGwSustainabilityThreshold(int /* PlayerTypes */ ePlayer) const; // K-Mod
+	int calculateGwSeverityRating() const;
 
 	bool isScoreDirty() const;
 	void setScoreDirty(bool bNewValue);

@@ -578,6 +578,11 @@ int CyGame::calculateGwSustainabilityThreshold(int /* PlayerTypes */ ePlayer) co
 {
 	return (NULL != m_pGame ? m_pGame->calculateGwSustainabilityThreshold((PlayerTypes)ePlayer) : 0);
 }
+
+int CyGame::calculateGwSeverityRating() const
+{
+	return (NULL != m_pGame ? m_pGame->calculateGwSeverityRating() : 0);
+}
 /*
 ** K-Mod end
 */

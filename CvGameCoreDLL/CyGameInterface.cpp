@@ -135,7 +135,8 @@ void CyGamePythonInterface()
 		.def("getGwEventTally", &CyGame::getGwEventTally)				// K-Mod
 		.def("calculateGlobalPollution", &CyGame::calculateGlobalPollution) // K-Mod
 		.def("calculateGwLandDefence", &CyGame::calculateGwLandDefence)	// K-Mod
-		.def("calculateGwSustainabilityThreshold", &CyGame::calculateGwSustainabilityThreshold)	// K-Mod		
+		.def("calculateGwSustainabilityThreshold", &CyGame::calculateGwSustainabilityThreshold)	// K-Mod
+		.def("calculateGwSeverityRating", &CyGame::calculateGwSeverityRating)	// K-Mod
 
 		.def("isScoreDirty", &CyGame::isScoreDirty, "bool ()")
 		.def("setScoreDirty", &CyGame::setScoreDirty)
