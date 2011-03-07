@@ -6118,7 +6118,7 @@ void CvGame::doGlobalWarming()
 				gDLL->getInterfaceIFace()->addMessage(((PlayerTypes)iI), false, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_GLOBALWARMING", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_HIGHLIGHT_TEXT"));
 			}
 			
-			// Tell human players that they can now access the environmental advisor
+			// Tell human players that the threshold has been reached
 			if (GET_PLAYER((PlayerTypes)iI).isHuman() && !isNetworkMultiPlayer())
 			{
 				CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_TEXT);
@@ -6359,7 +6359,7 @@ CvPlot* CvGame::getRandGWPlot(int iPool)
 				break;
 			}
 			// check for ordinary land plots
-			if (!pTestPlot->isWater())
+			if (!pTestPlot->isWater() && !pTestPlot->isPeak())
 			{
 				eTerrain = pTestPlot->getTerrainType();
 				break;
