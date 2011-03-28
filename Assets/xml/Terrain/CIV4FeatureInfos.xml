@@ -16,7 +16,7 @@
 			<iDisappearance>0</iDisappearance>
 			<iGrowth>0</iGrowth>
 			<iTurnDamage>0</iTurnDamage>
-			<iWarmingDefense>0</iWarmingDefense><!-- GWMod new XML field M.A. -->
+			<iWarmingDefense>0</iWarmingDefense>
 			<bNoCoast>0</bNoCoast>
 			<bNoRiver>0</bNoRiver>
 			<bNoAdjacent>0</bNoAdjacent>
@@ -365,7 +365,7 @@
 			<iDisappearance>0</iDisappearance>
 			<iGrowth>0</iGrowth>
 			<iTurnDamage>0</iTurnDamage>
-			<iWarmingDefense>0</iWarmingDefense><!-- GWMod new XML field M.A. -->
+			<iWarmingDefense>0</iWarmingDefense>
 			<bNoCoast>0</bNoCoast>
 			<bNoRiver>0</bNoRiver>
 			<bNoAdjacent>0</bNoAdjacent>
@@ -478,7 +478,7 @@
 			<iDisappearance>0</iDisappearance>
 			<iGrowth>8</iGrowth>
 			<iTurnDamage>0</iTurnDamage>
-			<iWarmingDefense>20</iWarmingDefense><!-- GWMod new XML field M.A. -->
+			<iWarmingDefense>20</iWarmingDefense>
 			<bNoCoast>0</bNoCoast>
 			<bNoRiver>0</bNoRiver>
 			<bNoAdjacent>0</bNoAdjacent>
@@ -600,7 +600,7 @@
 			<iDisappearance>500</iDisappearance>
 			<iGrowth>0</iGrowth>
 			<iTurnDamage>0</iTurnDamage>
-			<iWarmingDefense>0</iWarmingDefense><!-- GWMod new XML field M.A. -->
+			<iWarmingDefense>0</iWarmingDefense>
 			<bNoCoast>0</bNoCoast>
 			<bNoRiver>0</bNoRiver>
 			<bNoAdjacent>0</bNoAdjacent>

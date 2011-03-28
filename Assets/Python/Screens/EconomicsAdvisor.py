@@ -527,7 +527,7 @@ class EconomicsAdvisor:
 		
 		#szText = u"GLOBAL WARMING SEVERITY RATING: %d" % iSeverityRating
 		szText = u"GLOBAL WARMING SEVERITY RATING: "
-		if (iSeverityRating < 30):
+		if (iSeverityRating < 35):
 			szText += localText.getColorText("LOW", (), gc.getInfoTypeForString ("COLOR_GREEN"))
 		elif (iSeverityRating < 70):
 			szText += localText.getColorText ("MEDIUM", (), gc.getInfoTypeForString ("COLOR_YELLOW"))
@@ -674,7 +674,7 @@ class EconomicsAdvisor:
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iGwEventTally) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		
 		iGwPercentAnger = player.calculateGwPercentAnger()
-		if (iGwPercentAnger >= 5):
+		if (iGwPercentAnger >= 2):
 			yLocation += 1.5 * self.Y_SPACING
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Local Anger Level" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_UNHAPPY, -1, -1 )
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iGwPercentAnger) + "%</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_GW_UNHAPPY, -1, -1 )			

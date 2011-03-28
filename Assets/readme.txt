@@ -1,17 +1,21 @@
-This is K-Mod version 0.92.
+This is K-Mod version 0.93.
 If you have any questions, comments, suggetsions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
 
-v0.93 changelist *
+v0.93 changelist
 
  + Changed Odeon culture from 3 to 2.
  + Changed Arabian Madrassa culture from 4 to 3
  + Changed culture from Great Works to be base_rate * era, rather than base_rate * (era+1)
- + Reverted State Property upkeep back to 'low' [Now that state property no longer eliminates colony maintenance and corporations come into the game earlier, I feel that state property is not too powerful on low upkeep.]
+ + Reverted State Property upkeep back to 'low' [Now that state property no longer eliminates colony maintenance, and corporations come into the game earlier, I feel that state property is not too powerful on low upkeep.]
  + Increased Representation upkeep from 'medium' to 'high'
  + Increased cost of public transport to 200 (from 150)
- + Fixed global warming to not strike impassable peak tiles
+ + Global warming can no longer strike impassable peak tiles
+ + Fixed a bug which caused terrain to be degraded at the same as trees were degraded. [The correct behaviour is jungle->forest->nothing before any terrain degration takes place.]
+ + Fixed problem which sometimes caused towns not to be removed when global warming made the land uninhabitable. [I'm in two minds about whether desert towns should be allowed to stay; but for now I'm disabling it.]
+ + Minor adjustments to the environmental advisor screen.
+ + Mining inc now uses aluminium and uranium instead of gold and silver [this should make mining inc slightly weaker, and civ jewelers more viable]
 
 --
 
