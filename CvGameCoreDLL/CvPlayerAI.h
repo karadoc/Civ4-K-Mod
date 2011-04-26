@@ -126,7 +126,7 @@ public:
 ** K-Mod, 1/mar/11, karadoc
 ** experimental AI functions
 */
-	int KAI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const;
+	//int KAI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const;
 /*
 ** K-Mod end
 */

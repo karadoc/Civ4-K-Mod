@@ -5823,6 +5823,7 @@ void CvPlayerAI::AI_chooseResearch()
 ** experimental AI functions
 */
 
+#if 0
 int CvPlayerAI::KAI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const
 {
 	PROFILE_FUNC();
@@ -6640,6 +6641,7 @@ int CvPlayerAI::KAI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCos
 	return iValue;
 }
 
+#endif
 /*
 ** K-Mod end experimental AI functions
 */

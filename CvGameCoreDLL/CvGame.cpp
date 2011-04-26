@@ -344,6 +344,35 @@ void CvGame::regenerateMap()
 
 	CvEventReporter::getInstance().resetStatistics();
 
+/*
+** K-Mod, 25/apr/2011, karadoc
+** Adjust the AI handicap to be the minimum of all the human player's handicap.
+*/
+	if (isGameMultiPlayer())
+	{
+		HandicapTypes eMinHandicap = (HandicapTypes)INT_MAX;
+		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		{
+			if (GET_PLAYER((PlayerTypes)iI).isHuman())
+			{
+				eMinHandicap = std::min(GET_PLAYER((PlayerTypes)iI).getHandicapType(), eMinHandicap);
+			}
+		}
+		setHandicapType(eMinHandicap);
+
+		/* I don't think we need this. In fact, I think it might be the opposite of what we want. But I haven't checked...
+		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		{
+			if (!GET_PLAYER((PlayerTypes)iI).isHuman())
+			{
+				GC.getInitCore().setHandicap(PlayerTypes(iI), eMinHandicap)
+			}
+		}*/
+	}
+/*
+** K-Mod end
+*/
+
 	setInitialItems();
 
 	initScoreCalculation();
@@ -6163,10 +6192,11 @@ void CvGame::doGlobalWarming()
 
 			if (pPlot != NULL)
 			{
-				FeatureTypes eFeature = pPlot->getFeatureType();
 				bool bChanged = false;
-				if (pPlot->getFeatureType() != NO_FEATURE && pPlot->getFeatureType() != GC.getDefineINT("NUKE_FEATURE"))
+				/* (I've rewritten the following section to correct a few problems)
+				if (pPlot->getFeatureType() != NO_FEATURE && pPlot->getFeatureType() != eFalloutFeature)
 				{// don't remove features if underlaying terrain can melt
+					
 					if (pPlot->getFeatureType() != eColdFeature)
 					{
 						if ((pPlot->calculateBestNatureYield(YIELD_FOOD, NO_TEAM) > 1) && (pPlot->getFeatureType() == eTemperateFeature))
@@ -6195,6 +6225,7 @@ void CvGame::doGlobalWarming()
 						pPlot->setFeatureType(NO_FEATURE);
 						bChanged = true;
 					}
+					
 				}
 
 				{// GWMod stepped terrain changes M.A.
@@ -6235,6 +6266,66 @@ void CvGame::doGlobalWarming()
 						bChanged = true;
 					}
 				}
+				*/
+				/*
+				** rewritten terrain changing code:
+				*/
+				// 1) Melt frozen terrain
+				if (pPlot->getFeatureType() == eColdFeature)
+				{
+					pPlot->setFeatureType(NO_FEATURE);
+					bChanged = true;
+				}
+				else if (pPlot->getTerrainType() == eFrozenTerrain)
+				{
+						pPlot->setTerrainType(eColdTerrain);
+						bChanged = true;
+				}
+				else if (pPlot->getTerrainType() == eColdTerrain)
+				{
+					pPlot->setTerrainType(eTemperateTerrain);
+					bChanged = true;
+				}
+				// 2) Forest -> Jungle
+				else if (pPlot->getFeatureType() == eTemperateFeature)
+				{
+					pPlot->setFeatureType(eWarmFeature);
+					bChanged = true;
+				}
+				// 3) Remove other features
+				else if (pPlot->getFeatureType() != NO_FEATURE && pPlot->getFeatureType() != eFalloutFeature)
+				{
+					pPlot->setFeatureType(NO_FEATURE);
+					bChanged = true;
+				}
+				// 4) Dry the terrain
+				// Rising seas
+				else if (pPlot->getTerrainType() == eTemperateTerrain)
+				{
+					pPlot->setTerrainType(eDryTerrain);
+					bChanged = true;
+				}
+				else if (pPlot->getTerrainType() == eDryTerrain)
+				{
+					pPlot->setTerrainType(eBarrenTerrain);
+					bChanged = true;
+				}
+				// 5) Sink coastal desert
+				else if (pPlot->getTerrainType() == eBarrenTerrain)
+				{
+					// if (isOption(GAMEOPTION_RISING_SEAS)) (always enabled)
+					{
+						if (pPlot->isCoastalLand())
+						{
+							if (!pPlot->isHills() && !pPlot->isPeak())
+							{
+								pPlot->forceBumpUnits();
+								pPlot->setPlotType(PLOT_OCEAN);
+								bChanged = true;
+							}
+						}
+					}
+				}					
 
 				if (bChanged)
 				{
