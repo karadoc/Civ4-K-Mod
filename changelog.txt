@@ -74,9 +74,7 @@ A list of differences between K-Mod v0.9 and standard Civ4:BtS. There may be thi
  + trade route culture: trade routes give plot culture in addition to commerce. The amount of culture given by the trade route is 1% * trade city's culture level * trade city's culture rate. The culture belongs to the owner of the trade city, not the local city; and it is not counted towards the culture of the city itself – it only effects the plots around the city.
  + changed plot culture mechanics: cultural influence extends 3 steps beyond the border. Outer ring of cultural influence gets 100% of the city culture; the city tile itself gets 1000%; the rate varies quadratically in between.
  + instant boosts to culture (such as great works and espionage missions) now apply the appropriate amount of plot culture with their city culture
- + change culture from great works from a flat 4000 to 800 * era. [to reduce the power of the early culture bombs – but it's worth 
-
-pointing out that early culture bombs are still very powerful]
+ + change culture from great works from a flat 4000 to 800 * era. [to reduce the power of the early culture bombs – but it's worth pointing out that early culture bombs are still very powerful]
  + Reduced culture of many buildings: 
  + reduced the culture from most of the great wonders
  + Sistine chapel state religion culture bonus changed from +5 to +3 [culture is more powerful now; so this building needed to be nerfed]
@@ -91,17 +89,9 @@ pointing out that early culture bombs are still very powerful]
  + Eiffle tower now comes with mass media instead of radio [to make mass media more appealing, and make free broadcasting towers less weird]
  + ironclad, from 2 moves to 3. [the ironclad was frustratingly slow... with this buff it is still slower than galleons]
  + public transport, removed health bonuses, replaced with -15% unhealthiness from population, [thinking of raising cost from 150->200.]
- + stone henge no longer goes obsolete [I felt that this wonder was actually disadvantageous, because the 'free' monuments disappeared and 
-
-thus robbed the owner of late-game culture]
- + tech requirements for corporations changed: civ jewellers: corporation, sushi co: refrigeration, cereal mills: medicine, creative 
-
-constructions: steel, standard ethanol: combustion [in my experience, sushi and mining inc are always by far the most powerful 
-
-corporations. My goal with changing the prereqs is to make the weaker corps more viable.]
- + space elevator bonus from +50 spaceship production -> +100%. [building this wonder is almost never worth the hammers/research... I 
-
-suspect that even with this massive buff it will still be too weak to be worthwhile.]
+ + stone henge no longer goes obsolete [I felt that this wonder was actually disadvantageous, because the 'free' monuments disappeared and thus robbed the owner of late-game culture]
+ + tech requirements for corporations changed: civ jewellers: corporation, sushi co: refrigeration, cereal mills: medicine, creative constructions: steel, standard ethanol: combustion [in my experience, sushi and mining inc are always by far the most powerful corporations. My goal with changing the prereqs is to make the weaker corps more viable.]
+ + space elevator bonus from +50 spaceship production -> +100%. [building this wonder is almost never worth the hammers/research... I suspect that even with this massive buff it will still be too weak to be worthwhile.]
  + free commando promotion for great spy [just like a normal spy]
  + slightly reduced the tech rate for everything in the later eras (slowed research), using the BBAI defaults
  + work boats no long count as military units
