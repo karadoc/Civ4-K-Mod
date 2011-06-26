@@ -790,8 +790,9 @@ def applyVolcano1(argsList):
 						listPlots.append(loopPlot)
 					
 	listRuins = []
-	listRuins.append(CvUtil.findInfoTypeNum(gc.getImprovementInfo,gc.getNumImprovementInfos(),'IMPROVEMENT_COTTAGE'))
-	listRuins.append(CvUtil.findInfoTypeNum(gc.getImprovementInfo,gc.getNumImprovementInfos(),'IMPROVEMENT_HAMLET'))
+	## K-Mod: I don't think cttages and hamlets are big enough to leave "city ruins"
+	#listRuins.append(CvUtil.findInfoTypeNum(gc.getImprovementInfo,gc.getNumImprovementInfos(),'IMPROVEMENT_COTTAGE'))
+	#listRuins.append(CvUtil.findInfoTypeNum(gc.getImprovementInfo,gc.getNumImprovementInfos(),'IMPROVEMENT_HAMLET'))
 	listRuins.append(CvUtil.findInfoTypeNum(gc.getImprovementInfo,gc.getNumImprovementInfos(),'IMPROVEMENT_VILLAGE'))
 	listRuins.append(CvUtil.findInfoTypeNum(gc.getImprovementInfo,gc.getNumImprovementInfos(),'IMPROVEMENT_TOWN'))
 	
@@ -811,6 +812,29 @@ def applyVolcano1(argsList):
 			
 			if i == 1 and gc.getGame().getSorenRandNum(100, "Volcano event num improvements destroyed") < 50:
 				break
+##
+# K-Mod, karadoc, 26/Jun/2011
+# Volcanic ash improves some tiles
+##
+	listPlots = []
+	for iDX in range(-1, 2):
+		for iDY in range(-1, 2):
+			loopPlot = plotXY(kTriggeredData.iPlotX, kTriggeredData.iPlotY, iDX, iDY)
+			if not loopPlot.isNone():
+				if (iDX != 0 or iDY != 0):
+					if gc.getGame().getPlotExtraYield(loopPlot.getX(), loopPlot.getY(), YieldTypes.YIELD_FOOD) == 0:
+						listPlots.append(loopPlot)
+
+	# zero - 50%, one - 25%, two - 25%
+	iCount = gc.getGame().getSorenRandNum(4, "Volcanic ash fertility bonus") - 1
+							
+	for i in range(iCount):
+		if len(listPlots) <= 0:
+			break
+		plot = listPlots[gc.getGame().getSorenRandNum(len(listPlots), "Volcano event increased yield")]
+		gc.getGame().setPlotExtraYield(plot.getX(), plot.getY(), YieldTypes.YIELD_FOOD, 1)
+		CyInterface().addMessage(kTriggeredData.ePlayer, false, gc.getEVENT_MESSAGE_TIME(), localText.getText("TXT_KEY_EVENT_VOLCANO_FERTILITY", ()), "", InterfaceMessageTypes.MESSAGE_TYPE_INFO, None, gc.getInfoTypeForString("COLOR_WHITE"), plot.getX(), plot.getY(), true, true)
+# K-Mod end
 
 ######## DUSTBOWL ###########
 

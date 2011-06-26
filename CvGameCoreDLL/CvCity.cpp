@@ -3574,6 +3574,9 @@ CvUnit* CvCity::initConscriptedUnit()
 		addProductionExperience(pUnit, true);
 
 		pUnit->setMoves(0);
+// K-Mod, karadoc, 26/Jun/2011: Conscription counts as building the unit
+		CvEventReporter::getInstance().unitBuilt(this, pUnit);
+// K-Mod end
 	}
 
 	return pUnit;

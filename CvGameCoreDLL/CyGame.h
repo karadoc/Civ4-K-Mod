@@ -278,6 +278,7 @@ public:
 /********************************************************************************/
 	int getCultureThreshold(int /*CultureLevelTypes*/ eLevel);
 
+	int getPlotExtraYield(int iX, int iY, int /*YieldTypes*/ eYield); // K-Mod
 	void setPlotExtraYield(int iX, int iY, int /*YieldTypes*/ eYield, int iExtraYield);
 	void changePlotExtraCost(int iX, int iY, int iExtraCost);
 	

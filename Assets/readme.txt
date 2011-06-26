@@ -3,6 +3,15 @@ If you have any questions, comments, suggetsions, bug reports, etc. Post here: h
 
 --
 
+v0.94* changelist
+
+ + drafted units are now included in the stats screen's units-built tally.
+ + global warming can no longer turn desert (or anything else) into coast. [I don't think this feature made the game more fun, and there were a few minor problems with it.]
+ + Cottages and hamlets destroyed by the volcano will no longer leave city ruins.
+ + The volcano event now has a chance of increasing the food yield of adjacent tiles (in addition to the original effects); as part of this change, I also fixed the Pythong API so that calculateNatureYield() actually works. I see that the same bug exists in serveral other python functions, but I'll only fix it when I need the functions; also, getPlotExtraYield() is now available in python.
+
+--
+
 v0.93 changelist
 
  + Changed Odeon culture from 3 to 2.

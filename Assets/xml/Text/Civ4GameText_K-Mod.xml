@@ -220,6 +220,31 @@
 		<Italian>[ICON_BULLET]%D1_Mod%% [ICON_UNHEALTHY] tra la popolazione</Italian>
 		<Spanish>[ICON_BULLET]%D1_Mod%% [ICON_UNHEALTHY] por poblaci&#243;n</Spanish>		
 	</TEXT>
+
+	<!-- new volcano text-->
+	<TEXT>
+		<Tag>TXT_KEY_EVENT_VOLCANO_FERTILITY</Tag>
+		<English>Volcanic ash has improved the soil fertility.</English>
+		<French>Les cendres volcaniques am&#233;lior&#233; la fertilit&#233; du sol.</French>
+		<German>Vulkanische Asche verbessert die Bodenfruchtbarkeit.</German>
+		<Italian>Ceneri vulcaniche migliorato la fertilità del suolo.</Italian>
+		<Spanish>La ceniza volcánica mejorar la fertilidad del suelo.</Spanish>
+	</TEXT>	
+	<!-- replacement volcano text (unfinished)-->
+	<TEXT>
+		<Tag>TXT_KEY_EVENT_VOLCANO_1_HELP</Tag>
+		<English>[ICON_BULLET]Suffer loss of plot improvements near the eruption[NEWLINE][ICON_BULLET]Chance of +1[ICON_FOOD] on plots near the eruption</English>
+		<French>[ICON_BULLET]Subir des pertes d'am&#233;nagements sur les cases proches de l'&#233;ruption</French>
+		<German>[ICON_BULLET]Verlust der Gel&#228;ndefeld-Modernisierungen in der N&#228;he der Eruption</German>
+		<Italian>[ICON_BULLET]Perdita dei miglioramenti delle caselle vicino all'eruzione</Italian>
+		<Spanish>[ICON_BULLET]P&#233;rdida de mejoras de casillas cerca de la erupci&#243;n.</Spanish>
+	</TEXT>
+		<English>[ICON_BULLET]+1[ICON_COMMERCE] in %d1 additional [NUM1:plot:plots]</English>
+		<French>[ICON_BULLET]+1[ICON_COMMERCE] sur %d1 [NUM1:case suppl&#233;mentaire:cases suppl&#233;mentaires]</French>
+		<German>[ICON_BULLET]+1[ICON_COMMERCE] auf %d1 [NUM1:zus&#228;tzlichem Gel&#228;ndefeld:zus&#228;tzlichen Gel&#228;ndefeldern]</German>
+		<Italian>[ICON_BULLET]+1[ICON_COMMERCE] in %d1 [NUM1:casella aggiuntiva:caselle aggiuntive]</Italian>
+		<Spanish>[ICON_BULLET]+1 [ICON_COMMERCE] en %d1 [NUM1:%casilla:casillas] m&#225;s.</Spanish>
+
 	<!-- Example text
 		<English>Clearing a %s1_FeatName has created %d2_Num [ICON_PRODUCTION] for %s3_CityName.</English>
 	<TEXT>

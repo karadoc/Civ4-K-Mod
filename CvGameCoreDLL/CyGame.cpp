@@ -1163,6 +1163,12 @@ int CyGame::getCultureThreshold(int eLevel)
 	return (m_pGame ? m_pGame->getCultureThreshold((CultureLevelTypes) eLevel) : -1);
 }
 
+// K-Mod
+int CyGame::getPlotExtraYield(int iX, int iY, int /*YieldTypes*/ eYield)
+{
+	return (m_pGame ? m_pGame->getPlotExtraYield(iX, iY, (YieldTypes)eYield) : 0);
+}
+
 void CyGame::setPlotExtraYield(int iX, int iY, int /*YieldTypes*/ eYield, int iExtraYield)
 {
 	if (m_pGame)

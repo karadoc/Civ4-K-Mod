@@ -6193,80 +6193,6 @@ void CvGame::doGlobalWarming()
 			if (pPlot != NULL)
 			{
 				bool bChanged = false;
-				/* (I've rewritten the following section to correct a few problems)
-				if (pPlot->getFeatureType() != NO_FEATURE && pPlot->getFeatureType() != eFalloutFeature)
-				{// don't remove features if underlaying terrain can melt
-					
-					if (pPlot->getFeatureType() != eColdFeature)
-					{
-						if ((pPlot->calculateBestNatureYield(YIELD_FOOD, NO_TEAM) > 1) && (pPlot->getFeatureType() == eTemperateFeature))
-						{
-							pPlot->setFeatureType(eWarmFeature);
-							bChanged = true;
-						}
-						else if (pPlot->getTerrainType() == eColdTerrain)
-						{
-							pPlot->setTerrainType(eTemperateTerrain);
-							bChanged = true;
-						}
-						else if (pPlot->getTerrainType() == eFrozenTerrain)
-						{
-							pPlot->setTerrainType(eColdTerrain);
-							bChanged = true;
-						}
-						else
-						{
-							pPlot->setFeatureType(NO_FEATURE);
-							bChanged = true;
-						}
-					}
-					else
-					{
-						pPlot->setFeatureType(NO_FEATURE);
-						bChanged = true;
-					}
-					
-				}
-
-				{// GWMod stepped terrain changes M.A.
-					// Rising seas
-					if (pPlot->getTerrainType() == eBarrenTerrain)
-					{
-						// if (isOption(GAMEOPTION_RISING_SEAS)) (always enabled)
-						{
-							if (pPlot->isCoastalLand())
-							{
-								if (!pPlot->isHills() && !pPlot->isPeak())
-								{
-									pPlot->forceBumpUnits();
-									pPlot->setPlotType(PLOT_OCEAN);
-									bChanged = true;
-								}
-							}
-						}
-					}					
-					else if (pPlot->getTerrainType() == eDryTerrain)
-					{
-						pPlot->setTerrainType(eBarrenTerrain);
-						bChanged = true;
-					}
-					else if (pPlot->getTerrainType() == eTemperateTerrain)
-					{
-						pPlot->setTerrainType(eDryTerrain);
-						bChanged = true;
-					}
-					else if (pPlot->getTerrainType() == eColdTerrain)
-					{
-						pPlot->setTerrainType(eTemperateTerrain);
-						bChanged = true;
-					}
-					else if (pPlot->getTerrainType() == eFrozenTerrain)
-					{
-						pPlot->setTerrainType(eColdTerrain);
-						bChanged = true;
-					}
-				}
-				*/
 				/*
 				** rewritten terrain changing code:
 				*/
@@ -6310,10 +6236,10 @@ void CvGame::doGlobalWarming()
 					pPlot->setTerrainType(eBarrenTerrain);
 					bChanged = true;
 				}
-				// 5) Sink coastal desert
+				/* 5) Sink coastal desert (disabled)
 				else if (pPlot->getTerrainType() == eBarrenTerrain)
 				{
-					// if (isOption(GAMEOPTION_RISING_SEAS)) (always enabled)
+					if (isOption(GAMEOPTION_RISING_SEAS))
 					{
 						if (pPlot->isCoastalLand())
 						{
@@ -6325,7 +6251,7 @@ void CvGame::doGlobalWarming()
 							}
 						}
 					}
-				}					
+				}*/
 
 				if (bChanged)
 				{
@@ -6347,70 +6273,6 @@ void CvGame::doGlobalWarming()
 			}
 		}
 	}
-	//Nuclear Winter
-	/*
-	int iNuclearWinterValue = 0;
-	iNuclearWinterValue += getNukesExploded() * GC.getDefineINT("GLOBAL_WARMING_NUKE_WEIGHT") / 100;
-
-	for (int iI = 0; iI < iNuclearWinterValue; iI++)
-	{
-		if (getSorenRandNum(100, "Nuclear Fallout") < GC.getDefineINT("NUCLEAR_WINTER_PROB"))
-		{
-			CvPlot* pPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
-			FeatureTypes eFeature = pPlot->getFeatureType();
-
-			if (pPlot != NULL)
-			{
-				bool bChanged = false;
-
-				if (pPlot->getFeatureType() != NO_FEATURE)
-				{
-					if (pPlot->getFeatureType() != GC.getDefineINT("NUKE_FEATURE"))
-					{
-						if (pPlot->getFeatureType() != eColdFeature)
-						{
-						pPlot->setFeatureType(NO_FEATURE);
-						bChanged = true;
-					}
-				}
-				}
-				else
-				{
-					pPlot->setFeatureType(eFalloutFeature);
-					bChanged = true;
-				}
-				if (getSorenRandNum(100, "Nuclear Winter") < GC.getDefineINT("NUCLEAR_WINTER_PROB"))
-				{
-					if (pPlot->getTerrainType() == eColdTerrain)
-				{
-						pPlot->setTerrainType(eFrozenTerrain);
-						bChanged = true;
-					}
-					if (pPlot->calculateTotalBestNatureYield(NO_TEAM) > 1)
-					{
-						pPlot->setTerrainType(eColdTerrain);
-						bChanged = true;
-					}
-				}
-
-				if (bChanged)
-				{
-					pPlot->setImprovementType(NO_IMPROVEMENT);
-
-					CvCity* pCity = GC.getMapINLINE().findCity(pPlot->getX_INLINE(), pPlot->getY_INLINE());
-					if (pCity != NULL)
-					{
-						if (pPlot->isVisible(pCity->getTeam(), false))
-						{
-							CvWString szBuffer = gDLL->getText("TXT_KEY_MISC_NUCLEAR_WINTER_NEAR_CITY", pCity->getNameKey());
-							gDLL->getInterfaceIFace()->addMessage(pCity->getOwnerINLINE(), false, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_GLOBALWARMING", MESSAGE_TYPE_INFO, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), pPlot->getX_INLINE(), pPlot->getY_INLINE(), true, true);
-						}
-					}
-				}
-			}
-		}
-	}
-	*/ // end nuclear winter code
 }
 
 // Choose the best plot for global warming to strike from a set of iPool random plots

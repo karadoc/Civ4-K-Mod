@@ -268,6 +268,7 @@ void CyGamePythonInterface()
 /********************************************************************************/
 		.def("getCultureThreshold", &CyGame::getCultureThreshold, "int getCultureThreshold(CultureLevelTypes eLevel)")
 
+		.def("getPlotExtraYield", &CyGame::getPlotExtraYield, "int (int iX, int iY, int /*YieldTypes*/ eYield)") // K-Mod
 		.def("setPlotExtraYield", &CyGame::setPlotExtraYield, "void (int iX, int iY, int /*YieldTypes*/ eYield, int iExtraYield)")
 		.def("changePlotExtraCost", &CyGame::changePlotExtraCost, "void (int iX, int iY, int iCost)")
 

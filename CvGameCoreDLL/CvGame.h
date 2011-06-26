@@ -504,7 +504,7 @@ public:
 	CultureLevelTypes culturalVictoryCultureLevel();
 	int getCultureThreshold(CultureLevelTypes eLevel) const;
 
-	int getPlotExtraYield(int iX, int iY, YieldTypes eYield) const;
+	int getPlotExtraYield(int iX, int iY, YieldTypes eYield) const;   // exposed to Python (K-Mod)
 	void setPlotExtraYield(int iX, int iY, YieldTypes eYield, int iCost);   // exposed to Python
 	void removePlotExtraYield(int iX, int iY);
 

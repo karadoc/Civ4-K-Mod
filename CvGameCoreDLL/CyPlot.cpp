@@ -835,9 +835,10 @@ int CyPlot::getYield(YieldTypes eIndex)
 	return m_pPlot ? m_pPlot->getYield(eIndex) : -1;
 }
 
-int CyPlot::calculateNatureYield(YieldTypes eIndex, TeamTypes eTeam, bool bIgnoreFeature)
+// K-Mod, 26/Jun/2011, karadoc: changed enum types to ints, so that it actually works...
+int CyPlot::calculateNatureYield(int /*YieldTypes*/ eIndex, int /*TeamTypes*/ eTeam, bool bIgnoreFeature)
 {
-	return m_pPlot ? m_pPlot->calculateNatureYield(eIndex, eTeam, bIgnoreFeature) : -1;
+	return m_pPlot ? m_pPlot->calculateNatureYield((YieldTypes)eIndex, (TeamTypes)eTeam, bIgnoreFeature) : -1;
 }
 
 int CyPlot::calculateBestNatureYield(YieldTypes eIndex, TeamTypes eTeam)
