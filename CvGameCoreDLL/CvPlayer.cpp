@@ -5581,7 +5581,8 @@ bool CvPlayer::canReceiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit) 
 		{
 			if (GC.getTechInfo((TechTypes) iI).isGoodyTech())
 			{
-				if (canResearch((TechTypes)iI))
+				//if (canResearch((TechTypes)iI))
+				if (canResearch((TechTypes)iI, false, true)) // K-Mod
 				{
 					bTechFound = true;
 					break;
@@ -5776,7 +5777,8 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 		{
 			if (GC.getTechInfo((TechTypes) iI).isGoodyTech())
 			{
-				if (canResearch((TechTypes)iI))
+				//if (canResearch((TechTypes)iI))
+				if (canResearch((TechTypes)iI, false, true)) // K-Mod
 				{
 					iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "Goody Tech"));
 
@@ -7720,7 +7722,7 @@ bool CvPlayer::canEverResearch(TechTypes eTech) const
 }
 
 
-bool CvPlayer::canResearch(TechTypes eTech, bool bTrade) const
+bool CvPlayer::canResearch(TechTypes eTech, bool bTrade, bool bFree) const
 {
 	bool bFoundPossible;
 	bool bFoundValid;
@@ -7740,7 +7742,7 @@ bool CvPlayer::canResearch(TechTypes eTech, bool bTrade) const
 		}
 	}
 
-	if (!isResearch() && getAdvancedStartPoints() < 0)
+	if (!isResearch() && !bFree && getAdvancedStartPoints() < 0)
 	{
 		return false;
 	}
@@ -21744,7 +21746,8 @@ bool CvPlayer::canStealTech(PlayerTypes eTarget, TechTypes eTech) const
 {
 	if (GET_TEAM(GET_PLAYER(eTarget).getTeam()).isHasTech(eTech))
 	{
-		if (canResearch(eTech))
+		//if (canResearch(eTech))
+		if (canResearch(eTech, false, true)) // K-Mod
 		{
 			return true;
 		}

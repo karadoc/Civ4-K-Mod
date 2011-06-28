@@ -2917,7 +2917,11 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	if (pPlot->isHills())
 	{
-		iValue += 200;
+		// iValue += 200;
+		// K-Mod
+		iValue += 100;
+		if (pPlot->calculateNatureYield(YIELD_PRODUCTION, NO_TEAM, true) > 1)
+			iValue += 100;
 	}
 
 	if (pPlot->isRiver())
@@ -2927,7 +2931,9 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 /*                                                                                              */
 /* Settler AI                                                                                   */
 /************************************************************************************************/
-		iValue += 60;
+		//iValue += 60;
+		// K-Mod
+		iValue += 100;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -2935,7 +2941,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	if (pPlot->isFreshWater())
 	{
-		iValue += 40;
+		// iValue += 40; // K-Mod (commented this out)
 		iValue += (GC.getDefineINT("FRESH_WATER_HEALTH_CHANGE") * 30);
 	}
 
@@ -4410,7 +4416,13 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		{
 			iTempValue = 0;
 
-			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK) * getImprovementCount((ImprovementTypes)iJ) * 50);
+			/* original code
+			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK) * getImprovementCount((ImprovementTypes)iJ) * 50); */
+			// Often, an improvment only becomes viable after it gets the tech bonus.
+			// So it's silly to score the bonus proportionally to how many of the improvements we already have.
+			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK)
+				* (getImprovementCount((ImprovementTypes)iJ)+getNumCities()) * 70);
+			// This new version is still bork, but at least it won't be worthless.
 
 			iTempValue *= AI_yieldWeight((YieldTypes)iK);
 			iTempValue /= 100;
@@ -4584,6 +4596,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					for (int iL = 0; iL < GC.getNumImprovementInfos(); iL++)
 					{
 						iTempValue += (GC.getImprovementInfo((ImprovementTypes)iL).getRouteYieldChanges(eRoute, iK) * 50);
+						// wtf? c.f. the improvement upgrade evaluation - which adds 50 for every improvement!
 					}
 
 					iTempValue *= AI_yieldWeight((YieldTypes)iK);
@@ -4938,7 +4951,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 			//iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (200 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Free Tech"))));
 			// K-Mod, 22/jan/11, karadoc: more ad-hoc adjustments... this stuff sucks so much.
-			iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (500 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Free Tech"))));
+			iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (500 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech"))));
 		}
 	}
 

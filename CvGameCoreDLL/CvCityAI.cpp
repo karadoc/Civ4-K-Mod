@@ -7255,7 +7255,8 @@ void CvCityAI::AI_updateBestBuild()
 		iFoodMultiplier += 10 * (2 - iBonusFoodDiff);
 	}
 	
-	int iExtraFoodForGrowth = (std::max(0, iTargetSize - getPopulation()) + 3) / 4;
+	// int iExtraFoodForGrowth = (std::max(0, iTargetSize - getPopulation()) + 3) / 4;
+	int iExtraFoodForGrowth = (std::max(0, iTargetSize - getPopulation() + 3)) / 4; // K-Mod!!
 	if (getPopulation() < iTargetSize)
 	{
 		iExtraFoodForGrowth ++;
@@ -11486,9 +11487,15 @@ int CvCityAI::AI_yieldMultiplier(YieldTypes eYield)
 	
 	if (eYield == YIELD_COMMERCE)
 	{
+		/* original code
 		iMultiplier += (getCommerceRateModifier(COMMERCE_RESEARCH) * 60) / 100;
 		iMultiplier += (getCommerceRateModifier(COMMERCE_GOLD) * 35) / 100;
-		iMultiplier += (getCommerceRateModifier(COMMERCE_CULTURE) * 15) / 100;
+		iMultiplier += (getCommerceRateModifier(COMMERCE_CULTURE) * 15) / 100; */
+		// K-Mod
+		// this breakdown seems wrong... but I'm not bold enough to change it yet.
+		iMultiplier += (getCommerceRateModifier(COMMERCE_RESEARCH) * 60 + 
+			getCommerceRateModifier(COMMERCE_GOLD) * 35 +
+			getCommerceRateModifier(COMMERCE_CULTURE) * 15) / 100;
 	}
 	
 	return iMultiplier;	
