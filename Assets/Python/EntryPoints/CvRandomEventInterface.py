@@ -834,6 +834,7 @@ def applyVolcano1(argsList):
 		plot = listPlots[gc.getGame().getSorenRandNum(len(listPlots), "Volcano event increased yield")]
 		gc.getGame().setPlotExtraYield(plot.getX(), plot.getY(), YieldTypes.YIELD_FOOD, 1)
 		CyInterface().addMessage(kTriggeredData.ePlayer, false, gc.getEVENT_MESSAGE_TIME(), localText.getText("TXT_KEY_EVENT_VOLCANO_FERTILITY", ()), "", InterfaceMessageTypes.MESSAGE_TYPE_INFO, None, gc.getInfoTypeForString("COLOR_WHITE"), plot.getX(), plot.getY(), true, true)
+		listPlots.remove(plot)
 # K-Mod end
 
 ######## DUSTBOWL ###########
