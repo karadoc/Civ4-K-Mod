@@ -527,9 +527,9 @@ class EconomicsAdvisor:
 		
 		#szText = u"GLOBAL WARMING SEVERITY RATING: %d" % iSeverityRating
 		szText = u"GLOBAL WARMING SEVERITY RATING: "
-		if (iSeverityRating < 35):
+		if (iSeverityRating < 34):
 			szText += localText.getColorText("LOW", (), gc.getInfoTypeForString ("COLOR_GREEN"))
-		elif (iSeverityRating < 70):
+		elif (iSeverityRating < 62):
 			szText += localText.getColorText ("MEDIUM", (), gc.getInfoTypeForString ("COLOR_YELLOW"))
 		else:
 			szText += localText.getColorText ("HIGH", (), gc.getInfoTypeForString ("COLOR_RED"))
