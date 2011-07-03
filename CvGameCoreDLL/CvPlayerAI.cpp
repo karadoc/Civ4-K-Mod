@@ -4676,13 +4676,33 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			
 			iRevealValue *= 100 + iMultiplier;
 			iRevealValue /= 100;
-        
+
+			// K-Mod
+			// If we don't yet have the 'enable' tech, reduce the value of the reveal.
+			if (GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade() != eTech &&
+				!GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade())))
+				iValue /= 3;
+			// K-Mod end
 
 			iValue += iRevealValue;
-			
 		}
-	}
+		// K-Mod: Value for enabling resources that are already revealed
+		else if (GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade() == eTech &&
+			GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)iJ).getTechReveal())))
+		{
+			int iOwned = countOwnedBonuses((BonusTypes)iJ);
+			if (iOwned > 0)
+			{
+				int iEnableValue = 150;
+				iEnableValue += (AI_bonusVal((BonusTypes)iJ) * 50);
+				iEnableValue *= (iOwned > 1) ? 150 : 100;
+				iEnableValue /= 100;
 
+				iValue += iEnableValue;
+			}
+		}
+		// K-Mod end
+	}
 
 	/* ------------------ Unit Value  ------------------ */
 	bool bEnablesUnitWonder;
