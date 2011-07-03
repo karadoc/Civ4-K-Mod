@@ -68,7 +68,7 @@ public:
 
 	int getAssets() const;																															// Exposed to Python
 	int getPower(bool bIncludeVassals) const;																																// Exposed to Python
-	int getDefensivePower() const;																											// Exposed to Python
+	int getDefensivePower(TeamTypes eExcludeTeam = NO_TEAM) const;	// Exposed to Python
 	int getEnemyPower() const;
 	int getNumNukeUnits() const;																												// Exposed to Python
 	int getVotes(VoteTypes eVote, VoteSourceTypes eVoteSource) const;

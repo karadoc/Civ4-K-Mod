@@ -2052,19 +2052,22 @@ int CvTeam::getPower(bool bIncludeVassals) const
 }
 
 
-int CvTeam::getDefensivePower() const
+int CvTeam::getDefensivePower(TeamTypes eExcludeTeam) const
 {
 	int iCount;
 	int iI;
 
 	iCount = 0;
 
+	FAssert(eExcludeTeam != getID());
+
 	for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
 	{
 		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
 		if (kLoopTeam.isAlive() && !kLoopTeam.isAVassal())
 		{
-			if (getID() == iI || isVassal((TeamTypes)iI) || isDefensivePact((TeamTypes)iI))
+			// K-Mod: added "eExcludeTeam" argument, so that defensive power can take into account the cancelation of pacts.
+			if (iI != eExcludeTeam && (getID() == iI || isVassal((TeamTypes)iI) || isDefensivePact((TeamTypes)iI)))
 			{
 				iCount += kLoopTeam.getPower(true);
 			}

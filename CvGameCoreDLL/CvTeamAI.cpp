@@ -1258,7 +1258,7 @@ int CvTeamAI::AI_startWarVal(TeamTypes eTeam) const
 	if( getAnyWarPlanCount(true) > 0 || 
 		(AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST2) && !(AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3))) )
 	{
-		int iMultiplier = (75 * getPower(false))/std::max(1, GET_TEAM(eTeam).getDefensivePower());
+		int iMultiplier = (75 * getPower(false))/std::max(1, GET_TEAM(eTeam).getDefensivePower(getID()));
 
 		iValue *= range(iMultiplier, 50, 400);
 		iValue /= 100;
@@ -1339,7 +1339,7 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 	iValue += (GET_TEAM(eTeam).AI_getWarSuccess(getID()) * 20);
 
 	int iOurPower = std::max(1, getPower(true));
-	int iTheirPower = std::max(1, GET_TEAM(eTeam).getDefensivePower());
+	int iTheirPower = std::max(1, GET_TEAM(eTeam).getDefensivePower(getID()));
 
 	iValue *= iTheirPower + 10;
 	iValue /= std::max(1, iOurPower + iTheirPower + 10);
@@ -2360,7 +2360,7 @@ int CvTeamAI::AI_getEnemyPowerPercent( bool bConsiderOthers ) const
 				else if( AI_isChosenWar((TeamTypes)iI) )
 				{
 					// Haven't declared war yet
-					int iTempPower = 240 * GET_TEAM((TeamTypes)iI).getDefensivePower();
+					int iTempPower = 240 * GET_TEAM((TeamTypes)iI).getDefensivePower(getID());
 					iTempPower /= (AI_hasCitiesInPrimaryArea((TeamTypes)iI) ? 2 : 3);
 					iTempPower /= 1 + (bConsiderOthers ? GET_TEAM((TeamTypes)iI).getAtWarCount(true,true) : 0);
 					iEnemyPower += iTempPower;
@@ -3134,7 +3134,7 @@ DenialTypes CvTeamAI::AI_declareWarTrade(TeamTypes eWarTeam, TeamTypes eTeam, bo
 	{
 		bLandTarget = AI_isAllyLandTarget(eWarTeam);
 
-		if ((GET_TEAM(eWarTeam).getDefensivePower() / ((bLandTarget) ? 2 : 1)) >
+		if ((GET_TEAM(eWarTeam).getDefensivePower(getID()) / ((bLandTarget) ? 2 : 1)) >
 			(getPower(true) + ((atWar(eWarTeam, eTeam)) ? GET_TEAM(eTeam).getPower(true) : 0)))
 		{
 			if (bLandTarget)
@@ -4781,7 +4781,7 @@ void CvTeamAI::AI_doWar()
 
 										if (iNoWarRoll >= AI_noWarAttitudeProb(AI_getAttitude((TeamTypes)iI)))
 										{
-											int iDefensivePower = (GET_TEAM((TeamTypes)iI).getDefensivePower() * 2) / 3;
+											int iDefensivePower = (GET_TEAM((TeamTypes)iI).getDefensivePower(getID()) * 2) / 3;
 											
 											if (iDefensivePower < ((iOurPower * ((iPass > 1) ? AI_maxWarDistantPowerRatio() : AI_maxWarNearbyPowerRatio())) / 100))
 											{
@@ -4864,7 +4864,7 @@ void CvTeamAI::AI_doWar()
 									{
 										if (AI_isLandTarget((TeamTypes)iI) || (AI_isAnyCapitalAreaAlone() && GET_TEAM((TeamTypes)iI).AI_isAnyCapitalAreaAlone()))
 										{
-											if (GET_TEAM((TeamTypes)iI).getDefensivePower() < ((iOurPower * AI_limitedWarPowerRatio()) / 100))
+											if (GET_TEAM((TeamTypes)iI).getDefensivePower(getID()) < ((iOurPower * AI_limitedWarPowerRatio()) / 100))
 											{
 												iValue = AI_startWarVal((TeamTypes)iI);
 
@@ -4944,9 +4944,9 @@ void CvTeamAI::AI_doWar()
 													}
 												}
 
-												FAssert(GET_TEAM((TeamTypes)iI).getPower(true) == GET_TEAM((TeamTypes)iI).getDefensivePower() || GET_TEAM((TeamTypes)iI).isAVassal());
+												FAssert(GET_TEAM((TeamTypes)iI).getPower(true) == GET_TEAM((TeamTypes)iI).getDefensivePower(getID()) || GET_TEAM((TeamTypes)iI).isAVassal());
 
-												if (((GET_TEAM((TeamTypes)iI).getDefensivePower() * 3) / 2) < iDogpilePower)
+												if (((GET_TEAM((TeamTypes)iI).getDefensivePower(getID()) * 3) / 2) < iDogpilePower)
 												{
 													iValue = AI_startWarVal((TeamTypes)iI);
 
