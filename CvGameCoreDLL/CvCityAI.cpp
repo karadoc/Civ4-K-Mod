@@ -3773,6 +3773,21 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						+ (std::max(0, iBuildingActualHealth - iBadHealth) * iHealthModifier);
 				}*/
 				iValue += iBuildingActualHealth * iHealthModifier;
+
+				// If the GW threshold has been reached,
+				// add some additional value for pollution reduction
+				// Note. health benefits have already been evaluated
+				if (iBad < 0 && GC.getGameINLINE().getGlobalWarmingIndex() > 0)
+				{
+					int iCleanValue = -2*iBad;
+
+					iCleanValue *= (100 + 5*kOwner.calculateGwPercentAnger());
+					iCleanValue /= 100;
+
+					FAssert(iCleanValue >= 0);
+
+					iValue += iCleanValue;
+				}
 /*
 ** K-Mod end
 */
@@ -4886,14 +4901,17 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 				}
 				
-				if (iFocusFlags & BUILDINGFOCUS_ESPIONAGE || (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && (iFocusFlags & BUILDINGFOCUS_CULTURE)))
+				//if (iFocusFlags & BUILDINGFOCUS_ESPIONAGE || (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && (iFocusFlags & BUILDINGFOCUS_CULTURE)))
+				// K-Mod: the "no espionage" stuff is already taken into account in the culture section.
+				if (iFocusFlags & BUILDINGFOCUS_ESPIONAGE && !GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 				{
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      01/09/10                                jdog5000      */
 /*                                                                                              */
 /* City AI                                                                                      */
 /************************************************************************************************/
-					iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE) * getBaseCommerceRate(COMMERCE_ESPIONAGE)) / 80);
+// K-Mod, changed this section.
+					iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE) * getBaseCommerceRate(COMMERCE_ESPIONAGE)) / 50);
 					
 					if (iTempValue != 0)
 					{
@@ -4911,9 +4929,9 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 						iValue += iTempValue;
 					}
-					iTempValue = (kBuilding.getCommerceChange(COMMERCE_ESPIONAGE) * 1);
-					iTempValue += (kBuilding.getObsoleteSafeCommerceChange(COMMERCE_ESPIONAGE) * 1);
-					iTempValue *= 100 + kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE);
+					iTempValue = (kBuilding.getCommerceChange(COMMERCE_ESPIONAGE) * 2);
+					iTempValue += (kBuilding.getObsoleteSafeCommerceChange(COMMERCE_ESPIONAGE) * 2);
+					iTempValue *= 100 + getTotalCommerceRateModifier(COMMERCE_ESPIONAGE) + kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE);
 					iValue += iTempValue / 100;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
