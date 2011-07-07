@@ -99,4 +99,8 @@
 		<DefineName>BONUS_OBSOLETE_VALUE_MODIFIER</DefineName>
 		<iDefineIntVal>150</iDefineIntVal>
 	</Define>-->
+	<Define>
+		<DefineName>WARLORD_EXTRA_EXPERIENCE_PER_UNIT_PERCENT</DefineName>
+		<iDefineIntVal>10</iDefineIntVal> <!-- increased from 0 -->
+	</Define>
 </Civ4Defines>

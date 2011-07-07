@@ -7086,7 +7086,9 @@ bool CvUnit::giveExperience()
 
 int CvUnit::getStackExperienceToGive(int iNumUnits) const
 {
-	return (m_pUnitInfo->getLeaderExperience() * (100 + std::min(50, (iNumUnits - 1) * GC.getDefineINT("WARLORD_EXTRA_EXPERIENCE_PER_UNIT_PERCENT")))) / 100;
+	//return (m_pUnitInfo->getLeaderExperience() * (100 + std::min(50, (iNumUnits - 1) * GC.getDefineINT("WARLORD_EXTRA_EXPERIENCE_PER_UNIT_PERCENT")))) / 100;
+	// K-Mod, +50% is too low as a maximum. I think 10 _units_ is more reasonable.
+	return (m_pUnitInfo->getLeaderExperience() * (100 + std::min(10, (iNumUnits - 1)) * GC.getDefineINT("WARLORD_EXTRA_EXPERIENCE_PER_UNIT_PERCENT"))) / 100;
 }
 
 int CvUnit::upgradePrice(UnitTypes eUnit) const
