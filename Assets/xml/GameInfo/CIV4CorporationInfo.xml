@@ -30,7 +30,7 @@
 				<iCommerceProduced>0</iCommerceProduced>
 			</CommercesProduced>
 			<YieldsProduced>
-				<iYieldProduced>75</iYieldProduced>
+				<iYieldProduced>100</iYieldProduced>
 			</YieldsProduced>
 			<Button>,Art/Interface/Buttons/TechTree/Corporation.dds,Art/Interface/Buttons/Beyond_the_Sword_Atlas.dds,1,6</Button>
 			<MovieFile>NONE</MovieFile>

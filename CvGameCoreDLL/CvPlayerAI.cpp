@@ -4421,7 +4421,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			// Often, an improvment only becomes viable after it gets the tech bonus.
 			// So it's silly to score the bonus proportionally to how many of the improvements we already have.
 			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK)
-				* (getImprovementCount((ImprovementTypes)iJ)+getNumCities()) * 70);
+				* (getImprovementCount((ImprovementTypes)iJ)+2*getNumCities()) * 35);
 			// This new version is still bork, but at least it won't be worthless.
 
 			iTempValue *= AI_yieldWeight((YieldTypes)iK);

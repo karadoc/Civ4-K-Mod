@@ -7272,10 +7272,8 @@ int CvPlayer::calculateGwPercentAnger() const
 	iResponsibilityFactor /= std::max(1, GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()));
 	iResponsibilityFactor *= GC.getGameINLINE().calculateGwSustainabilityThreshold();
 	iResponsibilityFactor /= std::max(1, iGlobalPollution - iGlobalDefence);
-	// square it, to increase its importance
-	iResponsibilityFactor *= iResponsibilityFactor;
-	iResponsibilityFactor /= 100;
-
+	// amplify the affects
+	iResponsibilityFactor = std::max(0, 2*iResponsibilityFactor-100);
 
 	int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
 	iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100

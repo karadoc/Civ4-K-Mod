@@ -4071,9 +4071,13 @@ int CvGame::calculateGwSeverityRating() const
 	// but since that is impractical, I've just made an ad-hoc formula with a similar shape.
 
 	// Note: watch out for integer overflow and rounding errors.
-	//int iRating = 100-100000/(1000+(100 * GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
-	// return 100-100000/(1000+(GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,(4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots())/(100 * GC.getDefineINT("GLOBAL_WARMING_PROB"))))));
-	return 100-1000/(10+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
+
+	// old version
+	// return 100-1000/(10+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
+
+	// new version: lower at the start, higher at the end.
+	const long x = GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()));
+	return 100L - 12000L/(120L+x*x);
 }
 /*
 ** K-mod end
