@@ -13086,6 +13086,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				int iCityHealth = pCity->goodHealth() - pCity->badHealth(false, 0);
 				int iBaseUnhealth = GC.getEspionageMissionInfo(eMission).getCityPoisonWaterCounter();
 
+				// K-Mod: fixing some "wtf".
+				/*
 				int iAvgFoodShortage = std::max(0, iBaseUnhealth - iCityHealth) - pCity->foodDifference();
 				iAvgFoodShortage += std::max(0, iBaseUnhealth/2 - iCityHealth) - pCity->foodDifference();
 				
@@ -13094,6 +13096,15 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				if( iAvgFoodShortage > 0 )
 				{
 					iValue += 8 * iAvgFoodShortage * iAvgFoodShortage;
+				}*/
+				int iAvgFoodShortage = std::max(0, iBaseUnhealth - iCityHealth) - pCity->foodDifference();
+				iAvgFoodShortage += std::max(0, -iCityHealth) - pCity->foodDifference();
+				
+				iAvgFoodShortage /= 2;
+				
+				if( iAvgFoodShortage > 0 )
+				{
+					iValue += 4 * iAvgFoodShortage * iBaseUnhealth;
 				}
 			}
 		}
@@ -13113,7 +13124,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				
 				if (iAvgUnhappy < 0)
 				{
-					iValue += 14 * abs(iAvgUnhappy) * iBaseAnger;
+					iValue += 10 * abs(iAvgUnhappy) * iBaseAnger;// down from 14
 				}
 			}
 		}
