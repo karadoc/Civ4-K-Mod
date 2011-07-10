@@ -4537,6 +4537,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if ((CommerceTypes)iI == COMMERCE_CULTURE)
 					{
+						// K-Mod. + 2 * foreign culture percent.
+						iTempValue *= 300 - 2*calculateCulturePercent(getOwner());
+						iTempValue /= 100;
+						// K-Mod end
 					    if (bCulturalVictory1)
 					    {
 					        iTempValue *= 2;					        
