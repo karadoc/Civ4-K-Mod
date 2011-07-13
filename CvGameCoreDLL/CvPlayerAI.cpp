@@ -12185,7 +12185,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		// suppose pop pollution is 1/3 of total, and current relative contribution is around 100%
 		// and anger percent scales like 2* relative contribution...
 		// anger percent reduction will then be around (kCivic.getUnhealthyPopulationModifier()*2/3)%
-		int iCleanValue = (getNumCities() * 10 * AI_getHappinessWeight(ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*calculateGwPercentAnger()*2,300), 1, true)) / 100;
+		int iCleanValue = (getNumCities() * 12 * AI_getHappinessWeight(ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*calculateGwPercentAnger()*2,300), 1, true)) / 100;
 		// This isn't a big reduction; and it should be the only part of this evaluation.
 		// Maybe I'll add more later; such as some flavour factors.
 
@@ -12303,6 +12303,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	
 	if (kCivic.getWarWearinessModifier() != 0)
 	{
+#if 0 // K-Mod: commenting out the old code
 		int iAngerPercent = getWarWearinessPercentAnger();
 		int iPopulation = 3 + (getTotalPopulation() / std::max(1, getNumCities()));
 
@@ -12322,6 +12323,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 /* UNOFFICIAL_PATCH                        END                                                  */
 /************************************************************************************************/
 		}
+#endif
+		// K-Mod; my version:
+		iValue += (11 * getNumCities() * AI_getHappinessWeight(ROUND_DIVIDE(getWarWearinessPercentAnger() * -getWarWearinessModifier(), GC.getPERCENT_ANGER_DIVISOR()), 1, true)) / 100;
 	}
 	
 	iValue += (kCivic.getNonStateReligionHappiness() * (iTotalReligonCount - iHighestReligionCount) * 5);
@@ -12438,6 +12442,21 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		iValue += iTempValue;
 	}
 
+	// K-Mod: count bonus specialists,
+	// so that we can more accurately gauge the representation bonus
+	int iTotalBonusSpecialists = 0;
+
+	{
+		int iLoop;
+		CvCity* pLoopCity;
+		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			iTotalBonusSpecialists += pLoopCity->getNumGreatPeople();
+			iTotalBonusSpecialists += pLoopCity->totalFreeSpecialists();
+		}
+	}
+	// K-Mod end
+
 	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
 		iTempValue = 0;
@@ -12452,7 +12471,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 
 		// Representation
-		iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * getTotalPopulation()) / 15);
+		//iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * getTotalPopulation()) / 15);
+		// K-Mod
+		iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * (getTotalPopulation()+14*iTotalBonusSpecialists)) / 14);
 
 		iTempValue *= AI_commerceWeight((CommerceTypes)iI);
 
