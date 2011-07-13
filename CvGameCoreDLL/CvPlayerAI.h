@@ -521,8 +521,8 @@ protected:
 	int AI_getStrategyHash() const;
 	void AI_calculateAverages() const;
 	
-	int AI_getHappinessWeight(int iHappy, int iExtraPop) const;
-	int AI_getHealthWeight(int iHealth, int iExtraPop) const;
+	int AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent=false) const;
+	int AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent=false) const;
 	
 	void AI_convertUnitAITypesForCrush();
 	int AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTriggeredData) const;

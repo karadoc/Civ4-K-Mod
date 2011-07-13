@@ -526,13 +526,19 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 /* City AI                                                                                      */
 /************************************************************************************************/
 		// Scale up value for civs/civics with bonuses
+	// K-Mod... moved this to reduce rounding errors.
+		/*
 		iGreatPeopleRate *= (100 + GET_PLAYER(getOwnerINLINE()).getGreatPeopleRateModifier());
 		iGreatPeopleRate /= 100;
+		*/
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
 		iTempValue = (iGreatPeopleRate * iGPPValue);
+	// K-Mod here's where I moved it to
+		iTempValue *= (100 + GET_PLAYER(getOwnerINLINE()).getGreatPeopleRateModifier());
+		iTempValue /= 100;
 		
 //		if (isHuman() && (getGreatPeopleUnitRate(iGreatPeopleType) == 0)
 //			&& (getForceSpecialistCount(eSpecialist) == 0) && !AI_isEmphasizeGreatPeople())
@@ -569,7 +575,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				CvUnitInfo& kUnitInfo = GC.getUnitInfo(eGreatPeopleUnit);
 				if (kUnitInfo.getGreatWorkCulture() > 0)
 				{
-					iTempValue += kUnitInfo.getGreatWorkCulture() / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 200 : 350);
+					iTempValue += kUnitInfo.getGreatWorkCulture() * (std::max(iTotalEras/2 + 1, (int)GET_PLAYER(getOwnerINLINE()).getCurrentEra())) / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 200 : 350);
 				}
 			}
 		}
@@ -2859,7 +2865,9 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 
 		if (bPrimaryArea)
 		{
-			aiUnitAIVal[UNITAI_ICBM] += std::max((GET_PLAYER(getOwnerINLINE()).getTotalPopulation() / 25), ((GC.getGameINLINE().countCivPlayersAlive() + GC.getGameINLINE().countTotalNukeUnits()) / (GC.getGameINLINE().countCivPlayersAlive() + 1)));
+			//aiUnitAIVal[UNITAI_ICBM] += std::max((GET_PLAYER(getOwnerINLINE()).getTotalPopulation() / 25), ((GC.getGameINLINE().countCivPlayersAlive() + GC.getGameINLINE().countTotalNukeUnits()) / (GC.getGameINLINE().countCivPlayersAlive() + 1)));
+			// K-Mod
+			aiUnitAIVal[UNITAI_ICBM] += std::max((GET_PLAYER(getOwnerINLINE()).getTotalPopulation() / 25), ((GC.getGameINLINE().countCivPlayersAlive() + GC.getGameINLINE().countTotalNukeUnits() + GC.getGameINLINE().getNukesExploded()) / (GC.getGameINLINE().countCivPlayersAlive() + 1)));
 		}
 	}
 
@@ -9719,6 +9727,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				{
 					iCommerceValue += (15 * aiCommerceYieldsTimes100[iI]) / 100;
 				}
+				// K-Mod: a boost for cities that are being culture pressed:
+				iCommerceWeight *= 400 - 3*calculateCulturePercent(getOwner());
+				iCommerceWeight /= 100;
 			}
 			iCommerceValue += (iCommerceWeight * (aiCommerceYieldsTimes100[iI] * iBaseCommerceValue) * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI)) / 1000000;
 		}

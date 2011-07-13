@@ -12175,9 +12175,22 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 */
 	//iValue += ((kCivic.isNoUnhealthyPopulation()) ? (getTotalPopulation() / 3) : 0);
 	//iValue += (-kCivic.getUnhealthyPopulationModifier() * getTotalPopulation()) / 100;
-	iValue += (getNumCities() * 6 * AI_getHealthWeight(ROUND_DIVIDE(20*-kCivic.getUnhealthyPopulationModifier(),100), 1)) / 100;
+	iValue += (getNumCities() * 6 * AI_getHealthWeight(-kCivic.getUnhealthyPopulationModifier(), 1, true)) / 100;
 	// c.f	iValue += (getNumCities() * 6 * AI_getHealthWeight(kCivic.getExtraHealth(), 1)) / 100;
-	// and just pretend all cities have 20 population. (remember that we also like the reduced polution...)
+
+	// If the GW threshold has been reached, increase the value.
+	if (GC.getGameINLINE().getGlobalWarmingIndex() > 0)
+	{
+		// estimate the happiness boost...
+		// suppose pop pollution is 1/3 of total, and current relative contribution is around 100%
+		// and anger percent scales like 2* relative contribution...
+		// anger percent reduction will then be around (kCivic.getUnhealthyPopulationModifier()*2/3)%
+		int iCleanValue = (getNumCities() * 10 * AI_getHappinessWeight(ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*calculateGwPercentAnger()*2,300), 1, true)) / 100;
+		// This isn't a big reduction; and it should be the only part of this evaluation.
+		// Maybe I'll add more later; such as some flavour factors.
+
+		iValue += iCleanValue;
+	}
 // K-Mod end
 	if (bWarPlan)
 	{
@@ -21535,7 +21548,7 @@ int CvPlayerAI::AI_getPlotCanalValue(CvPlot* pPlot) const
 //This returns a positive number equal approximately to the sum
 //of the percentage values of each unit (there is no need to scale the output by iHappy)
 //100 * iHappy means a high value.
-int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop) const
+int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent) const
 {
 	int iWorstHappy = 0;
 	int iBestHappy = 0;
@@ -21556,7 +21569,8 @@ int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop) const
 		
 		iCityHappy -= std::max(0, pLoopCity->getCommerceHappiness());
 		int iHappyNow = iCityHappy;
-		int iHappyThen = iCityHappy + iHappy;
+		int iHappyThen = iCityHappy +
+			(bPercent ? ROUND_DIVIDE(pLoopCity->getPopulation()*iHappy, 100) : iHappy);
 		
 		//Integration
 		int iTempValue = (((100 * iHappyThen - 10 * iHappyThen * iHappyThen)) - (100 * iHappyNow - 10 * iHappyNow * iHappyNow));
@@ -21591,7 +21605,7 @@ int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop) const
 	return (0 == iCount) ? 50 * iHappy : iValue / iCount;
 }
 
-int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop) const
+int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent) const
 {
 	int iWorstHealth = 0;
 	int iBestHealth = 0;
@@ -21611,7 +21625,8 @@ int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop) const
 		int iCityHealth = pLoopCity->goodHealth() - pLoopCity->badHealth(false, iExtraPop);
 		
 		int iHealthNow = iCityHealth;
-		int iHealthThen = iCityHealth + iHealth;
+		int iHealthThen = iCityHealth +
+			(bPercent ? ROUND_DIVIDE(pLoopCity->getPopulation()*iHealth, 100) : iHealth);
 		
 		//Integration
 		int iTempValue = (((100 * iHealthThen - 6 * iHealthThen * iHealthThen)) - (100 * iHealthNow - 6 * iHealthNow * iHealthNow));

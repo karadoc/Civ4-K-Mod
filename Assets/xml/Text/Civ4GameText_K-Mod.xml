@@ -13,6 +13,14 @@
 		<Italian>[SPACE]per[SPACE]</Italian>
 		<Spanish>[SPACE]por[SPACE]</Spanish>
 	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_UNIT_GREAT_WORK</Tag>
+		<English>[ICON_BULLET]Can Create a Great Work (%D1_Change[ICON_CULTURE] per era)</English>
+		<French>[ICON_BULLET]Peut cr&#233;er un chef d'oeuvre (%D1_Change[ICON_CULTURE] par epoque)</French>
+		<German>[ICON_BULLET]Kann ein Gro&#223;es Bauwerk errichten (%D1_Change[ICON_CULTURE] pro zeitalter)</German>
+		<Italian>[ICON_BULLET]Pu&#242; creare una Grande Opera (%D1_Change[ICON_CULTURE] per era)</Italian>
+		<Spanish>[ICON_BULLET]Puede crear una gran obra (%D1_Change [ICON_CULTURE] por &#233;poca)</Spanish>
+	</TEXT>
 	<!-- K-Mod trade culture -->
 	<TEXT>
 		<Tag>TXT_KEY_MISC_HELP_TRADE_CULTURE</Tag>
