@@ -223,6 +223,7 @@ public:
 	int cultureDistance(int iDX, int iDY) const;														// Exposed to Python
 	int cultureStrength(PlayerTypes ePlayer) const;								// Exposed to Python					 
 	int cultureGarrison(PlayerTypes ePlayer) const;								// Exposed to Python					 
+	int culturePressureFactor() const; // K-Mod
 																																		
 	int getNumBuilding(BuildingTypes eIndex) const;									// Exposed to Python					
 	int getNumActiveBuilding(BuildingTypes eIndex) const;						// Exposed to Python

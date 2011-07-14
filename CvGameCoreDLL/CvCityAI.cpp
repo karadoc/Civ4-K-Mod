@@ -575,7 +575,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				CvUnitInfo& kUnitInfo = GC.getUnitInfo(eGreatPeopleUnit);
 				if (kUnitInfo.getGreatWorkCulture() > 0)
 				{
-					iTempValue += kUnitInfo.getGreatWorkCulture() * (std::max(iTotalEras/2 + 1, (int)GET_PLAYER(getOwnerINLINE()).getCurrentEra())) / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 200 : 350);
+					iTempValue += kUnitInfo.getGreatWorkCulture() * (std::max(2*iTotalEras/3, (int)GET_PLAYER(getOwnerINLINE()).getCurrentEra())) / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 200 : 350);
 				}
 			}
 		}
@@ -4545,8 +4545,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if ((CommerceTypes)iI == COMMERCE_CULTURE)
 					{
-						// K-Mod. + 2 * foreign culture percent.
-						iTempValue *= 300 - 2*calculateCulturePercent(getOwner());
+						// K-Mod
+						iTempValue *= culturePressureFactor();
 						iTempValue /= 100;
 						// K-Mod end
 					    if (bCulturalVictory1)
@@ -4586,6 +4586,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					int iCommerceMultiplierValue = iCommerceModifier * iBaseCommerceRate;
 					if (((CommerceTypes) iI) == COMMERCE_CULTURE && iCommerceModifier != 0)
 					{
+						// K-Mod: bug fix, and improvement. (the old code was missing /= 100, and it was too conditional)
+						iCommerceMultiplierValue *= culturePressureFactor();
+						iCommerceMultiplierValue /= 100;
+
 						if (bCulturalVictory1)
 						{							
 							// if this is one of our top culture cities, then we want to build this here first!
@@ -4642,7 +4646,9 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							iCommerceMultiplierValue /= 15;
 
 							// increase priority if we need culture oppressed city
-							iCommerceMultiplierValue *= (100 - calculateCulturePercent(getOwnerINLINE()));
+							// K-Mod: moved this to outside of the current "if".
+							// It should still apply even when going for a cultural victory!
+							//iCommerceMultiplierValue *= (100 - calculateCulturePercent(getOwnerINLINE()));
 						}
 					}
 					else
@@ -9728,7 +9734,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					iCommerceValue += (15 * aiCommerceYieldsTimes100[iI]) / 100;
 				}
 				// K-Mod: a boost for cities that are being culture pressed:
-				iCommerceWeight *= 400 - 3*calculateCulturePercent(getOwner());
+				iCommerceWeight *= culturePressureFactor();
 				iCommerceWeight /= 100;
 			}
 			iCommerceValue += (iCommerceWeight * (aiCommerceYieldsTimes100[iI] * iBaseCommerceValue) * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI)) / 1000000;

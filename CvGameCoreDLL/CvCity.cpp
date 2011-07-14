@@ -4990,6 +4990,23 @@ int CvCity::cultureGarrison(PlayerTypes ePlayer) const
 	return iGarrison;
 }
 
+// K-Mod
+int CvCity::culturePressureFactor() const
+{
+	int iAnswer = 100;
+	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	{
+		CvPlot* pLoopPlot = getCityIndexPlot(iI);
+
+		if (pLoopPlot != NULL)
+		{
+			int iForeignCulture = 100 - pLoopPlot->calculateTeamCulturePercent(getTeam());
+			iAnswer += (iForeignCulture * iForeignCulture) / 100;
+			// use isWithinCultureRange? Maybe later.
+		}
+	}
+	return iAnswer;
+}
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const
 {
