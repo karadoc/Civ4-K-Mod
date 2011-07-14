@@ -12169,23 +12169,31 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	}
 /*
 ** K-Mod.
-** The evaluation of my new unhealthiness modifier is just as shonky as everything else here...
-** I guess I'll just test it and see how much the AI likes the new environmentalism!
-** Ideally it should base the value on average unhealthiness, number of cities, and global warming effects
+** evaluation of my new unhealthiness modifier
 */
-	//iValue += ((kCivic.isNoUnhealthyPopulation()) ? (getTotalPopulation() / 3) : 0);
-	//iValue += (-kCivic.getUnhealthyPopulationModifier() * getTotalPopulation()) / 100;
 	iValue += (getNumCities() * 6 * AI_getHealthWeight(-kCivic.getUnhealthyPopulationModifier(), 1, true)) / 100;
 	// c.f	iValue += (getNumCities() * 6 * AI_getHealthWeight(kCivic.getExtraHealth(), 1)) / 100;
 
-	// If the GW threshold has been reached, increase the value.
+	// If the GW threshold has been reached, increase the value based on GW anger
 	if (GC.getGameINLINE().getGlobalWarmingIndex() > 0)
 	{
 		// estimate the happiness boost...
 		// suppose pop pollution is 1/3 of total, and current relative contribution is around 100%
 		// and anger percent scales like 2* relative contribution...
 		// anger percent reduction will then be around (kCivic.getUnhealthyPopulationModifier()*2/3)%
-		int iCleanValue = (getNumCities() * 12 * AI_getHappinessWeight(ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*calculateGwPercentAnger()*2,300), 1, true)) / 100;
+
+		// Unfortunately, since adopting this civic will lower the very same anger percent that is giving the civic value...
+		// the civic will be valued lower as soon as it is adopted. :(
+		// Fixing this problem (and others like it) is a bit tricky. For now, I'll just try to fudge around it.
+		int iGwAnger = calculateGwPercentAnger();
+		if (isCivic(eCivic)) // Fudge factor
+		{
+			iGwAnger *= 100;
+			iGwAnger /= 100 - 2*kCivic.getUnhealthyPopulationModifier()/3;
+			// Note, this fudge factor is actually pretty good at estimating what the GwAnger would have been.
+			// But it doesn't fix the problem. Happiness and healthiness are both valued more highly when you don't have them!
+		}
+		int iCleanValue = (getNumCities() * 12 * AI_getHappinessWeight(ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*iGwAnger*2,300), 1, true)) / 100;
 		// This isn't a big reduction; and it should be the only part of this evaluation.
 		// Maybe I'll add more later; such as some flavour factors.
 
@@ -12201,6 +12209,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	iValue += (kCivic.getFreeSpecialist() * getNumCities() * 12);
 	iValue += (kCivic.getTradeRoutes() * (std::max(0, iConnectedForeignCities - getNumCities() * 3) * 6 + (getNumCities() * 2))); 
 	iValue += -((kCivic.isNoForeignTrade()) ? (iConnectedForeignCities * 3) : 0);
+
+	/* original bts code
 	if (kCivic.isNoCorporations())
 	{
 		iValue -= countHeadquarters() * (40 + 3 * getNumCities());
@@ -12229,7 +12239,138 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 		iValue += (-kCivic.getCorporationMaintenanceModifier() * (iHQCount * (25 + getNumCities() * 2) + iCorpCount * 7)) / 25;
 
+	}*/
+
+	// Corporations (K-Mod edition!)
+	if (kCivic.isNoCorporations() || kCivic.isNoForeignCorporations() || kCivic.getCorporationMaintenanceModifier() != 0)
+	{
+		for (CorporationTypes eCorp = (CorporationTypes)0; eCorp < GC.getNumCorporationInfos(); eCorp=(CorporationTypes)(eCorp+1))
+		{
+			if (!GC.getGameINLINE().isCorporationFounded(eCorp))
+				continue;
+
+			bool bPlayerHQ = false;
+			bool bTeamHQ = false;
+			if (hasHeadquarters(eCorp))
+			{
+				bPlayerHQ = true;
+				bTeamHQ = true;
+			}
+			else if (GET_TEAM(getTeam()).hasHeadquarters(eCorp))
+			{
+				bTeamHQ = true;
+			}
+
+			int iBonuses = 0;
+			int iCities = countCorporations(eCorp);
+			int iMaintenance = 0;
+			// If the HQ is ours, assume we will spread the corp. If it is not our, assume we don't care.
+			if (bTeamHQ)
+			{
+				iCities += (bPlayerHQ ?2 :1)*getNumCities();
+				iCities /= (bPlayerHQ ?3 :2);
+			}
+
+			for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
+			{
+				BonusTypes eBonus = (BonusTypes)GC.getCorporationInfo(eCorp).getPrereqBonus(i);
+				if (NO_BONUS != eBonus)
+				{
+					iBonuses += countOwnedBonuses(eBonus)+(bPlayerHQ ?1 :0);
+				}
+			}
+
+			for (iI = (CommerceTypes)0; iI < NUM_COMMERCE_TYPES; ++iI)
+			{
+				iTempValue = 0;
+
+				// loss of the headquarter bonus from our cities.
+				if (bTeamHQ &&
+					( (kCivic.isNoForeignCorporations() && !bPlayerHQ) ||
+					kCivic.isNoCorporations() ))
+				{
+					// This doesn't take city specific multiplier into account.
+					// Since HQ will probably have Wall St., lets boost it a bit.
+					iTempValue -= (3*GC.getCorporationInfo(eCorp).getHeadquarterCommerce((CommerceTypes)iI) * iCities)/2;
+				}
+
+				// loss of corp commerce bonuses
+				if (kCivic.isNoCorporations() || (kCivic.isNoForeignCorporations() && !bPlayerHQ))
+				{
+					iTempValue -= iCities * (GC.getCorporationInfo(eCorp).getCommerceProduced((CommerceTypes)iI) * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
+				}
+
+				iTempValue *= AI_commerceWeight((CommerceTypes)iI);
+				// Factors that are used in some other evaluation code.
+				if ((iI == COMMERCE_CULTURE) && bCultureVictory2)
+				{
+					iTempValue *= 2;
+					if (bCultureVictory3)
+					{
+						iTempValue *= 2;		        
+					}
+				}
+				iTempValue /= 100;
+
+				iValue += iTempValue;
+
+				iMaintenance += GC.getCorporationInfo(eCorp).getHeadquarterCommerce(iI) * iCities;
+			}
+			// loss of corp yield bonuses
+			if (kCivic.isNoCorporations() || (kCivic.isNoForeignCorporations() && !bPlayerHQ))
+			{
+				for (iI = 0; iI < NUM_YIELD_TYPES; ++iI)
+				{
+					iTempValue = -(iCities * GC.getCorporationInfo(eCorp).getYieldProduced((YieldTypes)iI) * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
+
+					// Factors that are used in some other evaluation code.
+					if (iI == YIELD_FOOD) 
+					{ 
+						iTempValue *= 3; 
+					} 
+					else if (iI == YIELD_PRODUCTION) 
+					{ 
+						iTempValue *= ((AI_avoidScience()) ? 6 : 2); 
+					} 
+					else if (iI == YIELD_COMMERCE) 
+					{ 
+						iTempValue *= ((AI_avoidScience()) ? 2 : 4);
+						iTempValue /= 3;
+					}
+
+					iTempValue *= AI_yieldWeight((YieldTypes)iI);
+					iTempValue /= 100;
+
+					iValue += iTempValue;
+				}
+			}
+
+			// loss of maintenance cost (money saved)
+			iTempValue = GC.getCorporationInfo(eCorp).getMaintenance() * iBonuses * iCities;
+			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
+			iTempValue /= 10000;
+			iTempValue += iMaintenance;
+			// devalue maintenance a bit, because it gets _reduced_ by buildings, not boosted like other commerce)
+			// neglect this multiplier
+			/* iMaintenance *= (getAveragePopulation() + 17);
+			iMaintenance /= 18; */
+			// We could probably divide by average wealth multiplier, or something like that.
+
+			iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
+			iTempValue /= 100;
+
+			if (kCivic.isNoCorporations() || (kCivic.isNoForeignCorporations() && !bPlayerHQ))
+			{
+				iValue += iTempValue;
+			}
+			else
+			{
+				iValue += (-kCivic.getCorporationMaintenanceModifier() * iTempValue)/100;
+			}
+		}
 	}
+	// K-Mod end
+
 
 	if (kCivic.getCivicPercentAnger() != 0)
 	{
@@ -12473,7 +12614,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		// Representation
 		//iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * getTotalPopulation()) / 15);
 		// K-Mod
-		iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * (getTotalPopulation()+14*iTotalBonusSpecialists)) / 14);
+		iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * (getTotalPopulation()+12*iTotalBonusSpecialists)) / 12);
 
 		iTempValue *= AI_commerceWeight((CommerceTypes)iI);
 
