@@ -2979,6 +2979,21 @@ int CvGame::countHumanPlayersAlive() const
 	return iCount;
 }
 
+// K-Mod
+int CvGame::countFreeTeamsAlive() const
+{
+	int iCount = 0;
+
+	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	{
+		if (GET_TEAM((TeamTypes)iI).isAlive() && !GET_TEAM((TeamTypes)iI).isAVassal())
+		{
+			iCount++;
+		}
+	}
+
+	return iCount;
+}
 
 int CvGame::countTotalCivPower()
 {

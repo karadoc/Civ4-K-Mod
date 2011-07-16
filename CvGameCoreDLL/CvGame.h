@@ -114,6 +114,7 @@ public:
 	DllExport int countCivTeamsAlive() const;																			// Exposed to Python
 	DllExport int countCivTeamsEverAlive() const;																	// Exposed to Python
 	DllExport int countHumanPlayersAlive() const;																	// Exposed to Python
+	int countFreeTeamsAlive() const; // K-Mod
 
 	int countTotalCivPower();																								// Exposed to Python
 	int countTotalNukeUnits();																							// Exposed to Python

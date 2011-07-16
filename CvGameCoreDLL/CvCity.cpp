@@ -4998,7 +4998,7 @@ int CvCity::culturePressureFactor() const
 	{
 		CvPlot* pLoopPlot = getCityIndexPlot(iI);
 
-		if (pLoopPlot != NULL)
+		if (pLoopPlot != NULL && pLoopPlot->isWithinCultureRange(getOwner()))
 		{
 			int iForeignCulture = 100 - pLoopPlot->calculateTeamCulturePercent(getTeam());
 			iAnswer += (iForeignCulture * iForeignCulture) / 100;
