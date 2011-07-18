@@ -1,5 +1,20 @@
-This is K-Mod version 0.94.
+This is K-Mod version 0.95.
 If you have any questions, comments, suggetsions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.95 changelist
+
++ Many AI improvements, including better evaluation of civics, more awareness of cultural pressure, proper understanding of how environmentalism will affect GW anger, better understanding of the difference between techs that 'reveal' a resource and techs that 'enable' a resource, tweaks for espionage mission choices and nuke building, and more.
++ Fixed a bug from the original BtS code, which sometimes caused the AI to include their own military power when counting the power of a potential military target.
++ Representation science bonus reduced from +3 to +2 (!!)
++ Representation upkeep reverted to 'medium'. [its a big nerf, and yet rep. is still very powerful.]
++ Rebalanced the build up of GW anger. Compared to the old version, GW anger will now build up slower but reach a slightly higher level in games that are severly affected by global warming.
++ Adjusted the affect of "relative contribution" on GW anger. The new version is slightly more sensitive to changes close to 100%, and less harsh on civs that have more than 150%.
++ The immediate experience boost from Great Generals (when used as a 'warlord') is now increased by 10% for each affected unit, up to a maximum of +100% (ie. 40 xp shared across 11 units).
++ Increased the food production by cerial mills corp, from 0.75 food per resource up to 1 food per resource. [Maybe now it will be able to chanange sushi co?]
++ Changed the sound effect for GW events, and for the signing of defensive pacts & permanent alliances.
++ A couple of minor UI changes.
 
 --
 
