@@ -2677,6 +2677,8 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 							aiYield[eYield] += aiYield[eYield] - iBasePlotYield;
 						}
 					}
+					// K-Mod: emphasise plots that give us extra city yield.
+					aiYield[eYield] -= pPlot->calculateNatureYield(eYield, NO_TEAM, true);
 				}
 			}
 
@@ -2714,20 +2716,11 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 			{
 				if (aiYield[YIELD_COMMERCE] > 1)
 				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/05/09                                jdog5000      */
-/*                                                                                              */
-/* Settler AI                                                                                   */
-/************************************************************************************************/
-/* orginal bts code
-					iTempValue += bIsCoastal ? 30 : -20;
-*/
-					// Upside is much higher based on multipliers above, with lighthouse a standard coast
-					// plot moves up into the higher multiplier category.  
-					iTempValue += bIsCoastal ? 40 + 10*aiYield[YIELD_COMMERCE] : -10*aiYield[YIELD_COMMERCE];
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+					/* orginal bts code
+					iTempValue += bIsCoastal ? 30 : -20; */
+					// K-Mod
+					iTempValue += bIsCoastal ? 10 + 10*aiYield[YIELD_COMMERCE] : -10*aiYield[YIELD_COMMERCE];
+
 					if (bIsCoastal && (aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION()))
 					{
 						iSpecialFoodPlus += 1;                    	
@@ -2740,10 +2733,22 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					}
 				}
 			}
+			// K-Mod
+			{
+				iTempValue += 15; // Don't let coast be worth more than grassland!
+			}
 
 			if (pLoopPlot->isRiver())
 			{
-				iTempValue += 10;
+				//iTempValue += 10;
+				// K-Mod
+				iTempValue += 15 + (pPlot->isRiver() ? 15 : 0);
+			}
+			// K-Mod
+			if (pLoopPlot->canHavePotentialIrrigation())
+			{
+				// in addition to the river bonus
+				iTempValue += 5 + (pLoopPlot->isFreshWater() ? 5 : 0);
 			}
 
 			if (iI == CITY_HOME_PLOT)
@@ -2920,23 +2925,6 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		// iValue += 200;
 		// K-Mod
 		iValue += 100;
-		if (pPlot->calculateNatureYield(YIELD_PRODUCTION, NO_TEAM, true) > 1)
-			iValue += 100;
-	}
-
-	if (pPlot->isRiver())
-	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/03/09                                jdog5000      */
-/*                                                                                              */
-/* Settler AI                                                                                   */
-/************************************************************************************************/
-		//iValue += 60;
-		// K-Mod
-		iValue += 100;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	}
 
 	if (pPlot->isFreshWater())
@@ -21023,6 +21011,23 @@ int CvPlayerAI::AI_getMinFoundValue() const
 	{
 		iValue *= 2;
 	}
+
+	// K-Mod. # of cities maintenance cost increase...
+	int iNumCitiesPercent = 100;
+	iNumCitiesPercent *= (getAveragePopulation() + 17);
+	iNumCitiesPercent /= 18;
+
+	iNumCitiesPercent *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getNumCitiesMaintenancePercent();
+	iNumCitiesPercent /= 100;
+
+	iNumCitiesPercent *= GC.getHandicapInfo(getHandicapType()).getNumCitiesMaintenancePercent();
+	iNumCitiesPercent /= 100;
+
+	// The marginal cost increase is roughly equal to double the cost of a current city...
+	// But we're really going to have to fudge it anyway, because the city value is in arbitrary units
+	// lets just say, each 'value point' is worth roughly 1/10 gold per turn.
+	iValue += iNumCitiesPercent * getNumCities() * 10;
+	// K-Mod end
 	
 	return iValue;
 }
