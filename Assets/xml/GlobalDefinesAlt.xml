@@ -103,4 +103,8 @@
 		<DefineName>WARLORD_EXTRA_EXPERIENCE_PER_UNIT_PERCENT</DefineName>
 		<iDefineIntVal>10</iDefineIntVal> <!-- increased from 0 -->
 	</Define>
+	<Define>
+		<DefineName>WARLORD_MAXIMUM_EXTRA_EXPERIENCE_PERCENT</DefineName>
+		<iDefineIntVal>100</iDefineIntVal> <!-- introduced by K-Mod -->
+	</Define>
 </Civ4Defines>

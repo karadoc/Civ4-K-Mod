@@ -5000,9 +5000,15 @@ int CvCity::culturePressureFactor() const
 
 		if (pLoopPlot != NULL && pLoopPlot->isWithinCultureRange(getOwner()))
 		{
-			int iForeignCulture = 100 - pLoopPlot->calculateTeamCulturePercent(getTeam());
-			iAnswer += (iForeignCulture * iForeignCulture) / 100;
-			// use isWithinCultureRange? Maybe later.
+			int iForeignCulture = 0;
+			for (int iP = 0; iP < MAX_PLAYERS; iP++)
+			{
+				if (GET_PLAYER((PlayerTypes)iP).isAlive() && GET_PLAYER((PlayerTypes)iP).getTeam() != getTeam())
+				{
+					int iForeignCulture = calculateCulturePercent((PlayerTypes)iP) / ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(GET_PLAYER((PlayerTypes)iP).getTeam()).isVassal(getTeam()))?2 :1);
+					iAnswer += (iForeignCulture * iForeignCulture) / 60;
+				}
+			}
 		}
 	}
 	return iAnswer;

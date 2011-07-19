@@ -12,7 +12,7 @@ v0.95 changelist
 + Rebalanced the build up of GW anger. Compared to the old version, GW anger will now build up slower but reach a slightly higher level in games that are severly affected by global warming.
 + Adjusted the affect of "relative contribution" on GW anger. The new version is slightly more sensitive to changes close to 100%, and less harsh on civs that have more than 150%.
 + The immediate experience boost from Great Generals (when used as a 'warlord') is now increased by 10% for each affected unit, up to a maximum of +100% (ie. 40 xp shared across 11 units).
-+ Increased the food production by cerial mills corp, from 0.75 food per resource up to 1 food per resource. [Maybe now it will be able to chanange sushi co?]
++ Increased the food production by cerial mills corp, from 0.75 food per resource up to 1 food per resource. [Maybe now it will be able to challenge sushi co?]
 + Changed the sound effect for GW events, and for the signing of defensive pacts & permanent alliances.
 + A couple of minor UI changes.
 
