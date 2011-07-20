@@ -2595,6 +2595,26 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 			eBonus = pLoopPlot->getBonusType((bStartingLoc) ? NO_TEAM : getTeam());
 			eBonusImprovement = NO_IMPROVEMENT;
 
+			// K-Mod
+			bool bRemoveableFeature = false;
+			bool bEventuallyRemoveableFeature = false;
+			if (eFeature != NO_FEATURE)
+			{
+				for (int i = 0; i < GC.getNumBuildInfos(); ++i)
+				{
+					if (GC.getBuildInfo((BuildTypes)i).isFeatureRemove(eFeature))
+					{
+						bEventuallyRemoveableFeature = true;
+						if (GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getBuildInfo((BuildTypes)i).getTechPrereq()))
+						{
+							bRemoveableFeature = true;
+							break;
+						}
+					}
+				}
+			}
+			// K-Mod end
+
 			int iCultureMultiplier;
             if (!pLoopPlot->isOwned() || (pLoopPlot->getOwnerINLINE() == getID()))
             {	
@@ -2638,7 +2658,8 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 			for (int iYieldType = 0; iYieldType < NUM_YIELD_TYPES; ++iYieldType)
 			{
 				YieldTypes eYield = (YieldTypes)iYieldType;
-				aiYield[eYield] = pLoopPlot->getYield(eYield);
+				//aiYield[eYield] = pLoopPlot->getYield(eYield);
+				aiYield[eYield] = pLoopPlot->calculateNatureYield(eYield, getTeam(), bEventuallyRemoveableFeature); // K-Mod
 
 				if (iI == CITY_HOME_PLOT)
 				{
@@ -2678,17 +2699,37 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 						}
 					}
 					// K-Mod: emphasise plots that give us extra city yield.
-					aiYield[eYield] -= pPlot->calculateNatureYield(eYield, NO_TEAM, true);
+					aiYield[eYield] -= pPlot->calculateNatureYield(eYield, NO_TEAM, bRemoveableFeature);
 				}
+				else // (not city tile), K-Mod: adjust for features
+				{
+					if (bEventuallyRemoveableFeature)
+					{
+						if (bRemoveableFeature)
+						{
+							iTempValue += 10 * GC.getFeatureInfo(eFeature).getYieldChange(eYield);
+						}
+						else
+						{
+							iTempValue -= 5;
+							if (GC.getFeatureInfo(eFeature).getYieldChange(eYield) < 0)
+							{
+								iTempValue += 30 * GC.getFeatureInfo(eFeature).getYieldChange(eYield);
+							}
+						}
+					}
+				}
+				// K-Mod end
 			}
 
-			if (iI == CITY_HOME_PLOT)
+			/*if (iI == CITY_HOME_PLOT)
 			{
 				iTempValue += aiYield[YIELD_FOOD] * 60;
 				iTempValue += aiYield[YIELD_PRODUCTION] * 60;
 				iTempValue += aiYield[YIELD_COMMERCE] * 40;
 			}
-			else if (aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
+			else if (aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())*/
+			if (iI == CITY_HOME_PLOT || aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION()) // K-Mod
 			{
 				iTempValue += aiYield[YIELD_FOOD] * 40;
 				iTempValue += aiYield[YIELD_PRODUCTION] * 40;
@@ -2719,7 +2760,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					/* orginal bts code
 					iTempValue += bIsCoastal ? 30 : -20; */
 					// K-Mod
-					iTempValue += bIsCoastal ? 10 + 10*aiYield[YIELD_COMMERCE] : -10*aiYield[YIELD_COMMERCE];
+					iTempValue += bIsCoastal ? 10*aiYield[YIELD_COMMERCE] : -10*aiYield[YIELD_COMMERCE];
 
 					if (bIsCoastal && (aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION()))
 					{
@@ -2733,16 +2774,12 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					}
 				}
 			}
-			// K-Mod
-			{
-				iTempValue += 15; // Don't let coast be worth more than grassland!
-			}
 
 			if (pLoopPlot->isRiver())
 			{
 				//iTempValue += 10;
 				// K-Mod
-				iTempValue += 15 + (pPlot->isRiver() ? 15 : 0);
+				iTempValue += 5 + (pPlot->isRiver() ? 15 : 0);
 			}
 			// K-Mod
 			if (pLoopPlot->canHavePotentialIrrigation())
@@ -4241,7 +4278,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	if (GC.getTechInfo(eTech).isMapCentering())
 	{
-		iValue += 100;
+		// K-Mod
+		//iValue += 100;
 	}
 
 	if (GC.getTechInfo(eTech).isMapVisible())
@@ -4394,7 +4432,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	if (GC.getTechInfo(eTech).isRiverTrade())
 	{
-		iValue += 1000;
+		//iValue += 1000;
+		iValue += 100; // K-Mod
 	}
 
 	/* ------------------ Tile Improvement Value  ------------------ */
@@ -21014,8 +21053,8 @@ int CvPlayerAI::AI_getMinFoundValue() const
 
 	// K-Mod. # of cities maintenance cost increase...
 	int iNumCitiesPercent = 100;
-	iNumCitiesPercent *= (getAveragePopulation() + 17);
-	iNumCitiesPercent /= 18;
+	//iNumCitiesPercent *= (getAveragePopulation() + 17);
+	//iNumCitiesPercent /= 18;
 
 	iNumCitiesPercent *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getNumCitiesMaintenancePercent();
 	iNumCitiesPercent /= 100;
@@ -21023,10 +21062,13 @@ int CvPlayerAI::AI_getMinFoundValue() const
 	iNumCitiesPercent *= GC.getHandicapInfo(getHandicapType()).getNumCitiesMaintenancePercent();
 	iNumCitiesPercent /= 100;
 
+	//iNumCitiesPercent *= std::max(0, getNumCitiesMaintenanceModifier() + 100);
+	//iNumCitiesPercent /= 100;
+
 	// The marginal cost increase is roughly equal to double the cost of a current city...
 	// But we're really going to have to fudge it anyway, because the city value is in arbitrary units
-	// lets just say, each 'value point' is worth roughly 1/10 gold per turn.
-	iValue += iNumCitiesPercent * getNumCities() * 10;
+	// lets just say each gold per turn is worth roughly 15 'value points'.
+	iValue += iNumCitiesPercent * getNumCities() * 15 / 100;
 	// K-Mod end
 	
 	return iValue;
