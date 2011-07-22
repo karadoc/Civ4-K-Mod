@@ -4994,24 +4994,25 @@ int CvCity::cultureGarrison(PlayerTypes ePlayer) const
 int CvCity::culturePressureFactor() const
 {
 	int iAnswer = 100;
+	const int iDivisor = 60;
+	iAnswer *= iDivisor;
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
 		CvPlot* pLoopPlot = getCityIndexPlot(iI);
 
 		if (pLoopPlot != NULL && pLoopPlot->isWithinCultureRange(getOwner()))
 		{
-			int iForeignCulture = 0;
 			for (int iP = 0; iP < MAX_PLAYERS; iP++)
 			{
 				if (GET_PLAYER((PlayerTypes)iP).isAlive() && GET_PLAYER((PlayerTypes)iP).getTeam() != getTeam())
 				{
-					int iForeignCulture = calculateCulturePercent((PlayerTypes)iP) / ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(GET_PLAYER((PlayerTypes)iP).getTeam()).isVassal(getTeam()))?2 :1);
-					iAnswer += (iForeignCulture * iForeignCulture) / 60;
+					int iForeignCulture = pLoopPlot->calculateCulturePercent((PlayerTypes)iP) / ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(GET_PLAYER((PlayerTypes)iP).getTeam()).isVassal(getTeam()))?2 :1);
+					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}
 		}
 	}
-	return iAnswer;
+	return iAnswer / iDivisor;
 }
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const

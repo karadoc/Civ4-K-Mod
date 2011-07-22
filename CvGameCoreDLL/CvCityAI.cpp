@@ -3475,6 +3475,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	int iLimitedWonderLimit = limitedWonderClassLimit(eBuildingClass);
 	bool bIsLimitedWonder = (iLimitedWonderLimit >= 0);
 
+	int iCountMaking = kOwner.getBuildingClassMaking(eBuildingClass); // K-Mod
+
 	ReligionTypes eStateReligion = kOwner.getStateReligion();
 
 	bool bAreaAlone = kOwner.AI_isAreaAlone(area());
@@ -4242,14 +4244,20 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				// is this building needed to build other buildings?
 				for (iI = 0; iI < GC.getNumBuildingInfos(); iI++)
 				{
-					int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(((BuildingTypes) iI), eBuildingClass);
+					//int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(((BuildingTypes) iI), eBuildingClass);
+					// K-Mod
+					int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(((BuildingTypes) iI), eBuildingClass, iCountMaking);
 
 					// if we need some of us to build iI building, and we dont need more than we have cities
 					if (iPrereqBuildings > 0 && iPrereqBuildings <= iNumCities)
 					{
 						// do we need more than what we are currently building?
-						if (iPrereqBuildings > kOwner.getBuildingClassCountPlusMaking(eBuildingClass))
+						//if (iPrereqBuildings > kOwner.getBuildingClassCountPlusMaking(eBuildingClass))
+						// K-Mod
+						iPrereqBuildings -= kOwner.getBuildingClassCountPlusMaking(eBuildingClass);
+						if (iPrereqBuildings > 0)
 						{
+							/* original bts code
 							iValue += (iNumCities * 3);
 
 							if (bCulturalVictory1)
@@ -4274,7 +4282,25 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 										}
 									}
 								}
+							}*/
+
+							// K-Mod, lets do it the long and slow way...
+							CvCity* pLoopCity;
+							int iLoop;
+							int iHighestValue = 0;
+							int iCanBuildPrereq = 0;
+							for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+							{
+								iHighestValue = std::max(pLoopCity->AI_buildingValue((BuildingTypes)iI, 0), iHighestValue);
+								if (canConstruct(eBuilding))
+									iCanBuildPrereq++;
 							}
+							int iBasePrereq = GC.getBuildingInfo((BuildingTypes)iI).getPrereqNumOfBuildingClass(eBuildingClass);
+							iTempValue = iHighestValue;
+							iTempValue *= iCanBuildPrereq + 3*iPrereqBuildings;
+							iTempValue /= iBasePrereq*(3*iCanBuildPrereq + iPrereqBuildings);
+							// That's between 1/iBasePrereq and 1/3*iBasePrereq, depending on # needed and # buildable
+							iValue += iTempValue;
 						}
 					}
 				}
@@ -4607,7 +4633,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							}
 							else
 							{
-								int iCountBuilt = kOwner.getBuildingClassCountPlusMaking(eBuildingClass);
+								//int iCountBuilt = kOwner.getBuildingClassCountPlusMaking(eBuildingClass);
 
 								// do we have enough buildings to build extras?
 								bool bHaveEnough = true;
@@ -4620,6 +4646,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 								for (iJ = 0; bHaveEnough && iJ < GC.getNumBuildingClassInfos(); iJ++)
 								{
+									// K-Mod: bug fix.
+									/* original bts code
 									// count excess the number of prereq buildings which do not have this building built for yet
 									int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eBuilding, (BuildingClassTypes) iJ, -iCountBuilt);
 									
@@ -4627,7 +4655,13 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 									if (iPrereqBuildings > 0 && kOwner.getBuildingClassCount((BuildingClassTypes) iJ) <  iPrereqBuildings)
 									{
 										bHaveEnough = false;
-									}
+									}*/
+
+									// Whatever that code was meant to do, I'm pretty sure it was wrong.
+									int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eBuilding, (BuildingClassTypes) iJ, iCountMaking);
+									if (kOwner.getBuildingClassCount((BuildingClassTypes) iJ) < iPrereqBuildings)
+										bHaveEnough = false;
+									// K-Mod end
 								}
 
 								// if we have enough and our rank is close to the top, then possibly build here too

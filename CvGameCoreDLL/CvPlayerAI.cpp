@@ -13322,7 +13322,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				
 				if( iAvgFoodShortage > 0 )
 				{
-					iValue += 4 * iAvgFoodShortage * iBaseUnhealth;
+					iValue += 3 * iAvgFoodShortage * iBaseUnhealth;
 				}
 			}
 		}
@@ -13342,7 +13342,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				
 				if (iAvgUnhappy < 0)
 				{
-					iValue += 10 * abs(iAvgUnhappy) * iBaseAnger;// down from 14
+					iValue += 8 * abs(iAvgUnhappy) * iBaseAnger;// down from 14
 				}
 			}
 		}
@@ -21067,8 +21067,9 @@ int CvPlayerAI::AI_getMinFoundValue() const
 
 	// The marginal cost increase is roughly equal to double the cost of a current city...
 	// But we're really going to have to fudge it anyway, because the city value is in arbitrary units
-	// lets just say each gold per turn is worth roughly 15 'value points'.
-	iValue += iNumCitiesPercent * getNumCities() * 15 / 100;
+	// lets just say each gold per turn is worth roughly 40 'value points'.
+	// In the future, this could be AI flavour based.
+	iValue += iNumCitiesPercent * getNumCities() * 40 / 100;
 	// K-Mod end
 	
 	return iValue;
