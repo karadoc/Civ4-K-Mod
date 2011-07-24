@@ -21,6 +21,9 @@ Here I'll list a few significant features. See changelog.txt for a more complete
  + Better AI (heavily modified)
  + BUG (heavily modified)
  + "unofficial patch" (well known bugfixes)
+ 
+== Better AI ==
+The BBAI mod was used as the starting point for the AI in K-Mod, but with each K-Mod patch comes further AI improvements. The AI in K-Mod is now noticebaly stronger than the AI in the BBAI mod.
 
 == New global warming system ==
 In standard BtS, global warming is a bit of a joke. It is triggered by the wrong things, you can't really do much to prevent it, and it hits the world in a harsh and unintuitive way. I've completely changed it.

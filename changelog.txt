@@ -1,5 +1,18 @@
-This is K-Mod version 0.95.
-If you have any questions, comments, suggetsions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+This is K-Mod version 0.96.
+If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.96 changelist
+
++ (This patch only has AI changes. There are no balance changes or new features.)
++ Improved the way the AI detects when it is being culture pressed
++ Taught the AI to understand the value of prerequisite buildings such as temples and universities.
++ Fixed a BtS AI bug related to cathedral building value.
++ Taught the AI to understand removable features (such as jungles) and the value of rivers when choosing city sites. (as well as few other city site evaluation tweaks)
++ The AI will now be a bit less enthusiastic about settling in useless places in the late-game.
++ Made a few minor changes to the AI tech evaluation function.
++ Made some further changes to the AI civic evaluation function.
 
 --
 
