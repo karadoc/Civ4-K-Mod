@@ -4291,16 +4291,24 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							int iCanBuildPrereq = 0;
 							for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 							{
-								iHighestValue = std::max(pLoopCity->AI_buildingValue((BuildingTypes)iI, 0), iHighestValue);
-								if (canConstruct(eBuilding))
+								if (canConstruct(eBuilding) && getProductionBuilding() != eBuilding)
 									iCanBuildPrereq++;
 							}
-							int iBasePrereq = GC.getBuildingInfo((BuildingTypes)iI).getPrereqNumOfBuildingClass(eBuildingClass);
-							iTempValue = iHighestValue;
-							iTempValue *= iCanBuildPrereq + 3*iPrereqBuildings;
-							iTempValue /= iBasePrereq*(3*iCanBuildPrereq + iPrereqBuildings);
-							// That's between 1/iBasePrereq and 1/3*iBasePrereq, depending on # needed and # buildable
-							iValue += iTempValue;
+							if (iCanBuildPrereq >= iPrereqBuildings)
+							{
+								for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+								{
+									if (canConstruct((BuildingTypes)iI, false, true) && getProductionBuilding() != iI)
+										iHighestValue = std::max(pLoopCity->AI_buildingValue((BuildingTypes)iI, 0), iHighestValue);
+								}
+
+								int iBasePrereq = GC.getBuildingInfo((BuildingTypes)iI).getPrereqNumOfBuildingClass(eBuildingClass);
+								iTempValue = iHighestValue;
+								iTempValue *= iCanBuildPrereq + 3*iPrereqBuildings;
+								iTempValue /= iBasePrereq*(3*iCanBuildPrereq + iPrereqBuildings);
+								// That's between 1/iBasePrereq and 1/3*iBasePrereq, depending on # needed and # buildable
+								iValue += iTempValue;
+							}
 						}
 					}
 				}
