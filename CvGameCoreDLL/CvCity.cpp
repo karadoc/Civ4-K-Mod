@@ -5012,7 +5012,11 @@ int CvCity::culturePressureFactor() const
 			}
 		}
 	}
-	return iAnswer / iDivisor;
+	// dull the effects in the late-game.
+	iAnswer *= GC.getNumEraInfos();
+	iAnswer /= GET_PLAYER(getOwnerINLINE()).getCurrentEra() + GC.getNumEraInfos();
+
+	return std::max(100, iAnswer / iDivisor);
 }
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const

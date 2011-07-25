@@ -2940,6 +2940,15 @@ void CvUnitAI::AI_attackCityMove()
 			{
 				return;
 			}
+			// K-Mod; sometimes you just need to blast them with collateral damage before they can do it to you!
+			// ... and please don't let them wipe out a massive stack just because we were too scared to fight back
+
+			// look. I don't want to spend too much time messing around with this. So let me just try an experimental heuristic... 
+			if (getGroup()->getNumUnits() > 1 &&
+				AI_anyAttack(1, 60/(getGroup()->getNumUnits()+1), 3+getGroup()->getNumUnits(), false))
+			{
+				return;
+			}
 		}
 	}
 

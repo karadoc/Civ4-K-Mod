@@ -21067,9 +21067,9 @@ int CvPlayerAI::AI_getMinFoundValue() const
 
 	// The marginal cost increase is roughly equal to double the cost of a current city...
 	// But we're really going to have to fudge it anyway, because the city value is in arbitrary units
-	// lets just say each gold per turn is worth roughly 40 'value points'.
+	// lets just say each gold per turn is worth roughly 60 'value points'.
 	// In the future, this could be AI flavour based.
-	iValue += iNumCitiesPercent * getNumCities() * 40 / 100;
+	iValue += iNumCitiesPercent * getNumCities() * 60 / 100;
 	// K-Mod end
 	
 	return iValue;
