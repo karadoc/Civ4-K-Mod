@@ -12178,7 +12178,7 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 	}
 	*/
 
-	// Experiemental culture profile...
+	// Experimental culture profile...
 	// Ae^(-bx). A = 10 (no effect), b = log(full_range_ratio)/range
 	// (iScale-1)(iDistance - iRange)^2/(iRange^2) + 1   // This approximates the exponential pretty well
 	const int iScale = 10;

@@ -13388,7 +13388,7 @@ int CvUnit::LFBgetAttackerRank(const CvUnit* pDefender, int& iUnadjustedRank) co
 		// No defender ... just use strength, but try to make it a number out of 1000
 		iUnadjustedRank = currCombatStr(NULL, NULL) / 5;
 	}
-	int iRank = LFBgetValueAdjustedOdds(iUnadjustedRank);
+	int iRank = LFBgetValueAdjustedOdds(iUnadjustedRank, false);
 
 	return iRank;
 }
@@ -13398,8 +13398,8 @@ int CvUnit::LFBgetDefenderRank(const CvUnit* pAttacker) const
 {
 	int iRank = LFBgetDefenderOdds(pAttacker);
 	// Don't adjust odds for value if attacker is limited in their damage (i.e: no risk of death)
-	if ((pAttacker != NULL) && (maxHitPoints() == pAttacker->combatLimit()))
-	iRank = LFBgetValueAdjustedOdds(iRank);
+	if ((pAttacker != NULL) && (maxHitPoints() <= pAttacker->combatLimit()))
+		iRank = LFBgetValueAdjustedOdds(iRank, true);
 
 	return iRank;
 }
@@ -13467,10 +13467,25 @@ int CvUnit::LFBgetDefenderOdds(const CvUnit* pAttacker) const
 }
 
 // Take the unadjusted odds and adjust them based on unit value
-int CvUnit::LFBgetValueAdjustedOdds(int iOdds) const
+int CvUnit::LFBgetValueAdjustedOdds(int iOdds, bool bDefender) const
 {
 	// Adjust odds based on value
 	int iValue = LFBgetRelativeValueRating();
+	// K-Mod: if we are defending, then let those with defensive promotions fight!
+	if (bDefender)
+	{
+		int iDef = LFGgetDefensiveValueAdjustment();
+		// I'm a little bit concerned that if a unit gets a bunch of promotions with an xp discount,
+		// that unit may end up being valued less than a completely inexperienced unit.
+		// Thus the experienced unit may end up being sacrificed to protect the rookie.
+
+		// To work around this, I'm putting in the following kludge / fudge...
+		while (iDef * iDef + 1 > getExperience())
+			iDef--;
+
+		iValue -= iDef;
+	}
+	// K-Mod end
 	long iAdjustment = -250;
 	if (GC.getLFBUseSlidingScale())
 		iAdjustment = (iOdds - 990);
@@ -13497,13 +13512,17 @@ int CvUnit::LFBgetRelativeValueRating() const
 			iValueRating += GC.getLFBBasedOnGeneral();
 
 	// Assign experience value in tiers
+	// (formula changed for K-Mod)
 	if (GC.getLFBBasedOnExperience() > 0)
 	{
-		int iTier = 10;
-		while (getExperience() >= iTier)
+		//int iTier = 10;
+		int iTier = 1;
+		//while (getExperience() >= iTier)
+		while (getExperience() >= iTier*iTier+1)
 		{
 			iValueRating += GC.getLFBBasedOnExperience();
-			iTier *= 2;
+			//iTier *= 2;
+			iTier++;
 		}
 	}
 
@@ -13518,6 +13537,58 @@ int CvUnit::LFBgetRelativeValueRating() const
 			iValueRating += GC.getLFBBasedOnHealer();
 
 	return iValueRating;
+}
+
+int CvUnit::LFGgetDefensiveValueAdjustment() const
+{
+	int iValue = 0;
+
+	for (int iI = 0; iI < GC.getNumPromotionInfos(); ++iI)
+	{
+		if (!isHasPromotion((PromotionTypes)iI))
+			continue;
+
+		CvPromotionInfo &kPromotion = GC.getPromotionInfo((PromotionTypes)iI);
+		bool bDefensive = false;
+
+		// Cities and hills
+		if ((kPromotion.getCityDefensePercent() > 0 && plot()->isCity()) ||
+			(kPromotion.getHillsDefensePercent() > 0 && plot()->isHills()))
+		{
+			bDefensive = true;
+		}
+		// Features
+		if (!bDefensive)
+		{
+			for (int iJ = 0; iJ < GC.getNumFeatureInfos(); ++iJ)
+			{
+				if (kPromotion.getFeatureDefensePercent(iJ) > 0 && plot()->getFeatureType() == iJ)
+				{
+					bDefensive = true;
+					break;
+				}
+			}
+		}
+		// Terrain
+		if (!bDefensive)
+		{
+			for (int iJ = 0; iJ < GC.getNumTerrainInfos(); ++iJ)
+			{
+				if (kPromotion.getTerrainDefensePercent(iJ) > 0 && plot()->getTerrainType() == iJ)
+				{
+					bDefensive = true;
+					break;
+				}
+			}
+		}
+
+		if (bDefensive)
+		{
+			iValue += GC.getLFBDefensiveAdjustment();
+		}
+	}
+
+	return iValue;
 }
 
 int CvUnit::LFBgetDefenderCombatOdds(const CvUnit* pAttacker) const

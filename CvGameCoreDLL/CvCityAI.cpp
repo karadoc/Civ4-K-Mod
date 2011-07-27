@@ -2500,7 +2500,7 @@ void CvCityAI::AI_chooseProduction()
 	if (iNumSpies < iNeededSpies)
 	{
 		//if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
-		if (AI_chooseUnit(UNITAI_SPY, 50*iNeededSpies / (3*iNumSpies+iNeededSpies)))
+		if (AI_chooseUnit(UNITAI_SPY, 30*iNeededSpies / (3*iNumSpies+iNeededSpies)))
 		{
 			return;
 		}

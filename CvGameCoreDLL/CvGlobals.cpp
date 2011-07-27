@@ -248,7 +248,7 @@ m_paMainMenus(NULL)
 ,m_iLFBBasedOnExperience(1)
 ,m_iLFBBasedOnLimited(1)
 ,m_iLFBBasedOnHealer(1)
-,m_iLFBBasedOnAverage(1)
+,m_iLFBDefensiveAdjustment(1)
 ,m_bLFBUseSlidingScale(true)
 ,m_iLFBAdjustNumerator(1)
 ,m_iLFBAdjustDenominator(3)
@@ -2735,7 +2735,7 @@ void CvGlobals::cacheGlobals()
 	m_iLFBBasedOnExperience = getDefineINT("LFB_BASEDONEXPERIENCE");
 	m_iLFBBasedOnLimited = getDefineINT("LFB_BASEDONLIMITED");
 	m_iLFBBasedOnHealer = getDefineINT("LFB_BASEDONHEALER");
-	m_iLFBBasedOnAverage = std::max(1, (m_iLFBBasedOnGeneral+m_iLFBBasedOnLimited+m_iLFBBasedOnHealer+(5*m_iLFBBasedOnExperience)+3)/4);
+	m_iLFBDefensiveAdjustment = getDefineINT("LFB_DEFENSIVEADJUSTMENT");
 	m_bLFBUseSlidingScale = !(getDefineINT("LFB_USESLIDINGSCALE") == 0);
 	m_iLFBAdjustNumerator = getDefineINT("LFB_ADJUSTNUMERATOR");
 	m_iLFBAdjustDenominator = getDefineINT("LFB_ADJUSTDENOMINATOR");
@@ -3781,64 +3781,64 @@ int CvGlobals::getTECH_COST_MODIFIER()
 }
 
 
-// From Lead From Behind by UncutDragon
+// From Lead From Behind by UncutDragon (edited for K-Mod)
 // Lead from Behind flags
-bool CvGlobals::getLFBEnable()
+bool CvGlobals::getLFBEnable() const
 {
 	return m_bLFBEnable;
 }
 
-int CvGlobals::getLFBBasedOnGeneral()
+int CvGlobals::getLFBBasedOnGeneral() const
 {
 	return m_iLFBBasedOnGeneral;
 }
 
-int CvGlobals::getLFBBasedOnExperience()
+int CvGlobals::getLFBBasedOnExperience() const
 {
 	return m_iLFBBasedOnExperience;
 }
 
-int CvGlobals::getLFBBasedOnLimited()
+int CvGlobals::getLFBBasedOnLimited() const
 {
 	return m_iLFBBasedOnLimited;
 }
 
-int CvGlobals::getLFBBasedOnHealer()
+int CvGlobals::getLFBBasedOnHealer() const
 {
 	return m_iLFBBasedOnHealer;
 }
 
-int CvGlobals::getLFBBasedOnAverage()
+int CvGlobals::getLFBDefensiveAdjustment() const
 {
-	return m_iLFBBasedOnAverage;
+	return m_iLFBDefensiveAdjustment;
 }
 
-bool CvGlobals::getLFBUseSlidingScale()
+bool CvGlobals::getLFBUseSlidingScale() const
 {
 	return m_bLFBUseSlidingScale;
 }
 
-int CvGlobals::getLFBAdjustNumerator()
+int CvGlobals::getLFBAdjustNumerator() const
 {
 	return m_iLFBAdjustNumerator;
 }
 
-int CvGlobals::getLFBAdjustDenominator()
+int CvGlobals::getLFBAdjustDenominator() const
 {
 	return m_iLFBAdjustDenominator;
 }
 
-bool CvGlobals::getLFBUseCombatOdds()
+bool CvGlobals::getLFBUseCombatOdds() const
 {
 	return m_bLFBUseCombatOdds;
 }
 
-int CvGlobals::getCOMBAT_DIE_SIDES()
+int CvGlobals::getCOMBAT_DIE_SIDES() const
 {
 	return m_iCOMBAT_DIE_SIDES;
 }
 
-int CvGlobals::getCOMBAT_DAMAGE()
+int CvGlobals::getCOMBAT_DAMAGE() const
 {
 	return m_iCOMBAT_DAMAGE;
 }

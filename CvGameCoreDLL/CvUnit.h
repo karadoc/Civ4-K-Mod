@@ -902,7 +902,7 @@ protected:
 /*                                                                                              */
 /* Lead From Behind                                                                             */
 /************************************************************************************************/
-// From Lead From Behind by UncutDragon
+// From Lead From Behind by UncutDragon. Edited for K-Mod
 public:
 	bool isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttacker, int* pBestDefenderRank) const;
 	virtual void LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) const = 0;
@@ -910,8 +910,9 @@ public:
 	int LFBgetDefenderRank(const CvUnit* pAttacker) const;
 protected:
 	int LFBgetDefenderOdds(const CvUnit* pAttacker) const;
-	int LFBgetValueAdjustedOdds(int iOdds) const;
+	int LFBgetValueAdjustedOdds(int iOdds, bool bDefender) const;
 	int LFBgetRelativeValueRating() const;
+	int LFGgetDefensiveValueAdjustment() const; // K-Mod
 	bool LFBisBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttacker, int* pBestDefenderRank) const;
 	int LFBgetDefenderCombatOdds(const CvUnit* pAttacker) const;
 /************************************************************************************************/

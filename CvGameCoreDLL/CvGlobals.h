@@ -1272,20 +1272,20 @@ protected:
 	int m_iTECH_COST_KNOWN_PREREQ_MODIFIER;
 	int m_iTECH_COST_MODIFIER;
 	
-// From Lead From Behind by UncutDragon
+// From Lead From Behind by UncutDragon. (edited for K-Mod)
 public:
-	bool getLFBEnable();
-	int getLFBBasedOnGeneral();
-	int getLFBBasedOnExperience();
-	int getLFBBasedOnLimited();
-	int getLFBBasedOnHealer();
-	int getLFBBasedOnAverage();
-	bool getLFBUseSlidingScale();
-	int getLFBAdjustNumerator();
-	int getLFBAdjustDenominator();
-	bool getLFBUseCombatOdds();
-	int getCOMBAT_DIE_SIDES();
-	int getCOMBAT_DAMAGE();
+	bool getLFBEnable() const;
+	int getLFBBasedOnGeneral() const;
+	int getLFBBasedOnExperience() const;
+	int getLFBBasedOnLimited() const;
+	int getLFBBasedOnHealer() const;
+	int getLFBDefensiveAdjustment() const;
+	bool getLFBUseSlidingScale() const;
+	int getLFBAdjustNumerator() const;
+	int getLFBAdjustDenominator() const;
+	bool getLFBUseCombatOdds() const;
+	int getCOMBAT_DIE_SIDES() const;
+	int getCOMBAT_DAMAGE() const;
 
 protected:
 	bool m_bLFBEnable;
@@ -1293,7 +1293,7 @@ protected:
 	int m_iLFBBasedOnExperience;
 	int m_iLFBBasedOnLimited;
 	int m_iLFBBasedOnHealer;
-	int m_iLFBBasedOnAverage;
+	int m_iLFBDefensiveAdjustment;
 	bool m_bLFBUseSlidingScale;
 	int	m_iLFBAdjustNumerator;
 	int	m_iLFBAdjustDenominator;

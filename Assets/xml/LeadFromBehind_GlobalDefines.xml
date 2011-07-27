@@ -7,19 +7,23 @@
 	</Define>
 	<Define>
 		<DefineName>LFB_BASEDONGENERAL</DefineName>
-		<iDefineIntVal>5</iDefineIntVal>
+		<iDefineIntVal>3</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>LFB_BASEDONEXPERIENCE</DefineName>
+		<DefineName>LFB_BASEDONEXPERIENCE</DefineName> <!-- note: in K-Mod this is given for each level worth of xp -->
 		<iDefineIntVal>1</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>LFB_BASEDONLIMITED</DefineName>
-		<iDefineIntVal>5</iDefineIntVal>
+		<iDefineIntVal>3</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>LFB_BASEDONHEALER</DefineName>
-		<iDefineIntVal>2</iDefineIntVal>
+		<iDefineIntVal>1</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>LFB_DEFENSIVEADJUSTMENT</DefineName>
+		<iDefineIntVal>1</iDefineIntVal> <!-- negative 'value' for defensive promotions when defending, to encourage defenders to actually fight -->
 	</Define>
 	<Define>
 		<DefineName>LFB_USESLIDINGSCALE</DefineName>
@@ -31,7 +35,7 @@
 	</Define>
 	<Define>
 		<DefineName>LFB_ADJUSTDENOMINATOR</DefineName>
-		<iDefineIntVal>3</iDefineIntVal>
+		<iDefineIntVal>4</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>LFB_USECOMBATODDS</DefineName>

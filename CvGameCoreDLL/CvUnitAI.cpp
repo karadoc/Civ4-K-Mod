@@ -13,15 +13,6 @@
 #include "CvRandom.h"
 #include "CyUnit.h"
 #include "CyArgsList.h"
-/************************************************************************************************/
-/* K_MOD                       04/sep/10                               karadoc                  */
-/*                                                                                              */
-/* CyPlot for automated workers                                                                 */
-/************************************************************************************************/
-#include "CyPlot.h"
-/************************************************************************************************/
-/* K_MOD                                   END                                                  */
-/************************************************************************************************/
 #include "CvDLLPythonIFaceBase.h"
 #include "CvInfos.h"
 #include "FProfiler.h"
@@ -2940,15 +2931,6 @@ void CvUnitAI::AI_attackCityMove()
 			{
 				return;
 			}
-			// K-Mod; sometimes you just need to blast them with collateral damage before they can do it to you!
-			// ... and please don't let them wipe out a massive stack just because we were too scared to fight back
-
-			// look. I don't want to spend too much time messing around with this. So let me just try an experimental heuristic... 
-			if (getGroup()->getNumUnits() > 1 &&
-				AI_anyAttack(1, 60/(getGroup()->getNumUnits()+1), 3+getGroup()->getNumUnits(), false))
-			{
-				return;
-			}
 		}
 	}
 
@@ -3005,7 +2987,8 @@ void CvUnitAI::AI_attackCityMove()
 
 			if( bTurtle )
 			{
-				if (AI_guardCity(false, true, 7))
+				//if (AI_guardCity(false, true, 7))
+				if (AI_guardCity(false, true, 5))
 				{
 					return;
 				}
@@ -3363,6 +3346,39 @@ void CvUnitAI::AI_collateralMove()
 	{
 		return;
 	}
+
+	// K-Mod: experimental defensive stack hunting.
+#if 0
+	if (getGroup()->getNumUnits() > 1)
+	{
+		// count collateral damage units.
+		int iTally = 0;
+		CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
+		while (pUnitNode != NULL)
+		{
+			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+
+			iTally += ((pLoopUnit->collateralDamage() > 0) ?1 : 0);
+
+			pUnitNode = getGroup()->nextUnitNode(pUnitNode);
+		}
+
+		// tell me what's going on, for testing.
+		if (iTally >= 2/* && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3))*/)
+		{
+			for (int iI = 0; iI < MAX_PLAYERS; iI++)
+			{
+				if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).isHuman())
+				{
+					gDLL->getInterfaceIFace()->addMessage((PlayerTypes)iI, false, GC.getEVENT_MESSAGE_TIME(), "K-Mod test", "AS2D_SQUISH", MESSAGE_TYPE_INFO, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), plot()->getX_INLINE(), plot()->getY_INLINE(), true, true);
+				}
+			}
+		}
+
+		return;
+	}
+#endif
+	// K-Mod end
 
 	if (AI_heal())
 	{
@@ -23617,41 +23633,3 @@ void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bo
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-
-/************************************************************************************************/
-/* K_MOD                      04/09/10                                karadoc                   */
-/*                                                                                              */
-/* Check plot signpost for build instructions                                                   */
-/************************************************************************************************/
-BuildTypes CvUnitAI::getBuildSign(CvPlot *pPlot) const
-{
-	BuildTypes eBuild = NO_BUILD;
-
-	if (isHuman())
-	{
-		CyPlot* pyPlot = new CyPlot(pPlot);
-		PlayerTypes ePlayer = getOwner();
-		CyArgsList argsList;
-		argsList.add(gDLL->getPythonIFace()->makePythonObject(pyPlot));
-		argsList.add(ePlayer);
-
-		//CvString eSign;
-		long lResult;
-
-		gDLL->getPythonIFace()->callFunction("CvKMod", "findSign", argsList.makeFunctionArgs(), &lResult);
-		eBuild = (BuildTypes)lResult;
-
-		/*
-		if (eSign.CompareNoCase("f"))
-		{
-			// only consider farm
-			bSignpostImprovement = true;
-			eBuild = FARM_IMPROVEMENT;
-		}
-		*/
-	}
-	return eBuild;
-}
-/************************************************************************************************/
-/* K_MOD                                   END                                                  */
-/************************************************************************************************/
