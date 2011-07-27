@@ -747,6 +747,7 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 	m_iLargestCityHappiness = 0;
 	m_iWarWearinessPercentAnger = 0;
 	m_iWarWearinessModifier = 0;
+	m_iGwPercentAnger = 0; // K-Mod
 	m_iFreeSpecialist = 0;
 	m_iNoForeignTradeCount = 0;
 	m_iNoCorporationsCount = 0;
@@ -7223,7 +7224,7 @@ int CvPlayer::calculateTotalCityUnhealthiness() const
 }
 
 /*
-** K-Mod, 18/dec/10, karadoc
+** K-Mod
 ** calculate the pollution output of a civ.
 ** iTypes is a bit-field whos members are POLLUTION_POPULTION, _BUILDINGS, _BONUS, _POWER. (and _ALL)
 */
@@ -7250,36 +7251,20 @@ int CvPlayer::calculatePollution(int iTypes) const
 	return iTotal;
 }
 
-/*
-** calculate unhappiness due to the state of global warming
-*/
-int CvPlayer::calculateGwPercentAnger() const
+int CvPlayer::getGwPercentAnger() const
 {
-	//PROFILE_FUNC();
-
-	if (GC.getGameINLINE().getGlobalWarmingIndex() <= 0)
-		return 0;
-
-	// player unhappiness = base rate * severity rating * responsibility factor
-
-	int iGlobalPollution = GC.getGameINLINE().calculateGlobalPollution();
-	int iGwSeverityRating = GC.getGameINLINE().calculateGwSeverityRating();
-	int iLocalDefence = GC.getGameINLINE().calculateGwLandDefence(getID());
-	int iGlobalDefence = GC.getGameINLINE().calculateGwLandDefence(NO_PLAYER);
-
-
-	int iResponsibilityFactor =	100*(calculatePollution() - iLocalDefence);
-	iResponsibilityFactor /= std::max(1, GC.getGameINLINE().calculateGwSustainabilityThreshold(getID()));
-	iResponsibilityFactor *= GC.getGameINLINE().calculateGwSustainabilityThreshold();
-	iResponsibilityFactor /= std::max(1, iGlobalPollution - iGlobalDefence);
-	// amplify the affects
-	iResponsibilityFactor = std::max(0, 2*iResponsibilityFactor-100);
-
-	int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
-	iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100
-
-	return iAngerPercent;
+	return m_iGwPercentAnger;
 }
+
+void CvPlayer::setGwPercentAnger(int iNewValue)
+{
+	if (iNewValue != m_iGwPercentAnger)
+	{
+		m_iGwPercentAnger = iNewValue;
+		AI_makeAssignWorkDirty();
+	}
+}
+
 /*
 ** K-Mod end
 */
@@ -13004,6 +12989,7 @@ void CvPlayer::setCivics(CivicOptionTypes eIndex, CivicTypes eNewValue)
 					}
 				}
 			}
+			GC.getGameINLINE().updateGwPercentAnger(); // K-Mod. (environmentalism can change this. It's nice to see the effects immediately.)
 		}
 
 /************************************************************************************************/
@@ -17127,6 +17113,7 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(&m_iLargestCityHappiness);
 	pStream->Read(&m_iWarWearinessPercentAnger);
 	pStream->Read(&m_iWarWearinessModifier);
+	pStream->Read(&m_iGwPercentAnger); // K-Mod
 	pStream->Read(&m_iFreeSpecialist);
 	pStream->Read(&m_iNoForeignTradeCount);
 	pStream->Read(&m_iNoCorporationsCount);
@@ -17591,6 +17578,7 @@ void CvPlayer::write(FDataStreamBase* pStream)
 	pStream->Write(m_iLargestCityHappiness);
 	pStream->Write(m_iWarWearinessPercentAnger);
 	pStream->Write(m_iWarWearinessModifier);
+	pStream->Write(m_iGwPercentAnger); // K-Mod
 	pStream->Write(m_iFreeSpecialist);
 	pStream->Write(m_iNoForeignTradeCount);
 	pStream->Write(m_iNoCorporationsCount);

@@ -354,6 +354,7 @@ public:
 	int AI_averageYieldMultiplier(YieldTypes eYield) const;
 	int AI_averageCommerceMultiplier(CommerceTypes eCommerce) const;
 	int AI_averageGreatPeopleMultiplier() const;
+	int AI_AverageCulturePressure() const; // K-Mod
 	int AI_averageCommerceExchange(CommerceTypes eCommerce) const;
 	
 	int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance) const;
@@ -459,6 +460,8 @@ protected:
 	mutable int m_iAveragesCacheTurn;
 	
 	mutable int m_iAverageGreatPeopleMultiplier;
+
+	mutable int m_iAverageCulturePressure; // K-Mod
 	
 	mutable int *m_aiAverageYieldMultiplier;
 	mutable int *m_aiAverageCommerceMultiplier;

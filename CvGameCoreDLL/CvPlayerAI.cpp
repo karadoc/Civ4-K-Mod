@@ -294,6 +294,7 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 		m_aiAverageCommerceExchange[iI] = 0;
 	}
 	m_iAverageGreatPeopleMultiplier = 0;
+	m_iAverageCulturePressure = 0;
 	m_iAveragesCacheTurn = -1;
 	
 	m_iStrategyHash = 0;
@@ -12214,7 +12215,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		// Unfortunately, since adopting this civic will lower the very same anger percent that is giving the civic value...
 		// the civic will be valued lower as soon as it is adopted. :(
 		// Fixing this problem (and others like it) is a bit tricky. For now, I'll just try to fudge around it.
-		int iGwAnger = calculateGwPercentAnger();
+		int iGwAnger = getGwPercentAnger();
 		if (isCivic(eCivic)) // Fudge factor
 		{
 			iGwAnger *= 100;
@@ -12294,6 +12295,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			int iCorpCities = countCorporations(eCorp);
 			int iMaintenance = 0;
 			// If the HQ is ours, assume we will spread the corp. If it is not our, assume we don't care.
+			// (Note: this doesn't take into account the posibility of competing corps. Sorry.)
 			if (bTeamHQ)
 			{
 				iCorpCities += (bPlayerHQ ?2 :1)*iCities;
@@ -16189,6 +16191,7 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 /************************************************************************************************/		
 	pStream->Read(&m_iAveragesCacheTurn);
 	pStream->Read(&m_iAverageGreatPeopleMultiplier);
+	pStream->Read(&m_iAverageCulturePressure); // K-Mod
 
 	pStream->Read(NUM_YIELD_TYPES, m_aiAverageYieldMultiplier);
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiAverageCommerceMultiplier);
@@ -16302,6 +16305,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 /************************************************************************************************/		
 	pStream->Write(m_iAveragesCacheTurn);
 	pStream->Write(m_iAverageGreatPeopleMultiplier);
+	pStream->Write(m_iAverageCulturePressure); // K-Mod
 
 	pStream->Write(NUM_YIELD_TYPES, m_aiAverageYieldMultiplier);
 	pStream->Write(NUM_COMMERCE_TYPES, m_aiAverageCommerceMultiplier);
@@ -19570,6 +19574,16 @@ int CvPlayerAI::AI_averageGreatPeopleMultiplier() const
 	return m_iAverageGreatPeopleMultiplier;	
 }
 
+// K-Mod
+int CvPlayerAI::AI_AverageCulturePressure() const
+{
+	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
+	{
+		AI_calculateAverages();
+	}
+	return m_iAverageCulturePressure;	
+}
+
 //"100 eCommerce is worth (return) raw YIELD_COMMERCE
 int CvPlayerAI::AI_averageCommerceExchange(CommerceTypes eCommerce) const
 {
@@ -19691,6 +19705,19 @@ void CvPlayerAI::AI_calculateAverages() const
 			m_aiAverageCommerceExchange[iI] = 100;
 		}
 	}
+
+	// K-Mod Culture pressure
+
+	int iTotal = 0;
+	int iWeightedTotal = 0;
+
+	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		int iCultureRate = pLoopCity->getCommerceRateTimes100(COMMERCE_CULTURE);
+		iTotal += iCultureRate;
+		iWeightedTotal += iCultureRate * pLoopCity->culturePressureFactor();
+	}
+	m_iAverageCulturePressure = iWeightedTotal / iTotal;
 
 	m_iAveragesCacheTurn = GC.getGameINLINE().getGameTurn();
 }

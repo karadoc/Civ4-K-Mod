@@ -697,6 +697,7 @@ void CvCityAI::AI_chooseProduction()
 	bool bDanger;
 	bool bChooseUnit;
 	int iProductionRank;
+	int iCommerceRank; // K-Mod
 	int iCulturePressure;
 
 	bDanger = AI_isDanger();
@@ -939,6 +940,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
+	iCommerceRank = findYieldRateRank(YIELD_COMMERCE);
 
 	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb);
 
@@ -1467,7 +1469,13 @@ void CvCityAI::AI_chooseProduction()
 	
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
-		if (AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+		// K-Mod, military exemption for commerce cities
+		if (iProductionRank > kPlayer.getNumCities()/2 && iCommerceRank - iProductionRank < 0)
+		{
+			// exempt
+		}
+		// K-Mod end
+		else if (AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
 			return;
@@ -2497,10 +2505,11 @@ void CvCityAI::AI_chooseProduction()
 	// K-Mod
 	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 		iNeededSpies *= 2;
+	// K-Mod end
 	if (iNumSpies < iNeededSpies)
 	{
 		//if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
-		if (AI_chooseUnit(UNITAI_SPY, 30*iNeededSpies / (3*iNumSpies+iNeededSpies)))
+		if (AI_chooseUnit(UNITAI_SPY, 30*iNeededSpies / (3*iNumSpies+iNeededSpies))) // K-Mod
 		{
 			return;
 		}
@@ -3796,7 +3805,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				{
 					int iCleanValue = -2*iBad;
 
-					iCleanValue *= (100 + 5*kOwner.calculateGwPercentAnger());
+					iCleanValue *= (100 + 5*kOwner.getGwPercentAnger());
 					iCleanValue /= 100;
 
 					FAssert(iCleanValue >= 0);

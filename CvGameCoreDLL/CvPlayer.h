@@ -267,7 +267,8 @@ public:
 	int calculateTotalCityUnhealthiness() const;																													// Exposed to Python
 
 	int calculatePollution(int iTypes = POLLUTION_ALL) const; // K-Mod, Exposed to Python
-	int calculateGwPercentAnger() const; // K-Mod, Exposed to Python
+	int getGwPercentAnger() const; // K-Mod, Exposed to Python
+	void setGwPercentAnger(int iNewValue); // K-Mod
 
 	int calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iBaseUnitCost, int& iMilitaryCost, int& iExtraCost) const;
 	int calculateUnitCost() const;																																				// Exposed to Python
@@ -1192,6 +1193,7 @@ protected:
 	int m_iLargestCityHappiness;
 	int m_iWarWearinessPercentAnger;
 	int m_iWarWearinessModifier;
+	int m_iGwPercentAnger; // K-Mod
 	int m_iFreeSpecialist;
 	int m_iNoForeignTradeCount;
 	int m_iNoCorporationsCount;

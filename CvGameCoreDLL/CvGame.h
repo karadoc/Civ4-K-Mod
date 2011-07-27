@@ -53,6 +53,7 @@ public:
 	DllExport void updateBuildingCommerce();
 	DllExport void updateCitySight(bool bIncrement);
 	DllExport void updateTradeRoutes();
+	void updateGwPercentAnger(); // K-Mod
 
 	DllExport void updateSelectionList();
 	DllExport void updateTestEndTurn();

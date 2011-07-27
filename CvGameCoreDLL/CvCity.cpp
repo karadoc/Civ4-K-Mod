@@ -4386,7 +4386,7 @@ int CvCity::unhappyLevel(int iExtra) const
 ** Unfortunately, people who made the rest of the game used anger percent to mean part per 1000
 ** so I have to multiply my GwPercentAnger by 10 to make it fit in.
 */
-		iAngerPercent += std::max(0, GET_PLAYER(getOwnerINLINE()).calculateGwPercentAnger()*10);
+		iAngerPercent += std::max(0, GET_PLAYER(getOwnerINLINE()).getGwPercentAnger()*10);
 // K-Mod end
 
 		for (iI = 0; iI < GC.getNumCivicInfos(); iI++)
@@ -6690,7 +6690,16 @@ int CvCity::getAdditionalHealthByBuilding(BuildingTypes eBuilding, int& iGood, i
 	} */
 
 	// Modified unhealthiness from population
-	iBad += ROUND_DIVIDE(getPopulation() * std::max(-100, kBuilding.getUnhealthyPopulationModifier()), 100);
+	int iEffectiveModifier = 0;
+	if (kBuilding.getUnhealthyPopulationModifier()+getUnhealthyPopulationModifier() < -100)
+	{
+		iEffectiveModifier = std::min(0, -100 - getUnhealthyPopulationModifier());
+	}
+	else
+	{
+		iEffectiveModifier = std::max(-100, kBuilding.getUnhealthyPopulationModifier());
+	}
+	iBad += ROUND_DIVIDE(getPopulation() * iEffectiveModifier, 100);
 	/*
 	** K-Mod end
 	*/

@@ -2290,6 +2290,60 @@ void CvGame::updateTradeRoutes()
 	}
 }
 
+/*
+** K-Mod
+** calculate unhappiness due to the state of global warming
+*/
+void CvGame::updateGwPercentAnger()
+{
+	int iGlobalPollution;
+	int iGwSeverityRating;
+	int iGlobalDefence;
+
+	int iGwIndex = getGlobalWarmingIndex();
+
+	if (iGwIndex > 0)
+	{
+		iGlobalPollution = calculateGlobalPollution();
+		iGwSeverityRating = calculateGwSeverityRating();
+		iGlobalDefence = calculateGwLandDefence(NO_PLAYER);
+	}
+
+	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	{
+		CvPlayerAI& kPlayer = GET_PLAYER((PlayerTypes)iI);
+
+		if (kPlayer.isAlive() && !kPlayer.isBarbarian() && !kPlayer.isMinorCiv())
+		{
+			int iAngerPercent;
+			if (iGwIndex > 0)
+			{
+				// player unhappiness = base rate * severity rating * responsibility factor
+
+				int iLocalDefence = calculateGwLandDefence((PlayerTypes)iI);
+				int iResponsibilityFactor =	100*(kPlayer.calculatePollution() - iLocalDefence);
+
+				iResponsibilityFactor /= std::max(1, calculateGwSustainabilityThreshold((PlayerTypes)iI));
+				iResponsibilityFactor *= calculateGwSustainabilityThreshold();
+				iResponsibilityFactor /= std::max(1, iGlobalPollution - iGlobalDefence);
+				// amplify the affects of responsibility
+				iResponsibilityFactor = std::max(0, 2*iResponsibilityFactor-100);
+
+				int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
+				iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100
+			}
+			else
+			{
+				iAngerPercent = 0;
+			}
+
+			kPlayer.setGwPercentAnger(iAngerPercent);
+		}
+	}
+}
+/*
+** K-Mod end
+*/
 
 void CvGame::testExtendedGame()
 {
@@ -4042,14 +4096,10 @@ int CvGame::calculateGwLandDefence(PlayerTypes ePlayer) const
 		{
 			if (ePlayer == NO_PLAYER || ePlayer == pPlot->getOwner())
 			{
-				//int iFeatureWarmingDefense = GC.getFeatureInfo(pPlot->getFeatureType()).getWarmingDefense();
-				//if (iFeatureWarmingDefense > 0)
 				iTotal += GC.getFeatureInfo(pPlot->getFeatureType()).getWarmingDefense();
 			}
 		}
 	}
-	// iFeatureWarmingDefense has the full defense value. So no need to multiply the total.
-	//iGlobalWarmingDefense = iTotal * GC.getDefineINT("GLOBAL_WARMING_FOREST") / std::max(1, GC.getMapINLINE().getLandPlots());
 	return iTotal;
 }
 
@@ -6292,6 +6342,7 @@ void CvGame::doGlobalWarming()
 			}
 		}
 	}
+	updateGwPercentAnger();
 }
 
 // Choose the best plot for global warming to strike from a set of iPool random plots
