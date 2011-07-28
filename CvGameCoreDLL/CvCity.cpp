@@ -5004,9 +5004,10 @@ int CvCity::culturePressureFactor() const
 		{
 			for (int iP = 0; iP < MAX_PLAYERS; iP++)
 			{
-				if (GET_PLAYER((PlayerTypes)iP).isAlive() && GET_PLAYER((PlayerTypes)iP).getTeam() != getTeam())
+				const CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iP);
+				if (kPlayer.isAlive() && kPlayer.getTeam() != getTeam() && !kPlayer.isBarbarian())
 				{
-					int iForeignCulture = pLoopPlot->calculateCulturePercent((PlayerTypes)iP) / ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(GET_PLAYER((PlayerTypes)iP).getTeam()).isVassal(getTeam()))?2 :1);
+					int iForeignCulture = pLoopPlot->calculateCulturePercent((PlayerTypes)iP) / ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :1);
 					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}
