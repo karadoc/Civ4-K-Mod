@@ -6257,7 +6257,7 @@ void CvGame::doGlobalWarming()
 			//CvPlot* pPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
 
 			// Global warming is no longer completely random. getRandGWPlot will get a weighted random plot for us to strike
-			CvPlot* pPlot = getRandGWPlot(2);
+			CvPlot* pPlot = getRandGWPlot(3);
 
 			if (pPlot != NULL)
 			{

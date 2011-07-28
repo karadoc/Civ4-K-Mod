@@ -1470,7 +1470,7 @@ void CvCityAI::AI_chooseProduction()
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
 		// K-Mod, military exemption for commerce cities
-		if (iProductionRank > kPlayer.getNumCities()/2 && iCommerceRank - iProductionRank < 0)
+		if (iProductionRank > kPlayer.getNumCities()/2 && iCommerceRank < iProductionRank)
 		{
 			// exempt
 		}
@@ -4389,7 +4389,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 										int iTempValue = iChange * 4;
 
 										// +99 mirrors code below, I think because commerce weight can be pretty small
-										iTempValue *= kOwner.AI_commerceWeight((CommerceTypes)iCommerce);
+										iTempValue *= kOwner.AI_commerceWeight((CommerceTypes)iCommerce, this);
 										iTempValue = (iTempValue + 99) / 100;
 
 										iValue += iTempValue;
@@ -4824,6 +4824,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						{
 							aiCommerceRank[iI] = findCommerceRateRank((CommerceTypes) iI);
 						}
+						/* original bts code
 						if (bIsLimitedWonder && ((aiCommerceRank[iI] > (3 + iLimitedWonderLimit)))
 							|| (bCulturalVictory1 && (iI == COMMERCE_CULTURE) && (aiCommerceRank[iI] == 1)))
 						{
@@ -4834,7 +4835,26 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							{
 								iTempValue = 0;
 							}
+						} */
+						// K-Mod, let us build culture wonders to defend againt culture pressure
+						if (bIsLimitedWonder)
+						{
+							if (iI == COMMERCE_CULTURE)
+							{
+								 if (bCulturalVictory1 &&
+									 ((bCulturalVictory2 && aiCommerceRank[iI] == 1) ||
+										aiCommerceRank[iI] > (3 + iLimitedWonderLimit)))
+								 {
+									 iTempValue = 0;
+								 }
+							}
+							else if (aiCommerceRank[iI] > (3 + iLimitedWonderLimit))
+							{
+								iTempValue *= -1;
+							}
 						}
+						// K-Mod end
+
 						iValue += iTempValue;
 					}
 				}
@@ -9783,7 +9803,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	{
 		if (aiCommerceYieldsTimes100[iI] != 0)
 		{
-			int iCommerceWeight = GET_PLAYER(getOwnerINLINE()).AI_commerceWeight((CommerceTypes)iI);
+			int iCommerceWeight = GET_PLAYER(getOwnerINLINE()).AI_commerceWeight((CommerceTypes)iI, this);
 			if (AI_isEmphasizeCommerce((CommerceTypes)iI))
 			{
 				iCommerceWeight *= 200;
@@ -9795,9 +9815,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				{
 					iCommerceValue += (15 * aiCommerceYieldsTimes100[iI]) / 100;
 				}
-				// K-Mod: a boost for cities that are being culture pressed:
-				iCommerceWeight *= culturePressureFactor();
-				iCommerceWeight /= 100;
 			}
 			iCommerceValue += (iCommerceWeight * (aiCommerceYieldsTimes100[iI] * iBaseCommerceValue) * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI)) / 1000000;
 		}
