@@ -941,7 +941,7 @@ void CvCityAI::AI_chooseProduction()
 	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 
 	// K-Mod, military exemption for commerce cities and underdeveloped cities
-	bool bMilitaryExempt = false;
+	bool bUnitExempt = false;
 	if (iProductionRank > kPlayer.getNumCities()/2)
 	{
 		bool bBelowMedian = true;
@@ -951,7 +951,7 @@ void CvCityAI::AI_chooseProduction()
 			int iRank = findCommerceRateRank((CommerceTypes)iI);
 			if (iRank < iProductionRank)
 			{
-				bMilitaryExempt = true;
+				bUnitExempt = true;
 				break;
 			}
 			if (iRank < kPlayer.getNumCities()/2)
@@ -959,7 +959,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 
 		if (bBelowMedian)
-			bMilitaryExempt = true;
+			bUnitExempt = true;
 	}
 	// K-Mod end
 
@@ -1491,7 +1491,7 @@ void CvCityAI::AI_chooseProduction()
 	
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
-		if (!bMilitaryExempt && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+		if (!bUnitExempt && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
 			return;
@@ -1760,7 +1760,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 	
 	//minimal defense.
-	if (!bMilitaryExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount))
+	if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount))
 	{
 		if (AI_chooseUnit(UNITAI_CITY_DEFENSE))
 		{
@@ -2455,7 +2455,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 	
 	//Arr.  Don't build pirates in financial trouble, as they'll be disbanded with high probability
-	if ((pWaterArea != NULL) && !bLandWar && !bAssault && !bFinancialTrouble && !bMilitaryExempt)
+	if ((pWaterArea != NULL) && !bLandWar && !bAssault && !bFinancialTrouble && !bUnitExempt)
 	{
 		int iPirateCount = kPlayer.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_PIRATE_SEA);
 		int iNeededPirates = (1 + (pWaterArea->getNumTiles() / std::max(1, 200 - iBuildUnitProb)));
@@ -2506,7 +2506,7 @@ void CvCityAI::AI_chooseProduction()
 		FAssertMsg(false, "AI_bestSpreadUnit should provide a valid unit when it returns true");
 	}
 		
-	if (!bMilitaryExempt && iTotalFloatingDefenders < iNeededFloatingDefenders && (!bFinancialTrouble || bLandWar))
+	if (!bUnitExempt && iTotalFloatingDefenders < iNeededFloatingDefenders && (!bFinancialTrouble || bLandWar))
 	{
 		if (AI_chooseLeastRepresentedUnit(floatingDefenderTypes, 50))
 		{
@@ -2751,7 +2751,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	bChooseUnit = false;
-	if (!bMilitaryExempt && iUnitCostPercentage < iMaxUnitSpending + 5)
+	if (!bUnitExempt && iUnitCostPercentage < iMaxUnitSpending + 5)
 	{
 		if ((bLandWar) ||
 			  ((kPlayer.getNumCities() <= 3) && (GC.getGameINLINE().getElapsedGameTurns() < 60)) ||
@@ -10092,7 +10092,7 @@ int CvCityAI::AI_buildUnitProb()
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      05/29/10                                jdog5000      */
 /*                                                                                              */
-/* City AI, Barbarian AI                                                                        */
+/* City AI, Barbarian AI     (K-Mod edition)                                                    */
 /************************************************************************************************/
 	iProb = (GC.getLeaderHeadInfo(getPersonalityType()).getBuildUnitProb() + AI_experienceWeight());
 
@@ -10100,15 +10100,17 @@ int CvCityAI::AI_buildUnitProb()
 	{
 		iProb /= 2;
 	}
-	else if( GET_TEAM(getTeam()).getHasMetCivCount(false) == 0 )
+	
+	if( GET_TEAM(getTeam()).getHasMetCivCount(false) == 0 )
 	{
 		iProb /= 2;
 	}
-	// more units from cities with military production bonuses
-	else
-	{
-		iProb += std::min(15,getMilitaryProductionModifier()/4);
-	}
+
+	if (GET_PLAYER(getOwnerINLINE()).getCurrentEra() < GC.getGameINLINE().getCurrentEra())
+		iProb /= 2;
+
+	iProb *= (100 + 2*getMilitaryProductionModifier());
+	iProb /= 100;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
