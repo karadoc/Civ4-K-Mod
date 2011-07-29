@@ -940,7 +940,6 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
-	iCommerceRank = findYieldRateRank(YIELD_COMMERCE);
 
 	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb);
 
@@ -1469,13 +1468,41 @@ void CvCityAI::AI_chooseProduction()
 	
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
-		// K-Mod, military exemption for commerce cities
-		if (iProductionRank > kPlayer.getNumCities()/2 && iCommerceRank < iProductionRank)
+		// K-Mod, military exemption for commerce cities and underdeveloped cities
+		bool bExempt = false;
+		if (iProductionRank > kPlayer.getNumCities()/2)
 		{
-			// exempt
-		}
-		// K-Mod end
-		else if (AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+			bool bBelowAverage = true;
+			for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+			{
+				// I'd use the total commerce rank, but there currently isn't a cached value of that.
+				int iRank = findCommerceRateRank((CommerceTypes)iI);
+				if (iRank < iProductionRank)
+				{
+					bExempt = true;
+					break;
+				}
+				if (iRank < kPlayer.getNumCities()/2)
+					bBelowAverage = false;
+			}
+
+			if (bBelowAverage)
+				bExempt = true;
+/*
+			if (bExempt)
+			{
+				// tell me what's going on, for testing.
+				for (int iI = 0; iI < MAX_PLAYERS; iI++)
+				{
+					if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).isHuman())
+					{
+						gDLL->getInterfaceIFace()->addMessage((PlayerTypes)iI, false, GC.getEVENT_MESSAGE_TIME(), "floating defender exemption", "AS2D_SQUISH", MESSAGE_TYPE_INFO, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), plot()->getX_INLINE(), plot()->getY_INLINE(), true, true);
+					}
+				}
+			}
+*/
+		}		
+		if (!bExempt && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
 			return;

@@ -2312,33 +2312,24 @@ void CvGame::updateGwPercentAnger()
 	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 	{
 		CvPlayerAI& kPlayer = GET_PLAYER((PlayerTypes)iI);
-
-		if (kPlayer.isAlive() && !kPlayer.isBarbarian() && !kPlayer.isMinorCiv())
+		int iAngerPercent = 0;
+		if (iGwIndex > 0 && kPlayer.isAlive() && !kPlayer.isBarbarian() && !kPlayer.isMinorCiv())
 		{
-			int iAngerPercent;
-			if (iGwIndex > 0)
-			{
-				// player unhappiness = base rate * severity rating * responsibility factor
+			// player unhappiness = base rate * severity rating * responsibility factor
 
-				int iLocalDefence = calculateGwLandDefence((PlayerTypes)iI);
-				int iResponsibilityFactor =	100*(kPlayer.calculatePollution() - iLocalDefence);
+			int iLocalDefence = calculateGwLandDefence((PlayerTypes)iI);
+			int iResponsibilityFactor =	100*(kPlayer.calculatePollution() - iLocalDefence);
 
-				iResponsibilityFactor /= std::max(1, calculateGwSustainabilityThreshold((PlayerTypes)iI));
-				iResponsibilityFactor *= calculateGwSustainabilityThreshold();
-				iResponsibilityFactor /= std::max(1, iGlobalPollution - iGlobalDefence);
-				// amplify the affects of responsibility
-				iResponsibilityFactor = std::max(0, 2*iResponsibilityFactor-100);
+			iResponsibilityFactor /= std::max(1, calculateGwSustainabilityThreshold((PlayerTypes)iI));
+			iResponsibilityFactor *= calculateGwSustainabilityThreshold();
+			iResponsibilityFactor /= std::max(1, iGlobalPollution - iGlobalDefence);
+			// amplify the affects of responsibility
+			iResponsibilityFactor = std::max(0, 2*iResponsibilityFactor-100);
 
-				int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
-				iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100
-			}
-			else
-			{
-				iAngerPercent = 0;
-			}
-
-			kPlayer.setGwPercentAnger(iAngerPercent);
+			int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
+			iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100
 		}
+		kPlayer.setGwPercentAnger(iAngerPercent);
 	}
 }
 /*

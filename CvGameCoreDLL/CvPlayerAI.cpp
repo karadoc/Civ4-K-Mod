@@ -1524,11 +1524,6 @@ void CvPlayerAI::AI_updateAssignWork()
 	}
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/08/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
 void CvPlayerAI::AI_doCentralizedProduction()
 {
 	PROFILE_FUNC();
@@ -1546,6 +1541,31 @@ void CvPlayerAI::AI_doCentralizedProduction()
 	{
 		return;
 	}
+
+	// Choose which cities should build floating defenders
+	// evaluate military cities score and rank.
+	// choose military cities that aren't building anything, or wait for good military cities to finish building.
+	/*
+	bool bCrushStrategy = kPlayer.AI_isDoStrategy(AI_STRATEGY_CRUSH);
+	int iNeededFloatingDefenders = (isBarbarian() || bCrushStrategy) ?  0 : kPlayer.AI_getTotalFloatingDefendersNeeded(pArea);
+ 	int iTotalFloatingDefenders = (isBarbarian() ? 0 : kPlayer.AI_getTotalFloatingDefenders(pArea));
+	
+	UnitTypeWeightArray floatingDefenderTypes;
+	floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_DEFENSE, 125));
+	floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_COUNTER, 100));
+	//floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_SPECIAL, 0));
+	floatingDefenderTypes.push_back(std::make_pair(UNITAI_RESERVE, 100));
+	floatingDefenderTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 100));
+	
+	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
+	if (!bExempt && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+	{
+		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
+		return;
+	}
+	*/
+
+// K-Mod end, the rest is some unfinished code from BBAI
 
 	// BBAI TODO: Temp testing
 	//if( getID() % 2 == 1 )
@@ -1646,10 +1666,6 @@ void CvPlayerAI::AI_doCentralizedProduction()
 	// Check for any national/team wonders to build
 	
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 void CvPlayerAI::AI_makeProductionDirty()
 {
@@ -12387,10 +12403,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 			iTempValue /= 10000;
 			iTempValue += iMaintenance;
-			// devalue maintenance a bit, because it gets _reduced_ by buildings, not boosted like other commerce)
-			// neglect this multiplier
-			/* iMaintenance *= (getAveragePopulation() + 17);
-			iMaintenance /= 18; */
+			iMaintenance *= (getAveragePopulation() + 17);
+			iMaintenance /= 18;
+			// maybe we should devalue maintenance a bit because it gets reduced by buildings. (?)
 
 			iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
 			iTempValue /= 100;
@@ -12430,7 +12445,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 		// K-Mod version.
 		// value for negation of unhappiness. Again, let me point out how _stupid_ it is that "percent_anger_divisor" is 1000, not 100.
-		iValue += (iCities * 14 * iS * AI_getHappinessWeight(iS*getCivicPercentAnger(eCivic, true)*GC.getPERCENT_ANGER_DIVISOR()/100, 2, true)) / 100;
+		iValue += (iCities * 14 * iS * AI_getHappinessWeight(iS*getCivicPercentAnger(eCivic, true)*100/GC.getPERCENT_ANGER_DIVISOR(), 2, true)) / 100;
 		// value for putting pressure on other civs. (this should probably take into account the civics of other civs)
 		iValue += kCivic.getCivicPercentAnger() * (iCities * iCities - iCities) / (5*GC.getGameINLINE().getNumCities()); // the 5* on the end is because "percent" is really per mil.
 	}
@@ -12636,7 +12651,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iTempValue /= 500;
 		}*/
 		// K-Mod
-		iTempValue += kCivic.getCommerceModifier(iI) * (getCommerceRate((CommerceTypes)iI) / AI_averageCommerceMultiplier((CommerceTypes)iI));
+		iTempValue += kCivic.getCommerceModifier(iI) * 100*getCommerceRate((CommerceTypes)iI) / (100+AI_averageCommerceMultiplier((CommerceTypes)iI));
 		iTempValue += kCivic.getCapitalCommerceModifier(iI) * pCapital->getBaseCommerceRate((CommerceTypes)iI);
 
 		// Representation

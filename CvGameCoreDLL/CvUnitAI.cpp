@@ -3348,7 +3348,8 @@ void CvUnitAI::AI_collateralMove()
 	}
 
 	// K-Mod: experimental defensive stack hunting.
-#if 0
+//#define EXPERIMENTAL_S
+#ifdef EXPERIMENTAL_S
 	if (getGroup()->getNumUnits() > 1)
 	{
 		// count collateral damage units.

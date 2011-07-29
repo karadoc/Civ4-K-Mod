@@ -13479,11 +13479,8 @@ int CvUnit::LFBgetValueAdjustedOdds(int iOdds, bool bDefender) const
 		// that unit may end up being valued less than a completely inexperienced unit.
 		// Thus the experienced unit may end up being sacrificed to protect the rookie.
 
-		// To work around this, I'm putting in the following kludge / fudge...
-		while (iDef * iDef + 1 > getExperience())
-			iDef--;
-
 		iValue -= iDef;
+		iValue = std::max(0, iValue);
 	}
 	// K-Mod end
 	long iAdjustment = -250;
@@ -13520,10 +13517,11 @@ int CvUnit::LFBgetRelativeValueRating() const
 		//while (getExperience() >= iTier)
 		while (getExperience() >= iTier*iTier+1)
 		{
-			iValueRating += GC.getLFBBasedOnExperience();
+			//iValueRating += GC.getLFBBasedOnExperience();
 			//iTier *= 2;
 			iTier++;
 		}
+		iValueRating += std::max(getLevel(), iTier) * GC.getLFBBasedOnExperience();
 	}
 
 	// Check if unit is limited in how many can exist
