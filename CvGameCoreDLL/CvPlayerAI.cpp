@@ -2178,17 +2178,14 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 				// if one of the currently best cities, then focus hard, *4 or more
 				if (iCultureRateRank <= iCulturalVictoryNumCultureCities)
 				{
-					//iWeight *= (3 + iCultureRateRank);
-					iWeight *= (3 + 2*iCultureRateRank);
+					iWeight *= (3 + iCultureRateRank);
 				}
 				// if one of the 3 close to the top, then still emphasize culture some, *2
 				else if (iCultureRateRank <= iCulturalVictoryNumCultureCities + 3)
 				{
-					//iWeight *= 2;
-					iWeight *= 4;
+					iWeight *= 2;
 				}
-				//else if (isHuman())
-				else
+				else if (isHuman())
 				{
 					iWeight *= 2;
 				}
