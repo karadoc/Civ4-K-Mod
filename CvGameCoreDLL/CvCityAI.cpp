@@ -2751,11 +2751,11 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	bChooseUnit = false;
-	if (!bUnitExempt && iUnitCostPercentage < iMaxUnitSpending + 5)
+	if (iUnitCostPercentage < iMaxUnitSpending + 5)
 	{
 		if ((bLandWar) ||
 			  ((kPlayer.getNumCities() <= 3) && (GC.getGameINLINE().getElapsedGameTurns() < 60)) ||
-			  (GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") < AI_buildUnitProb()) ||
+			  (!bUnitExempt && GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") < AI_buildUnitProb()) ||
 				(isHuman() && (getGameTurnFounded() == GC.getGameINLINE().getGameTurn())))
 		{
 			if (AI_chooseUnit())
@@ -10107,7 +10107,10 @@ int CvCityAI::AI_buildUnitProb()
 	}
 
 	if (GET_PLAYER(getOwnerINLINE()).getCurrentEra() < GC.getGameINLINE().getCurrentEra())
-		iProb /= 2;
+	{
+		iProb *= std::max(40, 100 - 20 * (GC.getGameINLINE().getCurrentEra() - GET_PLAYER(getOwnerINLINE()).getCurrentEra()));
+		iProb /= 100;
+	}
 
 	iProb *= (100 + 2*getMilitaryProductionModifier());
 	iProb /= 100;

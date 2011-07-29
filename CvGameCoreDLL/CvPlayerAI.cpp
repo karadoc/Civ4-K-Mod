@@ -12622,6 +12622,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	// K-Mod: count bonus specialists,
 	// so that we can more accurately gauge the representation bonus
 	int iTotalBonusSpecialists = 0;
+	int iTotalCurrentSpecialists = 0;
 
 	{
 		int iLoop;
@@ -12630,6 +12631,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		{
 			iTotalBonusSpecialists += pLoopCity->getNumGreatPeople();
 			iTotalBonusSpecialists += pLoopCity->totalFreeSpecialists();
+
+			iTotalCurrentSpecialists += pLoopCity->getNumGreatPeople();
+			iTotalCurrentSpecialists += pLoopCity->getSpecialistPopulation();
 		}
 	}
 	// K-Mod end
@@ -12654,7 +12658,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		// Representation
 		//iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * getTotalPopulation()) / 15);
 		// K-Mod
-		iTempValue += AI_averageCommerceMultiplier((CommerceTypes)iI)*((kCivic.getSpecialistExtraCommerce(iI) * (getTotalPopulation()+10*iTotalBonusSpecialists)) / 10);
+		iTempValue += AI_averageCommerceMultiplier((CommerceTypes)iI)*(kCivic.getSpecialistExtraCommerce(iI) * std::max((getTotalPopulation()+10*iTotalBonusSpecialists) / 10, iTotalCurrentSpecialists));
 
 		iTempValue /= 100; // (for the 3 things above)
 
@@ -12676,6 +12680,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 	{
 		iTempValue = kCivic.getBuildingHappinessChanges(iI);
+		/* original bts code
 		if (iTempValue != 0)
 		{
 			// Nationalism
@@ -12684,6 +12689,16 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				iValue += (iTempValue * iCities)/2;
 			}
 			iValue += (iTempValue * getBuildingClassCountPlusMaking((BuildingClassTypes)iI) * 2);
+		}*/
+		// K-Mod
+		if (iTempValue != 0)
+		{
+			int iExpectedBuildings = 0;
+			if (canConstruct((BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)))
+			{
+				iExpectedBuildings = (iCities + getBuildingClassCountPlusMaking((BuildingClassTypes)iI))/2;
+			}
+			iValue += (12 * iExpectedBuildings * iS * AI_getHappinessWeight(iS * iTempValue, 1))/100;
 		}
 	}
 

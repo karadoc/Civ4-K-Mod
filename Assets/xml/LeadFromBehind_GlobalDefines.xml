@@ -35,7 +35,7 @@
 	</Define>
 	<Define>
 		<DefineName>LFB_ADJUSTDENOMINATOR</DefineName>
-		<iDefineIntVal>4</iDefineIntVal>
+		<iDefineIntVal>6</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>LFB_USECOMBATODDS</DefineName>

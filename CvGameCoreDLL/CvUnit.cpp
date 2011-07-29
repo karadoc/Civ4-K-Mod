@@ -13488,9 +13488,10 @@ int CvUnit::LFBgetValueAdjustedOdds(int iOdds, bool bDefender) const
 		iAdjustment = (iOdds - 990);
 	// Value Adjustment = (odds-990)*(value*num/denom)^2
 	long iValueAdj = (long)(iValue * GC.getLFBAdjustNumerator());
-	iValueAdj *= iValueAdj;
+	//iValueAdj *= iValueAdj;
 	iValueAdj *= iAdjustment;
-	iValueAdj /= (long)(GC.getLFBAdjustDenominator() * GC.getLFBAdjustDenominator());
+	//iValueAdj /= (long)(GC.getLFBAdjustDenominator() * GC.getLFBAdjustDenominator());
+	iValueAdj /= (long)GC.getLFBAdjustDenominator();
 	int iRank = iOdds + iValueAdj + 10000;
 	// Note that the +10000 is just to try keeping it > 0 - doesn't really matter, other than that -1
 	// would be interpreted later as not computed yet, which would cause us to compute it again each time
