@@ -12653,7 +12653,10 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}*/
 		// K-Mod
 		iTempValue += kCivic.getCommerceModifier(iI) * 100*getCommerceRate((CommerceTypes)iI) / (100+AI_averageCommerceMultiplier((CommerceTypes)iI));
-		iTempValue += kCivic.getCapitalCommerceModifier(iI) * pCapital->getBaseCommerceRate((CommerceTypes)iI);
+		if (pCapital != NULL)
+		{
+			iTempValue += kCivic.getCapitalCommerceModifier(iI) * pCapital->getBaseCommerceRate((CommerceTypes)iI);
+		}
 
 		// Representation
 		//iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * getTotalPopulation()) / 15);

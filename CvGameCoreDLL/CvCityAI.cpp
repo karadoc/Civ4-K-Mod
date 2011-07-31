@@ -4425,8 +4425,33 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			{
 				for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
 				{
+					// K-Mod - I've shuffled some parts of this code around.
 					iTempValue = 0;
 
+					iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 10);
+					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));
+
+					if (bProvidesPower && !isPower())
+					{
+						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 12);
+					}
+
+					for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
+					{
+						if (hasBonus((BonusTypes)iJ))
+						{
+							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 12);
+						}
+					}
+
+					// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
+					// we do _not_ want to build this here (unless the value was small anyway)
+					if (bIsLimitedWonder && (aiYieldRank[iI] > (3 + iLimitedWonderLimit)))
+					{
+						iTempValue *= -1;
+					}
+
+					// ...and now the things that should not depend on whether or not we have a good yield rank
 					iValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 12);
 					if (bForeignTrade)
 					{
@@ -4448,28 +4473,14 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 					iTempValue += (kBuilding.getGlobalSeaPlotYieldChange(iI) * kOwner.countNumCoastalCities() * 8);
 					iTempValue += (kBuilding.getYieldChange(iI) * 6);
-					iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 10);
-					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));
-					iTempValue += ((kBuilding.getAreaYieldModifier(iI) * iNumCitiesInArea) / 3);
-					iTempValue += ((kBuilding.getGlobalYieldModifier(iI) * iNumCities) / 3);
-
-					if (bProvidesPower && !isPower())
-					{
-						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 12);
-					}
 
 					for (iJ = 0; iJ < GC.getNumSpecialistInfos(); iJ++)
 					{
 						iTempValue += ((kBuilding.getSpecialistYieldChange(iJ, iI) * kOwner.getTotalPopulation()) / 5);
 					}
 
-					for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
-					{
-						if (hasBonus((BonusTypes)iJ))
-						{
-							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 12);
-						}
-					}
+					iTempValue += ((kBuilding.getAreaYieldModifier(iI) * iNumCitiesInArea) / 3);
+					iTempValue += ((kBuilding.getGlobalYieldModifier(iI) * iNumCities) / 3);
 					
 					if (iTempValue != 0)
 					{
@@ -4486,12 +4497,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							aiYieldRank[iI] = findBaseYieldRateRank((YieldTypes) iI);
 						}
 
-						// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
-						// we do _not_ want to build this here (unless the value was small anyway)
-						if (bIsLimitedWonder && (aiYieldRank[iI] > (3 + iLimitedWonderLimit)))
-						{
-							iTempValue *= -1;
-						}
+						// (limited wonder condition use to be here. I've moved it. - Karadoc)
 
 						iValue += iTempValue;
 					}
@@ -7811,7 +7817,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 				{
 					// Non-critical, only burn population if population is not worth much
 					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorTiles() > 1))
-					if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorTiles() > 0)) // K-Mod
+					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) && (AI_countWorkedPoorTiles() > 0)) // K-Mod
 					{
 						//if( (getPopulation() >= std::max(5, getHighestPopulation() - 1)) )
 						// We're working poor tiles. What more do you want?
