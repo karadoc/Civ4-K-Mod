@@ -405,6 +405,9 @@ void CvPlayerAI::AI_doTurnPre()
 	AI_updateBonusValue();
 	
 	AI_doEnemyUnitData();
+
+	// K-Mod: clear construction value cache
+	AI_ClearConstructionValueCache();
 	
 	if (isHuman())
 	{
@@ -22056,6 +22059,18 @@ void CvPlayerAI::AI_invalidateAttitudeCache()
 	for( int iI = 0; iI < MAX_PLAYERS; iI++ )
 	{
 		AI_invalidateAttitudeCache((PlayerTypes)iI);
+	}
+}
+
+// K-Mod
+void CvPlayerAI::AI_ClearConstructionValueCache()
+{
+	CvCity *pLoopCity;
+	int iLoop;
+	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		// Have I meantioned that the way the "AI" classes are used in this code is an abomination and an insult to OO programming?
+		static_cast<CvCityAI*>(pLoopCity)->AI_ClearConstructionValueCache();
 	}
 }
 /************************************************************************************************/

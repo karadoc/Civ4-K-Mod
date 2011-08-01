@@ -15363,7 +15363,7 @@ void CvGameTextMgr::assignFontIds(int iFirstSymbolCode, int iPadAmount)
 	} while (iCurSymbolID % iPadAmount != 0);
 
 	// set commerce symbols
-	for (i=0;i<GC.getNUM_COMMERCE_TYPES();i++)
+	for (int i=0;i<GC.getNUM_COMMERCE_TYPES();i++)
 	{
 		GC.getCommerceInfo((CommerceTypes) i).setChar(iCurSymbolID);  
 		++iCurSymbolID;
@@ -15389,7 +15389,7 @@ void CvGameTextMgr::assignFontIds(int iFirstSymbolCode, int iPadAmount)
 		GC.getReligionInfo((ReligionTypes) i).setHolyCityChar(iCurSymbolID);
 		++iCurSymbolID;
 	}
-	for (i = 0; i < GC.getNumCorporationInfos(); i++)
+	for (int i = 0; i < GC.getNumCorporationInfos(); i++)
 	{
 		GC.getCorporationInfo((CorporationTypes) i).setChar(iCurSymbolID);
 		++iCurSymbolID;

@@ -1847,7 +1847,7 @@ void CvGame::normalizeAddExtras()
 												{
 												pLoopPlot->setFeatureType(NO_FEATURE);
 
-													for (iK = 0; iK < GC.getNumBonusInfos(); iK++)
+													for (int iK = 0; iK < GC.getNumBonusInfos(); iK++)
 													{
 														if (GC.getBonusInfo((BonusTypes)iK).isNormalize())
 														{
@@ -1879,7 +1879,7 @@ void CvGame::normalizeAddExtras()
 				
 				shuffleArray(aiShuffle, NUM_CITY_PLOTS, getMapRand());
 
-				for (iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+				for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
 				{
 					if (GET_PLAYER((PlayerTypes)iI).AI_foundValue(pStartingPlot->getX_INLINE(), pStartingPlot->getY_INLINE(), -1, true) >= iTargetValue)
 					{
@@ -6358,7 +6358,8 @@ CvPlot* CvGame::getRandGWPlot(int iPool)
 	{
 		// I want to be able to select a water tile with ice on it; so I can't just exclude water completely...
 		//CvPlot* pTestPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_LAND | RANDPLOT_NOT_CITY);
-		for (int j = 0; j < 100; j++)
+		int j;
+		for (j = 0; j < 100; j++)
 		{
 			pTestPlot = GC.getMapINLINE().syncRandPlot(RANDPLOT_NOT_CITY);
 
@@ -8795,7 +8796,7 @@ void CvGame::changeHumanPlayer( PlayerTypes eNewHuman )
 		GET_PLAYER(eNewHuman).setOption( (PlayerOptionTypes)iI, GET_PLAYER(eCurHuman).isOption((PlayerOptionTypes)iI) );
 	}
 
-	for (iI = 0; iI < NUM_PLAYEROPTION_TYPES; iI++)
+	for (int iI = 0; iI < NUM_PLAYEROPTION_TYPES; iI++)
 	{
 		gDLL->sendPlayerOption(((PlayerOptionTypes)iI), GET_PLAYER(eNewHuman).isOption((PlayerOptionTypes)iI));
 	}

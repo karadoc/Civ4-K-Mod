@@ -57,6 +57,7 @@ CvCityAI::CvCityAI()
 	m_bForceEmphasizeCulture = false;
 	m_aiSpecialYieldMultiplier = new int[NUM_YIELD_TYPES];
 	m_aiPlayerCloseness = new int[MAX_PLAYERS];
+	m_aiConstructionValue = new int[GC.getNumBuildingClassInfos()]; // K-Mod
 
 	m_pbEmphasize = NULL;
 
@@ -72,6 +73,7 @@ CvCityAI::~CvCityAI()
 	SAFE_DELETE_ARRAY(m_aiEmphasizeCommerceCount);
 	SAFE_DELETE_ARRAY(m_aiSpecialYieldMultiplier);
 	SAFE_DELETE_ARRAY(m_aiPlayerCloseness);
+	SAFE_DELETE_ARRAY(m_aiConstructionValue); // K-Mod
 }
 
 
@@ -153,6 +155,11 @@ void CvCityAI::AI_reset()
 	{
 		m_aiPlayerCloseness[iI] = 0;
 	}
+	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++) // K-Mod
+	{
+		m_aiConstructionValue[iI] = -1;
+	}
+
 	m_iCachePlayerClosenessTurn = -1;
 	m_iCachePlayerClosenessDistance = -1;
 	
@@ -3504,6 +3511,12 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	int iLimitedWonderLimit = limitedWonderClassLimit(eBuildingClass);
 	bool bIsLimitedWonder = (iLimitedWonderLimit >= 0);
 
+	// K-Mod, constructionValue cache
+	if (iFocusFlags == 0 && iThreshold == 0 && m_aiConstructionValue[eBuildingClass] != -1)
+	{
+		return m_aiConstructionValue[eBuildingClass];
+	}
+
 	int iCountMaking = kOwner.getBuildingClassMaking(eBuildingClass); // K-Mod
 
 	ReligionTypes eStateReligion = kOwner.getStateReligion();
@@ -5169,7 +5182,15 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 		
 	}
 
-	return std::max(0, iValue);
+	iValue = std::max(0, iValue);
+
+	// K-Mod, constructionValue cache
+	if (iFocusFlags == 0 && iThreshold == 0)
+	{
+		m_aiConstructionValue[eBuildingClass] = iValue;
+	}
+
+	return iValue;
 }
 
 
@@ -6894,7 +6915,7 @@ int CvCityAI::AI_getImprovementValue( CvPlot* pPlot, ImprovementTypes eImproveme
 
 			iValue /= 2;
 
-            for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+            for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 			{
 				aiFinalYields[iJ] /= 2;
 				aiDiffYields[iJ] /= 2;
@@ -12419,6 +12440,14 @@ void CvCityAI::write(FDataStreamBase* pStream)
 	pStream->Write(m_iWorkersHave);
 }
 
+// K-Mod
+void CvCityAI::AI_ClearConstructionValueCache()
+{
+	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	{
+		m_aiConstructionValue[iI] = -1;
+	}
+}
 
 /***
 **** K-Mod, 13/sep/10, Karadoc

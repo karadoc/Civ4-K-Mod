@@ -416,6 +416,7 @@ public:
 	// Attitude cache
 	void AI_invalidateAttitudeCache(PlayerTypes ePlayer);
 	void AI_invalidateAttitudeCache();
+	void AI_ClearConstructionValueCache(); // K-Mod
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/

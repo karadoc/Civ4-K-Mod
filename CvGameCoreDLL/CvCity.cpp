@@ -5007,7 +5007,11 @@ int CvCity::culturePressureFactor() const
 				const CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iP);
 				if (kPlayer.isAlive() && kPlayer.getTeam() != getTeam() && !kPlayer.isBarbarian())
 				{
-					int iForeignCulture = pLoopPlot->calculateCulturePercent((PlayerTypes)iP) / ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :1);
+					int iForeignCulture = pLoopPlot->calculateCulturePercent((PlayerTypes)iP);
+					// lower the value if the foreign culture is not allowed take control of the plot
+					iForeignCulture /= ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :1);
+					// lower the value if the foreign culture is not allowed to flip the city (with the default option for no conquest flipping)
+					iForeignCulture /= (isEverOwned((PlayerTypes)iP)?2 : 1);
 					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}

@@ -150,6 +150,8 @@ public:
 	void read(FDataStreamBase* pStream);
 	void write(FDataStreamBase* pStream);
 
+	void AI_ClearConstructionValueCache(); // K-Mod
+
 protected:
 
 	int m_iEmphasizeAvoidGrowthCount;
@@ -181,6 +183,8 @@ protected:
 	
 	int m_iWorkersNeeded;
 	int m_iWorkersHave;
+
+	int* m_aiConstructionValue; // K-Mod. (cache)
 	
 
 	void AI_doDraft(bool bForce = false);
