@@ -5007,7 +5007,9 @@ int CvCity::culturePressureFactor() const
 				const CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iP);
 				if (kPlayer.isAlive() && kPlayer.getTeam() != getTeam() && !kPlayer.isBarbarian())
 				{
-					int iForeignCulture = pLoopPlot->calculateCulturePercent((PlayerTypes)iP);
+					int iForeignCulture = pLoopPlot->getCulture((PlayerTypes)iP);
+					// scale it by how it compares to our culture
+					iForeignCulture = 100 * iForeignCulture / std::max(1, iForeignCulture + pLoopPlot->getCulture(getOwner()));
 					// lower the value if the foreign culture is not allowed take control of the plot
 					iForeignCulture /= ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :1);
 					// lower the value if the foreign culture is not allowed to flip the city (with the default option for no conquest flipping)

@@ -11731,6 +11731,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 //Returns approximately 100 x gpt value of the corporation.
 int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity) const
 {
+	/* original bts code
 	if (pCity == NULL)
 	{
 		if (getCapitalCity() != NULL)
@@ -11774,8 +11775,103 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 		}
 	}
 	iBonusValue *= 3;
-	
-	return iBonusValue;
+		
+	return iBonusValue; */
+
+	// K-Mod. Well that was a load of bullshit... lets try to do it better.
+	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
+	int iValue = 0;
+	int iMaintenance = 0;
+	int iTempValue;
+
+	int iBonuses = 0;
+	for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
+	{
+		BonusTypes eBonus = (BonusTypes)kCorp.getPrereqBonus(i);
+		if (NO_BONUS != eBonus)
+		{
+			if (pCity == NULL)
+				iBonuses += countOwnedBonuses(eBonus);
+			else
+				iBonuses += pCity->getNumBonuses(eBonus);
+		}
+	}
+
+	for (int iI = (CommerceTypes)0; iI < NUM_COMMERCE_TYPES; ++iI)
+	{
+		iTempValue = 0;
+		int iMultiplier;
+
+		if (pCity == NULL)
+			iMultiplier = AI_averageCommerceMultiplier((CommerceTypes)iI);
+		else
+			iMultiplier = pCity->getTotalCommerceRateModifier((CommerceTypes)iI);
+		// I'd feel more comfortable if they named it "multiplier" when it included the base 100%.
+
+		iTempValue += ((iMultiplier * kCorp.getCommerceProduced((CommerceTypes)iI))/100 * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
+
+		iTempValue *= AI_commerceWeight((CommerceTypes)iI, pCity);
+		iTempValue /= 100;
+
+		iValue += iTempValue;
+
+		iMaintenance += kCorp.getHeadquarterCommerce(iI);
+	}
+
+	for (iI = 0; iI < NUM_YIELD_TYPES; ++iI)
+	{
+		iTempValue = kCorp.getYieldProduced((YieldTypes)iI) * iBonuses;
+		if (pCity == NULL)
+			iTempValue *= AI_averageYieldMultiplier((YieldTypes)iI);
+		else
+			iTempValue *= pCity->getBaseYieldRateModifier((YieldTypes)iI);
+
+		iTempValue /= 100;
+		iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
+		iTempValue /= 10000; // getYieldProduced is x100.
+
+		// Factors that are used in some other evaluation code. Ideally these would be rolled into yieldWeight...
+		if (iI == YIELD_FOOD) 
+		{ 
+			iTempValue *= 3; 
+		} 
+		else if (iI == YIELD_PRODUCTION) 
+		{ 
+			iTempValue *= ((AI_avoidScience()) ? 6 : 2); 
+		} 
+		else if (iI == YIELD_COMMERCE) 
+		{ 
+			iTempValue *= ((AI_avoidScience()) ? 2 : 4);
+			iTempValue /= 3;
+		}
+
+		iTempValue *= AI_yieldWeight((YieldTypes)iI);
+		iTempValue /= 100;
+
+		iValue += iTempValue;
+	}
+
+	// maintenance cost
+	iTempValue = kCorp.getMaintenance() * iBonuses;
+	iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
+	iTempValue /= 10000;
+	iTempValue += iMaintenance;
+	if (pCity != NULL)
+	{
+		iMaintenance *= (pCity->getPopulation() + 17);
+		iMaintenance /= 18;
+		iMaintenance *= std::max(0, (pCity->getMaintenanceModifier() + 100));
+		iMaintenance /= 100;
+	}
+	// I'm neglecting those factors for the null city case. They will roughly cancel... maybe.
+
+	iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
+	iTempValue /= 100;
+
+	iValue -= iTempValue;
+
+	return iValue;
+	// K-Mod end
 }
 
 int CvPlayerAI::AI_areaMissionAIs(CvArea* pArea, MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup) const
@@ -12404,8 +12500,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			// (Note: this doesn't take into account the posibility of competing corps. Sorry.)
 			if (bTeamHQ)
 			{
-				iCorpCities += (bPlayerHQ ?2 :1)*iCities;
-				iCorpCities /= (bPlayerHQ ?3 :2);
+				iCorpCities = ((bPlayerHQ ?1 :2)*iCorpCities + iCities)/(bPlayerHQ ?2 :3);
 			}
 
 			for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
@@ -12780,7 +12875,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			int iExpectedBuildings = 0;
 			if (canConstruct((BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)))
 			{
-				iExpectedBuildings = (iCities + getBuildingClassCountPlusMaking((BuildingClassTypes)iI))/2;
+				iExpectedBuildings = (iCities + 2*getBuildingClassCountPlusMaking((BuildingClassTypes)iI))/3;
 			}
 			iValue += (12 * iExpectedBuildings * iS * AI_getHappinessWeight(iS * iTempValue, 1))/100;
 		}

@@ -469,7 +469,7 @@ bool CvCityAI::AI_ignoreGrowth()
 	return false;
 }
 
-
+// (this function has been edited heavily for K-Mod)
 int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove)
 {
 	PROFILE_FUNC();
@@ -493,7 +493,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		aiCommerceYields[iI] = GET_PLAYER(getOwnerINLINE()).specialistCommerce(eSpecialist, ((CommerceTypes)iI));
 	}
 	
-	iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove);
+	iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove) * 100;
 
 	iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
 
@@ -524,28 +524,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			}
 		}
 		
-		//iGreatPeopleRate = ((iGreatPeopleRate * getTotalGreatPeopleRateModifier()) / 100);
-		// UnitTypes iGreatPeopleType = (UnitTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass();
-		
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      12/06/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
-		// Scale up value for civs/civics with bonuses
-	// K-Mod... moved this to reduce rounding errors.
-		/*
-		iGreatPeopleRate *= (100 + GET_PLAYER(getOwnerINLINE()).getGreatPeopleRateModifier());
-		iGreatPeopleRate /= 100;
-		*/
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-		iTempValue = (iGreatPeopleRate * iGPPValue);
-	// K-Mod here's where I moved it to
-		iTempValue *= (100 + GET_PLAYER(getOwnerINLINE()).getGreatPeopleRateModifier());
-		iTempValue /= 100;
+		iTempValue = 100 * iGreatPeopleRate * iGPPValue;
 		
 //		if (isHuman() && (getGreatPeopleUnitRate(iGreatPeopleType) == 0)
 //			&& (getForceSpecialistCount(eSpecialist) == 0) && !AI_isEmphasizeGreatPeople())
@@ -559,18 +538,13 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			if (iProgress > 0)
 			{
 				int iThreshold = GET_PLAYER(getOwnerINLINE()).greatPeopleThreshold();
-				iTempValue += ((iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold));
+				iTempValue += 100*(iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold);
 			}
 		}
 		
 		int iCurrentEra = GET_PLAYER(getOwnerINLINE()).getCurrentEra();
 		int iTotalEras = GC.getNumEraInfos();
 		
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 		if (GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
 		{
 			int iUnitClass = GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass();
@@ -582,13 +556,10 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				CvUnitInfo& kUnitInfo = GC.getUnitInfo(eGreatPeopleUnit);
 				if (kUnitInfo.getGreatWorkCulture() > 0)
 				{
-					iTempValue += kUnitInfo.getGreatWorkCulture() * (std::max(2*iTotalEras/3, (int)GET_PLAYER(getOwnerINLINE()).getCurrentEra())) / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 200 : 350);
+					iTempValue += 100 * iGreatPeopleRate * kUnitInfo.getGreatWorkCulture() * (std::max(2*iTotalEras/3, (int)GET_PLAYER(getOwnerINLINE()).getCurrentEra())) / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 500 : 700);
 				}
 			}
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
         if (!isHuman() && (iCurrentEra <= ((iTotalEras * 2) / 3)))
         {
@@ -632,24 +603,29 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 
 			if (bNeedProphet)
             {
-                iTempValue += ((iGreatPeopleRate * iBestSpreadValue));
+                iTempValue += 100 * iGreatPeopleRate * iBestSpreadValue;
             }
 		}
+
+		// Scale based on how often this city will actually get a great person.
+		int iCityRate = getGreatPeopleRate();
+		int iHighestRate = 0;
+		int iLoop;
+		for( CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop) )
+		{
+			int x = pLoopCity->getGreatPeopleRate();
+			if (x > iHighestRate)
+				iHighestRate = x;
+		}
+		if (iHighestRate > iCityRate)
+		{
+			iTempValue *= 100;
+			iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
+		}
 		
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      12/06/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix, City AI                                                                              */
-/************************************************************************************************/
-/* original BTS code
-		iTempValue *= 100;
-*/		
-		// Scale up value for civs/civics with bonuses
 		iTempValue *= getTotalGreatPeopleRateModifier();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-		iTempValue /= GET_PLAYER(getOwnerINLINE()).AI_averageGreatPeopleMultiplier();
+		iTempValue /= 100;
+		//iTempValue /= GET_PLAYER(getOwnerINLINE()).AI_averageGreatPeopleMultiplier();
 		
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
@@ -672,15 +648,15 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 		int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
 
-		iValue += (iExperience * ((iHasMetCount > 0) ? 4 : 2));
+		iValue += 100 * iExperience * ((iHasMetCount > 0) ? 4 : 2);
 		if (iProductionRank <= iNumCities/2 + 1)
 		{
-			iValue += iExperience *  4;
+			iValue += 100 * iExperience *  4;
 		}
-		iValue += ((getMilitaryProductionModifier() * iExperience * 8) / 100);
+		iValue += (getMilitaryProductionModifier() * iExperience * 8);
 	}
 
-	return (iValue * 100);
+	return iValue;
 }
 
 /************************************************************************************************/
@@ -4768,68 +4744,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						}
 					}
 
-					CorporationTypes eCorporation = (CorporationTypes)kBuilding.getFoundsCorporation();
-					int iCorpValue = 0;
-					if (NO_CORPORATION != eCorporation)
-					{
-						iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
-						
-						for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
-						{
-							if (iCorp != eCorporation)
-							{
-								if (kOwner.hasHeadquarters((CorporationTypes)iCorp))
-								{
-									if (GC.getGame().isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
-									{
-										if (kOwner.AI_corporationValue((CorporationTypes)iCorp, this) > iCorpValue)
-										{
-											iCorpValue = -1;
-											break;											
-										}
-										else
-										{
-											if (!isHasCorporation((CorporationTypes)iCorp))
-											{
-												iCorpValue = -1;
-											}
-										}
-									}
-								}
-							}
-						}
-						
-						iTempValue += iCorpValue / 100;
-					}
-					
-					if (iCorpValue >= 0)//Don't build if it'll hurt us.
-					{
-						if (kBuilding.getGlobalCorporationCommerce() != NO_CORPORATION)
-						{
-							int iGoldValue = (GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())) * 2);
-							
-							iGoldValue += GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI);
-							if (iGoldValue > 0)
-							{
-								iGoldValue += 2 + (iNumCities / 4); 
-								iGoldValue += std::min(iGoldValue, getBuildingCommerce(COMMERCE_GOLD) / 2) / 2;							
-							}
-							iGoldValue *= 2;
-							iGoldValue *= getTotalCommerceRateModifier(COMMERCE_GOLD);
-							iGoldValue *= std::max(50, getTotalCommerceRateModifier(COMMERCE_GOLD) - 150);
-							iGoldValue /= 5000;
-							iCorpValue += iGoldValue;
-						}
-					}
-					
-					if (iCorpValue > 0)
-					{
-						if (kOwner.isNoCorporations())
-						{
-							iCorpValue /= 2;
-						}
-						iValue += iCorpValue;
-					}
+					// K-Mod: I've moved the corporation stuff to be outside of this loop so that it isn't quadriple counted
 
 					if (kBuilding.isCommerceFlexible(iI))
 					{
@@ -4896,6 +4811,89 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 						iValue += iTempValue;
 					}
+				}
+
+				// corp evaluation moved here for K-Mod
+				CorporationTypes eCorporation = (CorporationTypes)kBuilding.getFoundsCorporation();
+				int iCorpValue = 0;
+				if (NO_CORPORATION != eCorporation)
+				{
+					//iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
+					// K-Mod: consider the corporation for the whole civ, not just this city.
+					iCorpValue = kOwner.AI_corporationValue(eCorporation);
+						
+					for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
+					{
+						if (iCorp != eCorporation)
+						{
+							if (kOwner.hasHeadquarters((CorporationTypes)iCorp))
+							{
+								if (GC.getGame().isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
+								{
+									// K-Mod note: evaluation of the other corp for this particular city is ok.
+									if (kOwner.AI_corporationValue((CorporationTypes)iCorp, this) > iCorpValue)
+									{
+										iCorpValue = -1;
+										break;											
+									}
+									/* original bts code
+									else
+									{
+										if (!isHasCorporation((CorporationTypes)iCorp))
+										{
+											iCorpValue = -1;
+										}
+									}*/
+									// K-Mod. I commented that out because I don't understand its purpose. It seems to be saying
+									// "if the new corp is better, and this city does not have the old corp, value = -1."
+									// That makes no sense to me.
+								}
+							}
+						}
+					}
+						
+					iTempValue += iCorpValue / 100;
+				}
+					
+				if (iCorpValue >= 0)//Don't build if it'll hurt us.
+				{
+					if (kBuilding.getGlobalCorporationCommerce() != NO_CORPORATION)
+					{
+						/* original bts code
+						int iGoldValue = (GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())) * 2);
+							
+						iGoldValue += GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI);
+						if (iGoldValue > 0)
+						{
+							iGoldValue += 2 + (iNumCities / 4); 
+							iGoldValue += std::min(iGoldValue, getBuildingCommerce(COMMERCE_GOLD) / 2) / 2;							
+						}
+						iGoldValue *= 2;
+						iGoldValue *= getTotalCommerceRateModifier(COMMERCE_GOLD);
+						iGoldValue *= std::max(50, getTotalCommerceRateModifier(COMMERCE_GOLD) - 150);
+						iGoldValue /= 5000;
+						iCorpValue += iGoldValue; */
+
+						// K-Mod. See what they did there? I don't. Here's my version.
+						for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+						{
+							int iExpectedCities = iNumCities + GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce()));
+							int iHqValue = GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * iExpectedCities;
+							iHqValue *= getTotalCommerceRateModifier((CommerceTypes)iI);
+							iHqValue *= kOwner.AI_commerceWeight((CommerceTypes)iI, this);
+							iHqValue /= 10000;
+							iCorpValue += iHqValue;
+						}
+					}
+				}
+					
+				if (iCorpValue > 0)
+				{
+					if (kOwner.isNoCorporations())
+					{
+						iCorpValue /= 2;
+					}
+					iValue += iCorpValue;
 				}
 
 				for (iI = 0; iI < GC.getNumReligionInfos(); iI++)

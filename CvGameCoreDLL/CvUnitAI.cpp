@@ -12942,51 +12942,41 @@ bool CvUnitAI::AI_construct(int iMaxCount, int iMaxSingleBuildingCount, int iThr
 			{
 				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
 				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/03/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
-					if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+					for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 					{
-						for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+						BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
+
+						if (NO_BUILDING != eBuilding)
 						{
-							BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
-
-							if (NO_BUILDING != eBuilding)
+							bool bDoesBuild = false;
+							if ((m_pUnitInfo->getForceBuildings(eBuilding))
+								|| (m_pUnitInfo->getBuildings(eBuilding)))
 							{
-								bool bDoesBuild = false;
-								if ((m_pUnitInfo->getForceBuildings(eBuilding))
-									|| (m_pUnitInfo->getBuildings(eBuilding)))
-								{
-									bDoesBuild = true;
-								}
+								bDoesBuild = true;
+							}
 								
-								if (bDoesBuild && (pLoopCity->getNumBuilding(eBuilding) > 0))
+							if (bDoesBuild && (pLoopCity->getNumBuilding(eBuilding) > 0))
+							{
+								iCount++;
+								if (iCount >= iMaxCount)
 								{
-									iCount++;
-									if (iCount >= iMaxCount)
-									{
-										return false;
-									}
+									return false;
 								}
+							}
 								
-								if (bDoesBuild && GET_PLAYER(getOwnerINLINE()).getBuildingClassCount((BuildingClassTypes)GC.getBuildingInfo(eBuilding).getBuildingClassType()) < iMaxSingleBuildingCount)
+							if (bDoesBuild && GET_PLAYER(getOwnerINLINE()).getBuildingClassCount((BuildingClassTypes)GC.getBuildingInfo(eBuilding).getBuildingClassType()) < iMaxSingleBuildingCount)
+							{
+								//if (canConstruct(pLoopCity->plot(), eBuilding))
+								if (canConstruct(pLoopCity->plot(), eBuilding) && generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true))
 								{
-									if (canConstruct(pLoopCity->plot(), eBuilding))
-									{
-										iValue = pLoopCity->AI_buildingValue(eBuilding);
+									iValue = pLoopCity->AI_buildingValue(eBuilding);
 
-										if ((iValue > iThreshold) && (iValue > iBestValue))
-										{
-											iBestValue = iValue;
-											pBestPlot = getPathEndTurnPlot();
-											pBestConstructPlot = pLoopCity->plot();
-											eBestBuilding = eBuilding;
-										}
+									if ((iValue > iThreshold) && (iValue > iBestValue))
+									{
+										iBestValue = iValue;
+										pBestPlot = getPathEndTurnPlot();
+										pBestConstructPlot = pLoopCity->plot();
+										eBestBuilding = eBuilding;
 									}
 								}
 							}
