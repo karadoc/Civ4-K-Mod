@@ -1492,7 +1492,8 @@ void CvCityAI::AI_chooseProduction()
 		defensiveTypes.push_back(std::make_pair(UNITAI_COUNTER, 100));
 		defensiveTypes.push_back(std::make_pair(UNITAI_ATTACK, 100));
 		defensiveTypes.push_back(std::make_pair(UNITAI_RESERVE, 60));
-		defensiveTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 60));
+		//defensiveTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 60));
+		defensiveTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 100));
 		if ( bDanger || (iTotalFloatingDefenders < (5*iNeededFloatingDefenders)/(bGetBetterUnits ? 6 : 4)))
 		{
 			defensiveTypes.push_back(std::make_pair(UNITAI_CITY_DEFENSE, 200));

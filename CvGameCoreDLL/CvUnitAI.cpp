@@ -2988,7 +2988,7 @@ void CvUnitAI::AI_attackCityMove()
 			if( bTurtle )
 			{
 				//if (AI_guardCity(false, true, 7))
-				if (AI_guardCity(false, true, 5))
+				if (AI_guardCity(false, true, 6))
 				{
 					return;
 				}
