@@ -949,7 +949,11 @@ void CvCityAI::AI_chooseProduction()
 
 	// K-Mod, military exemption for commerce cities and underdeveloped cities
 	bool bUnitExempt = false;
-	if (iProductionRank > kPlayer.getNumCities()/2)
+	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
+	{
+		bUnitExempt = true;
+	}
+	else if (iProductionRank > kPlayer.getNumCities()/2)
 	{
 		bool bBelowMedian = true;
 		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
@@ -11536,6 +11540,20 @@ int CvCityAI::AI_getCityImportance(bool bEconomy, bool bMilitary)
     }
     
     return iValue;
+}
+
+// K-Mod
+int CvCityAI::AI_calculateMilitaryOutput() const
+{
+	int iValue = 0;
+
+	iValue = getBaseYieldRate(YIELD_PRODUCTION);
+	//UnitTypes eDefaultUnit = getConscriptUnit();
+
+	iValue *= 100 + getMilitaryProductionModifier() + 10 * getProductionExperience();
+	iValue /= 100;
+
+	return iValue;
 }
 
 void CvCityAI::AI_stealPlots()

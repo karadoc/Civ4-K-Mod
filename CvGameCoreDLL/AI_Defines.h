@@ -32,6 +32,7 @@
 #define AI_STRATEGY_PRODUCTION          (1 << 13)
 #define AI_STRATEGY_MISSIONARY          (1 << 14)
 #define AI_STRATEGY_BIG_ESPIONAGE		(1 << 15)
+#define AI_STRATEGY_ECONOMY_FOCUS       (1 << 16)  // K-Mod - catch up in tech, at the expensive of military
 
 
 // AI victory stages

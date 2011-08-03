@@ -123,6 +123,8 @@ public:
     int AI_calculateWaterWorldPercent();
     
     int AI_getCityImportance(bool bEconomy, bool bMilitary);
+
+	int AI_calculateMilitaryOutput() const; // K-Mod
     
     int AI_yieldMultiplier(YieldTypes eYield);
     void AI_updateSpecialYieldMultiplier();

@@ -2358,7 +2358,7 @@ bool CvCity::canContinueProduction(OrderData order)
 }
 
 
-int CvCity::getProductionExperience(UnitTypes eUnit)
+int CvCity::getProductionExperience(UnitTypes eUnit) const
 {
 	int iExperience;
 
@@ -4993,9 +4993,9 @@ int CvCity::cultureGarrison(PlayerTypes ePlayer) const
 // K-Mod
 int CvCity::culturePressureFactor() const
 {
-	int iAnswer = 100;
+	int iAnswer = 0;
 	const int iDivisor = 60;
-	iAnswer *= iDivisor;
+
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
 		CvPlot* pLoopPlot = getCityIndexPlot(iI);
@@ -5021,7 +5021,7 @@ int CvCity::culturePressureFactor() const
 	iAnswer *= GC.getNumEraInfos();
 	iAnswer /= GET_PLAYER(getOwnerINLINE()).getCurrentEra() + GC.getNumEraInfos();
 
-	return std::max(100, iAnswer / iDivisor);
+	return 100 + iAnswer / iDivisor;
 }
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const

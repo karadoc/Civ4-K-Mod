@@ -497,10 +497,11 @@ void CvPlayerAI::AI_doTurnUnitsPre()
 		return;
 	}
 	
-//	if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
-//	{
-//		AI_convertUnitAITypesForCrush();		
-//	}
+	// Uncommented by K-Mod
+	if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
+	{
+		AI_convertUnitAITypesForCrush();		
+	}
 }
 
 
@@ -672,12 +673,12 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
 /*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
+/* Unit AI, Efficiency    (and fixed by K-Mod. -- jdog5000, you forgot the "not")               */
 /************************************************************************************************/
 									if ((pLoopUnit->getDomainType() != DOMAIN_LAND) || pLoopUnit->plot()->plotCount(PUF_isMilitaryHappiness, -1, -1, getID()) > 1)
 									{
 										//if ((calculateUnitCost() > 0) && (AI_getPlotDanger( pLoopUnit->plot(), 2, false) == 0))
-										if ((calculateUnitCost() > 0) && (AI_getAnyPlotDanger( pLoopUnit->plot(), 2, false)))
+										if (calculateUnitCost() > 0 && !AI_getAnyPlotDanger( pLoopUnit->plot(), 2, false))
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/	
@@ -781,7 +782,9 @@ void CvPlayerAI::AI_doPeace()
 					{
 						if (GET_TEAM(getTeam()).isAtWar(GET_PLAYER((PlayerTypes)iI).getTeam()))
 						{
-							if (!(GET_PLAYER((PlayerTypes)iI).isHuman()) || (GET_TEAM(getTeam()).getLeaderID() == getID()))
+							//if (!(GET_PLAYER((PlayerTypes)iI).isHuman()) || (GET_TEAM(getTeam()).getLeaderID() == getID()))
+							// K-Mod, bug fix. (wtf was that? Make peace if the player is not human, or if we are their leader?)
+							if (GET_PLAYER((PlayerTypes)iI).isHuman() || GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).getLeaderID() == iI)
 							{
 								FAssertMsg(!(GET_PLAYER((PlayerTypes)iI).isBarbarian()), "(GET_PLAYER((PlayerTypes)iI).isBarbarian()) did not return false as expected");
 								FAssertMsg(iI != getID(), "iI is not expected to be equal with getID()");
@@ -884,6 +887,9 @@ void CvPlayerAI::AI_doPeace()
 															}
 														}
 
+														// K-Mod note: ideally we'd use AI_goldTradeValuePercent()
+														// to work out the gold's value gained by the receiver and the gold's value lost by the giver.
+														// Instead, we just pretend that the receiver gets 1 point per gold, and the giver loses nothing. (effectly a value of 2)
 														iGold = std::min((iTheirValue - iOurValue), GET_PLAYER((PlayerTypes)iI).AI_maxGoldTrade(getID()));
 
 														if (iGold > 0)
@@ -2153,6 +2159,12 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 				iWeight -= 25 - getCommercePercent(COMMERCE_GOLD);
 			}
 		}
+		// K-Mod
+		if (pCity != NULL)
+		{
+			iWeight *= (pCity->getCommerceRateModifier(COMMERCE_GOLD)+100);
+			iWeight /= AI_averageCommerceMultiplier(COMMERCE_GOLD);
+		}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -2237,7 +2249,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 				iWeight /= 3;
 			}
 			// K-Mod
-			iWeight *= AI_AverageCulturePressure();
+			iWeight *= AI_averageCulturePressure();
 			iWeight /= 100;
 		}
 /************************************************************************************************/
@@ -2275,6 +2287,12 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			iWeight *= AI_getEspionageWeight();
 			iWeight /= GET_TEAM(getTeam()).getHasMetCivCount(true) + 1;
 			iWeight /= 100;
+
+			// K-Mod
+			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
+			{
+				iWeight *= 2;
+			}
 
 			if( getCommercePercent(COMMERCE_ESPIONAGE) == 0 )
 			{
@@ -2564,6 +2582,9 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	iGreed = 100;
 
+	// K-Mod - EasyCulture means that it will be easy for us to pop the culture to the 2nd border
+	bool bEasyCulture = false;
+
 	if (bAdvancedStart)
 	{
 		iGreed = 150;		
@@ -2578,23 +2599,60 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
                 //resources into the fat cross.
                 iGreed += (GC.getTraitInfo((TraitTypes)iI).getUpkeepModifier() / 2);
                 iGreed += 20 * (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE));
+				// K-Mod note: I don't think this is the right way to calculate greed.
+				// For example, if greed is high, the civ will end up having fewer, more spread out cities.
+				// That's the opposite of what makes an upkeep reduction most useful.
+				if (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE) > 0)
+					bEasyCulture = true;
             }
         }
     }
+	// K-Mod, easy culture
+	// culture building process
+	if (!bEasyCulture)
+	{
+		for (int iJ = 0; iJ < GC.getNumProcessInfos(); iJ++)
+		{
+			if (GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getProcessInfo((ProcessTypes)iJ).getTechPrereq()) &&
+				GC.getProcessInfo((ProcessTypes)iJ).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0)
+			{
+				bEasyCulture = true;
+				break;
+			}
+		}
+	}
+	// free culture building
+	if (!bEasyCulture)
+	{
+		for (int iJ = 0; iJ < GC.getNumBuildingInfos(); iJ++)
+		{
+			if (isBuildingFree((BuildingTypes)iJ) && GC.getBuildingInfo((BuildingTypes)iJ).getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0)
+			{
+				bEasyCulture = true;
+				break;
+			}
+		}
+	}
+	// easy artists
+	if (!bEasyCulture)
+	{
+		for (int iJ = 0; iJ < GC.getNumSpecialistInfos(); iJ++)
+		{
+			if (isSpecialistValid((SpecialistTypes)iJ) && specialistCommerce((SpecialistTypes)iJ, COMMERCE_CULTURE) > 0)
+			{
+				bEasyCulture = true;
+				break;
+			}
+		}
+	}
+	// K-Mod end
+
     //iClaimThreshold is the culture required to pop the 2nd borders.
     int iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
     iClaimThreshold = std::max(1, iClaimThreshold);
-    iClaimThreshold *= (std::max(100, iGreed));
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       04/25/10                          denev & jdog5000    */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	// Was missing this
+    //iClaimThreshold *= (std::max(100, iGreed));
+	iClaimThreshold *= (bEasyCulture ? 140 : 100); // K-Mod
 	iClaimThreshold /= 100;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
     
     int iYieldLostHere = 0;
 
@@ -2816,6 +2874,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				iTempValue += 5 + (pLoopPlot->isFreshWater() ? 5 : 0);
 			}
 
+			/* original bts code
 			if (iI == CITY_HOME_PLOT)
 			{
 				iTempValue *= 2;
@@ -2830,7 +2889,26 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 			{
 				iTempValue *= iGreed;
 				iTempValue /= 100;
+			}*/
+			// K-Mod version
+			if (bEasyCulture)
+			{
+				// 5/4 * 21 ~= 9 * 1.5 + 12 * 1;
+				iTempValue *= 5;
+				iTempValue /= 4;
 			}
+			else
+			{
+				if ((pLoopPlot->getOwnerINLINE() == getID()) || (stepDistance(iX, iY, pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= 1))
+				{
+					iTempValue *= 3;
+					iTempValue /= 2;
+				}
+			}
+			iTempValue *= iGreed; // (note: see comments about iGreed higher in the code)
+			iTempValue /= 100;
+			// K-Mod end
+
 			
 			iTempValue *= iCultureMultiplier;
 			iTempValue /= 100;
@@ -12655,7 +12733,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iTempValue /= 500;
 		}*/
 		// K-Mod
-		iTempValue += kCivic.getCommerceModifier(iI) * 100*getCommerceRate((CommerceTypes)iI) / (100+AI_averageCommerceMultiplier((CommerceTypes)iI));
+		iTempValue += kCivic.getCommerceModifier(iI) * 100*getCommerceRate((CommerceTypes)iI) / AI_averageCommerceMultiplier((CommerceTypes)iI);
 		if (pCapital != NULL)
 		{
 			iTempValue += kCivic.getCapitalCommerceModifier(iI) * pCapital->getBaseCommerceRate((CommerceTypes)iI);
@@ -18569,7 +18647,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 			m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;	
 		}
 	}
-    
+
 	// Turtle strategy
 	if( GET_TEAM(getTeam()).getAtWarCount(true) > 0 && getNumCities() > 0 )
 	{
@@ -18728,6 +18806,12 @@ int CvPlayerAI::AI_getStrategyHash() const
 		{
 			m_iStrategyHash |= AI_STRATEGY_ALERT2;
 		}
+	}
+
+	// Economic focus (K-Mod) - Note: this strategy is a gambit. The goal is catch up in tech by avoiding building units.
+	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 && iParanoia <= 2*(100-GET_TEAM(getTeam()).getBestKnownTechScorePercent()))
+	{
+		m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
 	}
 
 	if( gPlayerLogLevel >= 2 )
@@ -18899,7 +18983,14 @@ int CvPlayerAI::AI_getStrategyHash() const
 		int iWarCount = 0;
 		int iCrushValue = 0;
 		
-		iCrushValue += (iNonsense % 4);
+
+	// K-Mod. (experimental)
+		//iCrushValue += (iNonsense % 4);
+		// A leader dependant value. (MaxWarRand is roughly between 50 and 200. Gandi is 400.)
+		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
+	// On second thought, lets try this
+		iCrushValue += iNonsense % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
+		// note: flavor military is between 0 and 10
 		
 		if (m_iStrategyHash & AI_STRATEGY_DAGGER)
 		{
@@ -19593,7 +19684,7 @@ int CvPlayerAI::AI_averageGreatPeopleMultiplier() const
 }
 
 // K-Mod
-int CvPlayerAI::AI_AverageCulturePressure() const
+int CvPlayerAI::AI_averageCulturePressure() const
 {
 	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
 	{
@@ -19663,7 +19754,7 @@ void CvPlayerAI::AI_calculateAverages() const
 		}
 		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
-			m_aiAverageCommerceMultiplier[iI] /= iTotalPopulation;	
+			m_aiAverageCommerceMultiplier[iI] /= iTotalPopulation;
 			FAssert(m_aiAverageCommerceMultiplier[iI] > 0);	
 		}
 		m_iAverageGreatPeopleMultiplier /= iTotalPopulation;

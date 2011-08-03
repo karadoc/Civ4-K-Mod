@@ -346,7 +346,7 @@ public:
 	int AI_averageYieldMultiplier(YieldTypes eYield) const;
 	int AI_averageCommerceMultiplier(CommerceTypes eCommerce) const;
 	int AI_averageGreatPeopleMultiplier() const;
-	int AI_AverageCulturePressure() const; // K-Mod
+	int AI_averageCulturePressure() const; // K-Mod
 	int AI_averageCommerceExchange(CommerceTypes eCommerce) const;
 	
 	int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance) const;
