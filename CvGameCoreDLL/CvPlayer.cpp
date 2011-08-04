@@ -9452,6 +9452,29 @@ void CvPlayer::changeFreeMilitaryUnitsPopulationPercent(int iChange)
 	}
 }
 
+// K-Mod
+int CvPlayer::getTypicalUnitValue(UnitAITypes eUnitAI) const
+{
+	//UnitTypes eBestUnit = NO_UNIT;
+	int iHighestValue = 0;
+
+	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+	{
+		UnitTypes eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
+
+		if (eLoopUnit != NO_UNIT && GC.getUnitInfo(eLoopUnit).getUnitAIType(eUnitAI) && canTrain(eLoopUnit))
+		{
+			int iValue = GC.getGameINLINE().AI_combatValue(eLoopUnit);
+			if (iValue > iHighestValue)
+			{
+				iHighestValue = iValue;
+				//eBestUnit = eLoopUnit;
+			}
+		}
+	}
+
+	return iHighestValue;
+}
 
 int CvPlayer::getGoldPerUnit() const																		
 {

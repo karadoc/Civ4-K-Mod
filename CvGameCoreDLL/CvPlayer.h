@@ -481,6 +481,9 @@ public:
 	int getFreeMilitaryUnitsPopulationPercent() const;																										// Exposed to Python
 	void changeFreeMilitaryUnitsPopulationPercent(int iChange);											
 
+	// K-Mod
+	int getTypicalUnitValue(UnitAITypes eUnitAI) const;
+
 	int getGoldPerUnit() const;																																								// Exposed to Python
 	void changeGoldPerUnit(int iChange);															
 
@@ -1062,15 +1065,6 @@ public:
 	virtual void AI_assignWorkingPlots() = 0;
 	virtual void AI_updateAssignWork() = 0;
 	virtual void AI_makeProductionDirty() = 0;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/08/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
-	//virtual void AI_doCentralizedProduction() = 0;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	virtual void AI_conquerCity(CvCity* pCity) = 0;
 	virtual int AI_foundValue(int iX, int iY, int iMinUnitRange = -1, bool bStartingLoc = false) const = 0; // Exposed to Python
 	virtual bool AI_isCommercePlot(CvPlot* pPlot) const = 0;

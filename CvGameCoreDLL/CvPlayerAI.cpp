@@ -10672,7 +10672,11 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * 8;
 			if (iBombardValue > 0)
 			{
-				int iGoalTotalBombardRate = 200;
+				//int iGoalTotalBombardRate = 200;
+				// K-Mod note: This goal has no dependancy on civ size, map size, era, strategy, or anything else that matters
+				// a flat goal of 200... This needs to be fixed. For now, I'll just replace it with something rough.
+				// But this is a future "todo".
+				int iGoalTotalBombardRate = (getNumCities()+2) * (getCurrentEra()+2) * (AI_isDoStrategy(AI_STRATEGY_CRUSH)?8 :4);
 
 				// Note: this also counts UNITAI_COLLATERAL units, which only play defense
 				int iTotalBombardRate = AI_calculateTotalBombard(DOMAIN_LAND);
@@ -15149,7 +15153,7 @@ void CvPlayerAI::AI_doDiplo()
 
 															if (GET_PLAYER((PlayerTypes)iI).isHuman())
 															{
-																//if (!(abContacted[GET_PLAYER((PlayerTypes)iI).getTeam()]))
+																if (!(abContacted[GET_PLAYER((PlayerTypes)iI).getTeam()])) // uncommented by K-Mod
 																{
 																	pDiplo = new CvDiploParameters(getID());
 																	FAssertMsg(pDiplo != NULL, "pDiplo must be valid");
@@ -18022,11 +18026,13 @@ int CvPlayerAI::AI_getConquestVictoryStage() const
 		
 		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
 
-		int iNonsense = AI_getStrategyRand() + 30;
+		//int iNonsense = AI_getStrategyRand() + 30;
+		int iNonsense = AI_getStrategyRand() + 8191; // K-Mod, a prime number, and bigger than 100.
 		iValue += (iNonsense % 100);
 
 		if (iValue >= 100)
 		{
+			// K-Mod note: I don't know why this is here. We need better units therefore we should go for conquest?
 			if( m_iStrategyHash & AI_STRATEGY_GET_BETTER_UNITS )
 			{
 				if( (getNumCities() > 3) && (4*iOurPower > 5*iAverageOtherPower) )
@@ -18525,6 +18531,12 @@ int CvPlayerAI::AI_getStrategyHash() const
     int iNukeCount = 0;
     
     int iAttackUnitCount = 0;
+	// K-Mod
+	int iAverageEnemyUnit = 0;
+	int iTypicalAttack = getTypicalUnitValue(UNITAI_ATTACK);
+	int iTypicalDefence = getTypicalUnitValue(UNITAI_CITY_DEFENSE);
+	// K-Mod end
+
 	for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
 	{
 		eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
@@ -18610,11 +18622,39 @@ int CvPlayerAI::AI_getStrategyHash() const
 			}
 		}
 	}
-	
-	if (iAttackUnitCount <= 1)
+
+	// K-Mod
+	{
+		int iTotalPower = 0;
+		int iTotalWeightedValue = 0;
+		for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		{
+			CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iI);
+			if (kPlayer.getTeam() != getTeam())
+			{
+				if (kPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kPlayer.getTeam()))
+				{
+					int iValue = kPlayer.getTypicalUnitValue(UNITAI_ATTACK);
+					if (iValue <= 1)
+						iValue = kPlayer.getTypicalUnitValue(UNITAI_CITY_DEFENSE);
+					iTotalWeightedValue += kPlayer.getPower() * iValue;
+					iTotalPower += kPlayer.getPower();
+				}
+			}
+		}
+		if (iTotalPower == 0)
+			iAverageEnemyUnit = 0;
+		else
+			iAverageEnemyUnit = iTotalWeightedValue / iTotalPower;
+	}
+
+	//if (iAttackUnitCount <= 1)
+	if (iAttackUnitCount <= 1 ||
+		(iAverageEnemyUnit > 3*iTypicalAttack/2 && iAverageEnemyUnit > 5*iTypicalDefence/3))
 	{
 		m_iStrategyHash |= AI_STRATEGY_GET_BETTER_UNITS;
 	}
+	// K-Mod end
 	if (iBestFastUnitCombat > iBestSlowUnitCombat)
 	{
 		m_iStrategyHash |= AI_STRATEGY_FASTMOVERS;		
@@ -18905,7 +18945,8 @@ int CvPlayerAI::AI_getStrategyHash() const
 	}
 
 	// Economic focus (K-Mod) - Note: this strategy is a gambit. The goal is catch up in tech by avoiding building units.
-	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 && iParanoia <= 2*(100-GET_TEAM(getTeam()).getBestKnownTechScorePercent()))
+	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 &&
+		(iAverageEnemyUnit >= 2*iTypicalAttack && iAverageEnemyUnit >= 5*iTypicalDefence/2))
 	{
 		m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
 	}
@@ -19935,6 +19976,18 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	CvUnit* pLoopUnit;
 	
 	int iLoop;
+
+	// K-Mod
+	int* aiSpareUnits = new int[GC.getMapINLINE().getNumAreas()];
+	for (iLoop = 0; iLoop < GC.getMapINLINE().getNumAreas(); iLoop++)
+	{
+		CvArea* pArea = GC.getMapINLINE().getArea(iLoop);
+		if (pArea)
+			aiSpareUnits[iLoop] = 2 * AI_getTotalFloatingDefenders(pArea) - AI_getTotalFloatingDefendersNeeded(pArea);
+		else
+			aiSpareUnits[iLoop] = 0;
+	}
+	// K-Mod end
 	
 	for(pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 	{
@@ -19954,6 +20007,10 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		{
 			bValid = false;
 		}
+
+		// K-Mod
+		if (aiSpareUnits[pLoopUnit->area()->getID()] <= 0)
+			bValid = false;
 	
 		if (bValid)
 		{
@@ -19972,8 +20029,12 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		if (bValid)
 		{
 			pLoopUnit->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
+			// K-Mod
+			aiSpareUnits[pLoopUnit->area()->getID()]--;
 		}
 	}
+
+	SAFE_DELETE_ARRAY(aiSpareUnits);
 }
 
 int CvPlayerAI::AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance) const
