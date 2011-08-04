@@ -14391,7 +14391,7 @@ void CvPlayerAI::AI_doCommerce()
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						9/7/08				jdog5000	    */
 /* 																			    */
-/* 	Espionage AI															    */
+/* 	Espionage AI		(with bug fixes by karadoc)							    */
 /********************************************************************************/
 		// original BTS code
 		/*
@@ -14416,13 +14416,13 @@ void CvPlayerAI::AI_doCommerce()
 		*/
 		
 		int iEspionageTargetRate = 0;
-		int* piTarget = new int[MAX_CIV_TEAMS];
-		int* piWeight = new int[MAX_CIV_TEAMS];
+		int* aiTarget = new int[MAX_CIV_TEAMS];
+		int* aiWeight = new int[MAX_CIV_TEAMS];
 
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 		{
-			piTarget[iTeam] = 0;
-			piWeight[iTeam] = 0;
+			aiTarget[iTeam] = 0;
+			aiWeight[iTeam] = 0;
 
 			CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
 			if (kLoopTeam.isAlive() && iTeam != getTeam() && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
@@ -14434,7 +14434,7 @@ void CvPlayerAI::AI_doCommerce()
 					int iDesiredMissionPoints = 0;
 					int iDesiredEspPoints = 0;
 					
-					piWeight[iTeam] = 10;
+					aiWeight[iTeam] = 10;
 					int iRateDivisor = 12;
 
 					if( GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN )
@@ -14460,11 +14460,11 @@ void CvPlayerAI::AI_doCommerce()
 						}
 
 						iRateDivisor = 10;
-						piWeight[iTeam] = 20;
+						aiWeight[iTeam] = 20;
 
 						if( GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam) )
 						{
-							piWeight[iTeam] = 30;
+							aiWeight[iTeam] = 30;
 							iRateDivisor = 8;
 						}
 					}
@@ -14514,16 +14514,16 @@ void CvPlayerAI::AI_doCommerce()
 						}
 
 						iRateDivisor += (iAttitude/5);
-						piWeight[iTeam] -= (iAttitude/2);
+						aiWeight[iTeam] -= (iAttitude/2);
 					}
 
 					iDesiredEspPoints = std::max(iTheirEspPoints,iDesiredMissionPoints);
 
-					piTarget[iTeam] = (iDesiredEspPoints - iOurEspPoints)/std::max(6,iRateDivisor);
+					aiTarget[iTeam] = (iDesiredEspPoints - iOurEspPoints)/std::max(6,iRateDivisor);
 
-					if( piTarget[iTeam] > 0 )
+					if( aiTarget[iTeam] > 0 )
 					{
-						iEspionageTargetRate += piTarget[iTeam];
+						iEspionageTargetRate += aiTarget[iTeam];
 					}
 				}
 			}
@@ -14531,18 +14531,18 @@ void CvPlayerAI::AI_doCommerce()
 
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 		{
-			if( piTarget[iTeam] > 0 )
+			if( aiTarget[iTeam] > 0 )
 			{
-				piWeight[iTeam] += (150*piTarget[iTeam])/std::max(4,iEspionageTargetRate);
+				aiWeight[iTeam] += (150*aiTarget[iTeam])/std::max(4,iEspionageTargetRate);
 			}
-			else if( piTarget[iTeam] < 0 )
+			else if( aiTarget[iTeam] < 0 )
 			{
-				piWeight[iTeam] += 2*piTarget[iTeam];
+				aiWeight[iTeam] += 2*aiTarget[iTeam];
 			}	
-			setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, std::max(0,piWeight[iTeam]));
+			setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, std::max(0,aiWeight[iTeam]));
 		}
-		SAFE_DELETE(piTarget);
-		SAFE_DELETE(piWeight);
+		SAFE_DELETE_ARRAY(aiTarget);
+		SAFE_DELETE_ARRAY(aiWeight);
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						END								    */
 /********************************************************************************/
