@@ -2904,7 +2904,19 @@ int CvTeam::countEnemyDangerByArea(CvArea* pArea, TeamTypes eEnemyTeam ) const
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
-
+// K-Mod
+int CvTeam::getTypicalUnitValue(UnitAITypes eUnitAI) const
+{
+	int iMax = 0;
+	for (int iI = 0; iI < MAX_PLAYERS; ++iI)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+		{
+			iMax = std::max(iMax, GET_PLAYER((PlayerTypes)iI).getTypicalUnitValue(eUnitAI));
+		}
+	}
+	return iMax;
+}
 
 int CvTeam::getResearchCost(TechTypes eTech) const
 {

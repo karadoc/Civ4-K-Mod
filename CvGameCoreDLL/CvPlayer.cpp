@@ -14752,7 +14752,9 @@ int CvPlayer::getEspionageMissionBaseCost(EspionageMissionTypes eMission, Player
 
 int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, PlayerTypes eTargetPlayer, const CvPlot* pPlot, int iExtraData, const CvUnit* pSpyUnit) const
 {
-	CvEspionageMissionInfo& kMission = GC.getEspionageMissionInfo(eMission);
+	// K-Mod. I've altered this function to give a generic answer when NO_ESPIONAGEMISSION is passed.
+
+	//CvEspionageMissionInfo& kMission = GC.getEspionageMissionInfo(eMission);
 	int iModifier = 100;
 
 	CvCity* pCity = NULL;
@@ -14766,7 +14768,8 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 		eTargetPlayer = getID();
 	}
 
-	if (pCity != NULL && kMission.isTargetsCity())
+	//if (pCity != NULL && kMission.isTargetsCity())
+	if (pCity != NULL && (eMission == NO_ESPIONAGEMISSION || GC.getEspionageMissionInfo(eMission).isTargetsCity()))
 	{
 		// City Population
 		iModifier *= 100 + (GC.getDefineINT("ESPIONAGE_CITY_POP_EACH_MOD") * (pCity->getPopulation() - 1));
@@ -14819,7 +14822,8 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 		CvCity* pOurCapital = getCapitalCity();
 		if (NULL != pOurCapital)
 		{
-			if (kMission.isSelectPlot() || kMission.isTargetsCity())
+			//if (kMission.isSelectPlot() || kMission.isTargetsCity())
+			if (eMission == NO_ESPIONAGEMISSION || GC.getEspionageMissionInfo(eMission).isSelectPlot() || GC.getEspionageMissionInfo(eMission).isTargetsCity())
 			{
 				iDistance = plotDistance(pOurCapital->getX_INLINE(), pOurCapital->getY_INLINE(), pPlot->getX_INLINE(), pPlot->getY_INLINE());
 			}

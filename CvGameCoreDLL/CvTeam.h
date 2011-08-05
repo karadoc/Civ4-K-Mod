@@ -123,6 +123,9 @@ public:
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+	// K-Mod
+	int getTypicalUnitValue(UnitAITypes eUnitAI) const;
+
 	int getResearchCost(TechTypes eTech) const;																// Exposed to Python
 	int getResearchLeft(TechTypes eTech) const;																// Exposed to Python
 
