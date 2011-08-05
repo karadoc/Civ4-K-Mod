@@ -1,5 +1,37 @@
-This is K-Mod version 0.96.
+This is K-Mod version 0.97.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.97 changelist
+
+NOTE: This patch changes the save file format. K-Mod saves from previous versions will not work with this version.
+
++ Increased cost of The Great Lighthouse, from 200 to 300.
++ Increased Environmentalism upkeep from medium to high.
++ Made some minor changes to some corporation stats.
++ Global warming events are now slightly more biased towards cold tiles.
++ Decreased event message stagger time.
++ GwPercentAnger, average culture press, and building value are now all cached. [no effect on gameplay, but it may make the game run slightly faster.]
++ Changed the way Lead From Behind works. [Previous, LFB was so overly-protective of high-value units that it would not allow warlord-defenders to actually defend.]
+
+AI changes:
++ Adjusted the AI's criteria for drafting.
++ Adjusted spy building decision making.
++ Adjusted espionage mission evaluation.
++ Added new strategies for espionage points targeting.
++ Tweaked city site evaluation.
++ Fixed some problems in the AI's culture pressure response.
++ In most cases, the AI will no longer choose low productivity cities to build floating defenders.
++ The AI now correctly estimates no pollution change from population-pollution reduction in cities that are already at 100% reduction.
++ The AI will no longer try to 'save up' culture wonders unless it is aiming for a cultural victory.
++ For health and happiness in civic evaluation, the AI now distinguishes between switching into a bonus and out of a bonus.
++ Commerce multipliers from civics are now valued in a more reasonable way.
++ The AI will no longer try to save the Moai Statues for a city that already has high productivity.
++ Added some new strategies to help the AI catch-up if it falls behind in tech.
++ Tweaked the conditions and effects of the AI's "crush" strategy.
++ Rewrote the AI's city evaluation of specialists.
++ Rewrote parts of the AI's evaluation of corporation HQ, effect on cities, and civics. [It will now choose its HQ cities more wisely.]
 
 --
 
