@@ -7908,6 +7908,8 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 				{
 					int iPeaceRand = GC.getLeaderHeadInfo(getPersonalityType()).getBasePeaceWeight();
 					iPeaceRand /= (bAggressiveAI ? 2 : 1);
+					// K-Mod
+					iPeaceRand /= (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2) ? 2 : 1); 
 					
 					// Always true for real war-mongers, rarely true for less aggressive types
 					bool bWarmongerRoll = (GC.getGame().getSorenRandNum(iPeaceRand, "AI Erratic Defiance (Force Peace)") == 0);
@@ -7917,7 +7919,8 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 						// Non-warmongers want peace to escape loss
 						bValid = true;
 					}
-					else if ( !bLosingBig && (iChosenWar > iWarsLosing) )
+					//else if ( !bLosingBig && (iChosenWar > iWarsLosing) )
+					else if ( !bLosingBig && (iChosenWar > iWarsLosing || AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3))) // K-Mod
 					{
 						// If chosen to be in most wars, keep it going
 						bValid = false;
@@ -10672,9 +10675,8 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			{
 				//int iGoalTotalBombardRate = 200;
 				// K-Mod note: This goal has no dependancy on civ size, map size, era, strategy, or anything else that matters
-				// a flat goal of 200... This needs to be fixed. For now, I'll just replace it with something rough.
-				// But this is a future "todo".
-				int iGoalTotalBombardRate = (getNumCities()+2) * (getCurrentEra()+2) * (AI_isDoStrategy(AI_STRATEGY_CRUSH)?8 :4);
+				// a flat goal of 200... This needs to be fixed, but for now, I'll just replace it with something rough.
+				int iGoalTotalBombardRate = (getNumCities()+3) * (getCurrentEra()+2) * (AI_isDoStrategy(AI_STRATEGY_CRUSH)?10 :5);
 
 				// Note: this also counts UNITAI_COLLATERAL units, which only play defense
 				int iTotalBombardRate = AI_calculateTotalBombard(DOMAIN_LAND);
@@ -13365,6 +13367,9 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 							iEspionageFlags |= BUILDINGFOCUS_GOLD;
 							iEspionageFlags |= BUILDINGFOCUS_RESEARCH;*/
 							iValue += pCity->AI_buildingValue((BuildingTypes)iData);
+							// K-Mod
+							iValue *= 60 + kBuilding.getProductionCost();
+							iValue /= 100;
 						}
 					}
 				}
@@ -13454,6 +13459,14 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	if (GC.getEspionageMissionInfo(eMission).getCounterespionageNumTurns() > 0)
 	{
 		//iValue += 100 * GET_TEAM(getTeam()).AI_getAttitudeVal(GET_PLAYER(eTargetPlayer).getTeam());
+
+		// K-Mod (I didn't comment that line out, btw.)
+		TeamTypes eTeam = GET_PLAYER(eTargetPlayer).getTeam();
+		int iCounterValue = GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
+		iCounterValue *= (100-AI_getAttitudeWeight(eTargetPlayer));
+		iCounterValue /= GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam);
+		iCounterValue /= 2;
+		iValue += iCounterValue;
 	}
 
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).getBuyCityCostFactor() > 0)
