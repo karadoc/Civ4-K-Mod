@@ -1,4 +1,4 @@
-This is K-Mod version 0.97.
+This is K-Mod version 0.97b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -32,6 +32,9 @@ AI changes:
 + Tweaked the conditions and effects of the AI's "crush" strategy.
 + Rewrote the AI's city evaluation of specialists.
 + Rewrote parts of the AI's evaluation of corporation HQ, effect on cities, and civics. [It will now choose its HQ cities more wisely.]
+
+v0.97b
++ Fixed a bug which was completely preventing global warming.
 
 --
 
