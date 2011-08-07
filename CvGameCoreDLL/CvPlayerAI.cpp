@@ -5866,6 +5866,13 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							iMilitaryValue /= 3;
 						}
 
+						// K-Mod
+						if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS))
+						{
+							iMilitaryValue *= 3;
+							iMilitaryValue /= 2;
+						}
+
 						iUnitValue += iMilitaryValue;
 					}
 					
@@ -13096,19 +13103,8 @@ EspionageMissionTypes CvPlayerAI::AI_bestPlotEspionage(CvPlot* pSpyPlot, PlayerT
 	{
 		if (pSpyPlot->getTeam() != getTeam())
 		{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       09/05/08                                jdog5000      */
-/*                                                                                              */
-/* Bugfix				                                                                         */
-/************************************************************************************************/
-/* original BTS code
+			/* original BTS code
 			if (!AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && (GET_TEAM(getTeam()).AI_getWarPlan(pSpyPlot->getTeam()) != NO_WARPLAN || AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 50 : 1)))
-*/
-			// Attitude weight < 50 is equivalent to < 1, < 51 is clearly what was intended
-			if (!AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && (GET_TEAM(getTeam()).AI_getWarPlan(pSpyPlot->getTeam()) != NO_WARPLAN || AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1)))
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 			{
 				//Destroy Improvement.
 				if (pSpyPlot->getImprovementType() != NO_IMPROVEMENT)
@@ -13138,19 +13134,8 @@ EspionageMissionTypes CvPlayerAI::AI_bestPlotEspionage(CvPlot* pSpyPlot, PlayerT
 			if (pCity != NULL)
 			{
 				//Something malicious
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       09/05/08                                jdog5000      */
-/*                                                                                              */
-/* Bugfix				                                                                         */
-/************************************************************************************************/
-/* original BTS code
-				if (AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 50 : 1))
-*/
-				// Attitude weight < 50 is equivalent to < 1, < 51 is clearly what was intended
-				if (AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1))
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+				//if (AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 50 : 1))
+				if (isMaliciousEspionageTarget(pSpyPlot->getOwnerINLINE()))
 				{
 					//Destroy Building.
 					if (!AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
@@ -13276,7 +13261,43 @@ EspionageMissionTypes CvPlayerAI::AI_bestPlotEspionage(CvPlot* pSpyPlot, PlayerT
 						}
 					}
 				}
+			} */
+			// K-Mod, one espionage mission loop to rule them all...
+			for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+			{
+				CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
+				if (kMissionInfo.getCounterespionageMod() > 0 && kMissionInfo.getCounterespionageNumTurns() > 0)
+				{
+					int iTestData = 1;
+					if (kMissionInfo.getBuyTechCostFactor() > 0)
+					{
+						iTestData = GC.getNumTechInfos();
+					}
+					else if (kMissionInfo.getDestroyProjectCostFactor() > 0)
+					{
+						iTestData = GC.getNumProjectInfos();
+					}
+					else if (kMissionInfo.getDestroyBuildingCostFactor() > 0)
+					{
+						iTestData = GC.getNumBuildingInfos();
+					}
+
+					for ( ; iTestData >= 0; iTestData--)
+					{							
+						int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
+							
+						if (iValue > iBestValue)
+						{
+							iBestValue = iValue;
+							eBestMission = (EspionageMissionTypes)iMission;
+							eTargetPlayer = pSpyPlot->getOwnerINLINE();
+							pPlot = pSpyPlot;
+							iData = iTestData;
+						}
+					}
+				}
 			}
+			// K-Mod end
 		}
 	}
 	
@@ -13286,11 +13307,6 @@ EspionageMissionTypes CvPlayerAI::AI_bestPlotEspionage(CvPlot* pSpyPlot, PlayerT
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/23/09                                jdog5000      */
-/*                                                                                              */
-/* Espionage AI                                                                                 */
-/************************************************************************************************/					
 /// \brief Value of espionage mission at this plot.
 ///
 /// Assigns value to espionage mission against ePlayer at pPlot, where iData can provide additional information about mission.
@@ -13310,7 +13326,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		return 0;
 	}
 
-	bool bMalicious = (AI_getAttitudeWeight(pPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1) || GET_TEAM(getTeam()).AI_getWarPlan(eTargetTeam) != NO_WARPLAN);
+	bool bMalicious = isMaliciousEspionageTarget(eTargetPlayer);	
 
 	int iValue = 0;
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).isDestroyImprovement())
@@ -13357,15 +13373,6 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 						CvBuildingInfo& kBuilding = GC.getBuildingInfo((BuildingTypes)iData);
 						if ((kBuilding.getProductionCost() > 1) && !isWorldWonderClass((BuildingClassTypes)kBuilding.getBuildingClassType()))
 						{
-							// BBAI TODO: Should this be based on production cost of building?  Others are
-							/*int iEspionageFlags = 0;
-							iEspionageFlags |= BUILDINGFOCUS_FOOD;
-							iEspionageFlags |= BUILDINGFOCUS_PRODUCTION;
-							iEspionageFlags |= BUILDINGFOCUS_DEFENSE;
-							iEspionageFlags |= BUILDINGFOCUS_HAPPY;
-							iEspionageFlags |= BUILDINGFOCUS_HEALTHY;
-							iEspionageFlags |= BUILDINGFOCUS_GOLD;
-							iEspionageFlags |= BUILDINGFOCUS_RESEARCH;*/
 							iValue += pCity->AI_buildingValue((BuildingTypes)iData);
 							// K-Mod
 							iValue *= 60 + kBuilding.getProductionCost();
@@ -13449,9 +13456,11 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	{
 		if( pPlot != NULL && pPlot->getPlotCity() != NULL )
 		{
-			int iGoldStolen = (GET_PLAYER(eTargetPlayer).getGold() * GC.getEspionageMissionInfo(eMission).getStealTreasuryTypes()) / 100;
+			/* int iGoldStolen = (GET_PLAYER(eTargetPlayer).getGold() * GC.getEspionageMissionInfo(eMission).getStealTreasuryTypes()) / 100;
 			iGoldStolen *= pPlot->getPlotCity()->getPopulation();
-			iGoldStolen /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());
+			iGoldStolen /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());*/
+			// K-Mod
+			int iGoldStolen = getEspionageGoldQuantity(eMission, eTargetPlayer, pPlot->getPlotCity());
 			iValue += ((GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble()) ? 4 : 2) * (2 * std::max(0, iGoldStolen - iCost));
 		}
 	}
@@ -13592,12 +13601,19 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		// AI doesn't use Player Anarchy
 	}
 
+	// K-Mod
+	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && iValue < 800 && iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
+	{
+		return 0;		
+	}
+
 	return iValue;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
+bool CvPlayerAI::isMaliciousEspionageTarget(PlayerTypes eTarget) const
+{
+	return (AI_getAttitudeWeight(eTarget) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1) || GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(eTarget).getTeam()) != NO_WARPLAN);
+}
 
 int CvPlayerAI::AI_getPeaceWeight() const
 {
@@ -14540,14 +14556,28 @@ void CvPlayerAI::AI_doCommerce()
 							int iModifier = 0;
 							for (pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 							{
-								iModifier += getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, GET_TEAM((TeamTypes)iTeam).getLeaderID(), pLoopCity->plot());
+								iModifier += getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, kLoopTeam.getLeaderID(), pLoopCity->plot());
 							}
 							iModifier /= kLoopPlayer.getNumCities();
 
 							if (iModifier < iMinModifier ||
 								(iModifier == iMinModifier && GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam) < GET_TEAM(getTeam()).AI_getAttitudeVal(eMinModTeam)))
 							{
-								if (getTechScore() < kLoopPlayer.getTechScore())
+								bool bValid = getTechScore() < kLoopPlayer.getTechScore();
+								if (!bValid)
+								{
+									// do they have _any_ techs we can steal?
+									for (int iT = 0; iT < GC.getNumTechInfos(); iT++)
+									{
+										if (canStealTech((PlayerTypes)iPlayer, (TechTypes)iT))
+										{
+											bValid = true;
+											break;
+										}
+									}
+
+								}
+								if (bValid)
 								{
 									iMinModifier = iModifier;
 									eMinModTeam = (TeamTypes)iTeam;
@@ -16396,39 +16426,11 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 
 	pStream->Read(&m_iStrategyHash);
 	pStream->Read(&m_iStrategyHashCacheTurn);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/18/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI, War strategy AI                                                         */
-/************************************************************************************************/
-	if( uiFlag < 3 )
-	{
-		m_iStrategyHash = 0;
-		m_iStrategyHashCacheTurn = -1;
-	}
-
-	if( uiFlag > 2 )
-	{
-		pStream->Read(&m_iStrategyRand);
-	}
-	else
-	{
-		m_iStrategyRand = 0;
-	}
-
-	if( uiFlag > 0 )
-	{
-		pStream->Read(&m_iVictoryStrategyHash);
-		pStream->Read(&m_iVictoryStrategyHashCacheTurn);
-	}
-	else
-	{
-		m_iVictoryStrategyHash = 0;
-		m_iVictoryStrategyHashCacheTurn = -1;
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
+// BBAI (edited for K-Mod)
+	pStream->Read(&m_iStrategyRand);
+	pStream->Read(&m_iVictoryStrategyHash);
+	pStream->Read(&m_iVictoryStrategyHashCacheTurn);
+// BBAI end
 	pStream->Read(&m_iAveragesCacheTurn);
 	pStream->Read(&m_iAverageGreatPeopleMultiplier);
 	pStream->Read(&m_iAverageCulturePressure); // K-Mod
@@ -16508,19 +16510,11 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 {
 	CvPlayer::write(pStream);	// write base class data first
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/18/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 /*
 	uint uiFlag=0;
 */
 	// Flag for type of save
 	uint uiFlag=3;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iPeaceWeight);
@@ -17757,15 +17751,15 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	}
 	*/
 
-	int iNonsense = AI_getStrategyRand() + 10;
-	iValue += (iNonsense % 100);
+	//int iNonsense = AI_getStrategyRand() + 10;
+	iValue += (AI_getStrategyRand(0) % 100);
 
 	if (iValue < 100)
 	{
 		return 0;
 	}
     
-    if (getCurrentEra() >= (GC.getNumEraInfos() - (2 + iNonsense % 2)))
+    if (getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
     {
 		bool bAt3 = false;
         
@@ -17795,7 +17789,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		}
     }
 
-	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + iNonsense % 2))
+	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2))
 	{
 	    return 2;
 	}
@@ -17936,8 +17930,8 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 
 		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
 
-		int iNonsense = AI_getStrategyRand() + 50;
-		iValue += (iNonsense % 100);
+		//int iNonsense = AI_getStrategyRand() + 50;
+		iValue += (AI_getStrategyRand(3) % 100);
 
 		if (iValue >= 100)
 		{
@@ -18071,8 +18065,7 @@ int CvPlayerAI::AI_getConquestVictoryStage() const
 		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
 
 		//int iNonsense = AI_getStrategyRand() + 30;
-		int iNonsense = AI_getStrategyRand() + 8191; // K-Mod, a prime number, and bigger than 100.
-		iValue += (iNonsense % 100);
+		iValue += (AI_getStrategyRand(4) % 100);
 
 		if (iValue >= 100)
 		{
@@ -18159,8 +18152,8 @@ int CvPlayerAI::AI_getDominationVictoryStage() const
 		
 		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
 
-		int iNonsense = AI_getStrategyRand() + 70;
-		iValue += (iNonsense % 100);
+		//int iNonsense = AI_getStrategyRand() + 70;
+		iValue += (AI_getStrategyRand(5) % 100);
 
 		if (iValue >= 100)
 		{
@@ -18230,8 +18223,8 @@ int CvPlayerAI::AI_getDiplomacyVictoryStage() const
 		
 		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
 
-		int iNonsense = AI_getStrategyRand() + 90;
-		iValue += (iNonsense % 100);
+		//int iNonsense = AI_getStrategyRand() + 90;
+		iValue += (AI_getStrategyRand(6) % 100);
 
 		// BBAI TODO: Level 2?
 
@@ -18490,21 +18483,23 @@ int CvPlayerAI::AI_getVictoryStrategyHash() const
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/18/10                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-int CvPlayerAI::AI_getStrategyRand() const
+// K-Mod, based on BBAI
+int CvPlayerAI::AI_getStrategyRand(int iShift) const
 {
+	const unsigned iBits = 16;
+
+	iShift += getCurrentEra();
+	while (iShift < 0)
+		iShift += iBits;
+	iShift %= iBits;
+
     if( m_iStrategyRand <= 0 )
 	{
-		m_iStrategyRand = 1 + GC.getGameINLINE().getSorenRandNum(100000, "AI Strategy Rand");
+		m_iStrategyRand = GC.getGameINLINE().getSorenRandNum((1<<(iBits+1))-1, "AI Strategy Rand");
 	}
 
-	return m_iStrategyRand;
+	return (m_iStrategyRand << iShift) + (m_iStrategyRand >> (iBits - iShift));
 }
-
 
 bool CvPlayerAI::AI_isDoStrategy(int iStrategy) const
 {
@@ -18560,7 +18555,7 @@ int CvPlayerAI::AI_getStrategyHash() const
         return m_iStrategyHash;
     }
     
-    int iNonsense = AI_getStrategyRand();
+    //int iNonsense = AI_getStrategyRand();
     
 	int iMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
     
@@ -18690,11 +18685,14 @@ int CvPlayerAI::AI_getStrategyHash() const
 			iAverageEnemyUnit = 0;
 		else
 			iAverageEnemyUnit = iTotalWeightedValue / iTotalPower;
+		// A bit of random variation...
+		iAverageEnemyUnit *= (91+AI_getStrategyRand(1)%20);
+		iAverageEnemyUnit /= 100;
 	}
 
 	//if (iAttackUnitCount <= 1)
 	if (iAttackUnitCount <= 1 ||
-		(iAverageEnemyUnit > 3*iTypicalAttack/2 && iAverageEnemyUnit > 3*iTypicalDefence/2))
+		(100*iAverageEnemyUnit > 140*iTypicalAttack && 100*iAverageEnemyUnit > 140*iTypicalDefence))
 	{
 		m_iStrategyHash |= AI_STRATEGY_GET_BETTER_UNITS;
 	}
@@ -18709,7 +18707,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	}
 	if (iNukeCount > 0)
 	{
-		if ((GC.getLeaderHeadInfo(getPersonalityType()).getBuildUnitProb() + iNonsense % 15) >= (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 37 : 43))
+		if ((GC.getLeaderHeadInfo(getPersonalityType()).getBuildUnitProb() + AI_getStrategyRand(7) % 15) >= (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 37 : 43))
 		{
 			m_iStrategyHash |= AI_STRATEGY_OWABWNW;
 		}
@@ -18722,7 +18720,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 		}
 		else
 		{
-			if ((iNonsense % 2) == 0)
+			if ((AI_getStrategyRand(8) % 2) == 0)
 			{
 				m_iStrategyHash |= AI_STRATEGY_AIR_BLITZ;
 				m_iStrategyHash &= ~AI_STRATEGY_LAND_BLITZ;				
@@ -18787,7 +18785,7 @@ int CvPlayerAI::AI_getStrategyHash() const
                     }
                 }
                 
-                iMissionary += (iNonsense % 7) * 3;
+                iMissionary += (AI_getStrategyRand(9) % 7) * 3;
                 
                 if (iMissionary > 100)
                 {
@@ -18820,7 +18818,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 		
 		iTempValue += (100 - AI_getEspionageWeight()) / 10;
 		
-		iTempValue += iNonsense % 12;
+		iTempValue += AI_getStrategyRand(10) % 12;
 	
 		if (iTempValue > 10)
 		{
@@ -18998,7 +18996,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 
 	// Economic focus (K-Mod) - Note: this strategy is a gambit. The goal is catch up in tech by avoiding building units.
 	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 &&
-		(iAverageEnemyUnit >= 5*iTypicalAttack/3 && iAverageEnemyUnit >= 2*iTypicalDefence))
+		(100*iAverageEnemyUnit >= 150*iTypicalAttack && 100*iAverageEnemyUnit >= 180*iTypicalDefence))
 	{
 		m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
 	}
@@ -19030,11 +19028,11 @@ int CvPlayerAI::AI_getStrategyHash() const
     //dagger
 	if( !(AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2)) 
 	 && !(m_iStrategyHash & AI_STRATEGY_MISSIONARY)
-     && (iCurrentEra <= (2+(iNonsense%2))) && (iCloseTargets > 0) )
+     && (iCurrentEra <= (2+(AI_getStrategyRand(11)%2))) && (iCloseTargets > 0) )
     {	    
 	    int iDagger = 0;
 	    iDagger += 12000 / std::max(100, (50 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand()));
-	    iDagger *= (iNonsense % 11);
+	    iDagger *= (AI_getStrategyRand(12) % 11);
 	    iDagger /= 10;
 	    iDagger += 5 * std::min(8, AI_getFlavorValue(AI_FLAVOR_MILITARY));
 	    
@@ -19178,7 +19176,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 		// A leader dependant value. (MaxWarRand is roughly between 50 and 200. Gandi is 400.)
 		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
 	// On second thought, lets try this
-		iCrushValue += iNonsense % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
+		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
 		// note: flavor military is between 0 and 10
 		
 		if (m_iStrategyHash & AI_STRATEGY_DAGGER)
@@ -19216,7 +19214,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 					}
 
 					// K-Mod
-					if (iTypicalAttack >= 3 * GET_TEAM(getTeam()).getTypicalUnitValue(UNITAI_CITY_DEFENSE) / 2)
+					if (100*iTypicalAttack >= 110 * GET_TEAM(getTeam()).getTypicalUnitValue(UNITAI_CITY_DEFENSE))
 					{
 						iCrushValue += 2;
 					}

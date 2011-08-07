@@ -14705,7 +14705,8 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 	{
 		if (NO_PLAYER != eTargetPlayer)
 		{
-			int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+			//int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+			int iNumTotalGold;
 
 			if (NULL != pPlot)
 			{
@@ -14713,8 +14714,10 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 
 				if (NULL != pCity)
 				{
-					iNumTotalGold *= pCity->getPopulation();
-					iNumTotalGold /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());
+					/* iNumTotalGold *= pCity->getPopulation();
+					iNumTotalGold /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());*/
+					// K-Mod					
+					iNumTotalGold = kPlayer.getEspionageGoldQuantity(eMission, eTargetPlayer, pCity);
 				}
 			}
 

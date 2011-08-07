@@ -5191,21 +5191,36 @@ void CvUnitAI::AI_spyMove()
 			break;
 
 		case ATTITUDE_CAUTIOUS:
-			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 30 : 10);
+			//iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 30 : 10);
+			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 30 : 16);
 			break;
 
 		case ATTITUDE_PLEASED:
-			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
+			//iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
+			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 8);
 			break;
 
 		case ATTITUDE_FRIENDLY:
-			iEspionageChance = 0;
+			//iEspionageChance = 0;
+			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 10 : 4);
 			break;
 
 		default:
 			FAssert(false);
 			break;
 		}
+		// K-Mod
+		{
+			int iRatio = 100;
+
+			iRatio *= kTeam.getEspionagePointsAgainstTeam(plot()->getTeam());
+			iRatio /= std::max(GET_TEAM(plot()->getTeam()).getEspionagePointsAgainstTeam(getTeam()), 1);
+
+			iEspionageChance *= std::min(800, 3*iRatio+100);
+			iEspionageChance /= 400;
+			// ie. a factor between 2 and 1/4.
+		}
+
 		
 		WarPlanTypes eWarPlan = kTeam.AI_getWarPlan(plot()->getTeam());
 		if (eWarPlan != NO_WARPLAN)

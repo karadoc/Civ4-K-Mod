@@ -14391,12 +14391,15 @@ int CvPlayer::getEspionageMissionBaseCost(EspionageMissionTypes eMission, Player
 	if (kMission.getStealTreasuryTypes() > 0)
 	{
 		// Steal Treasury
-		int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+		//int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+		int iNumTotalGold;
 
 		if (NULL != pCity)
 		{
-			iNumTotalGold *= pCity->getPopulation();
-			iNumTotalGold /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());
+			/* iNumTotalGold *= pCity->getPopulation();
+			iNumTotalGold /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation()); */
+			// K-Mod
+			iNumTotalGold = getEspionageGoldQuantity(eMission, eTargetPlayer, pCity);
 		}
 
 		if (iNumTotalGold > 0)
@@ -14459,7 +14462,9 @@ int CvPlayer::getEspionageMissionBaseCost(EspionageMissionTypes eMission, Player
 		{
 			if (canForceCivics(eTargetPlayer, eCivic))
 			{
-				iMissionCost = iBaseMissionCost + (kMission.getSwitchCivicCostFactor() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
+				//iMissionCost = iBaseMissionCost + (kMission.getSwitchCivicCostFactor() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
+				// K-Mod
+				iMissionCost = iBaseMissionCost + (kMission.getSwitchCivicCostFactor() * GET_PLAYER(eTargetPlayer).getTotalPopulation() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
 			}
 		}
 	}
@@ -14484,7 +14489,9 @@ int CvPlayer::getEspionageMissionBaseCost(EspionageMissionTypes eMission, Player
 		{
 			if (canForceReligion(eTargetPlayer, eReligion))
 			{
-				iMissionCost = iBaseMissionCost + (kMission.getSwitchReligionCostFactor() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
+				//iMissionCost = iBaseMissionCost + (kMission.getSwitchReligionCostFactor() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
+				// K-Mod
+				iMissionCost = iBaseMissionCost + (kMission.getSwitchReligionCostFactor() * GET_PLAYER(eTargetPlayer).getTotalPopulation() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;				
 			}
 		}
 	}
@@ -15175,7 +15182,8 @@ bool CvPlayer::doEspionageMission(EspionageMissionTypes eMission, PlayerTypes eT
 	{
 		if (NO_PLAYER != eTargetPlayer)
 		{
-			int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+			//int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+			int iNumTotalGold;
 
 			if (NULL != pPlot)
 			{
@@ -15183,8 +15191,10 @@ bool CvPlayer::doEspionageMission(EspionageMissionTypes eMission, PlayerTypes eT
 
 				if (NULL != pCity)
 				{
-					iNumTotalGold *= pCity->getPopulation();
-					iNumTotalGold /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());
+					/* iNumTotalGold *= pCity->getPopulation();
+					iNumTotalGold /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation()); */
+					// K-Mod. Make stealing gold still worthwhile against large civs.
+					iNumTotalGold = getEspionageGoldQuantity(eMission, eTargetPlayer, pCity);
 				}
 			}
 
@@ -21890,6 +21900,21 @@ bool CvPlayer::canSpyDestroyProject(PlayerTypes eTarget, ProjectTypes eProject) 
 	}	
 
 	return true;
+}
+
+// K-Mod
+int CvPlayer::getEspionageGoldQuantity(EspionageMissionTypes eMission, PlayerTypes eTargetPlayer, const CvCity* pCity) const
+{
+	if (!pCity || pCity->getOwnerINLINE() != eTargetPlayer)
+		return 0;
+
+	CvEspionageMissionInfo& kMission = GC.getEspionageMissionInfo(eMission);
+	int iGoldStolen = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
+
+	iGoldStolen *= 2*pCity->getPopulation();
+	iGoldStolen /= std::max(1, pCity->getPopulation() + GET_PLAYER(eTargetPlayer).getAveragePopulation());
+
+	return std::min(iGoldStolen, GET_PLAYER(eTargetPlayer).getGold());
 }
 
 void CvPlayer::forcePeace(PlayerTypes ePlayer)

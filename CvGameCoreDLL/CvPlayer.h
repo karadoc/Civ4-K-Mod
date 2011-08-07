@@ -368,6 +368,7 @@ public:
 	bool canSpyBribeUnit(PlayerTypes eTarget, CvUnit& kUnit) const;
 	bool canSpyDestroyBuilding(PlayerTypes eTarget, BuildingTypes eBuilding) const;
 	bool canSpyDestroyProject(PlayerTypes eTarget, ProjectTypes eProject) const;
+	int getEspionageGoldQuantity(EspionageMissionTypes eMission, PlayerTypes eTargetPlayer, const CvCity* pCity) const; // K-Mod
 
 	DllExport void doAdvancedStartAction(AdvancedStartActionTypes eAction, int iX, int iY, int iData, bool bAdd);
 	DllExport int getAdvancedStartUnitCost(UnitTypes eUnit, bool bAdd, CvPlot* pPlot = NULL) const;																													// Exposed to Python 

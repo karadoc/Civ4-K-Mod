@@ -239,6 +239,7 @@ public:
 
 	EspionageMissionTypes AI_bestPlotEspionage(CvPlot* pSpyPlot, PlayerTypes& eTargetPlayer, CvPlot*& pPlot, int& iData) const;
 	int AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes eMission, CvPlot* pPlot, int iData) const;
+	bool isMaliciousEspionageTarget(PlayerTypes eTarget) const; // K-Mod
 
 	int AI_getPeaceWeight() const;
 	void AI_setPeaceWeight(int iNewValue);
@@ -322,7 +323,7 @@ public:
 	bool AI_isDoVictoryStrategyLevel3() const;
 	void AI_forceUpdateVictoryStrategies();
 	int AI_getVictoryStrategyHash() const;
-	int AI_getStrategyRand() const;
+	int AI_getStrategyRand(int iShift) const;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/		
