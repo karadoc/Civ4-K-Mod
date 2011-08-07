@@ -6400,9 +6400,11 @@ CvPlot* CvGame::getRandGWPlot(int iPool)
 
 		if (iTestScore > iBestScore)
 		{
-			/*pBestPlot = pTestPlot;
-			iBestScore = iTestScore;*/
-			return pBestPlot; // lets not target the ice too much...
+			if (iBestScore > 0)
+				return pTestPlot; // lets not target the ice too much...
+
+			pBestPlot = pTestPlot;
+			iBestScore = iTestScore;
 		}
 	}
 	return pBestPlot;

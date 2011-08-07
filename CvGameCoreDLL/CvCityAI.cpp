@@ -2507,13 +2507,13 @@ void CvCityAI::AI_chooseProduction()
 	int iNeededSpies = iNumCitiesInArea / 3;
 	iNeededSpies += isCapital() ? 1 : 0;
 	// K-Mod
-	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
-		iNeededSpies *= 2;
-	// K-Mod end
+	iNeededSpies += (kPlayer.getCommerceRate(COMMERCE_ESPIONAGE)+50)/100;
+
 	if (iNumSpies < iNeededSpies)
 	{
 		//if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
-		if (AI_chooseUnit(UNITAI_SPY, 30*iNeededSpies / (3*iNumSpies+iNeededSpies))) // K-Mod
+		int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?65 : 50)*iNeededSpies / (4*iNumSpies+iNeededSpies);
+		if (AI_chooseUnit(UNITAI_SPY, iOdds)) // K-Mod
 		{
 			return;
 		}
@@ -7821,8 +7821,9 @@ void CvCityAI::AI_doDraft(bool bForce)
 					}*/
 
 					// K-Mod: full out defensive indeed. We've already checked for happiness, and we're desperate for units.
-					// So lets just do it.
-					bWait = false;
+					// Just beware of happiness sources that might expire - such as military happiness.
+					if (getConscriptAngerTimer() == 0 || AI_countWorkedPoorTiles() > 0)
+						bWait = false;
 				}
 				
 				if( bWait && bDanger )
@@ -7841,7 +7842,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 				{
 					// Non-critical, only burn population if population is not worth much
 					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorTiles() > 1))
-					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) && (AI_countWorkedPoorTiles() > 0)) // K-Mod
+					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) && AI_countWorkedPoorTiles() > 0) // K-Mod
 					{
 						//if( (getPopulation() >= std::max(5, getHighestPopulation() - 1)) )
 						// We're working poor tiles. What more do you want?
