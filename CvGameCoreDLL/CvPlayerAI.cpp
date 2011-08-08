@@ -2227,6 +2227,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 		// pCity == NULL
 		else
 		{
+			// weight multiplier changed for K-Mod
 			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >=90 )
 			{
 				//iWeight *= 3;
@@ -2242,10 +2243,12 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 50 )
 			{
 				//iWeight /= 2;
+				iWeight *= 3;
+				iWeight /= 2;
 			}
 			else 
 			{
-				iWeight /= 3;
+				//iWeight /= 3;
 			}
 			// K-Mod
 			iWeight *= AI_averageCulturePressure();
@@ -11803,24 +11806,27 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 		if (NO_BONUS != eBonus)
 		{
 			if (pCity == NULL)
-				iBonuses += countOwnedBonuses(eBonus);
+				iBonuses += countOwnedBonuses(eBonus) + 1;
 			else
-				iBonuses += pCity->getNumBonuses(eBonus);
+				iBonuses += pCity->getNumBonuses(eBonus) + 1;
+			// maybe use getNumAvailableBonuses ?
 		}
 	}
 
 	for (int iI = (CommerceTypes)0; iI < NUM_COMMERCE_TYPES; ++iI)
 	{
 		iTempValue = 0;
-		int iMultiplier;
+		iTempValue = kCorp.getCommerceProduced((CommerceTypes)iI) * iBonuses;
 
 		if (pCity == NULL)
-			iMultiplier = AI_averageCommerceMultiplier((CommerceTypes)iI);
+			iTempValue *= AI_averageCommerceMultiplier((CommerceTypes)iI);
 		else
-			iMultiplier = pCity->getTotalCommerceRateModifier((CommerceTypes)iI);
+			iTempValue *= pCity->getTotalCommerceRateModifier((CommerceTypes)iI);
 		// I'd feel more comfortable if they named it "multiplier" when it included the base 100%.
+		iTempValue /= 100;
 
-		iTempValue += ((iMultiplier * kCorp.getCommerceProduced((CommerceTypes)iI))/100 * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
+		iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
+		iTempValue /= 100;
 
 		iTempValue *= AI_commerceWeight((CommerceTypes)iI, pCity);
 		iTempValue /= 100;
@@ -11840,7 +11846,7 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 
 		iTempValue /= 100;
 		iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
-		iTempValue /= 10000; // getYieldProduced is x100.
+		iTempValue /= 100;
 
 		// Factors that are used in some other evaluation code. Ideally these would be rolled into yieldWeight...
 		if (iI == YIELD_FOOD) 
@@ -11866,16 +11872,10 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 	// maintenance cost
 	iTempValue = kCorp.getMaintenance() * iBonuses;
 	iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
-	iTempValue /= 10000;
+	iTempValue /= 100;
 	iTempValue += iMaintenance;
-	if (pCity != NULL)
-	{
-		iMaintenance *= (pCity->getPopulation() + 17);
-		iMaintenance /= 18;
-		iMaintenance *= std::max(0, (pCity->getMaintenanceModifier() + 100));
-		iMaintenance /= 100;
-	}
-	// I'm neglecting those factors for the null city case. They will roughly cancel... maybe.
+	// Inflation, population, and maintenance modifiers... lets just approximate them like this:
+	iTempValue /= 2;
 
 	iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
 	iTempValue /= 100;
@@ -12450,9 +12450,23 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	}
 	iValue += ((kCivic.isBuildingOnlyHealthy()) ? (iCities * 3) : 0);
 	iValue += -((kCivic.getWarWearinessModifier() * iCities) / ((bWarPlan) ? 10 : 50));
-	iValue += (kCivic.getFreeSpecialist() * iCities * 12);
-	iValue += (kCivic.getTradeRoutes() * (std::max(0, iConnectedForeignCities - iCities * 3) * 6 + (iCities * 2))); 
-	iValue += -((kCivic.isNoForeignTrade()) ? (iConnectedForeignCities * 3) : 0);
+	//iValue += (kCivic.getFreeSpecialist() * iCities * 12);
+	iValue += (kCivic.getFreeSpecialist() * iCities * 14); // this lacks the usual K-Mod rigour, but it will do for now.
+
+	/*
+	iValue += (kCivic.getTradeRoutes() * (std::max(0, iConnectedForeignCities - iCities * 3) * 6 + (iCities * 2)));
+	iValue += -((kCivic.isNoForeignTrade()) ? (iConnectedForeignCities * 3) : 0); */
+
+	// K-Mod - take a few more things into account for trade routes.
+	iTempValue = (kCivic.getTradeRoutes() * (std::max(0, iConnectedForeignCities - iCities * 3) * 3 + (iCities * 1)));
+	iTempValue += -((kCivic.isNoForeignTrade()) ? (iConnectedForeignCities * 3 / 2) : 0);
+	// Trade routes increase in value as cities grow, and build trade multipliers
+	iTempValue *= (getCurrentEra() + GC.getNumEraInfos());
+	iTempValue /= GC.getNumEraInfos();
+	// commerce multipliers
+	iTempValue *= AI_averageYieldMultiplier(YIELD_COMMERCE);
+	iTempValue /= 100;
+	iValue += iTempValue;
 
 	/* original bts code
 	if (kCivic.isNoCorporations())
@@ -12521,6 +12535,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				if (NO_BONUS != eBonus)
 				{
 					iBonuses += countOwnedBonuses(eBonus)+(bPlayerHQ ?1 :0);
+					// maybe use getNumAvailableBonuses ?
 				}
 			}
 
@@ -12588,9 +12603,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 			iTempValue /= 10000;
 			iTempValue += iMaintenance;
-			iMaintenance *= (getAveragePopulation() + 17);
-			iMaintenance /= 18;
-			// maybe we should devalue maintenance a bit because it gets reduced by buildings. (?)
+			// Inflation, population, and maintenance modifiers... lets just approximate them like this:
+			iTempValue /= 2;
+
 
 			iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
 			iTempValue /= 100;
@@ -13377,6 +13392,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).getDestroyBuildingCostFactor() > 0)
 	{
+		FAssert(iData >= 0 && iData < GC.getNumBuildingInfos());
 		if (canSpyDestroyBuilding(eTargetPlayer, (BuildingTypes)iData))
 		{
 			if (NULL != pPlot)
@@ -13403,6 +13419,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).getDestroyProjectCostFactor() > 0)
 	{
+		FAssert(iData >= 0 && iData < GC.getNumProjectInfos());
 		if (canSpyDestroyProject(eTargetPlayer, (ProjectTypes)iData))
 		{
 			CvProjectInfo& kProject = GC.getProjectInfo((ProjectTypes)iData);
@@ -13590,6 +13607,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 	if (GC.getEspionageMissionInfo(eMission).getBuyTechCostFactor() > 0)
 	{
+		FAssert(iData >= 0 && iData < GC.getNumTechInfos());
 		if (iCost < GET_TEAM(getTeam()).getResearchLeft((TechTypes)iData) * 4 / 3)
 		{
 			int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
@@ -13619,9 +13637,9 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	}
 
 	// K-Mod
-	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && iValue < 800 && iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
+	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && iValue < 100*getCurrentEra() && iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
 	{
-		return 0;		
+		return 0;
 	}
 
 	return iValue;
@@ -15099,7 +15117,7 @@ void CvPlayerAI::AI_doDiplo()
 /*                                                                                              */
 /* Diplomacy                                                                                    */
 /************************************************************************************************/
-								// Don't give techs for tree to advanced vassals ...
+								// Don't give techs for free to advanced vassals ...
 								if( GET_PLAYER((PlayerTypes)iI).getTechScore()*10 < getTechScore()*9 )
 								{
 									for (iJ = 0; iJ < GC.getNumTechInfos(); iJ++)
@@ -18690,9 +18708,10 @@ int CvPlayerAI::AI_getStrategyHash() const
 			{
 				if (kPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kPlayer.getTeam()))
 				{
-					int iValue = kPlayer.getTypicalUnitValue(UNITAI_ATTACK);
-					if (iValue <= 1)
-						iValue = kPlayer.getTypicalUnitValue(UNITAI_CITY_DEFENSE);
+					// Attack units are scaled down to roughly reflect their limitations.
+					// (eg. Knights (10) vs Macemen (8). Cavalry (15) vs Rifles (14). Tank (28) vs Infantry (20) / Marine (24) )
+					int iValue = std::max(100*kPlayer.getTypicalUnitValue(UNITAI_ATTACK)/110, kPlayer.getTypicalUnitValue(UNITAI_CITY_DEFENSE));
+
 					iTotalWeightedValue += kPlayer.getPower() * iValue;
 					iTotalPower += kPlayer.getPower();
 				}
@@ -20055,14 +20074,15 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	int iLoop;
 
 	// K-Mod
-	int* aiSpareUnits = new int[GC.getMapINLINE().getNumAreas()];
-	for (iLoop = 0; iLoop < GC.getMapINLINE().getNumAreas(); iLoop++)
+	std::map<int, int> spare_units;
+
+	CvArea *pLoopArea = NULL;
+	for (pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
-		CvArea* pArea = GC.getMapINLINE().getArea(iLoop);
-		if (pArea)
-			aiSpareUnits[iLoop] = 2 * AI_getTotalFloatingDefenders(pArea) - AI_getTotalFloatingDefendersNeeded(pArea);
+		if (pLoopArea)
+			spare_units[pLoopArea->getID()] = 2 * AI_getTotalFloatingDefenders(pLoopArea) - AI_getTotalFloatingDefendersNeeded(pLoopArea);
 		else
-			aiSpareUnits[iLoop] = 0;
+			spare_units[pLoopArea->getID()] = 0;
 	}
 	// K-Mod end
 	
@@ -20086,7 +20106,7 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		}
 
 		// K-Mod
-		if (aiSpareUnits[pLoopUnit->area()->getID()] <= 0)
+		if (spare_units[pLoopUnit->area()->getID()] <= 0)
 			bValid = false;
 	
 		if (bValid)
@@ -20107,11 +20127,9 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		{
 			pLoopUnit->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
 			// K-Mod
-			aiSpareUnits[pLoopUnit->area()->getID()]--;
+			spare_units[pLoopUnit->area()->getID()]--;
 		}
 	}
-
-	SAFE_DELETE_ARRAY(aiSpareUnits);
 }
 
 int CvPlayerAI::AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance) const

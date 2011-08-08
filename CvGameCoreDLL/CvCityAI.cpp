@@ -4191,7 +4191,31 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				}
 				
 				// prefer to build great people buildings in places that already have some GP points
-				iValue += (kBuilding.getGreatPeopleRateChange() * 10) * (1 + (getBaseGreatPeopleRate() / 2));
+				//iValue += (kBuilding.getGreatPeopleRateChange() * 10) * (1 + (getBaseGreatPeopleRate() / 2));
+				// K-Mod... here's some code like the specialist value function. Kind of long, but much better.
+				{
+					iTempValue = 100 * kBuilding.getGreatPeopleRateChange() * 2 * 4; // everything seems to be x4 around here
+					int iCityRate = getGreatPeopleRate();
+					int iHighestRate = 0;
+					int iLoop;
+					for( CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop) )
+					{
+						int x = pLoopCity->getGreatPeopleRate();
+						if (x > iHighestRate)
+							iHighestRate = x;
+					}
+					if (iHighestRate > iCityRate)
+					{
+						iTempValue *= 100;
+						iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
+					}
+					
+					iTempValue *= getTotalGreatPeopleRateModifier();
+					iTempValue /= 100;
+
+					iValue += iTempValue / 100;
+				}
+				// K-Mod end
 
 				if (!bAreaAlone)
 				{
@@ -4853,10 +4877,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						}
 					}
 						
-					iTempValue += iCorpValue / 100;
+					iTempValue += 4 * iCorpValue / 100;
 				}
 					
-				if (iCorpValue >= 0)//Don't build if it'll hurt us.
+				//if (iCorpValue >= 0)//Don't build if it'll hurt us.
+				// K-Mod. The HQ value is exactly what stops it from hurting us. The only question is how much we'll spread it.
 				{
 					if (kBuilding.getGlobalCorporationCommerce() != NO_CORPORATION)
 					{
@@ -4879,10 +4904,16 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 						{
 							int iExpectedCities = iNumCities + GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce()));
-							int iHqValue = GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * iExpectedCities;
+							int iHqValue = 4 * GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * iExpectedCities;
 							iHqValue *= getTotalCommerceRateModifier((CommerceTypes)iI);
 							iHqValue *= kOwner.AI_commerceWeight((CommerceTypes)iI, this);
 							iHqValue /= 10000;
+							// use rank as a tie-breaker
+							if (iHqValue > 0)
+							{
+								iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI);
+								iHqValue /= 2*iNumCities;
+							}
 							iCorpValue += iHqValue;
 						}
 					}
@@ -10188,12 +10219,6 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 		*peBestBuild = NO_BUILD;
 	}
 
-/***
-**** K-Mod, 10/sep/10, Karadoc
-**** No change so far, but I've got some code that I might want later.
-//if (pPlot->getWorkingCity() != this && (pPlot->isOwned() || getCommerceRateTimes100(COMMERCE_CULTURE )<= 0))
-**** Note, this change wouldn't work because 'canBuild()' is used to check all the improvements anyway.
-***/
 	if (pPlot->getWorkingCity() != this)
 	{
 		return;

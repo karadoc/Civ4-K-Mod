@@ -15372,7 +15372,7 @@ void CvPlayer::setEspionageSpendingWeightAgainstTeam(TeamTypes eIndex, int iValu
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-	FAssert(iValue >= 0);
+	//FAssert(iValue >= 0);
 
 	iValue = std::min(std::max(0, iValue), 99);
 

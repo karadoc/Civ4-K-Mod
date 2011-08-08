@@ -9568,7 +9568,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	int iI;
 
 	// OOS!! Temporary for Out-of-Sync madness debugging...
-	if (GC.getLogging())
+	/*if (GC.getLogging())
 	{
 		if (gDLL->getChtLvl() > 0)
 		{
@@ -9576,7 +9576,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 			sprintf(szOut, "Player %d Unit %d (%S's %S) moving from %d:%d to %d:%d\n", getOwnerINLINE(), getID(), GET_PLAYER(getOwnerINLINE()).getNameKey(), getName().GetCString(), getX_INLINE(), getY_INLINE(), iX, iY);
 			gDLL->messageControlLog(szOut);
 		}
-	}
+	}*/
 
 	FAssert(!at(iX, iY));
 	FAssert(!isFighting());
