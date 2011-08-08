@@ -19182,7 +19182,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 		}
 	}
 	
-	if( m_iStrategyHash & !AI_STRATEGY_ALERT2 )
+	if (!(m_iStrategyHash & AI_STRATEGY_ALERT2))
 	{//Crush
 		int iWarCount = 0;
 		int iCrushValue = 0;
@@ -19195,6 +19195,10 @@ int CvPlayerAI::AI_getStrategyHash() const
 	// On second thought, lets try this
 		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
 		// note: flavor military is between 0 and 10
+		if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3))
+		{
+			iCrushValue += 1;
+		}
 		
 		if (m_iStrategyHash & AI_STRATEGY_DAGGER)
 		{
