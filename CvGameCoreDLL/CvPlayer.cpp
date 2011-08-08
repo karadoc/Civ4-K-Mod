@@ -14863,11 +14863,14 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 	
 	// Counterespionage Mission Mod
 	CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam());
-	if (kTargetTeam.getCounterespionageModAgainstTeam(getTeam()) > 0)
+	/* if (kTargetTeam.getCounterespionageModAgainstTeam(getTeam()) > 0)
 	{
 		iModifier *= kTargetTeam.getCounterespionageModAgainstTeam(getTeam());
 		iModifier /= 100;
-	}
+	} */
+	// K-Mod
+	iModifier *= (100 + std::max(-100, kTargetTeam.getCounterespionageModAgainstTeam(getTeam())));
+	iModifier /= 100;
 
 	return iModifier;
 }
@@ -21911,8 +21914,8 @@ int CvPlayer::getEspionageGoldQuantity(EspionageMissionTypes eMission, PlayerTyp
 	CvEspionageMissionInfo& kMission = GC.getEspionageMissionInfo(eMission);
 	int iGoldStolen = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
 
-	iGoldStolen *= 2*pCity->getPopulation();
-	iGoldStolen /= std::max(1, pCity->getPopulation() + GET_PLAYER(eTargetPlayer).getAveragePopulation());
+	iGoldStolen *= 3*pCity->getPopulation();
+	iGoldStolen /= std::max(1, pCity->getPopulation() + 2*GET_PLAYER(eTargetPlayer).getAveragePopulation());
 
 	return std::min(iGoldStolen, GET_PLAYER(eTargetPlayer).getGold());
 }

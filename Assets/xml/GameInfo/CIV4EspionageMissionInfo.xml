@@ -634,7 +634,7 @@
 			<iSwitchReligionCostFactor>0</iSwitchReligionCostFactor>
 			<iPlayerAnarchyCounter>0</iPlayerAnarchyCounter>
 			<iCounterespionageNumTurns>10</iCounterespionageNumTurns>
-			<iCounterespionageMod>200</iCounterespionageMod>
+			<iCounterespionageMod>100</iCounterespionageMod>
 		</EspionageMissionInfo>
 	</EspionageMissionInfos>
 </Civ4EspionageMissionInfo>

@@ -14916,7 +14916,9 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 		CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam());
 		if (kTargetTeam.getCounterespionageModAgainstTeam(kPlayer.getTeam()) > 0)
 		{
-			iTempModifier = kTargetTeam.getCounterespionageModAgainstTeam(kPlayer.getTeam()) - 100;
+			//iTempModifier = kTargetTeam.getCounterespionageModAgainstTeam(kPlayer.getTeam()) - 100;
+			// K-Mod
+			iTempModifier = std::max(-100, kTargetTeam.getCounterespionageModAgainstTeam(kPlayer.getTeam()));
 			if (0 != iTempModifier)
 			{
 				szBuffer.append(SEPARATOR);
