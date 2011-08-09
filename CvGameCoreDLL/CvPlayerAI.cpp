@@ -10712,8 +10712,10 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 				}
 				else
 				{
-					iBombardValue *= iGoalTotalBombardRate;
-					iBombardValue /= std::min(4*iGoalTotalBombardRate, 2*iTotalBombardRate - iGoalTotalBombardRate);
+					/*iBombardValue *= iGoalTotalBombardRate;
+					iBombardValue /= std::min(4*iGoalTotalBombardRate, 2*iTotalBombardRate - iGoalTotalBombardRate);*/
+					iBombardValue *= 2*iGoalTotalBombardRate;
+					iBombardValue /= std::min(4*iGoalTotalBombardRate, 3*iTotalBombardRate - 2*iGoalTotalBombardRate);
 				}
 
 				iValue += iBombardValue;

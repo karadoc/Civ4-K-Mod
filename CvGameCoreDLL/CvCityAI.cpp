@@ -3595,6 +3595,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	int iNumCities = kOwner.getNumCities();
 	int iNumCitiesInArea = area()->getCitiesPerPlayer(getOwnerINLINE());
 	
+	/* K-Mod: commenting this out. The findxxxRateRank functions are cached, so lets just use those to avoid mistakes.
 	int aiYieldRank[NUM_YIELD_TYPES];
 	for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
@@ -3605,10 +3606,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
 		aiCommerceRank[iI] = MAX_INT;
-	}
+	} */
 
-	aiYieldRank[YIELD_PRODUCTION] = findBaseYieldRateRank(YIELD_PRODUCTION);
-	bool bIsHighProductionCity = (aiYieldRank[YIELD_PRODUCTION] <= std::max(3, (iNumCities / 2)));
+	//aiYieldRank[YIELD_PRODUCTION] = findBaseYieldRateRank(YIELD_PRODUCTION);
+	bool bIsHighProductionCity = (findBaseYieldRateRank(YIELD_PRODUCTION) <= std::max(3, (iNumCities / 2)));
 	
 	int iCultureRank = findCommerceRateRank(COMMERCE_CULTURE);
 	int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
@@ -3673,7 +3674,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 		    {
 		        if (isWorldWonderClass(eBuildingClass))
 		        {
-                    if (aiYieldRank[YIELD_PRODUCTION] <= 3)
+                    if (findBaseYieldRateRank(YIELD_PRODUCTION) <= 3)
                     {
 						iValue++;
                     }
@@ -3990,7 +3991,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			if ((iFocusFlags & (BUILDINGFOCUS_GOLD | BUILDINGFOCUS_RESEARCH)) || iPass > 0)
 			{
 				// trade routes
-				iTempValue = ((kBuilding.getTradeRoutes() * ((8 * std::max(0, (totalTradeModifier() + 100))) / 100))
+				iTempValue = ((kBuilding.getTradeRoutes() * ((6 * std::max(0, (totalTradeModifier() + 100))) / 100)) // orignally 8 * std::max
 								* (getPopulation() / 5 + 1));
 				int iGlobalTradeValue = (((6 * iTotalPopulation) / 5) / iNumCities);
 				iTempValue += (kBuilding.getCoastalTradeRoutes() * kOwner.countNumCoastalCities() * iGlobalTradeValue);
@@ -4137,7 +4138,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iValue += kBuilding.getFoodKept() / 2;
 				}
 
-				iValue += kBuilding.getAirlift() * (getPopulation() * 3 + 10);
+				iValue += kBuilding.getAirlift() * (getPopulation() + 10); // originally population * 3 + 10
 				
 				int iAirDefense = -kBuilding.getAirModifier();
 				if (iAirDefense > 0)
@@ -4148,7 +4149,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 				}
 
-				iValue += kBuilding.getAirUnitCapacity() * (getPopulation() * 2 + 10);
+				iValue += kBuilding.getAirUnitCapacity() * (getPopulation() * 2 + 10) / 2; // originally didn't have /2
 
 				iValue += (-(kBuilding.getNukeModifier()) / ((iHasMetCount > 0) ? 10 : 20));
 
@@ -4170,9 +4171,9 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						if (bIsLimitedWonder)
 						{
 							// if one of the top 3 production cities, give a big boost
-							if (aiYieldRank[YIELD_PRODUCTION] <= (2 + iLimitedWonderLimit))
+							if (findBaseYieldRateRank(YIELD_PRODUCTION) <= (2 + iLimitedWonderLimit))
 							{
-								iValue += (2 * iMilitaryProductionModifier) / (2 + aiYieldRank[YIELD_PRODUCTION]);
+								iValue += (2 * iMilitaryProductionModifier) / (2 + findBaseYieldRateRank(YIELD_PRODUCTION));
 							}
 						}
 						// otherwise, any of the top half of cities will do
@@ -4186,7 +4187,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					// subtract from the value (if this wonder has a lot of other stuff, we still might build it)
 					else
 					{
-						iValue -= (iMilitaryProductionModifier * aiYieldRank[YIELD_PRODUCTION]) / 5;
+						iValue -= (iMilitaryProductionModifier * findBaseYieldRateRank(YIELD_PRODUCTION)) / 5;
 					}
 				}
 
@@ -4455,34 +4456,34 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					// K-Mod - I've shuffled some parts of this code around.
 					iTempValue = 0;
 
-					iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 10);
-					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));
+					iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 15); // originally was /10
+					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 18 : 23)); // originally 12 : 15
 
 					if (bProvidesPower && !isPower())
 					{
-						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 12);
+						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
 					}
 
 					for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
 					{
 						if (hasBonus((BonusTypes)iJ))
 						{
-							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 12);
+							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
 						}
 					}
 
 					// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 					// we do _not_ want to build this here (unless the value was small anyway)
-					if (bIsLimitedWonder && (aiYieldRank[iI] > (3 + iLimitedWonderLimit)))
+					if (bIsLimitedWonder && (findBaseYieldRateRank((YieldTypes)iI) > (3 + iLimitedWonderLimit)))
 					{
 						iTempValue *= -1;
 					}
 
 					// ...and now the things that should not depend on whether or not we have a good yield rank
-					iValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 12);
+					iValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 18); // originally 12
 					if (bForeignTrade)
 					{
-						iValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 12);
+						iValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 20); // originally 12
 					}
 
 					if (iFoodDifference > 0)
@@ -4519,10 +4520,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iI);
 						iTempValue /= 100;
 						
-						if (aiYieldRank[iI] == MAX_INT)
+						/*if (aiYieldRank[iI] == MAX_INT)
 						{
 							aiYieldRank[iI] = findBaseYieldRateRank((YieldTypes) iI);
-						}
+						}*/
 
 						// (limited wonder condition use to be here. I've moved it. - Karadoc)
 
@@ -4575,12 +4576,13 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 					if (bProvidesPower && !isPower())
 					{
-						iTempValue += ((getPowerYieldRateModifier(YIELD_PRODUCTION) * getBaseYieldRate(YIELD_PRODUCTION)) / 12);
+						//iTempValue += ((getPowerYieldRateModifier(YIELD_PRODUCTION) * getBaseYieldRate(YIELD_PRODUCTION)) / 12);
+						iTempValue += ((getPowerYieldRateModifier(YIELD_PRODUCTION) * getBaseYieldRate(YIELD_PRODUCTION)) / 24); // K-Mod, consistency
 					}
 					
 					// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 					// we do _not_ want to build this here (unless the value was small anyway)
-					if (bIsLimitedWonder && (aiYieldRank[YIELD_PRODUCTION] > (3 + iLimitedWonderLimit)))
+					if (bIsLimitedWonder && (findBaseYieldRateRank(YIELD_PRODUCTION) > (3 + iLimitedWonderLimit)))
 					{
 						iTempValue *= -1;
 					}
@@ -4600,14 +4602,14 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					iTempValue /= 3000;
 					
-					if (MAX_INT == aiCommerceRank[COMMERCE_GOLD])
+					/*if (MAX_INT == aiCommerceRank[COMMERCE_GOLD])
 					{
 						aiCommerceRank[COMMERCE_GOLD] = findCommerceRateRank(COMMERCE_GOLD);
-					}
+					}*/
 
 					// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 					// we do _not_ want to build this here (unless the value was small anyway)
-					if (bIsLimitedWonder && (aiCommerceRank[COMMERCE_GOLD] > (3 + iLimitedWonderLimit)))
+					if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_GOLD) > (3 + iLimitedWonderLimit)))
 					{
 						iTempValue *= -1;
 					}
@@ -4808,10 +4810,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 						// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 						// we do _not_ want to build this here (unless the value was small anyway)
-						if (MAX_INT == aiCommerceRank[iI])
+						/*if (MAX_INT == aiCommerceRank[iI])
 						{
 							aiCommerceRank[iI] = findCommerceRateRank((CommerceTypes) iI);
-						}
+						}*/
 						/* original bts code
 						if (bIsLimitedWonder && ((aiCommerceRank[iI] > (3 + iLimitedWonderLimit)))
 							|| (bCulturalVictory1 && (iI == COMMERCE_CULTURE) && (aiCommerceRank[iI] == 1)))
@@ -4830,13 +4832,13 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							if (iI == COMMERCE_CULTURE)
 							{
 								 if (bCulturalVictory1 &&
-									 ((bCulturalVictory2 && aiCommerceRank[iI] == 1) ||
-										aiCommerceRank[iI] > (3 + iLimitedWonderLimit)))
+									 ((bCulturalVictory2 && findCommerceRateRank((CommerceTypes)iI) == 1) ||
+										findCommerceRateRank((CommerceTypes)iI) > (3 + iLimitedWonderLimit)))
 								 {
 									 iTempValue = 0;
 								 }
 							}
-							else if (aiCommerceRank[iI] > (3 + iLimitedWonderLimit))
+							else if (findCommerceRateRank((CommerceTypes)iI) > (3 + iLimitedWonderLimit))
 							{
 								iTempValue *= -1;
 							}
@@ -4966,14 +4968,14 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							iTempValue *= 2;
 						}
 						
-						if (MAX_INT == aiCommerceRank[COMMERCE_GOLD])
+						/*if (MAX_INT == aiCommerceRank[COMMERCE_GOLD])
 						{
 							aiCommerceRank[COMMERCE_GOLD] = findCommerceRateRank(COMMERCE_GOLD);
-						}
+						}*/
 
 						// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 						// we do _not_ want to build this here (unless the value was small anyway)
-						if (bIsLimitedWonder && (aiCommerceRank[COMMERCE_GOLD] > (3 + iLimitedWonderLimit)))
+						if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_GOLD) > (3 + iLimitedWonderLimit)))
 						{
 							iTempValue *= -1;
 						}
@@ -4990,14 +4992,14 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if (iTempValue != 0)
 					{
-						if (MAX_INT == aiCommerceRank[COMMERCE_RESEARCH])
+						/*if (MAX_INT == aiCommerceRank[COMMERCE_RESEARCH])
 						{
 							aiCommerceRank[COMMERCE_RESEARCH] = findCommerceRateRank(COMMERCE_RESEARCH);
-						}
+						}*/
 
 						// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 						// we do _not_ want to build this here (unless the value was small anyway)
-						if (bIsLimitedWonder && (aiCommerceRank[COMMERCE_RESEARCH] > (3 + iLimitedWonderLimit)))
+						if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_RESEARCH) > (3 + iLimitedWonderLimit)))
 						{
 							iTempValue *= -1;
 						}
@@ -5028,15 +5030,15 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if (iTempValue != 0)
 					{
-						if (MAX_INT == aiCommerceRank[COMMERCE_CULTURE])
+						/*if (MAX_INT == aiCommerceRank[COMMERCE_CULTURE])
 						{
 							aiCommerceRank[COMMERCE_CULTURE] = findCommerceRateRank(COMMERCE_CULTURE);
-						}
+						}*/
 
 						// if this is a limited wonder, and we are not one of the top 4 in this category, 
 						// do not count the culture value
 						// we probably do not want to build this here (but we might)
-						if (bIsLimitedWonder && (aiCommerceRank[COMMERCE_CULTURE] > (3 + iLimitedWonderLimit)))
+						if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_CULTURE) > (3 + iLimitedWonderLimit)))
 						{
 							iTempValue  = 0;
 						}
@@ -5055,15 +5057,15 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iTempValue = (kBuilding.getCommerceModifier(COMMERCE_CULTURE) / 5);
 					if (iTempValue != 0)
 					{
-						if (MAX_INT == aiCommerceRank[COMMERCE_CULTURE])
+						/*if (MAX_INT == aiCommerceRank[COMMERCE_CULTURE])
 						{
 							aiCommerceRank[COMMERCE_CULTURE] = findCommerceRateRank(COMMERCE_CULTURE);
-						}
+						}*/
 
 						// if this is a limited wonder, and we are not one of the top 4 in this category, 
 						// do not count the culture value
 						// we probably do not want to build this here (but we might)
-						if (bIsLimitedWonder && (aiCommerceRank[COMMERCE_CULTURE] > (3 + iLimitedWonderLimit)))
+						if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_CULTURE) > (3 + iLimitedWonderLimit)))
 						{
 							iTempValue  = 0;
 						}
@@ -5086,14 +5088,14 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if (iTempValue != 0)
 					{
-						if (MAX_INT == aiCommerceRank[COMMERCE_ESPIONAGE])
+						/*if (MAX_INT == aiCommerceRank[COMMERCE_ESPIONAGE])
 						{
 							aiCommerceRank[COMMERCE_ESPIONAGE] = findCommerceRateRank(COMMERCE_ESPIONAGE);
-						}
+						}*/
 
 						// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 						// we do _not_ want to build this here (unless the value was small anyway)
-						if (bIsLimitedWonder && (aiCommerceRank[COMMERCE_ESPIONAGE] > (3 + iLimitedWonderLimit)))
+						if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_ESPIONAGE) > (3 + iLimitedWonderLimit)))
 						{
 							iTempValue *= -1;
 						}
@@ -7275,6 +7277,9 @@ void CvCityAI::AI_updateBestBuild()
 					{
 						// This check is necessary to stop oscillation which can result
 						// when best build changes food situation for city, changing the best build.
+
+						// K-Mod. I don't believe you. I think that if the rest of the code is right, this check will be unnecessary.
+						/* lets find out
 						CvUnit* pLoopUnit;
 						CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
 
@@ -7290,7 +7295,7 @@ void CvCityAI::AI_updateBestBuild()
 									eBuild = pLoopUnit->getBuildType();
 								}
 							}
-						}
+						}*/
 					}
 
 					if( eBuild != NO_BUILD )
@@ -7514,18 +7519,12 @@ void CvCityAI::AI_updateBestBuild()
 	
 	
 	int iNetCommerce = 1 + kPlayer.getCommerceRate(COMMERCE_GOLD) + kPlayer.getCommerceRate(COMMERCE_RESEARCH) + std::max(0, kPlayer.getGoldPerTurn());
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
 /* original BTS code
 	int iNetExpenses = kPlayer.calculateInflatedCosts() + std::min(0, kPlayer.getGoldPerTurn());
 */
+	// Unofficial Patch
 	int iNetExpenses = kPlayer.calculateInflatedCosts() + std::max(0, -kPlayer.getGoldPerTurn());
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+
 	int iRatio = (100 * iNetExpenses) / std::max(1, iNetCommerce);
 	
 	if (iRatio > 40)
@@ -7649,8 +7648,8 @@ void CvCityAI::AI_updateBestBuild()
 
 	for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
-		m_aiBestBuildValue[iI] = 0;
-		m_aeBestBuild[iI] = NO_BUILD;
+		//m_aiBestBuildValue[iI] = 0;
+		//m_aeBestBuild[iI] = NO_BUILD;
 
 		if (iI != CITY_HOME_PLOT)
 		{
@@ -7667,9 +7666,9 @@ void CvCityAI::AI_updateBestBuild()
 				BuildTypes eLastBestBuildType = m_aeBestBuild[iI];
 
 				AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, iHappyAdjust, iHealthAdjust, iDesiredFoodChange);
-				m_aiBestBuildValue[iI] *= 4;
-				m_aiBestBuildValue[iI] += 3 + iWorkerCount;  // to round up
-				m_aiBestBuildValue[iI] /= (4 + iWorkerCount);
+				m_aiBestBuildValue[iI] *= 5; // K-Mod, increased this from 4 (and the 2 lines below)
+				m_aiBestBuildValue[iI] += 4 + iWorkerCount;  // to round up
+				m_aiBestBuildValue[iI] /= (5 + iWorkerCount);
 				
 				if (m_aiBestBuildValue[iI] > 0)
 				{
@@ -7680,18 +7679,75 @@ void CvCityAI::AI_updateBestBuild()
 					FAssert(m_aiBestBuildValue[iI] > 0);
 				}
 
+				// K-Mod, make some adjustments to our yield weights based on our new bestbuild
+				if (m_aeBestBuild[iI] != NO_BUILD && m_aeBestBuild[iI] != eLastBestBuildType)
+				{
+					// its a new improvement, so lets adjust our values.
+					// This is rough, but better than nothing. (at least, I hope so...)
+					int iOldFood = (eLastBestBuildType == NO_BUILD)? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_FOOD, true);
+					int iOldProd = (eLastBestBuildType == NO_BUILD)? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_PRODUCTION, true);
+
+					int iDelta = pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_FOOD, true) - iOldFood;
+					if (iDelta != 0)
+					{
+						if (iFoodDifference < 0)
+						{
+							iFoodMultiplier -= std::min(iDelta, -iFoodDifference) * 4;
+							// cf. iFoodMultiplier +=  -iFoodDifference * 4;
+						}
+						
+						if (iFoodDifference > 4)
+						{
+							iFoodMultiplier -= std::max(iDelta, 4 - iFoodDifference) * 4;
+							if (iFoodDifference + iDelta <= 4)
+								iFoodMultiplier += 8;
+							// cf. iFoodMultiplier -= 8 + 4 * iFoodDifference;
+						}
+						iFoodDifference += iDelta;
+					}
+
+					iDelta = pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_PRODUCTION, true) - iOldProd;
+					if (iDelta != 0)
+					{
+						if (iProductionTotal < 10)
+						{
+							iProductionMultiplier -= 8 * std::min(iDelta, 10-iProductionTotal);
+							// cf. iProductionMultiplier += (80 - 8 * iProductionTotal);
+						}
+						
+						if (iProductionTotal < iProductionTarget)
+						{
+							iProductionMultiplier -= 8 * std::min(iDelta, iProductionTarget - iProductionTotal);
+							// cf. iProductionMultiplier += 8 * (iProductionTarget - iProductionTotal);
+						}
+						iProductionTotal += iDelta;
+					}
+					// Happiness modifers.. maybe I'll do this later, after testing etc.
+				}
+				// K-Mod end
+
 				if( eLastBestBuildType != NO_BUILD )
 				{
 					if( eLastBestBuildType != m_aeBestBuild[iI] )
 					{
 						if( iWorkerCount > 0 )
 						{
-							// BBAI TODO: Check workers are building the new thing
+							// K-Mod
+							CvUnit* pLoopUnit;
+							CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
 
-							if( gCityLogLevel >= 2 )
+							while (pUnitNode != NULL)
 							{
-								logBBAI( "      City %S switches best build on plot %d, %d from %S (%d) to %S (%d) with worker count %d",getName().GetCString(),pLoopPlot->getX(),pLoopPlot->getY(),GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eLastBestBuildType).getImprovement()).getDescription(),iLastBestBuildValue,GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(m_aeBestBuild[iI]).getImprovement()).getDescription(),m_aiBestBuildValue[iI],iWorkerCount);
+								pLoopUnit = ::getUnit(pUnitNode->m_data);
+								pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+
+								if (pLoopUnit->getBuildType() != NO_BUILD && pLoopUnit->getBuildType() != m_aeBestBuild[iI])
+								{
+									FAssert(pLoopUnit->getGroup() != NULL);
+									pLoopUnit->getGroup()->clearMissionQueue();
+								}
 							}
+							// K-Mod end
 						}
 					}
 				}
@@ -10306,6 +10362,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	BuildTypes eForcedBuild = NO_BUILD;
 
 	{	//If a worker is already building a build, force that Build.
+		// K-Mod, lets see what happens if we don't do this. (I expect nothing to change)
+		/*
 		CLLNode<IDInfo>* pUnitNode;
 		CvUnit* pLoopUnit;
 
@@ -10324,7 +10382,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					break;
 				}
 			}
-		}
+		}*/
 	}
 
 	iBestValue = 0;
