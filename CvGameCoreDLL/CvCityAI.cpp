@@ -10601,9 +10601,18 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					{
 						if (eBestBuild != NO_BUILD)
 						{
+							/* original bts code
 							if ((GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT) && (GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
 							{
 								iValue -= 1000;
+							}*/
+							// K-Mod, bug fix!
+							// Presumablly the original author wanted to subtract 1000 if eBestBuild would take away the bonus; not ... the nonsense they actually wrote.
+							if (bHasBonusImprovement)
+							{
+								// By the way, AI_bonusVal is typically 10 for the first bonus, and 2 for subsequent.
+								iValue -= (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, -1) * 10);
+								iValue -= 200;
 							}
 						}
 					}
