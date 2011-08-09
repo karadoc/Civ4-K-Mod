@@ -10223,7 +10223,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	{
 		return;
 	}
-	
+
 	//When improving new plots only, count emphasis twice
 	//helps to avoid too much tearing up of old improvements.
 /************************************************************************************************/
@@ -10275,14 +10275,14 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 			}
 		}
 	}
-	
+
 	for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 	{
 		aiBestDiffYields[iJ] = 0;
 	}
 
 	BuildTypes eForcedBuild = NO_BUILD;
-	
+
 	{	//If a worker is already building a build, force that Build.
 		CLLNode<IDInfo>* pUnitNode;
 		CvUnit* pLoopUnit;
@@ -10307,9 +10307,9 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 	iBestValue = 0;
 	eBestBuild = NO_BUILD;
-	
+
 	int iClearFeatureValue = 0;
-	
+
 	if (pPlot->getFeatureType() != NO_FEATURE)
 	{
 		iClearFeatureValue = AI_clearFeatureValue(getCityPlotIndex(pPlot));
@@ -10319,482 +10319,509 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	{
 		bEmphasizeIrrigation = false;
 
-        CvPlot* pAdjacentPlot;
-        CvPlot* pAdjacentPlot2;
-        BonusTypes eTempBonus;
+		CvPlot* pAdjacentPlot;
+		CvPlot* pAdjacentPlot2;
+		BonusTypes eTempBonus;
 
-        //It looks unwieldly but the code has to be rigid to avoid "worker ADD"
-        //where they keep connecting then disconnecting a crops resource or building
-        //multiple farms to connect a single crop resource.
-        //isFreshWater is used to ensure invalid plots are pruned early, the inner loop
-        //really doesn't run that often.
+		//It looks unwieldly but the code has to be rigid to avoid "worker ADD"
+		//where they keep connecting then disconnecting a crops resource or building
+		//multiple farms to connect a single crop resource.
+		//isFreshWater is used to ensure invalid plots are pruned early, the inner loop
+		//really doesn't run that often.
 
-        //using logic along the lines of "Will irrigating me make crops wet"
-        //wont really work... it does have to "am i the tile the crops want to be irrigated"
+		//using logic along the lines of "Will irrigating me make crops wet"
+		//wont really work... it does have to "am i the tile the crops want to be irrigated"
 
-        //I optimized through the use of "isIrrigated" which is just checking a bool...
-        //once everything is nicely irrigated, this code should be really fast...
-        if ((pPlot->isIrrigated()) || (pPlot->isFreshWater() && pPlot->canHavePotentialIrrigation()))
-        {
-            for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-            {
-                pAdjacentPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), ((DirectionTypes)iI));
-
-                if ((pAdjacentPlot != NULL) && (pAdjacentPlot->getOwner() == getOwner()) && (pAdjacentPlot->isCityRadius()))
-                {
-                    if (!pAdjacentPlot->isFreshWater())
-                    {
-                        //check for a city? cities can conduct irrigation and that effect is quite
-                        //useful... so I think irrigate cities.
-                        if (pAdjacentPlot->isPotentialIrrigation())
-                        {
-                            CvPlot* eBestIrrigationPlot = NULL;
-
-
-                            for (iJ = 0; iJ < NUM_DIRECTION_TYPES; iJ++)
-                            {
-                                pAdjacentPlot2 = plotDirection(pAdjacentPlot->getX_INLINE(), pAdjacentPlot->getY_INLINE(), ((DirectionTypes)iJ));
-                                if ((pAdjacentPlot2 != NULL) && (pAdjacentPlot2->getOwner() == getOwner()))
-                                {
-	                                eTempBonus = pAdjacentPlot2->getNonObsoleteBonusType(getTeam());
-                                    if (pAdjacentPlot->isIrrigated())
-                                    {
-                                        //the irrigation has to be coming from somewhere
-                                        if (pAdjacentPlot2->isIrrigated())
-                                        {
-                                            //if we find a tile which is already carrying irrigation
-                                            //then lets not replace that one...
-                                            eBestIrrigationPlot = pAdjacentPlot2;
-
-                                            if ((pAdjacentPlot2->isCity()) || (eTempBonus != NO_BONUS) || (!pAdjacentPlot2->isCityRadius()))
-                                            {
-                                            	if (pAdjacentPlot2->isFreshWater())
-                                            	{
-                                                	//these are all ideal for irrigation chains so stop looking.
-                                                	break;
-                                            	}
-                                            }
-                                        }
-
-                                    }
-                                    else
-                                    {
-                                        if (pAdjacentPlot2->getNonObsoleteBonusType(getTeam()) == NO_BONUS)
-                                        {
-                                            if (pAdjacentPlot2->canHavePotentialIrrigation() && pAdjacentPlot2->isIrrigationAvailable())
-                                            {
-                                                //could use more sophisticated logic
-                                                //however this would rely on things like smart irrigation chaining
-                                                //of out-of-city plots
-                                                eBestIrrigationPlot = pAdjacentPlot2;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (pPlot == eBestIrrigationPlot)
-                            {
-                                bEmphasizeIrrigation = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-	}
-	
-		for (iI = 0; iI < GC.getNumImprovementInfos(); iI++)
+		//I optimized through the use of "isIrrigated" which is just checking a bool...
+		//once everything is nicely irrigated, this code should be really fast...
+		if ((pPlot->isIrrigated()) || (pPlot->isFreshWater() && pPlot->canHavePotentialIrrigation()))
 		{
-			eImprovement = ((ImprovementTypes)iI);
-
-			iBestTempBuildValue = 0;
-			eBestTempBuild = NO_BUILD;
-
-			bIgnoreFeature = false;
-			bValid = false;
-
-			if (eImprovement == pPlot->getImprovementType())
+			for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 			{
-				bValid = true;
+				pAdjacentPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), ((DirectionTypes)iI));
+
+				if ((pAdjacentPlot != NULL) && (pAdjacentPlot->getOwner() == getOwner()) && (pAdjacentPlot->isCityRadius()))
+				{
+					if (!pAdjacentPlot->isFreshWater())
+					{
+						//check for a city? cities can conduct irrigation and that effect is quite
+						//useful... so I think irrigate cities.
+						if (pAdjacentPlot->isPotentialIrrigation())
+						{
+							CvPlot* eBestIrrigationPlot = NULL;
+
+
+							for (iJ = 0; iJ < NUM_DIRECTION_TYPES; iJ++)
+							{
+								pAdjacentPlot2 = plotDirection(pAdjacentPlot->getX_INLINE(), pAdjacentPlot->getY_INLINE(), ((DirectionTypes)iJ));
+								if ((pAdjacentPlot2 != NULL) && (pAdjacentPlot2->getOwner() == getOwner()))
+								{
+									eTempBonus = pAdjacentPlot2->getNonObsoleteBonusType(getTeam());
+									if (pAdjacentPlot->isIrrigated())
+									{
+										//the irrigation has to be coming from somewhere
+										if (pAdjacentPlot2->isIrrigated())
+										{
+											//if we find a tile which is already carrying irrigation
+											//then lets not replace that one...
+											eBestIrrigationPlot = pAdjacentPlot2;
+
+											if ((pAdjacentPlot2->isCity()) || (eTempBonus != NO_BONUS) || (!pAdjacentPlot2->isCityRadius()))
+											{
+												if (pAdjacentPlot2->isFreshWater())
+												{
+													//these are all ideal for irrigation chains so stop looking.
+													break;
+												}
+											}
+										}
+
+									}
+									else
+									{
+										if (pAdjacentPlot2->getNonObsoleteBonusType(getTeam()) == NO_BONUS)
+										{
+											if (pAdjacentPlot2->canHavePotentialIrrigation() && pAdjacentPlot2->isIrrigationAvailable())
+											{
+												//could use more sophisticated logic
+												//however this would rely on things like smart irrigation chaining
+												//of out-of-city plots
+												eBestIrrigationPlot = pAdjacentPlot2;
+												break;
+											}
+										}
+									}
+								}
+							}
+
+							if (pPlot == eBestIrrigationPlot)
+							{
+								bEmphasizeIrrigation = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (iI = 0; iI < GC.getNumImprovementInfos(); iI++)
+	{
+		eImprovement = ((ImprovementTypes)iI);
+
+		iBestTempBuildValue = 0;
+		eBestTempBuild = NO_BUILD;
+
+		bIgnoreFeature = false;
+		bValid = false;
+
+		if (eImprovement == pPlot->getImprovementType())
+		{
+			bValid = true;
+		}
+		else
+		{
+			if (eForcedBuild != NO_BUILD)
+			{
+				if (GC.getBuildInfo(eForcedBuild).getImprovement() == eImprovement)
+				{
+					eBestTempBuild = eForcedBuild;
+				}
 			}
 			else
 			{
-				if (eForcedBuild != NO_BUILD)
+				for (iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
 				{
-					if (GC.getBuildInfo(eForcedBuild).getImprovement() == eImprovement)
-					{
-						eBestTempBuild = eForcedBuild;
-					}
-				}
-				else
-				{
-					for (iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
-					{
-						eBuild = ((BuildTypes)iJ);
+					eBuild = ((BuildTypes)iJ);
 
-						if (GC.getBuildInfo(eBuild).getImprovement() == eImprovement)
+					if (GC.getBuildInfo(eBuild).getImprovement() == eImprovement)
+					{
+						if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild, false))
 						{
-							if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild, false))
+							iValue = 10000;
+
+							iValue /= (GC.getBuildInfo(eBuild).getTime() + 1);
+
+							// XXX feature production???
+
+							if (iValue > iBestTempBuildValue)
 							{
-								iValue = 10000;
-
-								iValue /= (GC.getBuildInfo(eBuild).getTime() + 1);
-
-								// XXX feature production???
-
-								if (iValue > iBestTempBuildValue)
-								{
-									iBestTempBuildValue = iValue;
-									eBestTempBuild = eBuild;
-								}
-							}
-						}
-					}
-				}
-
-				if (eBestTempBuild != NO_BUILD)
-				{
-					bValid = true;
-
-					if (pPlot->getFeatureType() != NO_FEATURE)
-					{
-						if (GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType()))
-						{
-							bIgnoreFeature = true;
-
-							if (GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange(YIELD_PRODUCTION) > 0)
-							{
-								if (eNonObsoleteBonus == NO_BONUS)
-								{
-									if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS))
-									{
-										bValid = false;
-									}
-									else if (healthRate() < 0 && GC.getFeatureInfo(pPlot->getFeatureType()).getHealthPercent() > 0)
-									{
-										bValid = false;
-									}
-									else if (GET_PLAYER(getOwnerINLINE()).getFeatureHappiness(pPlot->getFeatureType()) > 0)
-									{
-										bValid = false;
-									}
-								}
+								iBestTempBuildValue = iValue;
+								eBestTempBuild = eBuild;
 							}
 						}
 					}
 				}
 			}
 
-			if (bValid)
+			if (eBestTempBuild != NO_BUILD)
 			{
-				eFinalImprovement = finalImprovementUpgrade(eImprovement);
+				bValid = true;
 
-				if (eFinalImprovement == NO_IMPROVEMENT)
+				if (pPlot->getFeatureType() != NO_FEATURE)
 				{
-					eFinalImprovement = eImprovement;
-				}
-
-				iValue = 0;
-				
-				if (eBonus != NO_BONUS)
-				{
-					if (eNonObsoleteBonus != NO_BONUS)
+					if (GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType()))
 					{
-						if (GC.getImprovementInfo(eFinalImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
+						bIgnoreFeature = true;
+
+						if (GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange(YIELD_PRODUCTION) > 0)
 						{
-							iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) * 10);
-							iValue += 200;
-							if (eBestBuild != NO_BUILD)
+							if (eNonObsoleteBonus == NO_BONUS)
 							{
-								if ((GC.getBuildInfo(eBestBuild).getImprovement() == NO_IMPROVEMENT) || (!GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
+								if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS))
 								{
-									//Always prefer improvements which connect bonuses.
-									eBestBuild = NO_BUILD;
-									iBestValue = 0;
+									bValid = false;
+								}
+								else if (healthRate() < 0 && GC.getFeatureInfo(pPlot->getFeatureType()).getHealthPercent() > 0)
+								{
+									bValid = false;
+								}
+								else if (GET_PLAYER(getOwnerINLINE()).getFeatureHappiness(pPlot->getFeatureType()) > 0)
+								{
+									bValid = false;
 								}
 							}
-						}
-						else
-						{
-							if (eBestBuild != NO_BUILD)
-							{
-								if ((GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT) && (GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
-								{
-									iValue -= 1000;
-								}
-							}
-						}
-					}
-				}
-				else
-				{
-					for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
-					{
-						if (GC.getImprovementInfo(eFinalImprovement).getImprovementBonusDiscoverRand(iJ) > 0)
-						{
-							iValue++;
-						}
-					}
-				}
-				
-				if (iValue >= 0)
-				{
-
-                    iValue *= 2;
-					for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-					{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/06/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
-/* original BTS code
-						aiFinalYields[iJ] = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature));
-						aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
-						aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
-						if (bIgnoreFeature && pPlot->getFeatureType() != NO_FEATURE)
-						{
-							aiFinalYields[iJ] -= 2 * GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange((YieldTypes)iJ);							
-						}
-						aiDiffYields[iJ] = (aiFinalYields[iJ] - (2 * pPlot->getYield(((YieldTypes)iJ))));
-*/
-						// 
-						aiFinalYields[iJ] = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature));
-						aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
-						aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
-						if (bIgnoreFeature && pPlot->getFeatureType() != NO_FEATURE)
-						{
-							aiFinalYields[iJ] -= 2 * GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange((YieldTypes)iJ);							
-						}
-
-						int iCurYield = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), false));
-
-						ImprovementTypes eCurImprovement = pPlot->getImprovementType();
-						if( eCurImprovement != NO_IMPROVEMENT )
-						{
-							ImprovementTypes eCurFinalImprovement = finalImprovementUpgrade(eCurImprovement);
-							if (eCurFinalImprovement == NO_IMPROVEMENT)
-							{
-								eCurFinalImprovement = eCurImprovement;
-							}
-							iCurYield += (pPlot->calculateImprovementYieldChange(eCurFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
-							iCurYield += (pPlot->calculateImprovementYieldChange(eCurImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
-						}
-
-						aiDiffYields[iJ] = (aiFinalYields[iJ] - iCurYield);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-					}
-
-					iValue += (aiDiffYields[YIELD_FOOD] * ((100 * iFoodPriority) / 100));
-					iValue += (aiDiffYields[YIELD_PRODUCTION] * ((60 * iProductionPriority) / 100));
-					iValue += (aiDiffYields[YIELD_COMMERCE] * ((40 * iCommercePriority) / 100));
-
-					iValue /= 2;
-
-                    for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-					{
-					    aiFinalYields[iJ] /= 2;
-					    aiDiffYields[iJ] /= 2;
-					}
-					
-					if (iValue > 0)
-					{
-						// this is mainly to make it improve better tiles first
-						//flood plain > grassland > plain > tundra
-						iValue += (aiFinalYields[YIELD_FOOD] * 10);
-						iValue += (aiFinalYields[YIELD_PRODUCTION] * 6);
-						iValue += (aiFinalYields[YIELD_COMMERCE] * 4);
-
-						if (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
-						{
-							//this is a food yielding tile
-							if (iFoodPriority > 100)
-							{
-								iValue *= 100 + iFoodPriority;
-								iValue /= 200;							
-							}
-							if (iFoodChange > 0)
-							{
-								iValue += (10 * (1 + aiDiffYields[YIELD_FOOD]) * (1 + aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()) * iFoodChange * iFoodPriority) / 100;
-							}
-							if (iCommercePriority > 100)
-							{
-								iValue *= 100 + (((iCommercePriority - 100) * aiDiffYields[YIELD_COMMERCE]) / 2);
-								iValue /= 100;
-							}
-						}
-						else if (aiFinalYields[YIELD_FOOD] < GC.getFOOD_CONSUMPTION_PER_POPULATION())
-						{
-							if ((aiDiffYields[YIELD_PRODUCTION] > 0) && (aiFinalYields[YIELD_FOOD]+aiFinalYields[YIELD_PRODUCTION] > 3))
-							{
-								if (iFoodPriority < 100 || GET_PLAYER(getOwnerINLINE()).getCurrentEra() < 2)
-								{
-									//value booster for mines on hills
-									iValue *= (100 + 25 * aiDiffYields[YIELD_PRODUCTION]);
-									iValue /= 100;
-								}
-							}
-							if (iFoodChange < 0)
-							{
-								iValue *= 4 - iFoodChange;
-								iValue /= 3 + aiFinalYields[YIELD_FOOD];
-							}
-						}
-
-						if ((iFoodPriority < 100) && (iProductionPriority > 100))
-						{
-							iValue *= (200 + ((iProductionPriority - 100)*aiFinalYields[YIELD_PRODUCTION]));
-							iValue /= 200;
-						}
-						if (eBonus == NO_BONUS)
-						{
-							if (iFoodChange > 0)
-							{
-								//We want more food.
-								iValue *= 2 + std::max(0, aiDiffYields[YIELD_FOOD]);
-								iValue /= 2 * (1 + std::max(0, -aiDiffYields[YIELD_FOOD]));
-							}
-//							else if (iFoodChange < 0)
-//							{
-//								//We want to soak up food.
-//								iValue *= 8;
-//								iValue /= 8 + std::max(0, aiDiffYields[YIELD_FOOD]);
-//							}
-						}
-					}
-					
-
-					if (bEmphasizeIrrigation && GC.getImprovementInfo(eFinalImprovement).isCarriesIrrigation())
-					{
-						iValue += 500;
-					}
-
-					if (getImprovementFreeSpecialists(eFinalImprovement) > 0)
-					{
-						iValue += 2000;
-					}
-					
-					int iHappiness = GC.getImprovementInfo(eFinalImprovement).getHappiness();
-					if ((iHappiness != 0) && !(GET_PLAYER(getOwnerINLINE()).getAdvancedStartPoints() >= 0))
-					{
-						int iHappyLevel = iHappyAdjust + (happyLevel() - unhappyLevel(0));
-						if (eImprovement == pPlot->getImprovementType())
-						{
-							iHappyLevel -= iHappiness;
-						}
-						int iHealthLevel = (goodHealth() - badHealth(false, 0));
-						
-						int iHappyValue = 0;
-						if (iHappyLevel <= 0)
-						{
-							iHappyValue += 400;
-						}
-						bool bCanGrow = true;// (getYieldRate(YIELD_FOOD) > foodConsumption());
-						
-						if (iHappyLevel <= iHealthLevel)
-						{
-							iHappyValue += 200 * std::max(0, (bCanGrow ? std::min(6, 2 + iHealthLevel - iHappyLevel) : 0) - iHappyLevel);
-						}
-						else
-						{
-							iHappyValue += 200 * std::max(0, (bCanGrow ? 1 : 0) - iHappyLevel);
-						}
-						if (!pPlot->isBeingWorked())
-						{
-							iHappyValue *= 4;
-							iHappyValue /= 3;
-						}
-						iHappyValue += std::max(0, (pPlot->getCityRadiusCount() - 1)) * ((iHappyValue > 0) ? iHappyLevel / 2 : 200);
-						iValue += iHappyValue * iHappiness;
-					}
-
-					if (!isHuman())
-					{
-						iValue *= std::max(0, (GC.getLeaderHeadInfo(getPersonalityType()).getImprovementWeightModifier(eFinalImprovement) + 200));
-						iValue /= 200;
-					}
-
-					if (pPlot->getImprovementType() == NO_IMPROVEMENT)
-					{
-						if (pPlot->isBeingWorked())
-						{
-							iValue *= 5;
-							iValue /= 4;
-						}
-
-						if (eBestTempBuild != NO_BUILD)
-						{
-							if (pPlot->getFeatureType() != NO_FEATURE)
-							{
-								if (GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType()))
-								{
-									// BBAI TODO: extra boost in early game to chop rush
-									iValue += pPlot->getFeatureProduction(eBestTempBuild, getTeam(), &pCity) * 2;
-									FAssert(pCity == this);
-
-									iValue += iClearFeatureValue;
-								}
-							}
-						}
-					}
-					else
-					{
-						// cottage/villages (don't want to chop them up if turns have been invested)
-						ImprovementTypes eImprovementDowngrade = (ImprovementTypes)GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementPillage();
-						while (eImprovementDowngrade != NO_IMPROVEMENT)
-						{
-							CvImprovementInfo& kImprovementDowngrade = GC.getImprovementInfo(eImprovementDowngrade);
-							iValue -= kImprovementDowngrade.getUpgradeTime() * 8;
-							eImprovementDowngrade = (ImprovementTypes)kImprovementDowngrade.getImprovementPillage();
-						}
-
-						if (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementUpgrade() != NO_IMPROVEMENT)
-						{
-							iValue -= (GC.getImprovementInfo(pPlot->getImprovementType()).getUpgradeTime() * 8 * (pPlot->getUpgradeProgress())) / std::max(1, GC.getGameINLINE().getImprovementUpgradeTime(pPlot->getImprovementType()));
-						}
-
-						if (eNonObsoleteBonus == NO_BONUS)
-						{
-							if (isWorkingPlot(pPlot))
-							{
-								if (((iFoodPriority < 100) && (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())) || (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementPillage() != NO_IMPROVEMENT))
-								{
-									iValue -= 70;
-									iValue *= 2;
-									iValue /= 3;
-								}
-							}
-						}
-						
-						if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
-						{
-							iValue /= 4;	//Greatly prefer builds which are legal.
-						}
-					}
-
-					if (iValue > iBestValue)
-					{
-						iBestValue = iValue;
-						eBestBuild = eBestTempBuild;
-						
-						for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-						{
-							aiBestDiffYields[iJ] = aiDiffYields[iJ];
 						}
 					}
 				}
 			}
 		}
 
+		if (bValid)
+		{
+			eFinalImprovement = finalImprovementUpgrade(eImprovement);
+
+			if (eFinalImprovement == NO_IMPROVEMENT)
+			{
+				eFinalImprovement = eImprovement;
+			}
+
+			iValue = 0;
+
+			if (eBonus != NO_BONUS)
+			{
+				if (eNonObsoleteBonus != NO_BONUS)
+				{
+					if (GC.getImprovementInfo(eFinalImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
+					{
+						iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) * 10);
+						iValue += 200;
+						if (eBestBuild != NO_BUILD)
+						{
+							if ((GC.getBuildInfo(eBestBuild).getImprovement() == NO_IMPROVEMENT) || (!GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
+							{
+								//Always prefer improvements which connect bonuses.
+								eBestBuild = NO_BUILD;
+								iBestValue = 0;
+							}
+						}
+					}
+					else
+					{
+						if (eBestBuild != NO_BUILD)
+						{
+							if ((GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT) && (GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
+							{
+								iValue -= 1000;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
+				{
+					if (GC.getImprovementInfo(eFinalImprovement).getImprovementBonusDiscoverRand(iJ) > 0)
+					{
+						iValue++;
+					}
+				}
+			}
+
+			if (iValue >= 0)
+			{
+				iValue *= 2;
+				for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+				{
+/************************************************************************************************/
+/* BETTER_BTS_AI_MOD                      10/06/09                                jdog5000      */
+/*                                                                                              */
+/* City AI                                                                                      */
+/************************************************************************************************/
+/* original BTS code
+					aiFinalYields[iJ] = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature));
+					aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
+					aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
+					if (bIgnoreFeature && pPlot->getFeatureType() != NO_FEATURE)
+					{
+						aiFinalYields[iJ] -= 2 * GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange((YieldTypes)iJ);							
+					}
+					aiDiffYields[iJ] = (aiFinalYields[iJ] - (2 * pPlot->getYield(((YieldTypes)iJ))));
+*/
+					//
+					aiFinalYields[iJ] = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature));
+					aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
+					aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
+					if (bIgnoreFeature && pPlot->getFeatureType() != NO_FEATURE)
+					{
+						aiFinalYields[iJ] -= 2 * GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange((YieldTypes)iJ);							
+					}
+
+					int iCurYield = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), false));
+
+					ImprovementTypes eCurImprovement = pPlot->getImprovementType();
+					if( eCurImprovement != NO_IMPROVEMENT )
+					{
+						ImprovementTypes eCurFinalImprovement = finalImprovementUpgrade(eCurImprovement);
+						if (eCurFinalImprovement == NO_IMPROVEMENT)
+						{
+							eCurFinalImprovement = eCurImprovement;
+						}
+						iCurYield += (pPlot->calculateImprovementYieldChange(eCurFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
+						iCurYield += (pPlot->calculateImprovementYieldChange(eCurImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
+					}
+
+					aiDiffYields[iJ] = (aiFinalYields[iJ] - iCurYield);
+/************************************************************************************************/
+/* BETTER_BTS_AI_MOD                       END                                                  */
+/************************************************************************************************/
+				}
+
+				// K-Mod
+				/* remember this from AI_updateBestBuild?
+					if (iFoodDifference < 0)
+					{
+						iFoodMultiplier +=  -iFoodDifference * 4;
+					}
+					
+					if (iFoodDifference > 4)
+					{
+						iFoodMultiplier -= 8 + 4 * iFoodDifference;
+					}
+				that roughly means that
+				if iFoodChange > 0 && iFoodChange - aiDiffYields[0] <= 0, or
+				if iFoodChange < -4 && iFoodChange - aiDiffYields[0] >= -4
+				then the food multiplier will change.
+				We should try to preempt that change to prevent bestbuild from oscillating. */
+				int iCorrectedFoodPriority = iFoodPriority;
+				if (iFoodChange > 0 && iFoodChange - aiDiffYields[YIELD_FOOD] <= 0)
+				{
+					iCorrectedFoodPriority -= iFoodChange * 4; // undo the food priority increase.
+				}
+				if (iFoodChange < -4 && iFoodChange - aiDiffYields[YIELD_FOOD] >= -4)
+				{
+					iCorrectedFoodPriority += 8 + 4 * -iFoodChange; // undo the food priority decrease
+				}
+				// This corrected priority isn't perfect, but I think it will be better than nothing.
+				// K-Mod end
+
+				iValue += (aiDiffYields[YIELD_FOOD] * ((100 * iCorrectedFoodPriority) / 100));
+				iValue += (aiDiffYields[YIELD_PRODUCTION] * ((60 * iProductionPriority) / 100));
+				iValue += (aiDiffYields[YIELD_COMMERCE] * ((40 * iCommercePriority) / 100));
+
+				iValue /= 2;
+
+				for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+				{
+					aiFinalYields[iJ] /= 2;
+					aiDiffYields[iJ] /= 2;
+				}
+
+				if (iValue > 0)
+				{
+					// this is mainly to make it improve better tiles first
+					//flood plain > grassland > plain > tundra
+					iValue += (aiFinalYields[YIELD_FOOD] * 10);
+					iValue += (aiFinalYields[YIELD_PRODUCTION] * 6);
+					iValue += (aiFinalYields[YIELD_COMMERCE] * 4);
+
+					if (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
+					{
+						//this is a food yielding tile
+						if (iCorrectedFoodPriority > 100)
+						{
+							iValue *= 100 + iCorrectedFoodPriority;
+							iValue /= 200;							
+						}
+						if (iFoodChange > 0)
+						{
+							iValue += (10 * (1 + aiDiffYields[YIELD_FOOD]) * (1 + aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()) * iFoodChange * iCorrectedFoodPriority) / 100;
+						}
+						if (iCommercePriority > 100)
+						{
+							iValue *= 100 + (((iCommercePriority - 100) * aiDiffYields[YIELD_COMMERCE]) / 2);
+							iValue /= 100;
+						}
+					}
+					else if (aiFinalYields[YIELD_FOOD] < GC.getFOOD_CONSUMPTION_PER_POPULATION())
+					{
+						if ((aiDiffYields[YIELD_PRODUCTION] > 0) && (aiFinalYields[YIELD_FOOD]+aiFinalYields[YIELD_PRODUCTION] > 3))
+						{
+							if (iCorrectedFoodPriority < 100 || GET_PLAYER(getOwnerINLINE()).getCurrentEra() < 2)
+							{
+								//value booster for mines on hills
+								iValue *= (100 + 25 * aiDiffYields[YIELD_PRODUCTION]);
+								iValue /= 100;
+							}
+						}
+						if (iFoodChange < 0)
+						{
+							iValue *= 4 - iFoodChange;
+							iValue /= 3 + aiFinalYields[YIELD_FOOD];
+						}
+					}
+
+					if ((iCorrectedFoodPriority < 100) && (iProductionPriority > 100))
+					{
+						iValue *= (200 + ((iProductionPriority - 100)*aiFinalYields[YIELD_PRODUCTION]));
+						iValue /= 200;
+					}
+					if (eBonus == NO_BONUS)
+					{
+						if (iFoodChange > 0)
+						{
+							//We want more food.
+							iValue *= 2 + std::max(0, aiDiffYields[YIELD_FOOD]);
+							iValue /= 2 * (1 + std::max(0, -aiDiffYields[YIELD_FOOD]));
+						}
+//						else if (iFoodChange < 0)
+//						{
+//							//We want to soak up food.
+//							iValue *= 8;
+//							iValue /= 8 + std::max(0, aiDiffYields[YIELD_FOOD]);
+//						}
+					}
+				}
+
+
+				if (bEmphasizeIrrigation && GC.getImprovementInfo(eFinalImprovement).isCarriesIrrigation())
+				{
+					iValue += 500;
+				}
+
+				if (getImprovementFreeSpecialists(eFinalImprovement) > 0)
+				{
+					iValue += 2000;
+				}
+
+				int iHappiness = GC.getImprovementInfo(eFinalImprovement).getHappiness();
+				if ((iHappiness != 0) && !(GET_PLAYER(getOwnerINLINE()).getAdvancedStartPoints() >= 0))
+				{
+					int iHappyLevel = iHappyAdjust + (happyLevel() - unhappyLevel(0));
+					/*if (eImprovement == pPlot->getImprovementType())
+					{
+						iHappyLevel -= iHappiness;
+					}*/ // commented out by K-Mod.
+					int iHealthLevel = (goodHealth() - badHealth(false, 0));
+
+					int iHappyValue = 0;
+					if (iHappyLevel <= 0)
+					{
+						iHappyValue += 400;
+					}
+					bool bCanGrow = true;// (getYieldRate(YIELD_FOOD) > foodConsumption());
+
+					if (iHappyLevel <= iHealthLevel)
+					{
+						iHappyValue += 200 * std::max(0, (bCanGrow ? std::min(6, 2 + iHealthLevel - iHappyLevel) : 0) - iHappyLevel);
+					}
+					else
+					{
+						iHappyValue += 200 * std::max(0, (bCanGrow ? 1 : 0) - iHappyLevel);
+					}
+					if (!pPlot->isBeingWorked())
+					{
+						iHappyValue *= 4;
+						iHappyValue /= 3;
+					}
+					iHappyValue += std::max(0, (pPlot->getCityRadiusCount() - 1)) * ((iHappyValue > 0) ? iHappyLevel / 2 : 200);
+					iValue += iHappyValue * iHappiness;
+				}
+
+				if (!isHuman())
+				{
+					iValue *= std::max(0, (GC.getLeaderHeadInfo(getPersonalityType()).getImprovementWeightModifier(eFinalImprovement) + 200));
+					iValue /= 200;
+				}
+
+				if (pPlot->getImprovementType() == NO_IMPROVEMENT)
+				{
+					if (pPlot->isBeingWorked())
+					{
+						iValue *= 5;
+						iValue /= 4;
+					}
+
+					if (eBestTempBuild != NO_BUILD)
+					{
+						if (pPlot->getFeatureType() != NO_FEATURE)
+						{
+							if (GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType()))
+							{
+								// BBAI TODO: extra boost in early game to chop rush
+								iValue += pPlot->getFeatureProduction(eBestTempBuild, getTeam(), &pCity) * 2;
+								FAssert(pCity == this);
+
+								iValue += iClearFeatureValue;
+							}
+						}
+					}
+				}
+				else
+				{
+					// cottage/villages (don't want to chop them up if turns have been invested)
+					ImprovementTypes eImprovementDowngrade = (ImprovementTypes)GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementPillage();
+					while (eImprovementDowngrade != NO_IMPROVEMENT)
+					{
+						CvImprovementInfo& kImprovementDowngrade = GC.getImprovementInfo(eImprovementDowngrade);
+						iValue -= kImprovementDowngrade.getUpgradeTime() * 8;
+						eImprovementDowngrade = (ImprovementTypes)kImprovementDowngrade.getImprovementPillage();
+					}
+
+					if (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementUpgrade() != NO_IMPROVEMENT)
+					{
+						iValue -= (GC.getImprovementInfo(pPlot->getImprovementType()).getUpgradeTime() * 8 * (pPlot->getUpgradeProgress())) / std::max(1, GC.getGameINLINE().getImprovementUpgradeTime(pPlot->getImprovementType()));
+					}
+
+					if (eNonObsoleteBonus == NO_BONUS)
+					{
+						if (isWorkingPlot(pPlot))
+						{
+							if (((iCorrectedFoodPriority < 100) && (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())) || (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementPillage() != NO_IMPROVEMENT))
+							{
+								iValue -= 70;
+								iValue *= 2;
+								iValue /= 3;
+							}
+						}
+					}
+
+					if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
+					{
+						iValue /= 4;	//Greatly prefer builds which are legal.
+					}
+				}
+
+				if (iValue > iBestValue)
+				{
+					iBestValue = iValue;
+					eBestBuild = eBestTempBuild;
+
+					for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+					{
+						aiBestDiffYields[iJ] = aiDiffYields[iJ];
+					}
+				}
+			}
+		}
+	}
+
 	if (iClearFeatureValue > 0)
 	{
 		FAssert(pPlot->getFeatureType() != NO_FEATURE);
-		
+
 		{
 			if ((GC.getFeatureInfo(pPlot->getFeatureType()).getHealthPercent() < 0) ||
 				((GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange(YIELD_FOOD) + GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange(YIELD_PRODUCTION) + GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange(YIELD_COMMERCE)) < 0))
@@ -10811,10 +10838,10 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 							{
 								iValue = iClearFeatureValue;
 								iValue += (pPlot->getFeatureProduction(eBuild, getTeam(), &pCity) * 10);
-								
+
 								iValue *= 400;
-                                iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));
-                                
+								iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));
+
 								if ((iValue > iBestValue) || ((iValue > 0) && (eBestBuild == NO_BUILD)))
 								{
 									iBestValue = iValue;
@@ -10830,77 +10857,77 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 	//Chop - maybe integrate this better with the other feature-clear code tho the logic
 	//is kinda different
-    if (bChop && (eBonus == NO_BONUS) && (pPlot->getFeatureType() != NO_FEATURE) &&
-        (pPlot->getImprovementType() == NO_IMPROVEMENT) && !(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS)))
-    {
-        for (iI = 0; iI < GC.getNumBuildInfos(); iI++)
-        {
-            eBuild = ((BuildTypes)iI);
-            if (GC.getBuildInfo(eBuild).getImprovement() == NO_IMPROVEMENT)
-            {
-                if (GC.getBuildInfo(eBuild).isFeatureRemove(pPlot->getFeatureType()))
-                {
-                    if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild))
-                    {
-                        iValue = (pPlot->getFeatureProduction(eBuild, getTeam(), &pCity)) * 10;
-                        FAssert(pCity == this);
+	if (bChop && (eBonus == NO_BONUS) && (pPlot->getFeatureType() != NO_FEATURE) &&
+		(pPlot->getImprovementType() == NO_IMPROVEMENT) && !(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS)))
+	{
+		for (iI = 0; iI < GC.getNumBuildInfos(); iI++)
+		{
+			eBuild = ((BuildTypes)iI);
+			if (GC.getBuildInfo(eBuild).getImprovement() == NO_IMPROVEMENT)
+			{
+				if (GC.getBuildInfo(eBuild).isFeatureRemove(pPlot->getFeatureType()))
+				{
+					if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild))
+					{
+						iValue = (pPlot->getFeatureProduction(eBuild, getTeam(), &pCity)) * 10;
+						FAssert(pCity == this);
 
-                        if (iValue > 0)
-                        {
+						if (iValue > 0)
+						{
 							iValue += iClearFeatureValue;
 
-                            if (iValue > 0)
-                            {
+							if (iValue > 0)
+							{
 								if (GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_DAGGER))
 								{
 									iValue += 20;
 									iValue *= 2;
 								}
-                                iValue *= 500;
-                                iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));
+								iValue *= 500;
+								iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));
 
-                                if (iValue > iBestValue)
-                                {
-                                    iBestValue = iValue;
-                                    eBestBuild = eBuild;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+								if (iValue > iBestValue)
+								{
+									iBestValue = iValue;
+									eBestBuild = eBuild;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 
-    for (iI = 0; iI < GC.getNumRouteInfos(); iI++)
-    {
-        RouteTypes eRoute = (RouteTypes)iI;
-        RouteTypes eOldRoute = pPlot->getRouteType();
+	for (iI = 0; iI < GC.getNumRouteInfos(); iI++)
+	{
+		RouteTypes eRoute = (RouteTypes)iI;
+		RouteTypes eOldRoute = pPlot->getRouteType();
 
-        if (eRoute != eOldRoute)
-        {
-        	int iTempValue = 0;
-            if (pPlot->getImprovementType() != NO_IMPROVEMENT)
-            {
-                if ((eOldRoute == NO_ROUTE) || (GC.getRouteInfo(eRoute).getValue() > GC.getRouteInfo(eOldRoute).getValue()))
-                {
-                    iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_FOOD)) * 100);
-                    iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_PRODUCTION)) * 60);
-                    iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_COMMERCE)) * 40);
-                }
-                
-                if (pPlot->isBeingWorked())
-                {
-                	iTempValue *= 2;
-                }
+		if (eRoute != eOldRoute)
+		{
+			int iTempValue = 0;
+			if (pPlot->getImprovementType() != NO_IMPROVEMENT)
+			{
+				if ((eOldRoute == NO_ROUTE) || (GC.getRouteInfo(eRoute).getValue() > GC.getRouteInfo(eOldRoute).getValue()))
+				{
+					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_FOOD)) * 100);
+					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_PRODUCTION)) * 60);
+					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_COMMERCE)) * 40);
+				}
+
+				if (pPlot->isBeingWorked())
+				{
+					iTempValue *= 2;
+				}
 				//road up bonuses if sort of bored.
 				if ((eOldRoute == NO_ROUTE) && (eBonus != NO_BONUS))
 				{
 					iTempValue += (pPlot->isConnectedToCapital() ? 10 : 30);
 				}
-            }
-                                
+			}
+
 			if (iTempValue > 0)
 			{
 				for (iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
@@ -10923,15 +10950,15 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					}
 				}
 			}
-        }
-    }
+		}
+	}
 
 
 
 	if (eBestBuild != NO_BUILD)
 	{
 		FAssertMsg(iBestValue > 0, "iBestValue is expected to be greater than 0");
-		
+
 		//Now modify the priority for this build.
 		if (GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
 		{
@@ -10940,7 +10967,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 				iBestValue += (iBestValue * std::max(0, aiBestDiffYields[YIELD_COMMERCE])) / 4;
 				iBestValue = std::max(1, iBestValue);
 			}
-			
+
 		}
 
 		if (piBestValue != NULL)

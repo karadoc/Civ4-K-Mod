@@ -9510,7 +9510,9 @@ int CvPlayerAI::AI_corporationBonusVal(BonusTypes eBonus) const
 
 					iValue += (30 * kCorp.getCommerceProduced(COMMERCE_GOLD) * iCorpCount) / iCityCount;
 					iValue += (30 * kCorp.getCommerceProduced(COMMERCE_RESEARCH) * iCorpCount) / iCityCount;
-					iValue += (12 * kCorp.getCommerceProduced(COMMERCE_CULTURE) * iCorpCount) / iCityCount;
+					//iValue += (12 * kCorp.getCommerceProduced(COMMERCE_CULTURE) * iCorpCount) / iCityCount;
+					// K-Mod, I'd love to calculate this stuff properly, but because of the way trade currently operates...
+					iValue += (20 * kCorp.getCommerceProduced(COMMERCE_CULTURE) * iCorpCount) / iCityCount;
 					iValue += (20 * kCorp.getCommerceProduced(COMMERCE_ESPIONAGE) * iCorpCount) / iCityCount;
 					
 					//Disabled since you can't found/spread a corp unless there is already a bonus,
@@ -16098,22 +16100,22 @@ void CvPlayerAI::AI_doDiplo()
 													if (GET_PLAYER((PlayerTypes)iI).AI_corporationBonusVal((BonusTypes)iJ) == 0)
 													{
 														if (AI_bonusTradeVal(((BonusTypes)iJ), ((PlayerTypes)iI), 1) > 0)
-													{
-														setTradeItem(&item, TRADE_RESOURCES, iJ);
-
-														if (GET_PLAYER((PlayerTypes)iI).canTradeItem(getID(), item, true))
 														{
-															iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "AI Bonus Trading #1"));
+															setTradeItem(&item, TRADE_RESOURCES, iJ);
 
-															if (iValue > iBestValue)
+															if (GET_PLAYER((PlayerTypes)iI).canTradeItem(getID(), item, true))
 															{
-																iBestValue = iValue;
-																eBestReceiveBonus = ((BonusTypes)iJ);
+																iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "AI Bonus Trading #1"));
+
+																if (iValue > iBestValue)
+																{
+																	iBestValue = iValue;
+																	eBestReceiveBonus = ((BonusTypes)iJ);
+																}
 															}
 														}
 													}
 												}
-											}
 											}
 
 											if (eBestReceiveBonus != NO_BONUS)
