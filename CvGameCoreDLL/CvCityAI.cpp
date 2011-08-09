@@ -948,6 +948,15 @@ void CvCityAI::AI_chooseProduction()
 		if (bBelowMedian)
 			bUnitExempt = true;
 	}
+	if (bUnitExempt)
+	{
+		// Don't give exemptions to cities that don't have anything good to do anyway.
+		BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
+		if (eBestBuilding == NO_BUILDING || AI_buildingValueThreshold(eBestBuilding) < 50)
+		{
+			bUnitExempt = false;
+		}
+	}
 	// K-Mod end
 
 
@@ -2720,7 +2729,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	if (plot()->plotCheck(PUF_isUnitAIType, UNITAI_CITY_COUNTER, -1, getOwnerINLINE()) == NULL)
+	if (!bUnitExempt && plot()->plotCheck(PUF_isUnitAIType, UNITAI_CITY_COUNTER, -1, getOwnerINLINE()) == NULL)
 	{
 		if (AI_chooseUnit(UNITAI_CITY_COUNTER))
 		{
@@ -2945,7 +2954,7 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 			if (bLandWar || bAssault || !bFinancialTrouble || (GET_PLAYER(getOwnerINLINE()).calculateUnitCost() == 0))
 			{
 				aiUnitAIVal[UNITAI_ATTACK] += ((iMilitaryWeight / ((bLandWar || bAssault) ? 9 : 16)) + ((bPrimaryArea && !bAreaAlone) ? 1 : 0));
-				aiUnitAIVal[UNITAI_ATTACK_CITY] += ((iMilitaryWeight / ((bLandWar || bAssault) ? 7 : 15)) + ((bPrimaryArea && !bAreaAlone) ? 1 : 0));
+				aiUnitAIVal[UNITAI_ATTACK_CITY] += ((iMilitaryWeight / ((bLandWar || bAssault) ? 6 : 15)) + ((bPrimaryArea && !bAreaAlone) ? 1 : 0)); // K-Mod, used to be (bLandWar || bAssault) ? 7
 				aiUnitAIVal[UNITAI_COLLATERAL] += ((iMilitaryWeight / ((bDefense) ? 8 : 14)) + ((bPrimaryArea && !bAreaAlone) ? 1 : 0));
 				aiUnitAIVal[UNITAI_PILLAGE] += ((iMilitaryWeight / ((bLandWar || bAssault) ? 10 : 19)) + ((bPrimaryArea && !bAreaAlone) ? 1 : 0));
 				aiUnitAIVal[UNITAI_RESERVE] += ((iMilitaryWeight / ((bLandWar) ? 12 : 17)) + ((bPrimaryArea && !bAreaAlone) ? 1 : 0));
@@ -2989,7 +2998,7 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	aiUnitAIVal[UNITAI_SETTLE] *= ((bDanger) ? 8 : 20);
 	aiUnitAIVal[UNITAI_WORKER] *= ((bDanger) ? 2 : 7);
 	aiUnitAIVal[UNITAI_ATTACK] *= 3;
-	aiUnitAIVal[UNITAI_ATTACK_CITY] *= 4;
+	aiUnitAIVal[UNITAI_ATTACK_CITY] *= 5; // K-Mod, up from *4
 	aiUnitAIVal[UNITAI_COLLATERAL] *= 5;
 	aiUnitAIVal[UNITAI_PILLAGE] *= 3;
 	aiUnitAIVal[UNITAI_RESERVE] *= 3;

@@ -5091,6 +5091,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			if (getTechFreeUnit(eTech) != NO_UNIT)
 			{
 				int iGreatPeopleRandom = ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Great People ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Great People"));
+				iRandomMax += 3200; // K-Mod
 				iValue += iGreatPeopleRandom;
 				
 				iRandomMax += 3200;
@@ -5107,6 +5108,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			//iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (200 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Free Tech"))));
 			// K-Mod, 22/jan/11, karadoc: more ad-hoc adjustments... this stuff sucks so much.
 			iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (500 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech"))));
+			iRandomMax += 6000; // K-Mod
 		}
 	}
 
@@ -5469,7 +5471,9 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
                     iUnitValue += 600;
                 }
 
-				if (kLoopUnit.getPrereqAndTech() == eTech)
+				//if (kLoopUnit.getPrereqAndTech() == eTech)
+				// K-Mod.
+				if (kLoopUnit.getPrereqAndTech() == eTech || GET_TEAM(getTeam()).isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()))
 				{
 					iMilitaryValue = 0;
 
@@ -5872,6 +5876,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						// K-Mod
 						if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS))
 						{
+							iMilitaryValue += 2 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
 							iMilitaryValue *= 3;
 							iMilitaryValue /= 2;
 						}
@@ -5892,7 +5897,15 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							}
 						}
 					}
-
+					// K-Mod, decrease the value if we are missing other prereqs.
+					for (int iI = 0; iI < GC.getNUM_UNIT_AND_TECH_PREREQS(); iI++)
+					{
+						if (!GET_TEAM(getTeam()).isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+						{
+							iValue /= 2;
+						}
+					}
+					// K-Mod end
 					iValue += iUnitValue;
 				}
 			}
