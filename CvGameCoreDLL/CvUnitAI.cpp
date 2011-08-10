@@ -3342,43 +3342,45 @@ void CvUnitAI::AI_collateralMove()
 		return;
 	}
 
+	/* original bts code
 	if (AI_anyAttack(1, 20, 5))
 	{
 		return;
-	}
+	} */
 
-	// K-Mod: experimental defensive stack hunting.
-//#define EXPERIMENTAL_S
-#ifdef EXPERIMENTAL_S
-	if (getGroup()->getNumUnits() > 1)
+	// K-Mod
 	{
-		// count collateral damage units.
+		// count our collateral damage units on this plot
 		int iTally = 0;
-		CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
+		CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
 		while (pUnitNode != NULL)
 		{
 			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 
-			iTally += ((pLoopUnit->collateralDamage() > 0) ?1 : 0);
-
-			pUnitNode = getGroup()->nextUnitNode(pUnitNode);
-		}
-
-		// tell me what's going on, for testing.
-		if (iTally >= 2/* && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3))*/)
-		{
-			for (int iI = 0; iI < MAX_PLAYERS; iI++)
+			if (DOMAIN_LAND == pLoopUnit->getDomainType() && pLoopUnit->getOwner() == getOwner() && pLoopUnit->collateralDamage() > 0)
 			{
-				if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).isHuman())
-				{
-					gDLL->getInterfaceIFace()->addMessage((PlayerTypes)iI, false, GC.getEVENT_MESSAGE_TIME(), "K-Mod test", "AS2D_SQUISH", MESSAGE_TYPE_INFO, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), plot()->getX_INLINE(), plot()->getY_INLINE(), true, true);
-				}
+				iTally++;
 			}
+
+			pUnitNode = plot()->nextUnitNode(pUnitNode);
 		}
 
-		return;
+		if (AI_anyAttack(1, 80 / (3 + iTally), 3 + 2*iTally))
+		{
+			// tell me what's going on, for testing.
+			//if (iTally >= 2/* && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3))*/)
+			//{
+			//	for (int iI = 0; iI < MAX_PLAYERS; iI++)
+			//	{
+			//		if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).isHuman())
+			//		{
+			//			gDLL->getInterfaceIFace()->addMessage((PlayerTypes)iI, false, GC.getEVENT_MESSAGE_TIME(), "K-Mod test", "AS2D_SQUISH", MESSAGE_TYPE_INFO, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), plot()->getX_INLINE(), plot()->getY_INLINE(), true, true);
+			//		}
+			//	}
+			//}
+			return;
+		}
 	}
-#endif
 	// K-Mod end
 
 	if (AI_heal())
@@ -3399,15 +3401,17 @@ void CvUnitAI::AI_collateralMove()
 		return;
 	}
 
+	/* original bts code. (I don't think we need to get this enthusiastic about 50% odds.)
 	if (AI_cityAttack(2, 50))
 	{
 		return;
-	}
+	} */
 
+	/* original bts code. (check again with a stricter threshold -> a waste of time)
 	if (AI_anyAttack(2, 60))
 	{
 		return;
-	}
+	}*/
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
 /*                                                                                              */
@@ -3421,6 +3425,8 @@ void CvUnitAI::AI_collateralMove()
 	{
 		return;
 	}
+
+	// K-Mod todo: at this point we should check whether city attack needs more bombard power.
 
 	if (AI_guardCity(false, true, 3))
 	{

@@ -10653,7 +10653,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 3 : 1;
 		
 		iValue += iCombatValue;
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves() * iFastMoverMultiplier) / 3);
+		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 3); // K-Mod put in -1 !
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -10678,11 +10678,13 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		iValue += iTempValue;
 		if (GC.getUnitInfo(eUnit).isNoDefensiveBonus())
 		{
-			iValue -= iTempValue / 2;
+			//iValue -= iTempValue / 2;
+			iValue -= iTempValue / 4; // K-Mod. (I'd say knights, tanks, etc. are very good for city attack...)
 		}
 		if (GC.getUnitInfo(eUnit).getDropRange() > 0)
 		{
-			iValue -= iTempValue / 2;
+			//iValue -= iTempValue / 2;
+			// K-Mod (how is drop range a disadvantage?)
 		}
 		if (GC.getUnitInfo(eUnit).isFirstStrikeImmune())
 		{
@@ -10690,7 +10692,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		}		
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCityAttackModifier()) / 75);
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 200);
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves() * iFastMoverMultiplier) / 4);
+		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 4); // K-Mod put in -1 !
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 100);
 
 		if (!AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
@@ -10714,8 +10716,8 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 				{
 					/*iBombardValue *= iGoalTotalBombardRate;
 					iBombardValue /= std::min(4*iGoalTotalBombardRate, 2*iTotalBombardRate - iGoalTotalBombardRate);*/
-					iBombardValue *= 2*iGoalTotalBombardRate;
-					iBombardValue /= std::min(4*iGoalTotalBombardRate, 3*iTotalBombardRate - 2*iGoalTotalBombardRate);
+					iBombardValue *= 3*iGoalTotalBombardRate+iTotalBombardRate;
+					iBombardValue /= 4*iTotalBombardRate;
 				}
 
 				iValue += iBombardValue;
@@ -20096,8 +20098,9 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	CvArea *pLoopArea = NULL;
 	for (pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
+		// Keep 1/2 of recommended floating defenders.
 		if (pLoopArea)
-			spare_units[pLoopArea->getID()] = 2 * AI_getTotalFloatingDefenders(pLoopArea) - AI_getTotalFloatingDefendersNeeded(pLoopArea);
+			spare_units[pLoopArea->getID()] = (2 * AI_getTotalFloatingDefenders(pLoopArea) - AI_getTotalFloatingDefendersNeeded(pLoopArea))/2;
 		else
 			spare_units[pLoopArea->getID()] = 0;
 	}
@@ -20106,8 +20109,9 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	for(pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 	{
 		bool bValid = false;
-		if ((pLoopUnit->AI_getUnitAIType() == UNITAI_RESERVE)
-			|| (pLoopUnit->AI_isCityAIType() && (pLoopUnit->getExtraCityDefensePercent() <= 0)))
+		// K-Mod, added collateral as valid
+		if (pLoopUnit->AI_getUnitAIType() == UNITAI_RESERVE || pLoopUnit->AI_getUnitAIType() == UNITAI_COLLATERAL
+			|| pLoopUnit->AI_isCityAIType() && (pLoopUnit->getExtraCityDefensePercent() <= 0))
 		{
 			bValid = true;
 		}
@@ -20142,9 +20146,12 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		
 		if (bValid)
 		{
-			pLoopUnit->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
-			// K-Mod
-			spare_units[pLoopUnit->area()->getID()]--;
+			// K-Mod, I've added a rand check so that we don't always just get the first valid units in the list
+			if (GC.getGameINLINE().getSorenRandNum(100, "AI Convert unit for crush") > 60)
+			{
+				pLoopUnit->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
+				spare_units[pLoopUnit->area()->getID()]--;
+			}
 		}
 	}
 }
