@@ -3357,7 +3357,8 @@ void CvUnitAI::AI_collateralMove()
 		{
 			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 
-			if (DOMAIN_LAND == pLoopUnit->getDomainType() && pLoopUnit->getOwner() == getOwner() && pLoopUnit->collateralDamage() > 0)
+			if (DOMAIN_LAND == pLoopUnit->getDomainType() && pLoopUnit->getOwner() == getOwner()
+				&& pLoopUnit->canMove() && pLoopUnit->collateralDamage() > 0)
 			{
 				iTally++;
 			}
@@ -3425,8 +3426,6 @@ void CvUnitAI::AI_collateralMove()
 	{
 		return;
 	}
-
-	// K-Mod todo: at this point we should check whether city attack needs more bombard power.
 
 	if (AI_guardCity(false, true, 3))
 	{
@@ -5215,18 +5214,6 @@ void CvUnitAI::AI_spyMove()
 			FAssert(false);
 			break;
 		}
-		// K-Mod
-		{
-			int iRatio = 100;
-
-			iRatio *= kTeam.getEspionagePointsAgainstTeam(plot()->getTeam());
-			iRatio /= std::max(GET_TEAM(plot()->getTeam()).getEspionagePointsAgainstTeam(getTeam()), 1);
-
-			iEspionageChance *= std::min(800, 3*iRatio+100);
-			iEspionageChance /= 400;
-			// ie. a factor between 2 and 1/4.
-		}
-
 		
 		WarPlanTypes eWarPlan = kTeam.AI_getWarPlan(plot()->getTeam());
 		if (eWarPlan != NO_WARPLAN)
@@ -5239,6 +5226,18 @@ void CvUnitAI::AI_spyMove()
 			{
 				iEspionageChance += 20;
 			}
+		}
+
+		// K-Mod
+		{
+			int iModifier = 100;
+			int iTargetPoints = GET_TEAM(plot()->getTeam()).getEspionagePointsEver();
+			int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
+
+			// the inverse of the espionage cost-modifier formula.
+			iModifier /= (GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints)) / std::max(1, iTargetPoints + 2 * iOurPoints);
+
+			iEspionageChance *= iModifier;
 		}
 		
 		if (plot()->isCity() && plot()->getTeam() != getTeam())
