@@ -7068,26 +7068,20 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 				int iWarsWinning = 0;
 				int iWarsLosing = 0;
 				int iChosenWar = 0;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/03/09                                jdog5000      */
-/*                                                                                              */
-/* Diplomacy AI                                                                                 */
-/************************************************************************************************/
+// K-Mod version of end-war vote decision.
+// Note: this code is based on BBAI code. I'm not sure which bits are from BBAI and which are from BtS.
+// So I haven't marked individual changes or preserved the original code. The way "winning" and "losing" are calculated are mine.
 				bool bLosingBig = false;
 				bool bWinningBig = false;
 				bool bThisPlayerWinning = false;
 
-				int iWinDeltaThreshold = 3*GC.getDefineINT("WAR_SUCCESS_ATTACKING");
-				int iLossAbsThreshold = std::max(3, getNumMilitaryUnits()/40)*GC.getDefineINT("WAR_SUCCESS_ATTACKING");
+				int iSuccessScale = GET_PLAYER(kVoteData.ePlayer).getNumMilitaryUnits() * GC.getDefineINT("WAR_SUCCESS_ATTACKING") / 5;
 
 				bool bAggressiveAI = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
-				if( bAggressiveAI )
+				if (bAggressiveAI)
 				{
-					iWinDeltaThreshold *= 2;
-					iWinDeltaThreshold /= 3;
-
-					iLossAbsThreshold *= 4;
-					iLossAbsThreshold /= 3;
+					iSuccessScale *= 3;
+					iSuccessScale /= 2;
 				}
 
 				// Is ePeaceTeam winning wars?
@@ -7097,49 +7091,46 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 					{
 						if (iI != ePeaceTeam)
 						{
-							if (GET_TEAM((TeamTypes)iI).isAtWar(ePeaceTeam))
+							if (!GET_TEAM((TeamTypes)iI).isAVassal() && GET_TEAM((TeamTypes)iI).isAtWar(ePeaceTeam))
 							{
 								int iPeaceTeamSuccess = GET_TEAM(ePeaceTeam).AI_getWarSuccess((TeamTypes)iI);
 								int iOtherTeamSuccess = GET_TEAM((TeamTypes)iI).AI_getWarSuccess(ePeaceTeam);
-								
-								if ( (iPeaceTeamSuccess - iOtherTeamSuccess) > iWinDeltaThreshold )
+
+								int iPeaceTeamPower = GET_TEAM(ePeaceTeam).getPower(true);
+								int iOtherTeamPower = GET_TEAM((TeamTypes)iI).getPower(true);
+
+								if (iPeaceTeamSuccess * iPeaceTeamPower > (iOtherTeamSuccess + iSuccessScale) * iOtherTeamPower)
 								{
 									// Have to be ahead by at least a few victories to count as win
 									++iWarsWinning;
 
-									if ( (iPeaceTeamSuccess - iOtherTeamSuccess) > (3*iWinDeltaThreshold) )
+									if (iPeaceTeamSuccess * iPeaceTeamPower / std::max(1, (iOtherTeamSuccess + 2*iSuccessScale) * iOtherTeamPower) > 2)
 									{
 										bWinningBig = true;
 									}
 								}
-								else if( (iOtherTeamSuccess >= iPeaceTeamSuccess) )
+								else if (iOtherTeamSuccess * iOtherTeamPower > (iPeaceTeamSuccess + iSuccessScale) * iPeaceTeamPower)
 								{
-									if( iI == getTeam() )
-									{
-										if( (iOtherTeamSuccess - iPeaceTeamSuccess) > iWinDeltaThreshold )
-										{
-											bThisPlayerWinning = true;
-										}
-									}
+									// Have to have non-trivial loses
+									++iWarsLosing;
 
-									if( (iOtherTeamSuccess > iLossAbsThreshold) )
+									if (iOtherTeamSuccess * iOtherTeamPower / std::max(1, (iPeaceTeamSuccess + 2*iSuccessScale) * iPeaceTeamPower) > 2)
 									{
-										// Have to have non-trivial loses
+										bLosingBig = true;
+									}						
+
+									if (iI == getTeam())
+									{
+										bThisPlayerWinning = true;
+									}
+								}
+								else if (GET_TEAM(ePeaceTeam).AI_getAtWarCounter((TeamTypes)iI) < 10)
+								{
+									// Not winning, just recently attacked, and in multiple wars, be pessimistic
+									// Counts ties from no actual battles
+									if ((GET_TEAM(ePeaceTeam).getAtWarCount(true) > 1) && !(GET_TEAM(ePeaceTeam).AI_isChosenWar((TeamTypes)iI)))
+									{
 										++iWarsLosing;
-
-										if( (iOtherTeamSuccess - iPeaceTeamSuccess) > (3*iLossAbsThreshold) )
-										{
-											bLosingBig = true;
-										}						
-									}
-									else if( GET_TEAM(ePeaceTeam).AI_getAtWarCounter((TeamTypes)iI) < 10 )
-									{
-										// Not winning, just recently attacked, and in multiple wars, be pessimistic
-										// Counts ties from no actual battles
-										if( (GET_TEAM(ePeaceTeam).getAtWarCount(true) > 1) && !(GET_TEAM(ePeaceTeam).AI_isChosenWar((TeamTypes)iI)) )
-										{
-											++iWarsLosing;
-										}
 									}
 								}
 
@@ -7155,14 +7146,11 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 				if (ePeaceTeam == getTeam())
 				{
 					int iPeaceRand = GC.getLeaderHeadInfo(getPersonalityType()).getBasePeaceWeight();
+					// Note, base peace weight ranges between 0 and 10.
 					iPeaceRand /= (bAggressiveAI ? 2 : 1);
-					// K-Mod
-					iPeaceRand /= (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2) ? 2 : 1); 
+					iPeaceRand /= (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2) ? 2 : 1);
 					
-					// Always true for real war-mongers, rarely true for less aggressive types
-					bool bWarmongerRoll = (GC.getGame().getSorenRandNum(iPeaceRand, "AI Erratic Defiance (Force Peace)") == 0);
-
-					if( bLosingBig && (!bWarmongerRoll || bPropose) )
+					if( bLosingBig && (GC.getGame().getSorenRandNum(iPeaceRand, "AI Force Peace to avoid loss") || bPropose) )
 					{
 						// Non-warmongers want peace to escape loss
 						bValid = true;
@@ -7184,7 +7172,7 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 						// Can we continue this war with defiance penalties?
 						if( !AI_isFinancialTrouble() )
 						{
-							if (bWarmongerRoll)
+							if (!GC.getGame().getSorenRandNum(iPeaceRand, "AI defy Force Peace!"))
 							{
 								bDefy = true;
 							}
@@ -7274,10 +7262,7 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 						}
 					}
 				}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
+// K-Mod end
 			}
 			else if (GC.getVoteInfo(eVote).isForceNoTrade())
 			{
