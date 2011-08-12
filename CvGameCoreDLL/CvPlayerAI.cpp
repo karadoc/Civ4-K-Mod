@@ -5902,7 +5902,8 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					const CvTeam& kTeam = GET_TEAM(getTeam());
 					for (int iI = 0; iI < GC.getNUM_UNIT_AND_TECH_PREREQS(); iI++)
 					{
-						if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+						if (kLoopUnit.getPrereqAndTechs(iI) != eTech &&
+							!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
 						{
 							iValue /= 2;
 						}
@@ -12347,249 +12348,6 @@ int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 	return iValue;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/07/10                                jdog5000      */
-/*                                                                                              */
-/* Espionage AI                                                                                 */
-/************************************************************************************************/
-EspionageMissionTypes CvPlayerAI::AI_bestPlotEspionage(CvPlot* pSpyPlot, PlayerTypes& eTargetPlayer, CvPlot*& pPlot, int& iData) const
-{
-	//ooookay what missions are possible
-	
-	FAssert(pSpyPlot != NULL);
-	
-	pPlot = NULL;
-	iData = -1;
-
-	EspionageMissionTypes eBestMission = NO_ESPIONAGEMISSION;
-	int iBestValue = 0;
-	
-	if (pSpyPlot->isOwned())
-	{
-		if (pSpyPlot->getTeam() != getTeam())
-		{
-			/* original BTS code
-			if (!AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && (GET_TEAM(getTeam()).AI_getWarPlan(pSpyPlot->getTeam()) != NO_WARPLAN || AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 50 : 1)))
-			{
-				//Destroy Improvement.
-				if (pSpyPlot->getImprovementType() != NO_IMPROVEMENT)
-				{
-					for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-					{
-						CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-
-						if (kMissionInfo.isDestroyImprovement())
-						{
-							int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, -1);
-							
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								eBestMission = (EspionageMissionTypes)iMission;
-								eTargetPlayer = pSpyPlot->getOwnerINLINE();
-								pPlot = pSpyPlot;
-								iData = -1;
-							}
-						}
-					}
-				}
-			}
-			
-			CvCity* pCity = pSpyPlot->getPlotCity();
-			if (pCity != NULL)
-			{
-				//Something malicious
-				//if (AI_getAttitudeWeight(pSpyPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 50 : 1))
-				if (isMaliciousEspionageTarget(pSpyPlot->getOwnerINLINE()))
-				{
-					//Destroy Building.
-					if (!AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
-					{
-						for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-						{
-							CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-							if (kMissionInfo.getDestroyBuildingCostFactor() > 0)
-							{
-								for (int iBuilding = 0; iBuilding < GC.getNumBuildingInfos(); iBuilding++)
-								{
-									BuildingTypes eBuilding = (BuildingTypes)iBuilding;
-									
-									if (pCity->getNumBuilding(eBuilding) > 0)
-									{
-										int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iBuilding);
-										
-										if (iValue > iBestValue)
-										{
-											iBestValue = iValue;
-											eBestMission = (EspionageMissionTypes)iMission;
-											eTargetPlayer = pSpyPlot->getOwnerINLINE();
-											pPlot = pSpyPlot;
-											iData = iBuilding;
-										}
-									}
-								}
-							}
-						}
-					}
-					
-					//Destroy Project
-					for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-					{
-						CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-						if (kMissionInfo.getDestroyProjectCostFactor() > 0)
-						{
-							for (int iProject = 0; iProject < GC.getNumProjectInfos(); iProject++)
-							{
-								ProjectTypes eProject = (ProjectTypes)iProject;
-								
-								int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iProject);
-								
-								if (iValue > iBestValue)
-								{
-									iBestValue = iValue;
-									eBestMission = (EspionageMissionTypes)iMission;
-									eTargetPlayer = pSpyPlot->getOwnerINLINE();
-									pPlot = pSpyPlot;
-									iData = iProject;
-								}
-							}
-						}
-					}
-					
-					//General dataless city mission.
-					if (!AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
-					{
-						for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-						{
-							CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-							{
-								if ((kMissionInfo.getCityPoisonWaterCounter() > 0) || (kMissionInfo.getDestroyProductionCostFactor() > 0)
-									|| (kMissionInfo.getStealTreasuryTypes() > 0))
-								{
-									int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, -1);
-									
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										eBestMission = (EspionageMissionTypes)iMission;
-										eTargetPlayer = pSpyPlot->getOwnerINLINE();
-										pPlot = pSpyPlot;
-										iData = -1;
-									}
-								}
-							}
-						}
-					}
-				
-					//Disruption suitable for war.
-					if (GET_TEAM(getTeam()).isAtWar(pSpyPlot->getTeam()))
-					{
-						for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-						{
-							CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-							if ((kMissionInfo.getCityRevoltCounter() > 0) || (kMissionInfo.getPlayerAnarchyCounter() > 0))
-							{
-								int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, -1);
-								
-								if (iValue > iBestValue)
-								{
-									iBestValue = iValue;
-									eBestMission = (EspionageMissionTypes)iMission;
-									eTargetPlayer = pSpyPlot->getOwnerINLINE();
-									pPlot = pSpyPlot;
-									iData = -1;
-								}
-							}
-						}
-					}
-				}
-				
-				//Steal Technology
-				for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-				{
-					CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-					if (kMissionInfo.getBuyTechCostFactor() > 0)
-					{
-						for (int iTech = 0; iTech < GC.getNumTechInfos(); iTech++)
-						{
-							TechTypes eTech = (TechTypes)iTech;
-							int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, eTech);
-							
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								eBestMission = (EspionageMissionTypes)iMission;
-								eTargetPlayer = pSpyPlot->getOwnerINLINE();
-								pPlot = pSpyPlot;
-								iData = eTech;
-							}
-						}
-					}
-				}
-			} */
-
-			// K-Mod edition
-			// estimate risk cost of losing the spy while trying to escape
-			int iBaseIntercept = 0;
-			{
-				int iTargetPoints = GET_TEAM(pSpyPlot->getTeam()).getEspionagePointsEver();
-				int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
-				iBaseIntercept += (GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetPoints) / std::max(1, iTargetPoints + iOurPoints);
-
-				if (GET_TEAM(pSpyPlot->getTeam()).getCounterespionageModAgainstTeam(getTeam()) > 0)
-					iBaseIntercept += GC.getDefineINT("ESPIONAGE_INTERCEPT_COUNTERESPIONAGE_MISSION");
-			}
-			int iEscapeCost = 100 * iBaseIntercept * (100+GC.getDefineINT("ESPIONAGE_SPY_MISSION_ESCAPE_MOD")) / 10000;
-
-			// One espionage mission loop to rule them all.
-			for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
-			{
-				CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-				if (kMissionInfo.getCounterespionageMod() > 0 && kMissionInfo.getCounterespionageNumTurns() > 0)
-				{
-					int iTestData = 1;
-					if (kMissionInfo.getBuyTechCostFactor() > 0)
-					{
-						iTestData = GC.getNumTechInfos();
-					}
-					else if (kMissionInfo.getDestroyProjectCostFactor() > 0)
-					{
-						iTestData = GC.getNumProjectInfos();
-					}
-					else if (kMissionInfo.getDestroyBuildingCostFactor() > 0)
-					{
-						iTestData = GC.getNumBuildingInfos();
-					}
-
-					// estimate the risk cost of losing the spy.
-					int iOverhead = iEscapeCost + 200 * iBaseIntercept * (100 + kMissionInfo.getDifficultyMod()) / 10000;
-
-					for ( ; iTestData >= 0; iTestData--)
-					{							
-						int iValue = AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
-						iValue -= iOverhead;
-							
-						if (iValue > iBestValue)
-						{
-							iBestValue = iValue;
-							eBestMission = (EspionageMissionTypes)iMission;
-							eTargetPlayer = pSpyPlot->getOwnerINLINE();
-							pPlot = pSpyPlot;
-							iData = iTestData;
-						}
-					}
-				}
-			}
-			// K-Mod end
-		}
-	}
-	
-	return eBestMission;
-}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 /// \brief Value of espionage mission at this plot.
 ///
 /// Assigns value to espionage mission against ePlayer at pPlot, where iData can provide additional information about mission.
@@ -18511,14 +18269,14 @@ int CvPlayerAI::AI_getStrategyHash() const
 						{
 							iWarCount++;
 						}
+
+						// K-Mod. (if we attack with our defenders, would they be beat their defenders?)
+						if (100*iTypicalDefence >= 110 * GET_TEAM((TeamTypes)iI).getTypicalUnitValue(UNITAI_CITY_DEFENSE))
+						{
+							iCrushValue += 2;
+						}						
 					}
 
-					// K-Mod
-					if (100*iTypicalAttack >= 110 * GET_TEAM(getTeam()).getTypicalUnitValue(UNITAI_CITY_DEFENSE))
-					{
-						iCrushValue += 2;
-					}
-					
 					if (GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iI) == WARPLAN_PREPARING_TOTAL)
 					{
 						iCrushValue += 6;					
@@ -19327,26 +19085,30 @@ void CvPlayerAI::AI_calculateAverages() const
 	m_iAveragesCacheTurn = GC.getGameINLINE().getGameTurn();
 }
 
+// K-Mod edition
 void CvPlayerAI::AI_convertUnitAITypesForCrush()
 {
-	CvUnit* pLoopUnit;
-	
 	int iLoop;
 
-	// K-Mod
 	std::map<int, int> spare_units;
+	std::multimap<int, CvUnit*> ordered_units;
 
 	CvArea *pLoopArea = NULL;
 	for (pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
 		// Keep 1/2 of recommended floating defenders.
-		if (pLoopArea)
-			spare_units[pLoopArea->getID()] = (2 * AI_getTotalFloatingDefenders(pLoopArea) - AI_getTotalFloatingDefendersNeeded(pLoopArea))/2;
-		else
+		if (!pLoopArea || pLoopArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT
+			|| pLoopArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
+		{
 			spare_units[pLoopArea->getID()] = 0;
+		}
+		else
+		{
+			spare_units[pLoopArea->getID()] = (2 * AI_getTotalFloatingDefenders(pLoopArea) - AI_getTotalFloatingDefendersNeeded(pLoopArea))/2;
+		}
 	}
-	// K-Mod end
 	
+	CvUnit* pLoopUnit;
 	for(pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 	{
 		bool bValid = false;
@@ -19359,19 +19121,18 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		{
 			bValid = true;
 		}
-		if ((pLoopUnit->area()->getAreaAIType(getTeam()) == AREAAI_ASSAULT)
+
+		/*if ((pLoopUnit->area()->getAreaAIType(getTeam()) == AREAAI_ASSAULT)
 			|| (pLoopUnit->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE))
 		{
 			bValid = false;
-		}
+		}*/
 		
-		//if (!pLoopUnit->canAttack() || (pLoopUnit->AI_getUnitAIType() == UNITAI_CITY_SPECIAL))
-		if (!GC.getUnitInfo(pLoopUnit->getUnitType()).getUnitAIType(UNITAI_ATTACK_CITY))
+		if (!pLoopUnit->canAttack() || (pLoopUnit->AI_getUnitAIType() == UNITAI_CITY_SPECIAL))
 		{
 			bValid = false;
 		}
 
-		// K-Mod
 		if (spare_units[pLoopUnit->area()->getID()] <= 0)
 			bValid = false;
 	
@@ -19391,12 +19152,19 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		
 		if (bValid)
 		{
-			// K-Mod, I've added a rand check so that we don't always just get the first valid units in the list			
-			if (GC.getGameINLINE().getSorenRandNum(100, "AI Convert unit for crush") < 60)
-			{
-				pLoopUnit->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
-				spare_units[pLoopUnit->area()->getID()]--;
-			}
+			int iValue = AI_unitValue(pLoopUnit->getUnitType(), UNITAI_ATTACK_CITY, pLoopUnit->area());
+			ordered_units.insert(std::make_pair(iValue, pLoopUnit));
+		}
+	}
+
+	// convert the highest scoring units first.
+	std::multimap<int, CvUnit*>::reverse_iterator rit;
+	for (rit = ordered_units.rbegin(); rit != ordered_units.rend(); ++rit)
+	{
+		if (rit->first > 0 && spare_units[rit->second->area()->getID()] > 0)
+		{
+			rit->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
+			spare_units[rit->second->area()->getID()]--;
 		}
 	}
 }

@@ -283,6 +283,7 @@ protected:
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 	bool AI_espionageSpy();
+	EspionageMissionTypes AI_bestPlotEspionage(PlayerTypes& eTargetPlayer, CvPlot*& pPlot, int& iData) const; // K-Mod
 	bool AI_moveToStagingCity();
 	bool AI_seaRetreatFromCityDanger();
 	bool AI_airRetreatFromCityDanger();

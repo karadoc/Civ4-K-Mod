@@ -22083,7 +22083,8 @@ bool CvUnitAI::AI_espionageSpy()
 	PlayerTypes eTargetPlayer = NO_PLAYER;
 	int iExtraData = -1;
 	
-	eBestMission = GET_PLAYER(getOwnerINLINE()).AI_bestPlotEspionage(plot(), eTargetPlayer, pTargetPlot, iExtraData);
+	//eBestMission = GET_PLAYER(getOwnerINLINE()).AI_bestPlotEspionage(plot(), eTargetPlayer, pTargetPlot, iExtraData);
+	eBestMission = AI_bestPlotEspionage(eTargetPlayer, pTargetPlot, iExtraData);
 	if (NO_ESPIONAGEMISSION == eBestMission)
 	{
 		return false;
@@ -22100,6 +22101,93 @@ bool CvUnitAI::AI_espionageSpy()
 	}
 	
 	return true;
+}
+
+// K-Mod edition. (This use to be a CvPlayerAI:: function.)
+EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer, CvPlot*& pPlot, int& iData) const
+{
+	CvPlot* pSpyPlot = plot();
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+	FAssert(pSpyPlot != NULL);
+
+	int iSpyValue = 4*kPlayer.getProductionNeeded(getUnitType());
+	if (kPlayer.getCapitalCity() != NULL)
+	{
+		iSpyValue += stepDistance(getX(), getY(), kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY()) / 2;
+	}
+	
+	pPlot = NULL;
+	iData = -1;
+
+	EspionageMissionTypes eBestMission = NO_ESPIONAGEMISSION;
+	int iBestValue = 0;
+	
+	if (pSpyPlot->isOwned())
+	{
+		if (pSpyPlot->getTeam() != getTeam())
+		{
+			// estimate risk cost of losing the spy while trying to escape
+			int iBaseIntercept = 0;
+			{
+				int iTargetPoints = GET_TEAM(pSpyPlot->getTeam()).getEspionagePointsEver();
+				int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
+				iBaseIntercept += (GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetPoints) / std::max(1, iTargetPoints + iOurPoints);
+
+				if (GET_TEAM(pSpyPlot->getTeam()).getCounterespionageModAgainstTeam(getTeam()) > 0)
+					iBaseIntercept += GC.getDefineINT("ESPIONAGE_INTERCEPT_COUNTERESPIONAGE_MISSION");
+			}
+			int iEscapeCost = iSpyValue * iBaseIntercept * (100+GC.getDefineINT("ESPIONAGE_SPY_MISSION_ESCAPE_MOD")) / 20000;
+
+			// One espionage mission loop to rule them all.
+			for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+			{
+				CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
+				if (kMissionInfo.getCounterespionageMod() > 0 && kMissionInfo.getCounterespionageNumTurns() > 0)
+				{
+					int iTestData = 1;
+					if (kMissionInfo.getBuyTechCostFactor() > 0)
+					{
+						iTestData = GC.getNumTechInfos();
+					}
+					else if (kMissionInfo.getDestroyProjectCostFactor() > 0)
+					{
+						iTestData = GC.getNumProjectInfos();
+					}
+					else if (kMissionInfo.getDestroyBuildingCostFactor() > 0)
+					{
+						iTestData = GC.getNumBuildingInfos();
+					}
+
+					// estimate the risk cost of losing the spy.
+					int iOverhead = iEscapeCost + iSpyValue * iBaseIntercept * (100 + kMissionInfo.getDifficultyMod()) / 10000;
+
+					for ( ; iTestData >= 0; iTestData--)
+					{							
+						if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
+						{
+							int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
+							iValue *= 75 + GC.getGameINLINE().getSorenRandNum(50, "AI best espionage mission");
+							iValue /= 100;
+							iValue -= iOverhead;
+								
+							if (iValue > iBestValue)
+							{
+								iBestValue = iValue;
+								eBestMission = (EspionageMissionTypes)iMission;
+								eTargetPlayer = pSpyPlot->getOwnerINLINE();
+								pPlot = pSpyPlot;
+								iData = iTestData;
+							}
+						}
+					}
+				}
+			}
+			// K-Mod end
+		}
+	}
+	
+	return eBestMission;
 }
 
 bool CvUnitAI::AI_moveToStagingCity()
