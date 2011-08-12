@@ -2268,6 +2268,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			// Fixed bug where espionage weight set to 0 if winning all esp point races
 			// Smoothed out emphasis
 			int iEspBehindWeight = 0;
+			int iEspAttackWeight = 0; // K-Mod (not yet implemented)
 			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 			{
 				CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
@@ -2313,11 +2314,16 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			}
 			else
 			{
-				// AI Espionage slider use maxed out at 20 percent
+				// AI Espionage slider use maxed out at 20 percent. (not in K-Mod...)
 				if( getCommercePercent(COMMERCE_ESPIONAGE) >= 20 )
 				{
 					iWeight *= 3;
 					iWeight /= 2;
+				}
+				if (getCommercePercent(COMMERCE_ESPIONAGE) > 30)
+				{
+					iWeight *= 2;
+					iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
 				}
 			}
 /************************************************************************************************/
@@ -13366,7 +13372,21 @@ void CvPlayerAI::AI_doCommerce()
 
 			iIdealPercent -= (iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
 
-			iIdealPercent = std::min(iIdealPercent, 20);
+			// K-Mod
+			int iCap = 20;
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+			{
+				iIdealPercent+=5;
+				iCap += 10;
+			}
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
+			{
+				iIdealPercent+=5;
+				iCap += 20;
+			}
+			//iIdealPercent = std::min(iIdealPercent, 20);
+			iIdealPercent = std::min(iIdealPercent, iCap);
+			// K-Mod end
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
@@ -13471,6 +13491,7 @@ void CvPlayerAI::AI_doCommerce()
 		int iEspionageTargetRate = 0;
 		int* aiTarget = new int[MAX_CIV_TEAMS];
 		int* aiWeight = new int[MAX_CIV_TEAMS];
+		int iHighestTarget = 0;
 		int iMinModifier = INT_MAX;
 		TeamTypes eMinModTeam = NO_TEAM;
 
@@ -13491,7 +13512,7 @@ void CvPlayerAI::AI_doCommerce()
 				int iDesiredMissionPoints = 0;
 				int iDesiredEspPoints = 0;
 					
-				aiWeight[iTeam] = 10;
+				aiWeight[iTeam] = 7;
 				int iRateDivisor = 12;
 
 				if( GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN )
@@ -13517,11 +13538,11 @@ void CvPlayerAI::AI_doCommerce()
 					}
 
 					iRateDivisor = 10;
-					aiWeight[iTeam] = 20;
+					aiWeight[iTeam] = 13;
 
 					if( GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam) )
 					{
-						aiWeight[iTeam] = 30;
+						aiWeight[iTeam] = 20;
 						iRateDivisor = 8;
 					}
 				}
@@ -13571,7 +13592,7 @@ void CvPlayerAI::AI_doCommerce()
 					}
 
 					iRateDivisor += (iAttitude/5);
-					aiWeight[iTeam] -= (iAttitude/2);
+					aiWeight[iTeam] -= (iAttitude/3);
 				}
 				// Individual player targeting
 				if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
@@ -13612,7 +13633,6 @@ void CvPlayerAI::AI_doCommerce()
 												break;
 											}
 										}
-
 									}
 									if (bValid)
 									{
@@ -13640,7 +13660,8 @@ void CvPlayerAI::AI_doCommerce()
 		{
 			if( aiTarget[iTeam] > 0 )
 			{
-				aiWeight[iTeam] += (150*aiTarget[iTeam])/std::max(4,iEspionageTargetRate);
+				//aiWeight[iTeam] += (150*aiTarget[iTeam])/std::max(4,iEspionageTargetRate);
+				aiWeight[iTeam] += (100*aiTarget[iTeam])/std::max(4,iEspionageTargetRate);
 			}
 			else if( aiTarget[iTeam] < 0 )
 			{
@@ -13649,8 +13670,25 @@ void CvPlayerAI::AI_doCommerce()
 			if (iTeam == eMinModTeam)
 			{
 				// This is pretty arbitrary. I'm sorry. :(
-				aiWeight[iTeam] = std::max(2*aiWeight[iTeam] + 1, 6);
-				// that "6" is 150 / (6 * 4). It's based on the numbers used earlier.
+				aiWeight[iTeam] = std::max(2*aiWeight[iTeam] + 1, 4);
+				// that "4" is 100 / (6 * 4). It's based on the numbers used earlier.
+				iMinModifier *= 100 - GC.getDefineINT("MAX_FORTIFY_TURNS") * GC.getDefineINT("ESPIONAGE_EACH_TURN_UNIT_COST_DECREASE");
+				iMinModifier /= 100;
+				int iStealMod = 100000;
+				for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+				{
+					CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
+					if (kMissionInfo.getBuyTechCostFactor() != 0)
+					{
+						if (kMissionInfo.getBuyTechCostFactor() < iStealMod)
+						{
+							iStealMod = kMissionInfo.getBuyTechCostFactor();
+						}
+					}
+				}
+				iMinModifier *= 100 + iStealMod;
+				iMinModifier /= 100;
+				// This number will be used while setting the espionage commerce slider
 			}
 			// note. bounds checks are done the set weight function
 			setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, aiWeight[iTeam]);
@@ -13684,7 +13722,18 @@ void CvPlayerAI::AI_doCommerce()
 
 			int iInitialResearchPercent = getCommercePercent(COMMERCE_RESEARCH);
 
-			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < 20)
+			//while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < 20)
+			// K-Mod
+			bool bCheapTech = (eMinModTeam != NO_TEAM && 700 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
+			int iCap = 20;
+			if (bCheapTech && !AI_avoidScience() && !isNoResearchAvailable() && getCurrentResearch() != NO_TECH)
+			{
+				iCap = 60;
+				iEspionageTargetRate += GET_TEAM(getTeam()).getResearchCost(getCurrentResearch()) / 10;
+				// cf. (iDesiredEspPoints - iOurEspPoints)/std::max(6,iRateDivisor);
+			}
+
+			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
 			{
 				changeCommercePercent(COMMERCE_RESEARCH, -GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));			
 				changeCommercePercent(COMMERCE_ESPIONAGE, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
@@ -13694,7 +13743,7 @@ void CvPlayerAI::AI_doCommerce()
 					break;
 				}
 
-				if (!AI_avoidScience() && !isNoResearchAvailable())
+				if (!AI_avoidScience() && !isNoResearchAvailable() && !bCheapTech)
 				{
 	//				if (2 * getCommercePercent(COMMERCE_RESEARCH) < iInitialResearchPercent)
 	//				{
@@ -17861,7 +17910,13 @@ int CvPlayerAI::AI_getStrategyHash() const
 	
 		if (iTempValue > 10)
 		{
-			m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;	
+			m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
+		}
+
+		// K-Mod
+		if (getCommercePercent(COMMERCE_ESPIONAGE) > 20)
+		{
+			m_iStrategyHash |= AI_STRATEGY_ESPIONAGE_ECONOMY;
 		}
 	}
 

@@ -33,6 +33,7 @@
 #define AI_STRATEGY_MISSIONARY          (1 << 14)
 #define AI_STRATEGY_BIG_ESPIONAGE		(1 << 15)
 #define AI_STRATEGY_ECONOMY_FOCUS       (1 << 16)  // K-Mod - catch up in tech, at the expensive of military
+#define AI_STRATEGY_ESPIONAGE_ECONOMY   (1 << 17)  // K-Mod - run high espionage slider to steal techs at a discount.
 
 
 // AI victory stages
