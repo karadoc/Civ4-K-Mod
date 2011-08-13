@@ -3049,6 +3049,16 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
                 szTempBuffer.Format(L"BigEspionage, ");
                 szString.append(szTempBuffer);
             }
+			if (GET_PLAYER(pPlot->getOwner()).AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS)) // K-Mod
+			{
+				szTempBuffer.Format(L"EconomyFocus, ");
+				szString.append(szTempBuffer);
+			}
+			if (GET_PLAYER(pPlot->getOwner()).AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY)) // K-Mod
+			{
+				szTempBuffer.Format(L"EspionageEconomy, ");
+				szString.append(szTempBuffer);
+			}
                        
             //Area battle plans.
             if (pPlot->area()->getAreaAIType(pPlot->getTeam()) == AREAAI_OFFENSIVE)

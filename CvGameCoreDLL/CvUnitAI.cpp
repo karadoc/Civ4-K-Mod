@@ -4517,6 +4517,7 @@ void CvUnitAI::AI_prophetMove()
 {
 	PROFILE_FUNC();
 
+	/* original bts code
 	if (AI_construct(1))
 	{
 		return;
@@ -4568,19 +4569,13 @@ void CvUnitAI::AI_prophetMove()
 		{
 			return;
 		}
-	}
+	} */
+	// K-Mod
+	if (AI_greatPersonMove())
+		return;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-	//if ((GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0) ||
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-		  (getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
 	{
 		if (AI_discover())
 		{
@@ -4622,7 +4617,27 @@ void CvUnitAI::AI_prophetMove()
 void CvUnitAI::AI_artistMove()
 {
 	PROFILE_FUNC();
-	
+
+	// K-Mod (this is less than ideal. I'm sorry.)
+	if (AI_construct(100))
+	{
+		return;
+	}
+
+	if (AI_artistCultureVictoryMove())
+	{
+	    return;
+	}
+
+	if (AI_greatWork())
+	{
+		return;
+	}
+
+	if (AI_greatPersonMove())
+		return;
+
+	/* original bts code
 	if (AI_artistCultureVictoryMove())
 	{
 	    return;
@@ -4679,19 +4694,10 @@ void CvUnitAI::AI_artistMove()
 		{
 			return;
 		}
-	}
+	} */
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-	//if ((GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0) ||
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-		  (getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
 	{
 		if (AI_discover())
 		{
@@ -4734,6 +4740,7 @@ void CvUnitAI::AI_scientistMove()
 {
 	PROFILE_FUNC();
 
+	/* original bts code
 	if (AI_discover(true, true))
 	{
 		return;
@@ -4797,23 +4804,17 @@ void CvUnitAI::AI_scientistMove()
 		}
 	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-	//if ((GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0) ||
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-		  (getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
 	{
 		if (AI_discover())
 		{
 			return;
 		}
-	}
+	} */
+	// K-Mod
+	if (AI_greatPersonMove())
+		return;
 
 	if (AI_retreatToCity())
 	{
@@ -4955,6 +4956,7 @@ void CvUnitAI::AI_merchantMove()
 {
 	PROFILE_FUNC();
 
+	/* original bts code
 	if (AI_construct())
 	{
 		return;
@@ -5011,19 +5013,13 @@ void CvUnitAI::AI_merchantMove()
 		{
 			return;
 		}
-	}
+	} */
+	// K-Mod
+	if (AI_greatPersonMove())
+		return;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-	//if ((GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0) ||
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-		  (getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
 	{
 		if (AI_discover())
 		{
@@ -5066,7 +5062,8 @@ void CvUnitAI::AI_engineerMove()
 {
 	PROFILE_FUNC();
 
-	if (AI_construct())
+	//if (AI_construct())
+	if (AI_construct(100)) // K-Mod. I'd cut this out completely, but something like this needs to come before switchHurry()
 	{
 		return;
 	}
@@ -5081,6 +5078,7 @@ void CvUnitAI::AI_engineerMove()
 		return;
 	}
 
+	/* original bts code
 	if (AI_discover(true, true))
 	{
 		return;
@@ -5122,19 +5120,13 @@ void CvUnitAI::AI_engineerMove()
 		{
 			return;
 		}
-	}
+	} */
+	// K-Mod
+	if (AI_greatPersonMove())
+		return;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-	//if ((GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0) ||
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-		  (getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
 	{
 		if (AI_discover())
 		{
@@ -5171,6 +5163,160 @@ void CvUnitAI::AI_engineerMove()
 	getGroup()->pushMission(MISSION_SKIP);
 	return;
 }
+
+// K-Mod. For most great people, the AI needs to do similar checks and calculations.
+// I've made this general function to do those calculations for all types of great people.
+bool CvUnitAI::AI_greatPersonMove()
+{
+	CvCity* pLoopCity;
+	CvPlot* pBestPlot = NULL;
+	SpecialistTypes eBestSpecialist = NO_SPECIALIST;
+	BuildingTypes eBestBuilding = NO_BUILDING;
+	int iBestValue = 0;
+	int iLoop;
+
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
+
+	for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+	{
+		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()))
+		{
+			if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)) && generatePath(pLoopCity->plot(), MOVE_SAFE_TERRITORY, true))
+			{
+				// Join
+				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+				{
+					SpecialistTypes eSpecialist = (SpecialistTypes)iI;
+					if (canJoin(pLoopCity->plot(), eSpecialist))
+					{
+						if ( !(kPlayer.AI_getAnyPlotDanger(pLoopCity->plot(), 2)) )
+						{
+							// Note, specialistValue is roughly 100x the commerce it provides.
+							int iValue = pLoopCity->AI_specialistValue(eSpecialist, pLoopCity->AI_avoidGrowth(), false);
+							if (iValue > iBestValue)
+							{
+								iBestValue = iValue;
+								pBestPlot = getPathEndTurnPlot();
+								FAssert(pBestPlot == pLoopCity->plot());
+								eBestSpecialist = eSpecialist;
+								eBestBuilding = NO_BUILDING;
+							}
+						}
+					}
+				}
+				// Construct
+				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
+				{
+					for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+					{
+						BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
+
+						if (NO_BUILDING != eBuilding)
+						{
+							if ((m_pUnitInfo->getForceBuildings(eBuilding) || m_pUnitInfo->getBuildings(eBuilding)) &&
+								canConstruct(pLoopCity->plot(), eBuilding))
+							{
+								// Note, building value is roughly 4x the value of the commerce it provides.
+								// so we * 25 to match the scale of specialist value.
+								int iValue = pLoopCity->AI_buildingValue(eBuilding) * 25;
+
+								if (iValue > iBestValue)
+								{
+									iBestValue = iValue;
+									pBestPlot = getPathEndTurnPlot();
+									FAssert(pBestPlot == pLoopCity->plot());
+									eBestBuilding = eBuilding;
+									eBestSpecialist = NO_SPECIALIST;
+								}
+							}
+						}
+					}
+				}
+			} // end safe move possible
+		} // end this area
+	} // end city loop.
+
+	int iGoldenAgeValue = (GET_PLAYER(getOwnerINLINE()).AI_calculateGoldenAgeValue() / (GET_PLAYER(getOwnerINLINE()).unitsRequiredForGoldenAge()));
+	// Todo: add civic switch to golden age value.
+	iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
+	iGoldenAgeValue /= 100;
+
+	int iDiscoverValue = std::max(1, getDiscoverResearch(NO_TECH));
+	iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(1) % 51);
+	iDiscoverValue /= 100;
+
+	int iFirstDiscoverValue = iDiscoverValue;
+	iFirstDiscoverValue *= (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent());
+	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
+	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent()); // twice, because this is important
+	iFirstDiscoverValue *= 2 * (GC.getNumEraInfos() - kPlayer.getCurrentEra());
+	iFirstDiscoverValue /= GC.getNumEraInfos();
+
+	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
+	int iSlowValue = iBestValue;
+	iSlowValue *= (GC.getNumEraInfos() - kPlayer.getCurrentEra());
+	// at this point, we have roughly 100 * commerce per turn * number of eras remaining.
+	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel3() ? 2 : 1;
+	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
+	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+	iSlowValue /= 100;
+	iSlowValue *= (75 + kPlayer.AI_getStrategyRand(2) % 51);
+	iSlowValue /= 100;
+
+	bool bCanTrade = getUnitInfo().getBaseTrade() > 0 || getUnitInfo().getTradeMultiplier() > 0;
+
+	if (iSlowValue < iFirstDiscoverValue)
+	{
+		if (bCanTrade && AI_trade(iFirstDiscoverValue))
+			return true;
+
+		if (bCanTrade && AI_trade(iGoldenAgeValue * 2))
+			return true;
+
+		if (AI_discover(false, true))
+			return true;
+
+		if (iGoldenAgeValue > iDiscoverValue && iGoldenAgeValue > iSlowValue)
+		{
+			if (AI_goldenAge())
+				return true;
+			if (bCanTrade && AI_trade(iGoldenAgeValue))
+				return true;
+		}
+
+		if (iDiscoverValue > iSlowValue && AI_discover())
+		{
+			return true;
+		}
+	}
+
+	// do slow
+	if (pBestPlot != NULL)
+	{
+		if (atPlot(pBestPlot))
+		{
+			if (eBestSpecialist != NO_SPECIALIST)
+			{
+				getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
+				return true;
+			}
+
+			if (eBestBuilding != NO_BUILDING)
+			{
+				getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
+				return true;
+			}
+		}
+		else
+		{
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY);
+			return true;
+		}
+	}
+
+	return false;
+}
+// K-Mod end
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/25/10                                jdog5000      */
@@ -5232,10 +5378,12 @@ void CvUnitAI::AI_spyMove()
 		{
 			int iModifier = 100;
 			int iTargetPoints = GET_TEAM(plot()->getTeam()).getEspionagePointsEver();
-			int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
+			int iOurPoints = kTeam.getEspionagePointsEver();
 
 			// the inverse of the espionage cost-modifier formula.
 			iModifier /= (GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints)) / std::max(1, iTargetPoints + 2 * iOurPoints);
+
+			iEspionageChance += (GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY)? 20 : 0);
 
 			iEspionageChance *= iModifier;
 		}

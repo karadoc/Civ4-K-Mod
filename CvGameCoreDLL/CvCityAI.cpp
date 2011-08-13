@@ -4649,7 +4649,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
-					iTempValue *= 100 + kBuilding.getCommerceModifier(iI);
+					//iTempValue *= 100 + kBuilding.getCommerceModifier(iI);
+					iTempValue *= getTotalCommerceRateModifier((CommerceTypes)iI) + kBuilding.getCommerceModifier(iI); // K-Mod. Note that getTotalCommerceRateModifier() includes the +100.
 					iTempValue /= 100;
 					
 					if ((CommerceTypes)iI == COMMERCE_CULTURE)
@@ -4784,11 +4785,15 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 					if (kBuilding.getGlobalReligionCommerce() != NO_RELIGION)
 					{
-						iTempValue += (GC.getReligionInfo((ReligionTypes)(kBuilding.getGlobalReligionCommerce())).getGlobalReligionCommerce(iI) * GC.getGameINLINE().countReligionLevels((ReligionTypes)(kBuilding.getGlobalReligionCommerce())) * 2);
+						/*iTempValue += (GC.getReligionInfo((ReligionTypes)(kBuilding.getGlobalReligionCommerce())).getGlobalReligionCommerce(iI) * GC.getGameINLINE().countReligionLevels((ReligionTypes)(kBuilding.getGlobalReligionCommerce())) * 2);
 						if (eStateReligion == (ReligionTypes)(kBuilding.getGlobalReligionCommerce()))
 						{
 						    iTempValue += 10;
-						}
+						}*/
+						// K-Mod
+						int iExpectedSpread = GC.getGameINLINE().countReligionLevels((ReligionTypes)kBuilding.getGlobalReligionCommerce());
+						iExpectedSpread += (GC.getNumEraInfos() - kOwner.getCurrentEra() + (eStateReligion == (ReligionTypes)(kBuilding.getGlobalReligionCommerce())? 2 : 0)) * GC.getWorldInfo(GC.getMap().getWorldSize()).getDefaultPlayers()/2;
+						iTempValue += GC.getReligionInfo((ReligionTypes)kBuilding.getGlobalReligionCommerce()).getGlobalReligionCommerce(iI) * iExpectedSpread * 4;
 					}
 
 					// K-Mod: I've moved the corporation stuff to be outside of this loop so that it isn't quadriple counted

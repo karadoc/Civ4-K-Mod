@@ -87,6 +87,7 @@ protected:
 	void AI_generalMove();
 	void AI_merchantMove();
 	void AI_engineerMove();
+	bool AI_greatPersonMove(); // K-Mod
 	void AI_spyMove();
 	void AI_ICBMMove();
 	void AI_workerSeaMove();
