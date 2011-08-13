@@ -5242,7 +5242,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	iGoldenAgeValue /= 100;
 
 	int iDiscoverValue = std::max(1, getDiscoverResearch(NO_TECH));
-	iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(1) % 51);
+	iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(3) % 51);
 	iDiscoverValue /= 100;
 
 	int iFirstDiscoverValue = iDiscoverValue;
@@ -5260,17 +5260,20 @@ bool CvUnitAI::AI_greatPersonMove()
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
 	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
 	iSlowValue /= 100;
-	iSlowValue *= (75 + kPlayer.AI_getStrategyRand(2) % 51);
+	iSlowValue *= (75 + kPlayer.AI_getStrategyRand(6) % 51);
 	iSlowValue /= 100;
 
-	bool bCanTrade = getUnitInfo().getBaseTrade() > 0 || getUnitInfo().getTradeMultiplier() > 0;
+	CvPlot* pBestTradePlot;
+	int iTradeValue = AI_tradeMissionValue(pBestTradePlot, iDiscoverValue / 2);
+	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
+	iTradeValue /= 100;
 
 	if (iSlowValue < iFirstDiscoverValue)
 	{
-		if (bCanTrade && AI_trade(iFirstDiscoverValue))
+		if (iTradeValue < iFirstDiscoverValue && AI_discover(false, true))
 			return true;
-
-		if (bCanTrade && AI_trade(iGoldenAgeValue * 2))
+		
+		if (iTradeValue >= iGoldenAgeValue * 2 && AI_doTrade(pBestTradePlot))
 			return true;
 
 		if (AI_discover(false, true))
@@ -5280,7 +5283,7 @@ bool CvUnitAI::AI_greatPersonMove()
 		{
 			if (AI_goldenAge())
 				return true;
-			if (bCanTrade && AI_trade(iGoldenAgeValue))
+			if (iTradeValue >= iGoldenAgeValue && AI_doTrade(pBestTradePlot))
 				return true;
 		}
 
@@ -5316,6 +5319,7 @@ bool CvUnitAI::AI_greatPersonMove()
 
 	return false;
 }
+
 // K-Mod end
 
 /************************************************************************************************/
@@ -21692,6 +21696,7 @@ bool CvUnitAI::AI_nukeRange(int iRange)
 
 bool CvUnitAI::AI_trade(int iValueThreshold)
 {
+	/* original bts code
 	CvCity* pLoopCity;
 	CvPlot* pBestPlot;
 	CvPlot* pBestTradePlot;
@@ -21760,8 +21765,84 @@ bool CvUnitAI::AI_trade(int iValueThreshold)
 		}
 	}
 
+	return false; */
+
+	// K-Mod. I'm using my own function to do this, just to avoid code duplication.
+	CvPlot* pBestPlot;
+	AI_tradeMissionValue(pBestPlot, iValueThreshold);
+	return AI_doTrade(pBestPlot);
+}
+
+// K-Mod. Get the best trade mission value.
+// Note. The iThreshold parameter is only there to improve efficiency.
+int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
+{
+	pBestPlot = NULL;
+
+	int iBestValue = 0;
+	int iBestPathTurns = INT_MAX;
+	int iLoop;
+
+	if (getUnitInfo().getBaseTrade() <= 0 && getUnitInfo().getTradeMultiplier() <= 0)
+		return 0;
+
+	for (int iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		{
+			for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+			{
+				if (AI_plotValid(pLoopCity->plot()))
+				{
+                    int iValue = getTradeGold(pLoopCity->plot());
+					int iPathTurns;
+
+                    if ((iValue >= iThreshold) && canTrade(pLoopCity->plot(), true))
+                    {
+                        if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
+                        {
+                            if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+                            {
+                                if (iValue / (4 + iPathTurns) > iBestValue / (4 + iBestPathTurns))
+                                {
+                                    iBestValue = iValue;
+									iBestPathTurns = iPathTurns;
+                                    pBestPlot = getPathEndTurnPlot();
+									FAssert(pBestPlot == pLoopCity->plot());
+									iThreshold = std::max(iThreshold, iBestValue * 4 / (4 + iBestPathTurns));
+                                }
+                            }
+
+                        }
+                    }
+				}
+			}
+		}
+	}
+
+	return iBestValue;
+}
+
+// K-Mod. Do a trade mission at the target plot.
+bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
+{
+	if (pTradePlot != NULL && canTrade(pTradePlot))
+	{
+		if (atPlot(pTradePlot))
+		{
+			getGroup()->pushMission(MISSION_TRADE);
+			return true;
+		}
+		else
+		{
+			getGroup()->pushMission(MISSION_MOVE_TO, pTradePlot->getX_INLINE(), pTradePlot->getY_INLINE());
+			return true;
+		}
+	}
+
 	return false;
 }
+// K-Mod end
 
 bool CvUnitAI::AI_infiltrate()
 {

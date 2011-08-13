@@ -270,6 +270,8 @@ protected:
 	bool AI_nuke();
 	bool AI_nukeRange(int iRange);
 	bool AI_trade(int iValueThreshold);
+	int AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold = 0); // K-Mod
+	bool AI_doTrade(CvPlot* pTradePlot); // K-Mod
 	bool AI_infiltrate();
 	bool AI_reconSpy(int iRange);
 /************************************************************************************************/
