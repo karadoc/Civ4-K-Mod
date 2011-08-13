@@ -4792,7 +4792,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						}*/
 						// K-Mod
 						int iExpectedSpread = GC.getGameINLINE().countReligionLevels((ReligionTypes)kBuilding.getGlobalReligionCommerce());
-						iExpectedSpread += (GC.getNumEraInfos() - kOwner.getCurrentEra() + (eStateReligion == (ReligionTypes)(kBuilding.getGlobalReligionCommerce())? 2 : 0)) * GC.getWorldInfo(GC.getMap().getWorldSize()).getDefaultPlayers()/2;
+						iExpectedSpread += (GC.getNumEraInfos() - kOwner.getCurrentEra() + (eStateReligion == (ReligionTypes)(kBuilding.getGlobalReligionCommerce())? 2 : 0)) * GC.getWorldInfo(GC.getMap().getWorldSize()).getDefaultPlayers();
 						iTempValue += GC.getReligionInfo((ReligionTypes)kBuilding.getGlobalReligionCommerce()).getGlobalReligionCommerce(iI) * iExpectedSpread * 4;
 					}
 
@@ -4872,7 +4872,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				{
 					//iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
 					// K-Mod: consider the corporation for the whole civ, not just this city.
-					iCorpValue = kOwner.AI_corporationValue(eCorporation);
+					iCorpValue = kOwner.AI_corporationValue(eCorporation) * 3 * kOwner.getNumCities() / 2;
 						
 					for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
 					{

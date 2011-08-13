@@ -5191,8 +5191,8 @@ bool CvUnitAI::AI_greatPersonMove()
 					{
 						if ( !(kPlayer.AI_getAnyPlotDanger(pLoopCity->plot(), 2)) )
 						{
-							// Note, specialistValue is roughly 100x the commerce it provides.
-							int iValue = pLoopCity->AI_specialistValue(eSpecialist, pLoopCity->AI_avoidGrowth(), false);
+							// Note, specialistValue is roughly 700x the commerce it provides. /= 7 to make it 100x.
+							int iValue = pLoopCity->AI_specialistValue(eSpecialist, pLoopCity->AI_avoidGrowth(), false)/7;
 							if (iValue > iBestValue)
 							{
 								iBestValue = iValue;

@@ -9921,7 +9921,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 				// K-Mod note: This goal has no dependancy on civ size, map size, era, strategy, or anything else that matters
 				// a flat goal of 200... This needs to be fixed, but for now, I'll just replace it with something rough.
 				//int iGoalTotalBombardRate = (getNumCities()+3) * (getCurrentEra()+2) * (AI_isDoStrategy(AI_STRATEGY_CRUSH)?10 :5);
-				int iGoalTotalBombardRate = AI_totalUnitAIs(UNITAI_ATTACK_CITY) * (getCurrentEra()+3) * 2 / 3;
+				int iGoalTotalBombardRate = AI_totalUnitAIs(UNITAI_ATTACK_CITY) * (getCurrentEra()+3);
 				if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
 				{
 					iGoalTotalBombardRate *= 3;
@@ -12509,7 +12509,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		int iCounterValue = 5;
 		iCounterValue *= 50*iEra*iEra + GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
 		iCounterValue /= std::max(1, 50*iEra*iEra + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam));
-		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + 1;
+		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0);
 		iValue += iCounterValue;
 	}
 
