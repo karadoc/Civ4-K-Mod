@@ -4956,6 +4956,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 								if (GC.getGame().isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
 								{
 									// K-Mod note: evaluation of the other corp for this particular city is ok.
+									iCorpValue /= 2; // expect to spread the corp to fewer cities.
 									if (kOwner.AI_corporationValue((CorporationTypes)iCorp, this) > iCorpValue)
 									{
 										iCorpValue = -1;

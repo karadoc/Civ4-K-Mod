@@ -1573,6 +1573,115 @@ void CvPlayerAI::AI_doCentralizedProduction()
 	}
 	*/
 
+	// Cycle through all buildings looking for limited buildings (wonders)
+	// Identify the cities that will benefit the most. If the best city is not busy, build the wonder.
+	/*
+	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	{
+		if (!(GET_PLAYER(getOwnerINLINE()).isBuildingClassMaxedOut(((BuildingClassTypes)iI), GC.getBuildingClassInfo((BuildingClassTypes)iI).getExtraPlayerInstances())))
+		{
+			BuildingTypes eLoopBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
+			bool bWorld = isWorldWonderClass((BuildingClassTypes)iI);
+			bool bNational = isNationalWonderClass((BuildingClassTypes)iI);
+
+						if (canConstruct(eLoopBuilding))
+						{
+							// city loop.
+							iValue = AI_buildingValueThreshold(eLoopBuilding);
+
+							if (GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass() != NO_BUILDINGCLASS)
+							{
+								BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass());
+								if (NO_BUILDING != eFreeBuilding)
+								{
+									iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (GET_PLAYER(getOwnerINLINE()).getNumCities() - GET_PLAYER(getOwnerINLINE()).getBuildingClassCountPlusMaking((BuildingClassTypes)GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass())));
+								}
+							}
+
+							if (iValue > 0)
+							{
+								iTurnsLeft = getProductionTurnsLeft(eLoopBuilding, 0);
+
+								if (isWorldWonderClass((BuildingClassTypes)iI))
+								{
+									if (iProductionRank <= std::min(3, ((GET_PLAYER(getOwnerINLINE()).getNumCities() + 2) / 3)))
+									{
+										if (bAsync)
+										{
+											iTempValue = GC.getASyncRand().get(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand ASYNC");
+										}
+										else
+										{
+											iTempValue = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
+										}
+										
+										if (bAreaAlone)
+										{
+											iTempValue *= 2;
+										}
+										iValue += iTempValue;
+									}
+								}
+
+								if (bAsync)
+								{
+									iValue *= (GC.getASyncRand().get(25, "AI Best Building ASYNC") + 100);
+									iValue /= 100;
+								}
+								else
+								{
+									iValue *= (GC.getGameINLINE().getSorenRandNum(25, "AI Best Building") + 100);
+									iValue /= 100;
+								}
+
+								iValue += getBuildingProduction(eLoopBuilding);
+								
+								
+								bool bValid = ((iMaxTurns <= 0) ? true : false);
+								if (!bValid)
+								{
+									bValid = (iTurnsLeft <= GC.getGameINLINE().AI_turnsPercent(iMaxTurns, GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getConstructPercent()));
+								}
+								if (!bValid)
+								{
+									for (int iHurry = 0; iHurry < GC.getNumHurryInfos(); ++iHurry)
+									{
+										if (canHurryBuilding((HurryTypes)iHurry, eLoopBuilding, true))
+										{
+											if (AI_getHappyFromHurry((HurryTypes)iHurry, eLoopBuilding, true) > 0)
+											{
+												bValid = true;
+												break;
+											}
+										}
+									}
+								}
+
+								if (bValid)
+								{
+									FAssert((MAX_INT / 1000) > iValue);
+									iValue *= 1000;
+									iValue /= std::max(1, (iTurnsLeft + 3));
+
+									iValue = std::max(1, iValue);
+
+									if (iValue > iBestValue)
+									{
+										iBestValue = iValue;
+										eBestBuilding = eLoopBuilding;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return eBestBuilding;
+	*/
+
+
 // K-Mod end, the rest is some unfinished code from BBAI
 
 	// BBAI TODO: Temp testing
@@ -5679,11 +5788,14 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						break;
 
 					case UNITAI_ATTACK_AIR:
-						iMilitaryValue += ((bWarPlan) ? 1200 : 800);
+						//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
+						// K-Mod, I've decreased the value here but added something extra a bit lower down.
+						iMilitaryValue += ((bWarPlan) ? 1000 : 600);
 						break;
 
 					case UNITAI_DEFENSE_AIR:
-						iMilitaryValue += ((bWarPlan) ? 1200 : 800);
+						//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
+						iMilitaryValue += ((bWarPlan) ? 1000 : 600);
 						break;
 
 					case UNITAI_CARRIER_AIR:
@@ -5707,12 +5819,13 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
 						{
-							iUnitValue += 500;
+							//iUnitValue += 500;
+							iMilitaryValue += 500 * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100; // K-Mod
 						}
 
 						if( kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE) )
 						{
-							iUnitValue += (1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100;
+							iMilitaryValue += (1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
 						}
 					}
 					
@@ -5720,12 +5833,13 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
 						{
-							iUnitValue += 1000;
+							//iUnitValue += 1000;
+							iMilitaryValue += 1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100; // K-Mod
 						}
 
 						if( kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE) )
 						{
-							iUnitValue += (2000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100;
+							iMilitaryValue += (2000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
 						}
 					}
 
@@ -5733,14 +5847,14 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_ATTACK_CITY) )
 						{
-							iUnitValue += (1500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100;
+							iMilitaryValue += (1500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
 						}
 					}
 					else if( AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) )
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_ATTACK_CITY) )
 						{
-							iUnitValue += (500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100;
+							iMilitaryValue += (500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
 						}
 					}
 					
@@ -5787,6 +5901,12 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 								iUnitValue += iAssaultValue;
 							}
 						}
+					}
+					
+					// K-Mod
+					if (kLoopUnit.getDomainType() == DOMAIN_AIR)
+					{
+						iMilitaryValue += (bWarPlan? 600 : 400) * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100;
 					}
 					
 					if (iNavalValue > 0)
@@ -5883,9 +6003,9 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						}
 
 						// K-Mod
-						if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS))
+						if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS) && kLoopUnit.getDomainType() == DOMAIN_LAND)
 						{
-							iMilitaryValue += 2 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
+							iMilitaryValue += 3 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
 							iMilitaryValue *= 3;
 							iMilitaryValue /= 2;
 						}
@@ -12409,8 +12529,9 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 						CvBuildingInfo& kBuilding = GC.getBuildingInfo((BuildingTypes)iData);
 						if ((kBuilding.getProductionCost() > 1) && !isWorldWonderClass((BuildingClassTypes)kBuilding.getBuildingClassType()))
 						{
-							iValue += pCity->AI_buildingValue((BuildingTypes)iData);
+							//iValue += pCity->AI_buildingValue((BuildingTypes)iData);
 							// K-Mod
+							iValue += 2 * pCity->AI_buildingValue((BuildingTypes)iData);
 							iValue *= 60 + kBuilding.getProductionCost();
 							iValue /= 100;
 						}
@@ -12495,10 +12616,11 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		{
 			/* int iGoldStolen = (GET_PLAYER(eTargetPlayer).getGold() * GC.getEspionageMissionInfo(eMission).getStealTreasuryTypes()) / 100;
 			iGoldStolen *= pPlot->getPlotCity()->getPopulation();
-			iGoldStolen /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());*/
+			iGoldStolen /= std::max(1, GET_PLAYER(eTargetPlayer).getTotalPopulation());
+			iValue += ((GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble()) ? 4 : 2) * (2 * std::max(0, iGoldStolen - iCost));*/
 			// K-Mod
 			int iGoldStolen = getEspionageGoldQuantity(eMission, eTargetPlayer, pPlot->getPlotCity());
-			iValue += ((GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble()) ? 4 : 2) * (2 * std::max(0, iGoldStolen - iCost));
+			iValue += (GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble() ? 4 : 2) * iGoldStolen;
 		}
 	}
 
@@ -12542,7 +12664,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					iCultureAmount /= 100;
 					if (pCity->calculateCulturePercent(getID()) > 40)
 					{
-						iValue += iCultureAmount * 3;					
+						iValue += iCultureAmount * 3;
 					}
 				}
 			}
@@ -12606,7 +12728,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).getCityRevoltCounter() > 0)
 	{
-		// Handled else where
+		// Handled elsewhere
 	}
 
 	if (GC.getEspionageMissionInfo(eMission).getBuyTechCostFactor() > 0)
@@ -12618,7 +12740,9 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 			if( GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 )
 			{
-				iTempValue *= 2;
+				//iTempValue *= 2;
+				iTempValue *= 3;
+				iTempValue /= 2;
 			}
 
 			iValue += iTempValue;
@@ -12641,7 +12765,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	}
 
 	// K-Mod
-	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && iValue < 100*getCurrentEra() && iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
+	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && iValue < 100*getCurrentEra() && iValue < 2*iCost)
 	{
 		return 0;
 	}

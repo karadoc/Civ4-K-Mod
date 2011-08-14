@@ -22341,7 +22341,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 	FAssert(pSpyPlot != NULL);
 
-	int iSpyValue = 4*kPlayer.getProductionNeeded(getUnitType());
+	int iSpyValue = 3*kPlayer.getProductionNeeded(getUnitType());
 	if (kPlayer.getCapitalCity() != NULL)
 	{
 		iSpyValue += stepDistance(getX(), getY(), kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY()) / 2;
@@ -22373,42 +22373,47 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 			for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
 			{
 				CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-				if (kMissionInfo.getCounterespionageMod() > 0 && kMissionInfo.getCounterespionageNumTurns() > 0)
+				int iTestData = 1;
+				if (kMissionInfo.getBuyTechCostFactor() > 0)
 				{
-					int iTestData = 1;
-					if (kMissionInfo.getBuyTechCostFactor() > 0)
-					{
-						iTestData = GC.getNumTechInfos();
-					}
-					else if (kMissionInfo.getDestroyProjectCostFactor() > 0)
-					{
-						iTestData = GC.getNumProjectInfos();
-					}
-					else if (kMissionInfo.getDestroyBuildingCostFactor() > 0)
-					{
-						iTestData = GC.getNumBuildingInfos();
-					}
+					iTestData = GC.getNumTechInfos();
+				}
+				else if (kMissionInfo.getDestroyProjectCostFactor() > 0)
+				{
+					iTestData = GC.getNumProjectInfos();
+				}
+				else if (kMissionInfo.getDestroyBuildingCostFactor() > 0)
+				{
+					iTestData = GC.getNumBuildingInfos();
+				}
 
-					// estimate the risk cost of losing the spy.
-					int iOverhead = iEscapeCost + iSpyValue * iBaseIntercept * (100 + kMissionInfo.getDifficultyMod()) / 10000;
+				// estimate the risk cost of losing the spy.
+				int iOverhead = iEscapeCost + iSpyValue * iBaseIntercept * (100 + kMissionInfo.getDifficultyMod()) / 10000;
 
-					for ( ; iTestData >= 0; iTestData--)
-					{							
-						if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
+				for ( ; iTestData >= 0; iTestData--)
+				{
+					if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
+					{
+						int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
+						iValue *= 80 + GC.getGameINLINE().getSorenRandNum(60, "AI best espionage mission");
+						iValue /= 100;
+						iValue -= iOverhead;
+
+					/* idea...
+					// If we can't do the mission yet, don't completely give up. It might be worth saving points for.
+					if (!kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
+					{
+						iValue *= our points / getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iExtraData, pUnit)
+					}
+					*/
+							
+						if (iValue > iBestValue)
 						{
-							int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
-							iValue *= 75 + GC.getGameINLINE().getSorenRandNum(50, "AI best espionage mission");
-							iValue /= 100;
-							iValue -= iOverhead;
-								
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								eBestMission = (EspionageMissionTypes)iMission;
-								eTargetPlayer = pSpyPlot->getOwnerINLINE();
-								pPlot = pSpyPlot;
-								iData = iTestData;
-							}
+							iBestValue = iValue;
+							eBestMission = (EspionageMissionTypes)iMission;
+							eTargetPlayer = pSpyPlot->getOwnerINLINE();
+							pPlot = pSpyPlot;
+							iData = iTestData;
 						}
 					}
 				}
