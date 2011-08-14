@@ -5191,8 +5191,8 @@ bool CvUnitAI::AI_greatPersonMove()
 					{
 						if ( !(kPlayer.AI_getAnyPlotDanger(pLoopCity->plot(), 2)) )
 						{
-							// Note, specialistValue is roughly 700x the commerce it provides. /= 7 to make it 100x.
-							int iValue = pLoopCity->AI_specialistValue(eSpecialist, pLoopCity->AI_avoidGrowth(), false)/7;
+							// Note, specialistValue is roughly 400x the commerce it provides. So /= 4 to make it 100x.
+							int iValue = pLoopCity->AI_permanentSpecialistValue(eSpecialist)/4;
 							if (iValue > iBestValue)
 							{
 								iBestValue = iValue;
@@ -13042,7 +13042,8 @@ bool CvUnitAI::AI_join(int iMaxCount)
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 							{
-								iValue = pLoopCity->AI_specialistValue(((SpecialistTypes)iI), pLoopCity->AI_avoidGrowth(), false);
+								//iValue = pLoopCity->AI_specialistValue(((SpecialistTypes)iI), pLoopCity->AI_avoidGrowth(), false);
+								iValue = pLoopCity->AI_permanentSpecialistValue((SpecialistTypes)iI); // K-Mod
 								if (iValue > iBestValue)
 								{
 									iBestValue = iValue;
@@ -23339,7 +23340,8 @@ bool CvUnitAI::AI_artistCultureVictoryMove()
 					{
 						if (canJoin(pBestPlot, ((SpecialistTypes)iI)))
 						{
-							iValue = pLoopCity->AI_specialistValue(((SpecialistTypes)iI), pLoopCity->AI_avoidGrowth(), false);
+							//iValue = pLoopCity->AI_specialistValue(((SpecialistTypes)iI), pLoopCity->AI_avoidGrowth(), false);
+							iValue = pLoopCity->AI_permanentSpecialistValue((SpecialistTypes)iI); // K-Mod
 
 							if (iValue > iBestValue)
 							{

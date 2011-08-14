@@ -29,6 +29,7 @@ public:
 	bool AI_avoidGrowth();
 	bool AI_ignoreGrowth();
 	int AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove);
+	int AI_permanentSpecialistValue(SpecialistTypes eSpecialist); // K-Mod
 
 	void AI_chooseProduction();
 

@@ -659,6 +659,77 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 	return iValue;
 }
 
+// K-Mod. The value of a long-term specialist, for use in calculating great person value, and value of free specialists from buildings.
+// value is roughly 4 * 100 * commerce
+int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist)
+{
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
+
+	const int iCommerceValue = 4;
+	const int iProdValue = 7;
+	const int iFoodValue = 11;
+
+	int iValue = 0;
+
+	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD);
+	iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION);
+	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE);
+
+	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+	{
+		int iTemp = iCommerceValue * kPlayer.specialistCommerce(eSpecialist, (CommerceTypes)iI);
+		iTemp *= getTotalCommerceRateModifier((CommerceTypes)iI);
+		iTemp *= kPlayer.AI_commerceWeight((CommerceTypes)iI, this);
+		iTemp /= 100;
+		iValue += iTemp;
+	}
+	
+	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
+
+	if (iGreatPeopleRate != 0)
+	{
+		int iGPPValue = 4;
+		
+		int iTempValue = 100 * iGreatPeopleRate * iGPPValue;
+		
+		// Scale based on how often this city will actually get a great person.
+		int iCityRate = getGreatPeopleRate();
+		int iHighestRate = 0;
+		int iLoop;
+		for( CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop) )
+		{
+			int x = pLoopCity->getGreatPeopleRate();
+			if (x > iHighestRate)
+				iHighestRate = x;
+		}
+		if (iHighestRate > iCityRate)
+		{
+			iTempValue *= 100;
+			iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
+		}
+		
+		iTempValue *= getTotalGreatPeopleRateModifier();
+		iTempValue /= 100;
+		
+		iValue += iTempValue;
+	}
+	
+	int iExperience = GC.getSpecialistInfo(eSpecialist).getExperience();
+	if (0 != iExperience)
+	{
+		int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
+
+		iValue += 100 * iExperience * 4;
+		if (iProductionRank <= kPlayer.getNumCities()/2 + 1)
+		{
+			iValue += 100 * iExperience *  4;
+		}
+		iValue += (getMilitaryProductionModifier() * iExperience * 8);
+	}
+
+	return iValue;
+}
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      10/22/09                                jdog5000      */
 /*                                                                                              */
@@ -4253,7 +4324,9 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				{
 					if (kBuilding.getFreeSpecialistCount(iI) > 0)
 					{
-						iValue += ((AI_specialistValue(((SpecialistTypes)iI), false, false) * kBuilding.getFreeSpecialistCount(iI)) / 50);
+						//iValue += ((AI_specialistValue(((SpecialistTypes)iI), false, false) * kBuilding.getFreeSpecialistCount(iI)) / 50);
+						// K-Mod
+						iValue += AI_permanentSpecialistValue((SpecialistTypes)iI) * kBuilding.getFreeSpecialistCount(iI) / 100;
 					}
 				}
 
@@ -9579,10 +9652,13 @@ bool CvCityAI::AI_foodAvailable(int iExtra)
 
 int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation, bool bWorkerOptimization)
 {
-	const int iBaseProductionValue = 15;
-	const int iBaseCommerceValue = 7;
+	/* const int iBaseProductionValue = 15;
+	const int iBaseCommerceValue = 7; */
+	// K-Mod, reduced the scale to match the building evaluation code.
+	const int iBaseProductionValue = 7;
+	const int iBaseCommerceValue = 4;
 	
-	const int iMaxFoodValue = (3 * iBaseProductionValue) - 1;
+	int iMaxFoodValue = (3 * iBaseProductionValue) - 1; // K-Mod, originally was const int.
 
 	int aiYields[NUM_YIELD_TYPES];
 	int aiCommerceYieldsTimes100[NUM_COMMERCE_TYPES];
@@ -9639,12 +9715,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		aiCommerceYieldsTimes100[iJ] += (iCommerceTimes100 * iModifier) / 100;
 	}
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       07/09/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-/* original BTS code
 	if (isProductionProcess() && !bWorkerOptimization)
 	{
 		for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
@@ -9653,14 +9723,11 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		}
 
 		aiYields[YIELD_PRODUCTION] = 0;
+		// K-Mod, Note, this if block was commented out by the Unofficial Patch. They say that this code causes an
+		// over-emphasis of food. I've restored the original code, but to deal with the food issue I'm adding the following line.
+		iMaxFoodValue = (3 * iBaseCommerceValue) - 1;
 	}
-*/
-	// Above code causes governor and AI to heavily weight food when building any form of commerce,
-	// which is not expected by human and does not seem to produce better results for AI either.  
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-	
+
 	// should not really use this much, but making it accurate
 	aiYields[YIELD_COMMERCE] = 0;
 	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
@@ -11833,10 +11900,14 @@ int CvCityAI::AI_yieldMultiplier(YieldTypes eYield)
 		iMultiplier += (getCommerceRateModifier(COMMERCE_GOLD) * 35) / 100;
 		iMultiplier += (getCommerceRateModifier(COMMERCE_CULTURE) * 15) / 100; */
 		// K-Mod
-		// this breakdown seems wrong... but I'm not bold enough to change it yet.
-		iMultiplier += (getCommerceRateModifier(COMMERCE_RESEARCH) * 60 + 
-			getCommerceRateModifier(COMMERCE_GOLD) * 35 +
-			getCommerceRateModifier(COMMERCE_CULTURE) * 15) / 100;
+		// this breakdown seems wrong... lets try it a different way.
+		const CvPlayer& kPlayer = GET_PLAYER(getOwner());
+		int iExtra = 0;
+		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+		{
+			iExtra += getCommerceRateModifier((CommerceTypes)iI) * kPlayer.getCommercePercent((CommerceTypes)iI);
+		}
+		iMultiplier += iExtra/100;
 	}
 	
 	return iMultiplier;	

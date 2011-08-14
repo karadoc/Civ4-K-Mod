@@ -2158,10 +2158,13 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 				iWeight -= 25 - getCommercePercent(COMMERCE_GOLD);
 			}
 		}
-		// K-Mod
+		// K-Mod.
+		// (note. This factor is helpful for assigning merchant specialists in the right places, but it causes problems
+		// when building wealth. Really we dont' want to scale all gold commerce like this, we only want to scale it when
+		// it is independant of the commerce slider.)
 		if (pCity != NULL)
 		{
-			iWeight *= (pCity->getCommerceRateModifier(COMMERCE_GOLD)+100);
+			iWeight *= pCity->getTotalCommerceRateModifier(COMMERCE_GOLD);
 			iWeight /= AI_averageCommerceMultiplier(COMMERCE_GOLD);
 		}
 /************************************************************************************************/
@@ -15887,7 +15890,8 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 			{
 				if (kEvent.getFreeSpecialistCount(iSpecialist) > 0)
 				{
-					iCityTurnValue += (pCity->AI_specialistValue((SpecialistTypes)iSpecialist, false, false) / 300);
+					//iCityTurnValue += (pCity->AI_specialistValue((SpecialistTypes)iSpecialist, false, false) / 300);
+					iCityTurnValue += pCity->AI_permanentSpecialistValue((SpecialistTypes)iSpecialist) / 100; // K-Mod
 				}
 			}
 		}

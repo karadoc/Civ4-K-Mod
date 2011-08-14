@@ -952,6 +952,7 @@ public:
 	virtual void AI_updateAssignWork() = 0;
 	virtual bool AI_avoidGrowth() = 0;											// Exposed to Python
 	virtual int AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) = 0;
+	virtual int AI_permanentSpecialistValue(SpecialistTypes eSpecialist) = 0; // K-Mod
 	virtual void AI_chooseProduction() = 0;
 	virtual UnitTypes AI_bestUnit(bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR, UnitAITypes* peBestUnitAI = NULL) = 0;
 	virtual UnitTypes AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) = 0;
