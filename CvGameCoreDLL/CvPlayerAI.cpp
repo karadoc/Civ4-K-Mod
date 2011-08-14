@@ -10017,8 +10017,10 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		iValue += iTempValue;
 		if (GC.getUnitInfo(eUnit).isNoDefensiveBonus())
 		{
-			//iValue -= iTempValue / 2;
-			iValue -= iTempValue / 4; // K-Mod. (I'd say knights, tanks, etc. are very good for city attack...)
+			iValue -= iTempValue / 2;
+			//iValue -= iTempValue / 4; // K-Mod. (I'd say knights, tanks, etc. are very good for city attack...)
+			// K-Mod note: I've reverted this back to the original code. Ideally, I'd use the reduced penalty, but
+			// also take into account which promotions are available to the unit. Eg. knights cannot get city raider.
 		}
 		if (GC.getUnitInfo(eUnit).getDropRange() > 0)
 		{
