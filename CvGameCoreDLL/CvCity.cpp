@@ -5002,7 +5002,7 @@ int CvCity::culturePressureFactor() const
 
 		if (pLoopPlot != NULL && pLoopPlot->isWithinCultureRange(getOwner()))
 		{
-			for (int iP = 0; iP < MAX_PLAYERS; iP++)
+			for (int iP = 0; iP < MAX_CIV_PLAYERS; iP++)
 			{
 				const CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iP);
 				if (kPlayer.isAlive() && kPlayer.getTeam() != getTeam() && !kPlayer.isBarbarian())

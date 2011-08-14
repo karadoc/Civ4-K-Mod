@@ -202,7 +202,7 @@ public:
 	
 	bool AI_performNoWarRolls(TeamTypes eTeam);
 	
-	int AI_getAttitudeWeight(TeamTypes eTeam);
+	int AI_getAttitudeWeight(TeamTypes eTeam) const;
 	
 	int AI_getLowestVictoryCountdown() const;
 

@@ -5007,7 +5007,7 @@ bool CvTeamAI::AI_performNoWarRolls(TeamTypes eTeam)
 	return false;	
 }
 
-int CvTeamAI::AI_getAttitudeWeight(TeamTypes eTeam)
+int CvTeamAI::AI_getAttitudeWeight(TeamTypes eTeam) const
 {
 	int iAttitudeWeight = 0;
 	switch (AI_getAttitude(eTeam))

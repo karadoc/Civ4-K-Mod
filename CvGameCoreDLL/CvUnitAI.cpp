@@ -5319,45 +5319,37 @@ bool CvUnitAI::AI_greatPersonMove()
 
 	return false;
 }
-
 // K-Mod end
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/25/10                                jdog5000      */
-/*                                                                                              */
-/* Espionage AI                                                                                 */
-/************************************************************************************************/
+// Edited heavily for K-Mod
 void CvUnitAI::AI_spyMove()
 {
 	PROFILE_FUNC();
 
 	CvTeamAI& kTeam = GET_TEAM(getTeam());
-	int iEspionageChance = 0;
-	if (plot()->isOwned() && (plot()->getTeam() != getTeam()))
+	int iSpontaneousChance = 0;
+	if (plot()->isOwned() && plot()->getTeam() != getTeam())
 	{
 		switch (GET_PLAYER(getOwnerINLINE()).AI_getAttitude(plot()->getOwnerINLINE()))
 		{
 		case ATTITUDE_FURIOUS:
-			iEspionageChance = 100;
+			iSpontaneousChance = 100;
 			break;
 
 		case ATTITUDE_ANNOYED:
-			iEspionageChance = 50;
+			iSpontaneousChance = 50;
 			break;
 
 		case ATTITUDE_CAUTIOUS:
-			//iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 30 : 10);
-			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 30 : 16);
+			iSpontaneousChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 30 : 10);
 			break;
 
 		case ATTITUDE_PLEASED:
-			//iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
-			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 8);
+			iSpontaneousChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
 			break;
 
 		case ATTITUDE_FRIENDLY:
-			//iEspionageChance = 0;
-			iEspionageChance = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 10 : 4);
+			iSpontaneousChance = 0;
 			break;
 
 		default:
@@ -5370,29 +5362,15 @@ void CvUnitAI::AI_spyMove()
 		{
 			if (eWarPlan == WARPLAN_LIMITED)
 			{
-				iEspionageChance += 50;
+				iSpontaneousChance += 50;
 			}
 			else
 			{
-				iEspionageChance += 20;
+				iSpontaneousChance += 20;
 			}
 		}
 
-		// K-Mod
-		{
-			int iModifier = 100;
-			int iTargetPoints = GET_TEAM(plot()->getTeam()).getEspionagePointsEver();
-			int iOurPoints = kTeam.getEspionagePointsEver();
-
-			// the inverse of the espionage cost-modifier formula.
-			iModifier /= (GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints)) / std::max(1, iTargetPoints + 2 * iOurPoints);
-
-			iEspionageChance += (GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY)? 20 : 0);
-
-			iEspionageChance *= iModifier;
-		}
-		
-		if (plot()->isCity() && plot()->getTeam() != getTeam())
+		if (plot()->isCity())
 		{
 			bool bTargetCity = false;
 
@@ -5404,23 +5382,34 @@ void CvUnitAI::AI_spyMove()
 			{
 				bTargetCity = true;
 
-				if( AI_revoltCitySpy() )
+				if (AI_revoltCitySpy())
 				{
 					return;
 				}
 
-				if (GC.getGame().getSorenRandNum(5, "AI Spy Skip Turn") > 0)
+				if (GC.getGame().getSorenRandNum(6, "AI Spy Skip Turn") > 0)
 				{
 					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
 					return;
 				}
 
-				if ( AI_cityOffenseSpy(5, plot()->getPlotCity()) )
+				if (plot()->plotCount(PUF_isSpy, -1, -1, getOwner()) > 1)
+				{
+					if (AI_cityOffenseSpy(5, plot()->getPlotCity()))
+					{
+						return;
+					}
+				}
+			}
+			else if (GC.getGameINLINE().getSorenRandNum(100, "AI Spy Espionage") < iSpontaneousChance)
+			{
+				// This applies only when not in an enemy city, so for destroying improvements
+				if (AI_espionageSpy())
 				{
 					return;
 				}
 			}
-			
+
 			if( GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(plot(), MISSIONAI_ASSAULT, getGroup()) > 0 )
 			{
 				bTargetCity = true;
@@ -5447,18 +5436,18 @@ void CvUnitAI::AI_spyMove()
 				}
 			}
 		}
-		else if (GC.getGameINLINE().getSorenRandNum(100, "AI Spy Espionage") < iEspionageChance)
-		{
-			// This applies only when not in an enemy city, so for destroying improvements
-			if (AI_espionageSpy())
-			{
-				return;
-			}
-		}
 	}
 	
 	if (plot()->getTeam() == getTeam())
 	{
+		if (GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
+		{
+			if (AI_cityOffenseSpy(10))
+			{
+				return;
+			}
+		}
+
 		if (kTeam.getAnyWarPlanCount(true) == 0 || GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) || GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
 		{
 			if( GC.getGame().getSorenRandNum(10, "AI Spy defense") > 0)
@@ -5470,7 +5459,7 @@ void CvUnitAI::AI_spyMove()
 			}
 		}
 		
-		if (GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < 25)
+		if (GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (GET_PLAYER(getOwner()).AI_getStrategyRand(5) % 30))
 		{
 			if (AI_bonusOffenseSpy(5))
 			{
@@ -5486,7 +5475,7 @@ void CvUnitAI::AI_spyMove()
 		}
 	}
 	
-	if (iEspionageChance > 0 && (plot()->isCity() || (plot()->getNonObsoleteBonusType(getTeam()) != NO_BONUS)))
+	if (iSpontaneousChance > 0 && (plot()->isCity() || (plot()->getNonObsoleteBonusType(getTeam()) != NO_BONUS)))
 	{
 		if (GC.getGame().getSorenRandNum(7, "AI Spy Skip Turn") > 0)
 		{
@@ -22126,8 +22115,6 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 				iValue += pCity->getPopulation();
 				iValue += pCity->plot()->calculateCulturePercent(getOwnerINLINE())/8;
 
-				// BBAI TODO: Should go to cities where missions will be cheaper ...
-
 				int iRand = GC.getGame().getSorenRandNum(6, "AI spy choose city");
 				iValue += iRand * iRand;
 
@@ -22140,8 +22127,11 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 				{
 					iValue += 30;
 				}
-
-				// BBAI TODO: What else?  If can see production, go for wonders and space race ...
+				// K-Mod. Dilute the effect of population, and take cost modifiers into account.
+				iValue += 10;
+				iValue *= 100;
+				iValue /= GET_PLAYER(getOwner()).getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, pCity->getOwner(), pPlot);
+				// K-Mod end.
 			}
 			else
 			{
@@ -22170,8 +22160,8 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 						iValue *= 3;
 					}
 
-					iValue *= 3;
-					iValue /= (3 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pPlot, MISSIONAI_ATTACK_SPY, getGroup()));
+					iValue *= 4; // K-Mod. Was 3 and 3.
+					iValue /= (4 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pPlot, MISSIONAI_ATTACK_SPY, getGroup()));
 				}
 			}
 		}
@@ -22180,7 +22170,7 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 	return iValue;
 }
 
-
+// heavily edited for K-Mod
 bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 {
 	PROFILE_FUNC();
@@ -22188,35 +22178,70 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
 
+	const CvTeamAI& kTeam = GET_TEAM(getTeam());
+
+	int iAverageUnspentPoints;
+
+	{
+		int iTeamCount = 0;
+		int iTotalUnspentPoints = 0;
+		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+		{
+			const CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
+			if (iI != getTeam() && kLoopTeam.isAlive() && !kTeam.isVassal((TeamTypes)iI))
+			{
+				iTotalUnspentPoints += kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI);
+				iTeamCount++;
+			}
+		}
+		iAverageUnspentPoints = iTotalUnspentPoints /= std::max(1, iTeamCount);
+	}
+
+
 	for (int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; ++iPlayer)
 	{
 		CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
 		if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() != getTeam() && !GET_TEAM(getTeam()).isVassal(kLoopPlayer.getTeam()))
 		{
-			// Only move to cities where we will run missions
-			if (GET_PLAYER(getOwnerINLINE()).AI_getAttitudeWeight((PlayerTypes)iPlayer) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1)
-				|| GET_TEAM(getTeam()).AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN
-				|| GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 )
-			{
-				int iLoop;
-				for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); NULL != pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
-				{
-					if( pLoopCity == pSkipCity )
-					{
-						continue;
-					}
+			int iTeamWeight = 1000;
+			iTeamWeight *= kTeam.getEspionagePointsAgainstTeam(kLoopPlayer.getTeam());
+			iTeamWeight /= std::max(1, iAverageUnspentPoints);
 
-					if (pLoopCity->area() == area() || canMoveAllTerrain())
+			iTeamWeight *= 400 - kTeam.AI_getAttitudeWeight(kLoopPlayer.getTeam());
+			iTeamWeight /= 500;
+
+			iTeamWeight *= (kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN ? 3 : 2);
+			iTeamWeight /= 2;
+
+			iTeamWeight *= GET_PLAYER(getOwner()).isMaliciousEspionageTarget((PlayerTypes)iPlayer) ? 3 : 2;
+			iTeamWeight /= 2;
+
+			if (iTeamWeight < 200 && GC.getGame().getSorenRandNum(5, "AI team target saving throw") != 0)
+			{
+				// low weight. Probably friendly attitude and below average points.
+				// don't target this team.
+				continue;
+			}
+
+			int iLoop;
+			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); NULL != pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
+			{
+				if( pLoopCity == pSkipCity )
+				{
+					continue;
+				}
+
+				if (pLoopCity->area() == area() || canMoveAllTerrain())
+				{
+					CvPlot* pLoopPlot = pLoopCity->plot();
+					if (AI_plotValid(pLoopPlot))
 					{
-						CvPlot* pLoopPlot = pLoopCity->plot();
-						if (AI_plotValid(pLoopPlot))
+						int iValue = AI_getEspionageTargetValue(pLoopPlot, iMaxPath);
+						iValue *= iTeamWeight;
+						if (iValue > iBestValue)
 						{
-							int iValue = AI_getEspionageTargetValue(pLoopPlot, iMaxPath);
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								pBestPlot = pLoopPlot;								
-							}
+							iBestValue = iValue;
+							pBestPlot = pLoopPlot;
 						}
 					}
 				}
@@ -22262,8 +22287,9 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 				if( pLoopPlot->isOwned() && pLoopPlot->getTeam() != getTeam() )
 				{
 					// Only move to plots where we will run missions
-					if (GET_PLAYER(getOwnerINLINE()).AI_getAttitudeWeight(pLoopPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1)
-						|| GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN )
+					/*if (GET_PLAYER(getOwnerINLINE()).AI_getAttitudeWeight(pLoopPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1)
+						|| GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN )*/
+					if (GET_PLAYER(getOwner()).isMaliciousEspionageTarget(pLoopPlot->getOwner())) // K-Mod
 					{
 						int iValue = AI_getEspionageTargetValue(pLoopPlot, iRange);
 						if (iValue > iBestValue)
@@ -22352,19 +22378,25 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 	EspionageMissionTypes eBestMission = NO_ESPIONAGEMISSION;
 	int iBestValue = 0;
+
+	int iEspionageRate = kPlayer.getCommerceRate(COMMERCE_ESPIONAGE);
 	
 	if (pSpyPlot->isOwned())
 	{
-		if (pSpyPlot->getTeam() != getTeam())
+		TeamTypes eTargetTeam = pSpyPlot->getTeam();
+
+		if (eTargetTeam != getTeam())
 		{
+			int iEspPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTargetTeam);
+
 			// estimate risk cost of losing the spy while trying to escape
 			int iBaseIntercept = 0;
 			{
-				int iTargetPoints = GET_TEAM(pSpyPlot->getTeam()).getEspionagePointsEver();
-				int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
-				iBaseIntercept += (GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetPoints) / std::max(1, iTargetPoints + iOurPoints);
+				int iTargetTotal = GET_TEAM(eTargetTeam).getEspionagePointsEver();
+				int iOurTotal = GET_TEAM(getTeam()).getEspionagePointsEver();
+				iBaseIntercept += (GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetTotal) / std::max(1, iTargetTotal + iOurTotal);
 
-				if (GET_TEAM(pSpyPlot->getTeam()).getCounterespionageModAgainstTeam(getTeam()) > 0)
+				if (GET_TEAM(eTargetTeam).getCounterespionageModAgainstTeam(getTeam()) > 0)
 					iBaseIntercept += GC.getDefineINT("ESPIONAGE_INTERCEPT_COUNTERESPIONAGE_MISSION");
 			}
 			int iEscapeCost = iSpyValue * iBaseIntercept * (100+GC.getDefineINT("ESPIONAGE_SPY_MISSION_ESCAPE_MOD")) / 20000;
@@ -22392,29 +22424,41 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 				for ( ; iTestData >= 0; iTestData--)
 				{
-					if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
-					{
-						int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwnerINLINE(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
-						iValue *= 80 + GC.getGameINLINE().getSorenRandNum(60, "AI best espionage mission");
-						iValue /= 100;
-						iValue -= iOverhead;
+					//if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
+					int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwner(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
+					iValue *= 80 + GC.getGameINLINE().getSorenRandNum(60, "AI best espionage mission");
+					iValue /= 100;
+					iValue -= iOverhead;
 
-					/* idea...
 					// If we can't do the mission yet, don't completely give up. It might be worth saving points for.
-					if (!kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
+					if (!kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this))
 					{
-						iValue *= our points / getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iExtraData, pUnit)
-					}
-					*/
-							
-						if (iValue > iBestValue)
+						if (!GET_TEAM(getTeam()).isHasTech((TechTypes)kMissionInfo.getTechPrereq()))
 						{
-							iBestValue = iValue;
-							eBestMission = (EspionageMissionTypes)iMission;
-							eTargetPlayer = pSpyPlot->getOwnerINLINE();
-							pPlot = pSpyPlot;
-							iData = iTestData;
+							// Ok. Now it's time to give up. (Even if we're researching the tech right now - too bad.)
+							iValue = 0;
 						}
+						else
+						{
+							// Assume cost is the reason we can't do the mission.
+							// Scale the mission value based on how long we think it will take to get the points.
+							int iCost = kPlayer.getEspionageMissionCost((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this);
+							FAssert(iCost > iEspPoints);
+
+							iValue *= 2;
+							iValue /= (iCost - iEspPoints) / std::max(1, iEspionageRate) + 2;
+							// eg, 1 turn left -> 2/3. 2 turns -> 2/4, 3 turns -> 2/5. Etc.
+							// The number of turns is approximated (poorly) by assuming our entire esp rate is targeting eTargetTeam.
+						}
+					}
+						
+					if (iValue > iBestValue)
+					{
+						iBestValue = iValue;
+						eBestMission = (EspionageMissionTypes)iMission;
+						eTargetPlayer = pSpyPlot->getOwner();
+						pPlot = pSpyPlot;
+						iData = iTestData;
 					}
 				}
 			}
