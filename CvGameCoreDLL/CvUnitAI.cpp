@@ -5458,6 +5458,17 @@ void CvUnitAI::AI_spyMove()
 				}
 			}
 		}
+
+		if (plot()->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
+		{
+			if( GC.getGame().getSorenRandNum(7, "AI Spy defense (wartime)") > 0)
+			{
+				if (AI_guardSpy(0))
+				{
+					return;			
+				}
+			}
+		}
 		
 		if (GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (GET_PLAYER(getOwner()).AI_getStrategyRand(5) % 30))
 		{
@@ -5520,9 +5531,6 @@ void CvUnitAI::AI_spyMove()
 	getGroup()->pushMission(MISSION_SKIP);
 	return;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                   */
-/************************************************************************************************/
 
 void CvUnitAI::AI_ICBMMove()
 {

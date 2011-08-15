@@ -648,12 +648,17 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 		int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
 
-		iValue += 100 * iExperience * ((iHasMetCount > 0) ? 4 : 2);
+		iTempValue += 100 * iExperience * ((iHasMetCount > 0) ? 4 : 2);
 		if (iProductionRank <= iNumCities/2 + 1)
 		{
-			iValue += 100 * iExperience *  4;
+			iTempValue += 100 * iExperience *  4;
 		}
-		iValue += (getMilitaryProductionModifier() * iExperience * 8);
+		iTempValue += (getMilitaryProductionModifier() * iExperience * 8);
+
+		iTempValue *= 100;
+		iTempValue /= (100+10*(getFreeExperience()/5));
+
+		iValue += iTempValue;
 	}
 
 	return iValue;
@@ -2592,7 +2597,9 @@ void CvCityAI::AI_chooseProduction()
 	if (iNumSpies < iNeededSpies)
 	{
 		//if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
-		int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?65 : 50)*iNeededSpies / (4*iNumSpies+iNeededSpies);
+		int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) || GET_TEAM(getTeam()).getAnyWarPlanCount(true)) ?65 : 50;
+		iOdds *= iNeededSpies;
+		iOdds /= (4*iNumSpies+iNeededSpies);
 		if (AI_chooseUnit(UNITAI_SPY, iOdds)) // K-Mod
 		{
 			return;
