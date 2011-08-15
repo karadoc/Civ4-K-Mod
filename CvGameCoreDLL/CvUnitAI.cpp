@@ -5242,6 +5242,11 @@ bool CvUnitAI::AI_greatPersonMove()
 	iGoldenAgeValue /= 100;
 
 	int iDiscoverValue = std::max(1, getDiscoverResearch(NO_TECH));
+	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
+	{
+		iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
+		iDiscoverValue /= 2;
+	}
 	iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(3) % 51);
 	iDiscoverValue /= 100;
 
