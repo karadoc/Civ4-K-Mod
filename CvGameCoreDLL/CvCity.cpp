@@ -3261,12 +3261,17 @@ bool CvCity::canHurry(HurryTypes eHurry, bool bTestVisible) const
 		return false;
 	}
 
+	// K-Mod. moved this check outside of !bTestVisible.
+	if (!isProductionUnit() && !isProductionBuilding())
+	{
+		return false;
+	}
 	if (!bTestVisible)
 	{
-		if (!isProductionUnit() && !isProductionBuilding())
+		/*if (!isProductionUnit() && !isProductionBuilding())
 		{
 			return false;
-		}
+		}*/
 
 		if (GET_PLAYER(getOwnerINLINE()).getGold() < hurryGold(eHurry))
 		{

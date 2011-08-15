@@ -5197,7 +5197,6 @@ bool CvUnitAI::AI_greatPersonMove()
 							{
 								iBestValue = iValue;
 								pBestPlot = getPathEndTurnPlot();
-								FAssert(pBestPlot == pLoopCity->plot());
 								eBestSpecialist = eSpecialist;
 								eBestBuilding = NO_BUILDING;
 							}
@@ -5224,7 +5223,6 @@ bool CvUnitAI::AI_greatPersonMove()
 								{
 									iBestValue = iValue;
 									pBestPlot = getPathEndTurnPlot();
-									FAssert(pBestPlot == pLoopCity->plot());
 									eBestBuilding = eBuilding;
 									eBestSpecialist = NO_SPECIALIST;
 								}
@@ -5433,9 +5431,10 @@ void CvUnitAI::AI_spyMove()
 						return;
 					}
 				}
-				else if (GC.getGame().getSorenRandNum(100, "AI Spy Skip Turn") > 5)
+
+				if (GC.getGame().getSorenRandNum(100, "AI Spy Skip Turn") > 4)
 				{
-					// don't get stuck forever
+					// don't wait forever
 					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
 					return;
 				}
@@ -22435,7 +22434,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 				// estimate the risk cost of losing the spy.
 				int iOverhead = iEscapeCost + iSpyValue * iBaseIntercept * (100 + kMissionInfo.getDifficultyMod()) / 10000;
 
-				for ( ; iTestData >= 0; iTestData--)
+				for (iTestData-- ; iTestData >= 0; iTestData--)
 				{
 					//if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
 					int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwner(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
@@ -22446,22 +22445,21 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 					// If we can't do the mission yet, don't completely give up. It might be worth saving points for.
 					if (!kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this))
 					{
-						if (!GET_TEAM(getTeam()).isHasTech((TechTypes)kMissionInfo.getTechPrereq()))
+						// Is cost is the reason we can't do the mission?
+						int iCost = kPlayer.getEspionageMissionCost((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this);
+						if (GET_TEAM(getTeam()).isHasTech((TechTypes)kMissionInfo.getTechPrereq()) && iCost > iEspPoints)
 						{
-							// Ok. Now it's time to give up. (Even if we're researching the tech right now - too bad.)
-							iValue = 0;
-						}
-						else
-						{
-							// Assume cost is the reason we can't do the mission.
 							// Scale the mission value based on how long we think it will take to get the points.
-							int iCost = kPlayer.getEspionageMissionCost((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this);
-							FAssert(iCost > iEspPoints);
 
 							iValue *= 2;
 							iValue /= (iCost - iEspPoints) / std::max(1, iEspionageRate) + 2;
 							// eg, 1 turn left -> 2/3. 2 turns -> 2/4, 3 turns -> 2/5. Etc.
 							// The number of turns is approximated (poorly) by assuming our entire esp rate is targeting eTargetTeam.
+						}
+						else
+						{
+							// Ok. Now it's time to give up. (Even if we're researching the prereq tech right now - too bad.)
+							iValue = 0;
 						}
 					}
 						

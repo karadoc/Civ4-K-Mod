@@ -3576,13 +3576,10 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags)
 
 // XXX should some of these count cities, buildings, etc. based on teams (because wonders are shared...)
 // XXX in general, this function needs to be more sensitive to what makes this city unique (more likely to build airports if there already is a harbor...)
+// This function has been heavily edited for K-Mod
 int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags, int iThreshold)
 {
 	PROFILE_FUNC();
-
-	int iTempValue;
-	int iPass;
-	int iI, iJ;
 
 	CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 	CvBuildingInfo& kBuilding = GC.getBuildingInfo(eBuilding);
@@ -3723,7 +3720,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 	bool bForeignTrade = false;
 	int iNumTradeRoutes = getTradeRoutes();
-	for (iI = 0; iI < iNumTradeRoutes; ++iI)
+	for (int iI = 0; iI < iNumTradeRoutes; ++iI)
 	{
 		CvCity* pTradeCity = getTradeCity(iI);
 		if (NULL != pTradeCity)
@@ -3741,7 +3738,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 		return 0;
 	}
 
-	for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 	{
 		if (kBuilding.getReligionChange(iI) > 0)
 		{
@@ -3754,7 +3751,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 	int iValue = 0;
 
-	for (iPass = 0; iPass < 2; iPass++)
+	for (int iPass = 0; iPass < 2; iPass++)
 	{
 		if ((iFocusFlags == 0) || (iValue > 0) || (iPass == 0))
 		{
@@ -3798,7 +3795,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			if (((iFocusFlags & BUILDINGFOCUS_HAPPY) || (iPass > 0)) && !isNoUnhappiness())
 			{
 				int iBestHappy = 0;
-				for (iI = 0; iI < GC.getNumHurryInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumHurryInfos(); iI++)
 				{
 					if (canHurryBuilding((HurryTypes)iI, eBuilding, true))
 					{
@@ -3841,7 +3838,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				iValue += (-kBuilding.getHurryAngerModifier() * getHurryPercentAnger()) / 100;
 
-				for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+				for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 				{
 					iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 4;
 				}
@@ -3863,7 +3860,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iValue += (-iGlobalWarWearinessModifer * iHappyModifier) / 16;
 				}
 
-				for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 				{
 					if (kBuilding.getBuildingHappinessChanges(iI) != 0)
 					{
@@ -3944,7 +3941,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 				}
 
-				for (iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
+				for (int iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
 				{
 					int iDomainExpValue = 0;
 					if (iI == DOMAIN_SEA)
@@ -3995,7 +3992,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				int iExistingUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier())) / 100;
 				int iNewUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier() + kBuilding.getMaintenanceModifier())) / 100;
 				
-				iTempValue = (iExistingUpkeep - iNewUpkeep) / 16;
+				int iTempValue = (iExistingUpkeep - iNewUpkeep) / 16;
 				
 				if (bFinancialTrouble)
 				{
@@ -4033,7 +4030,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						{
 							if ((!bUnlimited) && (iRunnable < 5))
 							{
-								iTempValue = AI_specialistValue(((SpecialistTypes)iI), false, false);
+								int iTempValue = AI_specialistValue(((SpecialistTypes)iI), false, false);
 
 								iTempValue *= (20 + (40 * kBuilding.getSpecialistCount(iI)));
 								iTempValue /= 100;
@@ -4080,7 +4077,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			if ((iFocusFlags & (BUILDINGFOCUS_GOLD | BUILDINGFOCUS_RESEARCH)) || iPass > 0)
 			{
 				// trade routes
-				iTempValue = ((kBuilding.getTradeRoutes() * ((6 * std::max(0, (totalTradeModifier() + 100))) / 100)) // orignally 8 * std::max
+				int iTempValue = ((kBuilding.getTradeRoutes() * ((6 * std::max(0, (totalTradeModifier() + 100))) / 100)) // orignally 8 * std::max
 								* (getPopulation() / 5 + 1));
 				int iGlobalTradeValue = (((6 * iTotalPopulation) / 5) / iNumCities);
 				iTempValue += (kBuilding.getCoastalTradeRoutes() * kOwner.countNumCoastalCities() * iGlobalTradeValue);
@@ -4293,7 +4290,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				//iValue += (kBuilding.getGreatPeopleRateChange() * 10) * (1 + (getBaseGreatPeopleRate() / 2));
 				// K-Mod... here's some code like the specialist value function. Kind of long, but much better.
 				{
-					iTempValue = 100 * kBuilding.getGreatPeopleRateChange() * 2 * 4; // everything seems to be x4 around here
+					int iTempValue = 100 * kBuilding.getGreatPeopleRateChange() * 2 * 4; // everything seems to be x4 around here
 					int iCityRate = getGreatPeopleRate();
 					int iHighestRate = 0;
 					int iLoop;
@@ -4327,7 +4324,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				iValue += kBuilding.getEnemyWarWearinessModifier() / 2;
 
-				for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 				{
 					if (kBuilding.getFreeSpecialistCount(iI) > 0)
 					{
@@ -4337,7 +4334,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 				}
 
-				for (iI = 0; iI < GC.getNumImprovementInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumImprovementInfos(); iI++)
 				{
 					if (kBuilding.getImprovementFreeSpecialist(iI) > 0)
 					{
@@ -4345,7 +4342,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 				}
 
-				for (iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
+				for (int iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
 				{
 					iValue += (kBuilding.getDomainProductionModifier(iI) / 5);
 					
@@ -4355,7 +4352,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 				}
 
-				for (iI = 0; iI < GC.getNumUnitInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumUnitInfos(); iI++)
 				{
 					if (GC.getUnitInfo((UnitTypes)iI).getPrereqBuilding() == eBuilding)
 					{
@@ -4390,11 +4387,18 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				}
 				
 				// is this building needed to build other buildings?
-				for (iI = 0; iI < GC.getNumBuildingInfos(); iI++)
+				// for (iI = 0; iI < GC.getNumBuildingInfos(); iI++)
+				// K-Mod, loop through building classes, not buildings.
+				// Otherwise we'll be considering a bunch of buildings that we can't have anyway.
+				for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 				{
+					BuildingTypes eLoopBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings((BuildingClassTypes)iI); // K-Mod
+					if (eLoopBuilding == NO_BUILDING)
+						continue;
+
 					//int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(((BuildingTypes) iI), eBuildingClass);
 					// K-Mod
-					int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(((BuildingTypes) iI), eBuildingClass, iCountMaking);
+					int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, eBuildingClass, iCountMaking);
 
 					// if we need some of us to build iI building, and we dont need more than we have cities
 					if (iPrereqBuildings > 0 && iPrereqBuildings <= iNumCities)
@@ -4446,11 +4450,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							{
 								for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 								{
-									if (canConstruct((BuildingTypes)iI, false, true) && getProductionBuilding() != iI)
-										iHighestValue = std::max(pLoopCity->AI_buildingValue((BuildingTypes)iI, 0), iHighestValue);
+									if (canConstruct(eLoopBuilding, false, true) && getProductionBuilding() != eLoopBuilding)
+										iHighestValue = std::max(pLoopCity->AI_buildingValue(eLoopBuilding, 0), iHighestValue);
 								}
 
-								iTempValue = iHighestValue;
+								int iTempValue = iHighestValue;
 								iTempValue *= iCanBuildPrereq + 3*iPrereqBuildings;
 								iTempValue /= (iPrereqBuildings+1)*(3*iCanBuildPrereq + iPrereqBuildings);
 								// That's between 1/(iPrereqBuildings+1) and 1/3*(iPrereqBuildings+1), depending on # needed and # buildable
@@ -4469,7 +4473,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 /*                                                                                              */
 /* City AI, Victory Strategy AI                                                                 */
 /************************************************************************************************/					
-						iTempValue = 0;
+						int iTempValue = 0;
 						if (kBuilding.isStateReligion())
 						{
 							int iShareReligionCount = 0;
@@ -4545,7 +4549,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
 				{
 					// K-Mod - I've shuffled some parts of this code around.
-					iTempValue = 0;
+					int iTempValue = 0;
 
 					iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 15); // originally was /10
 					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 18 : 23)); // originally 12 : 15
@@ -4555,7 +4559,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
 					}
 
-					for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
+					for (int iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
 					{
 						if (hasBonus((BonusTypes)iJ))
 						{
@@ -4593,7 +4597,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iTempValue += (kBuilding.getGlobalSeaPlotYieldChange(iI) * kOwner.countNumCoastalCities() * 8);
 					iTempValue += (kBuilding.getYieldChange(iI) * 6);
 
-					for (iJ = 0; iJ < GC.getNumSpecialistInfos(); iJ++)
+					for (int iJ = 0; iJ < GC.getNumSpecialistInfos(); iJ++)
 					{
 						iTempValue += ((kBuilding.getSpecialistYieldChange(iJ, iI) * kOwner.getTotalPopulation()) / 5);
 					}
@@ -4631,8 +4635,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 					if (kBuilding.getSeaPlotYieldChange(YIELD_FOOD) > 0)
 					{
-					    
-					    iTempValue = kBuilding.getSeaPlotYieldChange(YIELD_FOOD) * AI_buildingSpecialYieldChangeValue(eBuilding, YIELD_FOOD);
+					    int iTempValue = kBuilding.getSeaPlotYieldChange(YIELD_FOOD) * AI_buildingSpecialYieldChangeValue(eBuilding, YIELD_FOOD);
 					    if ((iTempValue < 8) && (getPopulation() > 3))
 					    {
 					        // don't bother
@@ -4651,7 +4654,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				if (iFocusFlags & BUILDINGFOCUS_PRODUCTION)
 				{
-					iTempValue = ((kBuilding.getYieldModifier(YIELD_PRODUCTION) * getBaseYieldRate(YIELD_PRODUCTION)) / 20);
+					int iTempValue = ((kBuilding.getYieldModifier(YIELD_PRODUCTION) * getBaseYieldRate(YIELD_PRODUCTION)) / 20);
 					iTempValue += ((kBuilding.getPowerYieldModifier(YIELD_PRODUCTION) * getBaseYieldRate(YIELD_PRODUCTION)) / ((bProvidesPower || isPower()) ? 24 : 30));
 					if (kBuilding.getSeaPlotYieldChange(YIELD_PRODUCTION) > 0)
 					{
@@ -4683,7 +4686,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				if (iFocusFlags & BUILDINGFOCUS_GOLD)
 				{
-					iTempValue = ((kBuilding.getYieldModifier(YIELD_COMMERCE) * getBaseYieldRate(YIELD_COMMERCE)));
+					int iTempValue = ((kBuilding.getYieldModifier(YIELD_COMMERCE) * getBaseYieldRate(YIELD_COMMERCE)));
 					iTempValue *= kOwner.getCommercePercent(COMMERCE_GOLD);
 					
 					if (bFinancialTrouble)
@@ -4713,7 +4716,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			{
 				for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 				{
-					iTempValue = 0;
+					int iTempValue = 0;
 
 					iTempValue += (kBuilding.getCommerceChange(iI) * 4);
 					iTempValue += (kBuilding.getObsoleteSafeCommerceChange(iI) * 4);
@@ -4807,7 +4810,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 									bHaveEnough = false;
 								}
 
-								for (iJ = 0; bHaveEnough && iJ < GC.getNumBuildingClassInfos(); iJ++)
+								for (int iJ = 0; bHaveEnough && iJ < GC.getNumBuildingClassInfos(); iJ++)
 								{
 									// K-Mod: bug fix.
 									/* original bts code
@@ -4953,6 +4956,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					//iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
 					// K-Mod: consider the corporation for the whole civ, not just this city.
 					iCorpValue = kOwner.AI_corporationValue(eCorporation) * 3 * kOwner.getNumCities() / 2;
+					iCorpValue *= 4;
+					iCorpValue /= 100;
 						
 					for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
 					{
@@ -4984,8 +4989,6 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							}
 						}
 					}
-						
-					iTempValue += 4 * iCorpValue / 100;
 				}
 					
 				//if (iCorpValue >= 0)//Don't build if it'll hurt us.
@@ -5056,7 +5059,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			{
 				if (iFocusFlags & BUILDINGFOCUS_GOLD)
 				{
-					iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_GOLD) * getBaseCommerceRate(COMMERCE_GOLD)) / 40);
+					int iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_GOLD) * getBaseCommerceRate(COMMERCE_GOLD)) / 40);
 					
 					if (iTempValue != 0)
 					{
@@ -5085,7 +5088,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				if (iFocusFlags & BUILDINGFOCUS_RESEARCH)
 				{
-					iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_RESEARCH) * getBaseCommerceRate(COMMERCE_RESEARCH)) / 40);
+					int iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_RESEARCH) * getBaseCommerceRate(COMMERCE_RESEARCH)) / 40);
 					
 					if (iTempValue != 0)
 					{
@@ -5109,7 +5112,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				if (iFocusFlags & BUILDINGFOCUS_CULTURE)
 				{
-					iTempValue = (kBuilding.getCommerceChange(COMMERCE_CULTURE) * 3);
+					int iTempValue = (kBuilding.getCommerceChange(COMMERCE_CULTURE) * 3);
 					iTempValue += (kBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) * 3);
 					if (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 					{
@@ -5151,7 +5154,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				
                 if (iFocusFlags & BUILDINGFOCUS_BIGCULTURE)
 				{
-					iTempValue = (kBuilding.getCommerceModifier(COMMERCE_CULTURE) / 5);
+					int iTempValue = (kBuilding.getCommerceModifier(COMMERCE_CULTURE) / 5);
 					if (iTempValue != 0)
 					{
 						/*if (MAX_INT == aiCommerceRank[COMMERCE_CULTURE])
@@ -5181,7 +5184,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 /* City AI                                                                                      */
 /************************************************************************************************/
 // K-Mod, changed this section.
-					iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE) * getBaseCommerceRate(COMMERCE_ESPIONAGE)) / 50);
+					int iTempValue = ((kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE) * getBaseCommerceRate(COMMERCE_ESPIONAGE)) / 50);
 					
 					if (iTempValue != 0)
 					{

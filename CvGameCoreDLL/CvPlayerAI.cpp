@@ -12594,7 +12594,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		return 0;
 	}
 
-	int iCost = getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData);
+	//int iCost = getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData);
 
 	if (!canDoEspionageMission(eMission, eTargetPlayer, pPlot, iData, NULL))
 	{
@@ -12721,10 +12721,13 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 				if (GC.getEspionageMissionInfo(eMission).getBuyUnitCostFactor() > 0)
 				{
-					if (!canTrain(eUnit) || getProductionNeeded(eUnit) > iCost)
+					/*if (!canTrain(eUnit) || getProductionNeeded(eUnit) > iCost)
 					{
 						iValue += AI_unitValue(eUnit, (UnitAITypes)GC.getUnitInfo(eUnit).getDefaultUnitAIType(), pUnit->area());
-					}
+					}*/
+					// K-Mod. (this kind of mission is not enabled anyway.)
+					iValue += AI_unitValue(eUnit, (UnitAITypes)GC.getUnitInfo(eUnit).getDefaultUnitAIType(), pUnit->area());
+					iValue *= (canTrain(eUnit) ? 1 : 2);
 				}
 			}
 		}
@@ -12887,7 +12890,9 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	}
 
 	// K-Mod
-	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && iValue < 100*getCurrentEra() && iValue < 2*iCost)
+	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
+		&& iValue < 30*getCurrentEra()*getCurrentEra() // 30, 120, 270, 480, 750, ...
+		&& iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
 	{
 		return 0;
 	}
