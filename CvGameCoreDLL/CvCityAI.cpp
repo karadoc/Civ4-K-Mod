@@ -2593,6 +2593,8 @@ void CvCityAI::AI_chooseProduction()
 	iNeededSpies += isCapital() ? 1 : 0;
 	// K-Mod
 	iNeededSpies += (kPlayer.getCommerceRate(COMMERCE_ESPIONAGE)+50)/100;
+	iNeededSpies *= 100 + 3*kPlayer.AI_commerceWeight(COMMERCE_ESPIONAGE);
+	iNeededSpies /= 150;
 
 	if (iNumSpies < iNeededSpies)
 	{
@@ -4955,7 +4957,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				{
 					//iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
 					// K-Mod: consider the corporation for the whole civ, not just this city.
-					iCorpValue = kOwner.AI_corporationValue(eCorporation) * 3 * kOwner.getNumCities() / 2;
+					iCorpValue = kOwner.AI_corporationValue(eCorporation) * 2 * kOwner.getNumCities() / 3;
+					// Rescale from 100x commerce down to 4x commerce.
 					iCorpValue *= 4;
 					iCorpValue /= 100;
 						

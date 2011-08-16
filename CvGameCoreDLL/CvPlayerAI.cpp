@@ -1941,7 +1941,8 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 						iRazeValue += std::max(0, (70 - 15 * pCity->getPopulation()));
 					}
 
-					// Scale down distance/maintenance effects for organized
+					// Scale down distance/maintenance effects for organized. (disabled by K-Mod)
+					/*
 					if( iRazeValue > 0 )
 					{
 						for (iI = 0; iI < GC.getNumTraitInfos(); iI++)
@@ -1957,7 +1958,7 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 								}
 							}
 						}
-					}
+					} */
 
 					// Non-distance related aspects
 					iRazeValue += GC.getLeaderHeadInfo(getPersonalityType()).getRazeCityProb();
@@ -2058,8 +2059,10 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 
 	if( bRaze )
 	{
-		pCity->doTask(TASK_RAZE);
 		logBBAI("    Player %d (%S) decides to to raze city %S!!!", getID(), getCivilizationDescription(0), pCity->getName().GetCString() );
+		pCity->doTask(TASK_RAZE);
+		//logBBAI("    Player %d (%S) decides to to raze city %S!!!", getID(), getCivilizationDescription(0), pCity->getName().GetCString() );
+		// K-Mod moved the log message up - otherwise it will crash due to pCity being deleted!
 	}
 	else
 	{
@@ -2382,10 +2385,12 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			int iEspBehindWeight = 0;
 			int iEspAttackWeight = 0;
 			int iAllTeamTotalPoints = 0; // K-Mod
+			int iTeamCount = 0; // K-Mod
 			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 			{
 				CvTeamAI& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
-				if (kLoopTeam.isAlive() && iTeam != getTeam() && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
+				// K-Mod, added "has met"
+				if (kLoopTeam.isAlive() && iTeam != getTeam() && GET_TEAM(getTeam()).isHasMet((TeamTypes)iTeam) && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
 				{
 					/*
 					int iPointDiff = kLoopTeam.getEspionagePointsAgainstTeam(getTeam()) - GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
@@ -2399,6 +2404,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 					}*/
 					// K-Mod
 					iAllTeamTotalPoints += kLoopTeam.getEspionagePointsEver();
+					iTeamCount++;
 
 					int iTheirPoints = kLoopTeam.getEspionagePointsAgainstTeam(getTeam());
 					int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
@@ -2424,7 +2430,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			}
 			
 			// K-Mod
-			iAllTeamTotalPoints /= std::max(1, GET_TEAM(getTeam()).getHasMetCivCount(true));
+			iAllTeamTotalPoints /= std::max(1, iTeamCount);
 			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 2*iAllTeamTotalPoints, 6*iAllTeamTotalPoints);
 			iWeight /= 3 * iAllTeamTotalPoints;
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
@@ -2432,13 +2438,13 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 				iWeight *= 2;
 			}
 			//iWeight *= 2*iEspBehindWeight + (3*GET_TEAM(getTeam()).getHasMetCivCount(true))/4 + 1;
-			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + (3*GET_TEAM(getTeam()).getHasMetCivCount(true))/4 + 1;
+			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 1;
 			// K-Mod end
 			iWeight *= AI_getEspionageWeight();
-			iWeight /= GET_TEAM(getTeam()).getHasMetCivCount(true) + 1;
+			iWeight /= iTeamCount + 1;
 			iWeight /= 100;
 
-			if( getCommercePercent(COMMERCE_ESPIONAGE) == 0 )
+			/* if( getCommercePercent(COMMERCE_ESPIONAGE) == 0 )
 			{
 				iWeight *= 2;
 				iWeight /= 3;
@@ -2455,17 +2461,23 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			}
 			else
 			{
-				// AI Espionage slider use maxed out at 20 percent. (not in K-Mod...)
+				// AI Espionage slider use maxed out at 20 percent.
 				if( getCommercePercent(COMMERCE_ESPIONAGE) >= 20 )
 				{
 					iWeight *= 3;
 					iWeight /= 2;
 				}
-				if (getCommercePercent(COMMERCE_ESPIONAGE) > 30)
-				{
-					iWeight *= 2;
-					iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
-				}
+			} */
+			// K-Mod
+			if (AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || (isHuman() && getCommercePercent(COMMERCE_ESPIONAGE) >= 60))
+			{
+				iWeight *= 2;
+				iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
+			}
+			else
+			{
+				iWeight *= 100 + 2*getCommercePercent(COMMERCE_ESPIONAGE);
+				iWeight /= 110;
 			}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -3912,7 +3924,10 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves)
 	}
 
 	TeamTypes eTeam = getTeam();
-	bool bCheckBorder = (!isHuman() && !pPlot->isCity());
+	//bool bCheckBorder = (!isHuman() && !pPlot->isCity());
+	// K-Mod. I don't want auto-workers on the frontline; and Cities can be attacked too. 
+	bool bCheckBorder = true;
+
 	
 	if( bCheckBorder )
 	{
@@ -4137,7 +4152,8 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 
 	if (iBorderDanger > 0)
 	{
-	    if (!isHuman() && !pPlot->isCity())
+	    //if (!isHuman() && !pPlot->isCity())
+		// Commented out by K-Mod. I don't want auto-workers on the frontline; and Cities can be attacked too!
 	    {
             iCount += iBorderDanger;
 	    }
@@ -13943,6 +13959,11 @@ void CvPlayerAI::AI_doCommerce()
 				iMinModifier *= 100 + iStealMod;
 				iMinModifier /= 100;
 				// This number will be used while setting the espionage commerce slider
+			}
+			else if (eMinModTeam != NO_TEAM)
+			{
+				aiWeight[iTeam] *= 2;
+				aiWeight[iTeam] /= 3;
 			}
 			// note. bounds checks are done the set weight function
 			setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, aiWeight[iTeam]);

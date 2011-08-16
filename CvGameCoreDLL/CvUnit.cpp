@@ -3091,36 +3091,23 @@ bool CvUnit::canAutomate(AutomateTypes eAutomate) const
 		break;
 
 	case AUTOMATE_EXPLORE:
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/25/10                                jdog5000      */
-/*                                                                                              */
-/* Player Interface                                                                             */
-/************************************************************************************************/
-		if ( !canFight() )
-		{
-			// Enable exploration for air units
-			if((getDomainType() != DOMAIN_SEA) && (getDomainType() != DOMAIN_AIR))
-			{
-				if( !(alwaysInvisible()) || !(isSpy()) )
-				{
-					return false;
-				}
-			}
-		}
-
-		if( (getDomainType() == DOMAIN_IMMOBILE) )
+		/* original bts code
+		if ((!canFight() && (getDomainType() != DOMAIN_SEA)) || (getDomainType() == DOMAIN_AIR) || (getDomainType() == DOMAIN_IMMOBILE))
 		{
 			return false;
 		}
-
-		if( getDomainType() == DOMAIN_AIR && !canRecon(NULL) )
+		break; */
+		switch (getDomainType())
 		{
+		case DOMAIN_IMMOBILE:
 			return false;
+		case DOMAIN_LAND:
+			return canFight() || isSpy() || alwaysInvisible();
+		case DOMAIN_AIR:
+			return canRecon(NULL);
+		default: // sea
+			return true;
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
-
 		break;
 
 	case AUTOMATE_RELIGION:

@@ -22,6 +22,6 @@
 #define gUnitLogLevel   0
 #endif
 
-void logBBAI(char* format, ... );
+void logBBAI(TCHAR* format, ... );
 
 #endif  //BETTERBTSAI_H

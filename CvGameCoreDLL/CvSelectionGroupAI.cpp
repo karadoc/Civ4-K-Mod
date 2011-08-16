@@ -894,7 +894,8 @@ CvUnit* CvSelectionGroupAI::AI_ejectBestDefender(CvPlot* pDefendPlot)
 		pLoopUnit = ::getUnit(pEntityNode->m_data);
 		pEntityNode = nextUnitNode(pEntityNode);
 		
-		if (!pLoopUnit->noDefensiveBonus())
+		//if (!pLoopUnit->noDefensiveBonus())
+		// commented out by K-Mod. The noDefBonus thing is already taken into account.
 		{
 			int iValue = pLoopUnit->currEffectiveStr(pDefendPlot, NULL) * 100;
 			

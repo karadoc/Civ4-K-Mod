@@ -2774,6 +2774,16 @@ void CvUnitAI::AI_attackCityMove()
 	{
 		int iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
 		int iAttackRatio = std::max(100, GC.getBBAI_ATTACK_CITY_STACK_RATIO());
+		// K-Mod - I'm going to scale the attack ratio based on the quality of our units.
+		// this isn't the "right way" to do it, but it's better than nothing.
+		// (The /right way/ would be to estimate how good our odd would be after collateral damage, etc.)
+		{
+			int iOurValue = GET_PLAYER(getOwner()).getTypicalUnitValue(UNITAI_ATTACK_CITY);
+			int iTheirValue = GET_PLAYER(pTargetCity->getOwner()).getTypicalUnitValue(UNITAI_CITY_DEFENSE);
+			iAttackRatio *= iOurValue;
+			iAttackRatio /= std::max(1, iTheirValue);
+		}
+		// K-Mod end
 
 		if( isBarbarian() )
 		{
@@ -3365,22 +3375,18 @@ void CvUnitAI::AI_collateralMove()
 
 			pUnitNode = plot()->nextUnitNode(pUnitNode);
 		}
+		FAssert(iTally > 0);
+		FAssert(collateralDamageMaxUnits() > 0);
 
-		if (AI_anyAttack(1, 80 / (3 + iTally), 3 + 2*iTally))
+		do
 		{
-			// tell me what's going on, for testing.
-			//if (iTally >= 2/* && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3))*/)
-			//{
-			//	for (int iI = 0; iI < MAX_PLAYERS; iI++)
-			//	{
-			//		if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).isHuman())
-			//		{
-			//			gDLL->getInterfaceIFace()->addMessage((PlayerTypes)iI, false, GC.getEVENT_MESSAGE_TIME(), "K-Mod test", "AS2D_SQUISH", MESSAGE_TYPE_INFO, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), plot()->getX_INLINE(), plot()->getY_INLINE(), true, true);
-			//		}
-			//	}
-			//}
-			return;
-		}
+			if (AI_anyAttack(1, 80 / (3 + iTally), std::min(2*collateralDamageMaxUnits(), collateralDamageMaxUnits() + iTally - 1)))
+			{
+				return;
+			}
+			// Try again with just half the units, just in case our only problem is that we can't find a bit enough target stack.
+			iTally = (iTally-1)/2;
+		} while (iTally > 1);
 	}
 	// K-Mod end
 
@@ -3402,17 +3408,32 @@ void CvUnitAI::AI_collateralMove()
 		return;
 	}
 
-	/* original bts code. (I don't think we need to get this enthusiastic about 50% odds.)
 	if (AI_cityAttack(2, 50))
 	{
 		return;
-	} */
+	}
 
 	/* original bts code. (check again with a stricter threshold -> a waste of time)
 	if (AI_anyAttack(2, 60))
 	{
 		return;
 	}*/
+	// K-Mod
+	if (area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE)
+	{
+		const CvPlayerAI& kOwner = GET_PLAYER(getOwner());
+		// if more than a third of our floating defenders are collateral units, convert this one to city attack
+		if (3 * kOwner.AI_totalAreaUnitAIs(area(), UNITAI_COLLATERAL) > kOwner.AI_getTotalFloatingDefenders(area()))
+		{
+			if (kOwner.AI_unitValue(getUnitType(), UNITAI_ATTACK_CITY, area()) > 0)
+			{
+				AI_setUnitAIType(UNITAI_ATTACK_CITY);
+				return; // no mission pushed.
+			}
+		}
+	}
+	// K-Mod end
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
 /*                                                                                              */
@@ -10940,10 +10961,11 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 				//This unit is not suited for defense, skip the mission
 				//to protect this city but encourage others to defend instead.
 				getGroup()->pushMission(MISSION_SKIP);
+				/* original bts code (commented by K-Mod. Why the hell was this here?)
 				if (!isHurt())
 				{
 					finishMoves();
-				}
+				}*/
 			}
 			return true;
 		}
@@ -12957,7 +12979,7 @@ bool CvUnitAI::AI_lead(std::vector<UnitAITypes>& aeUnitAITypes)
 				CvWString szString;
 				getUnitAIString(szString, pBestUnit->AI_getUnitAIType());
 
-				logBBAI("      Great general %d for %S chooses to lead %S with UNITAI %S", getID(), GET_PLAYER(getOwner()).getCivilizationDescription(0), pBestUnit->getName(0).GetCString(), szString);
+				logBBAI("      Great general %d for %S chooses to lead %S with UNITAI %S", getID(), GET_PLAYER(getOwner()).getCivilizationDescription(0), pBestUnit->getName(0).GetCString(), szString.GetCString());
 			}
 			getGroup()->pushMission(MISSION_LEAD, pBestUnit->getID());
 			return true;
@@ -14610,7 +14632,8 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 
 									// If stack has poor bombard, direct towards lower defense cities
-									iPathTurns += std::min(12, getGroup()->getBombardTurns(pLoopCity)/4);
+									//iPathTurns += std::min(12, getGroup()->getBombardTurns(pLoopCity)/4);
+									iPathTurns += std::min(6, getGroup()->getBombardTurns(pLoopCity)/4); // K-Mod. That's 24 turns!
 
 									iValue /= (4 + iPathTurns*iPathTurns);
 
