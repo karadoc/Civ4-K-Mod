@@ -10220,7 +10220,6 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 	CvUnit* pLoopUnit;
 	CvUnit* pBestUnit;
 	int iPathTurns;
-	int iValue;
 	int iBestValue;
 	int iLoop;
 
@@ -10323,13 +10322,23 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 															{
 																if (iPathTurns <= iMaxPath)
 																{
+																	/* original code
 																	iValue = 1000 * (iPathTurns + 1);
 																	iValue *= 4 + pLoopGroup->getCargo();
 																	iValue /= pLoopGroup->getNumUnits();
+																	*/
+																	// K-Mod
+																	int iCost = 100 * iPathTurns * iPathTurns + 1;
+																	iCost *= 4 + pLoopGroup->getCargo();
+																	iCost /= pLoopGroup->getNumUnits();
+																	int iSizeMod = 10*std::max(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
+																	iSizeMod /= std::min(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
+																	iCost *= iSizeMod * iSizeMod;
+																	iCost /= 10000;
 
-																	if (iValue < iBestValue)
+																	if (iCost < iBestValue)
 																	{
-																		iBestValue = iValue;
+																		iBestValue = iCost;
 																		pBestUnit = pLoopUnit;
 																	}
 																}
