@@ -10,8 +10,7 @@
 	 author="PieceOfMind" 
 	 version="1.0" 
 	 date="04/18/2009" 
-	 url="http://forums.civfanatics.com/showthread.php?t=310415"
-	 dll="1">
+	 url="http://forums.civfanatics.com/showthread.php?t=310415">
 	 
 	<options id="ACO" file="Advanced Combat Odds.ini">
 		<section id="ACO">

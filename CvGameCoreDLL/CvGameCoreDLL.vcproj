@@ -81,6 +81,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CvBugOptions.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\CvCity.cpp"
 				>
 			</File>
@@ -488,6 +492,10 @@
 			</File>
 			<File
 				RelativePath=".\CvArtFileMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CvBugOptions.h"
 				>
 			</File>
 			<File
