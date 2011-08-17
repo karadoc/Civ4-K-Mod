@@ -114,15 +114,6 @@ public:
 	void AI_chooseFreeTech();
 	void AI_chooseResearch();
 
-/*
-** K-Mod, 1/mar/11, karadoc
-** experimental AI functions
-*/
-	//int KAI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const;
-/*
-** K-Mod end
-*/
-
 	DllExport DiploCommentTypes AI_getGreeting(PlayerTypes ePlayer) const;
 	bool AI_isWillingToTalk(PlayerTypes ePlayer) const;
 	bool AI_demandRebukedSneak(PlayerTypes ePlayer) const;

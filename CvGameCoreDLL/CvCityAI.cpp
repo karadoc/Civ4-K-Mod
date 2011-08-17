@@ -735,11 +735,7 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist)
 	return iValue;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/22/09                                jdog5000      */
-/*                                                                                              */
-/* City AI, War Strategy AI                                                                     */
-/************************************************************************************************/
+// Heavily edited by BBAI and K-Mod
 void CvCityAI::AI_chooseProduction()
 {
 	PROFILE_FUNC();
@@ -858,6 +854,7 @@ void CvCityAI::AI_chooseProduction()
 	bLandWar = ((pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (pArea->getAreaAIType(getTeam()) == AREAAI_MASSING));
 	bDefenseWar = (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE);
 	bool bAssaultAssist = (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_ASSIST);
+	bool bTotalWar = GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true); // K-Mod
 	bAssault = bAssaultAssist || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT) || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_MASSING);
 	bPrimaryArea = kPlayer.AI_isPrimaryArea(pArea);
 	bFinancialTrouble = kPlayer.AI_isFinancialTrouble();
@@ -1912,7 +1909,9 @@ void CvCityAI::AI_chooseProduction()
 	//also very good for giving cultural cities first dibs on wonders
     if (bImportantCity && (iCultureRateRank <= iCulturalVictoryNumCultureCities))
     {
-        if (iCultureRateRank == iCulturalVictoryNumCultureCities)
+		int iWarScore = (bLandWar? 4: 0) + (bTotalWar? 4: 0) + (bDefenseWar? 4: 0);
+        //if (iCultureRateRank == iCulturalVictoryNumCultureCities)
+		if (iCultureRateRank == iCulturalVictoryNumCultureCities && GC.getGameINLINE().getSorenRandNum(10, "AI Build up Culture") >= iWarScore)
         {
             if (AI_chooseBuilding(BUILDINGFOCUS_BIGCULTURE | BUILDINGFOCUS_CULTURE | BUILDINGFOCUS_WONDEROK, 40))
             {
@@ -1920,7 +1919,8 @@ void CvCityAI::AI_chooseProduction()
                 return;
             }
 		}
-        else if (GC.getGameINLINE().getSorenRandNum(((iCultureRateRank == 1) ? 4 : 1) + iCulturalVictoryNumCultureCities * 2 + (bLandWar ? 5 : 0), "AI Build up Culture") < iCultureRateRank)
+        //else if (GC.getGameINLINE().getSorenRandNum(((iCultureRateRank == 1) ? 4 : 1) + iCulturalVictoryNumCultureCities * 2 + (bLandWar ? 5 : 0), "AI Build up Culture") < iCultureRateRank)
+		else if (GC.getGameINLINE().getSorenRandNum(((iCultureRateRank == 1) ? 4 : 1) + iCulturalVictoryNumCultureCities * 2 + iWarScore, "AI Build up Culture") < iCultureRateRank)
         {
             if (AI_chooseBuilding(BUILDINGFOCUS_BIGCULTURE | BUILDINGFOCUS_CULTURE | BUILDINGFOCUS_WONDEROK, (bLandWar ? 20 : 40)))
             {
@@ -1981,7 +1981,7 @@ void CvCityAI::AI_chooseProduction()
 	if (!bDanger && (!hasActiveWorldWonder() || (kPlayer.getNumCities() > 3)))
 	{
 		// For civ at war, don't build wonders if losing
-		if( !bLandWar || (iWarSuccessRatio > -30) )
+		if (!bTotalWar && (!bLandWar || iWarSuccessRatio > -30))
 		{	
 			int iWonderTime = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
 			iWonderTime /= 5;
@@ -2626,8 +2626,9 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	if ((iProductionRank <= ((kPlayer.getNumCities() > 8) ? 3 : 2))
-		&& (getPopulation() > 3))
+	//if ((iProductionRank <= ((kPlayer.getNumCities() > 8) ? 3 : 2))
+	// Ideally we'd look at relative production, not just rank.
+	if (iProductionRank <= kPlayer.getNumCities()/9 + 2	&& getPopulation() > 3)
 	{
 		int iWonderRand = 8 + GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
 		
@@ -2649,6 +2650,12 @@ void CvCityAI::AI_chooseProduction()
 		}
 		
 		if (bAggressiveAI)
+		{
+			iWonderRand *= 2;
+			iWonderRand /= 3;
+		}
+
+		if (bLandWar && bTotalWar)
 		{
 			iWonderRand *= 2;
 			iWonderRand /= 3;
@@ -2754,6 +2761,10 @@ void CvCityAI::AI_chooseProduction()
 	    }
 	}
 
+	// K-Mod. I'm disabling a few of these "choose building" checks.
+	// I suspect they do very little other than use CPU time.
+	// If the building is good enough, it will get chosen by the general chooseBuilding function.
+
 	if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20, 4))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 2", getName().GetCString());
@@ -2761,20 +2772,20 @@ void CvCityAI::AI_chooseProduction()
 	}
 	
 	//20 means 5g or ~2 happiness...
-	if (AI_chooseBuilding(iEconomyFlags, 15, 20))
+	/*if (AI_chooseBuilding(iEconomyFlags, 15, 20))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 2", getName().GetCString());
 		return;
-	}
+	}*/ // K-Mod
 
 
 	if (!bLandWar)
 	{
-		if (AI_chooseBuilding(iEconomyFlags, 40, 8))
+		/*if (AI_chooseBuilding(iEconomyFlags, 40, 8))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 3", getName().GetCString());
 			return;
-		}
+		}*/ // K-Mod
 
 		if (iCulturePressure > 50)
 		{
@@ -2799,14 +2810,14 @@ void CvCityAI::AI_chooseProduction()
 			}
 		}
 
-		if (getBaseYieldRate(YIELD_PRODUCTION) >= 8)
+		/*if (getBaseYieldRate(YIELD_PRODUCTION) >= 8)
 		{
 			if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 80))
 			{
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 3", getName().GetCString());
 				return;
 			}
-		}
+		}*/ // K-Mod
 	}
 
 	if (!bUnitExempt && plot()->plotCheck(PUF_isUnitAIType, UNITAI_CITY_COUNTER, -1, getOwnerINLINE()) == NULL)
@@ -2817,8 +2828,9 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	// we do a similar check lower, in the landwar case
-	if (!bLandWar && bFinancialTrouble)
+	// we do a similar check lower, in the landwar case. (umm. no you don't. I'm changing this.)
+	//if (!bLandWar && bFinancialTrouble)
+	if (bFinancialTrouble)
 	{
 		if (AI_chooseBuilding(BUILDINGFOCUS_GOLD))
 		{
@@ -2845,20 +2857,16 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	// BBAI TODO: Temporary for testing
-	//if( getOwnerINLINE()%2 == 1 )
-	//{
-		// Only cities with reasonable production
-		if ((iProductionRank <= ((kPlayer.getNumCities() > 8) ? 3 : 2))
+	// Only cities with reasonable production
+	if ((iProductionRank <= ((kPlayer.getNumCities() > 8) ? 3 : 2))
 		&& (getPopulation() > 3))
+	{
+		if (AI_chooseProject())
 		{
-			if (AI_chooseProject())
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2", getName().GetCString());
-				return;
-			}
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2", getName().GetCString());
+			return;
 		}
-	//}
+	}
 
 	if (AI_chooseBuilding())
 	{
@@ -2879,10 +2887,6 @@ void CvCityAI::AI_chooseProduction()
 		return;
 	}
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAITypes* peBestUnitAI)
 {
@@ -3055,6 +3059,20 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 					}
 				}
 			}
+			// K-Mod
+			if (bLandWar && !bDefense && GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true))
+			{
+				// if we're winning, then focus on capturing cities.
+				int iSuccessRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
+				if (iSuccessRatio > 0)
+				{
+					aiUnitAIVal[UNITAI_ATTACK] += iSuccessRatio * iMilitaryWeight / 1200;
+					aiUnitAIVal[UNITAI_ATTACK_CITY] += iSuccessRatio * iMilitaryWeight / 600;
+					aiUnitAIVal[UNITAI_COUNTER] += iSuccessRatio * iMilitaryWeight / 1200;
+					aiUnitAIVal[UNITAI_PARADROP] += iSuccessRatio * iMilitaryWeight / 600;
+				}
+			}
+			// K-Mod end
 		}
 	}
 

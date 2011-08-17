@@ -5511,7 +5511,7 @@ void CvUnitAI::AI_spyMove()
 		}
 	}
 	
-	if (iSpontaneousChance > 0 && (plot()->isCity() || (plot()->getNonObsoleteBonusType(getTeam()) != NO_BONUS)))
+	if (iSpontaneousChance > 0 && (plot()->isCity() || plot()->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS))
 	{
 		if (GC.getGame().getSorenRandNum(7, "AI Spy Skip Turn") > 0)
 		{
@@ -11159,7 +11159,7 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 	CvPlot* pLoopPlot;
 	CvPlot* pBestPlot;
 	CvPlot* pBestGuardPlot;
-	ImprovementTypes eImprovement;
+	//ImprovementTypes eImprovement; // K-Mod made this obsolete
 	BonusTypes eNonObsoleteBonus;
 	int iPathTurns;
 	int iValue;
@@ -11178,42 +11178,37 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 		{
 			if (pLoopPlot->getOwnerINLINE() == getOwnerINLINE())
 			{
-				eNonObsoleteBonus = pLoopPlot->getNonObsoleteBonusType(getTeam());
+				eNonObsoleteBonus = pLoopPlot->getNonObsoleteBonusType(getTeam(), true);
 
 				if (eNonObsoleteBonus != NO_BONUS)
 				{
-					eImprovement = pLoopPlot->getImprovementType();
+					iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus);
 
-					if ((eImprovement != NO_IMPROVEMENT) && GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
+					iValue += std::max(0, 200 * GC.getBonusInfo(eNonObsoleteBonus).getAIObjective());
+
+					if (pLoopPlot->getPlotGroupConnectedBonus(getOwnerINLINE(), eNonObsoleteBonus) == 1)
 					{
-						iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus);
+						iValue *= 2;
+					}
 
-						iValue += std::max(0, 200 * GC.getBonusInfo(eNonObsoleteBonus).getAIObjective());
-
-						if (pLoopPlot->getPlotGroupConnectedBonus(getOwnerINLINE(), eNonObsoleteBonus) == 1)
+					if (iValue > iMinValue)
+					{
+						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 						{
-							iValue *= 2;
-						}
-
-						if (iValue > iMinValue)
-						{
-							if (!(pLoopPlot->isVisibleEnemyUnit(this)))
+							// BBAI TODO: Multiple defenders for higher value resources?
+							if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_GUARD_BONUS, getGroup()) == 0)
 							{
-								// BBAI TODO: Multiple defenders for higher value resources?
-								if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_GUARD_BONUS, getGroup()) == 0)
+								if (generatePath(pLoopPlot, 0, true, &iPathTurns))
 								{
-									if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+									iValue *= 1000;
+
+									iValue /= (iPathTurns + 1);
+
+									if (iValue > iBestValue)
 									{
-										iValue *= 1000;
-
-										iValue /= (iPathTurns + 1);
-
-										if (iValue > iBestValue)
-										{
-											iBestValue = iValue;
-											pBestPlot = getPathEndTurnPlot();
-											pBestGuardPlot = pLoopPlot;
-										}
+										iBestValue = iValue;
+										pBestPlot = getPathEndTurnPlot();
+										pBestGuardPlot = pLoopPlot;
 									}
 								}
 							}
@@ -22179,7 +22174,7 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 			}
 			else
 			{
-				BonusTypes eBonus = pPlot->getNonObsoleteBonusType(getTeam());
+				BonusTypes eBonus = pPlot->getNonObsoleteBonusType(getTeam(), true);
 				if (eBonus != NO_BONUS)
 				{
 					iValue += GET_PLAYER(pPlot->getOwnerINLINE()).AI_baseBonusVal(eBonus) - 10;
@@ -22326,7 +22321,7 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 		{
 			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iX, iY);
 
-			if (NULL != pLoopPlot && pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
+			if (NULL != pLoopPlot && pLoopPlot->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS)
 			{
 				if( pLoopPlot->isOwned() && pLoopPlot->getTeam() != getTeam() )
 				{
@@ -22865,7 +22860,7 @@ int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 	}
 	
 	iBonusValue = 0;
-	eNonObsoleteBonus = pPlot->getNonObsoleteBonusType(pPlot->getTeam());
+	eNonObsoleteBonus = pPlot->getNonObsoleteBonusType(pPlot->getTeam(), true);
 	if (eNonObsoleteBonus != NO_BONUS)
 	{
 		iBonusValue = (GET_PLAYER(pPlot->getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus));

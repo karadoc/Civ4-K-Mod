@@ -2408,15 +2408,20 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 
 					int iTheirPoints = kLoopTeam.getEspionagePointsAgainstTeam(getTeam());
 					int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
+					int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
+					iTheirPoints -= (iTheirPoints*iAttitude)/(2*12);
+
 					if (iTheirPoints > iOurPoints)
 					{
 						iEspBehindWeight += 1;
-						if (kLoopTeam.AI_getAttitude(getTeam()) <= ATTITUDE_CAUTIOUS)
+						if (kLoopTeam.AI_getAttitude(getTeam()) <= ATTITUDE_CAUTIOUS
+							&& GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 						{
 							iEspBehindWeight += 1;
 						}
 					}
-					if (GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
+					if ((GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
+						&& GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 						|| GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
 					{
 						iEspAttackWeight += 1;
@@ -13640,8 +13645,6 @@ void CvPlayerAI::AI_doCommerce()
 
 			iIdealPercent /= getNumCities();
 
-			iIdealPercent -= (iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
-
 			// K-Mod
 			int iCap = 20;
 			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
@@ -13654,6 +13657,7 @@ void CvPlayerAI::AI_doCommerce()
 				iIdealPercent+=5;
 				iCap += 20;
 			}
+			iIdealPercent -= (iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
 			//iIdealPercent = std::min(iIdealPercent, 20);
 			iIdealPercent = std::min(iIdealPercent, iCap);
 			// K-Mod end
@@ -13766,6 +13770,29 @@ void CvPlayerAI::AI_doCommerce()
 		int iApproxTechCost = 0;
 		TeamTypes eMinModTeam = NO_TEAM;
 
+		// For this part of the AI, I will assume there is only mission for each purpose.
+		EspionageMissionTypes eSeeDemographicsMission = NO_ESPIONAGEMISSION;
+		EspionageMissionTypes eSeeResearchMission = NO_ESPIONAGEMISSION;
+		EspionageMissionTypes eStealTechMission = NO_ESPIONAGEMISSION;
+		EspionageMissionTypes eCityRevoltMission = NO_ESPIONAGEMISSION; // Not used yet.
+
+		for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+		{
+			CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
+				
+			if (kMissionInfo.isSeeDemographics())
+				eSeeDemographicsMission = (EspionageMissionTypes)iMission;
+
+			if (kMissionInfo.isSeeResearch())
+				eSeeResearchMission = (EspionageMissionTypes)iMission;
+
+			if (kMissionInfo.getBuyTechCostFactor() != 0)
+				eStealTechMission = (EspionageMissionTypes)iMission;
+
+			if (kMissionInfo.getCityRevoltCounter() > 0)
+				eCityRevoltMission = (EspionageMissionTypes)iMission;
+		}
+
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 		{
 			aiTarget[iTeam] = 0;
@@ -13781,31 +13808,22 @@ void CvPlayerAI::AI_doCommerce()
 				int iTheirEspPoints = kLoopTeam.getEspionagePointsAgainstTeam(getTeam());
 				int iOurEspPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
 				int iDesiredMissionPoints = 0;
-				int iDesiredEspPoints = 0;
-					
+				int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
+
 				aiWeight[iTeam] = 6;
 				int iRateDivisor = 12;
 
-				if( GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN )
+				if (GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
 				{
 					iTheirEspPoints *= 3;
 					iTheirEspPoints /= 2;
 
-					for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+					int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
+					iMissionCost *= 12;
+					iMissionCost /= 10;
+					if (iDesiredMissionPoints < iMissionCost)
 					{
-						CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-							
-						if( kMissionInfo.isPassive() )
-						{
-							if( kMissionInfo.isSeeDemographics() || kMissionInfo.isSeeResearch() )
-							{
-								int iMissionCost = (11*getEspionageMissionCost((EspionageMissionTypes)iMission, GET_TEAM((TeamTypes)iTeam).getLeaderID(), NULL, -1, NULL))/10;
-								if( iDesiredMissionPoints < iMissionCost )
-								{
-									iDesiredMissionPoints = iMissionCost;
-								}
-							}
-						}
+						iDesiredMissionPoints = iMissionCost;
 					}
 
 					iRateDivisor -= 2;
@@ -13814,56 +13832,37 @@ void CvPlayerAI::AI_doCommerce()
 				}
 				else
 				{
-					int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
-
 					iTheirEspPoints -= (iTheirEspPoints*iAttitude)/(2*12);
 
-					if( iAttitude <= -3 )
+					if (iAttitude <= -3)
 					{
-						for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+						int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
+						iMissionCost *= 11;
+						iMissionCost /= 10;
+						if( iDesiredMissionPoints < iMissionCost )
 						{
-							CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-								
-							if( kMissionInfo.isPassive() )
-							{
-								if( kMissionInfo.isSeeDemographics() || kMissionInfo.isSeeResearch() )
-								{
-									int iMissionCost = (11*getEspionageMissionCost((EspionageMissionTypes)iMission, GET_TEAM((TeamTypes)iTeam).getLeaderID(), NULL, -1, NULL))/10;
-									if( iDesiredMissionPoints < iMissionCost )
-									{
-										iDesiredMissionPoints = iMissionCost;
-									}
-								}
-							}
+							iDesiredMissionPoints = iMissionCost;
 						}
 					}
-					else if( iAttitude < 3 )
+					else if (iAttitude < 3)
 					{
-						for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+						int iMissionCost = getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID());
+						iMissionCost *= 11;
+						iMissionCost /= 10;
+						if( iDesiredMissionPoints < iMissionCost )
 						{
-							CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-								
-							if( kMissionInfo.isPassive() )
-							{
-								if( kMissionInfo.isSeeDemographics() )
-								{
-									int iMissionCost = (11*getEspionageMissionCost((EspionageMissionTypes)iMission, GET_TEAM((TeamTypes)iTeam).getLeaderID(), NULL, -1, NULL))/10;
-									if( iDesiredMissionPoints < iMissionCost )
-									{
-										iDesiredMissionPoints = iMissionCost;
-									}
-								}
-							}
+							iDesiredMissionPoints = iMissionCost;
 						}
 					}
-
-					iRateDivisor += (iAttitude/5);
-					aiWeight[iTeam] -= (iAttitude/3);
 				}
-				if( GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam) )
+
+				iRateDivisor += (iAttitude/5);
+				aiWeight[iTeam] -= (iAttitude/3);
+				if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 				{
-					aiWeight[iTeam] += 6;
-					iRateDivisor -= 2;
+					aiWeight[iTeam] *= 2;
+					aiWeight[iTeam] = std::max(0, aiWeight[iTeam]);
+					iRateDivisor -= 3;
 				}
 
 				// Individual player targeting
@@ -13880,10 +13879,10 @@ void CvPlayerAI::AI_doCommerce()
 							int iTargetCities = 0;
 							for (pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 							{
-								if (pLoopCity->area() != NULL && pLoopCity->area()->getCitiesPerPlayer(getID()) > 2)
+								if (pLoopCity->area() != NULL && AI_isPrimaryArea(pLoopCity->area()))
 								{
 									iTargetCities++;
-									iModifier += getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, kLoopTeam.getLeaderID(), pLoopCity->plot());
+									iModifier += getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, (PlayerTypes)iPlayer, pLoopCity->plot());
 								}
 							}
 							if (iTargetCities > 0)
@@ -13891,7 +13890,7 @@ void CvPlayerAI::AI_doCommerce()
 								iModifier /= iTargetCities; // average modifier of targetable cities
 
 								if (iModifier < iMinModifier ||
-									(iModifier == iMinModifier && GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam) < GET_TEAM(getTeam()).AI_getAttitudeVal(eMinModTeam)))
+									(iModifier == iMinModifier && iAttitude < GET_TEAM(getTeam()).AI_getAttitudeVal(eMinModTeam)))
 								{
 									// do they have any techs we can steal?
 									bool bValid = false;
@@ -13915,10 +13914,20 @@ void CvPlayerAI::AI_doCommerce()
 						}
 					}
 				}
+				if (iTheirEspPoints > iDesiredMissionPoints
+					&& GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_CAUTIOUS)
+				{
+					iRateDivisor += 1;
+					// scale by esp points ever, so that we don't fall over ourselves trying to catch up with
+					// a civ that happens to be running an espionage economy.
+					int iOurTotal = GET_TEAM(getTeam()).getEspionagePointsEver();
+					int iTheirTotal = kLoopTeam.getEspionagePointsEver();
+					iTheirEspPoints *= iOurTotal;
+					iTheirEspPoints /= std::max(1, iTheirTotal);
+					iDesiredMissionPoints = std::max(iTheirEspPoints, iDesiredMissionPoints);
+				}
 
-				iDesiredEspPoints = std::max(iTheirEspPoints,iDesiredMissionPoints);
-
-				aiTarget[iTeam] = (iDesiredEspPoints - iOurEspPoints)/std::max(6,iRateDivisor);
+				aiTarget[iTeam] = (iDesiredMissionPoints - iOurEspPoints)/std::max(6,iRateDivisor);
 
 				if( aiTarget[iTeam] > 0 )
 				{
@@ -13931,50 +13940,44 @@ void CvPlayerAI::AI_doCommerce()
 		bool bCheapTechSteal = false;
 		if (eMinModTeam != NO_TEAM && !AI_avoidScience() && !isNoResearchAvailable())
 		{
-			iMinModifier *= 100 - GC.getDefineINT("MAX_FORTIFY_TURNS") * GC.getDefineINT("ESPIONAGE_EACH_TURN_UNIT_COST_DECREASE");
-			iMinModifier /= 100;
-			int iStealMod = 100000; // arbitrary large number - until we find the real modifier.
-			for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
+			if (eStealTechMission != NO_ESPIONAGEMISSION)
 			{
-				CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-				if (kMissionInfo.getBuyTechCostFactor() != 0)
-				{
-					if (kMissionInfo.getBuyTechCostFactor() < iStealMod)
-					{
-						iStealMod = kMissionInfo.getBuyTechCostFactor();
-					}
-				}
-			}
-			iMinModifier *= 100 + iStealMod;
-			iMinModifier /= 100;
-			// This is the espionage cost modifier for stealing techs.
+				iMinModifier *= 100 - GC.getDefineINT("MAX_FORTIFY_TURNS") * GC.getDefineINT("ESPIONAGE_EACH_TURN_UNIT_COST_DECREASE");
+				iMinModifier /= 100;
+				iMinModifier *= 100 + GC.getEspionageMissionInfo(eStealTechMission).getBuyTechCostFactor();
+				iMinModifier /= 100;
+				// This is the espionage cost modifier for stealing techs.
 
-			// lets say "cheap" means 70% of the research cost.
-			bCheapTechSteal = (7000 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
-			if (bCheapTechSteal)
-			{
-				aiTarget[iTeam] += iApproxTechCost / 10;
-				iEspionageTargetRate += iApproxTechCost / 10;
-				// I'm just using iApproxTechCost to get a rough sense of scale.
-				// cf. (iDesiredEspPoints - iOurEspPoints)/std::max(6,iRateDivisor);
+				// lets say "cheap" means 70% of the research cost.
+				bCheapTechSteal = (7000 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
+				if (bCheapTechSteal)
+				{
+					aiTarget[eMinModTeam] += iApproxTechCost / 10;
+					iEspionageTargetRate += iApproxTechCost / 10;
+					// I'm just using iApproxTechCost to get a rough sense of scale.
+					// cf. (iDesiredEspPoints - iOurEspPoints)/std::max(6,iRateDivisor);
+				}
 			}
 		}
 
 
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 		{
-			if( aiTarget[iTeam] > 0 )
+			if (aiTarget[iTeam] > 0)
 			{
 				//aiWeight[iTeam] += (150*aiTarget[iTeam])/std::max(4,iEspionageTargetRate);
 				aiWeight[iTeam] += (100*aiTarget[iTeam])/std::max(4,iEspionageTargetRate);
 			}
-			else if( aiTarget[iTeam] < 0 )
+			else if (aiTarget[iTeam] < 0)
 			{
-				aiWeight[iTeam] += 2*aiTarget[iTeam];
+				if (iTeam != eMinModTeam &&
+					(!isMaliciousEspionageTarget(GET_TEAM((TeamTypes)iTeam).getLeaderID()) || !GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam)))
+					aiWeight[iTeam] = 0;
 			}
 			if (iTeam == eMinModTeam)
 			{
-				aiWeight[iTeam]++;
+				aiWeight[iTeam] *= 3;
+				aiWeight[iTeam] /= 2;
 			}
 			else if (eMinModTeam != NO_TEAM && bCheapTechSteal)
 			{
@@ -18595,7 +18598,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 							iWarCount++;
 						}
 
-						// K-Mod. (if we attack with our defenders, would they be beat their defenders?)
+						// K-Mod. (if we attack with our defenders, would they beat their defenders?)
 						if (100*iTypicalDefence >= 110 * GET_TEAM((TeamTypes)iI).getTypicalUnitValue(UNITAI_CITY_DEFENSE))
 						{
 							iCrushValue += 2;

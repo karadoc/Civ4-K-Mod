@@ -5602,7 +5602,7 @@ BonusTypes CvPlot::getBonusType(TeamTypes eTeam) const
 }
 
 
-BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam) const
+BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckImprovement) const // K-Mod added bCheckImprovement
 {
 	FAssert(eTeam != NO_TEAM);
 
@@ -5613,6 +5613,15 @@ BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam) const
 		{
 			return NO_BONUS;
 		}
+		// K-Mod
+		if (bCheckImprovement)
+		{
+			if (getImprovementType() == NO_IMPROVEMENT || !GC.getImprovementInfo(getImprovementType()).isImprovementBonusTrade(eBonus))
+			{
+				return NO_BONUS;
+			}
+		}
+		// K-Mod end
 	}
 
 	return eBonus;
