@@ -455,11 +455,21 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 
 						if (AI_isChosenWar((TeamTypes)iI))
 						{
-							bChosenTargets = true;
-
-							if ((isAtWar((TeamTypes)iI)) ? (AI_getAtWarCounter((TeamTypes)iI) < 10) : AI_isSneakAttackReady((TeamTypes)iI))
+							//// K-Mod. Lets just say it's only really a "chosen war" if we're not losing too badly.
+							//// The follow code mimics the !bLosingBig test I wrote for forced peace votes.
+							//long iWarPowerRatio = GET_TEAM((TeamTypes)iI).AI_getWarSuccess(getID());
+							//iWarPowerRatio *= GET_TEAM((TeamTypes)iI).getPower(false); // not sure if I should use true or false for this.
+							//iWarPowerRatio /= std::max(1, (AI_getWarSuccess((TeamTypes)iI) + 2 * GC.getDefineINT("WAR_SUCCESS_CITY_CAPTURING")));
+							//iWarPowerRatio /= std::max(1, getPower(false));
+							//if (iWarPowerRatio < 2)
+							//// K-Mod end
 							{
-								bDeclaredTargets = true;
+								bChosenTargets = true;
+
+								if ((isAtWar((TeamTypes)iI)) ? (AI_getAtWarCounter((TeamTypes)iI) < 10) : AI_isSneakAttackReady((TeamTypes)iI))
+								{
+									bDeclaredTargets = true;
+								}
 							}
 						}
 					}
@@ -547,7 +557,6 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 			}
 
 			iMilitaryWeight /= iCount;
-			
 			if ((countNumAIUnitsByArea(pArea, UNITAI_ATTACK) + countNumAIUnitsByArea(pArea, UNITAI_ATTACK_CITY) + countNumAIUnitsByArea(pArea, UNITAI_PILLAGE) + countNumAIUnitsByArea(pArea, UNITAI_ATTACK_AIR)) > (((iMilitaryWeight * iOffensiveThreshold) / 100) + 1))
 			{
 				return AREAAI_OFFENSIVE;
