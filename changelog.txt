@@ -1,5 +1,45 @@
-This is K-Mod version 0.97.
+This is K-Mod version 0.98.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.98 changelist
+
++ Added the Advanced Combat Odds mod. [You can activate it from the BUG options menu.]
++ Changed the way stolen gold is calculated for espionage missions. [Previously, the amount of gold stolen was inversely proportional to the target civs number of cities!]
++ Changed the way switch civic / religion costs are calculated for espionage missions. [The cost now scales with the size of the civ.]
++ Added 4 culture to the Kremlin.
+
++ Tweaked the AI's conscription decision making.
++ Fixed a BBAI bug which was preventing the AI from ever using their "crush" strategy!
++ Made many adjustments to the (now enabled) crush strategy.
++ Adjusted the build probabilities of different unit types.
++ Added new attack conditions for collateral unit AI. [to try to fix the problem of the AI stockpiling collateral units for 'defence', but never using them.]
+
++ The AI will now try to recognise when its units are out of date, and thus aim for tech which will help them.
++ Changed tech unit value to be reduced if other prereqs are missing. [So that, for example, the unit value of assembly line is not higher then rifling if you don't have rifling!]
++ Unit value is awarded for secondary tech prereqs if the player already has the primary prereq.
+
++ Fixed an original BtS bug which would sometimes prevent AI spies from doing any espionage missions.
++ Rewrote the AI's decision making process for choosing the best espionage mission. [You're probably use to the AI just using Poison Water Supply over and over; so brace yourself for some more painful missions.]
++ Reworked most of the spy unit AI code; choosing target cities etc.
++ Changed many parts of the AI's espionage strategies. (points targeting etc.)
++ Implemented a new AI strategy: espionage economy. The way it works is that when the AI recognises that stealing techs is significantly cheaper than researching them - it may choose to focus on espionage instead of research. [The conditions for this strategy are pretty strict. Don't be surprised if you never see the AI try it.]
+
++ Rewrote most of the decision making process for "Force Peace" votes, to take into account relative power. [Previously, if an AI player had lost a few more units in the war, then it would vote for peace even if it was much stronger and even if aiming for a conquest victory!]
++ Replaced most of the AI's great person usage decisions with a new decision making process. [Before this change, the AI would _always_ use its great spies to build Scotland yard, unless every city already had it. The logic process was quite absurd.]
++ Added some personality-based changes to city site evaluation.
++ Fixed some problems in the way the AIs main strategies are chosen, to decorrelate "random" decisions.
+
++ Changed many parts of how the AI chooses which improvements to build. [I'll list some...]
++ Changed the AI's definition of a "good tile", and hence changed their city population targets.
++ Changed the way the AI counts and evaluates a city's total food.
++ Changed the scaling of the AI's commerce weight for improvement evaluation.
++ Fixed an original BtS bug which prevented improvement builds which remove bonus from being penalised.
++ When choosing an improvement, the AI will now try to anticipate how the improvement will change their future needs - this should reduce the AI's tendency to oscillating between different improvements.
+
++ Fixed an bug in the original BtS ironclad animation file.
++ Removed / fixed some false debug assertions and logging problems; from my code, BBAI code, and from BtS code. [This only applies to the Debug build]
 
 --
 
@@ -54,10 +94,10 @@ v0.95 changelist
 + Fixed a bug from the original BtS code, which sometimes caused the AI to include their own military power when counting the power of a potential military target.
 + Representation science bonus reduced from +3 to +2 (!!)
 + Representation upkeep reverted to 'medium'. [its a big nerf, and yet rep. is still very powerful.]
-+ Rebalanced the build up of GW anger. Compared to the old version, GW anger will now build up slower but reach a slightly higher level in games that are severly affected by global warming.
++ Rebalanced the build up of GW anger. Compared to the old version, GW anger will now build up slower but reach a slightly higher level in games that are severely affected by global warming.
 + Adjusted the affect of "relative contribution" on GW anger. The new version is slightly more sensitive to changes close to 100%, and less harsh on civs that have more than 150%.
 + The immediate experience boost from Great Generals (when used as a 'warlord') is now increased by 10% for each affected unit, up to a maximum of +100% (ie. 40 xp shared across 11 units).
-+ Increased the food production by cerial mills corp, from 0.75 food per resource up to 1 food per resource. [Maybe now it will be able to challenge sushi co?]
++ Increased the food production by cereal mills corp, from 0.75 food per resource up to 1 food per resource. [Maybe now it will be able to challenge sushi co?]
 + Changed the sound effect for GW events, and for the signing of defensive pacts & permanent alliances.
 + A couple of minor UI changes.
 
@@ -71,7 +111,7 @@ v0.94 changelist
  + Decreased production cost of cathedrals (etc) from 300 to 240.
  + Drafted units are now included in the stats screen's units-built tally.
  + Global warming can no longer turn desert (or anything else) into coast. [I don't think this feature made the game more fun, and there were a few minor problems with it, such as graphical glitches.]
- + The volcano event now has a chance of increasing the food yield of adjacent tiles (in addition to the original effects); as part of this change, I also fixed the Pythong API so that calculateNatureYield() actually works. I see that the same bug exists in serveral other python functions, but I'll only fix it when I need the functions; also, getPlotExtraYield() is now available in python.
+ + The volcano event now has a chance of increasing the food yield of adjacent tiles (in addition to the original effects); as part of this change, I also fixed the Python API so that calculateNatureYield() actually works. I see that the same bug exists in several other python functions, but I'll only fix it when I need the functions; also, getPlotExtraYield() is now available in python.
  + Cottages and hamlets destroyed by the volcano event will no longer leave city ruins.
  + Lowered the threshold for global warming severity to be described as "high" (this change has no effect on gameplay).
 
@@ -86,10 +126,10 @@ v0.93 changelist
  + Increased Representation upkeep from 'medium' to 'high'
  + Increased cost of public transport to 200 (from 150)
  + Global warming can no longer strike impassable peak tiles
- + Fixed a bug which caused terrain to be degraded at the same as trees were degraded. [The correct behaviour is jungle->forest->nothing before any terrain degration takes place.]
+ + Fixed a bug which caused terrain to be degraded at the same as trees were degraded. [The correct behaviour is jungle->forest->nothing before any terrain degradation takes place.]
  + Fixed problem which sometimes caused towns not to be removed when global warming made the land uninhabitable. [I'm in two minds about whether desert towns should be allowed to stay; but for now I'm disabling it.]
  + Minor adjustments to the environmental advisor screen.
- + Mining inc now uses aluminium and uranium instead of gold and silver [this should make mining inc slightly weaker, and civ jewelers more viable]
+ + Mining inc now uses aluminium and uranium instead of gold and silver [this should make mining inc slightly weaker, and civ jewellers more viable]
 
 --
 
@@ -129,7 +169,7 @@ A list of differences between K-Mod v0.9 and standard Civ4:BtS. There may be thi
  + Vassalage: -25% number of cities maintenance
  + State property: high upkeep (up from low)
  + free speech: from +100% culture to +50%. [now that culture is more powerful, this needed a nerf.]
- + Environmentalism: removed health bonuses, replaced with -30% unhealthiness from population, removed the corp maintanence penalty.
+ + Environmentalism: removed health bonuses, replaced with -30% unhealthiness from population, removed the corp maintenance penalty.
 
 == Traits ==
  + protective: +100% build rate for security bureau
