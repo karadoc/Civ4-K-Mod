@@ -3657,7 +3657,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	// Reduce reaction to espionage induced happy/health problems
 	int iHappinessLevel = happyLevel() - unhappyLevel(1) + getEspionageHappinessCounter()/2;
 	int iAngryPopulation = range(-iHappinessLevel, 0, (getPopulation() + 1));
-	int iHealthLevel = goodHealth() - badHealth(/*bNoAngry*/ false, std::max(0, (iHappinessLevel + 1) / 2)) + getEspionageHealthCounter()/2;
+	//int iHealthLevel = goodHealth() - badHealth(/*bNoAngry*/ false, std::max(0, (iHappinessLevel + 1) / 2)) + getEspionageHealthCounter()/2;
+	int iHealthLevel = goodHealth()
+		- badHealth(false, std::max(0, std::min(foodDifference()/GC.getFOOD_CONSUMPTION_PER_POPULATION(), (iHappinessLevel + 1) / 2)))
+		+ getEspionageHealthCounter()/2;
 	int iBadHealth = std::max(0, -iHealthLevel);
 
 	int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 6) ? 6 : 3;

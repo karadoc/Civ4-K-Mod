@@ -1,4 +1,4 @@
-This is K-Mod version 0.98.
+This is K-Mod version 0.98b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -21,15 +21,22 @@ v0.98 changelist
 + Unit value is awarded for secondary tech prereqs if the player already has the primary prereq.
 
 + Fixed an original BtS bug which would sometimes prevent AI spies from doing any espionage missions.
++ Fixed an original BtS bug which prevent the AI from using the culture slider for anything other than a cultural victory.
 + Rewrote the AI's decision making process for choosing the best espionage mission. [You're probably use to the AI just using Poison Water Supply over and over; so brace yourself for some more painful missions.]
 + Reworked most of the spy unit AI code; choosing target cities etc.
 + Changed many parts of the AI's espionage strategies. (points targeting etc.)
 + Implemented a new AI strategy: espionage economy. The way it works is that when the AI recognises that stealing techs is significantly cheaper than researching them - it may choose to focus on espionage instead of research. [The conditions for this strategy are pretty strict. Don't be surprised if you never see the AI try it.]
++ Increased the build priority of spies, so that the AI will still sometimes build them when at war.
++ The AI's espionage targets are now adjusted for different game speeds.
 
 + Rewrote most of the decision making process for "Force Peace" votes, to take into account relative power. [Previously, if an AI player had lost a few more units in the war, then it would vote for peace even if it was much stronger and even if aiming for a conquest victory!]
 + Replaced most of the AI's great person usage decisions with a new decision making process. [Before this change, the AI would _always_ use its great spies to build Scotland yard, unless every city already had it. The logic process was quite absurd.]
 + Added some personality-based changes to city site evaluation.
 + Fixed some problems in the way the AIs main strategies are chosen, to decorrelate "random" decisions.
++ Corrected a bug in the calculation of average commerce yield modifier.
++ Changed the way happiness and healthiness are evaluated for civics.
++ Tweaked the usage of, and civic value of, conscription.
++ Changed the way the AI classifies war areas - to correct a problem which sometimes caused the AI to use an "offense" strategy when it was losing an intercontinental battle.
 
 + Changed many parts of how the AI chooses which improvements to build. [I'll list some...]
 + Changed the AI's definition of a "good tile", and hence changed their city population targets.
