@@ -2775,8 +2775,8 @@ void CvUnitAI::AI_attackCityMove()
 		int iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
 		int iAttackRatio = std::max(100, GC.getBBAI_ATTACK_CITY_STACK_RATIO());
 		// K-Mod - I'm going to scale the attack ratio based on the quality of our units.
-		// this isn't the "right way" to do it, but it's better than nothing.
-		// (The /right way/ would be to estimate how good our odd would be after collateral damage, etc.)
+		// this isn't the "right way" to do it, but hopefully it's better than nothing.
+		// (The /right way/ would be to estimate how good our odds would be after collateral damage, etc.)
 		{
 			int iOurValue = GET_PLAYER(getOwner()).getTypicalUnitValue(UNITAI_ATTACK_CITY);
 			int iTheirValue = GET_PLAYER(pTargetCity->getOwner()).getTypicalUnitValue(UNITAI_CITY_DEFENSE);
@@ -3378,13 +3378,31 @@ void CvUnitAI::AI_collateralMove()
 		FAssert(iTally > 0);
 		FAssert(collateralDamageMaxUnits() > 0);
 
+		int iDangerModifier = 100;
+		//if (iTally > 1 && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3, false))
+		//{
+		//	int iEnemyOffense = GET_PLAYER(getOwner()).AI_getEnemyPlotStrength(plot(), 2, false, false);
+		//	if (iEnemyOffense > 0)
+		//	{
+		//		int iOurDefense = GET_PLAYER(getOwner()).AI_getOurPlotStrength(plot(), 0, true, false);
+		//		iDangerModifier = iEnemyOffense * 100 / std::max(1, iOurDefense);
+		//		iDangerModifier = std::max(iDangerModifier, 100);
+		//		iDangerModifier = std::min(iDangerModifier, 300);
+		//		//if (!plot()->isCity())
+		//		//	iDangerModifier = std::min(iDangerModifier, 150);
+		//	}
+		//}
+
 		do
 		{
-			if (AI_anyAttack(1, 80 / (3 + iTally), std::min(2*collateralDamageMaxUnits(), collateralDamageMaxUnits() + iTally - 1)))
+			int iMinOdds = 80 / (3 + iTally);
+			iMinOdds *= 100;
+			iMinOdds /= iDangerModifier;
+			if (AI_anyAttack(1, iMinOdds, std::min(2*collateralDamageMaxUnits(), collateralDamageMaxUnits() + iTally - 1)))
 			{
 				return;
 			}
-			// Try again with just half the units, just in case our only problem is that we can't find a bit enough target stack.
+			// Try again with just half the units, just in case our only problem is that we can't find a big enough target stack.
 			iTally = (iTally-1)/2;
 		} while (iTally > 1);
 	}
@@ -5289,6 +5307,8 @@ bool CvUnitAI::AI_greatPersonMove()
 
 	CvPlot* pBestTradePlot;
 	int iTradeValue = AI_tradeMissionValue(pBestTradePlot, iDiscoverValue / 2);
+	iTradeValue *= kPlayer.AI_commerceWeight(COMMERCE_GOLD);
+	iTradeValue /= 100;
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
 	iTradeValue /= 100;
 
@@ -20142,6 +20162,10 @@ bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 				if( atPlot(pLoopPlot) || (AI_plotValid(pLoopPlot) && generatePath(pLoopPlot, 0, true, &iPathTurns)) )
 				{
 					pPickupPlot = pLoopPlot;
+					// K-Mod, bug fix
+					if (atPlot(pLoopPlot))
+						iPathTurns = 0;
+					// K-Mod end.
 				}
 				else
 				{
@@ -21837,7 +21861,6 @@ int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
                                     iBestValue = iValue;
 									iBestPathTurns = iPathTurns;
                                     pBestPlot = getPathEndTurnPlot();
-									FAssert(pBestPlot == pLoopCity->plot());
 									iThreshold = std::max(iThreshold, iBestValue * 4 / (4 + iBestPathTurns));
                                 }
                             }

@@ -4498,14 +4498,14 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 
 				if( pPlot->getFeatureType() != NO_FEATURE )
 				{
-					szString.append(CvWString::format(L"Defense unit AIs:\n"));
+					szString.append(CvWString::format(L"\nDefense unit AIs:"));
 					vecUnitAIs.push_back(UNITAI_CITY_DEFENSE);
 					vecUnitAIs.push_back(UNITAI_COUNTER);
 					vecUnitAIs.push_back(UNITAI_CITY_COUNTER);
 				}
 				else
 				{
-					szString.append(CvWString::format(L"Attack unit AIs:\n"));
+					szString.append(CvWString::format(L"\nAttack unit AIs:"));
 					vecUnitAIs.push_back(UNITAI_ATTACK);
 					vecUnitAIs.push_back(UNITAI_ATTACK_CITY);
 					vecUnitAIs.push_back(UNITAI_COUNTER);
@@ -4786,6 +4786,22 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				szString.append(CvWString::format(L"\nUnit cost percentage: %d (%d / %d)", iUnitCostPercentage, iUnitCost, iTotalCosts));
 
 				szString.append(CvWString::format(L"\nUpgrade all units: %d gold", kPlayer.AI_goldToUpgradeAllUnits()));
+				// K-Mod
+				{
+					int iValue = 0;
+					for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+					{
+						iValue += kPlayer.getCommerceRate((CommerceTypes)iI) * kPlayer.AI_commerceWeight((CommerceTypes)iI)/100;
+					}
+					int iLoop;
+					for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+					{
+						iValue += 2*pLoopCity->getYieldRate(YIELD_PRODUCTION);
+					}
+					iValue /= kPlayer.getTotalPopulation();
+					szString.append(CvWString::format(L"\nAverage citizen value: %d", iValue));
+				}
+				// K-Mod end
 
 				szString.append(CvWString::format(L"\n\nRanks:"));
 				szString.append(CvWString::format(L"\nPopulation:%d", pCity->findPopulationRank()));

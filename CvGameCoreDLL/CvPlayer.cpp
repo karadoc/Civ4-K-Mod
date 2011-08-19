@@ -11881,6 +11881,8 @@ void CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue)
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < NUM_COMMERCE_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
 
+	PROFILE_FUNC(); // K-Mod - I suspect this function is slow
+
 	iOldValue = getCommercePercent(eIndex);
 
 	m_aiCommercePercent[eIndex] = range(iNewValue, 0, 100);

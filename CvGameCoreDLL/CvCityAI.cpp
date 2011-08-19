@@ -1629,7 +1629,7 @@ void CvCityAI::AI_chooseProduction()
 **** K-Mod, 10/sep/10, Karadoc
 **** It was "if (bDanger", I have changed it to "if (!bDanger"
 ***/
-    if (bDanger && (iExistingWorkers == 0) && (isCapital() || (iNeededWorkers > 0) || (iNeededSeaWorkers > iExistingSeaWorkers)))
+    if (!bDanger && (iExistingWorkers == 0) && (isCapital() || (iNeededWorkers > 0) || (iNeededSeaWorkers > iExistingSeaWorkers)))
     {
 		if( !(bDefenseWar && iWarSuccessRatio < -30) && !(kPlayer.AI_isDoStrategy(AI_STRATEGY_TURTLE)) )
 		{
@@ -1954,6 +1954,32 @@ void CvCityAI::AI_chooseProduction()
 				}
 			}
         }
+
+		// K-Mod (the spies stuff used to be lower down)
+		int iNumSpies = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_SPY) + kPlayer.AI_getNumTrainAIUnits(UNITAI_SPY);
+		int iNeededSpies = iNumCitiesInArea / 3;
+		iNeededSpies += bPrimaryArea ? (kPlayer.getCommerceRate(COMMERCE_ESPIONAGE)+50)/100 : 0;
+		iNeededSpies *= 100 + 3*kPlayer.AI_commerceWeight(COMMERCE_ESPIONAGE);
+		iNeededSpies /= 150;
+		{
+			const CvCity* pCapitalCity = kPlayer.getCapitalCity();
+			if (pCapitalCity != NULL && pCapitalCity->area() == area())
+				iNeededSpies++;
+		}
+		iNeededSpies -= (bDefenseWar ? 1 : 0);
+
+		if (iNumSpies < iNeededSpies)
+		{
+			int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) || GET_TEAM(getTeam()).getAnyWarPlanCount(true)) ?40 : 30;
+			iOdds *= iNeededSpies;
+			iOdds /= (4*iNumSpies+iNeededSpies);
+			if (AI_chooseUnit(UNITAI_SPY, iOdds))
+			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S chooses spy with %d/%d needed, at %d odds", getName().GetCString(), iNumSpies, iNeededSpies, iOdds);
+				return;
+			}
+		}
+		// K-Mod end
 
 		if( bDefenseWar || (bLandWar && (iWarSuccessRatio < -30)) )
 		{
@@ -2587,26 +2613,20 @@ void CvCityAI::AI_chooseProduction()
 			return;
 		}
 	}
-	
+
+	/* original bts code. (I've moved to spy stuff higher up - K-Mod)
 	int iNumSpies = (kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_SPY));
 	int iNeededSpies = iNumCitiesInArea / 3;
+
 	iNeededSpies += isCapital() ? 1 : 0;
-	// K-Mod
-	iNeededSpies += (kPlayer.getCommerceRate(COMMERCE_ESPIONAGE)+50)/100;
-	iNeededSpies *= 100 + 3*kPlayer.AI_commerceWeight(COMMERCE_ESPIONAGE);
-	iNeededSpies /= 150;
 
 	if (iNumSpies < iNeededSpies)
 	{
-		//if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
-		int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) || GET_TEAM(getTeam()).getAnyWarPlanCount(true)) ?65 : 50;
-		iOdds *= iNeededSpies;
-		iOdds /= (4*iNumSpies+iNeededSpies);
-		if (AI_chooseUnit(UNITAI_SPY, iOdds)) // K-Mod
+		if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
 		{
 			return;
 		}
-	}
+	}*/
 	
 	if (bLandWar && !bDanger)
 	{
@@ -3130,8 +3150,15 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	// K-Mod
 	if (GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH))
 	{
-		aiUnitAIVal[UNITAI_ATTACK_CITY] *= 3;
-		aiUnitAIVal[UNITAI_ATTACK_AIR] *= 3;
+		aiUnitAIVal[UNITAI_ATTACK_CITY] *= 2;
+		aiUnitAIVal[UNITAI_ATTACK] *= 3;
+		aiUnitAIVal[UNITAI_ATTACK] /= 2;
+		aiUnitAIVal[UNITAI_ATTACK_AIR] *= 2;
+	}
+	if (GET_TEAM(getTeam()).AI_getRivalAirPower() <= 10 * GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_DEFENSE_AIR))
+	{
+		// if each of our air defence units has a power of around 50, then this means the rival air power is very low.
+		aiUnitAIVal[UNITAI_DEFENSE_AIR] /= 4;
 	}
 	// K-Mod end
 
@@ -7787,9 +7814,9 @@ void CvCityAI::AI_updateBestBuild()
 				BuildTypes eLastBestBuildType = m_aeBestBuild[iI];
 
 				AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, iHappyAdjust, iHealthAdjust, iDesiredFoodChange);
-				m_aiBestBuildValue[iI] *= 5; // K-Mod, increased this from 4 (and the 2 lines below)
-				m_aiBestBuildValue[iI] += 4 + iWorkerCount;  // to round up
-				m_aiBestBuildValue[iI] /= (5 + iWorkerCount);
+				m_aiBestBuildValue[iI] *= 6; // K-Mod, increased this from 4 (and the 2 lines below)
+				m_aiBestBuildValue[iI] += 5 + iWorkerCount;  // to round up
+				m_aiBestBuildValue[iI] /= (6 + iWorkerCount);
 				
 				if (m_aiBestBuildValue[iI] > 0)
 				{
@@ -8072,7 +8099,8 @@ void CvCityAI::AI_doDraft(bool bForce)
 				{
 					// Non-critical, only burn population if population is not worth much
 					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorTiles() > 1))
-					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) && AI_countWorkedPoorTiles() > 0) // K-Mod
+					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) // K-Mod
+						&& (AI_countWorkedPoorTiles() > 0 || foodDifference()+getFood() < 0 || (foodDifference() < 0 && healthRate() <= -4)))
 					{
 						//if( (getPopulation() >= std::max(5, getHighestPopulation() - 1)) )
 						// We're working poor tiles. What more do you want?
@@ -11937,7 +11965,7 @@ int CvCityAI::AI_yieldMultiplier(YieldTypes eYield)
 		int iExtra = 0;
 		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
-			iExtra += getCommerceRateModifier((CommerceTypes)iI) * kPlayer.getCommercePercent((CommerceTypes)iI);
+			iExtra += (getTotalCommerceRateModifier((CommerceTypes)iI)-100) * kPlayer.getCommercePercent((CommerceTypes)iI);
 		}
 		iMultiplier += iExtra/100;
 	}

@@ -2420,15 +2420,17 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 							iEspBehindWeight += 1;
 						}
 					}
-					if ((GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
-						&& GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
-						|| GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
+					if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 					{
-						iEspAttackWeight += 1;
-					}
-					if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_PLAYER(kLoopTeam.getLeaderID()).getTechScore() > getTechScore())
-					{
-						iEspAttackWeight += 1;
+						if (GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
+							|| GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
+						{
+							iEspAttackWeight += 1;
+						}
+						if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_PLAYER(kLoopTeam.getLeaderID()).getTechScore() > getTechScore())
+						{
+							iEspAttackWeight += 1;
+						}
 					}
 					// K-Mod end
 				}
@@ -11914,6 +11916,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 					iTempValue *= 75 + range(-iWarSuccessRatio, 25, 100);
 					iTempValue /= 100;
 				}
+				// K-Mod (maybe I'll do some more tweaking later)
+				int iConscriptPop = std::max(1, GC.getUnitInfo(eConscript).getProductionCost() / GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST"));
+				iTempValue *= GC.getUnitInfo(eConscript).getProductionCost();
+				iTempValue /= iConscriptPop * GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST");
+				iTempValue *= std::min(iCities, iTemp*3);
+				iTempValue /= iTemp*3;
+				// K-Mod end
 
 				iValue += iTempValue;
 			}
@@ -11944,7 +11953,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iGwAnger /= 100 - 2*kCivic.getUnhealthyPopulationModifier()/3;
 			// Note, this fudge factor is actually pretty good at estimating what the GwAnger would have been.
 		}
-		int iCleanValue = (iCities * 12 * iS * AI_getHappinessWeight(iS*ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*iGwAnger*2,300), 2, true)) / 100;
+		int iCleanValue = (iCities * 12 * iS * AI_getHappinessWeight(iS*ROUND_DIVIDE(-kCivic.getUnhealthyPopulationModifier()*iGwAnger*2,300), 1, true)) / 100;
 		// This isn't a big reduction; and it should be the only part of this evaluation.
 		// Maybe I'll add more later; such as some flavour factors.
 
@@ -12152,7 +12161,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 		// K-Mod version.
 		// value for negation of unhappiness. Again, let me point out how _stupid_ it is that "percent_anger_divisor" is 1000, not 100.
-		iValue += (iCities * 14 * iS * AI_getHappinessWeight(iS*getCivicPercentAnger(eCivic, true)*100/GC.getPERCENT_ANGER_DIVISOR(), 2, true)) / 100;
+		iValue += (iCities * 12 * iS * AI_getHappinessWeight(iS*getCivicPercentAnger(eCivic, true)*100/GC.getPERCENT_ANGER_DIVISOR(), 2, true)) / 100;
 		// value for putting pressure on other civs. (this should probably take into account the civics of other civs)
 		iValue += kCivic.getCivicPercentAnger() * (iCities * iCities - iCities) / (5*GC.getGameINLINE().getNumCities()); // the 5* on the end is because "percent" is really per mil.
 	}
@@ -12180,7 +12189,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 /* orginal bts code
 		iValue += (12 * std::min(getNumCities(), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()) * AI_getHappinessWeight(isCivic(eCivic) ? -iTempValue : iTempValue, 1)) / 100;
 */
-		iValue += (12 * std::min(iCities, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()) * iS * AI_getHappinessWeight(iS*iTempValue, 1)) / 100;
+		iValue += (14 * std::min(iCities, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()) * iS * AI_getHappinessWeight(iS*iTempValue, 1)) / 100;
 	}
 	
 	if (kCivic.getWarWearinessModifier() != 0)
@@ -12207,7 +12216,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 #endif
 		// K-Mod; my version:
-		iValue += (11 * iCities * iS * AI_getHappinessWeight(iS*ROUND_DIVIDE(getWarWearinessPercentAnger() * -getWarWearinessModifier(), GC.getPERCENT_ANGER_DIVISOR()), 1, true)) / 100;
+		iValue += (12 * iCities * iS * AI_getHappinessWeight(iS*ROUND_DIVIDE(getWarWearinessPercentAnger() * -getWarWearinessModifier(), GC.getPERCENT_ANGER_DIVISOR()), 1, true)) / 100;
 	}
 	
 	iValue += (kCivic.getNonStateReligionHappiness() * (iTotalReligonCount - iHighestReligionCount) * 5);
@@ -12411,7 +12420,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			{
 				iExpectedBuildings = (iCities + 2*getBuildingClassCountPlusMaking((BuildingClassTypes)iI))/3;
 			}
-			iValue += (12 * iExpectedBuildings * iS * AI_getHappinessWeight(iS * iTempValue, 1))/100;
+			iValue += (10 * iExpectedBuildings * iS * AI_getHappinessWeight(iS * iTempValue, 1))/100;
 		}
 	}
 
@@ -13657,6 +13666,8 @@ void CvPlayerAI::AI_doCommerce()
 				iIdealPercent+=5;
 				iCap += 20;
 			}
+			iIdealPercent += (AI_averageCulturePressure() - 100)/10;
+			iIdealPercent = std::max(iIdealPercent, (AI_averageCulturePressure() - 100)/5);
 			iIdealPercent -= (iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
 			//iIdealPercent = std::min(iIdealPercent, 20);
 			iIdealPercent = std::min(iIdealPercent, iCap);
@@ -13695,7 +13706,7 @@ void CvPlayerAI::AI_doCommerce()
 		}
 		else
 		{
-			while (calculateGoldRate() > 0)
+			/* while (calculateGoldRate() > 0)
 			{
 				changeCommercePercent(COMMERCE_RESEARCH, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
 
@@ -13703,7 +13714,8 @@ void CvPlayerAI::AI_doCommerce()
 				{
 					break;
 				}
-			}
+			} */
+			// K-Mod disabled this!
 
 			if (getGold() + iTargetTurns * calculateGoldRate() < iGoldTarget)
 			{
@@ -13811,7 +13823,7 @@ void CvPlayerAI::AI_doCommerce()
 				int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
 
 				aiWeight[iTeam] = 6;
-				int iRateDivisor = 12;
+				int iRateDivisor = iTargetTurns*3;
 
 				if (GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
 				{
@@ -13826,7 +13838,7 @@ void CvPlayerAI::AI_doCommerce()
 						iDesiredMissionPoints = iMissionCost;
 					}
 
-					iRateDivisor -= 2;
+					iRateDivisor -= iTargetTurns/2;
 					aiWeight[iTeam] += 6;
 
 				}
@@ -13856,13 +13868,13 @@ void CvPlayerAI::AI_doCommerce()
 					}
 				}
 
-				iRateDivisor += (iAttitude/5);
+				iRateDivisor += 4*iAttitude/(5*iTargetTurns);
 				aiWeight[iTeam] -= (iAttitude/3);
 				if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 				{
 					aiWeight[iTeam] *= 2;
 					aiWeight[iTeam] = std::max(0, aiWeight[iTeam]);
-					iRateDivisor -= 3;
+					iRateDivisor -= iTargetTurns;
 				}
 
 				// Individual player targeting
@@ -13920,19 +13932,18 @@ void CvPlayerAI::AI_doCommerce()
 					iRateDivisor += 1;
 					// scale by esp points ever, so that we don't fall over ourselves trying to catch up with
 					// a civ that happens to be running an espionage economy.
-					int iOurTotal = GET_TEAM(getTeam()).getEspionagePointsEver();
-					int iTheirTotal = kLoopTeam.getEspionagePointsEver();
-					iTheirEspPoints *= iOurTotal;
-					iTheirEspPoints /= std::max(1, iTheirTotal);
+					int iOurTotal = std::max(4, GET_TEAM(getTeam()).getEspionagePointsEver());
+					int iTheirTotal = std::max(4, kLoopTeam.getEspionagePointsEver());
+
+					iTheirEspPoints *= (3*iOurTotal + iTheirTotal);
+					iTheirEspPoints /= (2*iOurTotal + 3*iTheirTotal);
+					// That's a factor between 3/2 and 1/3, centered at 4/5
 					iDesiredMissionPoints = std::max(iTheirEspPoints, iDesiredMissionPoints);
 				}
 
-				aiTarget[iTeam] = (iDesiredMissionPoints - iOurEspPoints)/std::max(6,iRateDivisor);
+				aiTarget[iTeam] = (iDesiredMissionPoints - iOurEspPoints)/std::max(3*iTargetTurns/2,iRateDivisor);
 
-				if( aiTarget[iTeam] > 0 )
-				{
-					iEspionageTargetRate += aiTarget[iTeam];
-				}
+				iEspionageTargetRate += std::max(0, aiTarget[iTeam]);
 			}
 		}
 
@@ -13948,8 +13959,8 @@ void CvPlayerAI::AI_doCommerce()
 				iMinModifier /= 100;
 				// This is the espionage cost modifier for stealing techs.
 
-				// lets say "cheap" means 70% of the research cost.
-				bCheapTechSteal = (7000 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
+				// lets say "cheap" means 80% of the research cost.
+				bCheapTechSteal = (8000 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
 				if (bCheapTechSteal)
 				{
 					aiTarget[eMinModTeam] += iApproxTechCost / 10;
@@ -13985,6 +13996,9 @@ void CvPlayerAI::AI_doCommerce()
 			}
 			// note. bounds checks are done the set weight function
 			setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, aiWeight[iTeam]);
+			// one last ad-hoc correction to the target espionage rate...
+			if (aiWeight[iTeam] <= 0 && aiTarget[iTeam] > 0)
+				iEspionageTargetRate -= aiTarget[iTeam];
 		}
 		SAFE_DELETE_ARRAY(aiTarget);
 		SAFE_DELETE_ARRAY(aiWeight);
@@ -14017,7 +14031,6 @@ void CvPlayerAI::AI_doCommerce()
 
 			//while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < 20)
 			// K-Mod
-			bool bCheapTechSteal = (eMinModTeam != NO_TEAM && 700 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
 			int iCap = (bCheapTechSteal? 60 :20);
 
 			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
@@ -19687,7 +19700,7 @@ int CvPlayerAI::AI_getTotalFloatingDefenders(CvArea* pArea) const
 	iCount += AI_totalAreaUnitAIs(pArea, UNITAI_CITY_COUNTER);
 	iCount += AI_totalAreaUnitAIs(pArea, UNITAI_CITY_SPECIAL);
 	// BBAI TODO: Defense air?  Is this outdated?
-	iCount += AI_totalAreaUnitAIs(pArea, UNITAI_DEFENSE_AIR);
+	//iCount += AI_totalAreaUnitAIs(pArea, UNITAI_DEFENSE_AIR); // K-Mod commented this out.
 	return iCount;
 }
 
@@ -21527,7 +21540,7 @@ int CvPlayerAI::AI_getPlotCanalValue(CvPlot* pPlot) const
 	return 10 * std::min(0, pSecondWaterArea->getNumTiles() - 2);
 }
 
-//This returns a positive number equal approximately to the sum
+//This returns approximately to the sum
 //of the percentage values of each unit (there is no need to scale the output by iHappy)
 //100 * iHappy means a high value.
 int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent) const
@@ -21547,6 +21560,7 @@ int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent) 
 	int iValue = 0;
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
+		/* original bts code
 		int iCityHappy = pLoopCity->happyLevel() - pLoopCity->unhappyLevel(iExtraPop);
 		
 		iCityHappy -= std::max(0, pLoopCity->getCommerceHappiness());
@@ -21562,26 +21576,29 @@ int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent) 
 		}
 		else
 		{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       10/21/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* orginal bts code
-			iValue += std::max(0, -iTempValue);
-*/
-			// Negative happy changes should produce a negative value, not the same value as positive
 			iValue += std::min(0, iTempValue);
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-		}
+		} */
+
+		// K-Mod. I have no idea what they were trying to 'integrate', and it was giving some strange answers.
+		// So lets try it my way.
+		if (pLoopCity->isNoUnhappiness())
+			continue;
+		int iCurrentHappy = 100*(pLoopCity->happyLevel() - pLoopCity->unhappyLevel(iExtraPop));
+		// I'm only going to subtract half of the commerce happiness, because we might not be using that commerce for only happiness.
+		iCurrentHappy -= 50*std::max(0, pLoopCity->getCommerceHappiness());
+		int iTestHappy = iCurrentHappy +
+			(bPercent ? ((pLoopCity->getPopulation()+iExtraPop)*iHappy) : 100 * iHappy);
+		iValue += std::max(0, -iCurrentHappy) - std::max(0, -iTestHappy); // change in the number of angry citizens
+		// a small bonus for happiness beyond what we need
+		iValue += 100*(std::max(0, iTestHappy) - std::max(0, iCurrentHappy))/(600 + std::max(0, iTestHappy) + std::max(0, iCurrentHappy));
+		// K-Mod end
 		
 		iCount++;
+		/* original bts code - (huh?)
 		if (iCount > 6)
 		{
 			break;
-		}
+		}*/
 	}
 	
 	return (0 == iCount) ? 50 * iHappy : iValue / iCount;
@@ -21604,6 +21621,7 @@ int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent) co
 	int iValue = 0;
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
+		/* original bts code
 		int iCityHealth = pLoopCity->goodHealth() - pLoopCity->badHealth(false, iExtraPop);
 		
 		int iHealthNow = iCityHealth;
@@ -21618,25 +21636,24 @@ int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent) co
 		}
 		else
 		{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       10/21/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* orginal bts code
-			iValue += std::max(0, -iTempValue);
-*/
-			// Negative health changes should produce a negative value, not the same value as positive
 			iValue += std::min(0, iTempValue);
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-		}
+		} */
+
+		// K-Mod. Changed to match the happiness function.
+		int iCurrentHealth = 100*(pLoopCity->goodHealth() - pLoopCity->badHealth(false, iExtraPop));
+		int iTestHealth = iCurrentHealth +
+			(bPercent ? ((pLoopCity->getPopulation()+iExtraPop)*iHealth) : 100 * iHealth);
+		iValue += std::max(0, -iCurrentHealth) - std::max(0, -iTestHealth); // change in the number of angry citizens
+		// a small bonus for happiness beyond what we need
+		iValue += 100*(std::max(0, iTestHealth) - std::max(0, iCurrentHealth))/(600 + std::max(0, iTestHealth) + std::max(0, iCurrentHealth));
+		// K-Mod end
+
 		iCount++;
+		/* original bts code
 		if (iCount > 6)
 		{
 			break;
-		}
+		} */
 	}
 	
 /************************************************************************************************/

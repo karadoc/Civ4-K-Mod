@@ -37,6 +37,7 @@ v0.98 changelist
 + Changed the scaling of the AI's commerce weight for improvement evaluation.
 + Fixed an original BtS bug which prevented improvement builds which remove bonus from being penalised.
 + When choosing an improvement, the AI will now try to anticipate how the improvement will change their future needs - this should reduce the AI's tendency to oscillating between different improvements.
++ Automated (human) workers will now try to avoid working near enemy borders when at war.
 
 + Fixed an bug in the original BtS ironclad animation file.
 + Removed / fixed some false debug assertions and logging problems; from my code, BBAI code, and from BtS code. [This only applies to the Debug build]
