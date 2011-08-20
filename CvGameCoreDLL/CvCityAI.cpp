@@ -208,7 +208,8 @@ void CvCityAI::AI_doTurn()
 	
 	AI_updateBestBuild();
 */
-	AI_updateBestBuild();
+	if (!isDisorder()) // K-Mod
+		AI_updateBestBuild();
 
 	AI_updateWorkersNeededHere();
 /************************************************************************************************/
@@ -2723,7 +2724,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	if (!bLandWar)
-	{		
+	{
 		if ((iCulturePressure > 90) || kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
 		{
 			if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, 20))
@@ -4850,6 +4851,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							else
 							{
 								//int iCountBuilt = kOwner.getBuildingClassCountPlusMaking(eBuildingClass);
+								int iCountBuilt = kOwner.getBuildingClassCount(eBuildingClass); // K-Mod (to match the number used by getBuildingClassPrereqBuilding)
 
 								// do we have enough buildings to build extras?
 								bool bHaveEnough = true;
@@ -4874,7 +4876,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 									}*/
 
 									// Whatever that code was meant to do, I'm pretty sure it was wrong.
-									int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eBuilding, (BuildingClassTypes) iJ, iCountMaking);
+									int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eBuilding, (BuildingClassTypes) iJ, iCulturalVictoryNumCultureCities - iCountBuilt);
 									if (kOwner.getBuildingClassCount((BuildingClassTypes) iJ) < iPrereqBuildings)
 										bHaveEnough = false;
 									// K-Mod end
@@ -4889,6 +4891,9 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 								else
 								{
 									iCommerceMultiplierValue /= 30;
+									// K-Mod. If we're serious about a cultural victory, then we /really/ don't want to waste this building.
+									if (bCulturalVictory3 && iCountBuilt < iCulturalVictoryNumCultureCities)
+										iCommerceMultiplierValue = 0;
 								}
 							}
 						}
@@ -5176,9 +5181,17 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						if (iTempValue >= 3)
 						{
 							iTempValue += 7;
-						}						
+						}
 					}
-					
+
+					// K-Mod, this stuff was moved from below
+					iTempValue += ((kBuilding.getCommerceModifier(COMMERCE_CULTURE) * getBaseCommerceRate(COMMERCE_CULTURE)) / 15);
+					if (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+					{
+						iTempValue += ((kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE) * getBaseCommerceRate(COMMERCE_ESPIONAGE)) / 15);
+					}
+					// K-Mod end
+
 					if (iTempValue != 0)
 					{
 						/*if (MAX_INT == aiCommerceRank[COMMERCE_CULTURE])
@@ -5189,18 +5202,37 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						// if this is a limited wonder, and we are not one of the top 4 in this category, 
 						// do not count the culture value
 						// we probably do not want to build this here (but we might)
+						/* original bts code
 						if (bIsLimitedWonder && (findCommerceRateRank(COMMERCE_CULTURE) > (3 + iLimitedWonderLimit)))
 						{
 							iTempValue  = 0;
+						}*/
+						// K-Mod. The original code doesn't take prereq buildings into account, and it was in the wrong place.
+						// To be honest, I think this "building focus" flag system is pretty bad; but I'm fixing it anyway.
+						if (findCommerceRateRank(COMMERCE_CULTURE) > iCulturalVictoryNumCultureCities)
+						{
+							bool bAvoid = false;
+							if (bIsLimitedWonder && findCommerceRateRank(COMMERCE_CULTURE) - iLimitedWonderLimit >= iCulturalVictoryNumCultureCities)
+								bAvoid = true;
+							for (int iJ = 0; !bAvoid && iJ < GC.getNumBuildingClassInfos(); iJ++)
+							{
+								int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eBuilding, (BuildingClassTypes) iJ, iCulturalVictoryNumCultureCities - kOwner.getBuildingClassCount(eBuildingClass));
+								if (kOwner.getBuildingClassCount((BuildingClassTypes) iJ) < iPrereqBuildings)
+									bAvoid = true;
+							}
+							if (bAvoid)
+								iTempValue = 0;
 						}
+						// K-Mod end
 						iValue += iTempValue;
 					}
-					
+
+					/* original bts code. (I've moved this stuff up to be before the limited wonder checks.
 					iValue += ((kBuilding.getCommerceModifier(COMMERCE_CULTURE) * getBaseCommerceRate(COMMERCE_CULTURE)) / 15);
 					if (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 					{
 						iValue += ((kBuilding.getCommerceModifier(COMMERCE_ESPIONAGE) * getBaseCommerceRate(COMMERCE_ESPIONAGE)) / 15);
-					}
+					}*/
 				}
 				
                 if (iFocusFlags & BUILDINGFOCUS_BIGCULTURE)
@@ -10758,7 +10790,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 							{
 								// By the way, AI_bonusVal is typically 10 for the first bonus, and 2 for subsequent.
 								iValue -= (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, -1) * 10);
-								iValue -= 200;
+								iValue -= 300;
 							}
 						}
 					}

@@ -5315,24 +5315,40 @@ bool CvUnitAI::AI_greatPersonMove()
 	if (iSlowValue < iFirstDiscoverValue)
 	{
 		if (iTradeValue < iFirstDiscoverValue && AI_discover(false, true))
+		{
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses to bulb (first) with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
+		}
 		
 		if (iTradeValue >= iGoldenAgeValue * 2 && AI_doTrade(pBestTradePlot))
+		{
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses trade mission with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
+		}
 
 		if (AI_discover(false, true))
+		{
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses to bulb (first) with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
+		}
 
 		if (iGoldenAgeValue > iDiscoverValue && iGoldenAgeValue > iSlowValue)
 		{
 			if (AI_goldenAge())
+			{
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses to start a golden age with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
+			}
 			if (iTradeValue >= iGoldenAgeValue && AI_doTrade(pBestTradePlot))
+			{
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses trade mission with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
+			}
 		}
 
 		if (iDiscoverValue > iSlowValue && AI_discover())
 		{
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses to bulb with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
 		}
 	}
@@ -5345,12 +5361,14 @@ bool CvUnitAI::AI_greatPersonMove()
 			if (eBestSpecialist != NO_SPECIALIST)
 			{
 				getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses settle their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
 			}
 
 			if (eBestBuilding != NO_BUILDING)
 			{
 				getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses build with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
 			}
 		}
@@ -5445,9 +5463,10 @@ void CvUnitAI::AI_spyMove()
 					}
 				}
 			}
-			else if (GC.getGameINLINE().getSorenRandNum(100, "AI Spy Espionage") < iSpontaneousChance)
+
+			// I think this spontaneous thing is bad. I'm leaving it in, but with greatly diminished probability.
+			if (GC.getGameINLINE().getSorenRandNum(1500, "AI Spy Espionage") < iSpontaneousChance)
 			{
-				// This applies only when not in an enemy city, so for destroying improvements
 				if (AI_espionageSpy())
 				{
 					return;
@@ -5473,7 +5492,7 @@ void CvUnitAI::AI_spyMove()
 					}
 				}
 
-				if (GC.getGame().getSorenRandNum(100, "AI Spy Skip Turn") > 4)
+				if (GC.getGame().getSorenRandNum(100, "AI Spy Skip Turn") > 5)
 				{
 					// don't wait forever
 					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
@@ -22525,6 +22544,10 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 			}
 			// K-Mod end
 		}
+	}
+	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION && kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
+	{
+		logBBAI("      %S chooses %S as their best Espionage Economy mission.", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText());
 	}
 	
 	return eBestMission;
