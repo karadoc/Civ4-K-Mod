@@ -1433,7 +1433,7 @@ void CvCityAI::AI_chooseProduction()
 		int iOdds = 100 * iBestBuildingValue / (4 * iBestBuildingValue + 1200);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
-			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit", getName().GetCString());
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit (odds: %d)", getName().GetCString(), iOdds);
    			return;
 		}
 	}
@@ -10775,7 +10775,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					{
 						//iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) * 10);
 						iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 1) * 50); // K-Mod
-						iValue += 200;
+						iValue += 100;
 						/* original code (K-mod comments this out, because bonuses are taken into account in other ways)
 						if (eBestBuild != NO_BUILD)
 						{
@@ -10803,7 +10803,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 						{
 							// By the way, AI_bonusVal is typically 10 for the first bonus, and 2 for subsequent.
 							iValue -= (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, -1) * 50);
-							iValue -= 200;
+							iValue -= 100;
 						}
 					}
 				}

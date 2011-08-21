@@ -5297,7 +5297,8 @@ bool CvUnitAI::AI_greatPersonMove()
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
 	int iSlowValue = iBestValue;
 	iSlowValue *= (GC.getNumEraInfos() - kPlayer.getCurrentEra());
-	// at this point, we have roughly 100 * commerce per turn * number of eras remaining.
+	iSlowValue /= 2;
+	// at this point, we have roughly 50 * commerce per turn * number of eras remaining.
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel3() ? 2 : 1;
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
 	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
@@ -5316,19 +5317,19 @@ bool CvUnitAI::AI_greatPersonMove()
 	{
 		if (iTradeValue < iFirstDiscoverValue && AI_discover(false, true))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses to bulb (first) with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'bulb (first)' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
 		}
 		
 		if (iTradeValue >= iGoldenAgeValue * 2 && AI_doTrade(pBestTradePlot))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses trade mission with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
 		}
 
 		if (AI_discover(false, true))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses to bulb (first) with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'bulb (first)' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
 		}
 
@@ -5336,19 +5337,19 @@ bool CvUnitAI::AI_greatPersonMove()
 		{
 			if (AI_goldenAge())
 			{
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses to start a golden age with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'golden age' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
 			}
 			if (iTradeValue >= iGoldenAgeValue && AI_doTrade(pBestTradePlot))
 			{
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses trade mission with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
 			}
 		}
 
 		if (iDiscoverValue > iSlowValue && AI_discover())
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses to bulb with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'bulb' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 			return true;
 		}
 	}
@@ -5361,14 +5362,14 @@ bool CvUnitAI::AI_greatPersonMove()
 			if (eBestSpecialist != NO_SPECIALIST)
 			{
 				getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses settle their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'join' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
 			}
 
 			if (eBestBuilding != NO_BUILDING)
 			{
 				getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses build with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'build' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
 				return true;
 			}
 		}
