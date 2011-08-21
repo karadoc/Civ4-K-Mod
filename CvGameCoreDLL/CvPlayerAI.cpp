@@ -2294,6 +2294,8 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 		// so that governors do smart things
 		if (pCity != NULL)
 		{
+			int iPressureWeight = iWeight * pCity->culturePressureFactor() / 100; // K-Mod
+
 			if (pCity->getCultureTimes100(getID()) >= 100 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1)))
 			{
 				iWeight /= 50;
@@ -2331,8 +2333,8 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			
 			// K-Mod
 			//iWeight += (100 - pCity->plot()->calculateCulturePercent(getID()));
-			iWeight *= pCity->culturePressureFactor();
-			iWeight /= 100;
+			iWeight += iPressureWeight;
+			// K-Mod end
 			
 			if (pCity->getCultureLevel() <= (CultureLevelTypes) 1)
 			{
@@ -21590,7 +21592,7 @@ int CvPlayerAI::AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent) 
 			(bPercent ? ((pLoopCity->getPopulation()+iExtraPop)*iHappy) : 100 * iHappy);
 		iValue += std::max(0, -iCurrentHappy) - std::max(0, -iTestHappy); // change in the number of angry citizens
 		// a small bonus for happiness beyond what we need
-		iValue += 100*(std::max(0, iTestHappy) - std::max(0, iCurrentHappy))/(600 + std::max(0, iTestHappy) + std::max(0, iCurrentHappy));
+		iValue += 100*(std::max(0, iTestHappy) - std::max(0, iCurrentHappy))/(400 + std::max(0, iTestHappy) + std::max(0, iCurrentHappy));
 		// K-Mod end
 		
 		iCount++;
@@ -21645,7 +21647,7 @@ int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent) co
 			(bPercent ? ((pLoopCity->getPopulation()+iExtraPop)*iHealth) : 100 * iHealth);
 		iValue += std::max(0, -iCurrentHealth) - std::max(0, -iTestHealth); // change in the number of angry citizens
 		// a small bonus for happiness beyond what we need
-		iValue += 100*(std::max(0, iTestHealth) - std::max(0, iCurrentHealth))/(600 + std::max(0, iTestHealth) + std::max(0, iCurrentHealth));
+		iValue += 100*(std::max(0, iTestHealth) - std::max(0, iCurrentHealth))/(400 + std::max(0, iTestHealth) + std::max(0, iCurrentHealth));
 		// K-Mod end
 
 		iCount++;

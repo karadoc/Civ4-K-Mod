@@ -999,42 +999,40 @@ void CvCityAI::AI_chooseProduction()
 
 	// K-Mod, military exemption for commerce cities and underdeveloped cities
 	bool bUnitExempt = false;
-	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
-	{
-		bUnitExempt = true;
-	}
-	else if (iProductionRank > kPlayer.getNumCities()/2)
-	{
-		bool bBelowMedian = true;
-		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
-		{
-			// I'd use the total commerce rank, but there currently isn't a cached value of that.
-			int iRank = findCommerceRateRank((CommerceTypes)iI);
-			if (iRank < iProductionRank)
-			{
-				bUnitExempt = true;
-				break;
-			}
-			if (iRank < kPlayer.getNumCities()/2)
-				bBelowMedian = false;
-		}
+	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
+	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValueThreshold(eBestBuilding);
 
-		if (bBelowMedian)
-			bUnitExempt = true;
-	}
-	if (bUnitExempt)
+	// Don't give exemptions to cities that don't have anything good to do anyway.
+	if (iBestBuildingValue >= 50)
 	{
-		// Don't give exemptions to cities that don't have anything good to do anyway.
-		BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
-		if (eBestBuilding == NO_BUILDING || AI_buildingValueThreshold(eBestBuilding) < 50)
+		if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
 		{
-			bUnitExempt = false;
+			bUnitExempt = true;
+		}
+		else if (iProductionRank > kPlayer.getNumCities()/2)
+		{
+			bool bBelowMedian = true;
+			for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+			{
+				// I'd use the total commerce rank, but there currently isn't a cached value of that.
+				int iRank = findCommerceRateRank((CommerceTypes)iI);
+				if (iRank < iProductionRank)
+				{
+					bUnitExempt = true;
+					break;
+				}
+				if (iRank < kPlayer.getNumCities()/2)
+					bBelowMedian = false;
+			}
+
+			if (bBelowMedian)
+				bUnitExempt = true;
 		}
 	}
 	// K-Mod end
 
 
-	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb);
+	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%s, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
 
 	// -------------------- BBAI Notes -------------------------
 	// Start special circumstances
@@ -1396,6 +1394,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
+	/* original bts code (disabled by K-Mod. I don't think these are helpful)
 	if ( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3) )
 	{
         if ((goodHealth() - badHealth(true, 0)) < 1)
@@ -1427,9 +1426,19 @@ void CvCityAI::AI_chooseProduction()
 				}
 			}
 		}
+	}*/
+
+	// K-Mod, short-circuit production choice if we already have something good in mind
+	{
+		int iOdds = 100 * iBestBuildingValue / (4 * iBestBuildingValue + 1200);
+		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit", getName().GetCString());
+   			return;
+		}
 	}
- 
-    
+	// K-Mod end
+     
 	// -------------------- BBAI Notes -------------------------
 	// Minimal attack force, both land and sea
     if (bDanger) 
@@ -1588,6 +1597,10 @@ void CvCityAI::AI_chooseProduction()
 		{
 			iOdds += abs(iWarSuccessRatio/3);
 		}
+		// K-Mod
+		iOdds *= (-iWarSuccessRatio+20 + iBestBuildingValue);
+		iOdds /= (-iWarSuccessRatio + 2 * iBestBuildingValue);
+		// K-Mod end
 		if( bDanger )
 		{
 			iOdds += 10;
@@ -1971,7 +1984,9 @@ void CvCityAI::AI_chooseProduction()
 
 		if (iNumSpies < iNeededSpies)
 		{
-			int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) || GET_TEAM(getTeam()).getAnyWarPlanCount(true)) ?40 : 30;
+			int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) || GET_TEAM(getTeam()).getAnyWarPlanCount(true)) ?45 : 35;
+			iOdds *= (50 + iBestBuildingValue);
+			iOdds /= (50 + 2 * iBestBuildingValue);
 			iOdds *= iNeededSpies;
 			iOdds /= (4*iNumSpies+iNeededSpies);
 			if (AI_chooseUnit(UNITAI_SPY, iOdds))
@@ -2283,9 +2298,15 @@ void CvCityAI::AI_chooseProduction()
 			int iTrainInvaderChance = iBuildUnitProb + 10;
 
 			iTrainInvaderChance += (bAggressiveAI ? 15 : 0);
+			iTrainInvaderChance += (bTotalWar ? 10 : 0); // K-Mod
 			iTrainInvaderChance /= (bAssaultAssist ? 2 : 1);
 			iTrainInvaderChance /= (bImportantCity ? 2 : 1);
 			iTrainInvaderChance /= (bGetBetterUnits ? 2 : 1);
+
+			// K-Mod
+			iTrainInvaderChance *= (80 + iBestBuildingValue);
+			iTrainInvaderChance /= (50 + 2 * iBestBuildingValue);
+			// K-Mod end
 
 			iUnitsToTransport *= 9;
 			iUnitsToTransport /= 10;
@@ -2863,9 +2884,14 @@ void CvCityAI::AI_chooseProduction()
 	bChooseUnit = false;
 	if (iUnitCostPercentage < iMaxUnitSpending + 5)
 	{
+		// K-Mod
+		iBuildUnitProb *= (70 + iBestBuildingValue);
+		iBuildUnitProb /= (50 + 2 * iBestBuildingValue);
+		// K-Mod end
+
 		if ((bLandWar) ||
 			  ((kPlayer.getNumCities() <= 3) && (GC.getGameINLINE().getElapsedGameTurns() < 60)) ||
-			  (!bUnitExempt && GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") < AI_buildUnitProb()) ||
+			  (!bUnitExempt && GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") < iBuildUnitProb) ||
 				(isHuman() && (getGameTurnFounded() == GC.getGameINLINE().getGameTurn())))
 		{
 			if (AI_chooseUnit())
@@ -3656,72 +3682,27 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	int iFoodDifference = foodDifference(false);
 
 	// Reduce reaction to espionage induced happy/health problems
+	/* original bts code
 	int iHappinessLevel = happyLevel() - unhappyLevel(1) + getEspionageHappinessCounter()/2;
 	int iAngryPopulation = range(-iHappinessLevel, 0, (getPopulation() + 1));
-	//int iHealthLevel = goodHealth() - badHealth(/*bNoAngry*/ false, std::max(0, (iHappinessLevel + 1) / 2)) + getEspionageHealthCounter()/2;
-	int iHealthLevel = goodHealth()
-		- badHealth(false, std::max(0, std::min(foodDifference()/GC.getFOOD_CONSUMPTION_PER_POPULATION(), (iHappinessLevel + 1) / 2)))
-		+ getEspionageHealthCounter()/2;
-	int iBadHealth = std::max(0, -iHealthLevel);
+	int iHealthLevel = goodHealth() - badHealth(false, std::max(0, (iHappinessLevel + 1) / 2)) + getEspionageHealthCounter()/2;
+	int iBadHealth = std::max(0, -iHealthLevel); */
+	// K-Mod
+	int iHappinessLevel = happyLevel() - unhappyLevel() + getEspionageHappinessCounter()/2;
+	int iHealthLevel = goodHealth() - badHealth() + getEspionageHealthCounter()/2;
+	// K-Mod end
 
+	/* original code
 	int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 6) ? 6 : 3;
 	if (iHappinessLevel >= 10)
 	{
 		iHappyModifier = 1;
 	}
-/*
-** K-Mod, 29/dec/10, karadoc
-** Rewrite of health evalulation
-*/
-	/* original code
 	int iHealthModifier = (iHealthLevel < iHappinessLevel && iHealthLevel <= 4) ? 4 : 2;
 	if (iHealthLevel >= 8)
 	{
 		iHealthModifier = 0;
 	}*/
-	int iHealthModifier;
-
-	if (iHealthLevel >= 8)
-	{
-		// No effect in the near future
-		iHealthModifier = 2;
-	}
-	else
-	{
-		if (iHealthLevel < 0 && iHealthLevel <= iHappinessLevel)
-		{
-			// Health is negative, and worse than happiness
-			if (iFoodDifference < 0)
-				// Causing starvation
-				iHealthModifier = 14;
-			else
-			{
-				if (iFoodDifference >= iHappinessLevel)
-				{
-					// growth probably capped by happiness anyway
-					iHealthModifier = 8;
-				}
-				else
-					// Currently slowing growth
-					iHealthModifier = 10;
-			}
-		}
-		else
-		{
-			// either health is positive, or more than happiness
-			if (iHealthLevel < iHappinessLevel && iHealthLevel <= 4)
-			{
-				// Not currently a problem, but maybe the bottleneck on future growth
-				iHealthModifier = 6;
-			}
-			else
-				// not reducing growth, and not the bottleneck on future growth
-				iHealthModifier = 4;
-		}
-	}
-/*
-** K-Mod end
-*/
 
 	bool bProvidesPower = (kBuilding.isPower() || ((kBuilding.getPowerBonus() != NO_BONUS) && hasBonus((BonusTypes)(kBuilding.getPowerBonus()))) || kBuilding.isAreaCleanPower());
 /************************************************************************************************/
@@ -3861,7 +3842,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				if (kBuilding.isNoUnhappiness())
 				{
-					iValue += ((iAngryPopulation * 10) + getPopulation());
+					//iValue += ((iAngryPopulation * 10) + getPopulation());
+					iValue += ((std::max(0, -iHappinessLevel) * 10) + getPopulation()); // K-Mod
 				}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      02/24/10                              jdog5000        */
@@ -3871,6 +3853,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				int iGood, iBad = 0;
 				int iBuildingActualHappiness = getAdditionalHappinessByBuilding(eBuilding,iGood,iBad);
 
+				/* original code
 				if( iBuildingActualHappiness < 0 )
 				{
 					// Building causes net decrease in city happiness
@@ -3885,7 +3868,26 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					// Building causes net increase in city happiness
 					iValue += (std::min(iBuildingActualHappiness, iAngryPopulation) * 10) 
 						+ (std::max(0, iBuildingActualHappiness - iAngryPopulation) * iHappyModifier);
+				}*/
+				// K-Mod
+				int iAngerDelta = std::max(0, -(iHappinessLevel+iBuildingActualHappiness)) - std::max(0, -iHappinessLevel);
+				// High value for any immediate change in anger. (estimating citizen value to be 5 + era)
+				iValue -= iAngerDelta * 4 * (5 + kOwner.getCurrentEra());
+				// some extra value if we are still growing (this is a positive change bias)
+				if (iAngerDelta < 0 && iFoodDifference > 1)
+				{
+					iValue -= 8 * iAngerDelta;
 				}
+				// finally, a little bit of value for happiness which gives us some padding
+				iValue += 64 * std::max(0, iBuildingActualHappiness)/(4 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel));
+
+				// I'll now define the "iHappinessModifer" that some of the other happy effects use.
+				int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 4) ? 8 : 4;
+				if (iHappinessLevel >= 10)
+				{
+					iHappyModifier = 1;
+				}
+				// K-Mod
 
 				iValue += (-kBuilding.getHurryAngerModifier() * getHurryPercentAnger()) / 100;
 
@@ -3934,8 +3936,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				int iGood, iBad = 0;
 				int iBuildingActualHealth = getAdditionalHealthByBuilding(eBuilding,iGood,iBad);
 /*
-** K-Mod, 29/dec/10, karadoc
-** rewrote the evaluation of building health. (also see changes to iHealthModifier above)
+** K-Mod
+** rewrote the evaluation of building health.
 */
 				/* original
 				if( iBuildingActualHealth < 0 )
@@ -3953,7 +3955,19 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iValue += (std::min(iBuildingActualHealth, iBadHealth) * 10)
 						+ (std::max(0, iBuildingActualHealth - iBadHealth) * iHealthModifier);
 				}*/
-				iValue += iBuildingActualHealth * iHealthModifier;
+
+				int iWasteDelta = std::max(0, -(iHealthLevel+iBuildingActualHealth)) - std::max(0, -iHealthLevel);
+				// High value for any change in our food deficit.
+				iValue -= 12 * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
+				// medium value for change in waste
+				iValue -= 8 * iWasteDelta;
+				// some extra value if the change will help us grow (this is a positive change bias)
+				if (iWasteDelta < 0 && iHappinessLevel > 1)
+				{
+					iValue -= 8 * iWasteDelta;
+				}
+				// finally, a little bit of value for health which gives us some padding
+				iValue += 36 * std::max(0, iBuildingActualHealth)/(2 + std::max(0, iHealthLevel+iBuildingActualHealth) + std::max(0, iHealthLevel));
 
 				// If the GW threshold has been reached,
 				// add some additional value for pollution reduction
@@ -4789,10 +4803,6 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if ((CommerceTypes)iI == COMMERCE_CULTURE)
 					{
-						// K-Mod
-						iTempValue *= culturePressureFactor();
-						iTempValue /= 100;
-						// K-Mod end
 					    if (bCulturalVictory1)
 					    {
 					        iTempValue *= 2;					        
@@ -4892,7 +4902,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 								{
 									iCommerceMultiplierValue /= 30;
 									// K-Mod. If we're serious about a cultural victory, then we /really/ don't want to waste this building.
-									if (bCulturalVictory3 && iCountBuilt < iCulturalVictoryNumCultureCities)
+									if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4) && iCountBuilt < iCulturalVictoryNumCultureCities)
 										iCommerceMultiplierValue = 0;
 								}
 							}
@@ -10763,8 +10773,10 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 				{
 					if (GC.getImprovementInfo(eFinalImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
 					{
-						iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) * 10);
+						//iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) * 10);
+						iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 1) * 50); // K-Mod
 						iValue += 200;
+						/* original code (K-mod comments this out, because bonuses are taken into account in other ways)
 						if (eBestBuild != NO_BUILD)
 						{
 							if ((GC.getBuildInfo(eBestBuild).getImprovement() == NO_IMPROVEMENT) || (!GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
@@ -10773,25 +10785,25 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 								eBestBuild = NO_BUILD;
 								iBestValue = 0;
 							}
-						}
+						}*/
 					}
 					else
 					{
+						/* original bts code
 						if (eBestBuild != NO_BUILD)
 						{
-							/* original bts code
 							if ((GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT) && (GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isImprovementBonusTrade(eNonObsoleteBonus)))
 							{
 								iValue -= 1000;
-							}*/
-							// K-Mod, bug fix!
-							// Presumablly the original author wanted to subtract 1000 if eBestBuild would take away the bonus; not ... the nonsense they actually wrote.
-							if (bHasBonusImprovement)
-							{
-								// By the way, AI_bonusVal is typically 10 for the first bonus, and 2 for subsequent.
-								iValue -= (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, -1) * 10);
-								iValue -= 300;
 							}
+						} */
+						// K-Mod, bug fix!
+						// Presumablly the original author wanted to subtract 1000 if eBestBuild would take away the bonus; not ... the nonsense they actually wrote.
+						if (bHasBonusImprovement)
+						{
+							// By the way, AI_bonusVal is typically 10 for the first bonus, and 2 for subsequent.
+							iValue -= (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, -1) * 50);
+							iValue -= 200;
 						}
 					}
 				}
