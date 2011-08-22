@@ -14472,7 +14472,8 @@ void CvPlayerAI::AI_doDiplo()
 /* Diplomacy                                                                                    */
 /************************************************************************************************/
 								// Don't give techs for free to advanced vassals ...
-								if( GET_PLAYER((PlayerTypes)iI).getTechScore()*10 < getTechScore()*9 )
+								//if( GET_PLAYER((PlayerTypes)iI).getTechScore()*10 < getTechScore()*9 )
+								if (GET_PLAYER((PlayerTypes)iI).getTechScore()*10 < getTechScore() * (GET_PLAYER((PlayerTypes)iI).isHuman() ? 7 : 9)) // K-Mod
 								{
 									for (iJ = 0; iJ < GC.getNumTechInfos(); iJ++)
 									{

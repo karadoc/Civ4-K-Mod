@@ -5290,6 +5290,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	int iFirstDiscoverValue = iDiscoverValue;
 	iFirstDiscoverValue *= (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent());
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
+	iFirstDiscoverValue *= 100;
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent()); // twice, because this is important
 	iFirstDiscoverValue *= 2 * (GC.getNumEraInfos() - kPlayer.getCurrentEra());
 	iFirstDiscoverValue /= GC.getNumEraInfos();
@@ -5297,8 +5298,8 @@ bool CvUnitAI::AI_greatPersonMove()
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
 	int iSlowValue = iBestValue;
 	iSlowValue *= (GC.getNumEraInfos() - kPlayer.getCurrentEra());
-	iSlowValue /= 2;
-	// at this point, we have roughly 50 * commerce per turn * number of eras remaining.
+	// at this point, we have roughly 100 * commerce per turn * number of eras remaining. Scale it to 40 * era.
+	iSlowValue = 40 * iSlowValue / 100;
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel3() ? 2 : 1;
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
 	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
@@ -5317,19 +5318,19 @@ bool CvUnitAI::AI_greatPersonMove()
 	{
 		if (iTradeValue < iFirstDiscoverValue && AI_discover(false, true))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'bulb (first)' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
 			return true;
 		}
 		
 		if (iTradeValue >= iGoldenAgeValue * 2 && AI_doTrade(pBestTradePlot))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
 			return true;
 		}
 
 		if (AI_discover(false, true))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'bulb (first)' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
 			return true;
 		}
 
@@ -5337,19 +5338,19 @@ bool CvUnitAI::AI_greatPersonMove()
 		{
 			if (AI_goldenAge())
 			{
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'golden age' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'golden age' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue);
 				return true;
 			}
 			if (iTradeValue >= iGoldenAgeValue && AI_doTrade(pBestTradePlot))
 			{
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
 				return true;
 			}
 		}
 
 		if (iDiscoverValue > iSlowValue && AI_discover())
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'bulb' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue);
 			return true;
 		}
 	}
@@ -5362,14 +5363,14 @@ bool CvUnitAI::AI_greatPersonMove()
 			if (eBestSpecialist != NO_SPECIALIST)
 			{
 				getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'join' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'join' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
 				return true;
 			}
 
 			if (eBestBuilding != NO_BUILDING)
 			{
 				getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'build' with their %S", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString());
+				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'build' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
 				return true;
 			}
 		}
@@ -5535,7 +5536,8 @@ void CvUnitAI::AI_spyMove()
 			}
 		}
 		
-		if (GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (GET_PLAYER(getOwner()).AI_getStrategyRand(5) % 30))
+		if (!GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) &&
+			GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (GET_PLAYER(getOwner()).AI_getStrategyRand(5) % 30))
 		{
 			if (AI_bonusOffenseSpy(5))
 			{
@@ -22548,7 +22550,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 	}
 	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION && kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
 	{
-		logBBAI("      %S chooses %S as their best Espionage Economy mission.", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText());
+		logBBAI("      %S chooses %S as their best Espionage Economy mission (value: %d).", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), iBestValue);
 	}
 	
 	return eBestMission;
