@@ -2777,11 +2777,14 @@ void CvUnitAI::AI_attackCityMove()
 		// K-Mod - I'm going to scale the attack ratio based on the quality of our units.
 		// this isn't the "right way" to do it, but hopefully it's better than nothing.
 		// (The /right way/ would be to estimate how good our odds would be after collateral damage, etc.)
+		int iAttackRatioSkipBombard = std::max(150, GC.getDefineINT("BBAI_SKIP_BOMBARD_MIN_STACK_RATIO"));
 		{
 			int iOurValue = GET_PLAYER(getOwner()).getTypicalUnitValue(UNITAI_ATTACK_CITY);
 			int iTheirValue = GET_PLAYER(pTargetCity->getOwner()).getTypicalUnitValue(UNITAI_CITY_DEFENSE);
 			iAttackRatio *= iOurValue;
 			iAttackRatio /= std::max(1, iTheirValue);
+			iAttackRatioSkipBombard *= iOurValue;
+			iAttackRatioSkipBombard /= std::max(1, iTheirValue);
 		}
 		// K-Mod end
 
@@ -2832,7 +2835,7 @@ void CvUnitAI::AI_attackCityMove()
 				// or if defenses have crept up past half
 				if( (iComparePostBombard >= iAttackRatio) || (pTargetCity->getDefenseDamage() < ((GC.getMAX_CITY_DEFENSE_DAMAGE() * 1) / 2)) )
 				{
-					if( (iComparePostBombard < std::max(150, GC.getDefineINT("BBAI_SKIP_BOMBARD_MIN_STACK_RATIO"))) )
+					if (iComparePostBombard < iAttackRatioSkipBombard)
 					{
 						// Move to good tile to attack from unless we're way more powerful
 						if( AI_goToTargetCity(0,1,pTargetCity) )
@@ -5274,7 +5277,6 @@ bool CvUnitAI::AI_greatPersonMove()
 	} // end city loop.
 
 	int iGoldenAgeValue = (GET_PLAYER(getOwnerINLINE()).AI_calculateGoldenAgeValue() / (GET_PLAYER(getOwnerINLINE()).unitsRequiredForGoldenAge()));
-	// Todo: add civic switch to golden age value.
 	iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
 	iGoldenAgeValue /= 100;
 

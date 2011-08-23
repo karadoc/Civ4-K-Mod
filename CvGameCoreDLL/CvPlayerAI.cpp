@@ -13732,12 +13732,12 @@ void CvPlayerAI::AI_doCommerce()
 
 			// K-Mod
 			int iCap = 20;
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) && !bFirstTech)
 			{
 				iIdealPercent+=5;
 				iCap += 10;
 			}
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) && !bFirstTech)
 			{
 				iIdealPercent+=5;
 				iCap += 20;
@@ -13825,10 +13825,10 @@ void CvPlayerAI::AI_doCommerce()
 		}
 	}
 
+	// original BTS code
+	/*
 	if (isCommerceFlexible(COMMERCE_ESPIONAGE) && !bFirstTech)
 	{
-		// original BTS code
-		/*
 		int iEspionageTargetRate = 0;
 
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
@@ -13850,6 +13850,8 @@ void CvPlayerAI::AI_doCommerce()
 		*/
 
 		// K-Mod, partially based on the changes made by BETTER_BTS_AI_MOD
+	if (isCommerceFlexible(COMMERCE_ESPIONAGE))
+	{
 		int iEspionageTargetRate = 0;
 		int* aiTarget = new int[MAX_CIV_TEAMS];
 		int* aiWeight = new int[MAX_CIV_TEAMS];
@@ -14063,6 +14065,7 @@ void CvPlayerAI::AI_doCommerce()
 			}
 			if (iTeam == eMinModTeam)
 			{
+				aiWeight[iTeam] = std::max(1, aiWeight[iTeam]);
 				aiWeight[iTeam] *= 3;
 				aiWeight[iTeam] /= 2;
 			}
@@ -14082,15 +14085,7 @@ void CvPlayerAI::AI_doCommerce()
 
 		//if economy is weak, neglect espionage spending.
 		//instead invest hammers into espionage via spies/builds
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-		if (AI_isFinancialTrouble() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		if (AI_isFinancialTrouble() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || !bFirstTech) // K-Mod
 		{
 			//can still get trickle espionage income
 			iEspionageTargetRate = 0;
@@ -14210,9 +14205,9 @@ void CvPlayerAI::AI_doCivics()
 			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
 			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
-			// using 15 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
+			// using 20 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
 			// reduced threshold if we are already going to have a revolution.
-			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 15 : 10) : 2);
+			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 20 : 12) : 2);
 
 			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > paiCurrentValue[iI] + paiCurrentValue[iI] * iThreshold / 100 )
 			{
