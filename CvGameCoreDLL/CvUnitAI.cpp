@@ -5279,8 +5279,6 @@ bool CvUnitAI::AI_greatPersonMove()
 	iGoldenAgeValue /= 100;
 
 	int iDiscoverValue = std::max(1, getDiscoverResearch(NO_TECH));
-	iDiscoverValue *= 2 * GC.getNumEraInfos() - kPlayer.getCurrentEra();
-	iDiscoverValue /= GC.getNumEraInfos();
 	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
 	{
 		iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
@@ -5292,7 +5290,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	int iFirstDiscoverValue = iDiscoverValue;
 	iFirstDiscoverValue *= (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent());
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
-	iFirstDiscoverValue *= 100;
+	iFirstDiscoverValue *= 130;
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent()); // twice, because this is important
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
@@ -5300,6 +5298,8 @@ bool CvUnitAI::AI_greatPersonMove()
 	iSlowValue *= (GC.getNumEraInfos() - kPlayer.getCurrentEra());
 	// at this point, we have roughly 100 * commerce per turn * number of eras remaining. Scale it down.
 	iSlowValue = 35 * iSlowValue / 100;
+	iSlowValue *= GC.getNumEraInfos();
+	iSlowValue /= std::max(1, 2 * GC.getNumEraInfos() - kPlayer.getCurrentEra());
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel3() ? 2 : 1;
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
 	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
@@ -5309,8 +5309,6 @@ bool CvUnitAI::AI_greatPersonMove()
 
 	CvPlot* pBestTradePlot;
 	int iTradeValue = AI_tradeMissionValue(pBestTradePlot, iDiscoverValue / 2);
-	iTradeValue *= 2 * GC.getNumEraInfos() - kPlayer.getCurrentEra();
-	iTradeValue /= GC.getNumEraInfos();
 	iTradeValue *= kPlayer.AI_commerceWeight(COMMERCE_GOLD);
 	iTradeValue /= 100;
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
@@ -5320,19 +5318,19 @@ bool CvUnitAI::AI_greatPersonMove()
 	{
 		if (iTradeValue < iFirstDiscoverValue && AI_discover(false, true))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
+			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
 			return true;
 		}
 		
 		if (iTradeValue >= iGoldenAgeValue * 2 && AI_doTrade(pBestTradePlot))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
+			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
 			return true;
 		}
 
 		if (AI_discover(false, true))
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
+			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
 			return true;
 		}
 
@@ -5340,19 +5338,19 @@ bool CvUnitAI::AI_greatPersonMove()
 		{
 			if (AI_goldenAge())
 			{
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'golden age' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue);
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'golden age' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue);
 				return true;
 			}
 			if (iTradeValue >= iGoldenAgeValue && AI_doTrade(pBestTradePlot))
 			{
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
 				return true;
 			}
 		}
 
 		if (iDiscoverValue > iSlowValue && AI_discover())
 		{
-			if (gUnitLogLevel > 2) logBBAI("      %S chooses 'discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue);
+			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue);
 			return true;
 		}
 	}
@@ -5365,14 +5363,14 @@ bool CvUnitAI::AI_greatPersonMove()
 			if (eBestSpecialist != NO_SPECIALIST)
 			{
 				getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'join' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'join' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
 				return true;
 			}
 
 			if (eBestBuilding != NO_BUILDING)
 			{
 				getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
-				if (gUnitLogLevel > 2) logBBAI("      %S chooses 'build' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'build' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
 				return true;
 			}
 		}

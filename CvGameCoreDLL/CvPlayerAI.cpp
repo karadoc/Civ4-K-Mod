@@ -13414,8 +13414,51 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
     }
 
     iValue *= getTotalPopulation();
-    iValue *= GC.getGameINLINE().goldenAgeLength();
+    //iValue *= GC.getGameINLINE().goldenAgeLength(); // original BtS code
+	iValue *= getGoldenAgeLength(); // K-Mod
     iValue /= 100;
+
+	// K-Mod. Add some value if we would use the opportunity to switch civics
+	if (getAnarchyModifier() + 100 > 0)
+	{
+		CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
+
+		int iAnarchyLength = 0;
+		bool bHighValue = false;
+		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
+		{
+			int iCurrentValue = AI_civicValue(getCivics((CivicOptionTypes)iI));
+			int iBestValue;
+			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
+
+			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
+			// using a 4 percent thresold. (cf the higher threshold used in AI_doCivics)
+			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > iCurrentValue + iCurrentValue * 4 / 100 )
+			{
+				iAnarchyLength = iTestAnarchy;
+				if (gPlayerLogLevel > 0) logBBAI("      %S wants a golden age to switch to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, iCurrentValue);
+			}
+			else
+			{
+				paeBestCivic[iI] = getCivics((CivicOptionTypes)iI); // revert to current civic
+			}
+		}
+		if (iAnarchyLength > 0)
+		{
+			// we would switch; so what's it worth?
+			for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+			{
+				iTempValue = getCommerceRate((CommerceTypes)iI) * iAnarchyLength;
+				iTempValue *= AI_commerceWeight((CommerceTypes)iI);
+				iTempValue /= 100;
+				iValue += iTempValue;
+			}
+			// production and GGP matter too, but I don't really want to try to evaluate them properly. Sorry.
+			// On the other hand, I'm ignoring the negation of maintanence cost.
+		}
+		SAFE_DELETE_ARRAY(paeBestCivic);
+	}
+	// K-Mod end
 
     return iValue;
 }
@@ -14117,32 +14160,16 @@ void CvPlayerAI::AI_doCommerce()
 	verifyGoldCommercePercent();
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      07/19/09                                jdog5000      */
-/*                                                                                              */
-/* Civic AI                                                                                     */
-/************************************************************************************************/
+// K-Mod had edited this function, based on edits from BBAI. I don't know what's original bts code and what's not.
+// BBAI introduced some bugs, which is why I've rewritten parts.
 void CvPlayerAI::AI_doCivics()
 {
-	CivicTypes* paeBestCivic;
-	int iCurCivicsValue = 0;
-	int iBestCivicsValue = 0;
-	int iI;
-
 	FAssertMsg(!isHuman(), "isHuman did not return false as expected");
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      07/20/09                                jdog5000      */
-/*                                                                                              */
-/* Barbarian AI, efficiency                                                                     */
-/************************************************************************************************/
 	if( isBarbarian() )
 	{
 		return;
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	if (AI_getCivicTimer() > 0)
 	{
@@ -14157,35 +14184,50 @@ void CvPlayerAI::AI_doCivics()
 
 	FAssertMsg(AI_getCivicTimer() == 0, "AI Civic timer is expected to be 0");
 
-	paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
+	CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
+	int* paiCurrentValue = new int[GC.getNumCivicOptionInfos()];
 
-	// Threshold to make AI hold off on civics changes, threshold is percentage to add to
-	// value of current civics
-	int iThreshold = 7;
-
-	if( (getAnarchyTurns() > 0) && !isGoldenAge() )
+	for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 	{
-		iThreshold += 13;
+		paeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
+		paiCurrentValue[iI] = AI_civicValue(paeBestCivic[iI]);
 	}
 
-	int iCurValue;
-	int iBestValue;
-	for (iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
+	int iAnarchyLength = 0;
+	bool bWillSwitch;
+	bool bWantSwitch;
+	bool bFirstPass = true;
+	do
 	{
-		paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
-		iCurValue = AI_civicValue( getCivics((CivicOptionTypes)iI) );
-		
-		iCurValue += (iCurValue * iThreshold) / 100;
-
-		if ( paeBestCivic[iI] == NO_CIVIC || iBestValue < iCurValue )
+		bWillSwitch = false;
+		bWantSwitch = false;
+		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 		{
-			paeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
-			iBestValue = iCurValue;
-		}
+			int iBestValue;
+			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
-		iCurCivicsValue += iCurValue;
-		iBestCivicsValue += iBestValue;
-	}
+			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
+			// using 12 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
+			// reduced threshold if we are already going to have a revolution.
+			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 12 : 8) : 2);
+
+			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > paiCurrentValue[iI] + paiCurrentValue[iI] * iThreshold / 100 )
+			{
+				iAnarchyLength = iTestAnarchy;
+				paiCurrentValue[iI] = iBestValue;
+				bWillSwitch = true;
+				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%s)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
+			}
+			else
+			{
+				paeBestCivic[iI] = getCivics((CivicOptionTypes)iI); // revert to current civic
+				if (iBestValue > paiCurrentValue[iI] + paiCurrentValue[iI]/50)
+					bWantSwitch = true;
+			}
+		}
+		bFirstPass = false;
+	} while (bWillSwitch && bWantSwitch);
+	// Recheck, just in case we can switch another good civic without adding more anarchy.
 
 
 	// XXX AI skips revolution???
@@ -14196,11 +14238,8 @@ void CvPlayerAI::AI_doCivics()
 	}
 
 	SAFE_DELETE_ARRAY(paeBestCivic);
+	SAFE_DELETE_ARRAY(paiCurrentValue);
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 void CvPlayerAI::AI_doReligion()
 {
