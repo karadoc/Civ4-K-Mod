@@ -13422,18 +13422,21 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 	if (getAnarchyModifier() + 100 > 0)
 	{
 		CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
-
-		int iAnarchyLength = 0;
-		bool bHighValue = false;
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 		{
-			int iCurrentValue = AI_civicValue(getCivics((CivicOptionTypes)iI));
+			paeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
+		}
+
+		int iAnarchyLength = 0;
+		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
+		{
+			int iCurrentValue = AI_civicValue(paeBestCivic[iI]);
 			int iBestValue;
 			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
 			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
-			// using a 4 percent thresold. (cf the higher threshold used in AI_doCivics)
-			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > iCurrentValue + iCurrentValue * 4 / 100 )
+			// using a 7 percent thresold. (cf the higher threshold used in AI_doCivics)
+			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > iCurrentValue + iCurrentValue * 7 / 100 )
 			{
 				iAnarchyLength = iTestAnarchy;
 				if (gPlayerLogLevel > 0) logBBAI("      %S wants a golden age to switch to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, iCurrentValue);
@@ -14207,16 +14210,16 @@ void CvPlayerAI::AI_doCivics()
 			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
 			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
-			// using 12 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
+			// using 15 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
 			// reduced threshold if we are already going to have a revolution.
-			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 12 : 8) : 2);
+			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 15 : 10) : 2);
 
 			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > paiCurrentValue[iI] + paiCurrentValue[iI] * iThreshold / 100 )
 			{
+				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%s)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
 				iAnarchyLength = iTestAnarchy;
 				paiCurrentValue[iI] = iBestValue;
 				bWillSwitch = true;
-				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%s)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
 			}
 			else
 			{
@@ -17132,6 +17135,13 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	int iHighCultureCount = 0;
 	int iCloseToLegendaryCount = 0;
 	int iLegendaryCount = 0;
+	// K-Mod, the "iHighCultureMark turns out to be 250 in standard games. Note: this could get messed up by mods.
+	// In the future, I might decide to adjust the high culture based on era and such.
+	int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
+	int iHighCultureMark = iLegendaryCulture / std::max(1, 2 * GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent());
+	int iLowestCountdown = INT_MAX;
+	int iVictoryCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
+	// K-Mod end
 		
 	int iLoop;
 	CvCity* pLoopCity;
@@ -17139,7 +17149,14 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	{
 		if (pLoopCity->getCultureLevel() >= (GC.getGameINLINE().culturalVictoryCultureLevel() - 1))
 		{
-			if (pLoopCity->getBaseCommerceRate(COMMERCE_CULTURE) > 100)
+			//if (pLoopCity->getBaseCommerceRate(COMMERCE_CULTURE) > 100)
+			// K-Mod. Try to tell us what the culture would be like if we were to turn up the slider...
+			int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
+			iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+			iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+			int iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
+			iLowestCountdown = std::min(iCountdown, iLowestCountdown);
+			if (iEstimatedRate > iHighCultureMark)
 			{
 				iHighCultureCount++;
 			}
@@ -17158,13 +17175,13 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		}
 	}
 
-	if( iLegendaryCount >= GC.getGameINLINE().culturalVictoryNumCultureCities() )
+	if( iLegendaryCount >= iVictoryCities )
 	{
 		// Already won, keep playing culture heavy but do some tech to keep pace if human wants to keep playing
 		return 3;
 	}
 
-	if( iCloseToLegendaryCount >= GC.getGameINLINE().culturalVictoryNumCultureCities() )
+	if( iCloseToLegendaryCount >= iVictoryCities )
 	{
 		return 4;
 	}
@@ -17181,6 +17198,10 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		return 0;
 	}
 
+	// K-Mod, disabling some stuff.
+	// It is still possible to get a cultural victory in advanced start games.
+	// and moving your captial city certainly does not indicate that you shouldn't go for a cultural victory!
+	/* original code
 	if (GC.getGame().getStartEra() > 1)
     {
     	return 0;
@@ -17193,7 +17214,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 			//the loss of the capital indicates it might be a good idea to abort any culture victory
 			return 0;
 		}
-    }
+    } */
 
     iValue = GC.getLeaderHeadInfo(getPersonalityType()).getCultureVictoryWeight();
 
@@ -17204,9 +17225,31 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	
 	iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
 	
-	if( iValue > 20 && getNumCities() >= GC.getGameINLINE().culturalVictoryNumCultureCities() )
+	// K-Mod
+	iValue += 30 * std::min(iCloseToLegendaryCount, iVictoryCities*2);
+	iValue += 10 * std::min(iHighCultureCount, iVictoryCities*2);
+	// K-Mod end
+	if( iValue > 20 && getNumCities() >= iVictoryCities )
 	{
 		iValue += 10*countHolyCities();
+		// K-Mod be wary of going for a cultural victory if everyone hates us.
+		int iScore = 0;
+		int iTotalPop = 0;
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		{
+			const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+			if (iI != getID() && kLoopPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam())
+				&& !kLoopPlayer.isMinorCiv() && !GET_TEAM(kLoopPlayer.getTeam()).isAVassal())
+			{
+				iTotalPop += kLoopPlayer.getTotalPopulation();
+				if (AI_getAttitude((PlayerTypes)iI) <= ATTITUDE_ANNOYED)
+					iScore -= 20 * kLoopPlayer.getTotalPopulation();
+				else if (AI_getAttitude((PlayerTypes)iI) >= ATTITUDE_PLEASED)
+					iScore += 20 * kLoopPlayer.getTotalPopulation();
+			}
+		}
+		iValue += iScore / std::max(1, iTotalPop);
+		// K-Mod end
 	}
 	/*
 	if ((GET_TEAM(getTeam()).isAVassal()) && (getNumCities() > 5))
@@ -17233,23 +17276,27 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		bool bAt3 = false;
         
 		// if we have enough high culture cities, go to stage 3
-		if (iHighCultureCount >= GC.getGameINLINE().culturalVictoryNumCultureCities())
+		if (iHighCultureCount >= iVictoryCities)
 		{
 			bAt3 = true;
 		}
 
 		// if we have a lot of religion, may be able to catch up quickly
+		/* disabled by K-Mod
 		if (countTotalHasReligion() >= getNumCities() * 3)
         {
 			if( getNumCities() >= GC.getGameINLINE().culturalVictoryNumCultureCities() )
 			{
 				bAt3 = true;
 			}
-        }
+        } */
 
 		if( bAt3 )
 		{
-			if (AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
+			//if (AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
+			// K-Mod
+			if (iLowestCountdown < 2 * GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent()
+				&& AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
 			{
 				return 4;
 			}
@@ -17258,7 +17305,8 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		}
     }
 
-	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2))
+	//if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2))
+	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2) || iHighCultureCount >= iVictoryCities)
 	{
 	    return 2;
 	}
