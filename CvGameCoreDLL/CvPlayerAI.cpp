@@ -7883,6 +7883,10 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 			}
 		}
 	}
+	// K-Mod
+	if (GET_TEAM(getTeam()).AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
+		return false;
+	// K-Mod end
 
 	if (GET_PLAYER(ePlayer).getTeam() == getTeam())
 	{
@@ -7896,33 +7900,36 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 /************************************************************************************************/
 	// Don't always accept giving deals, TRADE_VASSAL and TRADE_SURRENDER come with strings attached
 	bool bVassalTrade = false;
-	for (pNode = pTheirList->head(); pNode; pNode = pTheirList->next(pNode))
+	if (iChange > -1) // K-Mod
 	{
-		if( pNode->m_data.m_eItemType == TRADE_VASSAL )
+		for (pNode = pTheirList->head(); pNode; pNode = pTheirList->next(pNode))
 		{
-			bVassalTrade = true;
-
-			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++)
+			if( pNode->m_data.m_eItemType == TRADE_VASSAL )
 			{
-				if (GET_TEAM((TeamTypes)iTeam).isAlive())
+				bVassalTrade = true;
+
+				for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++)
 				{
-					if (iTeam != getTeam() && iTeam != GET_PLAYER(ePlayer).getTeam() && atWar(GET_PLAYER(ePlayer).getTeam(), (TeamTypes)iTeam) && !atWar(getTeam(), (TeamTypes)iTeam))
+					if (GET_TEAM((TeamTypes)iTeam).isAlive())
 					{
-						if (GET_TEAM(getTeam()).AI_declareWarTrade((TeamTypes)iTeam, GET_PLAYER(ePlayer).getTeam(), false) != NO_DENIAL)
+						if (iTeam != getTeam() && iTeam != GET_PLAYER(ePlayer).getTeam() && atWar(GET_PLAYER(ePlayer).getTeam(), (TeamTypes)iTeam) && !atWar(getTeam(), (TeamTypes)iTeam))
 						{
-							return false;
+							if (GET_TEAM(getTeam()).AI_declareWarTrade((TeamTypes)iTeam, GET_PLAYER(ePlayer).getTeam(), false) != NO_DENIAL)
+							{
+								return false;
+							}
 						}
 					}
 				}
 			}
-		}
-		else if( pNode->m_data.m_eItemType == TRADE_SURRENDER )
-		{
-			bVassalTrade = true;
-
-			if( !(GET_TEAM(getTeam()).AI_acceptSurrender(GET_PLAYER(ePlayer).getTeam())) )
+			else if( pNode->m_data.m_eItemType == TRADE_SURRENDER )
 			{
-				return false;
+				bVassalTrade = true;
+
+				if( !(GET_TEAM(getTeam()).AI_acceptSurrender(GET_PLAYER(ePlayer).getTeam())) )
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -7943,6 +7950,26 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 
 	if (iOurValue > 0 && 0 == pTheirList->getLength() && 0 == iTheirValue)
 	{
+		// K-Mod. Don't cancel gift deals to vassals that you like, unless you need the gift back.
+		if (iChange < 0 && GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(getTeam()))
+		{
+			/*if (iOurValue > AI_dealVal(ePlayer, pOurList, false, 1))
+				return true;
+			else
+				return false; */
+			// Simply comparing deal values doesn't work because the value from voluntary vassals gets halved.
+			// So unfortunately, I'm going to use a kludge:
+			if (pOurList->getLength() == 1 && pOurList->head()->m_data.m_eItemType == TRADE_RESOURCES)
+			{
+				BonusTypes eBonus = (BonusTypes)pOurList->head()->m_data.m_iData;
+				if (GET_PLAYER(ePlayer).AI_bonusVal(eBonus, -1) > AI_bonusVal(eBonus, 1))
+					return true;
+				else
+					return false;
+			}
+		}
+		// K-Mod end
+
 		if (GET_TEAM(getTeam()).isVassal(GET_PLAYER(ePlayer).getTeam()) && CvDeal::isVassalTributeDeal(pOurList))
 		{
 			if (AI_getAttitude(ePlayer, false) <= GC.getLeaderHeadInfo(getPersonalityType()).getVassalRefuseAttitudeThreshold()
@@ -8000,7 +8027,8 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 
 	if (iChange < 0)
 	{
-		return (iTheirValue * 110 >= iOurValue * 100);
+		//return (iTheirValue * 110 >= iOurValue * 100);
+		return (iTheirValue * 125 >= iOurValue * 100); // K-Mod
 	}
 
 	return (iTheirValue >= iOurValue);
@@ -14292,12 +14320,13 @@ void CvPlayerAI::AI_doDiplo()
 							{
 								if (pLoopDeal->isCancelable(getID()))
 								{
-									if ((GC.getGameINLINE().getGameTurn() - pLoopDeal->getInitialGameTurn()) >= (GC.getDefineINT("PEACE_TREATY_LENGTH") * 2))
+									// if ((GC.getGameINLINE().getGameTurn() - pLoopDeal->getInitialGameTurn()) >= (GC.getDefineINT("PEACE_TREATY_LENGTH") * 2)) // K-Mod disabled
 									{
 										bCancelDeal = false;
 
 										if ((pLoopDeal->getFirstPlayer() == getID()) && (pLoopDeal->getSecondPlayer() == ((PlayerTypes)iI)))
 										{
+											/* original bts code
 											if (GET_PLAYER((PlayerTypes)iI).isHuman())
 											{
 												if (!AI_considerOffer(((PlayerTypes)iI), pLoopDeal->getSecondTrades(), pLoopDeal->getFirstTrades(), -1))
@@ -14315,10 +14344,16 @@ void CvPlayerAI::AI_doDiplo()
 														break;
 													}
 												}
+											}*/
+											// K-Mod. getTradeDenial is not equiped to consider deal cancelation properly.
+											if (!AI_considerOffer(((PlayerTypes)iI), pLoopDeal->getSecondTrades(), pLoopDeal->getFirstTrades(), -1))
+											{
+												bCancelDeal = true;
 											}
 										}
 										else if ((pLoopDeal->getFirstPlayer() == ((PlayerTypes)iI)) && (pLoopDeal->getSecondPlayer() == getID()))
 										{
+											/* original bts code
 											if (GET_PLAYER((PlayerTypes)iI).isHuman())
 											{
 												if (!AI_considerOffer(((PlayerTypes)iI), pLoopDeal->getFirstTrades(), pLoopDeal->getSecondTrades(), -1))
@@ -14336,6 +14371,11 @@ void CvPlayerAI::AI_doDiplo()
 														break;
 													}
 												}
+											}*/
+											// K-Mod
+											if (!AI_considerOffer(((PlayerTypes)iI), pLoopDeal->getFirstTrades(), pLoopDeal->getSecondTrades(), -1))
+											{
+												bCancelDeal = true;
 											}
 										}
 
@@ -14380,7 +14420,6 @@ void CvPlayerAI::AI_doDiplo()
 														pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_NO_VASSAL"));
 														pDiplo->setAIContact(true);
 														gDLL->beginDiplomacy(pDiplo, ((PlayerTypes)iI));
-
 													}
 													else
 													{
@@ -18575,7 +18614,9 @@ int CvPlayerAI::AI_getStrategyHash() const
 		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
 	// On second thought, lets try this
 		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
+		iCrushValue += std::min(0, GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio()/15);
 		// note: flavor military is between 0 and 10
+		// K-Mod end
 		if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3))
 		{
 			iCrushValue += 1;
@@ -18659,7 +18700,8 @@ int CvPlayerAI::AI_getStrategyHash() const
 				}
 			}
 		}
-		if ((iWarCount <= 1) && (iCrushValue >= ((iLastStrategyHash & AI_STRATEGY_CRUSH) ? 9 :10)))
+		//if ((iWarCount <= 1) && (iCrushValue >= ((iLastStrategyHash & AI_STRATEGY_CRUSH) ? 9 :10)))
+		if ((iWarCount == 1) && (iCrushValue >= ((iLastStrategyHash & AI_STRATEGY_CRUSH) ? 9 :10))) // K-Mod
 		{
 			m_iStrategyHash |= AI_STRATEGY_CRUSH;
 		}

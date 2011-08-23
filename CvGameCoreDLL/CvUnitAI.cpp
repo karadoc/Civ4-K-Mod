@@ -5279,6 +5279,8 @@ bool CvUnitAI::AI_greatPersonMove()
 	iGoldenAgeValue /= 100;
 
 	int iDiscoverValue = std::max(1, getDiscoverResearch(NO_TECH));
+	iDiscoverValue *= 2 * GC.getNumEraInfos() - kPlayer.getCurrentEra();
+	iDiscoverValue /= GC.getNumEraInfos();
 	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
 	{
 		iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
@@ -5292,14 +5294,12 @@ bool CvUnitAI::AI_greatPersonMove()
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
 	iFirstDiscoverValue *= 100;
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent()); // twice, because this is important
-	iFirstDiscoverValue *= 2 * (GC.getNumEraInfos() - kPlayer.getCurrentEra());
-	iFirstDiscoverValue /= GC.getNumEraInfos();
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
 	int iSlowValue = iBestValue;
 	iSlowValue *= (GC.getNumEraInfos() - kPlayer.getCurrentEra());
-	// at this point, we have roughly 100 * commerce per turn * number of eras remaining. Scale it to 40 * era.
-	iSlowValue = 40 * iSlowValue / 100;
+	// at this point, we have roughly 100 * commerce per turn * number of eras remaining. Scale it down.
+	iSlowValue = 35 * iSlowValue / 100;
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel3() ? 2 : 1;
 	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
 	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
@@ -5309,6 +5309,8 @@ bool CvUnitAI::AI_greatPersonMove()
 
 	CvPlot* pBestTradePlot;
 	int iTradeValue = AI_tradeMissionValue(pBestTradePlot, iDiscoverValue / 2);
+	iTradeValue *= 2 * GC.getNumEraInfos() - kPlayer.getCurrentEra();
+	iTradeValue /= GC.getNumEraInfos();
 	iTradeValue *= kPlayer.AI_commerceWeight(COMMERCE_GOLD);
 	iTradeValue /= 100;
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
