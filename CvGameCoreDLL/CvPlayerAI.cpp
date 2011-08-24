@@ -13249,6 +13249,8 @@ void CvPlayerAI::AI_changePeacetimeGrantValue(PlayerTypes eIndex, int iChange)
 		m_aiPeacetimeGrantValue[eIndex] = (m_aiPeacetimeGrantValue[eIndex] + iChange);
 		FAssert(AI_getPeacetimeGrantValue(eIndex) >= 0);
 
+		AI_invalidateAttitudeCache(eIndex); // K-Mod. (missing from CAR mod)
+
 		FAssert(iChange > 0);
 
 		if (iChange > 0)
@@ -13397,6 +13399,7 @@ void CvPlayerAI::AI_changeMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2, 
 	FAssertMsg(eIndex2 < NUM_MEMORY_TYPES, "eIndex2 is expected to be within maximum bounds (invalid Index)");
 	m_aaiMemoryCount[eIndex1][eIndex2] += iChange;
 	FAssert(AI_getMemoryCount(eIndex1, eIndex2) >= 0);
+	AI_invalidateAttitudeCache(eIndex1); // K-Mod. (missing from CAR mod)
 }
 
 int CvPlayerAI::AI_calculateGoldenAgeValue() const
@@ -21926,12 +21929,12 @@ bool CvPlayerAI::AI_isFirstTech(TechTypes eTech) const
 /************************************************************************************************/
 // From Sanguo Mod Performance, ie the CAR Mod
 // Attitude cache
-void CvPlayerAI::AI_invalidateAttitudeCache(PlayerTypes ePlayer)
+void CvPlayerAI::AI_invalidateAttitudeCache(PlayerTypes ePlayer) const
 {
 	m_aiAttitudeCache[ePlayer] = MAX_INT;
 }
 
-void CvPlayerAI::AI_invalidateAttitudeCache()
+void CvPlayerAI::AI_invalidateAttitudeCache() const
 {
 	for( int iI = 0; iI < MAX_PLAYERS; iI++ )
 	{

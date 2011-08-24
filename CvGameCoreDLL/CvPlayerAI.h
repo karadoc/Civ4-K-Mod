@@ -407,8 +407,8 @@ public:
 /************************************************************************************************/
 	// From Sanguo Mod Performance, ie the CAR Mod
 	// Attitude cache
-	void AI_invalidateAttitudeCache(PlayerTypes ePlayer);
-	void AI_invalidateAttitudeCache();
+	void AI_invalidateAttitudeCache(PlayerTypes ePlayer) const;
+	void AI_invalidateAttitudeCache() const;
 	void AI_ClearConstructionValueCache(); // K-Mod
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */

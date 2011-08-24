@@ -3638,6 +3638,23 @@ void CvTeamAI::AI_setEnemyPeacetimeTradeValue(TeamTypes eIndex, int iNewValue)
 	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
 	m_aiEnemyPeacetimeTradeValue[eIndex] = iNewValue;
 	FAssert(AI_getEnemyPeacetimeTradeValue(eIndex) >= 0);
+	// K-Mod. bug fix for the CAR mod. (a mod which makes me sad, let me just say once.)
+	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	{
+		CvPlayerAI& kIPlayer = GET_PLAYER((PlayerTypes)iI);
+		if (kIPlayer.getTeam() == getID())
+		{
+			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
+			{
+				CvPlayer& kJPlayer = GET_PLAYER((PlayerTypes)iJ);
+				if (kJPlayer.getTeam() == eIndex)
+				{
+					kIPlayer.AI_invalidateAttitudeCache((PlayerTypes)iJ);
+				}
+			}
+		}
+	}
+	// K-Mod end
 }
 
 
@@ -3661,6 +3678,23 @@ void CvTeamAI::AI_setEnemyPeacetimeGrantValue(TeamTypes eIndex, int iNewValue)
 	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
 	m_aiEnemyPeacetimeGrantValue[eIndex] = iNewValue;
 	FAssert(AI_getEnemyPeacetimeGrantValue(eIndex) >= 0);
+	// K-Mod. bug fix for the CAR mod. (a mod which makes me sad, let me just say once.)
+	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	{
+		CvPlayerAI& kIPlayer = GET_PLAYER((PlayerTypes)iI);
+		if (kIPlayer.getTeam() == getID())
+		{
+			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
+			{
+				CvPlayer& kJPlayer = GET_PLAYER((PlayerTypes)iJ);
+				if (kJPlayer.getTeam() == eIndex)
+				{
+					kIPlayer.AI_invalidateAttitudeCache((PlayerTypes)iJ);
+				}
+			}
+		}
+	}
+	// K-Mod end
 }
 
 

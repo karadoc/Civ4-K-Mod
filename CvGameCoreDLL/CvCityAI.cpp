@@ -3480,7 +3480,9 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 	int iBestValue;
 	int iI, iJ;
 
-	bAreaAlone = GET_PLAYER(getOwnerINLINE()).AI_isAreaAlone(area());
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwner()); // K-Mod (and I've replaced all other GET_PLAYER calls in this function)
+
+	bAreaAlone = kOwner.AI_isAreaAlone(area());
 
 	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 
@@ -3520,7 +3522,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 
 	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 	{
-		if (!(GET_PLAYER(getOwnerINLINE()).isBuildingClassMaxedOut(((BuildingClassTypes)iI), GC.getBuildingClassInfo((BuildingClassTypes)iI).getExtraPlayerInstances())))
+		if (!(kOwner.isBuildingClassMaxedOut(((BuildingClassTypes)iI), GC.getBuildingClassInfo((BuildingClassTypes)iI).getExtraPlayerInstances())))
 		{
 			eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
 
@@ -3560,7 +3562,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 								BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass());
 								if (NO_BUILDING != eFreeBuilding)
 								{
-									iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (GET_PLAYER(getOwnerINLINE()).getNumCities() - GET_PLAYER(getOwnerINLINE()).getBuildingClassCountPlusMaking((BuildingClassTypes)GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass())));
+									iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass())));
 								}
 							}
 							if (isProductionAutomated())
@@ -3575,14 +3577,77 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 								}
 							}
 
-
 							if (iValue > 0)
 							{
 								iTurnsLeft = getProductionTurnsLeft(eLoopBuilding, 0);
 
+								// K-Mod
+								// Block construction of limited buildings in bad places
+								// (the value check is just for efficiency. 1250 takes into account the possible +25 random boost)
+								if (iFocusFlags == 0 && iValue * 1250 / std::max(1, iTurnsLeft + 3) >= iBestValue)
+								{
+									int iLimit = limitedWonderClassLimit((BuildingClassTypes)iI);
+									if (iLimit == -1)
+									{
+										// We're not out of the woods yet. Check for prereq buildings.
+										for (int iJ = 0; iJ < GC.getNumBuildingClassInfos(); iJ++)
+										{
+											if (GC.getBuildingInfo(eLoopBuilding).getPrereqNumOfBuildingClass(iJ) > 0)
+											{
+												// I wish this was easier to calculate...
+												int iBuilt = kOwner.getBuildingClassCount((BuildingClassTypes)iI);
+												int iBuilding = kOwner.getBuildingClassMaking((BuildingClassTypes)iI);
+												int iPrereqEach = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, (BuildingClassTypes)iJ, -iBuilt);
+												int iPrereqBuilt = kOwner.getBuildingClassCount((BuildingClassTypes)iJ);
+												FAssert(iPrereqEach > 0);
+												iLimit = iPrereqBuilt / iPrereqEach - iBuilt - iBuilding;
+												FAssert(iLimit > 0);
+												break;
+											}
+										}
+									}
+									if (iLimit != -1)
+									{
+										const int iMaxNumWonders = (GC.getGameINLINE().isOption(GAMEOPTION_ONE_CITY_CHALLENGE) && isHuman()) ? GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY_FOR_OCC") : GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY");
+										int iRelativeValue = iValue;
+
+										if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
+										{
+											iRelativeValue *= iMaxNumWonders + 2 - getNumNationalWonders();
+											iRelativeValue /= iMaxNumWonders + 2;
+										}
+
+										int iLoop;
+										for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+										{
+											if (pLoopCity->canConstruct(eLoopBuilding))
+											{
+												int iLoopValue = static_cast<CvCityAI*>(pLoopCity)->AI_buildingValueThreshold(eLoopBuilding);
+												if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
+												{
+													iLoopValue *= iMaxNumWonders + 2 - pLoopCity->getNumNationalWonders();
+													iLoopValue /= iMaxNumWonders + 2;
+												}
+												if (80 * iLoopValue > 100 * iRelativeValue)
+												{
+													if (--iLimit <= 0)
+													{
+														iValue = 0;
+														break;
+													}
+												}
+											}
+										}
+										// Subtract some points from wonder value, just to stop us from wasting it
+										if (isNationalWonderClass((BuildingClassTypes)iI))
+											iValue -= 20;
+									}
+								}
+								// K-Mod end
+
 								if (isWorldWonderClass((BuildingClassTypes)iI))
 								{
-									if (iProductionRank <= std::min(3, ((GET_PLAYER(getOwnerINLINE()).getNumCities() + 2) / 3)))
+									if (iProductionRank <= std::min(3, ((kOwner.getNumCities() + 2) / 3)))
 									{
 										if (bAsync)
 										{
@@ -3613,8 +3678,8 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 								}
 
 								iValue += getBuildingProduction(eLoopBuilding);
-								
-								
+
+
 								bool bValid = ((iMaxTurns <= 0) ? true : false);
 								if (!bValid)
 								{
@@ -3634,7 +3699,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 										}
 									}
 								}
-
+								
 								if (bValid)
 								{
 									FAssert((MAX_INT / 1000) > iValue);
@@ -4918,9 +4983,6 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 								else
 								{
 									iCommerceMultiplierValue /= 30;
-									// K-Mod. If we're serious about a cultural victory, then we /really/ don't want to waste this building.
-									if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4) && iCountBuilt < iCulturalVictoryNumCultureCities)
-										iCommerceMultiplierValue = 0;
 								}
 							}
 						}

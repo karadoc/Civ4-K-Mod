@@ -22166,11 +22166,16 @@ void CvPlayer::buildTradeTable(PlayerTypes eOtherPlayer, CLinkList<TradeData>& o
 		case TRADE_CITIES:
 			for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 			{
-				setTradeItem(&item, TRADE_CITIES, pLoopCity->getID());
-				if (canTradeItem(eOtherPlayer, item))
+				// K-Mod
+				if (AI_cityTrade(pLoopCity, eOtherPlayer) != DENIAL_NEVER)
+				// K-Mod end
 				{
-					bFoundItemUs = true;
-					ourList.insertAtEnd(item);
+					setTradeItem(&item, TRADE_CITIES, pLoopCity->getID());
+					if (canTradeItem(eOtherPlayer, item))
+					{
+						bFoundItemUs = true;
+						ourList.insertAtEnd(item);
+					}
 				}
 			}
 			break;
