@@ -17227,7 +17227,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	if( iValue > 20 && getNumCities() >= iVictoryCities )
 	{
 		iValue += 10*countHolyCities();
-		// K-Mod be wary of going for a cultural victory if everyone hates us.
+		// K-Mod: be wary of going for a cultural victory if everyone hates us.
 		int iScore = 0;
 		int iTotalPop = 0;
 		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
@@ -17240,10 +17240,11 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 				if (AI_getAttitude((PlayerTypes)iI) <= ATTITUDE_ANNOYED)
 					iScore -= 20 * kLoopPlayer.getTotalPopulation();
 				else if (AI_getAttitude((PlayerTypes)iI) >= ATTITUDE_PLEASED)
-					iScore += 20 * kLoopPlayer.getTotalPopulation();
+					iScore += 10 * kLoopPlayer.getTotalPopulation();
 			}
 		}
 		iValue += iScore / std::max(1, iTotalPop);
+		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) ? 10 : 0; // space is more important
 		// K-Mod end
 	}
 	/*
@@ -17290,7 +17291,14 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		{
 			//if (AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
 			// K-Mod
-			if (iLowestCountdown < 2 * GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent()
+			int iCountdownTarget = 200;
+			iCountdownTarget -=  50 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3);
+			iCountdownTarget -=  50 * AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3);
+			iCountdownTarget -=  80 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE3);
+			iCountdownTarget *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
+			iCountdownTarget /= 100;
+			// Note: culture 4 is blocked completely by 4 in any of those other strategies.
+			if (iLowestCountdown < iCountdownTarget
 				&& AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
 			{
 				return 4;
@@ -17301,7 +17309,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
     }
 
 	//if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2))
-	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2) || iHighCultureCount >= iVictoryCities)
+	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(1) % 2) || iHighCultureCount >= iVictoryCities-1)
 	{
 	    return 2;
 	}
@@ -17441,6 +17449,21 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 		}
 
 		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
+
+		// K-Mod: take into account how we're doing in tech
+		int iScore = 0;
+		int iTotalPop = 0;
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		{
+			const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+			if (iI != getID() && kLoopPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam()))
+			{
+				iTotalPop += kLoopPlayer.getTotalPopulation();
+				iScore += (getTechScore() > kLoopPlayer.getTechScore() ? 20 : -20) * kLoopPlayer.getTotalPopulation();
+			}
+		}
+		iValue += iScore / std::max(1, iTotalPop);
+		// K-Mod end
 
 		//int iNonsense = AI_getStrategyRand() + 50;
 		iValue += (AI_getStrategyRand(3) % 100);
@@ -17944,6 +17967,8 @@ int CvPlayerAI::AI_getVictoryStrategyHash() const
 	}
 
 	// Cultural victory
+	// K-Mod Note: AI_getCultureVictoryStage now checks some of the other victory strategies,
+	// so it is important that they are set first.
 	iVictoryStage = AI_getCultureVictoryStage();
 
 	if( iVictoryStage >= 1 )
