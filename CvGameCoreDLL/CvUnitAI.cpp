@@ -5573,7 +5573,7 @@ void CvUnitAI::AI_spyMove()
 	int iMinPoints = 100 + 50 * kOwner.getCurrentEra() * kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? kOwner.getCurrentEra() : 1;
 	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 	{
-		if (GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
+		if (iI != getTeam() && GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
 			kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)iI) &&
 			kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) > iMinPoints)
 		{
@@ -22277,7 +22277,9 @@ bool CvUnitAI::AI_revoltCitySpy()
 	return false;
 }
 
-int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
+// K-Mod, I've moved the pathfinding check out of this function.
+//int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
+int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot)
 {
 	PROFILE_FUNC();
 
@@ -22320,7 +22322,7 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 					iValue += GET_PLAYER(pPlot->getOwnerINLINE()).AI_baseBonusVal(eBonus) - 10;
 				}
 			}
-
+			/* original bts code (moved out of this function)
 			int iPathTurns;
 			if (generatePath(pPlot, 0, true, &iPathTurns))
 			{
@@ -22339,10 +22341,10 @@ int CvUnitAI::AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath)
 						iValue *= 3;
 					}
 
-					iValue *= 4; // K-Mod. Was 3 and 3.
-					iValue /= (4 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pPlot, MISSIONAI_ATTACK_SPY, getGroup()));
+					iValue *= 3;
+					iValue /= (3 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pPlot, MISSIONAI_ATTACK_SPY, getGroup()));
 				}
-			}
+			} */
 		}
 	}
 
@@ -22356,7 +22358,8 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
-
+	CvPlot* pEndTurnPlot = NULL;
+	
 	const CvTeamAI& kTeam = GET_TEAM(getTeam());
 
 	const int iEra = GET_PLAYER(getOwner()).getCurrentEra();
@@ -22390,8 +22393,8 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 			iTeamWeight *= 400 - kTeam.AI_getAttitudeWeight(kLoopPlayer.getTeam());
 			iTeamWeight /= 500;
 
-			iTeamWeight *= (kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN ? 3 : 2);
-			iTeamWeight /= 2;
+			iTeamWeight *= kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN ? 2 : 1;
+			iTeamWeight *= kTeam.AI_isSneakAttackPreparing(kLoopPlayer.getTeam()) ? 2 : 1;
 
 			iTeamWeight *= GET_PLAYER(getOwner()).isMaliciousEspionageTarget((PlayerTypes)iPlayer) ? 3 : 2;
 			iTeamWeight /= 2;
@@ -22416,12 +22419,20 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 					CvPlot* pLoopPlot = pLoopCity->plot();
 					if (AI_plotValid(pLoopPlot))
 					{
-						int iValue = AI_getEspionageTargetValue(pLoopPlot, iMaxPath);
-						iValue *= iTeamWeight;
-						if (iValue > iBestValue)
+						int iPathTurns;
+						if (generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= iMaxPath)
 						{
-							iBestValue = iValue;
-							pBestPlot = pLoopPlot;
+							int iValue = AI_getEspionageTargetValue(pLoopPlot);
+
+							iValue *= 4;
+							iValue /= (4 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
+							iValue *= iTeamWeight;
+							if (iValue > iBestValue)
+							{
+								iBestValue = iValue;
+								pBestPlot = pLoopPlot;
+								pEndTurnPlot = getPathEndTurnPlot();
+							}
 						}
 					}
 				}
@@ -22437,8 +22448,8 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY );			
-			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+			FAssert(pEndTurnPlot != NULL);
+			getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX(), pEndTurnPlot->getY(), 0, false, false, MISSIONAI_ATTACK_SPY, pBestPlot);
 		}
 		return true;
 	}
@@ -22451,6 +22462,7 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 	PROFILE_FUNC();
 
 	CvPlot* pBestPlot = NULL;
+	CvPlot* pEndTurnPlot = NULL;
 
 	int iBestValue = 10;
 
@@ -22466,10 +22478,10 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 			{
 				if( pLoopPlot->isOwned() && pLoopPlot->getTeam() != getTeam() )
 				{
+					/* original code
 					// Only move to plots where we will run missions
-					/*if (GET_PLAYER(getOwnerINLINE()).AI_getAttitudeWeight(pLoopPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1)
-						|| GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN )*/
-					if (GET_PLAYER(getOwner()).isMaliciousEspionageTarget(pLoopPlot->getOwner())) // K-Mod
+					if (GET_PLAYER(getOwnerINLINE()).AI_getAttitudeWeight(pLoopPlot->getOwner()) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1)
+						|| GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN )
 					{
 						int iValue = AI_getEspionageTargetValue(pLoopPlot, iRange);
 						if (iValue > iBestValue)
@@ -22477,7 +22489,30 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 							iBestValue = iValue;
 							pBestPlot = pLoopPlot;								
 						}
+					}*/
+
+					// K-Mod
+					if (GET_PLAYER(getOwner()).isMaliciousEspionageTarget(pLoopPlot->getOwner())) // K-Mod
+					{
+						int iPathTurns;
+						if (generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= iRange)
+						{
+							int iValue = AI_getEspionageTargetValue(pLoopPlot);
+							iValue *= GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN ? 3: 1;
+							iValue *= GET_TEAM(getTeam()).AI_isSneakAttackPreparing(pLoopPlot->getTeam()) ? 2 : 1;
+
+							iValue *= 3;
+							iValue /= (3 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
+							if (iValue > iBestValue)
+							{
+								iBestValue = iValue;
+								pBestPlot = pLoopPlot;
+								pEndTurnPlot = getPathEndTurnPlot();
+							}
+						}
+
 					}
+					// K-Mod end
 				}
 			}
 		}
@@ -22492,8 +22527,13 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 		}
 		else
 		{
+			/* original code
 			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY);			
-			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY); */
+			// K-Mod
+			FAssert(pEndTurnPlot != NULL);
+			getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX(), pEndTurnPlot->getY(), 0, false, false, MISSIONAI_ATTACK_SPY, pBestPlot);
+			// K-Mod end
 			return true;
 		}
 	}

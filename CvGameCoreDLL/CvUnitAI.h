@@ -330,7 +330,8 @@ protected:
 	
 	int AI_calculatePlotWorkersNeeded(CvPlot* pPlot, BuildTypes eBuild);
 
-	int AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath);
+	//int AI_getEspionageTargetValue(CvPlot* pPlot, int iMaxPath);
+	int AI_getEspionageTargetValue(CvPlot* pPlot); // K-Mod
 
 	bool AI_canGroupWithAIType(UnitAITypes eUnitAI) const;
 	bool AI_allowGroup(const CvUnit* pUnit, UnitAITypes eUnitAI) const;
