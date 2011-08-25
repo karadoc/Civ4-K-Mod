@@ -7357,6 +7357,8 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 				}
 
 				// Is ePeaceTeam winning wars?
+				int iPeaceTeamPower = GET_TEAM(ePeaceTeam).getPower(true);
+
 				for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
 				{
 					if (GET_TEAM((TeamTypes)iI).isAlive())
@@ -7368,7 +7370,6 @@ PlayerVoteTypes CvPlayerAI::AI_diploVote(const VoteSelectionSubData& kVoteData, 
 								int iPeaceTeamSuccess = GET_TEAM(ePeaceTeam).AI_getWarSuccess((TeamTypes)iI);
 								int iOtherTeamSuccess = GET_TEAM((TeamTypes)iI).AI_getWarSuccess(ePeaceTeam);
 
-								int iPeaceTeamPower = GET_TEAM(ePeaceTeam).getPower(true);
 								int iOtherTeamPower = GET_TEAM((TeamTypes)iI).getPower(true);
 
 								if (iPeaceTeamSuccess * iPeaceTeamPower > (iOtherTeamSuccess + iSuccessScale) * iOtherTeamPower)
@@ -12834,7 +12835,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		}
 	}
 
-	if (bMalicious && GC.getEspionageMissionInfo(eMission).getCityInsertCultureAmountFactor() > 0)
+	if (GC.getEspionageMissionInfo(eMission).getCityInsertCultureAmountFactor() > 0)
 	{
 		if (NULL != pPlot)
 		{
@@ -12845,9 +12846,16 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				{
 					int iCultureAmount = GC.getEspionageMissionInfo(eMission).getCityInsertCultureAmountFactor() * pPlot->getCulture(getID());
 					iCultureAmount /= 100;
-					if (pCity->calculateCulturePercent(getID()) > 40)
+					/* if (pCity->calculateCulturePercent(getID()) > 40)
 					{
 						iValue += iCultureAmount * 3;
+					}*/
+					// K-Mod
+					int iClossness = pCity->AI_playerCloseness(getID(), DEFAULT_PLAYER_CLOSENESS);
+					if (iClossness > 20 && pCity->calculateCulturePercent(getID()) > 20)
+					{
+						int iMultiplier = std::min(2, iClossness * pCity->culturePressureFactor() / 4000);
+						iValue += iCultureAmount * iMultiplier;
 					}
 				}
 			}
@@ -12951,7 +12959,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 	// K-Mod
 	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
-		&& iValue < 30*getCurrentEra()*getCurrentEra() // 30, 120, 270, 480, 750, ...
+		&& iValue < 50*getCurrentEra()*getCurrentEra() // 50, 200, 450, 800, 1250, ...
 		&& iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
 	{
 		return 0;
@@ -13411,18 +13419,32 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
     iValue = 0;
     for (iI = 0; iI <  NUM_YIELD_TYPES; ++iI)
     {
+		/* original bts code
         iTempValue = (GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYield() * AI_yieldWeight((YieldTypes)iI));
-        iTempValue /= std::max(1, (1 + GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYieldThreshold()));
+        iTempValue /= std::max(1, (1 + GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYieldThreshold())); */
+		// K-Mod
+		iTempValue = GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYield() * AI_yieldWeight((YieldTypes)iI) * AI_averageYieldMultiplier((YieldTypes)iI);
+		iTempValue /= 1 + GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYieldThreshold();
+		if (iI == YIELD_PRODUCTION)
+			iTempValue *= 2;
+		if (iI == YIELD_FOOD)
+			iTempValue *= 3;
+		//
         iValue += iTempValue;
     }
 
-    iValue *= getTotalPopulation();
-    //iValue *= GC.getGameINLINE().goldenAgeLength(); // original BtS code
-	iValue *= getGoldenAgeLength(); // K-Mod
-    iValue /= 100;
+    /* original bts code
+	iValue *= getTotalPopulation();
+    iValue *= GC.getGameINLINE().goldenAgeLength(); // original BtS code
+    iValue /= 100; */
+	// K-Mod
+	iValue *= getTotalPopulation();
+	iValue *= getGoldenAgeLength();
+    iValue /= 10000;
 
 	// K-Mod. Add some value if we would use the opportunity to switch civics
-	if (getAnarchyModifier() + 100 > 0)
+	// Note: this first "if" isn't necessary. It just saves us checking civics when we don't need to.
+	if (getMaxAnarchyTurns() != 0 && !isGoldenAge() && getAnarchyModifier() + 100 > 0)
 	{
 		CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
@@ -19659,8 +19681,9 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	{
 		if (rit->first > 0 && spare_units[rit->second->area()->getID()] > 0)
 		{
-			rit->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);			
-			spare_units[rit->second->area()->getID()]--;
+			rit->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);
+			// only convert half of our spare units, so that we can reevaluate which units we need before converting more.
+			spare_units[rit->second->area()->getID()]-=2;
 		}
 	}
 }

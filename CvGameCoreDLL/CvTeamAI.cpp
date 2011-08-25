@@ -2305,6 +2305,7 @@ bool CvTeamAI::AI_isAnyMemberDoVictoryStrategyLevel3() const
 /// to perhaps have another player capitulate to us.
 int CvTeamAI::AI_getWarSuccessCapitulationRatio() const
 {
+	/* original BBAI code
 	int iSumWarSuccess = 0;
 
 	for( int iI = 0; iI < MAX_CIV_TEAMS; iI++ )
@@ -2323,7 +2324,44 @@ int CvTeamAI::AI_getWarSuccessCapitulationRatio() const
 
 	iSumWarSuccess = range((100*iSumWarSuccess)/iDivisor, -99, 99);
 
-	return iSumWarSuccess;
+	return iSumWarSuccess; */
+
+	// K-Mod
+	// I swear, more often than not the AI at minus 99 would be the one demanding cities for peace.
+	// The original version of this function was so completely off the mark that I pretty much anything
+	// would be an improvement. So let me have a shot at it, without trying to be too fancy.
+	// Based on my code for Force Peace diplomacy voting.
+	int iMilitaryUnits = 0;
+	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	{
+		const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+		if (kLoopPlayer.getTeam() == getID())
+		{
+			iMilitaryUnits += kLoopPlayer.getNumMilitaryUnits();
+		}
+	}
+	int iSuccessScale = iMilitaryUnits * GC.getDefineINT("WAR_SUCCESS_ATTACKING") / 5;
+
+	int iThisTeamPower = getPower(true);
+	int iScore = 0;
+
+	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	{
+		const CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
+		if (iI != getID() && isAtWar((TeamTypes)iI) && kLoopTeam.isAlive() && !kLoopTeam.isAVassal())
+		{
+			int iThisTeamSuccess = AI_getWarSuccess((TeamTypes)iI);
+			int iOtherTeamSuccess = kLoopTeam.AI_getWarSuccess(getID());
+
+			int iOtherTeamPower = kLoopTeam.getPower(true);
+
+			iScore += (iThisTeamSuccess+iSuccessScale) * iThisTeamPower;
+			iScore -= (iOtherTeamSuccess+iSuccessScale) * iOtherTeamPower;
+		}
+	}
+	iScore = range((100*iScore)/std::max(1, iThisTeamPower*iSuccessScale*5), -99, 99);
+	return iScore;
+// K-Mod end
 }
 
 /// \brief Compute power of enemies as percentage of our power.

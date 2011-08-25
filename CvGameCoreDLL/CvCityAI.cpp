@@ -1566,7 +1566,7 @@ void CvCityAI::AI_chooseProduction()
 	floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_COUNTER, 100));
 	//floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_SPECIAL, 0));
 	floatingDefenderTypes.push_back(std::make_pair(UNITAI_RESERVE, 100));
-	floatingDefenderTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 100));
+	floatingDefenderTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 80)); // K-Mod, down from 100
 	
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
@@ -1578,14 +1578,17 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	// If losing badly in war, need to build up defenses and counter attack force
-	if( bLandWar && (iWarSuccessRatio < -30 || iEnemyPowerPerc > 150) )
+	//if( bLandWar && (iWarSuccessRatio < -30 || iEnemyPowerPerc > 150) )
+	// K-Mod. I've changed the condition on this; but to be honest, I'm thinking it should just be completely removed.
+	// The noraml unit selection function should know what kind of units we should be building...
+	if (bLandWar && iWarSuccessRatio < -10 && iEnemyPowerPerc - iWarSuccessRatio > 150)
 	{
 		UnitTypeWeightArray defensiveTypes;
 		defensiveTypes.push_back(std::make_pair(UNITAI_COUNTER, 100));
 		defensiveTypes.push_back(std::make_pair(UNITAI_ATTACK, 100));
 		defensiveTypes.push_back(std::make_pair(UNITAI_RESERVE, 60));
 		//defensiveTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 60));
-		defensiveTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 100));
+		defensiveTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 80));
 		if ( bDanger || (iTotalFloatingDefenders < (5*iNeededFloatingDefenders)/(bGetBetterUnits ? 6 : 4)))
 		{
 			defensiveTypes.push_back(std::make_pair(UNITAI_CITY_DEFENSE, 200));
