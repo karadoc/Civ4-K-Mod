@@ -2773,19 +2773,21 @@ void CvUnitAI::AI_attackCityMove()
 	if( pTargetCity != NULL )
 	{
 		int iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
-		int iAttackRatio = std::max(100, GC.getBBAI_ATTACK_CITY_STACK_RATIO());
+		int iAttackRatio = GC.getBBAI_ATTACK_CITY_STACK_RATIO();
 		// K-Mod - I'm going to scale the attack ratio based on the quality of our units.
 		// this isn't the "right way" to do it, but hopefully it's better than nothing.
 		// (The /right way/ would be to estimate how good our odds would be after collateral damage, etc.)
-		int iAttackRatioSkipBombard = std::max(150, GC.getDefineINT("BBAI_SKIP_BOMBARD_MIN_STACK_RATIO"));
-		{
-			int iOurValue = GET_PLAYER(getOwner()).getTypicalUnitValue(UNITAI_ATTACK_CITY);
+		// UPDATE: it isn't better than nothing. It's worse, because "getTypicalUnitValue" is unreliably inaccurate.
+		int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
+		/*{
+			int iOurValue = GET_PLAYER(getOwner()).getTypicalUnitValue(UNITAI_ATTACK);
 			int iTheirValue = GET_PLAYER(pTargetCity->getOwner()).getTypicalUnitValue(UNITAI_CITY_DEFENSE);
-			iAttackRatio *= iTheirValue;
-			iAttackRatio /= std::max(1, iOurValue);
-			iAttackRatioSkipBombard *= iTheirValue;
-			iAttackRatioSkipBombard /= std::max(1, iOurValue);
-		}
+			int iMultiplier = (100 + 100 * iTheirValue / std::max(1, iOurValue))/2;
+			iAttackRatio *= iMultiplier;
+			iAttackRatio /= 100;
+			iAttackRatioSkipBombard *= iMultiplier;
+			iAttackRatioSkipBombard /= 100;
+		}*/
 		// K-Mod end
 
 		if( isBarbarian() )
@@ -2801,7 +2803,8 @@ void CvUnitAI::AI_attackCityMove()
 
 			int iDefenseModifier = pTargetCity->getDefenseModifier(true);
 			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
-			iDefenseModifier *= std::max(0, 20 - iBombardTurns);
+			//iDefenseModifier *= std::max(0, 20 - iBombardTurns); // original BBAI code
+			iDefenseModifier *= std::min(22, std::max(0, iBombardTurns - 20)); // K-Mod (BBAI had it backwards?)
 			iDefenseModifier /= 20;
 			iComparePostBombard *= 100 + std::max(0, iDefenseModifier);
 			iComparePostBombard /= 100;
@@ -5441,6 +5444,11 @@ void CvUnitAI::AI_spyMove()
 					}
 				}
 				break;
+			case MISSIONAI_EXPLORE:
+				if (atPlot(pMissionPlot))
+				{
+					getGroup()->AI_setMissionAI(NO_MISSIONAI, 0, 0);
+				}
 			default:
 				break;
 			}
@@ -5586,11 +5594,11 @@ void CvUnitAI::AI_spyMove()
 
 		if (!bAnyTargets || kTeam.getAnyWarPlanCount(true) == 0 || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
 		{
-			if( GC.getGame().getSorenRandNum(5, "AI Spy defense") > 0)
+			if( GC.getGame().getSorenRandNum(8, "AI Spy defense") > 0)
 			{
 				if (AI_guardSpy(0))
 				{
-					return;			
+					return;
 				}
 			}
 		}
@@ -5639,7 +5647,8 @@ void CvUnitAI::AI_spyMove()
 
 	if( area()->getNumCities() > area()->getCitiesPerPlayer(getOwnerINLINE()) )
 	{
-		if (getGroup()->AI_getMissionAIType() == MISSIONAI_EXPLORE || GC.getGame().getSorenRandNum(4, "AI Spy Choose Movement") > 0)
+		if (getGroup()->AI_getMissionAIType() == MISSIONAI_EXPLORE
+			|| GC.getGame().getSorenRandNum(3, "AI Spy Choose Movement") > 0)
 		{
 			if (AI_reconSpy(3))
 			{
