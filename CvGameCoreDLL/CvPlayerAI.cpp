@@ -12850,13 +12850,21 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					{
 						iValue += iCultureAmount * 3;
 					}*/
-					// K-Mod
-					int iClossness = pCity->AI_playerCloseness(getID(), DEFAULT_PLAYER_CLOSENESS);
-					if (iClossness > 20 && pCity->calculateCulturePercent(getID()) > 20)
+					// K-Mod - defensive use of spread culture mission. (The first "if" is really just for effeciency.)
+					if (pCity->calculateCulturePercent(getID()) > 10)
 					{
-						int iMultiplier = std::min(2, iClossness * pCity->culturePressureFactor() / 4000);
-						iValue += iCultureAmount * iMultiplier;
+						const CvCity* pOurClosestCity = GC.getMap().findCity(pPlot->getX(), pPlot->getY(), getID());
+						if (pOurClosestCity != NULL)
+						{
+							int iDistance = pCity->cultureDistance(xDistance(pPlot->getX(), pOurClosestCity->getX()), yDistance(pPlot->getY(), pOurClosestCity->getY()));
+							if (iDistance < 6)
+							{
+								int iMultiplier = std::min(2, (6 - iDistance) * pOurClosestCity->culturePressureFactor() / 600);
+								iValue += iCultureAmount * iMultiplier;
+							}
+						}
 					}
+					// K-Mod end
 				}
 			}
 		}
