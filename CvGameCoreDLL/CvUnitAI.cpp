@@ -5586,7 +5586,7 @@ void CvUnitAI::AI_spyMove()
 	{
 		if (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) && bAnyTargets)
 		{
-			if (AI_cityOffenseSpy(10))
+			if (AI_cityOffenseSpy(20))
 			{
 				return;
 			}
@@ -5657,7 +5657,7 @@ void CvUnitAI::AI_spyMove()
 		}
 		else if (bAnyTargets)
 		{
-			if (AI_cityOffenseSpy(10))
+			if (AI_cityOffenseSpy(20))
 			{
 				return;
 			}
@@ -22689,7 +22689,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 	}
 	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION && kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 	{
-		logBBAI("      %S chooses %S as their best Big Espionage mission (value: %d).", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), iBestValue);
+		logBBAI("      %S chooses %S as their best Big Espionage mission (value: %d, cost: %d).", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), iBestValue, kPlayer.getEspionageMissionCost(eBestMission, eTargetPlayer, pPlot, iData, this));
 	}
 
 	return eBestMission;

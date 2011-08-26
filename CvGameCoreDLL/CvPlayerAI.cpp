@@ -2502,6 +2502,8 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 }
 
 // Heavily edited for K-Mod (some changes marked, others not.)
+// note, this function is called for every revealed plot for every player at the start of every turn.
+// try to not make it too slow!
 int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const
 {
 	CvCity* pNearestCity;
@@ -2566,6 +2568,71 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		}
 	}
 	
+	// K-Mod. city site radius check used to be here. I've moved it down a bit.
+	// ... and also the bonus vector initializtion
+
+	if (iMinRivalRange != -1)
+	{
+		for (int iDX = -(iMinRivalRange); iDX <= iMinRivalRange; iDX++)
+		{
+			for (int iDY = -(iMinRivalRange); iDY <= iMinRivalRange; iDY++)
+			{
+				pLoopPlot	= plotXY(iX, iY, iDX, iDY);
+
+				if (pLoopPlot != NULL)
+				{
+					if (pLoopPlot->plotCheck(PUF_isOtherTeam, getID()) != NULL)
+					{
+						return 0;
+					}
+				}
+			}
+		}
+	}
+
+	if (bStartingLoc)
+	{
+		if (pPlot->isGoody())
+		{
+			return 0;
+		}
+
+		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		{
+			pLoopPlot = plotCity(iX, iY, iI);
+
+			if (pLoopPlot == NULL)
+			{
+				return 0;
+			}
+		}
+	}
+
+	iOwnedTiles = 0;
+
+	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	{
+		pLoopPlot = plotCity(iX, iY, iI);
+
+		if (pLoopPlot == NULL)
+		{
+			iOwnedTiles++;
+		}
+		else if (pLoopPlot->isOwned())
+        {
+            if (pLoopPlot->getTeam() != getTeam())
+            {
+                iOwnedTiles++;
+            }
+        }
+	}
+
+	if (iOwnedTiles > (NUM_CITY_PLOTS / 3))
+	{
+		return 0;
+	}
+
+	// (K-Mod this site radius check code was moved from higher up)
 	//Explaination of city site adjustment:
 	//Any plot which is otherwise within the radius of a city site
 	//is basically treated as if it's within an existing city radius
@@ -2604,67 +2671,6 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
     {
         paiBonusCount.push_back(0);
     }
-
-	if (iMinRivalRange != -1)
-	{
-		for (int iDX = -(iMinRivalRange); iDX <= iMinRivalRange; iDX++)
-		{
-			for (int iDY = -(iMinRivalRange); iDY <= iMinRivalRange; iDY++)
-			{
-				pLoopPlot	= plotXY(iX, iY, iDX, iDY);
-
-				if (pLoopPlot != NULL)
-				{
-					if (pLoopPlot->plotCheck(PUF_isOtherTeam, getID()) != NULL)
-					{
-						return 0;
-					}
-				}
-			}
-		}
-	}
-
-	if (bStartingLoc)
-	{
-		if (pPlot->isGoody())
-		{
-			return 0;
-		}
-
-		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
-		{
-			pLoopPlot = plotCity(iX, iY, iI);
-
-			if (pLoopPlot == NULL)
-			{
-				return 0;
-			}
-		}
-	}
-
-	iOwnedTiles = 0;
-
-	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
-	{
-		pLoopPlot = plotCity(iX, iY, iI);
-
-		if (pLoopPlot == NULL)
-		{
-			iOwnedTiles++;
-		}
-		else if (pLoopPlot->isOwned())
-        {
-            if (pLoopPlot->getTeam() != getTeam())
-            {
-                iOwnedTiles++;
-            }
-        }
-	}
-
-	if (iOwnedTiles > (NUM_CITY_PLOTS / 3))
-	{
-		return 0;
-	}
 
 	iBadTile = 0;
 
@@ -2924,7 +2930,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				iTeammateTakenTiles++;
 			}
 		}
-		else
+		else // K-Mod Note: it kind of sucks that no value is counted taken tiles. Tile sharing / stealing should be allowed.
 		{
 			iTempValue = 0;
 
@@ -3116,7 +3122,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 			{
 				//iTempValue += 10;
 				// K-Mod
-				iTempValue += (bFinancial ? 20 : 5);
+				iTempValue += (bFinancial ? 25 : 5);
 				iTempValue += (pPlot->isRiver() ? 15 : 0);
 			}
 			// K-Mod
@@ -3257,10 +3263,11 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		return 0;
 	}
 
+	/* original bts code (K-Mod: just go look at what "iTeammateTakenTiles" actually is...)
 	if (iTeammateTakenTiles > 1)
 	{
 		return 0;
-	}
+	}*/
 
 	iValue += (iHealth / 5);
 
@@ -3559,7 +3566,12 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	if (pArea->getNumCities() == 0)
 	{
-		iValue *= 2;
+		//iValue *= 2;
+		// K-Mod: presumably this is meant to be a bonus for being the first on a new continent.
+		// But I don't want it to be a bonus for settling on tiny islands, so I'm changing it.
+		iValue *= range(100 * (pArea->getNumTiles() - 15) / 15, 100, 200);
+		iValue /= 100;
+		// K-Mod end
 	}
 	else
 	{
@@ -12804,7 +12816,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 			iValue += ((GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble()) ? 4 : 2) * (2 * std::max(0, iGoldStolen - iCost));*/
 			// K-Mod
 			int iGoldStolen = getEspionageGoldQuantity(eMission, eTargetPlayer, pPlot->getPlotCity());
-			iValue += (GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble() ? 4 : 2) * iGoldStolen;
+			iValue += (GET_PLAYER(eTargetPlayer).AI_isFinancialTrouble() || AI_isFinancialTrouble() ? 6 : 4) * iGoldStolen;
 		}
 	}
 
@@ -12937,7 +12949,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		//if (iCost < GET_TEAM(getTeam()).getResearchLeft((TechTypes)iData) * 4 / 3)
 		if (canStealTech(eTargetPlayer, (TechTypes)iData)) // K-Mod!
 		{
-			int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
+			//int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
+			int iTempValue = 2 * GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam()); // K-Mod
 
 			if( GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 )
 			{
@@ -12968,7 +12981,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	// K-Mod
 	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
 		&& iValue < 50*getCurrentEra()*getCurrentEra() // 50, 200, 450, 800, 1250, ...
-		&& iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
+		&& iValue < 3*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
 	{
 		return 0;
 	}
