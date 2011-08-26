@@ -5569,69 +5569,49 @@ void CvUnitAI::AI_spyMove()
 	}
 
 	// Do with have enough points on anyone for an attack mission to be useful?
-	bool bAnyTargets = false;
-	int iMinPoints = 100 + 50 * kOwner.getCurrentEra() * kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? kOwner.getCurrentEra() : 1;
-	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	int iAttackChance = 0;
 	{
-		if (iI != getTeam() && GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
-			kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)iI) &&
-			kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) > iMinPoints)
+		int iScale = 50 * kOwner.getCurrentEra() * (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY)? kOwner.getCurrentEra() : 1);
+		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
-			bAnyTargets = true;
-			break;
+			if (iI != getTeam() && GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
+				kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)iI))
+			{
+				int x = 100 * kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + iScale;
+				x /= kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + 1 * iScale;
+				iAttackChance = std::max(iAttackChance, x);
+			}
 		}
+		iAttackChance /= kTeam.getAnyWarPlanCount(true) == 0 ? 3 : 1;
+		iAttackChance /= plot()->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 2 : 1;
+		iAttackChance /= (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 2 : 1;
+		iAttackChance *= kOwner.AI_getEspionageWeight();
+		iAttackChance /= 100;
 	}
 	
 	if (plot()->getTeam() == getTeam())
 	{
-		if (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) && bAnyTargets)
+		if (GC.getGame().getSorenRandNum(100, "AI Spy defense") >= iAttackChance)
 		{
-			if (AI_cityOffenseSpy(20))
+			if (AI_guardSpy(0))
 			{
 				return;
 			}
 		}
 
-		if (!bAnyTargets || kTeam.getAnyWarPlanCount(true) == 0 || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
+		if (!kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) &&
+			GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (kOwner.AI_getStrategyRand(5) % 30))
 		{
-			if( GC.getGame().getSorenRandNum(8, "AI Spy defense") > 0)
+			if (AI_bonusOffenseSpy(5))
 			{
-				if (AI_guardSpy(0))
-				{
-					return;
-				}
+				return;
 			}
 		}
-
-		if (plot()->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE
-			|| (!bAnyTargets &&
-				(plot()->area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE || plot()->area()->getAreaAIType(getTeam()) == AREAAI_MASSING)))
+		else
 		{
-			if( GC.getGame().getSorenRandNum(5, "AI Spy defense (wartime)") > 0)
+			if (AI_cityOffenseSpy(10))
 			{
-				if (AI_guardSpy(0))
-				{
-					return;
-				}
-			}
-		}
-		
-		if (bAnyTargets)
-		{
-			if (!kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) &&
-				GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (kOwner.AI_getStrategyRand(5) % 30))
-			{
-				if (AI_bonusOffenseSpy(5))
-				{
-					return;
-				}
-			}
-			else
-			{
-				if (AI_cityOffenseSpy(10))
-				{
-					return;
-				}
+				return;
 			}
 		}
 	}
@@ -5655,7 +5635,7 @@ void CvUnitAI::AI_spyMove()
 				return;
 			}
 		}
-		else if (bAnyTargets)
+		else
 		{
 			if (AI_cityOffenseSpy(20))
 			{
@@ -22590,7 +22570,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 	FAssert(pSpyPlot != NULL);
 
-	int iSpyValue = 3*kPlayer.getProductionNeeded(getUnitType());
+	int iSpyValue = 4*kPlayer.getProductionNeeded(getUnitType());
 	if (kPlayer.getCapitalCity() != NULL)
 	{
 		iSpyValue += stepDistance(getX(), getY(), kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY()) / 2;
@@ -22662,10 +22642,12 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 						{
 							// Scale the mission value based on how long we think it will take to get the points.
 
-							iValue *= 2;
-							iValue /= (iCost - iEspPoints) / std::max(1, iEspionageRate) + 2;
-							// eg, 1 turn left -> 2/3. 2 turns -> 2/4, 3 turns -> 2/5. Etc.
+							int iTurns = (iCost - iEspPoints) / std::max(1, iEspionageRate);
+							iTurns *= kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)? 1 : 2;
 							// The number of turns is approximated (poorly) by assuming our entire esp rate is targeting eTargetTeam.
+							iValue *= 2;
+							iValue /= iTurns + 2;
+							// eg, 1 turn left -> 2/3. 2 turns -> 2/4, 3 turns -> 2/5. Etc.
 						}
 						else
 						{

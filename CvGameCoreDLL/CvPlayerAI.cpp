@@ -2930,7 +2930,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				iTeammateTakenTiles++;
 			}
 		}
-		else // K-Mod Note: it kind of sucks that no value is counted taken tiles. Tile sharing / stealing should be allowed.
+		else // K-Mod Note: it kind of sucks that no value is counted for taken tiles. Tile sharing / stealing should be allowed.
 		{
 			iTempValue = 0;
 
@@ -12950,14 +12950,11 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		if (canStealTech(eTargetPlayer, (TechTypes)iData)) // K-Mod!
 		{
 			//int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
-			int iTempValue = 2 * GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam()); // K-Mod
-
-			if( GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 )
-			{
-				//iTempValue *= 2;
-				iTempValue *= 3;
-				iTempValue /= 2;
-			}
+			// K-Mod
+			int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
+			iTempValue *= 3;
+			iTempValue /= 2;
+			// K-Mod end
 
 			iValue += iTempValue;
 		}
@@ -12981,7 +12978,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	// K-Mod
 	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
 		&& iValue < 50*getCurrentEra()*getCurrentEra() // 50, 200, 450, 800, 1250, ...
-		&& iValue < 3*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
+		&& iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
 	{
 		return 0;
 	}
@@ -17238,6 +17235,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	// K-Mod, disabling some stuff.
 	// It is still possible to get a cultural victory in advanced start games.
 	// and moving your captial city certainly does not indicate that you shouldn't go for a cultural victory!
+	// ... and colonies don't get their capital on turn 1 anyway.
 	/* original code
 	if (GC.getGame().getStartEra() > 1)
     {
