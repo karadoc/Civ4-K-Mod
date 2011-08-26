@@ -12995,7 +12995,11 @@ void CvPlayer::setCivics(CivicOptionTypes eIndex, CivicTypes eNewValue)
 			{
 				if (getCivics(eIndex) != NO_CIVIC)
 				{
-					if (getCivics(eIndex) != GC.getCivilizationInfo(getCivilizationType()).getCivilizationInitialCivics(eIndex))
+					/* original code (which erroneously blocked the message for certain civic switches)
+					if (getCivics(eIndex) != GC.getCivilizationInfo(getCivilizationType()).getCivilizationInitialCivics(eIndex))*/
+					// K-Mod
+					if (getCivics(eIndex) != GC.getCivilizationInfo(getCivilizationType()).getCivilizationInitialCivics(eIndex) || GC.getGameINLINE().getGameTurn() != GC.getGameINLINE().getStartTurn())
+					// K-Mod end
 					{
 						for (iI = 0; iI < MAX_PLAYERS; iI++)
 						{
