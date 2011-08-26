@@ -4138,9 +4138,18 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			if ((iFocusFlags & BUILDINGFOCUS_MAINTENANCE) || (iFocusFlags & BUILDINGFOCUS_GOLD) || (iPass > 0))
 			{
 
+				/* original bts code
 				int iBaseMaintenance = getMaintenanceTimes100();
 				int iExistingUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier())) / 100;
 				int iNewUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier() + kBuilding.getMaintenanceModifier())) / 100;
+				*/
+				// K-Mod, bugfix. getMaintenanceTimes100 is the total, with modifiers already applied.
+				// (note. ideally we'd use "calculateBaseMaintenanceTimes100", and that would avoid problem caused by "we love the X day".
+				// but doing it this way is slightly faster.)
+				int iExistingUpkeep = getMaintenanceTimes100();
+				int iBaseMaintenance = 100 * iExistingUpkeep / std::max(1, 100 + getMaintenanceModifier());
+				int iNewUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier() + kBuilding.getMaintenanceModifier())) / 100;
+				// K-Mod end
 				
 				int iTempValue = (iExistingUpkeep - iNewUpkeep) / 16;
 				

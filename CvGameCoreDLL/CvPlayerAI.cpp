@@ -13473,25 +13473,21 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 			paeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
 		}
 
-		int iAnarchyLength = 0;
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 		{
 			int iCurrentValue = AI_civicValue(paeBestCivic[iI]);
 			int iBestValue;
-			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
-
-			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
+			CivicTypes eNewCivic = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
+			
 			// using a 7 percent thresold. (cf the higher threshold used in AI_doCivics)
-			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > iCurrentValue + iCurrentValue * 7 / 100 )
+			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > 107*iCurrentValue)
 			{
-				iAnarchyLength = iTestAnarchy;
-				if (gPlayerLogLevel > 0) logBBAI("      %S wants a golden age to switch to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, iCurrentValue);
-			}
-			else
-			{
-				paeBestCivic[iI] = getCivics((CivicOptionTypes)iI); // revert to current civic
+				paeBestCivic[iI] = eNewCivic;
+				if (gPlayerLogLevel > 0) logBBAI("      %S wants a golden age to switch to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, iCurrentValue);
 			}
 		}
+
+		int iAnarchyLength = getCivicAnarchyLength(paeBestCivic);
 		if (iAnarchyLength > 0)
 		{
 			// we would switch; so what's it worth?
@@ -14248,24 +14244,24 @@ void CvPlayerAI::AI_doCivics()
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 		{
 			int iBestValue;
-			paeBestCivic[iI] = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
+			CivicTypes eNewCivic = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
 			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
 			// using 20 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
 			// reduced threshold if we are already going to have a revolution.
 			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 20 : 12) : 2);
 
-			if ( paeBestCivic[iI] != NO_CIVIC && iBestValue > paiCurrentValue[iI] + paiCurrentValue[iI] * iThreshold / 100 )
+			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > (100+iThreshold)*paiCurrentValue[iI])
 			{
-				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%s)", getCivilizationDescription(0), GC.getCivicInfo(paeBestCivic[iI]).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
+				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%s)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
 				iAnarchyLength = iTestAnarchy;
+				paeBestCivic[iI] = eNewCivic;
 				paiCurrentValue[iI] = iBestValue;
 				bWillSwitch = true;
 			}
 			else
 			{
-				paeBestCivic[iI] = getCivics((CivicOptionTypes)iI); // revert to current civic
-				if (iBestValue > paiCurrentValue[iI] + paiCurrentValue[iI]/50)
+				if (100*iBestValue > 102*paiCurrentValue[iI])
 					bWantSwitch = true;
 			}
 		}

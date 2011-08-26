@@ -21929,10 +21929,15 @@ int CvPlayer::getEspionageGoldQuantity(EspionageMissionTypes eMission, PlayerTyp
 
 void CvPlayer::forcePeace(PlayerTypes ePlayer)
 {
+	/* original bts code
 	if (!GET_TEAM(getTeam()).isAVassal())
 	{
-		FAssert(GET_TEAM(getTeam()).canChangeWarPeace(GET_PLAYER(ePlayer).getTeam()));
+		FAssert(GET_TEAM(getTeam()).canChangeWarPeace(GET_PLAYER(ePlayer).getTeam())); */
 
+	// K-Mod. "canChangeWarPeace" can return false here if the peace team vassalates after the vote is cast.
+	if (GET_TEAM(getTeam()).canChangeWarPeace(GET_PLAYER(ePlayer).getTeam()))
+	{
+	// K-Mod end
 		CLinkList<TradeData> playerList;
 		CLinkList<TradeData> loopPlayerList;
 		TradeData kTradeData;
