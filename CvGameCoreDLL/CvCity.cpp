@@ -5016,9 +5016,8 @@ int CvCity::culturePressureFactor() const
 					// scale it by how it compares to our culture
 					iForeignCulture = 100 * iForeignCulture / std::max(1, iForeignCulture + pLoopPlot->getCulture(getOwner()));
 					// lower the value if the foreign culture is not allowed take control of the plot
-					iForeignCulture /= ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :1);
 					// lower the value if the foreign culture is not allowed to flip the city (with the default option for no conquest flipping)
-					iForeignCulture /= (isEverOwned((PlayerTypes)iP)?2 : 1);
+					iForeignCulture /= 1 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?1 :0) + (isEverOwned((PlayerTypes)iP)?1 : 0);
 					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}
@@ -5028,7 +5027,7 @@ int CvCity::culturePressureFactor() const
 	iAnswer *= GC.getNumEraInfos();
 	iAnswer /= GET_PLAYER(getOwnerINLINE()).getCurrentEra() + GC.getNumEraInfos();
 
-	return 100 + iAnswer / iDivisor;
+	return std::min(500, 100 + iAnswer / iDivisor); // max of 500. Any more than that just distorts building values too much
 }
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const

@@ -5571,11 +5571,16 @@ void CvUnitAI::AI_spyMove()
 	// Do with have enough points on anyone for an attack mission to be useful?
 	int iAttackChance = 0;
 	{
-		int iScale = 50 * kOwner.getCurrentEra() * (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY)? kOwner.getCurrentEra() : 1);
+		int iScale = 100 * (kOwner.getCurrentEra() + 1);
+		if (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
+		{
+			iScale += 50 * kOwner.getCurrentEra() * kOwner.getCurrentEra();
+		}
+		iScale *= 1 + kOwner.AI_areaMissionAIs(area(), MISSIONAI_ATTACK_SPY);
 		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
 			if (iI != getTeam() && GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
-				kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)iI))
+				GET_TEAM((TeamTypes)iI).countNumCitiesByArea(area()) > 0)
 			{
 				int x = 100 * kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + iScale;
 				x /= kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + 1 * iScale;

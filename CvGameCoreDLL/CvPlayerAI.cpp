@@ -18377,6 +18377,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 	{
 		int iTempValue = 0;
+		/* original BBAI code
 		if (getCommercePercent(COMMERCE_ESPIONAGE) == 0)
 		{
 			iTempValue += 4;
@@ -18396,7 +18397,17 @@ int CvPlayerAI::AI_getStrategyHash() const
 		
 		iTempValue += (100 - AI_getEspionageWeight()) / 10;
 		
-		iTempValue += AI_getStrategyRand(10) % 12;
+		iTempValue += AI_getStrategyRand(10) % 12; */
+		// K-Mod
+		// Apparently BBAI wanted to use "big espionage" to save points when our espionage is weak.
+		// I've got other plans.
+		iTempValue += AI_commerceWeight(COMMERCE_ESPIONAGE) / 8;
+		// note, although AI_commerceWeight is doubled for Big Espionage, this value here is unaffected
+		// because the strategy hash has been cleared.
+		iTempValue += GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 ? 3 : 0;
+		iTempValue -= GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 ? 0 : 3;
+		iTempValue += AI_getStrategyRand(10) % 8;
+		// K-Mod end
 	
 		if (iTempValue > 10)
 		{
