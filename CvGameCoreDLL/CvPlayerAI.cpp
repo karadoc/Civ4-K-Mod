@@ -13496,6 +13496,7 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 				iValue += iTempValue;
 			}
 			// production and GGP matter too, but I don't really want to try to evaluate them properly. Sorry.
+			iValue += getTotalPopulation() * iAnarchyLength;
 			// On the other hand, I'm ignoring the negation of maintanence cost.
 		}
 		SAFE_DELETE_ARRAY(paeBestCivic);
@@ -14246,7 +14247,7 @@ void CvPlayerAI::AI_doCivics()
 			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
 			// using 20 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
 			// reduced threshold if we are already going to have a revolution.
-			int iThreshold = (iTestAnarchy > iAnarchyLength ? (bFirstPass ? 20 : 12) : 2);
+			int iThreshold = (iTestAnarchy > iAnarchyLength ? (!bFirstPass | bWantSwitch ? 14 : 24) : 2);
 
 			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > (100+iThreshold)*paiCurrentValue[iI])
 			{
@@ -14258,7 +14259,7 @@ void CvPlayerAI::AI_doCivics()
 			}
 			else
 			{
-				if (100*iBestValue > 102*paiCurrentValue[iI])
+				if (100*iBestValue > 114*paiCurrentValue[iI])
 					bWantSwitch = true;
 			}
 		}
