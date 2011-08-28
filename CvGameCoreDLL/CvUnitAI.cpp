@@ -4619,8 +4619,10 @@ void CvUnitAI::AI_prophetMove()
 	if (AI_greatPersonMove())
 		return;
 
+	/* original bts code
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25))) */
+	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) // K-Mod (there are good reasons for saving a great person)
 	{
 		if (AI_discover())
 		{
@@ -5279,7 +5281,7 @@ bool CvUnitAI::AI_greatPersonMove()
 		} // end this area
 	} // end city loop.
 
-	int iGoldenAgeValue = (GET_PLAYER(getOwnerINLINE()).AI_calculateGoldenAgeValue() / (GET_PLAYER(getOwnerINLINE()).unitsRequiredForGoldenAge()));
+	int iGoldenAgeValue = (isGoldenAge()? (GET_PLAYER(getOwnerINLINE()).AI_calculateGoldenAgeValue() / (GET_PLAYER(getOwnerINLINE()).unitsRequiredForGoldenAge())) : 0);
 	iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
 	iGoldenAgeValue /= 100;
 
@@ -5361,7 +5363,10 @@ bool CvUnitAI::AI_greatPersonMove()
 	}
 
 	// do slow
-	if (pBestPlot != NULL)
+	int iDeadTime = GC.getGameINLINE().getGameTurn() - getGameTurnCreated();
+	iDeadTime *= 100;
+	iDeadTime /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+	if (pBestPlot != NULL && 100 * iSlowValue > (100-iDeadTime) * iGoldenAgeValue)
 	{
 		if (atPlot(pBestPlot))
 		{
@@ -5385,7 +5390,8 @@ bool CvUnitAI::AI_greatPersonMove()
 			return true;
 		}
 	}
-
+	// wait for a better opportunity.
+	if (gUnitLogLevel > 2) logBBAI("    %S chooses 'wait' with their %S (dead time: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDeadTime);
 	return false;
 }
 // K-Mod end
