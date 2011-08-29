@@ -5556,11 +5556,26 @@ void CvUnitAI::AI_spyMove()
 			if( !bTargetCity )
 			{
 				// normal city handling
+
 				if (getFortifyTurns() >= GC.getDefineINT("MAX_FORTIFY_TURNS"))
 				{
 					if (AI_espionageSpy())
 					{
 						return;
+					}
+				}
+				else
+				{
+					// If we think we'll get caught soon, then do the mission early.
+					int iInterceptChance = getSpyInterceptPercent(plot()->getTeam());
+					iInterceptChance *= 100 + (GET_TEAM(getTeam()).isOpenBorders(plot()->getTeam())
+						? GC.getDefineINT("ESPIONAGE_SPY_NO_INTRUDE_INTERCEPT_MOD")
+						: GC.getDefineINT("ESPIONAGE_SPY_INTERCEPT_MOD"));
+					iInterceptChance /= 100;
+					if (GC.getGame().getSorenRandNum(100, "AI Spy early attack") < iInterceptChance/2 + getFortifyTurns())
+					{
+						if (AI_espionageSpy())
+							return;
 					}
 				}
 

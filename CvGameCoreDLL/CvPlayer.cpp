@@ -8569,8 +8569,8 @@ int CvPlayer::unitsGoldenAgeReady() const
 	{
 		if (!(pabUnitUsed[pLoopUnit->getUnitType()]))
 		{
-		if (pLoopUnit->isGoldenAge())
-		{
+			if (pLoopUnit->isGoldenAge())
+			{
 				pabUnitUsed[pLoopUnit->getUnitType()] = true;
 				iCount++;
 			}
