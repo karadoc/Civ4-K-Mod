@@ -5285,7 +5285,11 @@ bool CvUnitAI::AI_greatPersonMove()
 	iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
 	iGoldenAgeValue /= 100;
 
-	int iDiscoverValue = std::max(1, getDiscoverResearch(NO_TECH));
+	TechTypes eDiscoverTech = getDiscoveryTech(); // could be NO_TECH.
+	int iTechScorePercent = std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
+	int iDiscoverValue = getDiscoverResearch(eDiscoverTech);
+	iDiscoverValue *= 100 + 100*GET_TEAM(getTeam()).AI_knownTechValModifier(eDiscoverTech)/iTechScorePercent;
+	iDiscoverValue /= 100;
 	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
 	{
 		iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
@@ -5295,10 +5299,9 @@ bool CvUnitAI::AI_greatPersonMove()
 	iDiscoverValue /= 100;
 
 	int iFirstDiscoverValue = iDiscoverValue;
+	// some extra value on top of the high AI_knownTechValModifier bonus
 	iFirstDiscoverValue *= (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent());
-	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
-	iFirstDiscoverValue *= 150;
-	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent()); // twice, because this is important
+	iFirstDiscoverValue /= iTechScorePercent;
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
 	int iSlowValue = iBestValue;
@@ -5321,8 +5324,8 @@ bool CvUnitAI::AI_greatPersonMove()
 	iTradeValue /= 100;
 	iTradeValue *= kPlayer.AI_averageCommerceMultiplier(COMMERCE_RESEARCH);
 	iTradeValue /= kPlayer.AI_averageCommerceMultiplier(COMMERCE_GOLD);
-	// and unlike bulb beckers, gold can be targeted where it is needed
-	iTradeValue *= 130;
+	// gold can be targeted where it is needed. (cf AI_knownTechValModifier)
+	iTradeValue *= 150;
 	iTradeValue /= 100;
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
 	iTradeValue /= 100;

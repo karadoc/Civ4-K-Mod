@@ -1486,10 +1486,32 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 	}
 }
 
+// K-Mod. This is the tech value modifier for devaluing techs that are known by other civs
+// It's based on the original bts code from AI_techTradVal
+int CvTeamAI::AI_knownTechValModifier(TechTypes eTech) const
+{
+	int iTechCivs = 0;
+	int iCivsMet = 0;
+
+	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	{
+		if (GET_TEAM((TeamTypes)iI).isAlive() && iI != getID() && isHasMet((TeamTypes)iI))
+		{
+			if (GET_TEAM((TeamTypes)iI).isHasTech(eTech))
+				iTechCivs++;
+
+			iCivsMet++;
+		}
+	}
+
+	return 50 * (iCivsMet - iTechCivs) / iCivsMet;
+}
+// K-Mod end
 
 int CvTeamAI::AI_techTradeVal(TechTypes eTech, TeamTypes eTeam) const
 {
 	FAssert(eTeam != getID());
+	/* original bts code
 	int iKnownCount;
 	int iPossibleKnownCount;
 	int iCost;
@@ -1523,6 +1545,10 @@ int CvTeamAI::AI_techTradeVal(TechTypes eTech, TeamTypes eTeam) const
 	}
 
 	iValue += (((iCost / 2) * (iPossibleKnownCount - iKnownCount)) / iPossibleKnownCount);
+	*/
+	// K-Mod
+	int iValue = (150 + AI_knownTechValModifier(eTech)) * std::max(0, (getResearchCost(eTech) - getResearchProgress(eTech))) / 100;
+	// K-Mod end
 
 	iValue *= std::max(0, (GC.getTechInfo(eTech).getAITradeModifier() + 100));
 	iValue /= 100;
