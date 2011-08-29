@@ -14212,7 +14212,10 @@ void CvPlayerAI::AI_doCivics()
 	if (AI_getCivicTimer() > 0)
 	{
 		AI_changeCivicTimer(-1);
-		return;
+		if (getGoldenAgeTurns() != 1) // K-Mod. If its the last turn of a golden age, consider switching civics anyway.
+		{
+			return;
+		}
 	}
 
 	if (!canRevolution(NULL))
@@ -14220,7 +14223,7 @@ void CvPlayerAI::AI_doCivics()
 		return;
 	}
 
-	FAssertMsg(AI_getCivicTimer() == 0, "AI Civic timer is expected to be 0");
+	// FAssertMsg(AI_getCivicTimer() == 0, "AI Civic timer is expected to be 0"); // Disabled by K-Mod
 
 	CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
 	int* paiCurrentValue = new int[GC.getNumCivicOptionInfos()];

@@ -5297,7 +5297,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	int iFirstDiscoverValue = iDiscoverValue;
 	iFirstDiscoverValue *= (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent());
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
-	iFirstDiscoverValue *= 130;
+	iFirstDiscoverValue *= 150;
 	iFirstDiscoverValue /= std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent()); // twice, because this is important
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
@@ -5316,82 +5316,115 @@ bool CvUnitAI::AI_greatPersonMove()
 
 	CvPlot* pBestTradePlot;
 	int iTradeValue = AI_tradeMissionValue(pBestTradePlot, iDiscoverValue / 2);
+	// make it roughly comparable to research points
 	iTradeValue *= kPlayer.AI_commerceWeight(COMMERCE_GOLD);
+	iTradeValue /= 100;
+	iTradeValue *= kPlayer.AI_averageCommerceMultiplier(COMMERCE_RESEARCH);
+	iTradeValue /= kPlayer.AI_averageCommerceMultiplier(COMMERCE_GOLD);
+	// and unlike bulb beckers, gold can be targeted where it is needed
+	iTradeValue *= 130;
 	iTradeValue /= 100;
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
 	iTradeValue /= 100;
 
-	if (iSlowValue < iFirstDiscoverValue)
+	//
+	enum
 	{
-		if (iTradeValue < iFirstDiscoverValue && AI_discover(false, true))
+		GP_SLOW,
+		GP_FIRSTDISCOVER,
+		GP_DISCOVER,
+		GP_GOLDENAGE,
+		GP_TRADE
+	};
+	std::multimap<int, int> ordered_missions;
+	ordered_missions.insert(std::make_pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
+	ordered_missions.insert(std::make_pair<int, int>(iTradeValue, GP_TRADE));
+	ordered_missions.insert(std::make_pair<int, int>(iSlowValue, GP_SLOW));
+	ordered_missions.insert(std::make_pair<int, int>(iFirstDiscoverValue, GP_FIRSTDISCOVER));
+	ordered_missions.insert(std::make_pair<int, int>(iDiscoverValue, GP_DISCOVER));
+	std::multimap<int, int>::reverse_iterator rit;
+	int iChoice = 1;
+	for (rit = ordered_missions.rbegin(); rit != ordered_missions.rend(); ++rit)
+	{
+		switch (rit->second)
 		{
-			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
-			return true;
-		}
-		
-		if (iTradeValue >= iGoldenAgeValue * 2 && AI_doTrade(pBestTradePlot))
-		{
-			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
-			return true;
-		}
+		case GP_FIRSTDISCOVER:
+			if (AI_discover(false, true))
+			{
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'first discover' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue, iChoice);
+				return true;
+			}
+			break;
 
-		if (AI_discover(false, true))
-		{
-			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'first discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue);
-			return true;
-		}
+		case GP_DISCOVER:
+			if (AI_discover())
+			{
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'discover' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue, iChoice);
+				return true;
+			}
+			break;
 
-		if (iGoldenAgeValue > iDiscoverValue && iGoldenAgeValue > iSlowValue)
-		{
+		case GP_TRADE:
+			if (AI_doTrade(pBestTradePlot))
+			{
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'trade mission' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue, iChoice);
+				return true;
+			}
+			break;
+
+		case GP_GOLDENAGE:
 			if (AI_goldenAge())
 			{
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'golden age' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue);
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'golden age' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue, iChoice);
 				return true;
 			}
-			if (iTradeValue >= iGoldenAgeValue && AI_doTrade(pBestTradePlot))
+			else
 			{
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'trade mission' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue);
-				return true;
+				// Do we want to wait for another great person?
+				int iDeadTime = GC.getGameINLINE().getGameTurn() - getGameTurnCreated();
+				iDeadTime *= 100;
+				iDeadTime /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+				std::multimap<int, int>::reverse_iterator next = rit;
+				++next;
+				if (next == ordered_missions.rend() || next->first * 100 < (100-iDeadTime) * rit->first)
+				{
+					if (gUnitLogLevel > 2) logBBAI("    %S chooses 'wait' with their %S (dead time: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDeadTime, iChoice);
+					return false;
+				}
 			}
-		}
+			break;
 
-		if (iDiscoverValue > iSlowValue && AI_discover())
-		{
-			if (gUnitLogLevel > 2) logBBAI("    %S chooses 'discover' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue);
-			return true;
+		case GP_SLOW:
+			// no dedicated function for this.
+			if (pBestPlot != NULL)
+			{
+				if (atPlot(pBestPlot))
+				{
+					if (eBestSpecialist != NO_SPECIALIST)
+					{
+						getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
+						if (gUnitLogLevel > 2) logBBAI("    %S chooses 'join' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue, iChoice);
+						return true;
+					}
+
+					if (eBestBuilding != NO_BUILDING)
+					{
+						getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
+						if (gUnitLogLevel > 2) logBBAI("    %S chooses 'build' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue, iChoice);
+						return true;
+					}
+				}
+				else
+				{
+					getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY);
+					return true;
+				}
+			}
+			break;
 		}
+		iChoice++;
 	}
-
-	// do slow
-	int iDeadTime = GC.getGameINLINE().getGameTurn() - getGameTurnCreated();
-	iDeadTime *= 100;
-	iDeadTime /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
-	if (pBestPlot != NULL && 100 * iSlowValue > (100-iDeadTime) * iGoldenAgeValue)
-	{
-		if (atPlot(pBestPlot))
-		{
-			if (eBestSpecialist != NO_SPECIALIST)
-			{
-				getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'join' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
-				return true;
-			}
-
-			if (eBestBuilding != NO_BUILDING)
-			{
-				getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'build' with their %S (value: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue);
-				return true;
-			}
-		}
-		else
-		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY);
-			return true;
-		}
-	}
-	// wait for a better opportunity.
-	if (gUnitLogLevel > 2) logBBAI("    %S chooses 'wait' with their %S (dead time: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDeadTime);
+	FAssert(false);
 	return false;
 }
 // K-Mod end
