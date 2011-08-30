@@ -1249,7 +1249,6 @@ void CvCityAI::AI_chooseProduction()
 
 	if( kPlayer.isStrike() )
 	{
-		// pick granary or lighthouse, any duration
 		int iStrikeFlags = 0;
 		iStrikeFlags |= BUILDINGFOCUS_GOLD;
 		iStrikeFlags |= BUILDINGFOCUS_MAINTENANCE;
@@ -1259,11 +1258,12 @@ void CvCityAI::AI_chooseProduction()
 			return;
 		}
 
+		/*
 		// try picking forge, etc, any duration
 		if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION))
 		{
 			return;
-		}
+		} */ // K-Mod (a produciton building will get choosen if it is the right thing to choose)
 		
 		// just pick any building, any duration
 		if (AI_chooseBuilding())
@@ -1534,11 +1534,11 @@ void CvCityAI::AI_chooseProduction()
 	
 	if (!bDanger && ((kPlayer.getCurrentEra() > (GC.getGame().getStartEra() + iProductionRank / 2))) || (kPlayer.getCurrentEra() > (GC.getNumEraInfos() / 2)))
 	{
-		if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20 - iWarTroubleThreshold, 15, ((bLandWar || bAssault) ? 25 : -1)))
+		/* if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20 - iWarTroubleThreshold, 15, ((bLandWar || bAssault) ? 25 : -1)))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 1", getName().GetCString());
 			return;	
-		}
+		} */ // K-Mod.
 
 		if( !(bDefenseWar && iWarSuccessRatio < -30) )
 		{
@@ -1794,11 +1794,12 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
+	/* original bts code. We dont' need this. It just ends up putting aqueducts everywhere.
 	if (AI_chooseBuilding(BUILDINGFOCUS_FOOD, isCapital() ? 5 : 30, 30))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_FOOD 2", getName().GetCString());
 		return;
-	}
+	} */
 
 	int iSpreadUnitThreshold = 1000;
 
@@ -2017,12 +2018,13 @@ void CvCityAI::AI_chooseProduction()
         	}
         }
     }
-        
+
+	/* original bts code. We dont' need this. It just ends up putting aqueducts everywhere.
 	if (AI_chooseBuilding(BUILDINGFOCUS_FOOD, 60, 10, (bLandWar ? 30 : -1)))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_FOOD 3", getName().GetCString());
 		return;
-	}
+	} */
 	
 	//oppurunistic wonder build
 	if (!bDanger && (!hasActiveWorldWonder() || (kPlayer.getNumCities() > 3)))
@@ -2768,14 +2770,14 @@ void CvCityAI::AI_chooseProduction()
 
 	if (!bLandWar)
 	{
-		if ((iCulturePressure > 90) || kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+		/* if ((iCulturePressure > 90) || kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
 		{
 			if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, 20))
 			{
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses cultural pressure/cultural victory 3", getName().GetCString());
 				return;
 			}
-		}
+		} */ // K-Mod (cultural buildings are valued more highly when doing cultural victory strats. This isn't needed.)
 
 		if (pWaterArea != NULL && bFinancialTrouble)
 		{
@@ -2829,18 +2831,18 @@ void CvCityAI::AI_chooseProduction()
 	// I suspect they do very little other than use CPU time.
 	// If the building is good enough, it will get chosen by the general chooseBuilding function.
 
-	if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20, 4))
+	/*if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20, 4))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 2", getName().GetCString());
 		return;
-	}
+	}*/ // K-Mod. (this ends up making cities kill themselves with unhealithiness they can't afford)
 	
 	//20 means 5g or ~2 happiness...
 	/*if (AI_chooseBuilding(iEconomyFlags, 15, 20))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 2", getName().GetCString());
 		return;
-	}*/ // K-Mod
+	}*/ // K-Mod. (economic value is already well estimated without flags)
 
 
 	if (!bLandWar)
@@ -2849,7 +2851,7 @@ void CvCityAI::AI_chooseProduction()
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 3", getName().GetCString());
 			return;
-		}*/ // K-Mod
+		}
 
 		if (iCulturePressure > 50)
 		{
@@ -2858,7 +2860,7 @@ void CvCityAI::AI_chooseProduction()
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose cultural pressure 2", getName().GetCString());
 				return;
 			}
-		}
+		}*/ // K-Mod
 
 		if (pWaterArea != NULL)
 		{
