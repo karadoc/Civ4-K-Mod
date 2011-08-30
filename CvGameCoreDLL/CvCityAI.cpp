@@ -4709,17 +4709,28 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 			if (iPass > 0)
 			{
+
+				// K-Mod, I've moved this from inside the yield types loop; and I've increased the value to compensate.
+				if (iFoodDifference > 0)
+				{
+					//iValue += kBuilding.getFoodKept() / 2;
+					iValue += std::max(0, AI_getTargetPopulation() - getPopulation()) * kBuilding.getFoodKept() / 2;
+				}
+
 				for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
 				{
 					// K-Mod - I've shuffled some parts of this code around.
 					int iTempValue = 0;
 
-					iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 15); // originally was /10
-					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 18 : 23)); // originally 12 : 15
+					/*iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 10);
+					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));*/
+					// K-Mod. The "2+" is meant to represent the extra yield we might start working if our multiplier was better.
+					iTempValue += kBuilding.getYieldModifier(iI) * (2+getBaseYieldRate((YieldTypes)iI)) / 17;
+					iTempValue += kBuilding.getPowerYieldModifier(iI) * (2+getBaseYieldRate((YieldTypes)iI)) / (bProvidesPower || isPower() ? 17 : 26);
 
 					if (bProvidesPower && !isPower())
 					{
-						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
+						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 17); // originally 12
 					}
 
 					for (int iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
@@ -4732,22 +4743,25 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 					// if this is a limited wonder, and we are not one of the top 4 in this category, subtract the value
 					// we do _not_ want to build this here (unless the value was small anyway)
-					if (bIsLimitedWonder && (findBaseYieldRateRank((YieldTypes)iI) > (3 + iLimitedWonderLimit)))
+					//if (bIsLimitedWonder && (findBaseYieldRateRank((YieldTypes)iI) > (3 + iLimitedWonderLimit)))
+					// K-Mod: lets say top 1/3 instead. There are now other mechanisms to stop us from wasting buildings.
+					if (bIsLimitedWonder && findBaseYieldRateRank((YieldTypes)iI) > iNumCities/3 + 1 + iLimitedWonderLimit)
 					{
 						iTempValue *= -1;
 					}
 
-					// ...and now the things that should not depend on whether or not we have a good yield rank
-					iValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 18); // originally 12
+					// (K-Mod)...and now the things that should not depend on whether or not we have a good yield rank
+					iTempValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 18); // originally 12 (and 'iValue')
 					if (bForeignTrade)
 					{
-						iValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 20); // originally 12
+						iTempValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 20); // originally 12 (and 'iValue')
 					}
 
+					/* original bts code (We're inside a yield types loop. This would be triple counted here!)
 					if (iFoodDifference > 0)
 					{
 						iValue += kBuilding.getFoodKept() / 2;
-					}
+					} */
 
 					if (kBuilding.getSeaPlotYieldChange(iI) > 0)
 					{
@@ -4774,6 +4788,18 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						{
 							iTempValue *= 2;
 						}
+
+						// K-Mod
+						if (iI == YIELD_PRODUCTION)
+						{
+							iTempValue *= (getYieldRate(YIELD_PRODUCTION) < 1 + getPopulation()/3) ? 4 : 3;
+							iTempValue /= 2;
+						}
+						if (iI == YIELD_FOOD)
+						{
+							iTempValue *= 2;
+						}
+						// K-Mod end
 
 						iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iI);
 						iTempValue /= 100;
@@ -5086,18 +5112,20 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 							}
 						} */
 						// K-Mod, let us build culture wonders to defend againt culture pressure
+						// also, lets say top 1/3 instead. There are now other mechanisms to stop us from wasting buildings.
 						if (bIsLimitedWonder)
 						{
 							if (iI == COMMERCE_CULTURE)
 							{
 								 if (bCulturalVictory1 &&
 									 ((bCulturalVictory2 && findCommerceRateRank((CommerceTypes)iI) == 1) ||
-										findCommerceRateRank((CommerceTypes)iI) > (3 + iLimitedWonderLimit)))
+									 findCommerceRateRank((CommerceTypes)iI) > iNumCities/3 + 1 + iLimitedWonderLimit))
 								 {
 									 iTempValue = 0;
 								 }
 							}
-							else if (findCommerceRateRank((CommerceTypes)iI) > (3 + iLimitedWonderLimit))
+							
+							else if (findCommerceRateRank((CommerceTypes)iI) > iNumCities/3 + 1 + iLimitedWonderLimit)
 							{
 								iTempValue *= -1;
 							}
@@ -6438,16 +6466,10 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 	return -iValue;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      07/25/09                                jdog5000      */
-/*                                                                                              */
-/* Debug                                                                                        */
-/************************************************************************************************/
+// K-Mod, based on ideas from BBAI (this code is currently duplicated in AI_getYieldMultipliers and AI_countWorkedPoorTiles)
 int CvCityAI::AI_getGoodTileCount()
 {
-	CvPlot* pLoopPlot;
 	int iGoodTileCount = 0;
-	int iJ;
 	int aiFinalYields[NUM_YIELD_TYPES];
 
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
@@ -6456,43 +6478,21 @@ int CvCityAI::AI_getGoodTileCount()
 	{
 		if (iI != CITY_HOME_PLOT)
 		{
-			pLoopPlot = getCityIndexPlot(iI);
+			CvPlot* pLoopPlot = getCityIndexPlot(iI);
 
 			if (NULL != pLoopPlot && pLoopPlot->getWorkingCity() == this)
 			{
-				int iCount = (kPlayer.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD));
+				int iWorkerCount = (kPlayer.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD));
 
 				bool bUseBaseValue = true;
 				//If the tile has a BestBuild and is being improved, then use the BestBuild
 				//determine if the tile is being improved.
-
-				if (iCount > 0)
+				if (iWorkerCount > 0)
 				{
 					BuildTypes eBuild = NO_BUILD;
 					if (m_aeBestBuild[iI] != NO_BUILD && m_aiBestBuildValue[iI] > 0)
 					{
 						eBuild = m_aeBestBuild[iI];
-					}
-					else
-					{
-						// This check is necessary to stop oscillation which can result
-						// when best build changes food situation for city, changing the best build.
-						CvUnit* pLoopUnit;
-						CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
-
-						while (pUnitNode != NULL)
-						{
-							pLoopUnit = ::getUnit(pUnitNode->m_data);
-							pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
-
-							if (pLoopUnit->getBuildType() != NO_BUILD)
-							{
-								if( eBuild == NO_BUILD || pLoopPlot->getBuildTurnsLeft(eBuild,0,0) > pLoopPlot->getBuildTurnsLeft(pLoopUnit->getBuildType(),0,0) )
-								{
-									eBuild = pLoopUnit->getBuildType();
-								}
-							}
-						}
 					}
 
 					if( eBuild != NO_BUILD )
@@ -6510,7 +6510,7 @@ int CvCityAI::AI_getGoodTileCount()
 							}
 
 							bUseBaseValue = false;
-							for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+							for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 							{
 								aiFinalYields[iJ] = (pLoopPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature) + pLoopPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
 							}
@@ -6521,7 +6521,7 @@ int CvCityAI::AI_getGoodTileCount()
 				//Otherwise use the base value.
 				if (bUseBaseValue)
 				{
-					for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+					for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 					{
 						//by default we'll use the current value
 						aiFinalYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
@@ -6532,28 +6532,20 @@ int CvCityAI::AI_getGoodTileCount()
 					}
 				}
 				
-				if ( ((aiFinalYields[YIELD_FOOD]*10) + (aiFinalYields[YIELD_PRODUCTION]*6) + (aiFinalYields[YIELD_COMMERCE]*4)) > 21 )
+				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
+					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 21))
 				{
-					//iGoodTileCount++;
-					// K-Mod
-					if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
-						!pLoopPlot->isWater())
-					{
-						iGoodTileCount++;
-					}
+					iGoodTileCount++;
 				}
 			}
 		}
 	}
-
 	return iGoodTileCount;
 }
 
 int CvCityAI::AI_countWorkedPoorTiles()
 {
-	CvPlot* pLoopPlot;
 	int iWorkedPoorTileCount = 0;
-	int iJ;
 	int aiFinalYields[NUM_YIELD_TYPES];
 
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
@@ -6562,43 +6554,21 @@ int CvCityAI::AI_countWorkedPoorTiles()
 	{
 		if (iI != CITY_HOME_PLOT)
 		{
-			pLoopPlot = getCityIndexPlot(iI);
+			CvPlot* pLoopPlot = getCityIndexPlot(iI);
 
-			if (NULL != pLoopPlot && pLoopPlot->getWorkingCity() == this && pLoopPlot->isBeingWorked())
+			if (NULL != pLoopPlot && pLoopPlot->getWorkingCity() == this)
 			{
-				int iCount = (kPlayer.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD));
+				int iWorkerCount = (kPlayer.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD));
 
 				bool bUseBaseValue = true;
 				//If the tile has a BestBuild and is being improved, then use the BestBuild
 				//determine if the tile is being improved.
-
-				if (iCount > 0)
+				if (iWorkerCount > 0)
 				{
 					BuildTypes eBuild = NO_BUILD;
 					if (m_aeBestBuild[iI] != NO_BUILD && m_aiBestBuildValue[iI] > 0)
 					{
 						eBuild = m_aeBestBuild[iI];
-					}
-					else
-					{
-						// This check is necessary to stop oscillation which can result
-						// when best build changes food situation for city, changing the best build.
-						CvUnit* pLoopUnit;
-						CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
-
-						while (pUnitNode != NULL)
-						{
-							pLoopUnit = ::getUnit(pUnitNode->m_data);
-							pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
-
-							if (pLoopUnit->getBuildType() != NO_BUILD)
-							{
-								if( eBuild == NO_BUILD || pLoopPlot->getBuildTurnsLeft(eBuild,0,0) > pLoopPlot->getBuildTurnsLeft(pLoopUnit->getBuildType(),0,0) )
-								{
-									eBuild = pLoopUnit->getBuildType();
-								}
-							}
-						}
 					}
 
 					if( eBuild != NO_BUILD )
@@ -6616,7 +6586,7 @@ int CvCityAI::AI_countWorkedPoorTiles()
 							}
 
 							bUseBaseValue = false;
-							for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+							for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 							{
 								aiFinalYields[iJ] = (pLoopPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature) + pLoopPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
 							}
@@ -6627,7 +6597,7 @@ int CvCityAI::AI_countWorkedPoorTiles()
 				//Otherwise use the base value.
 				if (bUseBaseValue)
 				{
-					for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+					for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 					{
 						//by default we'll use the current value
 						aiFinalYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
@@ -6638,50 +6608,32 @@ int CvCityAI::AI_countWorkedPoorTiles()
 					}
 				}
 				
-				if ( ((aiFinalYields[YIELD_FOOD]*10) + (aiFinalYields[YIELD_PRODUCTION]*6) + (aiFinalYields[YIELD_COMMERCE]*4)) <= 21 )
+				if (pLoopPlot->isBeingWorked() &&
+					aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 <= 27 &&
+					(pLoopPlot->isWater() || aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 <= 21))
 				{
 					iWorkedPoorTileCount++;
 				}
 			}
 		}
 	}
-
 	return iWorkedPoorTileCount;
 }
 
-int CvCityAI::AI_getTargetSize()
+// K-Mod, based on BBAI ideas
+int CvCityAI::AI_getTargetPopulation()
 {
-	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+	int iHealth = goodHealth() - badHealth() + getEspionageHealthCounter();
 	int iTargetSize = AI_getGoodTileCount();
-	
-	if( getEspionageHealthCounter() > 0 )
-	{
-		iTargetSize = std::min(iTargetSize, 2 + getPopulation());
-	}
-	else
-	{
-		iTargetSize = std::min(iTargetSize, 2 + getPopulation() + (goodHealth() - badHealth())/2);
-	}
+
+	iTargetSize = std::min(iTargetSize, 2 + getPopulation() + iHealth/2);
 
 	if( iTargetSize < getPopulation() )
 	{
 		iTargetSize = std::max(iTargetSize, getPopulation() - (AI_countWorkedPoorTiles()/2));
 	}
 	
-	// Target city size should not be perturbed by espionage, other short term effects
-	if( getEspionageHappinessCounter() > 0 )
-	{
-		iTargetSize = std::min(iTargetSize, getPopulation());
-	}
-	else
-	{
-		iTargetSize = std::min(iTargetSize, getPopulation()+(happyLevel()-unhappyLevel()));
-	}
-
-	if (kPlayer.getAdvancedStartPoints() >= 0)
-	{
-		iTargetSize += 2 + kPlayer.getCurrentEra();
-	}
+	iTargetSize = std::min(iTargetSize, 2 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
 
 	return iTargetSize;
 }

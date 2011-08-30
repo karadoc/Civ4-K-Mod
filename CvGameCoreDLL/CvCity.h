@@ -986,19 +986,12 @@ public:
 	virtual bool AI_isEmphasize(EmphasizeTypes eIndex) = 0;											// Exposed to Python
 	virtual void AI_setEmphasize(EmphasizeTypes eIndex, bool bNewValue) = 0;
 	virtual int AI_getBestBuildValue(int iIndex) = 0;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/25/09                                jdog5000      */
-/*                                                                                              */
-/* Debug                                                                                        */
-/************************************************************************************************/
-	virtual int AI_getTargetSize() = 0;
+	// K-Mod note: the following functions were originally created by jdog5000 for debugging BBAI. I've adopted them and changed them.
+	virtual int AI_getTargetPopulation() = 0;
 	virtual int AI_getGoodTileCount() = 0;
-	// K-Mod note: these next two are not longer for debug only. They are used by the AI itself.
 	virtual int AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue = 0, bool bEmphasizeIrrigation = false, BuildTypes* peBestBuild = 0) = 0;
 	virtual void AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange ) = 0;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	// K-Mod end
 	virtual int AI_totalBestBuildValue(CvArea* pArea) = 0;
 	virtual int AI_countBestBuilds(CvArea* pArea) = 0;													// Exposed to Python
 	virtual BuildTypes AI_getBestBuild(int iIndex) = 0;
