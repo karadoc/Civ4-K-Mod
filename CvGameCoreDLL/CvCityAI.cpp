@@ -6448,6 +6448,13 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 		}
 	}
 	iValue += iHealthValue;
+
+	// K-Mod
+	if (GC.getGame().getGwEventTally() >= 0) // if GW Threshold has been reached
+	{
+		iValue += kFeatureInfo.getWarmingDefense() * (100 + 2 * GET_PLAYER(getOwner()).getGwPercentAnger()) / 100;
+	}
+	// K-Mod end
 	
 	if (iValue > 0)
 	{

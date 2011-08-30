@@ -18825,6 +18825,8 @@ bool CvUnitAI::AI_irrigateTerritory()
 									{
 										bValid = true;
 
+										// K-Mod. (I didn't want it to be this way...)
+										/* original bts code
 										if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS))
 										{
 											if (pLoopPlot->getFeatureType() != NO_FEATURE)
@@ -18837,7 +18839,20 @@ bool CvUnitAI::AI_irrigateTerritory()
 													}
 												}
 											}
+										} */
+										if (pLoopPlot->getFeatureType() != NO_FEATURE)
+										{
+											if (GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pLoopPlot->getFeatureType()))
+											{
+												const CvFeatureInfo& kFeatureInfo = GC.getFeatureInfo(pLoopPlot->getFeatureType());
+												if ((GC.getGame().getGwEventTally() >= 0 && kFeatureInfo.getWarmingDefense() > 0) ||
+													(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS) && kFeatureInfo.getYieldChange(YIELD_PRODUCTION) > 0))
+												{
+													bValid = false;
+												}
+											}
 										}
+										// K-Mod end
 
 										if (bValid)
 										{
