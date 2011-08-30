@@ -3620,8 +3620,8 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 
 										if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
 										{
-											iRelativeValue *= iMaxNumWonders + 2 - getNumNationalWonders();
-											iRelativeValue /= iMaxNumWonders + 2;
+											iRelativeValue *= iMaxNumWonders + 1 - getNumNationalWonders();
+											iRelativeValue /= iMaxNumWonders + 1;
 										}
 
 										int iLoop;
@@ -3632,8 +3632,8 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 												int iLoopValue = static_cast<CvCityAI*>(pLoopCity)->AI_buildingValueThreshold(eLoopBuilding);
 												if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
 												{
-													iLoopValue *= iMaxNumWonders + 2 - pLoopCity->getNumNationalWonders();
-													iLoopValue /= iMaxNumWonders + 2;
+													iLoopValue *= iMaxNumWonders + 1 - pLoopCity->getNumNationalWonders();
+													iLoopValue /= iMaxNumWonders + 1;
 												}
 												if (80 * iLoopValue > 100 * iRelativeValue)
 												{
