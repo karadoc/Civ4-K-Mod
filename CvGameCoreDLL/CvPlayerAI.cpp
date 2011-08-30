@@ -4393,7 +4393,9 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 		// Really we just want to know how much of our commerce slider is used for paying the bills.
 		/* original bts code
 		int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn()); */
-		int iNetCommerce = 1 + 100 * (getCommerceRate(COMMERCE_GOLD) + std::max(0, getGoldPerTurn())) / std::max(1, getCommercePercent(COMMERCE_GOLD));
+		if (getCommercePercent(COMMERCE_GOLD) == 0)
+			return false; // I can't think of any reason to run 0% gold when short on money...
+		int iNetCommerce = 1 + 100 * (getCommerceRate(COMMERCE_GOLD) + std::max(0, getGoldPerTurn())) / std::max(1, getCommercePercent(COMMERCE_GOLD)); // std::max... paranoia.
 		// K-Mod end
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */

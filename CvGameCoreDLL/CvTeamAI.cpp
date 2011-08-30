@@ -1504,7 +1504,7 @@ int CvTeamAI::AI_knownTechValModifier(TechTypes eTech) const
 		}
 	}
 
-	return 50 * (iCivsMet - iTechCivs) / iCivsMet;
+	return 50 * (iCivsMet - iTechCivs) / std::max(1, iCivsMet);
 }
 // K-Mod end
 

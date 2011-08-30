@@ -10736,36 +10736,39 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		}
 	}
 	
-	//worker
-	if (!bDanger && GET_PLAYER(getOwner()).AI_isPrimaryArea(area())) // if its not a primary area, let the player ship one in.
+	if (GET_PLAYER(getOwner()).AI_isPrimaryArea(area())) // if its not a primary area, let the player ship units in.
 	{
-		int iExistingWorkers = GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
-		int iNeededWorkers = GET_PLAYER(getOwner()).AI_neededWorkers(area());
+		//worker
+		if (!bDanger)
+		{
+			int iExistingWorkers = GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
+			int iNeededWorkers = GET_PLAYER(getOwner()).AI_neededWorkers(area());
 
-		if (iExistingWorkers < (iNeededWorkers + 1)/2) // I don't want to build more workers than the player actually wants.
+			if (iExistingWorkers < (iNeededWorkers + 1)/2) // I don't want to build more workers than the player actually wants.
+			{
+				int iOdds = 100;
+				iOdds *= iNeededWorkers - iExistingWorkers;
+				iOdds /= std::max(1, iNeededWorkers);
+				iOdds *= 50 + iBestBuildingValue;
+				iOdds /= 50 + 5 * iBestBuildingValue;
+
+				if (AI_chooseUnit(UNITAI_WORKER, iOdds))
+				{
+					return;
+				}
+			}
+		}
+
+		//military
+		if (GET_TEAM(getTeam()).getAtWarCount(true) > 0 && (bDanger || iBestBuildingValue < 20))
 		{
 			int iOdds = 100;
-			iOdds *= iNeededWorkers - iExistingWorkers;
-			iOdds /= std::max(1, iNeededWorkers);
 			iOdds *= 50 + iBestBuildingValue;
-			iOdds /= 50 + 5 * iBestBuildingValue;
-
-			if (AI_chooseUnit(UNITAI_WORKER, iOdds))
+			iOdds /= 50 + 10 * iBestBuildingValue;
+			if (AI_chooseUnit(NO_UNITAI, iOdds))
 			{
 				return;
 			}
-		}
-	}
-
-	//military
-	if (GET_TEAM(getTeam()).getAtWarCount(true) > 0 && (bDanger || iBestBuildingValue < 20))
-	{
-		int iOdds = 100;
-		iOdds *= 50 + iBestBuildingValue;
-		iOdds /= 50 + 10 * iBestBuildingValue;
-		if (AI_chooseUnit(NO_UNITAI, iOdds))
-		{
-			return;
 		}
 	}
 
