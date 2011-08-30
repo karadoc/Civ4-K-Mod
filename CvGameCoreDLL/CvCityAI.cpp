@@ -808,7 +808,8 @@ void CvCityAI::AI_chooseProduction()
 		clearOrderQueue();
 	}
 	
-	if (GET_PLAYER(getOwner()).isAnarchy())
+	//if (GET_PLAYER(getOwner()).isAnarchy()) // original bts code
+	if (isDisorder()) // K-Mod
 	{
 		return;
 	}
@@ -1201,6 +1202,7 @@ void CvCityAI::AI_chooseProduction()
         }
 	}
 
+	/* original bts code. (K-Mod, we don't need this. The normal decision making should be fine.)
 	if (isOccupation())
 	{
 		// pick granary or lighthouse, any duration
@@ -1220,7 +1222,7 @@ void CvCityAI::AI_chooseProduction()
 		{
 			return;
 		}
-	}
+	} */
 
 	if (plot()->getNumDefenders(getOwnerINLINE()) == 0) // XXX check for other team's units?
 	{
@@ -10680,46 +10682,25 @@ int CvCityAI::AI_calculateCulturePressure(bool bGreatWork)
     return iValue;
 }
 
-
+// K-Mod: I've completely butchered this function. ie. deleted the bulk of it, and rewritten it.
 void CvCityAI::AI_buildGovernorChooseProduction()
 {
 	PROFILE_FUNC();
 
-	CvArea* pWaterArea;
-	bool bWasFoodProduction;
-	bool bDanger;
-	int iCulturePressure;
-
-	bDanger = AI_isDanger();
-
-
-	// only clear the dirty bit if we actually do a check, multiple items might be queued
 	AI_setChooseProductionDirty(false);
-
-	pWaterArea = waterArea();
-
-	bWasFoodProduction = isFoodProduction();
-	iCulturePressure = AI_calculateCulturePressure();
-	int iMinValueDivisor = 1;
-	if (getPopulation() < 3)
-	{
-		iMinValueDivisor = 3;
-	}
-	else if (getPopulation() < 7)
-	{
-		iMinValueDivisor = 2;
-	}
-	
-	
 	clearOrderQueue();
+
+	CvArea* pWaterArea = waterArea();
+	bool bWasFoodProduction = isFoodProduction();
+	bool bDanger = AI_isDanger();
 
 	if (bWasFoodProduction)
 	{
 		AI_assignWorkingPlots();
 	}
-	
-    // if we need to pop borders, then do that immediately if we have drama and can do it
-	if ((getCultureLevel() <= (CultureLevelTypes)1) && ((getCommerceRate(COMMERCE_CULTURE) < 2) || (iCulturePressure > 0)))
+
+    // pop borders
+	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) < 2)
 	{
         if (AI_chooseProcess(COMMERCE_CULTURE))
         {
@@ -10727,6 +10708,9 @@ void CvCityAI::AI_buildGovernorChooseProduction()
         }
 	}
 	
+	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
+	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValueThreshold(eBestBuilding);
+
 	//workboat
 	if (pWaterArea != NULL)
 	{
@@ -10734,120 +10718,61 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		{
 			if (AI_neededSeaWorkers() > 0)
 			{
-				if (AI_chooseUnit(UNITAI_WORKER_SEA))
+				int iOdds = 100;
+				iOdds *= 50 + iBestBuildingValue;
+				iOdds /= 50 + 5 * iBestBuildingValue;
+				if (AI_chooseUnit(UNITAI_WORKER_SEA, iOdds))
 				{
 					return;
 				}
 			}
 		}
 	}
-
-	if ((AI_countNumBonuses(NO_BONUS, false, true, 10, true, true) > 0)
-		&& (getPopulation() > AI_countNumBonuses(NO_BONUS, true, false, -1, true, true)))
+	
+	//worker
+	if (!bDanger && GET_PLAYER(getOwner()).AI_isPrimaryArea(area())) // if its not a primary area, let the player ship one in.
 	{
-		if (getCommerceRate(COMMERCE_CULTURE) == 0)
+		int iExistingWorkers = GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
+		int iNeededWorkers = GET_PLAYER(getOwner()).AI_neededWorkers(area());
+
+		if (iExistingWorkers < (iNeededWorkers + 1)/2) // I don't want to build more workers than the player actually wants.
 		{
-			AI_chooseBuilding(BUILDINGFOCUS_CULTURE);
-			return;
+			int iOdds = 100;
+			iOdds *= iNeededWorkers - iExistingWorkers;
+			iOdds /= std::max(1, iNeededWorkers);
+			iOdds *= 50 + iBestBuildingValue;
+			iOdds /= 50 + 5 * iBestBuildingValue;
+
+			if (AI_chooseUnit(UNITAI_WORKER, iOdds))
+			{
+				return;
+			}
 		}
 	}
 
-    // pick granary or lighthouse, any duration
-    if (AI_chooseBuilding(BUILDINGFOCUS_FOOD))
-    {
-        return;
-    }
-    
-    if (angryPopulation(1) > 1)
-    {
-        if (AI_chooseBuilding(BUILDINGFOCUS_HAPPY, 40))
-        {
-            return;
-        }
-    }
-    
-	if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 30, 10 / iMinValueDivisor))
-    {
-        return;
-    }
-    
-	if (AI_chooseBuilding(BUILDINGFOCUS_EXPERIENCE, 8, 33))
-    {
-        return;
-    }
-
-    
-	if (((getCommerceRateTimes100(COMMERCE_CULTURE) == 0) && (iCulturePressure != 0))
-        || (iCulturePressure > 100))
-    {
-        if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, 30))
-        {
-            return;
-        }
-    }
-
-    
-	int iEconomyFlags = 0;
-	iEconomyFlags |= BUILDINGFOCUS_GOLD;
-	iEconomyFlags |= BUILDINGFOCUS_RESEARCH;
-	iEconomyFlags |= BUILDINGFOCUS_MAINTENANCE;
-	iEconomyFlags |= BUILDINGFOCUS_HAPPY;
-	iEconomyFlags |= BUILDINGFOCUS_HEALTHY;
-	iEconomyFlags |= BUILDINGFOCUS_SPECIALIST;
-	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+	//military
+	if (GET_TEAM(getTeam()).getAtWarCount(true) > 0 && (bDanger || iBestBuildingValue < 20))
 	{
-		iEconomyFlags |= BUILDINGFOCUS_ESPIONAGE;
-	}
-	
-	//20 means 5g or ~2 happiness...
-	if (AI_chooseBuilding(iEconomyFlags, 20, 20 / iMinValueDivisor))
-	{
-		return;
-	}
-	
-	int iExistingWorkers = GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
-    int iNeededWorkers = GET_PLAYER(getOwner()).AI_neededWorkers(area());
-    
-	if (!bDanger && (iExistingWorkers < ((iNeededWorkers + 1) / 2)))
-	{
-		if (AI_chooseUnit(UNITAI_WORKER))
+		int iOdds = 100;
+		iOdds *= 50 + iBestBuildingValue;
+		iOdds /= 50 + 10 * iBestBuildingValue;
+		if (AI_chooseUnit(NO_UNITAI, iOdds))
 		{
 			return;
 		}
-	}	    
-
-    if (GC.getDefineINT("DEFAULT_SPECIALIST") != NO_SPECIALIST)
-    {
-        if (getSpecialistCount((SpecialistTypes)(GC.getDefineINT("DEFAULT_SPECIALIST"))) > 0)
-        {
-            if (AI_chooseBuilding(BUILDINGFOCUS_SPECIALIST, 60))
-            {
-                return;
-            }
-        }
-    }
-    
-	if (AI_chooseBuilding(iEconomyFlags, 40, 15 / iMinValueDivisor))
-	{
-		return;
-	}
-	
-	if (AI_chooseBuilding(iEconomyFlags | BUILDINGFOCUS_CULTURE, 10, 10 / iMinValueDivisor))
-	{
-		return;
 	}
 
-
-	if (AI_chooseProcess())
-	{
-		return;
-	}
-
+	//default
 	if (AI_chooseBuilding())
 	{
 		return;
 	}
 	
+	if (AI_chooseProcess())
+	{
+		return;
+	}
+
     if (AI_chooseUnit())
 	{
 		return;
