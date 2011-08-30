@@ -5285,23 +5285,28 @@ bool CvUnitAI::AI_greatPersonMove()
 	iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
 	iGoldenAgeValue /= 100;
 
-	TechTypes eDiscoverTech = getDiscoveryTech(); // could be NO_TECH.
-	int iTechScorePercent = std::max(1, GET_TEAM(getTeam()).getBestKnownTechScorePercent());
-	int iDiscoverValue = getDiscoverResearch(eDiscoverTech);
-	iDiscoverValue *= 100 + 100*GET_TEAM(getTeam()).AI_knownTechValModifier(eDiscoverTech)/iTechScorePercent;
-	iDiscoverValue /= 100;
-	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
+	int iDiscoverValue = 0;
+	TechTypes eDiscoverTech = getDiscoveryTech();
+	if (eDiscoverTech != NO_TECH)
 	{
-		iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
-		iDiscoverValue /= 2;
-	}
-	iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(3) % 51);
-	iDiscoverValue /= 100;
+		iDiscoverValue = getDiscoverResearch(eDiscoverTech);
+		// the next line: added extra value for being instant, and extra value for techs being undiscovered by other civs
+		// amplify the 'undiscovered' bonus based on how likely we are to try to trade the tech.
+		iDiscoverValue *= 120 + (300 - 2*GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent())*GET_TEAM(getTeam()).AI_knownTechValModifier(eDiscoverTech)/100;
+		iDiscoverValue /= 100;
+		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
+		{
+			iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
+			iDiscoverValue /= 2;
+		}
 
-	int iFirstDiscoverValue = iDiscoverValue;
-	// some extra value on top of the high AI_knownTechValModifier bonus
-	iFirstDiscoverValue *= (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent());
-	iFirstDiscoverValue /= iTechScorePercent;
+		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding relgions / free techs / free great people
+		{
+			iDiscoverValue *= 2;
+		}
+		iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(3) % 51);
+		iDiscoverValue /= 100;
+	}
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
 	int iSlowValue = iBestValue;
@@ -5343,25 +5348,21 @@ bool CvUnitAI::AI_greatPersonMove()
 	ordered_missions.insert(std::make_pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
 	ordered_missions.insert(std::make_pair<int, int>(iTradeValue, GP_TRADE));
 	ordered_missions.insert(std::make_pair<int, int>(iSlowValue, GP_SLOW));
-	ordered_missions.insert(std::make_pair<int, int>(iFirstDiscoverValue, GP_FIRSTDISCOVER));
 	ordered_missions.insert(std::make_pair<int, int>(iDiscoverValue, GP_DISCOVER));
 	std::multimap<int, int>::reverse_iterator rit;
 	int iChoice = 1;
+	int iScoreThreshold = 0;
 	for (rit = ordered_missions.rbegin(); rit != ordered_missions.rend(); ++rit)
 	{
-		switch (rit->second)
-		{
-		case GP_FIRSTDISCOVER:
-			if (AI_discover(false, true))
-			{
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'first discover' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iFirstDiscoverValue, iChoice);
-				return true;
-			}
+		if (rit->first < iScoreThreshold)
 			break;
 
+		switch (rit->second)
+		{
 		case GP_DISCOVER:
-			if (AI_discover())
+			if (canDiscover(plot()))
 			{
+                getGroup()->pushMission(MISSION_DISCOVER);
 				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'discover' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue, iChoice);
 				return true;
 			}
@@ -5383,16 +5384,30 @@ bool CvUnitAI::AI_greatPersonMove()
 			}
 			else
 			{
-				// Do we want to wait for another great person?
-				int iDeadTime = GC.getGameINLINE().getGameTurn() - getGameTurnCreated();
-				iDeadTime *= 100;
-				iDeadTime /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
-				std::multimap<int, int>::reverse_iterator next = rit;
-				++next;
-				if (next == ordered_missions.rend() || next->first * 100 < (100-iDeadTime) * rit->first)
+				// Do we want to wait for another great person? How long will it take?
+				int iGpThreshold = kPlayer.greatPeopleThreshold();
+				int iMinTurns = INT_MAX;
+				//int iPercentOther; // chance of it being a different GP.
+				// unfortunately, it's non-trivial to calculate the GP type probabilies. So I'm leaving it out.
+				for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
 				{
-					if (gUnitLogLevel > 2) logBBAI("    %S chooses 'wait' with their %S (dead time: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iDeadTime, iChoice);
-					return false;
+					int iGpRate = pLoopCity->getGreatPeopleRate();
+					if (iGpRate > 0)
+					{
+						int iGpProgress = pLoopCity->getGreatPeopleProgress();
+						int iTurns = (iGpThreshold - iGpProgress + iGpRate - 1) / iGpRate;
+						if (iTurns < iMinTurns)
+							iMinTurns = iTurns;
+					}
+				}
+
+				if (iMinTurns != INT_MAX)
+				{
+					int iRelativeWaitTime = iMinTurns + (GC.getGameINLINE().getGameTurn() - getGameTurnCreated());
+					iRelativeWaitTime *= 100;
+					iRelativeWaitTime /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+					// lets say 2% per 3 points.
+					iScoreThreshold = std::max(iScoreThreshold, rit->first * (100 - 2*iRelativeWaitTime/3) / 100);
 				}
 			}
 			break;
@@ -5427,7 +5442,8 @@ bool CvUnitAI::AI_greatPersonMove()
 		}
 		iChoice++;
 	}
-	FAssert(false);
+	FAssert(iScoreThreshold > 0);
+	if (gUnitLogLevel > 2) logBBAI("    %S chooses 'wait' with their %S (value: %d, dead time: %d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iScoreThreshold, GC.getGameINLINE().getGameTurn() - getGameTurnCreated());
 	return false;
 }
 // K-Mod end
@@ -22731,9 +22747,9 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 			// K-Mod end
 		}
 	}
-	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION && kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
+	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION)
 	{
-		logBBAI("      %S chooses %S as their best Big Espionage mission (value: %d, cost: %d).", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), iBestValue, kPlayer.getEspionageMissionCost(eBestMission, eTargetPlayer, pPlot, iData, this));
+		logBBAI("      %S chooses %S as their best%s espionage mission (value: %d, cost: %d).", GET_PLAYER(getOwner()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?" (big)":"", iBestValue, kPlayer.getEspionageMissionCost(eBestMission, eTargetPlayer, pPlot, iData, this));
 	}
 
 	return eBestMission;
