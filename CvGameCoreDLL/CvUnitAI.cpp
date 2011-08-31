@@ -2779,8 +2779,8 @@ void CvUnitAI::AI_attackCityMove()
 		{
 			int iAdjustment = 0;
 			iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
-			iAdjustment -= GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? 10 : 0;
-			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 10);
+			iAdjustment += GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? -10 : 0;
+			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 0);
 			iAttackRatio += iAdjustment;
 			iAttackRatioSkipBombard += iAdjustment;
 		}
@@ -2849,10 +2849,17 @@ void CvUnitAI::AI_attackCityMove()
 				{
 					if (iComparePostBombard < iAttackRatioSkipBombard)
 					{
-						// Move to good tile to attack from unless we're way more powerful
-						if( AI_goToTargetCity(0,1,pTargetCity) )
+						// K-Mod - only move into attack position if we have a chance.
+						// without this check, the AI can get stuck alternating between this, and pillage.
+						// I've tried to roughly take into account how much our ratio would improve by removing a river penalty.
+						if (canBombard(plot()) || (100 + (plot()->isRiverCrossing(directionXY(plot(), pTargetCity->plot()))?GC.getRIVER_ATTACK_MODIFIER()/2 : 0)) * iComparePostBombard >= 100 * iAttackRatio)
 						{
-							return;
+						// K-Mod end
+							// Move to good tile to attack from unless we're way more powerful
+							if( AI_goToTargetCity(0,1,pTargetCity) )
+							{
+								return;
+							}
 						}
 					}
 
