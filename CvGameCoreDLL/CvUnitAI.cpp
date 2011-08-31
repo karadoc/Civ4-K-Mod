@@ -2801,13 +2801,26 @@ void CvUnitAI::AI_attackCityMove()
 		{
 			iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true, true, true);
 
+			/* original BBAI code
 			int iDefenseModifier = pTargetCity->getDefenseModifier(true);
 			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
-			//iDefenseModifier *= std::max(0, 20 - iBombardTurns); // original BBAI code
-			iDefenseModifier *= std::min(22, std::max(0, iBombardTurns - 20)); // K-Mod (BBAI had it backwards?)
+			iDefenseModifier *= std::max(0, 20 - iBombardTurns);
 			iDefenseModifier /= 20;
 			iComparePostBombard *= 100 + std::max(0, iDefenseModifier);
-			iComparePostBombard /= 100;
+			iComparePostBombard /= 100; */
+			// K-Mod, appart from the fact that they got the defence reduction backwards; the defense modifier
+			// is counted in AI_compareStacks. So if we add it again, we'd be double counting.
+			// In fact, it's worse than that because it would compound.
+			// I'm going to subtract defence, but unfortunately this will reduce based on the total rather than the base.
+			int iDefenseModifier = pTargetCity->getDefenseModifier(false);
+			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
+			int iReducedModifier = iDefenseModifier;
+			iReducedModifier *= std::min(20, std::max(0, iBombardTurns - 12) + iBombardTurns/2);
+			iReducedModifier /= 20;
+			iComparePostBombard *= 200 + iReducedModifier - iDefenseModifier;
+			iComparePostBombard /= 200;
+			// using 200 instead of 100 to offset the over-reduction from compounding.
+			// With this, bombarding a defence bonus of 100% with reduce effective defence by 50%
 		}
 
 		if( iStepDistToTarget <= 2 )
@@ -15177,9 +15190,9 @@ bool CvUnitAI::AI_bombardCity()
 		}
 
 		// If we have reasonable odds, check for attacking without waiting for bombards
-		if( (iAttackOdds >= GC.getDefineINT("BBAI_SKIP_BOMBARD_BEST_ATTACK_ODDS")) )
+		if( (iAttackOdds >= GC.getBBAI_SKIP_BOMBARD_BEST_ATTACK_ODDS()) )
 		{
-			int iBase = std::max(150, GC.getDefineINT("BBAI_SKIP_BOMBARD_BASE_STACK_RATIO"));
+			int iBase = GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO();
 			int iComparison = getGroup()->AI_compareStacks(pBombardCity->plot(), /*bPotentialEnemy*/ true, /*bCheckCanAttack*/ true, /*bCheckCanMove*/ true);
 			
 			// Big troop advantage plus pretty good starting odds, don't wait to allow reinforcements
@@ -15189,7 +15202,7 @@ bool CvUnitAI::AI_bombardCity()
 				return false;
 			}
 
-			int iMin = std::max(100, GC.getDefineINT("BBAI_SKIP_BOMBARD_MIN_STACK_RATIO"));
+			int iMin = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
 			bool bHasWaited = false;
 			CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
 			while (pUnitNode != NULL)

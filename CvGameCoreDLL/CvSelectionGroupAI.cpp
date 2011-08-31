@@ -600,6 +600,8 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 
 	pUnitNode = headUnitNode();
 
+	int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // K-Mod. (currently this number is "10")
+
 	while (pUnitNode != NULL)
 	{
 		pLoopUnit = ::getUnit(pUnitNode->m_data);
@@ -618,7 +620,21 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 				if (!bCheckCanMove || pLoopUnit->canMove())
 					if (!bCheckCanMove || pAttackedPlot == NULL || pLoopUnit->canMoveInto(pAttackedPlot, /*bAttack*/ true, /*bDeclareWar*/ true))
 						if (eDomainType == NO_DOMAIN || pLoopUnit->getDomainType() == eDomainType)
+						{
 							strSum += pLoopUnit->currEffectiveStr(pAttackedPlot, pLoopUnit);
+							// K-Mod estimate the attack power of collateral units
+							if (pLoopUnit->collateralDamage() > 0 && pAttackedPlot != plot())
+							{
+								int iPossibleTargets = std::min((pAttackedPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1), pLoopUnit->collateralDamageMaxUnits());
+	
+								if (iPossibleTargets > 0)
+								{
+									// collateral damage is not trivial to calculate. This estimate is pretty rough.
+									strSum += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
+								}
+							}
+							// K-Mod end
+						}
 			}
 		}
 	}

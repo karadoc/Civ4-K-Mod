@@ -8136,20 +8136,9 @@ int CvUnit::maxCombatStr(const CvPlot* pPlot, const CvUnit* pAttacker, CombatDet
 	}
 
 	// calc attacker bonueses
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       09/20/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original code
-	if (pAttacker != NULL)
-*/
 	if (pAttacker != NULL && pAttackedPlot != NULL)
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 	{
-		int iTempModifier = 0;		
+		int iTempModifier = 0;
 
 		if (pAttackedPlot->isCity(true, getTeam()))
 		{

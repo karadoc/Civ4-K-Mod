@@ -2657,6 +2657,7 @@ int CvPlot::AI_sumStrength(PlayerTypes eOwner, PlayerTypes eAttackingPlayer, Dom
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
 	int	strSum = 0;
+	int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // K-Mod. (currently this number is "10")
 
 	pUnitNode = headUnitNode();
 
@@ -2683,6 +2684,21 @@ int CvPlot::AI_sumStrength(PlayerTypes eOwner, PlayerTypes eAttackingPlayer, Dom
 								pPlot = this;
 
 							strSum += pLoopUnit->currEffectiveStr(pPlot, NULL);
+
+							// K-Mod assume that if we aren't counting defensive bonuses, then we should be counting collateral
+							if (pLoopUnit->collateralDamage() > 0 && !bDefensiveBonuses)
+							{
+								//int iPossibleTargets = std::min((pAttackedPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1), pLoopUnit->collateralDamageMaxUnits());
+								// unfortunately, we can't count how many targets there are...
+								int iPossibleTargets = pLoopUnit->collateralDamageMaxUnits();
+	
+								if (iPossibleTargets > 0)
+								{
+									// collateral damage is not trivial to calculate. This estimate is pretty rough.
+									strSum += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
+								}
+							}
+							// K-Mod end
 						}
 					}
 				}
