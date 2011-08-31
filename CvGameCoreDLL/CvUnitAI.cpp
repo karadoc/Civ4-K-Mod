@@ -2774,20 +2774,16 @@ void CvUnitAI::AI_attackCityMove()
 	{
 		int iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
 		int iAttackRatio = GC.getBBAI_ATTACK_CITY_STACK_RATIO();
-		// K-Mod - I'm going to scale the attack ratio based on the quality of our units.
-		// this isn't the "right way" to do it, but hopefully it's better than nothing.
-		// (The /right way/ would be to estimate how good our odds would be after collateral damage, etc.)
-		// UPDATE: it isn't better than nothing. It's worse, because "getTypicalUnitValue" is unreliably inaccurate.
 		int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
-		/*{
-			int iOurValue = GET_PLAYER(getOwner()).getTypicalUnitValue(UNITAI_ATTACK);
-			int iTheirValue = GET_PLAYER(pTargetCity->getOwner()).getTypicalUnitValue(UNITAI_CITY_DEFENSE);
-			int iMultiplier = (100 + 100 * iTheirValue / std::max(1, iOurValue))/2;
-			iAttackRatio *= iMultiplier;
-			iAttackRatio /= 100;
-			iAttackRatioSkipBombard *= iMultiplier;
-			iAttackRatioSkipBombard /= 100;
-		}*/
+		// K-Mod - I'm going to scale the attack ratio based on our war strategy
+		{
+			int iAdjustment = 0;
+			iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
+			iAdjustment -= GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? 10 : 0;
+			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 10);
+			iAttackRatio += iAdjustment;
+			iAttackRatioSkipBombard += iAdjustment;
+		}
 		// K-Mod end
 
 		if( isBarbarian() )
