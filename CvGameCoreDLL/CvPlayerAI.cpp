@@ -2374,6 +2374,20 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
+		// K-Mod
+		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
+		{
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
+			{
+				iWeight *= 2;
+				iWeight /= 3;
+			}
+			else
+			{
+				iWeight /= 2;
+			}
+		}
+		// K-Mod end
 		break;
 	case COMMERCE_ESPIONAGE:
 		{
@@ -5363,7 +5377,21 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				{
 					if (!(GC.getGameINLINE().isCorporationFounded((CorporationTypes)iJ)))
 					{
-						iValue += 100 + ((bAsync) ? GC.getASyncRand().get(2400, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(2400, "AI Research Corporation"));
+						/* original bts code
+						iValue += 100 + ((bAsync) ? GC.getASyncRand().get(2400, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(2400, "AI Research Corporation")); */
+						// K-Mod
+						int iCorpValue = AI_corporationValue((CorporationTypes)iJ); // roughly 100x commerce from corp.
+						if (isNoCorporations())
+						{
+							iCorpValue /= 2;
+						}
+						if (iCorpValue > 0)
+						{
+							iValue += iCorpValue/2;
+							iValue += ((bAsync) ? GC.getASyncRand().get(iCorpValue, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(iCorpValue, "AI Research Corporation"));
+							iRandomMax += iCorpValue;
+						}
+						// K-Mod end
 					}
 				}
 			}
@@ -5473,8 +5501,13 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
 	{
 		int iCVValue = AI_cultureVictoryTechValue(eTech);
+		/* original bts code
 		iValue *= (iCVValue + 10);
-		iValue /= ((iCVValue < 100) ? 400 : 100);
+		iValue /= ((iCVValue < 100) ? 400 : 100); */
+		// K-Mod. I don't think AI_cultureVictoryTechValue is accurate enough to play such a large role.
+		iValue *= (iCVValue + 100);
+		iValue /= 200;
+		// K-Mod
 	}
 
 /***
@@ -7903,10 +7936,6 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 			}
 		}
 	}
-	// K-Mod
-	if (GET_TEAM(getTeam()).AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
-		return false;
-	// K-Mod end
 
 	if (GET_PLAYER(ePlayer).getTeam() == getTeam())
 	{
@@ -7964,6 +7993,10 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
+	// K-Mod
+	if (GET_TEAM(getTeam()).AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
+		return false;
+	// K-Mod end
 
 	int iOurValue = GET_PLAYER(ePlayer).AI_dealVal(getID(), pOurList, false, iChange);
 	int iTheirValue = AI_dealVal(ePlayer, pTheirList, false, iChange);
@@ -11440,6 +11473,13 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 	iTempValue /= 100;
 
 	iValue -= iTempValue;
+
+	// bonus produced by the corp
+	if (NO_BONUS != kCorp.getBonusProduced())
+	{
+		int iBonuses = getNumAvailableBonuses((BonusTypes)kCorp.getBonusProduced());
+		iValue += AI_baseBonusVal((BonusTypes)kCorp.getBonusProduced()) * 100 / (1 + 3 * iBonuses * iBonuses);
+	}
 
 	return iValue;
 	// K-Mod end

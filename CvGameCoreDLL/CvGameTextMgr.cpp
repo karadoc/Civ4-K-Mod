@@ -4800,6 +4800,15 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					}
 					iValue /= kPlayer.getTotalPopulation();
 					szString.append(CvWString::format(L"\nAverage citizen value: %d", iValue));
+
+					//
+					int iBuildUnitProb = static_cast<CvCityAI*>(pCity)->AI_buildUnitProb();
+					szString.append(CvWString::format(L"\nBuild unit prob: %d%%", iBuildUnitProb));
+					BuildingTypes eBestBuilding = static_cast<CvCityAI*>(pCity)->AI_bestBuildingThreshold(0, 0, 0, true /* async */);
+					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : static_cast<CvCityAI*>(pCity)->AI_buildingValueThreshold(eBestBuilding);
+					iBuildUnitProb *= (150 + iBestBuildingValue);
+					iBuildUnitProb /= (60 + 3 * iBestBuildingValue);
+					szString.append(CvWString::format(L" (%d%%)", iBuildUnitProb));
 				}
 				// K-Mod end
 

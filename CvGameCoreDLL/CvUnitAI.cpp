@@ -2777,7 +2777,7 @@ void CvUnitAI::AI_attackCityMove()
 		int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
 		// K-Mod - I'm going to scale the attack ratio based on our war strategy
 		{
-			int iAdjustment = 0;
+			int iAdjustment = 5;
 			iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
 			iAdjustment += GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? -10 : 0;
 			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 0);
@@ -5306,20 +5306,28 @@ bool CvUnitAI::AI_greatPersonMove()
 	if (eDiscoverTech != NO_TECH)
 	{
 		iDiscoverValue = getDiscoverResearch(eDiscoverTech);
-		// the next line: added extra value for being instant, and extra value for techs being undiscovered by other civs
+		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding relgions / free techs / free great people
+		{
+			if (iDiscoverValue >= GET_TEAM(getTeam()).getResearchLeft(eDiscoverTech) || kPlayer.getCurrentResearch() == eDiscoverTech)
+			{
+				iDiscoverValue *= 2;
+			}
+			else
+			{
+				iDiscoverValue *= 3;
+				iDiscoverValue /= 2;
+			}
+		}
+		// add extra value for being instant, and extra value for techs being undiscovered by other civs
 		// amplify the 'undiscovered' bonus based on how likely we are to try to trade the tech.
-		iDiscoverValue *= 120 + (300 - 2*GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent())*GET_TEAM(getTeam()).AI_knownTechValModifier(eDiscoverTech)/100;
+		iDiscoverValue *= 100 + (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent())*GET_TEAM(getTeam()).AI_knownTechValModifier(eDiscoverTech)/100;
 		iDiscoverValue /= 100;
 		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2))
 		{
-			iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 4 : 3);
-			iDiscoverValue /= 2;
+			iDiscoverValue *= (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 5 : 4);
+			iDiscoverValue /= 3;
 		}
 
-		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding relgions / free techs / free great people
-		{
-			iDiscoverValue *= 2;
-		}
 		iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(3) % 51);
 		iDiscoverValue /= 100;
 	}
@@ -22738,15 +22746,16 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 				{
 					//if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
 					int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwner(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
+					int iCost = kPlayer.getEspionageMissionCost((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this);
 					iValue *= 80 + GC.getGameINLINE().getSorenRandNum(60, "AI best espionage mission");
 					iValue /= 100;
 					iValue -= iOverhead;
+					iValue -= iCost * iCost / std::max(1, iCost + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTargetTeam));
 
 					// If we can't do the mission yet, don't completely give up. It might be worth saving points for.
 					if (!kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this))
 					{
 						// Is cost is the reason we can't do the mission?
-						int iCost = kPlayer.getEspionageMissionCost((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this);
 						if (GET_TEAM(getTeam()).isHasTech((TechTypes)kMissionInfo.getTechPrereq()) && iCost > iEspPoints)
 						{
 							// Scale the mission value based on how long we think it will take to get the points.

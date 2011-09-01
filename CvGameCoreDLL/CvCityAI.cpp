@@ -1430,12 +1430,12 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}*/
 
-	// K-Mod, short-circuit production choice if we already have something good in mind
+	// K-Mod, short-circuit production choice if we already have something really good in mind
 	{
-		int iOdds = 100 * iBestBuildingValue / (4 * iBestBuildingValue + 1200);
+		int iOdds = 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10;
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
-			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit (odds: %d)", getName().GetCString(), iOdds);
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 1 (odds: %d)", getName().GetCString(), iOdds);
    			return;
 		}
 	}
@@ -2074,6 +2074,17 @@ void CvCityAI::AI_chooseProduction()
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 1", getName().GetCString());
 		return;
 	} */ // (K-Mod disabled)
+
+	// K-Mod, short-circuit 2 - a strong chance to build some high value buildings.
+	{
+		int iOdds = (bLandWar ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25;
+		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 2 (odds: %d)", getName().GetCString(), iOdds);
+   			return;
+		}
+	}
+	// K-Mod end
 
 	if( !bDanger )
 	{
@@ -2837,6 +2848,16 @@ void CvCityAI::AI_chooseProduction()
 	// I suspect they do very little other than use CPU time.
 	// If the building is good enough, it will get chosen by the general chooseBuilding function.
 
+	// Short-circuit 3 - a last chance to catch important buildings
+	{
+		int iOdds = (bLandWar ? 150 : 200) * iBestBuildingValue / (iBestBuildingValue + 20) - 100;
+		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 3 (odds: %d)", getName().GetCString(), iOdds);
+   			return;
+		}
+	}
+
 	/*if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20, 4))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 2", getName().GetCString());
@@ -2915,7 +2936,7 @@ void CvCityAI::AI_chooseProduction()
 	if (iUnitCostPercentage < iMaxUnitSpending + 5)
 	{
 		// K-Mod
-		iBuildUnitProb *= (120 + iBestBuildingValue);
+		iBuildUnitProb *= (150 + iBestBuildingValue);
 		iBuildUnitProb /= (60 + 3 * iBestBuildingValue);
 		// K-Mod end
 
