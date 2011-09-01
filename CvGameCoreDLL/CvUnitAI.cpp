@@ -5306,19 +5306,16 @@ bool CvUnitAI::AI_greatPersonMove()
 	if (eDiscoverTech != NO_TECH)
 	{
 		iDiscoverValue = getDiscoverResearch(eDiscoverTech);
+		// if this isn't going to immediately help our research, it isn't worth as much.
+		if (iDiscoverValue < GET_TEAM(getTeam()).getResearchLeft(eDiscoverTech) && kPlayer.getCurrentResearch() != eDiscoverTech)
+		{
+			iDiscoverValue *= 3;
+			iDiscoverValue /= 4;
+		}
 		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding relgions / free techs / free great people
 		{
-			if (iDiscoverValue >= GET_TEAM(getTeam()).getResearchLeft(eDiscoverTech) || kPlayer.getCurrentResearch() == eDiscoverTech)
-			{
-				iDiscoverValue *= 2;
-			}
-			else
-			{
-				iDiscoverValue *= 3;
-				iDiscoverValue /= 2;
-			}
+			iDiscoverValue *= 2;
 		}
-		// add extra value for being instant, and extra value for techs being undiscovered by other civs
 		// amplify the 'undiscovered' bonus based on how likely we are to try to trade the tech.
 		iDiscoverValue *= 100 + (200 - GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getTechTradeKnownPercent())*GET_TEAM(getTeam()).AI_knownTechValModifier(eDiscoverTech)/100;
 		iDiscoverValue /= 100;

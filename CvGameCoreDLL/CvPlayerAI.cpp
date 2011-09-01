@@ -682,9 +682,9 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/	
-										{
-										
-											pLoopUnit->kill(false);
+										{										
+											//pLoopUnit->kill(false); // original code
+											pLoopUnit->scrap(); // K-Mod
 											bKilled = true;
 											pLastUpgradePlot = NULL;
 										}

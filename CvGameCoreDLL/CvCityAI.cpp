@@ -1498,7 +1498,8 @@ void CvCityAI::AI_chooseProduction()
 
 				if( iOdds >= 0 )
 				{
-					if (kPlayer.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_EXPLORE_SEA) == 0)
+					// if (kPlayer.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_EXPLORE_SEA) == 0) // original code
+					if (kPlayer.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_EXPLORE_SEA) == 0 && kPlayer.AI_neededExplorers(pWaterArea) > 0) // K-Mod!
 					{
 						if (AI_chooseUnit(UNITAI_EXPLORE_SEA, iOdds))
 						{
@@ -3992,7 +3993,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				// some extra value if we are still growing (this is a positive change bias)
 				if (iAngerDelta < 0 && iFoodDifference > 1)
 				{
-					iValue -= 8 * iAngerDelta;
+					iValue -= 10 * iAngerDelta;
 				}
 				// finally, a little bit of value for happiness which gives us some padding
 				iValue += 64 * std::max(0, iBuildingActualHappiness)/(4 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel));
@@ -4080,7 +4081,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				// some extra value if the change will help us grow (this is a positive change bias)
 				if (iWasteDelta < 0 && iHappinessLevel > 1)
 				{
-					iValue -= 6 * iWasteDelta;
+					iValue -= 8 * iWasteDelta;
 				}
 				// finally, a little bit of value for health which gives us some padding
 				iValue += 36 * std::max(0, iBuildingActualHealth)/(2 + std::max(0, iHealthLevel+iBuildingActualHealth) + std::max(0, iHealthLevel));
