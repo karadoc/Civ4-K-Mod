@@ -1432,7 +1432,7 @@ void CvCityAI::AI_chooseProduction()
 
 	// K-Mod, short-circuit production choice if we already have something really good in mind
 	{
-		int iOdds = 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10;
+		int iOdds = std::max(0, 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 1 (odds: %d)", getName().GetCString(), iOdds);
@@ -2077,7 +2077,7 @@ void CvCityAI::AI_chooseProduction()
 
 	// K-Mod, short-circuit 2 - a strong chance to build some high value buildings.
 	{
-		int iOdds = (bLandWar ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25;
+		int iOdds = std::max(0, (bLandWar ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 2 (odds: %d)", getName().GetCString(), iOdds);
@@ -2850,7 +2850,7 @@ void CvCityAI::AI_chooseProduction()
 
 	// Short-circuit 3 - a last chance to catch important buildings
 	{
-		int iOdds = (bLandWar ? 150 : 200) * iBestBuildingValue / (iBestBuildingValue + 20) - 100;
+		int iOdds = std::max(0, (bLandWar ? 150 : 200) * iBestBuildingValue / (iBestBuildingValue + 20) - 100);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 3 (odds: %d)", getName().GetCString(), iOdds);
@@ -4074,13 +4074,13 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				int iWasteDelta = std::max(0, -(iHealthLevel+iBuildingActualHealth)) - std::max(0, -iHealthLevel);
 				// High value for any change in our food deficit.
-				iValue -= 12 * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
+				iValue -= 16 * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
 				// medium value for change in waste
 				iValue -= 8 * iWasteDelta;
 				// some extra value if the change will help us grow (this is a positive change bias)
 				if (iWasteDelta < 0 && iHappinessLevel > 1)
 				{
-					iValue -= 8 * iWasteDelta;
+					iValue -= 6 * iWasteDelta;
 				}
 				// finally, a little bit of value for health which gives us some padding
 				iValue += 36 * std::max(0, iBuildingActualHealth)/(2 + std::max(0, iHealthLevel+iBuildingActualHealth) + std::max(0, iHealthLevel));
@@ -4771,11 +4771,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));*/
 					// K-Mod. The "4+" is meant to represent the extra yield we might start working if our multiplier was better.
 					iTempValue += kBuilding.getYieldModifier(iI) * (4+getBaseYieldRate((YieldTypes)iI)) / 17;
-					iTempValue += kBuilding.getPowerYieldModifier(iI) * (4+getBaseYieldRate((YieldTypes)iI)) / (bProvidesPower || isPower() ? 17 : 26);
+					iTempValue += kBuilding.getPowerYieldModifier(iI) * (4+getBaseYieldRate((YieldTypes)iI)) / (bProvidesPower || isPower() ? 18 : 34);
 
 					if (bProvidesPower && !isPower())
 					{
-						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 17); // originally 12
+						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
 					}
 
 					for (int iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
