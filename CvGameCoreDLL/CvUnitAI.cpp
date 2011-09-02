@@ -5490,6 +5490,11 @@ void CvUnitAI::AI_spyMove()
 					if (atPlot(pMissionPlot))
 					{
 						// stay here for a few turns.
+						if (hasMoved())
+						{
+							getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_SPY, pMissionPlot);
+							return;
+						}
 						if (GC.getGame().getSorenRandNum(6, "AI Spy continue guarding") > 0)
 						{
 							getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_SPY, pMissionPlot);
@@ -5520,6 +5525,11 @@ void CvUnitAI::AI_spyMove()
 							getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY, pMissionPlot);
 							return;
 						}
+					}
+					else if (hasMoved())
+					{
+						getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+						return;
 					}
 				}
 				break;

@@ -10576,9 +10576,20 @@ int CvCityAI::AI_cityValue() const
     
 	int iValue = 0;
 	
+	/* original bts code
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH);
+	iValue += 100 * getYieldRate(YIELD_PRODUCTION); */
+	// K-Mod. The original code fails completely for civs using high espionage or high culture.
+	// I'm going to use a similar technique for what I did with the fincial trouble code.
+	const CvPlayer& kOwner = GET_PLAYER(getOwner());
+	if (kOwner.getCommercePercent(COMMERCE_GOLD) == 0)
+		return 0; // I assume, based on the code above, that "zero" means the city is good enough to keep.
+	iValue += 100 * getCommerceRateTimes100(COMMERCE_GOLD) / kOwner.getCommercePercent(COMMERCE_GOLD);
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
+	//iValue -= 3 * calculateColonyMaintenanceTimes100(); // original bts code
+	iValue -= 2 * calculateColonyMaintenanceTimes100();
+	// K-Mod end
 
 /*
 ** K-Mod, 30/oct/10, Karadoc

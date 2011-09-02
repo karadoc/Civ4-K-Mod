@@ -1,5 +1,7 @@
 // playerAI.cpp
 
+#include <set> // K-Mod
+
 #include "CvGameCoreDLL.h"
 #include "CvPlayerAI.h"
 #include "CvRandom.h"
@@ -17224,10 +17226,10 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	// In the future, I might decide to adjust the high culture based on era and such.
 	int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
 	int iHighCultureMark = iLegendaryCulture / std::max(1, 2 * GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent());
-	int iLowestCountdown = INT_MAX;
+	std::multiset<int> countdownList;
 	int iVictoryCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
 	// K-Mod end
-		
+
 	int iLoop;
 	CvCity* pLoopCity;
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
@@ -17239,8 +17241,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 			int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
 			iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
 			iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
-			int iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
-			iLowestCountdown = std::min(iCountdown, iLowestCountdown);
+			countdownList.insert((iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate));
 			if (iEstimatedRate > iHighCultureMark)
 			{
 				iHighCultureCount++;
@@ -17312,8 +17313,8 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
 	
 	// K-Mod
-	iValue += 30 * std::min(iCloseToLegendaryCount, iVictoryCities*2);
-	iValue += 10 * std::min(iHighCultureCount, iVictoryCities*2);
+	iValue += 30 * std::min(iCloseToLegendaryCount, iVictoryCities + 1);
+	iValue += 10 * std::min(iHighCultureCount, iVictoryCities + 1);
 	// K-Mod end
 	if( iValue > 20 && getNumCities() >= iVictoryCities )
 	{
@@ -17357,7 +17358,15 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	{
 		return 0;
 	}
-    
+
+	int iWinningCountdown = INT_MAX;
+	if ((int)countdownList.size() >= iVictoryCities)
+	{
+		std::multiset<int>::iterator it = countdownList.begin();
+		for (int i = 0; i < iVictoryCities-1; ++i, ++it)
+			;
+		iWinningCountdown = *it;
+	}
     if (getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
     {
 		bool bAt3 = false;
@@ -17380,20 +17389,37 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 
 		if( bAt3 )
 		{
-			//if (AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
+			/* original code
+			if (AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
+			{
+				return 4;
+			}*/
 			// K-Mod
-			int iCountdownTarget = 200;
-			iCountdownTarget -=  50 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3);
-			iCountdownTarget -=  50 * AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3);
-			iCountdownTarget -=  80 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE3);
-			iCountdownTarget *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
-			iCountdownTarget /= 100;
+			int iCountdownTarget = 180;
+			{
+				int iDemoninator = 100;
+				iDemoninator += 50 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2);
+				iDemoninator += 50 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3);
+				iDemoninator += 80 * AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3);
+				iDemoninator += 70 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE2);
+				iDemoninator += 70 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE3);
+				iDemoninator += AI_cultureVictoryTechValue(getCurrentResearch()) > 100 ? 80 : 0;
+				iDemoninator += AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS)? 80 : 0;
+				iDemoninator += GET_TEAM(getTeam()).getAnyWarPlanCount(true)>0 ? 30 : 0;
+				int iWarRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
+				iDemoninator += iWarRatio < 0 ? -2*iWarRatio : 0;
+				// and a little bit of personal variation.
+				iDemoninator += 50 - GC.getLeaderHeadInfo(getPersonalityType()).getCultureVictoryWeight();
+
+				iCountdownTarget *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
+				iCountdownTarget /= iDemoninator;
+			}
 			// Note: culture 4 is blocked completely by 4 in any of those other strategies.
-			if (iLowestCountdown < iCountdownTarget
-				&& AI_cultureVictoryTechValue(getCurrentResearch()) < 100)
+			if (iWinningCountdown < iCountdownTarget)
 			{
 				return 4;
 			}
+			// K-Mod end
 
 			return 3;
 		}

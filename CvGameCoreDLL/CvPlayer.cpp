@@ -14304,6 +14304,11 @@ bool CvPlayer::canDoEspionageMission(EspionageMissionTypes eMission, PlayerTypes
 		return false;
 	}
 
+	// K-Mod. Bugfix
+	if (pUnit && pPlot && !pUnit->canEspionage(pPlot, false))
+		return false;
+	// K-Mod end
+
 	CvEspionageMissionInfo& kMission = GC.getEspionageMissionInfo(eMission);
 
 	// Need Tech Prereq, if applicable
