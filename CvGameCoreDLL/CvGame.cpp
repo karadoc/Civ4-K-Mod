@@ -2313,7 +2313,7 @@ void CvGame::updateGwPercentAnger()
 	{
 		CvPlayerAI& kPlayer = GET_PLAYER((PlayerTypes)iI);
 		int iAngerPercent = 0;
-		if (iGwIndex > 0 && kPlayer.isAlive() && !kPlayer.isBarbarian() && !kPlayer.isMinorCiv())
+		if (iGwIndex > 0 && kPlayer.isAlive() && !kPlayer.isMinorCiv())
 		{
 			// player unhappiness = base rate * severity rating * responsibility factor
 
@@ -2326,7 +2326,7 @@ void CvGame::updateGwPercentAnger()
 			// amplify the affects of responsibility
 			iResponsibilityFactor = std::max(0, 2*iResponsibilityFactor-100);
 
-			int iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
+			iAngerPercent = GC.getDefineINT("GLOBAL_WARMING_BASE_ANGER_PERCENT") * iGwSeverityRating * iResponsibilityFactor;
 			iAngerPercent = ROUND_DIVIDE(iAngerPercent, 10000);// div, 100 * 100
 		}
 		kPlayer.setGwPercentAnger(iAngerPercent);

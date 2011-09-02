@@ -5012,8 +5012,8 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					if (((CommerceTypes) iI) == COMMERCE_CULTURE && iCommerceModifier != 0)
 					{
 						// K-Mod: bug fix, and improvement. (the old code was missing /= 100, and it was too conditional)
-						iCommerceMultiplierValue *= culturePressureFactor();
-						iCommerceMultiplierValue /= 100;
+						iCommerceMultiplierValue *= culturePressureFactor() + 100;
+						iCommerceMultiplierValue /= 200;
 
 						if (bCulturalVictory1)
 						{							
@@ -5026,7 +5026,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 								if (bCulturalVictory3)
 								{
 									// its most important to build in the lowest rate city, but important everywhere
-									iCommerceMultiplierValue += std::max(100, 500 - iBaseCommerceRate) * iCommerceModifier;					        
+									iCommerceMultiplierValue += std::max(100, 500 - iBaseCommerceRate) * iCommerceModifier;
 								}
 							}
 							else
