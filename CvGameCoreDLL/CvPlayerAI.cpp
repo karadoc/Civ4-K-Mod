@@ -1,7 +1,5 @@
 // playerAI.cpp
 
-#include <set> // K-Mod
-
 #include "CvGameCoreDLL.h"
 #include "CvPlayerAI.h"
 #include "CvRandom.h"
@@ -17222,12 +17220,17 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	int iHighCultureCount = 0;
 	int iCloseToLegendaryCount = 0;
 	int iLegendaryCount = 0;
-	// K-Mod, the "iHighCultureMark turns out to be 250 in standard games. Note: this could get messed up by mods.
-	// In the future, I might decide to adjust the high culture based on era and such.
+	// K-Mod
 	int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
-	int iHighCultureMark = iLegendaryCulture / std::max(1, 2 * GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent());
-	std::multiset<int> countdownList;
 	int iVictoryCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
+
+	int iHighCultureMark = 300; // turns
+	iHighCultureMark *= (3*GC.getNumEraInfos() - 2*getCurrentEra());
+	iHighCultureMark /= std::max(1, 3*GC.getNumEraInfos());
+	iHighCultureMark *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
+	iHighCultureMark /= 100;
+
+	std::multiset<int> countdownList;
 	// K-Mod end
 
 	int iLoop;
@@ -17241,8 +17244,9 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 			int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
 			iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
 			iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
-			countdownList.insert((iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate));
-			if (iEstimatedRate > iHighCultureMark)
+			int iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
+			countdownList.insert(iCountdown);
+			if (iCountdown < iHighCultureMark)
 			{
 				iHighCultureCount++;
 			}
@@ -17318,7 +17322,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	// K-Mod end
 	if( iValue > 20 && getNumCities() >= iVictoryCities )
 	{
-		iValue += 10*countHolyCities();
+		iValue += 5*countHolyCities(); // was 10*
 		// K-Mod: be wary of going for a cultural victory if everyone hates us.
 		int iScore = 0;
 		int iTotalPop = 0;

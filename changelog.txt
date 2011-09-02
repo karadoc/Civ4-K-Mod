@@ -1,5 +1,58 @@
-This is K-Mod version 0.98b.
+This is K-Mod version 0.99.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v0.99 changelist
+
++ Rewrote the decision making process for switching civics.
++ Changed the golden age evaluation function to take into account golden age length modifiers, and possible civic changes. Also, I've greatly increased the perceived value of golden age yield. It should be more accurate now.
++ The AI can now save its great people for for multi-great-person golden age.
++ The AI will now always check its civics on the last turn of a golden age.
++ Hardened the requirements for the AI giving free tech to human vassals.
++ Changed the way the AI decides whether or not to cancel a deal - previously the AI would always cancel deal with other AIs after 20 turns, I suspect this was an original BtS bug. Also, the AI previously would cancel gift deals to vassals and then immediately re-offer them. It doesn't do that anymore.
++ Changed the conditions the AI uses for deciding whether or not to aim for a cultural victory.
++ Cities which the AI refuses to trade will no longer appear on the AI's trade table.
+
++ Rewrote most of the AI's city production decision making. It's far less rigid now - there may be some kinks to work out in the new system.
++ Completely replaced the city governor (auto production). Hopefully, the governor will be more useful now. It's similar to the new AI code.
++ Rewrote the way building happiness and healthiness are evaluated.
++ The AI will now avoid building limited buildings in cities which value the building at less than 80% of the other possible cities. (This applies to national wonders and cathedrals.)
+
++ Greatly reduced the probability of "spontaneous" espionage missions.
++ Completely changed the way the AI decides whether a spy should be used for offence or defence.
++ The AI will no longer send spies on attack missions when it hardly has any points to spend.
++ Changed the conditions that trigger the Big Espionage strategy.
++ The AI now sees "spread culture" espionage missions as "non-malicious". i.e. The AI now thinks its ok to spread culture to its friends. I've rewritten the evaluation of these missions so that it will try to use them defensively when it is being culture crushed.
++ AI espionage weights are now calculated and set even if the AI is researching an undiscovered tech (this use to be an original bts "feature").
+
++ Added an estimation of collateral damage strength to the AI's plot strength functions.
++ AI city attack ratio now has some dependence on the AI's individual strategy.
++ Changed the conditions for when the AI will build collateral units. (There will be slightly more offensive collateral, less defensive collateral.)
++ Rewrote the BBAI war success ratio code to scale properly for wars of different sizes in different eras - this will help the AI better understand whether it should be attacking or defending.
+
++ Fixed an original BtS bug which caused AI_getEspionageTargetValue to ignore its "iMaxPath" argument.
++ Fixed a minor original BtS bug which in the evaluation of maintenance reduction buildings.
++ Fixed a minor original BtS bug in the application of the force-peace resolution when the peace-team has vassalated.
++ Fixed an problem in the original BtS code for deciding whether an AI has "financial trouble". Previously, if the AI decided to use lots of culture or espionage, that would cause it to mistakenly think it was in financial trouble.
++ Fixed a problem which caused AI spies to forget what their mission was after they enter enemy territory. (For example, a spy might set off to some distant city, and then half way their decide that it should be retreating to base because it doesn't know what to do.) - (not sure if this was BBAI or original BtS)
++ Fixed an original BtS bug which caused the AI to continuously build "early sea explorers" in the late game.
++ Fixed an original BtS bug which caused AI civs to be more much likely to split their empire when they run high culture or high espionage.
++ Fixed an original BtS bug which caused AI spies to not know when they couldn't perform an espionage mission. (in fact, the AI use to cheat - it could perform espionage on the same turn the spy moved. It can't do that anymore.)
++ The AI's spies now use the mission queue for espionage missions; previously they just performed the mission immediately. (Could this fix an OOS race-condition?)
++ Fixed an original BtS bug which allowed spies to perform the force-religion mission on Civs with Free Religion.
++ Fixed an original BtS bug which prevented the civic-switch message from being sent when a civilization switched back to one of their starting civics.
+Fixed an original BtS bug which prevented improvement builds which remove a bonus from being penalised. (I claimed to have fixed this bug before. I was wrong.)
++ Fixed an original BtS bug which sometimes caused civs aiming for cultural victory to waste their cathedrals.
+
++ Fixed a problem in the BBAI code which caused the AI to think faster bombard was bad rather than good.
++ Fixed a BBAI bug which double-counted city defence when deciding whether to attack a city.
++ Fixed a BBAI problem which sometimes caused attack stacks to get stuck indefinitely, unable to choose between attacking and pillaging.
+
++ Fixed some bugs in the attitude cache from the CAR mod.
+
++ Fixed a K-Mod bug which caused bulbing to be massively undervalued.
++ Fixed a K-Mod bug which completely disabled GW anger!
 
 --
 

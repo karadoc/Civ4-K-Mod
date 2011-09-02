@@ -19,7 +19,7 @@ Here I'll list a few significant features. See changelog.txt for a more complete
 == Built-in mods ==
  + Actual quotes
  + Better AI (heavily modified)
- + BUG (heavily modified)
+ + BUG (modified)
  + "unofficial patch" (well known bugfixes)
  
 == Better AI ==
@@ -62,3 +62,4 @@ I hope you enjoy the mod.
 
  - Karadoc
  
+ (The full source-code for this mod is available at [https://github.com/karadoc/Civ4-K-Mod].)
