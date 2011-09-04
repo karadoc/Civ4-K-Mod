@@ -4115,7 +4115,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			{
 				iValue += (kBuilding.getFreeExperience() * ((iHasMetCount > 0) ? 12 : 6));
 
-				for (iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
 				{
 					if (canTrain((UnitCombatTypes)iI))
 					{
@@ -4197,7 +4197,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 			{
 				int iSpecialistsValue = 0;
 				int iCurrentSpecialistsRunnable = 0;
-				for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 				{
 					if (iI != GC.getDefineINT("DEFAULT_SPECIALIST"))
 					{
@@ -4371,7 +4371,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				if (kBuilding.getCivicOption() != NO_CIVICOPTION)
 				{
-					for (iI = 0; iI < GC.getNumCivicInfos(); iI++)
+					for (int iI = 0; iI < GC.getNumCivicInfos(); iI++)
 					{
 						if (GC.getCivicInfo((CivicTypes)iI).getCivicOptionType() == kBuilding.getCivicOption())
 						{
@@ -4763,7 +4763,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iValue += std::max(0, AI_getTargetPopulation() - getPopulation()+1) * kBuilding.getFoodKept() / 2;
 				}
 
-				for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+				for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 				{
 					// K-Mod - I've shuffled some parts of this code around.
 					int iTempValue = 0;
@@ -4949,7 +4949,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 			if (iPass > 0)
 			{
-				for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+				for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 				{
 					int iTempValue = 0;
 
@@ -5248,7 +5248,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						iCorpValue += iGoldValue; */
 
 						// K-Mod. See what they did there? I don't. Here's my version.
-						for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+						for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 						{
 							int iExpectedCities = iNumCities + GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce()));
 							int iHqValue = 4 * GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * iExpectedCities;
@@ -5275,7 +5275,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					iValue += iCorpValue;
 				}
 
-				for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 				{
 					if (kBuilding.getReligionChange(iI) > 0)
 					{
@@ -5483,7 +5483,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				iValue += kBuilding.getAIWeight();
 				if (iValue > 0)
 				{
-					for (iI = 0; iI < GC.getNumFlavorTypes(); iI++)
+					for (int iI = 0; iI < GC.getNumFlavorTypes(); iI++)
 					{
 						iValue += (kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI));
 					}
@@ -7746,7 +7746,7 @@ void CvCityAI::AI_updateBestBuild()
 		//Prune plots which are sub-par.
 		if (iBestUnworkedPlotValue > 0)
 		{
-			for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+			for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 			{
 				if (iI != CITY_HOME_PLOT)
 				{

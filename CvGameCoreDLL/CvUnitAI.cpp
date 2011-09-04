@@ -5269,7 +5269,7 @@ bool CvUnitAI::AI_greatPersonMove()
 				// Construct
 				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
 				{
-					for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+					for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 					{
 						BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
 

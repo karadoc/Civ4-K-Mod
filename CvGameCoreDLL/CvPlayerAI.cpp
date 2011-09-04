@@ -2927,7 +2927,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
     
     int iYieldLostHere = 0;
 
-	for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
 		pLoopPlot = plotCity(iX, iY, iI);
 
@@ -3408,7 +3408,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		
 		int iWaterCount = 0;
 		
-		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
 		    pLoopPlot = plotCity(iX, iY, iI);
             
@@ -3621,7 +3621,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	{
 	    int iBonusCount = 0;
 	    int iUniqueBonusCount = 0;
-	    for (iI = 0; iI < GC.getNumBonusInfos(); iI++)
+	    for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
 	    {
 	        iBonusCount += paiBonusCount[iI];
 	        iUniqueBonusCount += (paiBonusCount[iI] > 0) ? 1 : 0;
@@ -3654,7 +3654,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	{
 		iDifferentAreaTile = 0;
 
-		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
 			pLoopPlot = plotCity(iX, iY, iI);
 
@@ -7994,8 +7994,18 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 	// K-Mod
-	if (GET_TEAM(getTeam()).AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
-		return false;
+	if (iChange < 0)
+	{
+		if (GET_TEAM(getTeam()).AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
+		{
+			// There's one special case where the AI allow on going trade with it worst enemy...
+			if (pOurList->getLength() != 1 || pOurList->head()->m_data.m_eItemType != TRADE_GOLD_PER_TURN)
+			{
+				// but this case isn't it.
+				return false;
+			}
+		}
+	}
 	// K-Mod end
 
 	int iOurValue = GET_PLAYER(ePlayer).AI_dealVal(getID(), pOurList, false, iChange);
@@ -11428,7 +11438,7 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 		iMaintenance += kCorp.getHeadquarterCommerce(iI);
 	}
 
-	for (iI = 0; iI < NUM_YIELD_TYPES; ++iI)
+	for (int iI = 0; iI < NUM_YIELD_TYPES; ++iI)
 	{
 		iTempValue = kCorp.getYieldProduced((YieldTypes)iI) * iBonuses;
 		if (pCity == NULL)
