@@ -4717,7 +4717,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 										if (iI == YIELD_PRODUCTION)
 										{
 											// priority += 2% per 1% in production increase. roughly. More when at war.
-											iPriorityFactor += std::min(100, iTempValue/std::max(1, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 2 : 3)*getYieldRate(YIELD_PRODUCTION)));
+											iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
 											iTempValue *= 3;
 											iTempValue /= 2;
 										}
@@ -4849,7 +4849,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						if (iI == YIELD_PRODUCTION)
 						{
 							// priority += 2% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, iTempValue/std::max(1, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 2 : 3)*getYieldRate(YIELD_PRODUCTION)));
+							iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
 							iTempValue *= 3;
 							iTempValue /= 2;
 						}

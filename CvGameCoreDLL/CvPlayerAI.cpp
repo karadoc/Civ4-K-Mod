@@ -2453,9 +2453,9 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			}
 			
 			// K-Mod
-			iAllTeamTotalPoints /= std::max(1, iTeamCount);
-			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 2*iAllTeamTotalPoints, 6*iAllTeamTotalPoints);
-			iWeight /= std::max(12, 3 * iAllTeamTotalPoints);
+			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
+			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 2*iAllTeamTotalPoints + 36*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
+			iWeight /= std::max(1, 3 * iAllTeamTotalPoints);
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 			{
 				iWeight *= 2;

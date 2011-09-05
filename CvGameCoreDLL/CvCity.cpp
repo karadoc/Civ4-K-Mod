@@ -12580,7 +12580,8 @@ void CvCity::doReligion()
 	{
 		for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
 		{
-			if (!isHasReligion((ReligionTypes)iI))
+			//if (!isHasReligion((ReligionTypes)iI))
+			if (!isHasReligion((ReligionTypes)iI) && GC.getGame().isReligionFounded((ReligionTypes)iI)) // K-Mod
 			{
 				if ((iI == GET_PLAYER(getOwnerINLINE()).getStateReligion()) || !(GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread()))
 				{
