@@ -3161,7 +3161,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_JUDAISM</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>
@@ -3328,7 +3328,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_CHRISTIANITY</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>
@@ -3495,7 +3495,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_ISLAM</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>
@@ -3662,7 +3662,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_HINDUISM</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>
@@ -3829,7 +3829,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_BUDDHISM</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>
@@ -3996,7 +3996,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_CONFUCIANISM</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>
@@ -4163,7 +4163,7 @@
 			<ReligionSpreads>
 				<ReligionSpread>
 					<ReligionType>RELIGION_TAOISM</ReligionType>
-					<iReligionSpread>40</iReligionSpread>
+					<iReligionSpread>20</iReligionSpread>
 				</ReligionSpread>
 			</ReligionSpreads>
 			<CorporationSpreads/>

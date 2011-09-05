@@ -867,6 +867,7 @@ public:
 
 	bool isHasReligion(ReligionTypes eIndex) const;
 	void setHasReligion(ReligionTypes eIndex, bool bNewValue, bool bAnnounce, bool bArrows = true);
+	int getReligionGrip(ReligionTypes eReligion) const; // K-Mod
 
 	bool isHasCorporation(CorporationTypes eIndex) const;
 	void setHasCorporation(CorporationTypes eIndex, bool bNewValue, bool bAnnounce, bool bArrows = true);

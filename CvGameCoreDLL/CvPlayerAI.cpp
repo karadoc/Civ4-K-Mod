@@ -13554,7 +13554,7 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 			}
 			// production and GGP matter too, but I don't really want to try to evaluate them properly. Sorry.
 			iValue += getTotalPopulation() * iAnarchyLength;
-			// On the other hand, I'm ignoring the negation of maintanence cost.
+			// On the other hand, I'm ignoring the negation of maintenance cost.
 		}
 		SAFE_DELETE_ARRAY(paeBestCivic);
 	}

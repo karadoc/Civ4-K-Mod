@@ -5708,7 +5708,7 @@ bool CvUnit::spread(ReligionTypes eReligion)
 {
 	CvCity* pCity;
 	CvWString szBuffer;
-	int iSpreadProb;
+	//int iSpreadProb;
 
 	if (!canSpread(plot(), eReligion))
 	{
@@ -5719,6 +5719,7 @@ bool CvUnit::spread(ReligionTypes eReligion)
 
 	if (pCity != NULL)
 	{
+		/* original bts code
 		iSpreadProb = m_pUnitInfo->getReligionSpreads(eReligion);
 
 		if (pCity->getTeam() != getTeam())
@@ -5728,7 +5729,16 @@ bool CvUnit::spread(ReligionTypes eReligion)
 
 		bool bSuccess;
 
-		iSpreadProb += (((GC.getNumReligionInfos() - pCity->getReligionCount()) * (100 - iSpreadProb)) / GC.getNumReligionInfos());
+		iSpreadProb += (((GC.getNumReligionInfos() - pCity->getReligionCount()) * (100 - iSpreadProb)) / GC.getNumReligionInfos()); */
+		// K-Mod. A more dynamic formula
+		int iPresentReligions = pCity->getReligionCount();
+		int iMissingReligions = GC.getNumReligionInfos() - iPresentReligions;
+		int iSpreadProb = iPresentReligions * (m_pUnitInfo->getReligionSpreads(eReligion) + pCity->getPopulation())
+		                + iMissingReligions * (100 - 10 * iPresentReligions);
+		iSpreadProb /= GC.getNumReligionInfos();
+
+		bool bSuccess;
+		// K-Mod end
 
 		if (GC.getGameINLINE().getSorenRandNum(100, "Unit Spread Religion") < iSpreadProb)
 		{
@@ -5737,9 +5747,42 @@ bool CvUnit::spread(ReligionTypes eReligion)
 		}
 		else
 		{
+			/* original bts code
 			szBuffer = gDLL->getText("TXT_KEY_MISC_RELIGION_FAILED_TO_SPREAD", getNameKey(), GC.getReligionInfo(eReligion).getChar(), pCity->getNameKey());
 			gDLL->getInterfaceIFace()->addMessage(getOwnerINLINE(), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_NOSPREAD", MESSAGE_TYPE_INFO, getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), pCity->getX_INLINE(), pCity->getY_INLINE());
 			bSuccess = false;
+			*/
+			// K-Mod. Instead of simply failing, give some chance of removing one of the existing religions.
+			std::multimap<int, ReligionTypes> rankedReligions;
+			int iRandomWeight = GC.getDefineINT("RELIGION_INFLUENCE_RANDOM_WEIGHT");
+			for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
+			{
+				if (pCity->isHasReligion((ReligionTypes)iI) || iI == eReligion)
+				{
+					if (pCity != GC.getGame().getHolyCity((ReligionTypes)iI)) // holy city can't lose its religion!
+					{
+						int iInfluence = pCity->getReligionGrip(eReligion);
+						iInfluence += GC.getGameINLINE().getSorenRandNum(iRandomWeight, "Religion influence");
+						iInfluence += (iI == eReligion) ? m_pUnitInfo->getReligionSpreads(eReligion)/2 : 0;
+
+						rankedReligions.insert(std::make_pair(iInfluence, eReligion));
+					}
+				}
+			}
+			ReligionTypes eFailedReligion = rankedReligions.begin()->second;
+			if (eFailedReligion == eReligion)
+			{
+				szBuffer = gDLL->getText("TXT_KEY_MISC_RELIGION_FAILED_TO_SPREAD", getNameKey(), GC.getReligionInfo(eReligion).getChar(), pCity->getNameKey());
+				gDLL->getInterfaceIFace()->addMessage(getOwnerINLINE(), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_NOSPREAD", MESSAGE_TYPE_INFO, getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), pCity->getX_INLINE(), pCity->getY_INLINE());
+				bSuccess = false;
+			}
+			else
+			{
+				pCity->setHasReligion(eReligion, true, true, false);
+				pCity->setHasReligion(eFailedReligion, false, true, false);
+				bSuccess = true;
+			}
+			// K-Mod
 		}
 
 		// Python Event

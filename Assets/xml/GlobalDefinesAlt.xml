@@ -102,6 +102,34 @@
 		<iDefineIntVal>150</iDefineIntVal>
 	</Define>-->
 	<Define>
+		<DefineName>RELIGION_INFLUENCE_POPULATION_WEIGHT</DefineName>
+		<iDefineIntVal>2</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_BUILDING_WEIGHT</DefineName>
+		<iDefineIntVal>20</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_DISTANCE_WEIGHT</DefineName>
+		<iDefineIntVal>40</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_TIME_WEIGHT</DefineName>
+		<iDefineIntVal>40</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_SHRINE_WEIGHT</DefineName>
+		<iDefineIntVal>20</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_STATE_RELIGION_WEIGHT</DefineName>
+		<iDefineIntVal>20</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_RANDOM_WEIGHT</DefineName>
+		<iDefineIntVal>80</iDefineIntVal>
+	</Define>
+	<Define>
 		<DefineName>WARLORD_EXTRA_EXPERIENCE_PER_UNIT_PERCENT</DefineName>
 		<iDefineIntVal>10</iDefineIntVal> <!-- increased from 0 -->
 	</Define>

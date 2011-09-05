@@ -10965,6 +10965,50 @@ void CvCity::setHasReligion(ReligionTypes eIndex, bool bNewValue, bool bAnnounce
 	}
 }
 
+// K-Mod. A rating for how strong a religion can take hold in this city
+int CvCity::getReligionGrip(ReligionTypes eReligion) const
+{
+	if (!GC.getGame().isReligionFounded(eReligion))
+		return 0;
+
+	int iScore = 0;
+
+	if (isHasReligion(eReligion))
+	{
+		iScore += GC.getDefineINT("RELIGION_INFLUENCE_POPULATION_WEIGHT") * getPopulation();
+	}
+
+	if (GET_PLAYER(getOwner()).getStateReligion() == eReligion)
+	{
+		iScore += GC.getDefineINT("RELIGION_INFLUENCE_STATE_RELIGION_WEIGHT");
+	}
+
+	for (int iI = 0; iI < GC.getNumBuildingInfos(); iI++)
+	{
+		if (GC.getBuildingInfo((BuildingTypes)iI).getPrereqReligion() == eReligion)
+		{
+			iScore += GC.getDefineINT("RELIGION_INFLUENCE_BUILDING_WEIGHT") * getNumActiveBuilding((BuildingTypes)iI);
+		}
+	}
+
+	CvCity* pHolyCity = GC.getGame().getHolyCity(eReligion);
+	if (pHolyCity)
+	{
+		if (pHolyCity->hasShrine(eReligion))
+			iScore += GC.getDefineINT("RELIGION_INFLUENCE_SHRINE_WEIGHT");
+
+		int iDistance = plotDistance(getX_INLINE(), getY_INLINE(), pHolyCity->getX_INLINE(), pHolyCity->getY_INLINE());
+		iScore += GC.getDefineINT("RELIGION_INFLUENCE_DISTANCE_WEIGHT") * (GC.getMapINLINE().maxPlotDistance() - iDistance) / GC.getMapINLINE().maxPlotDistance();
+	}
+
+	int iCurrentTurn = GC.getGame().getGameTurn();
+	int iTurnFounded = GC.getGame().getReligionGameTurnFounded(eReligion);
+	int iTimeScale = GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()/2;
+	iScore += GC.getDefineINT("RELIGION_INFLUENCE_TIME_WEIGHT") * (iTurnFounded + iTimeScale) / (iCurrentTurn + iTimeScale);
+
+	return iScore; // note. the random part is not included in this function.
+}
+// K-Mod end
 
 void CvCity::processVoteSourceBonus(VoteSourceTypes eVoteSource, bool bActive)
 {
