@@ -14793,7 +14793,7 @@ void CvPlayerAI::AI_doDiplo()
 
 															if (GET_PLAYER((PlayerTypes)iI).isHuman())
 															{
-																if (!(abContacted[GET_PLAYER((PlayerTypes)iI).getTeam()])) // uncommented by K-Mod
+																//if (!(abContacted[GET_PLAYER((PlayerTypes)iI).getTeam()]))
 																{
 																	pDiplo = new CvDiploParameters(getID());
 																	FAssertMsg(pDiplo != NULL, "pDiplo must be valid");

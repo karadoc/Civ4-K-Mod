@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- K-Mod hints -->
+	<!-- Style guidelines (from CIV4GameText_Strategy.xml): -->
+	<!-- Technologies should be colored COLOR_TECH_TEXT (example: [COLOR_TECH_TEXT]Bronze Working[COLOR_REVERT]) -->
+	<!-- Unit should be colored COLOR_UNIT_TEXT (example: [COLOR_UNIT_TEXT]Archers[COLOR_REVERT]) -->
+	<!-- Buildings should be colored COLOR_BUILDING_TEXT (example: [COLOR_BUILDING_TEXT]Theatre[COLOR_REVERT]) -->
+	<!-- Projects should be colored COLOR_PROJECT_TEXT (example: [COLOR_PROJECT_TEXT]SS Engine[COLOR_REVERT]) -->
+	<!-- Anything else official (that should be capitalized) should be colored COLOR_HIGHLIGHT_TEXT (example: [COLOR_HIGHLIGHT_TEXT]Trade Mission[COLOR_HIGHLIGHT_TEXT] or [COLOR_HIGHLIGHT_TEXT]Islam[COLOR_HIGHLIGHT_TEXT]) -->
+<Civ4GameText xmlns="http://www.firaxis.com">
+<TEXT>
+	<Tag>TXT_KEY_BUG_HINT_INTERFACE_1</Tag>
+	<English>Press [ALT + CTRL + O] to open The BUG options screen.</English>
+	<French>Pressez [ALT + CTRL + O] pour accèder aux écrans d'options du BUG Mod.</French>
+	<German>Mit der Tastenkombination [STRG + ALT + O] lässt sich das Optionsmenü der BUG Mod aufrufen.</German>
+	<Italian>Premi [ALT + CTRL + O] per accedere alla schermata di configurazione del BUG Mod.</Italian>
+	<Spanish>Press [ALT + CTRL + O] to open The BUG options screen.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_1</Tag>
+	<English>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</English>
+	<French>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</French>
+	<German>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</German>
+	<Italian>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</Italian>
+	<Spanish>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_2</Tag>
+	<English>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</English>
+	<French>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</French>
+	<German>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</German>
+	<Italian>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Italian>
+	<Spanish>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_3</Tag>
+	<English>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</English>
+	<French>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</French>
+	<German>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</German>
+	<Italian>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</Italian>
+	<Spanish>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_4</Tag>
+	<English>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</English>
+	<French>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</French>
+	<German>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</German>
+	<Italian>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</Italian>
+	<Spanish>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_5</Tag>
+	<English>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</English>
+	<French>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</French>
+	<German>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</German>
+	<Italian>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</Italian>
+	<Spanish>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_6</Tag>
+	<English>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</English>
+	<French>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</French>
+	<German>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</German>
+	<Italian>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</Italian>
+	<Spanish>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_7</Tag>
+	<English>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</English>
+	<French>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</French>
+	<German>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</German>
+	<Italian>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</Italian>
+	<Spanish>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</Spanish>
+</TEXT>
+<!-- replacement text for the inaccurate barbarian tip (changed english only)-->
+<TEXT>
+	<Tag>TXT_KEY_HINT_12</Tag>
+	<English>Barbarians will not spawn within two steps of any player's units. With careful positioning of scouts you can completely block barbarian raiding parties from forming in your area.</English>
+	<French>Les barbares peuvent appara&#238;tre sur toutes les cases recouvertes par le brouillard de guerre. Vous ne saurez donc jamais ce qu'il y a sur celles qui sont invisibles, m&#234;me si vous avez d&#233;j&#224; v&#233;rifi&#233; au tour pr&#233;c&#233;dent !</French>
+	<German>Barbaren k&#246;nnen auf allen vom Nebel des Krieges verh&#252;llten Gel&#228;ndefeldern lauern. Gehen Sie also nie davon aus, dass ein Feld, das Sie nicht sehen k&#246;nnen, sicher ist ... auch wenn Sie es in der vorherigen Runde &#252;berpr&#252;ft haben!</German>
+	<Italian>I Barbari possono apparire in un qualsiasi spazio oscurato dalla nebbia di guerra. Non essere mai certo che uno spazio non visibile sia sicuro, anche se hai controllato durante il turno precedente!</Italian>
+	<Spanish>Los b&#225;rbaros pueden aparecer en cualquier lugar en el que una casilla est&#233; oscurecida por la niebla de la guerra, as&#237; que no supong&#225;is que una casilla que no pod&#225;is ver es segura, aunque la hay&#225;is comprobado en el turno anterior.</Spanish>
+</TEXT>
+</Civ4GameText>
