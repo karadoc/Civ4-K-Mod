@@ -6602,9 +6602,12 @@ int CvCity::getAdditionalHappinessByBuilding(BuildingTypes eBuilding, int& iGood
 		iBad += iNewUnhappiness - iCurrentUnhappiness;
 	}
 	
-	// K-Mod TODO: think about how you might include change to global warming anger
-	// also, this function doesn't take into account the possibility of the city already having 'NoUnhappiness'.
-	// therefore the results will be inaccurate if the city has the globe theatre, for example.
+	// K-Mod. If the city is immune to unhappiness, then clear the "bad" from this building.
+	if (isNoUnhappiness())
+	{
+		iBad = iStartingBad;
+	}
+	// K-Mod end
 
 	// No Unhappiness
 	if (kBuilding.isNoUnhappiness())

@@ -3777,6 +3777,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	BuildingClassTypes eBuildingClass = (BuildingClassTypes) kBuilding.getBuildingClassType();
 	int iLimitedWonderLimit = limitedWonderClassLimit(eBuildingClass);
 	bool bIsLimitedWonder = (iLimitedWonderLimit >= 0);
+	// K-Mod. This new value, iPriorityFactor, is used to boost the value of productivity buildings without overvaluing productivity.
+	// The point is to get the AI to build productiviy buildings quickly, but not if they come with large negative side effects.
+	// I may use it for other adjustments in the future.
+	int iPriorityFactor = 100;
+	// K-Mod end
 
 	// K-Mod, constructionValue cache
 	if (iFocusFlags == 0 && iThreshold == 0 && m_aiConstructionValue[eBuildingClass] != -1)
@@ -4707,18 +4712,19 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 										int iChange = GC.getVoteSourceInfo((VoteSourceTypes)iI).getReligionYield(iYield);
 										int iTempValue = iChange * 4; // was 6
 										// K-Mod
+										iTempValue *= AI_yieldMultiplier((YieldTypes)iYield);
+										iTempValue /= 100;
 										if (iI == YIELD_PRODUCTION)
 										{
-											iTempValue *= (getYieldRate(YIELD_PRODUCTION) < 1 + getPopulation()) ? 6 : 4;
+											// priority += 2% per 1% in production increase. roughly. More when at war.
+											iPriorityFactor += std::min(100, iTempValue/std::max(1, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 2 : 3)*getYieldRate(YIELD_PRODUCTION)));
+											iTempValue *= 3;
 											iTempValue /= 2;
 										}
 										if (iI == YIELD_FOOD)
 										{
-											iTempValue *= (iHappinessLevel > 0 ? 6 : 4);
-											iTempValue /= 2;
+											iTempValue *= (iHappinessLevel - iFoodDifference/3 > 0) ? 3 : 2;
 										}
-										iTempValue *= AI_yieldMultiplier((YieldTypes)iYield);
-										iTempValue /= 100;
 										// K-Mod end
 										iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iYield);
 										iTempValue /= 100;
@@ -4842,13 +4848,14 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 						// K-Mod
 						if (iI == YIELD_PRODUCTION)
 						{
-							iTempValue *= (getYieldRate(YIELD_PRODUCTION) < 1 + getPopulation() || GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)? 6 : 4;
+							// priority += 2% per 1% in production increase. roughly. More when at war.
+							iPriorityFactor += std::min(100, iTempValue/std::max(1, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 2 : 3)*getYieldRate(YIELD_PRODUCTION)));
+							iTempValue *= 3;
 							iTempValue /= 2;
 						}
 						if (iI == YIELD_FOOD)
 						{
-							iTempValue *= (iHappinessLevel > 0 ? 6 : 4);
-							iTempValue /= 2;
+							iTempValue *= (iHappinessLevel - iFoodDifference/3 > 0) ? 3 : 2;
 						}
 						// K-Mod end
 
@@ -5587,11 +5594,17 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 	iValue = std::max(0, iValue);
 
-	// K-Mod, constructionValue cache
+	// K-Mod
+	// priority factor
+	iValue *= iPriorityFactor;
+	iValue /= 100;
+
+	// constructionValue cache
 	if (iFocusFlags == 0 && iThreshold == 0)
 	{
 		m_aiConstructionValue[eBuildingClass] = iValue;
 	}
+	// K-Mod end
 
 	return iValue;
 }
