@@ -5732,9 +5732,18 @@ void CvUnitAI::AI_spyMove()
 		}
 	}
 	
-	if (iSpontaneousChance > 0 && (plot()->isCity() || plot()->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS))
+	if (plot()->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS && kOwner.isMaliciousEspionageTarget(plot()->getOwner()) && getGroup()->AI_getMissionAIType() == MISSIONAI_ATTACK_SPY)
 	{
-		if (GC.getGame().getSorenRandNum(7, "AI Spy Skip Turn") > 0)
+		// assume this is the target of our destroy improvement mission.
+		if (getFortifyTurns() >= GC.getDefineINT("MAX_FORTIFY_TURNS"))
+		{
+			if (AI_espionageSpy())
+			{
+				return;
+			}
+		}
+
+		if (GC.getGame().getSorenRandNum(10, "AI Spy skip turn at improvement") > 0)
 		{
 			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
 			return;

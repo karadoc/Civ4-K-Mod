@@ -13039,6 +13039,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 
 bool CvPlayerAI::isMaliciousEspionageTarget(PlayerTypes eTarget) const
 {
+	if (GET_PLAYER(eTarget).getTeam() == getTeam())
+		return false;
 	return (AI_getAttitudeWeight(eTarget) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1) || GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(eTarget).getTeam()) != NO_WARPLAN);
 }
 
@@ -17344,7 +17346,9 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 			}
 		}
 		iValue += iScore / std::max(1, iTotalPop);
-		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) ? 10 : 0; // space is more important
+		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) ? 20 : 0;
+		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE2) ? 10 : 0;
+		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) ? 20 : 0;
 		// K-Mod end
 	}
 	/*
@@ -17433,9 +17437,11 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 		}
     }
 
-	//if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(2) % 2))
+	//if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + iNonsense % 2))
 	if (getCurrentEra() >= ((GC.getNumEraInfos() / 3) + AI_getStrategyRand(1) % 2) || iHighCultureCount >= iVictoryCities-1)
 	{
+		if (iHighCultureCount < getCurrentEra() + iVictoryCities - GC.getNumEraInfos())
+			return 1;
 	    return 2;
 	}
         
