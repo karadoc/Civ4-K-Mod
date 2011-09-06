@@ -5715,10 +5715,10 @@ void CvUnitAI::AI_spyMove()
 			}
 		}
 
-		if (!kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) &&
+		if (!kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_TEAM(getTeam()).getAtWarCount(true) > 0 &&
 			GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (kOwner.AI_getStrategyRand(5) % 30))
 		{
-			if (AI_bonusOffenseSpy(5))
+			if (AI_bonusOffenseSpy(6))
 			{
 				return;
 			}
@@ -22623,15 +22623,16 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 						}
 					}*/
 
-					// K-Mod
-					if (GET_PLAYER(getOwner()).isMaliciousEspionageTarget(pLoopPlot->getOwner())) // K-Mod
+					// K-Mod. I think this is only worthwhile when at war...
+					//if (GET_PLAYER(getOwner()).isMaliciousEspionageTarget(pLoopPlot->getOwner()))
+					if (GET_TEAM(getTeam()).isAtWar(pLoopPlot->getTeam()))
 					{
 						int iPathTurns;
 						if (generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= iRange)
 						{
 							int iValue = AI_getEspionageTargetValue(pLoopPlot);
-							iValue *= GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN ? 3: 1;
-							iValue *= GET_TEAM(getTeam()).AI_isSneakAttackPreparing(pLoopPlot->getTeam()) ? 2 : 1;
+							//iValue *= GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN ? 3: 1;
+							//iValue *= GET_TEAM(getTeam()).AI_isSneakAttackPreparing(pLoopPlot->getTeam()) ? 2 : 1;
 
 							iValue *= 3;
 							iValue /= (3 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
