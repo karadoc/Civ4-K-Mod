@@ -243,6 +243,14 @@ void CvCityAI::AI_assignWorkingPlots()
 
 	CvPlot* pHomePlot;
 	int iI;
+
+	// K-Mod
+	if (isDisorder())
+	{
+		// can't do anything anyway.
+		return;
+	}
+	// K-Mod end
 	
 	if (0 != GC.getDefineINT("AI_SHOULDNT_MANAGE_PLOT_ASSIGNMENT"))
 	{
@@ -4080,7 +4088,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 				int iWasteDelta = std::max(0, -(iHealthLevel+iBuildingActualHealth)) - std::max(0, -iHealthLevel);
 				// High value for any change in our food deficit.
-				iValue -= 16 * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
+				iValue -= 20 * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
 				// medium value for change in waste
 				iValue -= 8 * iWasteDelta;
 				// some extra value if the change will help us grow (this is a positive change bias)
@@ -4717,16 +4725,10 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 										if (iI == YIELD_PRODUCTION)
 										{
 											// priority += 2% per 1% in production increase. roughly. More when at war.
-											iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
-											iTempValue *= 3;
-											iTempValue /= 2;
-										}
-										if (iI == YIELD_FOOD)
-										{
-											iTempValue *= (iHappinessLevel - iFoodDifference/3 > 0) ? 3 : 2;
+											iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
 										}
 										// K-Mod end
-										iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iYield);
+										iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iYield, this);
 										iTempValue /= 100;
 
 										iValue += iTempValue;
@@ -4766,7 +4768,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				if (iFoodDifference > 0)
 				{
 					//iValue += kBuilding.getFoodKept() / 2;
-					iValue += std::max(0, AI_getTargetPopulation() - getPopulation()+1) * kBuilding.getFoodKept() / 2;
+					iValue += std::max(0, 2*(AI_getTargetPopulation() - getPopulation())+1) * kBuilding.getFoodKept() / 4;
 				}
 
 				for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -4776,20 +4778,20 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 					/*iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 10);
 					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));*/
-					// K-Mod. The "4+" is meant to represent the extra yield we might start working if our multiplier was better.
-					iTempValue += kBuilding.getYieldModifier(iI) * (4+getBaseYieldRate((YieldTypes)iI)) / 17;
-					iTempValue += kBuilding.getPowerYieldModifier(iI) * (4+getBaseYieldRate((YieldTypes)iI)) / (bProvidesPower || isPower() ? 18 : 34);
+					// K-Mod
+					iTempValue += kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / 20;
+					iTempValue += kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / (bProvidesPower || isPower() ? 21 : 40);
 
 					if (bProvidesPower && !isPower())
 					{
-						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
+						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 21); // originally 12
 					}
 
 					for (int iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
 					{
 						if (hasBonus((BonusTypes)iJ))
 						{
-							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 18); // originally 12
+							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 21); // originally 12
 						}
 					}
 
@@ -4804,10 +4806,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 
 					// (K-Mod)...and now the things that should not depend on whether or not we have a good yield rank
 					int iRawYieldValue = 0;
-					iRawYieldValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 18); // originally 12 (and 'iValue')
-					if (bForeignTrade)
+					iRawYieldValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 21); // originally 12 (and 'iValue')
+					//if (bForeignTrade)
+					if (bForeignTrade && !kOwner.isNoForeignTrade()) // K-Mod
 					{
-						iRawYieldValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 20); // originally 12 (and 'iValue')
+						iRawYieldValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 30); // originally 12 (and 'iValue')
 					}
 
 					/* original bts code (We're inside a yield types loop. This would be triple counted here!)
@@ -4822,9 +4825,9 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					}
 					if (kBuilding.getRiverPlotYieldChange(iI) > 0)
 					{
-						iRawYieldValue += (kBuilding.getRiverPlotYieldChange(iI) * countNumRiverPlots() * 4);
+						iRawYieldValue += (kBuilding.getRiverPlotYieldChange(iI) * countNumRiverPlots() * 3); // was 4
 					}
-					iRawYieldValue += (kBuilding.getYieldChange(iI) * 6);
+					iRawYieldValue += (kBuilding.getYieldChange(iI) * 4); // was 6
 
 					iRawYieldValue *= AI_yieldMultiplier((YieldTypes)iI);
 					iRawYieldValue /= 100;
@@ -4840,26 +4843,21 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 					
 					if (iTempValue != 0)
 					{
+						/* original bts code (this is rolled into AI_yieldWeight)
 						if (bFinancialTrouble && iI == YIELD_COMMERCE)
 						{
 							iTempValue *= 2;
-						}
+						}*/
 
 						// K-Mod
 						if (iI == YIELD_PRODUCTION)
 						{
 							// priority += 2% per 1% in production increase. roughly. More when at war.
 							iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
-							iTempValue *= 3;
-							iTempValue /= 2;
-						}
-						if (iI == YIELD_FOOD)
-						{
-							iTempValue *= (iHappinessLevel - iFoodDifference/3 > 0) ? 3 : 2;
 						}
 						// K-Mod end
 
-						iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iI);
+						iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iI, this);
 						iTempValue /= 100;
 						
 						// (limited wonder condition use to be here. I've moved it. - Karadoc)

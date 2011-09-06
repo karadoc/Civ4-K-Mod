@@ -2212,14 +2212,45 @@ DomainTypes CvPlayerAI::AI_unitAIDomainType(UnitAITypes eUnitAI) const
 }
 
 
-int CvPlayerAI::AI_yieldWeight(YieldTypes eYield) const
+int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, CvCity* pCity) const // K-Mod added city argument
 {
+	/* original bts code
 	if (eYield == YIELD_PRODUCTION)
 	{
 		int iProductionModifier = 100 + (30 * std::max(0, GC.getGame().getCurrentEra() - 1) / std::max(1, (GC.getNumEraInfos() - 2)));
 		return (GC.getYieldInfo(eYield).getAIWeightPercent() * iProductionModifier) / 100;
 	}
-	return GC.getYieldInfo(eYield).getAIWeightPercent();
+
+	return GC.getYieldInfo(eYield).getAIWeightPercent(); */
+
+	// K-Mod. In the past, this function was always bundled with some code to boost the value of production and food...
+	// For simplicity and consistency, I've brought the adjustments into this function.
+	int iWeight = GC.getYieldInfo(eYield).getAIWeightPercent();
+	switch (eYield)
+	{
+	case YIELD_FOOD:
+		if (pCity)
+		{
+			iWeight *= (pCity->happyLevel() - pCity->unhappyLevel(1) - pCity->foodDifference() >= 0) ? 3 : 2;
+		}
+		else
+		{
+			iWeight *= 250;
+			iWeight /= 100;
+		}
+		break;
+	case YIELD_PRODUCTION:
+		iWeight *= 2;
+		break;
+	case YIELD_COMMERCE:
+		if (AI_isFinancialTrouble())
+		{
+			iWeight *= 2;
+		}
+		break;
+	}
+	return iWeight;
+	// K-Mod end
 }
 
 
@@ -4851,8 +4882,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK) * getImprovementCount((ImprovementTypes)iJ) * 50); */
 			// Often, an improvment only becomes viable after it gets the tech bonus.
 			// So it's silly to score the bonus proportionally to how many of the improvements we already have.
-			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK)
-				* (getImprovementCount((ImprovementTypes)iJ)+2*getNumCities()) * 35);
+			iTempValue += GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK)
+				* std::max(getImprovementCount((ImprovementTypes)iJ), 2*getNumCities()) * 30;
 			// This new version is still bork, but at least it won't be worthless.
 
 			iTempValue *= AI_yieldWeight((YieldTypes)iK);
@@ -4909,6 +4940,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					iTempValue += (kImprovement.getHillsYieldChange(iK) * 100);
 					iTempValue += (kImprovement.getIrrigatedYieldChange(iK) * 150);
 
+					/* original bts code
 					// land food yield is more valueble
 					if (iK == YIELD_FOOD && !kImprovement.isWater())
 					{
@@ -4919,7 +4951,14 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					if (bFinancialTrouble && iK == YIELD_COMMERCE)
 					{
 						iTempValue *= 2;
+					} */
+					// K-Mod. value adjustments are now rolled into AI_yieldWeight
+					if (kImprovement.isWater())
+					{
+						iTempValue *= 2;
+						iTempValue /= 3;
 					}
+					// K-Mod end
 
 					iTempValue *= AI_yieldWeight((YieldTypes)iK);
 					iTempValue /= 100;
@@ -4940,6 +4979,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						{
 							iTempValue = 0;
 
+							/* original bts code
 							iTempValue += (kImprovement.getImprovementBonusYield(iK, iL) * 300);
 							iTempValue += (kImprovement.getIrrigatedYieldChange(iL) * 200);
 
@@ -4963,7 +5003,11 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 							if (bAdvancedStart && getCurrentEra() < 2)
 							{
 								iValue *= (iL == YIELD_FOOD) ? 3 : 2;
-							}
+							} */
+							// K-Mod. value adjustments are now rolled into AI_yieldWeight
+							iTempValue += (kImprovement.getImprovementBonusYield(iK, iL) * 200);
+							iTempValue += (kImprovement.getIrrigatedYieldChange(iL) * 120);
+							// K-Mod end
 
 							iTempValue *= AI_yieldWeight((YieldTypes)iL);
 							iTempValue /= 100;
@@ -5016,25 +5060,86 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 			if (eRoute != NO_ROUTE)
 			{
-				iBuildValue += ((getBestRoute() == NO_ROUTE) ? 700 : 200) * (getNumCities() + (bAdvancedStart ? 4 : 0));
+				//iBuildValue += ((getBestRoute() == NO_ROUTE) ? 700 : 200) * (getNumCities() + (bAdvancedStart ? 4 : 0));
+				int iRouteValue = ((getBestRoute() == NO_ROUTE) ? 700 : 200) * (getNumCities() + (bAdvancedStart ? 4 : 0)); // K-Mod
 
 				for (int iK = 0; iK < NUM_YIELD_TYPES; iK++)
 				{
 					iTempValue = 0;
 
+					/* original bts code
 					iTempValue += (GC.getRouteInfo(eRoute).getYieldChange(iK) * 100);
 
 					for (int iL = 0; iL < GC.getNumImprovementInfos(); iL++)
 					{
 						iTempValue += (GC.getImprovementInfo((ImprovementTypes)iL).getRouteYieldChanges(eRoute, iK) * 50);
-						// wtf? c.f. the improvement upgrade evaluation - which adds 50 for every improvement!
+					} */
+					// K-Mod. wtf? c.f. the improvement upgrade evaluation - which adds 50 for every improvement!
+					iTempValue += getNumCities() * GC.getRouteInfo(eRoute).getYieldChange(iK) * 100; // epic bonus for epic effect
+					for (int iL = 0; iL < GC.getNumImprovementInfos(); iL++)
+					{
+						iTempValue += GC.getImprovementInfo((ImprovementTypes)iL).getRouteYieldChanges(eRoute, iK) * std::max(getImprovementCount((ImprovementTypes)iJ), 3*getNumCities()/2) * 30;
 					}
+					// K-Mod end
 
 					iTempValue *= AI_yieldWeight((YieldTypes)iK);
 					iTempValue /= 100;
 
-					iBuildValue += iTempValue;
+					//iBuildValue += iTempValue;
+					iRouteValue += iTempValue; // K-Mod
 				}
+				// K-Mod. Devalue it if we don't have the resources. (based on my code for unit evaluation)
+				bool bMaybeMissing = false; // if we don't know if we have the bonus or not
+				bool bDefinitelyMissing = false; // if we can see the bonuses, and we know we don't have any.
+				const CvTeam& kTeam = GET_TEAM(getTeam());
+
+				for (int iK = 0; iK < GC.getNUM_ROUTE_PREREQ_OR_BONUSES(); ++iK)
+				{
+					BonusTypes ePrereqBonus = (BonusTypes)GC.getRouteInfo(eRoute).getPrereqOrBonus(iK);
+					if (ePrereqBonus != NO_BONUS)
+					{
+						if (hasBonus(ePrereqBonus))
+						{
+							bDefinitelyMissing = false;
+							bMaybeMissing = false;
+							break;
+						}
+						else
+						{
+							if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) && countOwnedBonuses(ePrereqBonus) == 0)
+							{
+								bDefinitelyMissing = true;
+							}
+							else
+							{
+								bMaybeMissing = true;
+							}
+						}
+					}
+				}
+				BonusTypes ePrereqBonus = (BonusTypes)GC.getRouteInfo(eRoute).getPrereqBonus();
+				if (ePrereqBonus != NO_BONUS && !hasBonus(ePrereqBonus))
+				{
+					if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) &&
+						countOwnedBonuses(ePrereqBonus) == 0)
+					{							
+						bDefinitelyMissing = true;
+					}
+					else
+					{							
+						bMaybeMissing = true;
+					}
+				}
+				if (bDefinitelyMissing)
+				{
+					iRouteValue /= 3;
+				}
+				else if (bMaybeMissing)
+				{
+					iRouteValue /= 2;
+				}
+				iBuildValue += iRouteValue;
+				// K-Mod end
 			}
 		}
 	}
@@ -11452,21 +11557,6 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity
 		iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 		iTempValue /= 100;
 
-		// Factors that are used in some other evaluation code. Ideally these would be rolled into yieldWeight...
-		if (iI == YIELD_FOOD) 
-		{ 
-			iTempValue *= 3; 
-		} 
-		else if (iI == YIELD_PRODUCTION) 
-		{ 
-			iTempValue *= ((AI_avoidScience()) ? 6 : 2); 
-		} 
-		else if (iI == YIELD_COMMERCE) 
-		{ 
-			iTempValue *= ((AI_avoidScience()) ? 2 : 4);
-			iTempValue /= 3;
-		}
-
 		iTempValue *= AI_yieldWeight((YieldTypes)iI);
 		iTempValue /= 100;
 
@@ -12193,21 +12283,6 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 					iTempValue /= 100;
 					iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 					iTempValue /= 10000; // getYieldProduced is x100.
-
-					// Factors that are used in some other evaluation code.
-					if (iI == YIELD_FOOD) 
-					{ 
-						iTempValue *= 3; 
-					} 
-					else if (iI == YIELD_PRODUCTION) 
-					{ 
-						iTempValue *= ((AI_avoidScience()) ? 6 : 2); 
-					} 
-					else if (iI == YIELD_COMMERCE) 
-					{ 
-						iTempValue *= ((AI_avoidScience()) ? 2 : 4);
-						iTempValue /= 3;
-					}
 
 					iTempValue *= AI_yieldWeight((YieldTypes)iI);
 					iTempValue /= 100;
@@ -13496,10 +13571,6 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 		// K-Mod
 		iTempValue = GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYield() * AI_yieldWeight((YieldTypes)iI) * AI_averageYieldMultiplier((YieldTypes)iI);
 		iTempValue /= 1 + GC.getYieldInfo((YieldTypes)iI).getGoldenAgeYieldThreshold();
-		if (iI == YIELD_PRODUCTION)
-			iTempValue *= 2;
-		if (iI == YIELD_FOOD)
-			iTempValue *= 3;
 		//
         iValue += iTempValue;
     }

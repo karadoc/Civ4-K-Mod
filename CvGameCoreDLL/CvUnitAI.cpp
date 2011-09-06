@@ -5350,8 +5350,8 @@ bool CvUnitAI::AI_greatPersonMove()
 	iTradeValue /= 100;
 	iTradeValue *= kPlayer.AI_averageCommerceMultiplier(COMMERCE_RESEARCH);
 	iTradeValue /= kPlayer.AI_averageCommerceMultiplier(COMMERCE_GOLD);
-	// gold can be targeted where it is needed. (cf AI_knownTechValModifier)
-	iTradeValue *= 150;
+	// gold can be targeted where it is needed, but it's benefits typically aren't instant. (cf AI_knownTechValModifier)
+	iTradeValue *= 130;
 	iTradeValue /= 100;
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
 	iTradeValue /= 100;

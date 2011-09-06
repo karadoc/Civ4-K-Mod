@@ -67,7 +67,7 @@ public:
 
 	DomainTypes AI_unitAIDomainType(UnitAITypes eUnitAI) const;
 
-	int AI_yieldWeight(YieldTypes eYield) const;
+	int AI_yieldWeight(YieldTypes eYield, CvCity* pCity = 0) const; // K-Mod added city argument
 	int AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity = NULL) const;
 
 	int AI_foundValue(int iX, int iY, int iMinRivalRange = -1, bool bStartingLoc = false) const;
