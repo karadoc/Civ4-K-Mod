@@ -2402,6 +2402,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			int iEspAttackWeight = 0;
 			int iAllTeamTotalPoints = 0; // K-Mod
 			int iTeamCount = 0; // K-Mod
+			int iLocalTeamCount = 0; // K-Mod
 			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 			{
 				CvTeamAI& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
@@ -2438,6 +2439,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 					}
 					if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 					{
+						iLocalTeamCount++;
 						if (GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
 							|| GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
 						{
@@ -2464,7 +2466,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 1;
 			// K-Mod end
 			iWeight *= AI_getEspionageWeight();
-			iWeight /= iTeamCount + 1;
+			iWeight /= (2 * iLocalTeamCount + iTeamCount)/3 + 1;
 			iWeight /= 100;
 
 			/* if( getCommercePercent(COMMERCE_ESPIONAGE) == 0 )
@@ -13030,14 +13032,6 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).getPlayerAnarchyCounter() > 0)
 	{
 		// AI doesn't use Player Anarchy
-	}
-
-	// K-Mod
-	if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
-		&& iValue < 50*getCurrentEra()*getCurrentEra() // 50, 200, 450, 800, 1250, ...
-		&& iValue < 2*getEspionageMissionCost(eMission, eTargetPlayer, pPlot, iData))
-	{
-		return 0;
 	}
 
 	return iValue;

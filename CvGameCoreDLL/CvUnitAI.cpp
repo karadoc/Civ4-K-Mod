@@ -5309,8 +5309,8 @@ bool CvUnitAI::AI_greatPersonMove()
 		// if this isn't going to immediately help our research, it isn't worth as much.
 		if (iDiscoverValue < GET_TEAM(getTeam()).getResearchLeft(eDiscoverTech) && kPlayer.getCurrentResearch() != eDiscoverTech)
 		{
-			iDiscoverValue *= 3;
-			iDiscoverValue /= 4;
+			iDiscoverValue *= 2;
+			iDiscoverValue /= 3;
 		}
 		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding relgions / free techs / free great people
 		{
@@ -5620,6 +5620,9 @@ void CvUnitAI::AI_spyMove()
 			}
 
 			// I think this spontaneous thing is bad. I'm leaving it in, but with greatly diminished probability.
+			// scale for game speed
+			iSpontaneousChance *= 100;
+			iSpontaneousChance /= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
 			if (GC.getGameINLINE().getSorenRandNum(1500, "AI Spy Espionage") < iSpontaneousChance)
 			{
 				if (AI_espionageSpy())
@@ -5676,18 +5679,19 @@ void CvUnitAI::AI_spyMove()
 	int iAttackChance = 0;
 	{
 		int iScale = 100 * (kOwner.getCurrentEra() + 1);
+		int iAttackSpies = kOwner.AI_areaMissionAIs(area(), MISSIONAI_ATTACK_SPY);
 		if (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
 		{
 			iScale += 50 * kOwner.getCurrentEra() * kOwner.getCurrentEra();
 		}
-		iScale *= 1 + kOwner.AI_areaMissionAIs(area(), MISSIONAI_ATTACK_SPY);
+
 		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
 			if (iI != getTeam() && GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
 				GET_TEAM((TeamTypes)iI).countNumCitiesByArea(area()) > 0)
 			{
 				int x = 100 * kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + iScale;
-				x /= kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + 1 * iScale;
+				x /= kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + (1 + iAttackSpies) * iScale;
 				iAttackChance = std::max(iAttackChance, x);
 			}
 		}
@@ -5696,6 +5700,9 @@ void CvUnitAI::AI_spyMove()
 		iAttackChance /= (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 2 : 1;
 		iAttackChance *= kOwner.AI_getEspionageWeight();
 		iAttackChance /= 100;
+		// scale for game speed
+		iAttackChance *= 100;
+		iAttackChance /= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
 	}
 	
 	if (plot()->getTeam() == getTeam())
@@ -5736,8 +5743,9 @@ void CvUnitAI::AI_spyMove()
 
 	if( area()->getNumCities() > area()->getCitiesPerPlayer(getOwnerINLINE()) )
 	{
-		if (getGroup()->AI_getMissionAIType() == MISSIONAI_EXPLORE
-			|| GC.getGame().getSorenRandNum(3, "AI Spy Choose Movement") > 0)
+		if (kOwner.AI_areaMissionAIs(area(), MISSIONAI_EXPLORE) <= kOwner.AI_areaMissionAIs(area(), MISSIONAI_GUARD_SPY) &&
+			(getGroup()->AI_getMissionAIType() == MISSIONAI_EXPLORE
+			|| GC.getGame().getSorenRandNum(3, "AI Spy Choose Movement") > 0))
 		{
 			if (AI_reconSpy(3))
 			{
@@ -5746,6 +5754,14 @@ void CvUnitAI::AI_spyMove()
 		}
 		else
 		{
+			if (GC.getGame().getSorenRandNum(100, "AI Spy defense (vs recon)") >= iAttackChance)
+			{
+				if (AI_guardSpy(0))
+				{
+					return;
+				}
+			}
+
 			if (AI_cityOffenseSpy(20))
 			{
 				return;
@@ -22694,7 +22710,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 	FAssert(pSpyPlot != NULL);
 
-	int iSpyValue = 4*kPlayer.getProductionNeeded(getUnitType());
+	int iSpyValue = 3*kPlayer.getProductionNeeded(getUnitType()) + 60;
 	if (kPlayer.getCapitalCity() != NULL)
 	{
 		iSpyValue += stepDistance(getX(), getY(), kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY()) / 2;
@@ -22780,7 +22796,15 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 							iValue = 0;
 						}
 					}
-						
+
+					// Block small missions when using "big espionage", unless the mission is really good value.
+					if (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
+						&& iValue < 50*kPlayer.getCurrentEra()*kPlayer.getCurrentEra() // 50, 200, 450, 800, 1250, ...
+						&& iValue < 2*iCost)
+					{
+						iValue = 0;
+					}
+
 					if (iValue > iBestValue)
 					{
 						iBestValue = iValue;
