@@ -22101,15 +22101,18 @@ int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
 	return iBestValue;
 }
 
-// K-Mod. Do a trade mission at the target plot.
+// K-Mod. Move to destination for a trade mission. (pTradePlot is either the target city, or the end-turn plot.)
 bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
 {
-	if (pTradePlot != NULL && canTrade(pTradePlot))
+	if (pTradePlot != NULL)
 	{
 		if (atPlot(pTradePlot))
 		{
-			getGroup()->pushMission(MISSION_TRADE);
-			return true;
+			if (canTrade(pTradePlot))
+			{
+				getGroup()->pushMission(MISSION_TRADE);
+				return true;
+			}
 		}
 		else
 		{
