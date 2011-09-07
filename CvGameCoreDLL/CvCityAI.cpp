@@ -765,7 +765,7 @@ void CvCityAI::AI_chooseProduction()
 
 	bDanger = AI_isDanger();
 	
-	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+	CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
 
 	if (isProduction())
 	{
@@ -898,7 +898,9 @@ void CvCityAI::AI_chooseProduction()
     bool bAggressiveAI = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
     bool bAlwaysPeace = GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE);
 
-	int iUnitCostPercentage = (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts());
+	/* original bts code
+	int iUnitCostPercentage = (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts()); */
+	int iUnitCostPercentage = kPlayer.AI_unitCostRating(); // K-Mod
 	int iWaterPercent = AI_calculateWaterWorldPercent();
 	
 	int iBuildUnitProb = AI_buildUnitProb();
@@ -1938,6 +1940,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
+	/* original bts code.
 	//this is needed to build the cathedrals quickly
 	//also very good for giving cultural cities first dibs on wonders
     if (bImportantCity && (iCultureRateRank <= iCulturalVictoryNumCultureCities))
@@ -1961,7 +1964,7 @@ void CvCityAI::AI_chooseProduction()
                 return;
             }
         }
-    }
+    } */ //  K-Mod: I don't think this is helpful anymore.
 
 	// don't build frivolous things if this is an important city unless we at war
     if (!bImportantCity || bLandWar || bAssault)

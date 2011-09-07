@@ -2831,7 +2831,8 @@ void CvTeamAI::AI_getWarThresholds( int &iTotalWarThreshold, int &iLimitedWarThr
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
-				int iUnitSpendingPercent = (GET_PLAYER((PlayerTypes)iI).calculateUnitCost() * 100) / std::max(1, GET_PLAYER((PlayerTypes)iI).calculatePreInflatedCosts());
+				//int iUnitSpendingPercent = (GET_PLAYER((PlayerTypes)iI).calculateUnitCost() * 100) / std::max(1, GET_PLAYER((PlayerTypes)iI).calculatePreInflatedCosts());
+				int iUnitSpendingPercent = GET_PLAYER((PlayerTypes)iI).AI_unitCostRating(); // K-Mod
 				iHighUnitSpendingPercent += (std::max(0, iUnitSpendingPercent - 7) / 2);
 
 				if( GET_PLAYER((PlayerTypes)iI).AI_isDoStrategy(AI_STRATEGY_DAGGER))
@@ -4610,6 +4611,7 @@ void CvTeamAI::AI_doWar()
 	}
 	
 	int iNumMembers = getNumMembers();
+	/* original bts code
 	int iHighUnitSpendingPercent = 0;
 	int iLowUnitSpendingPercent = 0;
 	
@@ -4625,6 +4627,9 @@ void CvTeamAI::AI_doWar()
 			}			
 		}
 	}
+	
+	iHighUnitSpendingPercent /= iNumMembers;
+	iLowUnitSpendingPercent /= iNumMembers; */ // K-Mod, this simply wasn't being used anywhere.
 	
 	
 	// if at war, check for making peace

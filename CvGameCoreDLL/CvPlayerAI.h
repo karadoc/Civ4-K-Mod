@@ -58,7 +58,7 @@ public:
 
 	void AI_makeProductionDirty();
 
-	void AI_doCentralizedProduction(); // K-Mod
+	void AI_doCentralizedProduction(); // K-Mod. (not used)
 
 	void AI_conquerCity(CvCity* pCity);
 
@@ -184,6 +184,7 @@ public:
 	int AI_neededWorkers(CvArea* pArea) const;
 	int AI_neededMissionaries(CvArea* pArea, ReligionTypes eReligion) const;
 	int AI_neededExecutives(CvArea* pArea, CorporationTypes eCorporation) const;
+	int AI_unitCostRating() const; // K-Mod
 	
 	int AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, PlayerTypes* peBestPlayer = NULL) const;
 	int AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer = NULL) const;

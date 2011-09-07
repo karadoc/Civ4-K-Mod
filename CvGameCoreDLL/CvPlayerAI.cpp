@@ -4392,18 +4392,11 @@ int CvPlayerAI::AI_getWaterDanger(CvPlot* pPlot, int iRange, bool bTestMoves) co
 
 bool CvPlayerAI::AI_avoidScience() const
 {
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
+	/* original bts / BBAI code
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
     {
         return true;
-    }
+    } */ // K-Mod. going for culture does not mean avoiding science.
 	if (isCurrentResearchRepeat())
 	{
 		return true;
@@ -4442,7 +4435,7 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 		int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn()); */
 		if (getCommercePercent(COMMERCE_GOLD) == 0)
 			return false; // I can't think of any reason to run 0% gold when short on money...
-		int iNetCommerce = 1 + 100 * (getCommerceRate(COMMERCE_GOLD) + std::max(0, getGoldPerTurn())) / std::max(1, getCommercePercent(COMMERCE_GOLD)); // std::max... paranoia.
+		int iNetCommerce = std::max(0, getGoldPerTurn()) + 100 * getCommerceRate(COMMERCE_GOLD) / getCommercePercent(COMMERCE_GOLD);
 		// K-Mod end
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */
@@ -6383,7 +6376,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					}
 					if (bDefinitelyMissing)
 					{
-						iValue /= 2;
+						iValue /= 3;
 					}
 					else if (bMaybeMissing)
 					{
@@ -11039,6 +11032,19 @@ int CvPlayerAI::AI_neededExecutives(CvArea* pArea, CorporationTypes eCorporation
 	return iCount;
 }
 
+// K-Mod. This function is used to replace the old (broken) "unit cost percentage" calculation used by the AI
+int CvPlayerAI::AI_unitCostRating() const
+{
+	// original "cost percentage" = calculateUnitCost() * 100 / std::max(1, calculatePreInflatedCosts());
+	// If iUnitCostPercentage is calculated as above, decreasing maintenance will actually decrease the max units.
+	// If a builds a courthouse or switches to state property, it would then think it needs to get rid of units!
+	// It makes no sense, and civs with a surplus of cash still won't want to build units. So lets try it another way...
+	return calculateUnitCost() * 400 / std::max(1, getGoldPerTurn() - calculateInflatedCosts() + 100*getCommerceRate(COMMERCE_GOLD) / std::max(10, getCommercePercent(COMMERCE_GOLD)));
+	// this, roughly, is the unit cost divided by our total available funds.
+	// I've set the scale to 400 rather than 100, because the code below that actually uses iUnitCostPercentage is expecting
+	// the scale to be roughly the uninflated maintenance, not the total income.
+}
+// K-Mod end
 
 int CvPlayerAI::AI_adjacentPotentialAttackers(CvPlot* pPlot, bool bTestCanMove) const
 {

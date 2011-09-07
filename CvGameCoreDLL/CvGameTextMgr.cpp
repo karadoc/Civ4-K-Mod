@@ -4780,10 +4780,15 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
                 szString.append(szTempBuffer);
 
 				CvPlayerAI& kPlayer = GET_PLAYER(pCity->getOwnerINLINE());
+				/* original bts code
 				int iUnitCost = kPlayer.calculateUnitCost();
 				int iTotalCosts = kPlayer.calculatePreInflatedCosts();
 				int iUnitCostPercentage = (iUnitCost * 100) / std::max(1, iTotalCosts);
-				szString.append(CvWString::format(L"\nUnit cost percentage: %d (%d / %d)", iUnitCostPercentage, iUnitCost, iTotalCosts));
+				szString.append(CvWString::format(L"\nUnit cost percentage: %d (%d / %d)", iUnitCostPercentage, iUnitCost, iTotalCosts)); */
+				// K-Mod
+				int iUnitCostPercentage = kPlayer.AI_unitCostRating();
+				szString.append(CvWString::format(L"\nUnit Cost Percent: %d (old: %d)", iUnitCostPercentage, (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts())));
+				// K-Mod end
 
 				szString.append(CvWString::format(L"\nUpgrade all units: %d gold", kPlayer.AI_goldToUpgradeAllUnits()));
 				// K-Mod
