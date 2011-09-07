@@ -2527,7 +2527,6 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			// K-Mod
 			if (AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || (isHuman() && getCommercePercent(COMMERCE_ESPIONAGE) >= 60))
 			{
-				iWeight *= 2;
 				iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
 			}
 			else
@@ -4429,13 +4428,15 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 
 	//if (getCommercePercent(COMMERCE_GOLD) > 50)
 	{
-		// K-Mod: have you heard of "cultural victory"? How about "espionage economy"?
-		// Really we just want to know how much of our commerce slider is used for paying the bills.
 		/* original bts code
 		int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn()); */
-		if (getCommercePercent(COMMERCE_GOLD) == 0)
-			return false; // I can't think of any reason to run 0% gold when short on money...
-		int iNetCommerce = std::max(0, getGoldPerTurn()) + 100 * getCommerceRate(COMMERCE_GOLD) / getCommercePercent(COMMERCE_GOLD);
+		// K-Mod: have you heard of "cultural victory"? How about "espionage economy"?
+		// Lets try it a more general way. (hopefully this doesn't slow it down too much...)
+		int iTotalRaw = calculateTotalYield(YIELD_COMMERCE);
+
+		int iNetCommerce = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
+		iNetCommerce += std::max(0, getGoldPerTurn());
+		iNetCommerce += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
 		// K-Mod end
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */
@@ -11039,8 +11040,12 @@ int CvPlayerAI::AI_unitCostRating() const
 	// If iUnitCostPercentage is calculated as above, decreasing maintenance will actually decrease the max units.
 	// If a builds a courthouse or switches to state property, it would then think it needs to get rid of units!
 	// It makes no sense, and civs with a surplus of cash still won't want to build units. So lets try it another way...
-	return calculateUnitCost() * 400 / std::max(1, getGoldPerTurn() - calculateInflatedCosts() + 100*getCommerceRate(COMMERCE_GOLD) / std::max(10, getCommercePercent(COMMERCE_GOLD)));
-	// this, roughly, is the unit cost divided by our total available funds.
+	int iTotalRaw = calculateTotalYield(YIELD_COMMERCE);
+
+	int iFunds = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
+	iFunds += getGoldPerTurn() - calculateInflatedCosts();
+	iFunds += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
+	return calculateUnitCost() * 400 / std::max(1, iFunds);
 	// I've set the scale to 400 rather than 100, because the code below that actually uses iUnitCostPercentage is expecting
 	// the scale to be roughly the uninflated maintenance, not the total income.
 }
@@ -19674,26 +19679,22 @@ void CvPlayerAI::AI_calculateAverages() const
 {
 	CvCity* pLoopCity;
 	int iLoop;
-	int iI;
 	
-	int iPopulation;
-	int iTotalPopulation;
-
-	for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
 		m_aiAverageYieldMultiplier[iI] = 0;		
 	}
-	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
 		m_aiAverageCommerceMultiplier[iI] = 0;	
 	}
 	m_iAverageGreatPeopleMultiplier = 0;
 	
-	iTotalPopulation = 0;
+	int iTotalPopulation = 0;
 	
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
-		iPopulation = std::max(pLoopCity->getPopulation(), NUM_CITY_PLOTS);
+		int iPopulation = std::max(pLoopCity->getPopulation(), NUM_CITY_PLOTS);
 		iTotalPopulation += iPopulation;
 			
 		for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -19710,12 +19711,12 @@ void CvPlayerAI::AI_calculateAverages() const
 	
 	if (iTotalPopulation > 0)
 	{
-		for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 		{
 			m_aiAverageYieldMultiplier[iI] /= iTotalPopulation;
 			FAssert(m_aiAverageYieldMultiplier[iI] > 0);
 		}
-		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
 			m_aiAverageCommerceMultiplier[iI] /= iTotalPopulation;
 			FAssert(m_aiAverageCommerceMultiplier[iI] > 0);	
@@ -19725,11 +19726,11 @@ void CvPlayerAI::AI_calculateAverages() const
 	}
 	else
 	{
-		for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 		{
 			m_aiAverageYieldMultiplier[iI] = 100;
 		}
-		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
 			m_aiAverageCommerceMultiplier[iI] = 100;
 		}

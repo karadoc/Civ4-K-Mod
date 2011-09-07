@@ -10594,15 +10594,19 @@ int CvCityAI::AI_cityValue() const
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH);
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION); */
-	// K-Mod. The original code fails completely for civs using high espionage or high culture.
-	// I'm going to use a similar technique for what I did with the fincial trouble code.
-	const CvPlayer& kOwner = GET_PLAYER(getOwner());
-	if (kOwner.getCommercePercent(COMMERCE_GOLD) == 0)
-		return 0; // I assume, based on the code above, that "zero" means the city is good enough to keep.
-	iValue += 100 * getCommerceRateTimes100(COMMERCE_GOLD) / kOwner.getCommercePercent(COMMERCE_GOLD);
+	// K-Mod. The original code fails for civs using high espionage or high culture.
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwner());
+	iValue += getCommerceRateTimes100(COMMERCE_GOLD) * kOwner.AI_commerceWeight(COMMERCE_GOLD);
+	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH) * kOwner.AI_commerceWeight(COMMERCE_RESEARCH);
+	iValue += getCommerceRateTimes100(COMMERCE_ESPIONAGE) * kOwner.AI_commerceWeight(COMMERCE_ESPIONAGE);
+	iValue /= 100;
+	// Culture isn't counted, because its value is local. Unfortunately this will mean that civs running 100% culture
+	// (ie CULTURE4) will give up their non-core cities. It could be argued that this would be good strategy,
+	// but the problem is that CULTURE4 doesn't always run its full course. ... so I'm going to make a small ad hoc adjustment...
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
+	iValue *= kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)? 2 : 1;
 	//iValue -= 3 * calculateColonyMaintenanceTimes100(); // original bts code
-	iValue -= 2 * calculateColonyMaintenanceTimes100();
+	iValue -= 2 * calculateColonyMaintenanceTimes100() + getMaintenanceTimes100() / 2;
 	// K-Mod end
 
 /*
@@ -11234,9 +11238,12 @@ int CvCityAI::AI_yieldMultiplier(YieldTypes eYield)
 		int iExtra = 0;
 		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
-			iExtra += (getTotalCommerceRateModifier((CommerceTypes)iI)-100) * kPlayer.getCommercePercent((CommerceTypes)iI);
+			iExtra += getTotalCommerceRateModifier((CommerceTypes)iI) * kPlayer.getCommercePercent((CommerceTypes)iI);
 		}
-		iMultiplier += iExtra/100;
+		// base commerce modifier compounds with individual commerce modifiers.
+		iMultiplier *= iExtra;
+		iMultiplier /= 10000;
+		// K-Mod end
 	}
 	
 	return iMultiplier;	
