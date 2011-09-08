@@ -8787,18 +8787,24 @@ bool CvCityAI::AI_chooseLeastRepresentedUnit(UnitTypeWeightArray &allowedTypes, 
 
 	UnitTypeWeightArray::iterator it;
 	
+	/* original bts code
  	std::multimap<int, UnitAITypes, std::greater<int> > bestTypes;
- 	std::multimap<int, UnitAITypes, std::greater<int> >::iterator best_it;
- 	
- 	
+ 	std::multimap<int, UnitAITypes, std::greater<int> >::iterator best_it; */
+	std::vector<std::pair<int, UnitAITypes> > bestTypes; // K-Mod
+ 
 	for (it = allowedTypes.begin(); it != allowedTypes.end(); it++)
 	{
 		iValue = it->second;
 		iValue *= 750 + GC.getGameINLINE().getSorenRandNum(250, "AI choose least represented unit");
 		iValue /= 1 + GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(area(), it->first);
-		bestTypes.insert(std::make_pair(iValue, it->first));
+		//bestTypes.insert(std::make_pair(iValue, it->first));
+		bestTypes.push_back(std::make_pair(iValue, it->first)); // K-Mod
 	}
- 	
+ 
+	// K-Mod
+	std::sort(bestTypes.begin(), bestTypes.end(), std::greater<std::pair<int, UnitAITypes> >());
+	std::vector<std::pair<int, UnitAITypes> >::iterator best_it;
+	// K-Mod end
  	for (best_it = bestTypes.begin(); best_it != bestTypes.end(); best_it++)
  	{
 		if (AI_chooseUnit(best_it->second, iOdds))
@@ -10596,7 +10602,7 @@ int CvCityAI::AI_cityValue() const
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION); */
 	// K-Mod. The original code fails for civs using high espionage or high culture.
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwner());
-	iValue += getCommerceRateTimes100(COMMERCE_GOLD) * kOwner.AI_commerceWeight(COMMERCE_GOLD);
+	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH) * kOwner.AI_commerceWeight(COMMERCE_RESEARCH);
 	iValue += getCommerceRateTimes100(COMMERCE_ESPIONAGE) * kOwner.AI_commerceWeight(COMMERCE_ESPIONAGE);
 	iValue /= 100;

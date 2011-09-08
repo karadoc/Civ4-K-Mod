@@ -17318,7 +17318,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	iHighCultureMark *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
 	iHighCultureMark /= 100;
 
-	std::multiset<int> countdownList;
+	std::vector<int> countdownList;
 	// K-Mod end
 
 	int iLoop;
@@ -17333,7 +17333,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 			iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
 			iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
 			int iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
-			countdownList.insert(iCountdown);
+			countdownList.push_back(iCountdown);
 			if (iCountdown < iHighCultureMark)
 			{
 				iHighCultureCount++;
@@ -17454,12 +17454,10 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	}
 
 	int iWinningCountdown = INT_MAX;
-	if ((int)countdownList.size() >= iVictoryCities)
+	if ((int)countdownList.size() >= iVictoryCities && iVictoryCities > 0)
 	{
-		std::multiset<int>::iterator it = countdownList.begin();
-		for (int i = 0; i < iVictoryCities-1; ++i, ++it)
-			;
-		iWinningCountdown = *it;
+		std::partial_sort(countdownList.begin(), countdownList.begin() + iVictoryCities, countdownList.end());
+		iWinningCountdown = countdownList[iVictoryCities-1];
 	}
     if (getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
     {
@@ -19804,7 +19802,7 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	int iLoop;
 
 	std::map<int, int> spare_units;
-	std::multimap<int, CvUnit*> ordered_units;
+	std::vector<std::pair<int, CvUnit*> > unit_list;
 
 	CvArea *pLoopArea = NULL;
 	for (pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
@@ -19866,19 +19864,20 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		if (bValid)
 		{
 			int iValue = AI_unitValue(pLoopUnit->getUnitType(), UNITAI_ATTACK_CITY, pLoopUnit->area());
-			ordered_units.insert(std::make_pair(iValue, pLoopUnit));
+			unit_list.push_back(std::make_pair(iValue, pLoopUnit));
 		}
 	}
 
 	// convert the highest scoring units first.
-	std::multimap<int, CvUnit*>::reverse_iterator rit;
-	for (rit = ordered_units.rbegin(); rit != ordered_units.rend(); ++rit)
+	std::sort(unit_list.begin(), unit_list.end(), std::greater<std::pair<int, CvUnit*> >());
+	std::vector<std::pair<int, CvUnit*> >::iterator it;
+	for (it = unit_list.begin(); it != unit_list.end(); ++it)
 	{
-		if (rit->first > 0 && spare_units[rit->second->area()->getID()] > 0)
+		if (it->first > 0 && spare_units[it->second->area()->getID()] > 0)
 		{
-			rit->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);
+			it->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);
 			// only convert half of our spare units, so that we can reevaluate which units we need before converting more.
-			spare_units[rit->second->area()->getID()]-=2;
+			spare_units[it->second->area()->getID()]-=2;
 		}
 	}
 }

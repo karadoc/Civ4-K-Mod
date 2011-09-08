@@ -5753,7 +5753,7 @@ bool CvUnit::spread(ReligionTypes eReligion)
 			bSuccess = false;
 			*/
 			// K-Mod. Instead of simply failing, give some chance of removing one of the existing religions.
-			std::multimap<int, ReligionTypes> rankedReligions;
+			std::vector<std::pair<int, ReligionTypes> > rankedReligions;
 			int iRandomWeight = GC.getDefineINT("RELIGION_INFLUENCE_RANDOM_WEIGHT");
 			for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 			{
@@ -5765,11 +5765,12 @@ bool CvUnit::spread(ReligionTypes eReligion)
 						iInfluence += GC.getGameINLINE().getSorenRandNum(iRandomWeight, "Religion influence");
 						iInfluence += (iI == eReligion) ? m_pUnitInfo->getReligionSpreads(eReligion)/2 : 0;
 
-						rankedReligions.insert(std::make_pair(iInfluence, eReligion));
+						rankedReligions.push_back(std::make_pair(iInfluence, eReligion));
 					}
 				}
 			}
-			ReligionTypes eFailedReligion = rankedReligions.begin()->second;
+			std::partial_sort(rankedReligions.begin(), rankedReligions.begin()+1, rankedReligions.end());
+			ReligionTypes eFailedReligion = rankedReligions[0].second;
 			if (eFailedReligion == eReligion)
 			{
 				szBuffer = gDLL->getText("TXT_KEY_MISC_RELIGION_FAILED_TO_SPREAD", getNameKey(), GC.getReligionInfo(eReligion).getChar(), pCity->getNameKey());

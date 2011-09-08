@@ -5365,20 +5365,23 @@ bool CvUnitAI::AI_greatPersonMove()
 		GP_GOLDENAGE,
 		GP_TRADE
 	};
-	std::multimap<int, int> ordered_missions;
-	ordered_missions.insert(std::make_pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
-	ordered_missions.insert(std::make_pair<int, int>(iTradeValue, GP_TRADE));
-	ordered_missions.insert(std::make_pair<int, int>(iSlowValue, GP_SLOW));
-	ordered_missions.insert(std::make_pair<int, int>(iDiscoverValue, GP_DISCOVER));
-	std::multimap<int, int>::reverse_iterator rit;
+	std::vector<std::pair<int, int> > missions;
+	missions.push_back(std::make_pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
+	missions.push_back(std::make_pair<int, int>(iTradeValue, GP_TRADE));
+	missions.push_back(std::make_pair<int, int>(iSlowValue, GP_SLOW));
+	missions.push_back(std::make_pair<int, int>(iDiscoverValue, GP_DISCOVER));
+
+	std::sort(missions.begin(), missions.end(), std::greater<std::pair<int, int> >());
+	std::vector<std::pair<int, int> >::iterator it;
+
 	int iChoice = 1;
 	int iScoreThreshold = 0;
-	for (rit = ordered_missions.rbegin(); rit != ordered_missions.rend(); ++rit)
+	for (it = missions.begin(); it != missions.end(); ++it)
 	{
-		if (rit->first < iScoreThreshold)
+		if (it->first < iScoreThreshold)
 			break;
 
-		switch (rit->second)
+		switch (it->second)
 		{
 		case GP_DISCOVER:
 			if (canDiscover(plot()))
@@ -5403,7 +5406,7 @@ bool CvUnitAI::AI_greatPersonMove()
 				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'golden age' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue, iChoice);
 				return true;
 			}
-			else
+			else if (kPlayer.AI_totalUnitAIs(AI_getUnitAIType()) < 2) // unfortunately, merchant and spy share the same AI.
 			{
 				// Do we want to wait for another great person? How long will it take?
 				int iGpThreshold = kPlayer.greatPeopleThreshold();
@@ -5427,8 +5430,8 @@ bool CvUnitAI::AI_greatPersonMove()
 					int iRelativeWaitTime = iMinTurns + (GC.getGameINLINE().getGameTurn() - getGameTurnCreated());
 					iRelativeWaitTime *= 100;
 					iRelativeWaitTime /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
-					// lets say 2% per 3 points.
-					iScoreThreshold = std::max(iScoreThreshold, rit->first * (100 - 2*iRelativeWaitTime/3) / 100);
+					// lets say 1% per turn.
+					iScoreThreshold = std::max(iScoreThreshold, it->first * (100 - iRelativeWaitTime) / 100);
 				}
 			}
 			break;

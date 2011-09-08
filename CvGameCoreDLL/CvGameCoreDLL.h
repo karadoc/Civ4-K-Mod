@@ -27,7 +27,10 @@
 #include <assert.h>
 #include <map>
 #include <hash_map>
-#include <set> // K-Mod
+// K-Mod
+#include <utility>
+#include <algorithm>
+// K-Mod end
 
 #define DllExport   __declspec( dllexport ) 
 
