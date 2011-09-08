@@ -1271,41 +1271,46 @@ void CvUnitAI::AI_settleMove()
 	for (int iI = 0; iI < GET_PLAYER(getOwnerINLINE()).AI_getNumCitySites(); iI++)
 	{
 		CvPlot* pCitySitePlot = GET_PLAYER(getOwnerINLINE()).AI_getCitySite(iI);
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       01/10/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix, settler AI                                                                           */
-/************************************************************************************************/
-/* original bts code
-		if (pCitySitePlot->getArea() == getArea())
-*/
-		// Only count city sites we can get to
+		/* original bts code
+		if (pCitySitePlot->getArea() == getArea()) */
+		// UNOFFICIAL_PATCH: Only count city sites we can get to
 		if ((pCitySitePlot->getArea() == getArea() || canMoveAllTerrain()) && generatePath(pCitySitePlot, MOVE_SAFE_TERRITORY, true))
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+		// U_P end
 		{
 			if (plot() == pCitySitePlot)
 			{
 				if (canFound(plot()))
 				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 					if( gUnitLogLevel >= 2 )
 					{
 						logBBAI("    Settler founding in place since it's at a city site %d, %d", getX_INLINE(), getY_INLINE());
 					}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 					getGroup()->pushMission(MISSION_FOUND);
 					return;					
 				}
 			}
+			// K-Mod. If we are already heading to this site, then keep going!
+			// This change fixes a bug which prevented settlers from targetting the same site two turns in a row!
+			else
+			{
+				CvPlot* pMissionPlot = getGroup()->AI_getMissionAIPlot();
+				if (pMissionPlot == pCitySitePlot && getGroup()->AI_getMissionAIType() == MISSIONAI_FOUND)
+				{
+					// safety check. (cf. conditions in AI_found)
+					if (getGroup()->canDefend() || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pMissionPlot, MISSIONAI_GUARD_CITY) > 0)
+					{
+						if( gUnitLogLevel >= 2 )
+						{
+							logBBAI("    Settler continuing mission to %d, %d", pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE());
+						}
+						CvPlot* pEndTurnPlot = getPathEndTurnPlot();
+						getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX(), pEndTurnPlot->getY(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_FOUND, pCitySitePlot);
+						return;
+					}
+				}
+			}
+			// K-Mod end
 			iAreaBestFoundValue = std::max(iAreaBestFoundValue, pCitySitePlot->getFoundValue(getOwnerINLINE()));
 
 		}
@@ -5685,7 +5690,7 @@ void CvUnitAI::AI_spyMove()
 		int iAttackSpies = kOwner.AI_areaMissionAIs(area(), MISSIONAI_ATTACK_SPY);
 		if (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
 		{
-			iScale += 50 * kOwner.getCurrentEra() * kOwner.getCurrentEra();
+			iScale += 50 * kOwner.getCurrentEra() * (kOwner.getCurrentEra()+1);
 		}
 
 		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
@@ -22498,7 +22503,7 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 	const CvTeamAI& kTeam = GET_TEAM(getTeam());
 
 	const int iEra = GET_PLAYER(getOwner()).getCurrentEra();
-	int iBaselinePoints = 50 * iEra * iEra; // cf the "big espionage" minimum value.
+	int iBaselinePoints = 50 * iEra * (iEra+1); // cf the "big espionage" minimum value.
 	int iAverageUnspentPoints;
 	{
 		int iTeamCount = 0;
@@ -22815,7 +22820,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 					// Block small missions when using "big espionage", unless the mission is really good value.
 					if (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
-						&& iValue < 50*kPlayer.getCurrentEra()*kPlayer.getCurrentEra() // 50, 200, 450, 800, 1250, ...
+						&& iValue < 50*kPlayer.getCurrentEra()*(kPlayer.getCurrentEra()+1) // 100, 300, 600, 1000, 1500, ...
 						&& iValue < 2*iCost)
 					{
 						iValue = 0;

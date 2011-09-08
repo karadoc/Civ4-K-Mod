@@ -2487,7 +2487,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			
 			// K-Mod
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
-			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 2*iAllTeamTotalPoints + 36*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
+			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 2*iAllTeamTotalPoints + 18*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
 			iWeight /= std::max(1, 3 * iAllTeamTotalPoints);
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 			{
@@ -12976,11 +12976,11 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		// K-Mod (I didn't comment that line out, btw.)
 		const TeamTypes eTeam = GET_PLAYER(eTargetPlayer).getTeam();
 		const int iEra = getCurrentEra();
-		int iCounterValue = 5 + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3 || AI_VICTORY_SPACE3) ? 10 : 0);
+		int iCounterValue = 5 + 2*iEra + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3 || AI_VICTORY_SPACE3) ? 10 : 0);
 		// this is pretty bogus. I'll try to come up with something better some other time.
-		iCounterValue *= 50*iEra*iEra + GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
-		iCounterValue /= std::max(1, 50*iEra*iEra + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam));
-		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0) + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4 || AI_VICTORY_SPACE4)?1 : 0);
+		iCounterValue *= 50*iEra*(iEra+1) + GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
+		iCounterValue /= std::max(1, 50*iEra*(iEra+1) + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam));
+		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0) + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4)?1 : 0);
 		iValue += iCounterValue;
 	}
 
