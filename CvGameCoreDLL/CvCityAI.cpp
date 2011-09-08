@@ -244,18 +244,11 @@ void CvCityAI::AI_assignWorkingPlots()
 	CvPlot* pHomePlot;
 	int iI;
 
-	// K-Mod
-	if (isDisorder())
-	{
-		// can't do anything anyway.
-		return;
-	}
-	// K-Mod end
-	
+	/* original bts code
 	if (0 != GC.getDefineINT("AI_SHOULDNT_MANAGE_PLOT_ASSIGNMENT"))
 	{
 		return;
-	}
+	} */ // K-Mod. that option would break a bunch of stuff.
 
 	// remove all assigned plots if we automated
 	if (!isHuman() || isCitizensAutomated())
@@ -323,9 +316,10 @@ void CvCityAI::AI_assignWorkingPlots()
 	
 	// extraSpecialists() is less than extraPopulation()
 	FAssertMsg(extraSpecialists() >= 0, "extraSpecialists() is expected to be non-negative (invalid Index)");
-	
+
 	// do we have population unassigned
-	while (extraPopulation() > 0)
+	//while (extraPopulation() > 0)
+	while (extraPopulation() > 0 && !isDisorder()) // K-Mod (just to save time)
 	{
 		// (AI_addBestCitizen now handles forced specialist logic)
 		if (!AI_addBestCitizen(/*bWorkers*/ true, /*bSpecialists*/ true))
@@ -374,7 +368,8 @@ void CvCityAI::AI_assignWorkingPlots()
 	FAssertMsg(iExtraSpecialists >= 0, "added too many specialists");
 
 	// if we still have population to assign, assign specialists
-	while (extraSpecialists() > 0)
+	//while (extraSpecialists() > 0)
+	while (extraSpecialists() > 0 && !isDisorder()) // K-Mod (just to save time)
 	{
 		if (!AI_addBestCitizen(/*bWorkers*/ false, /*bSpecialists*/ true))
 		{
@@ -383,7 +378,8 @@ void CvCityAI::AI_assignWorkingPlots()
 	}
 	
 	// if automated, look for better choices than the current ones
-	if (!isHuman() || isCitizensAutomated())
+	//if (!isHuman() || isCitizensAutomated())
+	if (!isHuman() || isCitizensAutomated() && !isDisorder()) // K-Mod (just to save time)
 	{
 		AI_juggleCitizens();
 	}

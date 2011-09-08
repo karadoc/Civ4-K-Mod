@@ -5279,10 +5279,14 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				}
 				else
 				{
-					// Space ship parts
-					if( AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) )
+					// Space ship parts (changed by K-Mod)
+					if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE2))
 					{
 						iValue += 1000;
+					}
+					if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
+					{
+						iValue += 800; // (additional)
 					}
 				}
 			}
@@ -12834,7 +12838,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					BonusTypes eBonus = pPlot->getNonObsoleteBonusType(GET_PLAYER(eTargetPlayer).getTeam());
 					if (NO_BONUS != eBonus)
 					{
-						iValue += GET_PLAYER(eTargetPlayer).AI_bonusVal(eBonus, -1);
+						iValue += 2*GET_PLAYER(eTargetPlayer).AI_bonusVal(eBonus, -1); // was 1*
 						
 						int iTempValue = 0;
 						if (NULL != pPlot->getWorkingCity())
@@ -12886,7 +12890,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		{
 			CvProjectInfo& kProject = GC.getProjectInfo((ProjectTypes)iData);
 			
-			iValue += getProductionNeeded((ProjectTypes)iData) * ((kProject.getMaxTeamInstances() == 1) ? 3 : 2);
+			iValue += getProductionNeeded((ProjectTypes)iData) * (kProject.getMaxTeamInstances() == 1 ? 6 : 4); // was 3 : 2
 		}
 	}
 
@@ -12904,7 +12908,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					if (pCity->getProductionProject() != NO_PROJECT)
 					{
 						CvProjectInfo& kProject = GC.getProjectInfo(pCity->getProductionProject());
-						iValue += iTempValue * ((kProject.getMaxTeamInstances() == 1) ? 4 : 2);	
+						iValue += iTempValue * ((kProject.getMaxTeamInstances() == 1) ? 6 : 3);	// was 4 : 2
 					}
 					else if (pCity->getProductionBuilding() != NO_BUILDING)
 					{
@@ -12972,10 +12976,11 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		// K-Mod (I didn't comment that line out, btw.)
 		const TeamTypes eTeam = GET_PLAYER(eTargetPlayer).getTeam();
 		const int iEra = getCurrentEra();
-		int iCounterValue = 5;
+		int iCounterValue = 5 + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3 || AI_VICTORY_SPACE3) ? 10 : 0);
+		// this is pretty bogus. I'll try to come up with something better some other time.
 		iCounterValue *= 50*iEra*iEra + GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
 		iCounterValue /= std::max(1, 50*iEra*iEra + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam));
-		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0);
+		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0) + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4 || AI_VICTORY_SPACE4)?1 : 0);
 		iValue += iCounterValue;
 	}
 
@@ -13036,7 +13041,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 			if (NULL != pCity)
 			{
 				int iCityHealth = pCity->goodHealth() - pCity->badHealth(false, 0);
-				int iBaseUnhealth = GC.getEspionageMissionInfo(eMission).getCityPoisonWaterCounter();
+				//int iBaseUnhealth = GC.getEspionageMissionInfo(eMission).getCityPoisonWaterCounter();
+				int iBaseUnhealth = GC.getEspionageMissionInfo(eMission).getCityPoisonWaterCounter() - std::max(pCity->getOccupationTimer(), GET_PLAYER(eTargetPlayer).getAnarchyTurns());
 
 				// K-Mod: fixing some "wtf".
 				/*
@@ -13071,7 +13077,10 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 			if (NULL != pCity)
 			{
 				int iCityCurAngerLevel = pCity->happyLevel() - pCity->unhappyLevel(0);
-				int iBaseAnger = GC.getEspionageMissionInfo(eMission).getCityUnhappinessCounter();
+				//int iBaseAnger = GC.getEspionageMissionInfo(eMission).getCityUnhappinessCounter();
+				// K-Mod
+				int iBaseAnger = GC.getEspionageMissionInfo(eMission).getCityUnhappinessCounter() - std::max(pCity->getOccupationTimer(), GET_PLAYER(eTargetPlayer).getAnarchyTurns());
+				// K-Mod end
 				int iAvgUnhappy = iCityCurAngerLevel - iBaseAnger/2;
 				
 				if (iAvgUnhappy < 0)
