@@ -2116,7 +2116,8 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
+	//int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
+	int iMaxUnitSpending = (bAggressiveAI ? 10 : 5) + iBuildUnitProb / 2; // K-Mod. (unit spending is not what it use to be)
 
 	if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
 	{

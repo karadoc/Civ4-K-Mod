@@ -6,6 +6,10 @@
 <!-- Global Defines -->
 <Civ4Defines xmlns="x-schema:CIV4GlobalDefinesSchema.xml">
 	<Define>
+		<DefineName>SAVE_VERSION</DefineName>
+		<iDefineIntVal>303</iDefineIntVal>
+	</Define>
+	<Define>
 		<DefineName>BASE_REVOLT_OCCUPATION_TURNS</DefineName>
 		<iDefineIntVal>3</iDefineIntVal> <!-- increased from 2, because of changes that I've made to its useage -->
 	</Define>

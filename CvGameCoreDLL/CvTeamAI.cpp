@@ -5213,6 +5213,7 @@ int CvTeamAI::AI_getTechMonopolyValue(TechTypes eTech, TeamTypes eTeam) const
 					case UNITAI_GENERAL:
 					case UNITAI_MERCHANT:
 					case UNITAI_ENGINEER:
+					case UNITAI_GREAT_SPY: // K-Mod
 						break;
 
 					case UNITAI_SPY:

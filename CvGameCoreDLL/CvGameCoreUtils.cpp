@@ -2525,6 +2525,7 @@ void getUnitAIString(CvWString& szString, UnitAITypes eUnitAI)
 	case UNITAI_GENERAL: szString = L"general"; break;
 	case UNITAI_MERCHANT: szString = L"merchant"; break;
 	case UNITAI_ENGINEER: szString = L"engineer"; break;
+	case UNITAI_GREAT_SPY: szString = L"great spy"; break; // K-Mod
 	case UNITAI_SPY: szString = L"spy"; break;
 	case UNITAI_ICBM: szString = L"icbm"; break;
 	case UNITAI_WORKER_SEA: szString = L"worker sea"; break;

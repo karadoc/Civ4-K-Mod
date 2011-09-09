@@ -326,6 +326,12 @@ bool CvUnitAI::AI_update()
 			AI_engineerMove();
 			break;
 
+		// K-Mod
+		case UNITAI_GREAT_SPY:
+			AI_greatSpyMove();
+			break;
+		// K-Mod end
+
 		case UNITAI_SPY:
 			AI_spyMove();
 			break;
@@ -661,6 +667,7 @@ int CvUnitAI::AI_groupFirstVal()
 	case UNITAI_GENERAL:
 	case UNITAI_MERCHANT:
 	case UNITAI_ENGINEER:
+	case UNITAI_GREAT_SPY: // K-Mod
 		return 11;
 		break;
 
@@ -4764,8 +4771,10 @@ void CvUnitAI::AI_artistMove()
 		}
 	} */
 
+	/* original bts code
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25))) */
+	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) // K-Mod (there are good reasons for saving a great person)
 	{
 		if (AI_discover())
 		{
@@ -4883,6 +4892,15 @@ void CvUnitAI::AI_scientistMove()
 	// K-Mod
 	if (AI_greatPersonMove())
 		return;
+
+	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2))
+	{
+		if (AI_discover())
+		{
+			return;
+		}
+	}
+	// K-Mod end
 
 	if (AI_retreatToCity())
 	{
@@ -5086,8 +5104,10 @@ void CvUnitAI::AI_merchantMove()
 	if (AI_greatPersonMove())
 		return;
 
+	/* original bts code
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25))) */
+	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) // K-Mod (there are good reasons for saving a great person)
 	{
 		if (AI_discover())
 		{
@@ -5193,8 +5213,10 @@ void CvUnitAI::AI_engineerMove()
 	if (AI_greatPersonMove())
 		return;
 
+	/* original bts code
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
-		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25)))
+		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25))) */
+	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) // K-Mod (there are good reasons for saving a great person)
 	{
 		if (AI_discover())
 		{
@@ -5226,6 +5248,35 @@ void CvUnitAI::AI_engineerMove()
 	if (AI_safety())
 	{
 		return;
+	}
+
+	getGroup()->pushMission(MISSION_SKIP);
+	return;
+}
+
+// K-Mod, the previously missing great spy ai function...
+void CvUnitAI::AI_greatSpyMove()
+{
+	if (AI_greatPersonMove())
+		return;
+
+	// Note: spies can't be seen, and can't be attacked. So we don't need to worry about retreating to safety.
+	FAssert(alwaysInvisible());
+
+	if (area()->getNumCities() > area()->getCitiesPerPlayer(getOwner()))
+	{
+		if (AI_reconSpy(5))
+		{
+			return;
+		}
+	}
+
+	if (getGroup()->isStranded())
+	{
+		if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_NO_ENEMY_TERRITORY, 1))
+		{
+			return;
+		}
 	}
 
 	getGroup()->pushMission(MISSION_SKIP);
@@ -5272,7 +5323,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 				}
 				// Construct
-				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
+				//if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
 				{
 					for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 					{
@@ -5358,6 +5409,12 @@ bool CvUnitAI::AI_greatPersonMove()
 	// gold can be targeted where it is needed, but it's benefits typically aren't instant. (cf AI_knownTechValModifier)
 	iTradeValue *= 130;
 	iTradeValue /= 100;
+	if (getGroup()->AI_getMissionAIType() == MISSIONAI_TRADE && plot()->getOwner() != getOwner())
+	{
+		// if we are part way through a trade mission, prefer not to turn back.
+		iTradeValue *= 120;
+		iTradeValue /= 100;
+	}
 	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
 	iTradeValue /= 100;
 
@@ -5411,7 +5468,7 @@ bool CvUnitAI::AI_greatPersonMove()
 				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'golden age' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iGoldenAgeValue, iChoice);
 				return true;
 			}
-			else if (kPlayer.AI_totalUnitAIs(AI_getUnitAIType()) < 2) // unfortunately, merchant and spy share the same AI.
+			else if (kPlayer.AI_totalUnitAIs(AI_getUnitAIType()) < 2)
 			{
 				// Do we want to wait for another great person? How long will it take?
 				int iGpThreshold = kPlayer.greatPeopleThreshold();
@@ -5445,26 +5502,34 @@ bool CvUnitAI::AI_greatPersonMove()
 			// no dedicated function for this.
 			if (pBestPlot != NULL)
 			{
-				if (atPlot(pBestPlot))
+				if (eBestSpecialist != NO_SPECIALIST)
 				{
-					if (eBestSpecialist != NO_SPECIALIST)
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'join' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_JOIN?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
+					if (atPlot(pBestPlot))
 					{
 						getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
-						if (gUnitLogLevel > 2) logBBAI("    %S chooses 'join' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue, iChoice);
 						return true;
 					}
-
-					if (eBestBuilding != NO_BUILDING)
+					else
 					{
-						getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
-						if (gUnitLogLevel > 2) logBBAI("    %S chooses 'build' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iSlowValue, iChoice);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_JOIN);
 						return true;
 					}
 				}
-				else
+
+				if (eBestBuilding != NO_BUILDING)
 				{
-					getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY);
-					return true;
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'build' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_CONSTRUCT?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
+					if (atPlot(pBestPlot))
+					{
+						getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
+						return true;
+					}
+					else
+					{
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_CONSTRUCT);
+						return true;
+					}
 				}
 			}
 			break;
@@ -5760,8 +5825,8 @@ void CvUnitAI::AI_spyMove()
 
 	if( area()->getNumCities() > area()->getCitiesPerPlayer(getOwnerINLINE()) )
 	{
-		if (kOwner.AI_areaMissionAIs(area(), MISSIONAI_EXPLORE) <= kOwner.AI_areaMissionAIs(area(), MISSIONAI_GUARD_SPY) &&
-			(getGroup()->AI_getMissionAIType() == MISSIONAI_EXPLORE
+		if (kOwner.AI_areaMissionAIs(area(), MISSIONAI_RECON_SPY) <= kOwner.AI_areaMissionAIs(area(), MISSIONAI_GUARD_SPY) &&
+			(getGroup()->AI_getMissionAIType() == MISSIONAI_RECON_SPY
 			|| GC.getGame().getSorenRandNum(3, "AI Spy Choose Movement") > 0))
 		{
 			if (AI_reconSpy(3))
@@ -13388,7 +13453,8 @@ bool CvUnitAI::AI_construct(int iMaxCount, int iMaxSingleBuildingCount, int iThr
 		{
 			if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
 			{
-				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
+				//if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
+				// above line disabled by K-Mod, because there are different types of buildings to construct...
 				{
 					for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 					{
@@ -22133,7 +22199,7 @@ bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pTradePlot->getX_INLINE(), pTradePlot->getY_INLINE());
+			getGroup()->pushMission(MISSION_MOVE_TO, pTradePlot->getX_INLINE(), pTradePlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_TRADE);
 			return true;
 		}
 	}
@@ -22329,12 +22395,12 @@ bool CvUnitAI::AI_reconSpy(int iRange)
 			getGroup()->pushMission(MISSION_MOVE_TO, pBestTargetPlot->getX_INLINE(), pBestTargetPlot->getY_INLINE());
 			getGroup()->pushMission(MISSION_SKIP); */
 			// K-Mod. (skip turn after each step of a recon mission? strange)
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestTargetPlot->getX_INLINE(), pBestTargetPlot->getY_INLINE(), 0, false, false, MISSIONAI_EXPLORE, pBestPlot);
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestTargetPlot->getX_INLINE(), pBestTargetPlot->getY_INLINE(), 0, false, false, MISSIONAI_RECON_SPY, pBestPlot);
 			// K-Mod end
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 

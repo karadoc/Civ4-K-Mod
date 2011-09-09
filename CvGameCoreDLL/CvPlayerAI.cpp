@@ -2172,6 +2172,7 @@ DomainTypes CvPlayerAI::AI_unitAIDomainType(UnitAITypes eUnitAI) const
 	case UNITAI_GENERAL:
 	case UNITAI_MERCHANT:
 	case UNITAI_ENGINEER:
+	case UNITAI_GREAT_SPY: // K-Mod
 	case UNITAI_SPY:
 	case UNITAI_ATTACK_CITY_LEMMING:
 		return DOMAIN_LAND;
@@ -2487,8 +2488,8 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			
 			// K-Mod
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
-			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 2*iAllTeamTotalPoints + 18*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
-			iWeight /= std::max(1, 3 * iAllTeamTotalPoints);
+			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 24*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
+			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 			{
 				iWeight *= 2;
@@ -4453,7 +4454,7 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 		
 		int iFundedPercent = (100 * (iNetCommerce - iNetExpenses)) / std::max(1, iNetCommerce);
 		
-		int iSafePercent = 40;
+		int iSafePercent = 35; // was 40
 		if (AI_avoidScience())
 		{
 			iSafePercent -= 8;
@@ -4461,7 +4462,7 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 		
 		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true))
 		{
-			iSafePercent -= 12;
+			iSafePercent -= 10; // was 12
 		}
 		
 		if (isCurrentResearchRepeat())
@@ -5986,6 +5987,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					case UNITAI_GENERAL:
 					case UNITAI_MERCHANT:
 					case UNITAI_ENGINEER:
+					case UNITAI_GREAT_SPY: // K-Mod
 						break;
 
 					case UNITAI_SPY:
@@ -10131,6 +10133,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		case UNITAI_GENERAL:
 		case UNITAI_MERCHANT:
 		case UNITAI_ENGINEER:
+		case UNITAI_GREAT_SPY: // K-Mod
 		case UNITAI_SPY:
 			break;
 
@@ -10611,6 +10614,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 	case UNITAI_GENERAL:
 	case UNITAI_MERCHANT:
 	case UNITAI_ENGINEER:
+	case UNITAI_GREAT_SPY: // K-Mod
 		break;
 
 	case UNITAI_SPY:
@@ -16098,6 +16102,7 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 
 	pStream->Read(NUM_UNITAI_TYPES, m_aiNumTrainAIUnits);
 	pStream->Read(NUM_UNITAI_TYPES, m_aiNumAIUnits);
+
 	pStream->Read(MAX_PLAYERS, m_aiSameReligionCounter);
 	pStream->Read(MAX_PLAYERS, m_aiDifferentReligionCounter);
 	pStream->Read(MAX_PLAYERS, m_aiFavoriteCivicCounter);
@@ -17088,6 +17093,7 @@ bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
 							case UNITAI_GENERAL:
 							case UNITAI_MERCHANT:
 							case UNITAI_ENGINEER:
+							case UNITAI_GREAT_SPY: // K-Mod
 								iValue *= 20;
 								break;
 

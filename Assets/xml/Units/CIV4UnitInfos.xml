@@ -23284,7 +23284,7 @@
 			<Capture>NONE</Capture>
 			<Combat>NONE</Combat>
 			<Domain>DOMAIN_LAND</Domain>
-			<DefaultUnitAI>UNITAI_MERCHANT</DefaultUnitAI>
+			<DefaultUnitAI>UNITAI_GREAT_SPY</DefaultUnitAI>
 			<Invisible>NONE</Invisible>
 			<SeeInvisible>NONE</SeeInvisible>
 			<Description>TXT_KEY_SPECIALIST_GREAT_SPY</Description>
@@ -23307,7 +23307,7 @@
 			<bDestroy>0</bDestroy>
 			<bStealPlans>0</bStealPlans>
 			<bInvestigate>0</bInvestigate>
-			<bCounterSpy>0</bCounterSpy>
+			<bCounterSpy>1</bCounterSpy>
 			<bFound>0</bFound>
 			<bGoldenAge>1</bGoldenAge>
 			<bInvisible>1</bInvisible>
@@ -23333,7 +23333,7 @@
 			<FlankingStrikes/>
 			<UnitAIs>
 				<UnitAI>
-					<UnitAIType>UNITAI_MERCHANT</UnitAIType>
+					<UnitAIType>UNITAI_GREAT_SPY</UnitAIType>
 					<bUnitAI>1</bUnitAI>
 				</UnitAI>
 			</UnitAIs>
