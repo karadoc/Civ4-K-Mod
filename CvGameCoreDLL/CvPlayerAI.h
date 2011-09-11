@@ -316,6 +316,7 @@ public:
 	bool AI_isDoVictoryStrategyLevel3() const;
 	void AI_forceUpdateVictoryStrategies();
 	int AI_getVictoryStrategyHash() const;
+	void AI_initStrategyRand(); // K-Mod
 	int AI_getStrategyRand(int iShift) const;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -437,7 +438,7 @@ protected:
 /*                                                                                              */
 /* Victory Strategy AI                                                                          */
 /************************************************************************************************/
-	mutable int m_iStrategyRand;
+	int m_iStrategyRand;
 	mutable int m_iVictoryStrategyHash;
 	mutable int m_iVictoryStrategyHashCacheTurn;
 /************************************************************************************************/

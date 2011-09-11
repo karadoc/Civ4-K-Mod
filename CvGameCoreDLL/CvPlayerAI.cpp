@@ -199,6 +199,7 @@ void CvPlayerAI::AI_init()
 		AI_setReligionTimer(1);
 		AI_setCivicTimer((getMaxAnarchyTurns() == 0) ? 1 : 2);
 	}
+	AI_initStrategyRand(); // K-Mod
 }
 
 
@@ -299,17 +300,12 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 	
 	m_iStrategyHash = 0;
 	m_iStrategyHashCacheTurn = -1;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/18/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-	m_iStrategyRand = 0;
+
+// BBAI
+	m_iStrategyRand = -1; // was 0 (K-Mod)
 	m_iVictoryStrategyHash = 0;
 	m_iVictoryStrategyHashCacheTurn = -1;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
+// BBAI end
 
 	m_bWasFinancialTrouble = false;
 	m_iTurnLastProductionDirty = -1;
@@ -2684,7 +2680,8 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	//Any plot which is otherwise within the radius of a city site
 	//is basically treated as if it's within an existing city radius
 	std::vector<bool> abCitySiteRadius(NUM_CITY_PLOTS, false);
-		
+
+	/* original bts code
 	if (!bStartingLoc)
 	{
 		if (!AI_isPlotCitySite(pPlot))
@@ -2710,7 +2707,44 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				}
 			}
 		}
+	}*/
+	// K-Mod
+	if (!bStartingLoc)
+	{
+		if (!AI_isPlotCitySite(pPlot))
+		{
+			for (int iJ = 0; iJ < AI_getNumCitySites(); iJ++)
+			{
+				CvPlot* pCitySitePlot = AI_getCitySite(iJ);
+				if (pCitySitePlot == NULL)
+				{
+					// I don't think this can happen, but it's not a big deal.
+					FAssert(false);
+					continue;
+				}
+				if (plotDistance(iX, iY, pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= GC.getMIN_CITY_RANGE() &&
+					pPlot->area() == pCitySitePlot->area())
+				{
+					// this tile is too close to one of the sites we've already chosen.
+					return 0; // we can't settle here.
+				}
+				for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+				{
+					pLoopPlot = plotCity(iX, iY, iI);
+					if (pLoopPlot != NULL)
+					{
+						if (plotDistance(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= CITY_PLOTS_RADIUS)
+						{
+							//Plot is inside the radius of a city site
+							abCitySiteRadius[iI] = true;
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
+	// K-Mod end
 	
 	std::vector<int> paiBonusCount;
 
@@ -16184,17 +16218,11 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 
 	pStream->Write(m_iStrategyHash);
 	pStream->Write(m_iStrategyHashCacheTurn);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/18/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
+// BBAI
 	pStream->Write(m_iStrategyRand);
 	pStream->Write(m_iVictoryStrategyHash);
 	pStream->Write(m_iVictoryStrategyHashCacheTurn);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
+// BBAI end
 	pStream->Write(m_iAveragesCacheTurn);
 	pStream->Write(m_iAverageGreatPeopleMultiplier);
 	pStream->Write(m_iAverageCulturePressure); // K-Mod
@@ -18109,7 +18137,7 @@ int CvPlayerAI::AI_getVictoryStrategyHash() const
 
     if ((m_iVictoryStrategyHash != 0) && (m_iVictoryStrategyHashCacheTurn == GC.getGameINLINE().getGameTurn()))
     {
-        return m_iVictoryStrategyHash;        
+        return m_iVictoryStrategyHash;
     }
  
 	m_iVictoryStrategyHash = AI_DEFAULT_VICTORY_STRATEGY;
@@ -18247,22 +18275,26 @@ int CvPlayerAI::AI_getVictoryStrategyHash() const
 /************************************************************************************************/
 
 // K-Mod, based on BBAI
-int CvPlayerAI::AI_getStrategyRand(int iShift) const
+void CvPlayerAI::AI_initStrategyRand()
 {
 	const unsigned iBits = 16;
+	m_iStrategyRand = GC.getGameINLINE().getSorenRandNum((1<<(iBits+1))-1, "AI Strategy Rand");
+}
+
+int CvPlayerAI::AI_getStrategyRand(int iShift) const
+{
+	const unsigned iBits = 16; // cf bits in AI_initStrategyRand
 
 	iShift += getCurrentEra();
 	while (iShift < 0)
 		iShift += iBits;
 	iShift %= iBits;
 
-    if( m_iStrategyRand <= 0 )
-	{
-		m_iStrategyRand = GC.getGameINLINE().getSorenRandNum((1<<(iBits+1))-1, "AI Strategy Rand");
-	}
+	FAssert(m_iStrategyRand > 0);
 
 	return (m_iStrategyRand << iShift) + (m_iStrategyRand >> (iBits - iShift));
 }
+// K-Mod end
 
 bool CvPlayerAI::AI_isDoStrategy(int iStrategy) const
 {

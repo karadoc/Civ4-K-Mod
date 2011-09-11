@@ -3376,16 +3376,9 @@ void CvPlayer::doTurn()
 
 	doEspionagePoints();
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/08/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
-    // New function to handle wonder construction in a centralized manner
-	GET_PLAYER(getID()).AI_doCentralizedProduction();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	// K-Mod / BBAI centralized production. - Currently not enabled. (the function hasn't been writen yet)
+	//GET_PLAYER(getID()).AI_doCentralizedProduction();
+	//
 
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
