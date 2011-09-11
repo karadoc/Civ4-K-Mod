@@ -984,14 +984,14 @@ public:
 	virtual void AI_setAssignWorkDirty(bool bNewValue) = 0;
 	virtual bool AI_isChooseProductionDirty() = 0;
 	virtual void AI_setChooseProductionDirty(bool bNewValue) = 0;
-	virtual bool AI_isEmphasize(EmphasizeTypes eIndex) = 0;											// Exposed to Python
+	virtual bool AI_isEmphasize(EmphasizeTypes eIndex) const = 0;											// Exposed to Python
 	virtual void AI_setEmphasize(EmphasizeTypes eIndex, bool bNewValue) = 0;
 	virtual int AI_getBestBuildValue(int iIndex) = 0;
 	// K-Mod note: the following functions were originally created by jdog5000 for debugging BBAI. I've adopted them and changed them.
-	virtual int AI_getTargetPopulation() = 0;
-	virtual int AI_getGoodTileCount() = 0;
-	virtual int AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue = 0, bool bEmphasizeIrrigation = false, BuildTypes* peBestBuild = 0) = 0;
-	virtual void AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange ) = 0;
+	virtual int AI_getTargetPopulation() const = 0;
+	virtual int AI_getGoodTileCount() const = 0;
+	virtual int AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue = 0, bool bEmphasizeIrrigation = false, BuildTypes* peBestBuild = 0) const = 0;
+	virtual void AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange ) const = 0;
 	// K-Mod end
 	virtual int AI_totalBestBuildValue(CvArea* pArea) = 0;
 	virtual int AI_countBestBuilds(CvArea* pArea) = 0;													// Exposed to Python
@@ -1003,7 +1003,7 @@ public:
 	virtual int AI_calculateCulturePressure(bool bGreatWork = false) = 0;
 	virtual int AI_calculateWaterWorldPercent() = 0;
 	virtual int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true) = 0;
-	virtual int AI_yieldMultiplier(YieldTypes eYield) = 0;
+	virtual int AI_yieldMultiplier(YieldTypes eYield) const = 0;
 	virtual int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance = 7) = 0;
 	virtual int AI_cityThreat(bool bDangerPercent = false) = 0;
 	virtual BuildingTypes AI_bestAdvancedStartBuilding(int iPass) = 0;

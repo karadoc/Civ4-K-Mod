@@ -6313,7 +6313,7 @@ void CvCityAI::AI_updateRouteToCity()
 }
 
 
-int CvCityAI::AI_getEmphasizeYieldCount(YieldTypes eIndex)
+int CvCityAI::AI_getEmphasizeYieldCount(YieldTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -6321,13 +6321,13 @@ int CvCityAI::AI_getEmphasizeYieldCount(YieldTypes eIndex)
 }
 
 
-bool CvCityAI::AI_isEmphasizeYield(YieldTypes eIndex)
+bool CvCityAI::AI_isEmphasizeYield(YieldTypes eIndex) const
 {
 	return (AI_getEmphasizeYieldCount(eIndex) > 0);
 }
 
 
-int CvCityAI::AI_getEmphasizeCommerceCount(CommerceTypes eIndex)
+int CvCityAI::AI_getEmphasizeCommerceCount(CommerceTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < NUM_COMMERCE_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -6335,13 +6335,13 @@ int CvCityAI::AI_getEmphasizeCommerceCount(CommerceTypes eIndex)
 }
 
 
-bool CvCityAI::AI_isEmphasizeCommerce(CommerceTypes eIndex)
+bool CvCityAI::AI_isEmphasizeCommerce(CommerceTypes eIndex) const
 {
 	return (AI_getEmphasizeCommerceCount(eIndex) > 0);
 }
 
 
-bool CvCityAI::AI_isEmphasize(EmphasizeTypes eIndex)
+bool CvCityAI::AI_isEmphasize(EmphasizeTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumEmphasizeInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -6527,7 +6527,7 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 }
 
 // K-Mod, based on ideas from BBAI (this code is currently duplicated in AI_getYieldMultipliers and AI_countWorkedPoorTiles)
-int CvCityAI::AI_getGoodTileCount()
+int CvCityAI::AI_getGoodTileCount() const
 {
 	int iGoodTileCount = 0;
 	int aiFinalYields[NUM_YIELD_TYPES];
@@ -6603,7 +6603,7 @@ int CvCityAI::AI_getGoodTileCount()
 	return iGoodTileCount;
 }
 
-int CvCityAI::AI_countWorkedPoorTiles()
+int CvCityAI::AI_countWorkedPoorTiles() const
 {
 	int iWorkedPoorTileCount = 0;
 	int aiFinalYields[NUM_YIELD_TYPES];
@@ -6681,7 +6681,7 @@ int CvCityAI::AI_countWorkedPoorTiles()
 }
 
 // K-Mod, based on BBAI ideas
-int CvCityAI::AI_getTargetPopulation()
+int CvCityAI::AI_getTargetPopulation() const
 {
 	int iHealth = goodHealth() - badHealth() + getEspionageHealthCounter();
 	int iTargetSize = AI_getGoodTileCount();
@@ -6700,7 +6700,7 @@ int CvCityAI::AI_getTargetPopulation()
 
 // K-Mod note: This function was once used for Debug only, but I've made it the one and only way to get the yield multipliers.
 // This way we don't have to put up with duplicated code.
-void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange )
+void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange ) const
 {
 	PROFILE_FUNC();
 	
@@ -7096,7 +7096,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 }
 
 
-int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue, bool bEmphasizeIrrigation, BuildTypes* peBestBuild)
+int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue, bool bEmphasizeIrrigation, BuildTypes* peBestBuild) const
 {
 	// first check if the improvement is valid on this plot
 	// this also allows us work out whether or not the improvement will remove the plot feature...
@@ -10596,7 +10596,8 @@ int CvCityAI::AI_cityValue() const
 	/* original bts code
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH);
-	iValue += 100 * getYieldRate(YIELD_PRODUCTION); */
+	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
+	iValue -= 3 * calculateColonyMaintenanceTimes100(); */
 	// K-Mod. The original code fails for civs using high espionage or high culture.
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwner());
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
@@ -10608,8 +10609,16 @@ int CvCityAI::AI_cityValue() const
 	// but the problem is that CULTURE4 doesn't always run its full course. ... so I'm going to make a small ad hoc adjustment...
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
 	iValue *= kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)? 2 : 1;
-	//iValue -= 3 * calculateColonyMaintenanceTimes100(); // original bts code
-	iValue -= 2 * calculateColonyMaintenanceTimes100() + getMaintenanceTimes100() / 2;
+	int iCosts = 2 * calculateColonyMaintenanceTimes100() + getMaintenanceTimes100() / 2;
+	int iTargetPop = AI_getTargetPopulation();
+	if (getPopulation() > 0 && getPopulation() < iTargetPop)
+	{
+		iValue *= iTargetPop;
+		iValue /= std::max(1, getPopulation());
+		iCosts *= getPopulation();
+		iCosts /= iTargetPop;
+	}
+	iValue -= iCosts;
 	// K-Mod end
 
 /*
@@ -11218,7 +11227,7 @@ int CvCityAI::AI_buildingSpecialYieldChangeValue(BuildingTypes eBuilding, YieldT
 }
 
 
-int CvCityAI::AI_yieldMultiplier(YieldTypes eYield)
+int CvCityAI::AI_yieldMultiplier(YieldTypes eYield) const
 {
 	PROFILE_FUNC();
 	

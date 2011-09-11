@@ -88,13 +88,13 @@ public:
 	CvCity* AI_getRouteToCity() const;
 	void AI_updateRouteToCity();
 
-	int AI_getEmphasizeYieldCount(YieldTypes eIndex);
-	bool AI_isEmphasizeYield(YieldTypes eIndex);
+	int AI_getEmphasizeYieldCount(YieldTypes eIndex) const;
+	bool AI_isEmphasizeYield(YieldTypes eIndex) const;
 
-	int AI_getEmphasizeCommerceCount(CommerceTypes eIndex);
-	bool AI_isEmphasizeCommerce(CommerceTypes eIndex);
+	int AI_getEmphasizeCommerceCount(CommerceTypes eIndex) const;
+	bool AI_isEmphasizeCommerce(CommerceTypes eIndex) const;
 
-	bool AI_isEmphasize(EmphasizeTypes eIndex);
+	bool AI_isEmphasize(EmphasizeTypes eIndex) const;
 	void AI_setEmphasize(EmphasizeTypes eIndex, bool bNewValue);
 	void AI_forceEmphasizeCulture(bool bNewValue);
 
@@ -103,11 +103,11 @@ public:
 
 	int AI_clearFeatureValue(int iIndex);
 	// K-Mod note: the following functions were originally created by jdog5000 for debugging BBAI. I've adopted them and changed them.
-	int AI_getGoodTileCount();
-	int AI_countWorkedPoorTiles();
-	int AI_getTargetPopulation();
-	int AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue = 0, bool bEmphasizeIrrigation = false, BuildTypes* peBestBuild = 0);
-	void AI_getYieldMultipliers(int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange);
+	int AI_getGoodTileCount() const;
+	int AI_countWorkedPoorTiles() const;
+	int AI_getTargetPopulation() const;
+	int AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iFoodChange, int iClearFeatureValue = 0, bool bEmphasizeIrrigation = false, BuildTypes* peBestBuild = 0) const;
+	void AI_getYieldMultipliers(int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange) const;
 	// K-Mod end
 	BuildTypes AI_getBestBuild(int iIndex);
 	int AI_countBestBuilds(CvArea* pArea);
@@ -121,7 +121,7 @@ public:
 
 	int AI_calculateMilitaryOutput() const; // K-Mod
     
-    int AI_yieldMultiplier(YieldTypes eYield);
+    int AI_yieldMultiplier(YieldTypes eYield) const;
     void AI_updateSpecialYieldMultiplier();
     int AI_specialYieldMultiplier(YieldTypes eYield);
     
