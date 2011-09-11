@@ -296,21 +296,21 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 	}
 	m_iAverageGreatPeopleMultiplier = 0;
 	m_iAverageCulturePressure = 0;
-	m_iAveragesCacheTurn = -1;
+	//m_iAveragesCacheTurn = -1;
 	
 	m_iStrategyHash = 0;
-	m_iStrategyHashCacheTurn = -1;
+	//m_iStrategyHashCacheTurn = -1;
 
 // BBAI
 	m_iStrategyRand = -1; // was 0 (K-Mod)
 	m_iVictoryStrategyHash = 0;
-	m_iVictoryStrategyHashCacheTurn = -1;
+	//m_iVictoryStrategyHashCacheTurn = -1;
 // BBAI end
 
 	m_bWasFinancialTrouble = false;
 	m_iTurnLastProductionDirty = -1;
 
-	m_iUpgradeUnitsCacheTurn = -1;
+	//m_iUpgradeUnitsCacheTurn = -1;
 	m_iUpgradeUnitsCachedExpThreshold = 0;
 	m_iUpgradeUnitsCachedGold = 0;
 
@@ -383,6 +383,13 @@ void CvPlayerAI::AI_doTurnPre()
 	FAssertMsg(getCivilizationType() != NO_CIVILIZATION, "getCivilizationType() is not expected to be equal with NO_CIVILIZATION");
 
 	AI_invalidateCloseBordersAttitudeCache();
+	// K-Mod
+	AI_calculateAverages();
+	AI_updateStrategyHash();
+	AI_updateVictoryStrategyHash();
+	AI_updateGoldToUpgradeAllUnits();
+	// K-Mod end
+
 
 	AI_doCounter();
 
@@ -532,7 +539,7 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 	bool bAnyWar = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
 	int iStartingGold = getGold();
 	int iTargetGold = AI_goldTarget();
-	int iUpgradeBudget = (AI_goldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
+	int iUpgradeBudget = (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
 
 	iUpgradeBudget = std::min(iUpgradeBudget, iStartingGold - ((iTargetGold > iUpgradeBudget) ? (iTargetGold - iUpgradeBudget) : iStartingGold/2));
 
@@ -4556,7 +4563,7 @@ int CvPlayerAI::AI_goldTarget() const
 			iGold *= 10;
 		}
 
-		iGold += (AI_goldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
+		iGold += (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
 
 		CorporationTypes eActiveCorporation = NO_CORPORATION;
 		for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
@@ -13825,7 +13832,8 @@ void CvPlayerAI::AI_doResearch()
 	if (getCurrentResearch() == NO_TECH)
 	{
 		AI_chooseResearch();
-		AI_forceUpdateStrategies(); //to account for current research.
+		//AI_forceUpdateStrategies(); //to account for current research.
+		AI_updateStrategyHash(); // K-Mod
 	}
 }
 
@@ -16116,13 +16124,12 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(&m_iExtraGoldTarget);
 
 	pStream->Read(&m_iStrategyHash);
-	pStream->Read(&m_iStrategyHashCacheTurn);
+	//pStream->Read(&m_iStrategyHashCacheTurn); // disabled by K-Mod
 // BBAI (edited for K-Mod)
 	pStream->Read(&m_iStrategyRand);
 	pStream->Read(&m_iVictoryStrategyHash);
-	pStream->Read(&m_iVictoryStrategyHashCacheTurn);
 // BBAI end
-	pStream->Read(&m_iAveragesCacheTurn);
+	//pStream->Read(&m_iAveragesCacheTurn); // disabled by K-Mod
 	pStream->Read(&m_iAverageGreatPeopleMultiplier);
 	pStream->Read(&m_iAverageCulturePressure); // K-Mod
 
@@ -16130,7 +16137,7 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiAverageCommerceMultiplier);
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiAverageCommerceExchange);
 
-	pStream->Read(&m_iUpgradeUnitsCacheTurn);
+	//pStream->Read(&m_iUpgradeUnitsCacheTurn); // disabled by K-Mod
 	pStream->Read(&m_iUpgradeUnitsCachedExpThreshold);
 	pStream->Read(&m_iUpgradeUnitsCachedGold);
 
@@ -16217,13 +16224,12 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(m_iExtraGoldTarget);
 
 	pStream->Write(m_iStrategyHash);
-	pStream->Write(m_iStrategyHashCacheTurn);
+	//pStream->Write(m_iStrategyHashCacheTurn); // disabled by K-Mod
 // BBAI
 	pStream->Write(m_iStrategyRand);
 	pStream->Write(m_iVictoryStrategyHash);
-	pStream->Write(m_iVictoryStrategyHashCacheTurn);
 // BBAI end
-	pStream->Write(m_iAveragesCacheTurn);
+	//pStream->Write(m_iAveragesCacheTurn);
 	pStream->Write(m_iAverageGreatPeopleMultiplier);
 	pStream->Write(m_iAverageCulturePressure); // K-Mod
 
@@ -16231,7 +16237,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(NUM_COMMERCE_TYPES, m_aiAverageCommerceMultiplier);
 	pStream->Write(NUM_COMMERCE_TYPES, m_aiAverageCommerceExchange);
 
-	pStream->Write(m_iUpgradeUnitsCacheTurn);
+	//pStream->Write(m_iUpgradeUnitsCacheTurn); // disabled by K-Mod
 	pStream->Write(m_iUpgradeUnitsCachedExpThreshold);
 	pStream->Write(m_iUpgradeUnitsCachedGold);
 
@@ -18120,32 +18126,22 @@ bool CvPlayerAI::AI_isDoVictoryStrategyLevel3() const
 	return false;
 }
 
-void CvPlayerAI::AI_forceUpdateVictoryStrategies()
-{
-	//this forces a recache.
-	m_iVictoryStrategyHashCacheTurn = -1;
-}
-
-int CvPlayerAI::AI_getVictoryStrategyHash() const
+void CvPlayerAI::AI_updateVictoryStrategyHash()
 {
 	PROFILE_FUNC();
 
 	if( isBarbarian() || isMinorCiv() || !isAlive() )
 	{
-		return 0;
+		m_iVictoryStrategyHash = 0;
+		return;
 	}
 
-    if ((m_iVictoryStrategyHash != 0) && (m_iVictoryStrategyHashCacheTurn == GC.getGameINLINE().getGameTurn()))
-    {
-        return m_iVictoryStrategyHash;
-    }
- 
 	m_iVictoryStrategyHash = AI_DEFAULT_VICTORY_STRATEGY;
-    m_iVictoryStrategyHashCacheTurn = GC.getGameINLINE().getGameTurn();
+    //m_iVictoryStrategyHashCacheTurn = GC.getGameINLINE().getGameTurn();
 	
 	if (getCapitalCity() == NULL)
     {
-        return m_iVictoryStrategyHash;
+        return;
     }
 
 	bool bStartedOtherLevel3 = false;
@@ -18267,8 +18263,6 @@ int CvPlayerAI::AI_getVictoryStrategyHash() const
             }
 	    }
 	}
-
-	return m_iVictoryStrategyHash;
 }
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -18311,19 +18305,16 @@ bool CvPlayerAI::AI_isDoStrategy(int iStrategy) const
     return (iStrategy & AI_getStrategyHash());
 }
 
+/* obsolete original bts code
 void CvPlayerAI::AI_forceUpdateStrategies()
 {
 	//this forces a recache.
 	m_iStrategyHashCacheTurn = -1;
-}
+} */
 
-int CvPlayerAI::AI_getStrategyHash() const
+// K-mod. The body of this function use to be inside "AI_getStrategyHash"
+void CvPlayerAI::AI_updateStrategyHash()
 {
-    if ((m_iStrategyHash != 0) && (m_iStrategyHashCacheTurn == GC.getGameINLINE().getGameTurn()))
-    {
-        return m_iStrategyHash;        
-    }
-    
     const FlavorTypes AI_FLAVOR_MILITARY = (FlavorTypes)0;
 	const FlavorTypes AI_FLAVOR_RELIGION = (FlavorTypes)1;
     const FlavorTypes AI_FLAVOR_PRODUCTION = (FlavorTypes)2;
@@ -18332,13 +18323,11 @@ int CvPlayerAI::AI_getStrategyHash() const
     const FlavorTypes AI_FLAVOR_CULTURE = (FlavorTypes)5;
     const FlavorTypes AI_FLAVOR_GROWTH = (FlavorTypes)6;
     
-    int iI, iJ, iK;
     UnitTypes eLoopUnit;
 
 	int iLastStrategyHash = m_iStrategyHash;
     
     m_iStrategyHash = AI_DEFAULT_STRATEGY;
-    m_iStrategyHashCacheTurn = GC.getGameINLINE().getGameTurn();
     
 	if (AI_getFlavorValue(AI_FLAVOR_PRODUCTION) >= 2) // 0, 2, 5 or 10 in default xml [augustus 5, frederick 10, huayna 2, jc 2, chinese leader 2, qin 5, ramsess 2, roosevelt 5, stalin 2]
 	{
@@ -18347,7 +18336,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	
 	if (getCapitalCity() == NULL)
     {
-        return m_iStrategyHash;
+        return;
     }
     
     //int iNonsense = AI_getStrategyRand();
@@ -18371,7 +18360,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	int iTypicalDefence = getTypicalUnitValue(UNITAI_CITY_DEFENSE);
 	// K-Mod end
 
-	for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
 	{
 		eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
 		
@@ -18461,7 +18450,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	{
 		int iTotalPower = 0;
 		int iTotalWeightedValue = 0;
-		for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
 			CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iI);
 			if (kPlayer.getTeam() != getTeam())
@@ -18560,7 +18549,7 @@ int CvPlayerAI::AI_getStrategyHash() const
                 
 				iMissionary += std::min(iMetCount, 5) * 7;
 
-                for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+                for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
                 {
 					if (iI != getID())
                     {
@@ -18682,7 +18671,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	int iCloseTargets = 0;
 	int iOurDefensivePower = GET_TEAM(getTeam()).getDefensivePower();
 
-    for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+    for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
     {
 		if( GET_PLAYER((PlayerTypes)iI).isAlive() && !GET_PLAYER((PlayerTypes)iI).isMinorCiv() && !GET_PLAYER((PlayerTypes)iI).isBarbarian() )
 		{
@@ -18849,7 +18838,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 	    iDagger /= 10;
 	    iDagger += 5 * std::min(8, AI_getFlavorValue(AI_FLAVOR_MILITARY));
 	    
-        for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+        for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
         {
             eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
 
@@ -18897,7 +18886,7 @@ int CvPlayerAI::AI_getStrategyHash() const
                         int iOrBonusCount = 0;
                         int iOrBonusHave = 0;
                         
-                        for (iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
+                        for (int iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
                         {
                             BonusTypes eBonus = (BonusTypes)iJ;
                             if (eBonus != NO_BONUS)
@@ -18910,7 +18899,7 @@ int CvPlayerAI::AI_getStrategyHash() const
                                     }
                                 }
 
-                                for (iK = 0; iK < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); iK++)
+                                for (int iK = 0; iK < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); iK++)
                                 {
                                     if (GC.getUnitInfo(eLoopUnit).getPrereqOrBonuses(iK) == eBonus)
                                     {
@@ -19007,7 +18996,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 			iCrushValue += 3;
 		}
 
-		for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
+		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       02/14/10                        denev & jdog5000      */
@@ -19059,7 +19048,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 						{
 							if ((iJ != iI) && iJ != getID())
 */
-						for (iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
+						for (int iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
 						{
 							if ((iJ != iI) && iJ != getTeam() && GET_TEAM((TeamTypes)iJ).isAlive())
 /************************************************************************************************/
@@ -19102,7 +19091,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 
 		int iTheirVictoryCountdown = MAX_INT;
 		
-		for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
+		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       02/14/10                             jdog5000         */
@@ -19314,13 +19303,7 @@ int CvPlayerAI::AI_getStrategyHash() const
 		m_iStrategyHash &= ~AI_STRATEGY_OWABWNW;
 		m_iStrategyHash &= ~AI_STRATEGY_FASTMOVERS;
 	}
-
-	return m_iStrategyHash;   
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 void CvPlayerAI::AI_nowHasTech(TechTypes eTech)
 {
@@ -19538,12 +19521,13 @@ int CvPlayerAI::AI_getEnemyPlotStrength(CvPlot* pPlot, int iRange, bool bDefensi
 	
 }
 
-int CvPlayerAI::AI_goldToUpgradeAllUnits(int iExpThreshold) const
+// K-Mod. This function use to be the bulk of AI_goldToUpgradeAllUnits()
+void CvPlayerAI::AI_updateGoldToUpgradeAllUnits()
 {
-	if (m_iUpgradeUnitsCacheTurn == GC.getGameINLINE().getGameTurn() && m_iUpgradeUnitsCachedExpThreshold == iExpThreshold)
+	/*if (m_iUpgradeUnitsCacheTurn == GC.getGameINLINE().getGameTurn() && m_iUpgradeUnitsCachedExpThreshold == iExpThreshold)
 	{
 		return m_iUpgradeUnitsCachedGold;
-	}
+	}*/
 
 	int iTotalGold = 0;
 	
@@ -19555,11 +19539,12 @@ int CvPlayerAI::AI_goldToUpgradeAllUnits(int iExpThreshold) const
 	int iLoop;
 	for (CvUnit* pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 	{
+		/*
 		// if experience is below threshold, skip this unit
 		if (pLoopUnit->getExperience() < iExpThreshold)
 		{
 			continue;
-		}
+		}*/
 		
 		UnitTypes eUnitType = pLoopUnit->getUnitType();
 
@@ -19642,11 +19627,11 @@ int CvPlayerAI::AI_goldToUpgradeAllUnits(int iExpThreshold) const
 		}
 	}
 
-	m_iUpgradeUnitsCacheTurn = GC.getGameINLINE().getGameTurn();
-	m_iUpgradeUnitsCachedExpThreshold = iExpThreshold;
+	/*m_iUpgradeUnitsCacheTurn = GC.getGameINLINE().getGameTurn();
+	m_iUpgradeUnitsCachedExpThreshold = iExpThreshold; */
 	m_iUpgradeUnitsCachedGold = iTotalGold;
 
-	return iTotalGold;
+	//return iTotalGold;
 }
 
 int CvPlayerAI::AI_goldTradeValuePercent() const
@@ -19665,10 +19650,10 @@ int CvPlayerAI::AI_averageYieldMultiplier(YieldTypes eYield) const
 	FAssert(eYield > -1);
 	FAssert(eYield < NUM_YIELD_TYPES);
 	
-	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
+	/*if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
 	{
 		AI_calculateAverages();
-	}
+	}*/
 	
 	FAssert(m_aiAverageYieldMultiplier[eYield] > 0);
 	return m_aiAverageYieldMultiplier[eYield];
@@ -19679,30 +19664,30 @@ int CvPlayerAI::AI_averageCommerceMultiplier(CommerceTypes eCommerce) const
 	FAssert(eCommerce > -1);
 	FAssert(eCommerce < NUM_COMMERCE_TYPES);
 	
-	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
+	/*if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
 	{
 		AI_calculateAverages();
-	}
+	}*/
 	
 	return m_aiAverageCommerceMultiplier[eCommerce];	
 }
 
 int CvPlayerAI::AI_averageGreatPeopleMultiplier() const
 {
-	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
+	/*if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
 	{
 		AI_calculateAverages();
-	}
+	}*/
 	return m_iAverageGreatPeopleMultiplier;	
 }
 
 // K-Mod
 int CvPlayerAI::AI_averageCulturePressure() const
 {
-	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
+	/*if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
 	{
 		AI_calculateAverages();
-	}
+	}*/
 	return m_iAverageCulturePressure;	
 }
 
@@ -19712,15 +19697,15 @@ int CvPlayerAI::AI_averageCommerceExchange(CommerceTypes eCommerce) const
 	FAssert(eCommerce > -1);
 	FAssert(eCommerce < NUM_COMMERCE_TYPES);
 	
-	if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
+	/*if (m_iAveragesCacheTurn != GC.getGameINLINE().getGameTurn())
 	{
 		AI_calculateAverages();
-	}
+	}*/
 	
 	return m_aiAverageCommerceExchange[eCommerce];
 }
 
-void CvPlayerAI::AI_calculateAverages() const
+void CvPlayerAI::AI_calculateAverages()
 {
 	CvCity* pLoopCity;
 	int iLoop;
@@ -19840,7 +19825,7 @@ void CvPlayerAI::AI_calculateAverages() const
 	else
 		m_iAverageCulturePressure = iWeightedTotal / iTotal;
 
-	m_iAveragesCacheTurn = GC.getGameINLINE().getGameTurn();
+	//m_iAveragesCacheTurn = GC.getGameINLINE().getGameTurn();
 }
 
 // K-Mod edition

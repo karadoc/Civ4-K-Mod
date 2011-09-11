@@ -314,8 +314,8 @@ public:
 	bool AI_isDoVictoryStrategy(int iVictoryStrategy) const;
 	bool AI_isDoVictoryStrategyLevel4() const;
 	bool AI_isDoVictoryStrategyLevel3() const;
-	void AI_forceUpdateVictoryStrategies();
-	int AI_getVictoryStrategyHash() const;
+	inline int AI_getVictoryStrategyHash() const { return m_iVictoryStrategyHash; }
+	void AI_updateVictoryStrategyHash(); // K-Mod
 	void AI_initStrategyRand(); // K-Mod
 	int AI_getStrategyRand(int iShift) const;
 /************************************************************************************************/
@@ -325,7 +325,7 @@ public:
 	int AI_cultureVictoryTechValue(TechTypes eTech) const;
 	
 	bool AI_isDoStrategy(int iStrategy) const;
-	void AI_forceUpdateStrategies();
+	//void AI_forceUpdateStrategies(); // obsolete function from Original BtS
 
 	void AI_nowHasTech(TechTypes eTech);
 	
@@ -334,7 +334,11 @@ public:
     int AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const;
     int AI_getEnemyPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const;
 
-	int AI_goldToUpgradeAllUnits(int iExpThreshold = 0) const;
+	//int AI_goldToUpgradeAllUnits(int iExpThreshold = 0) const;
+	// K-Mod
+	inline int AI_getGoldToUpgradeAllUnits() const { return m_iUpgradeUnitsCachedGold; }
+	void AI_updateGoldToUpgradeAllUnits();
+	// K-Mod end
 
 	int AI_goldTradeValuePercent() const;
 	
@@ -431,25 +435,13 @@ protected:
 	int m_iReligionTimer;
 	int m_iExtraGoldTarget;
 	
+	/* original bts code
 	mutable int m_iStrategyHash;
 	mutable int m_iStrategyHashCacheTurn;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/18/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-	int m_iStrategyRand;
-	mutable int m_iVictoryStrategyHash;
-	mutable int m_iVictoryStrategyHashCacheTurn;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
-	
+
 	mutable int m_iAveragesCacheTurn;
 	
 	mutable int m_iAverageGreatPeopleMultiplier;
-
-	mutable int m_iAverageCulturePressure; // K-Mod
 	
 	mutable int *m_aiAverageYieldMultiplier;
 	mutable int *m_aiAverageCommerceMultiplier;
@@ -457,8 +449,26 @@ protected:
 	
 	mutable int m_iUpgradeUnitsCacheTurn;
 	mutable int m_iUpgradeUnitsCachedExpThreshold;
-	mutable int m_iUpgradeUnitsCachedGold;
-	
+	mutable int m_iUpgradeUnitsCachedGold; */
+
+	// K-Mod. The original caching method was just begging for OOS bugs.
+	int m_iStrategyHash;
+	// BBAI variables (adjusted for K-Mod)
+	int m_iStrategyRand;
+	int m_iVictoryStrategyHash;
+	// end BBAI
+
+	int m_iAverageGreatPeopleMultiplier;
+
+	int m_iAverageCulturePressure; // K-Mod culture pressure
+
+	int *m_aiAverageYieldMultiplier;
+	int *m_aiAverageCommerceMultiplier;
+	int *m_aiAverageCommerceExchange;
+
+	int m_iUpgradeUnitsCachedExpThreshold;
+	int m_iUpgradeUnitsCachedGold; 
+	// K-Mod end
 	
 	int *m_aiNumTrainAIUnits;
 	int *m_aiNumAIUnits;
@@ -508,9 +518,11 @@ protected:
 	void AI_doCheckFinancialTrouble();
 	
 	bool AI_disbandUnit(int iExpThreshold, bool bObsolete);
-	
-	int AI_getStrategyHash() const;
-	void AI_calculateAverages() const;
+
+	// K-Mod. I've moved the bulk of AI_getStrategyHash into a new function: AI_updateStrategyHash.
+	inline int AI_getStrategyHash() const { return m_iStrategyHash; }
+	void AI_updateStrategyHash();
+	void AI_calculateAverages();
 	
 	int AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent=false) const;
 	int AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent=false) const;

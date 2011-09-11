@@ -8122,7 +8122,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 							if (iHurryGold < (GET_PLAYER(getOwnerINLINE()).getGold() / 3))
 */
 							int iGoldThreshold = GET_PLAYER(getOwnerINLINE()).getGold();
-							iGoldThreshold -= (GET_PLAYER(getOwnerINLINE()).AI_goldToUpgradeAllUnits() / ((GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0) ? 1 : 3));
+							iGoldThreshold -= (GET_PLAYER(getOwnerINLINE()).AI_getGoldToUpgradeAllUnits() / ((GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0) ? 1 : 3));
 							iGoldThreshold /= 3;
 							if (iHurryGold < iGoldThreshold)
 /************************************************************************************************/
