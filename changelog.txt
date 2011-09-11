@@ -134,6 +134,9 @@ AI changes:
 + Rewrote the AI's city evaluation of specialists.
 + Rewrote parts of the AI's evaluation of corporation HQ, effect on cities, and civics. [It will now choose its HQ cities more wisely.]
 
+v0.97b
++ Fixed a bug which was completely preventing global warming.
+
 --
 
 v0.96 changelist
