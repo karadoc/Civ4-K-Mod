@@ -1437,6 +1437,7 @@ void CvCityAI::AI_chooseProduction()
 	}*/
 
 	// K-Mod, short-circuit production choice if we already have something really good in mind
+	if (kPlayer.getNumCities() > 1) // don't short circuit if this is our only city.
 	{
 		int iOdds = std::max(0, 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))

@@ -39,6 +39,8 @@ public:
 
 	int AI_getFlavorValue(FlavorTypes eFlavor) const;
 
+	void updateCacheData(); // K-Mod
+
 	void AI_doTurnPre();
 	void AI_doTurnPost();
 	void AI_doTurnUnitsPre();
@@ -466,7 +468,6 @@ protected:
 	int *m_aiAverageCommerceMultiplier;
 	int *m_aiAverageCommerceExchange;
 
-	int m_iUpgradeUnitsCachedExpThreshold;
 	int m_iUpgradeUnitsCachedGold; 
 	// K-Mod end
 	

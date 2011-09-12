@@ -200,6 +200,7 @@ void CvPlayerAI::AI_init()
 		AI_setCivicTimer((getMaxAnarchyTurns() == 0) ? 1 : 2);
 	}
 	AI_initStrategyRand(); // K-Mod
+	updateCacheData(); // K-Mod
 }
 
 
@@ -311,7 +312,7 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 	m_iTurnLastProductionDirty = -1;
 
 	//m_iUpgradeUnitsCacheTurn = -1;
-	m_iUpgradeUnitsCachedExpThreshold = 0;
+	//m_iUpgradeUnitsCachedExpThreshold = 0;
 	m_iUpgradeUnitsCachedGold = 0;
 
 	m_aiAICitySites.clear();
@@ -373,6 +374,21 @@ int CvPlayerAI::AI_getFlavorValue(FlavorTypes eFlavor) const
 	return GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(eFlavor);
 }
 
+// K-Mod
+void CvPlayerAI::updateCacheData()
+{
+	if (isAlive())
+	{
+		AI_calculateAverages();
+		AI_updateVictoryStrategyHash();
+		if (!isHuman())
+		{
+			AI_updateStrategyHash();
+			AI_updateGoldToUpgradeAllUnits();
+		}
+	}
+}
+// K-Mod end
 
 void CvPlayerAI::AI_doTurnPre()
 {
@@ -383,13 +399,6 @@ void CvPlayerAI::AI_doTurnPre()
 	FAssertMsg(getCivilizationType() != NO_CIVILIZATION, "getCivilizationType() is not expected to be equal with NO_CIVILIZATION");
 
 	AI_invalidateCloseBordersAttitudeCache();
-	// K-Mod
-	AI_calculateAverages();
-	AI_updateStrategyHash();
-	AI_updateVictoryStrategyHash();
-	AI_updateGoldToUpgradeAllUnits();
-	// K-Mod end
-
 
 	AI_doCounter();
 
@@ -16138,7 +16147,7 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiAverageCommerceExchange);
 
 	//pStream->Read(&m_iUpgradeUnitsCacheTurn); // disabled by K-Mod
-	pStream->Read(&m_iUpgradeUnitsCachedExpThreshold);
+	//pStream->Read(&m_iUpgradeUnitsCachedExpThreshold); // disabled by K-Mod
 	pStream->Read(&m_iUpgradeUnitsCachedGold);
 
 	pStream->Read(NUM_UNITAI_TYPES, m_aiNumTrainAIUnits);
@@ -16238,7 +16247,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(NUM_COMMERCE_TYPES, m_aiAverageCommerceExchange);
 
 	//pStream->Write(m_iUpgradeUnitsCacheTurn); // disabled by K-Mod
-	pStream->Write(m_iUpgradeUnitsCachedExpThreshold);
+	//pStream->Write(m_iUpgradeUnitsCachedExpThreshold); // disabled by K-Mod
 	pStream->Write(m_iUpgradeUnitsCachedGold);
 
 	pStream->Write(NUM_UNITAI_TYPES, m_aiNumTrainAIUnits);

@@ -10909,6 +10909,9 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 
 		if (isTurnActive())
 		{
+			// K-Mod
+			GET_PLAYER(getID()).updateCacheData();
+			// K-Mod end
 			if (GC.getLogging())
 			{
 				if (gDLL->getChtLvl() > 0)
