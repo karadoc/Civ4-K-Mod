@@ -5734,7 +5734,7 @@ bool CvUnit::spread(ReligionTypes eReligion)
 		int iPresentReligions = pCity->getReligionCount();
 		int iMissingReligions = GC.getNumReligionInfos() - iPresentReligions;
 		int iSpreadProb = iPresentReligions * (m_pUnitInfo->getReligionSpreads(eReligion) + pCity->getPopulation())
-		                + iMissingReligions * (100 - 10 * iPresentReligions);
+			+ iMissingReligions * std::max(100, 100 - 10 * iPresentReligions + pCity->getPopulation());
 		iSpreadProb /= GC.getNumReligionInfos();
 
 		bool bSuccess;

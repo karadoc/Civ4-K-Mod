@@ -480,27 +480,24 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 	PROFILE_FUNC();
 
 	short aiYields[NUM_YIELD_TYPES];
-	int iTempValue;
-	int iGreatPeopleRate;
 	int iValue;
-	int iI, iJ;
 	int iNumCities = GET_PLAYER(getOwnerINLINE()).getNumCities();
     
-	for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
 		aiYields[iI] = GET_PLAYER(getOwnerINLINE()).specialistYield(eSpecialist, ((YieldTypes)iI));
 	}
 
 	short int aiCommerceYields[NUM_COMMERCE_TYPES];
 	
-	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
 		aiCommerceYields[iI] = GET_PLAYER(getOwnerINLINE()).specialistCommerce(eSpecialist, ((CommerceTypes)iI));
 	}
 	
 	iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove) * 100;
 
-	iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
+	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
 
 	int iEmphasisCount = 0;
 	if (iGreatPeopleRate != 0)
@@ -529,7 +526,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			}
 		}
 		
-		iTempValue = 100 * iGreatPeopleRate * iGPPValue;
+		int iTempValue = 100 * iGreatPeopleRate * iGPPValue;
 		
 //		if (isHuman() && (getGreatPeopleUnitRate(iGreatPeopleType) == 0)
 //			&& (getForceSpecialistCount(eSpecialist) == 0) && !AI_isEmphasizeGreatPeople())
@@ -573,7 +570,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
             int iBestSpreadValue = 0;
 
 			
-			for (iJ = 0; iJ < GC.getNumReligionInfos(); iJ++)
+			for (int iJ = 0; iJ < GC.getNumReligionInfos(); iJ++)
             {
                 ReligionTypes eReligion = (ReligionTypes) iJ;
 
@@ -651,19 +648,13 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 	if (0 != iExperience)
 	{
 		int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
-		int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
 
-		iTempValue += 100 * iExperience * ((iHasMetCount > 0) ? 4 : 2);
+		iValue += 100 * iExperience * 4;
 		if (iProductionRank <= iNumCities/2 + 1)
 		{
-			iTempValue += 100 * iExperience *  4;
+			iValue += 100 * iExperience *  4;
 		}
-		iTempValue += (getMilitaryProductionModifier() * iExperience * 8);
-
-		iTempValue *= 100;
-		iTempValue /= (100+10*(getFreeExperience()/5));
-
-		iValue += iTempValue;
+		iValue += (getMilitaryProductionModifier() * iExperience * 8);
 	}
 
 	return iValue;
@@ -728,13 +719,19 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist)
 	if (0 != iExperience)
 	{
 		int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
+		int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
 
-		iValue += 100 * iExperience * 4;
+		int iTempValue = 100 * iExperience * ((iHasMetCount > 0) ? 4 : 2);
 		if (iProductionRank <= kPlayer.getNumCities()/2 + 1)
 		{
-			iValue += 100 * iExperience *  4;
+			iTempValue += 100 * iExperience *  4;
 		}
-		iValue += (getMilitaryProductionModifier() * iExperience * 8);
+		iTempValue += (getMilitaryProductionModifier() * iExperience * 8);
+
+		iTempValue *= 100;
+		iTempValue /= (100+10*(getFreeExperience()/5));
+
+		iValue += iTempValue;
 	}
 
 	return iValue;
@@ -4358,7 +4355,17 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 				if (kBuilding.isGovernmentCenter())
 				{
 					FAssert(!(kBuilding.isCapital()));
-					iValue += ((calculateDistanceMaintenance() - 3) * iNumCitiesInArea);
+					/* original bts code
+					iValue += ((calculateDistanceMaintenance() - 3) * iNumCitiesInArea); */
+					// K-mod. More bonus for colonies, because it reduces that extra maintenance too.
+					int iTempValue = (calculateDistanceMaintenance() - 3) * iNumCitiesInArea;
+					const CvCity* pCapitalCity = kOwner.getCapitalCity();
+					if (pCapitalCity == NULL || pCapitalCity->area() != area())
+					{
+						iTempValue *= 2;
+					}
+					iValue += iTempValue;
+					// K-Mod end
 				}
 
 				if (kBuilding.isMapCentering())
