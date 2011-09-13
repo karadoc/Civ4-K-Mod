@@ -2472,7 +2472,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 					int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
 					iTheirPoints -= (iTheirPoints*iAttitude)/(2*12);
 
-					if (iTheirPoints > iOurPoints)
+					if (iTheirPoints > iOurPoints && (!isHuman() || getEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam) > 0))
 					{
 						iEspBehindWeight += 1;
 						if (kLoopTeam.AI_getAttitude(getTeam()) <= ATTITUDE_CAUTIOUS
@@ -2510,7 +2510,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
 			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 1;
 			// K-Mod end
 			iWeight *= AI_getEspionageWeight();
-			iWeight /= (2 * iLocalTeamCount + iTeamCount)/3 + 1;
+			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 1;
 			iWeight /= 100;
 
 			/* if( getCommercePercent(COMMERCE_ESPIONAGE) == 0 )

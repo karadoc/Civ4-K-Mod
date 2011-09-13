@@ -11125,7 +11125,11 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 				}
 			}
 
-			if (getID() == GC.getGameINLINE().getActivePlayer())
+			/* original bts code
+			if (getID() == GC.getGameINLINE().getActivePlayer()) */
+			// K-Mod. clear messages for AI players as well, otherwise they never get cleared
+			if (getID() == GC.getGameINLINE().getActivePlayer() || !isHuman())
+			// K-Mod end
 			{
 				gDLL->getInterfaceIFace()->setForcePopup(false);
 				gDLL->getInterfaceIFace()->clearQueuedPopups();
