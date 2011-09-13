@@ -1260,6 +1260,7 @@ void CvCityAI::AI_chooseProduction()
 
 		if(AI_chooseBuilding(iStrikeFlags))
 		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses strike building (w/ flags)", getName().GetCString());
 			return;
 		}
 
@@ -1273,9 +1274,22 @@ void CvCityAI::AI_chooseProduction()
 		// just pick any building, any duration
 		if (AI_chooseBuilding())
 		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses strike building (w/o flags)", getName().GetCString());
 			return;
 		}
 	}
+
+	// K-Mod, short-circuit production choice if we already have something really good in mind
+	if (kPlayer.getNumCities() > 1) // don't use this short circuit if this is our only city.
+	{
+		int iOdds = std::max(0, 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10);
+		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 1 (odds: %d)", getName().GetCString(), iOdds);
+			return;
+		}
+	}
+	// K-Mod end
 
 	// So what's the right detection of defense which works in early game too?
 	int iPlotSettlerCount = (iNumSettlers == 0) ? 0 : plot()->plotCount(PUF_isUnitAIType, UNITAI_SETTLE, -1, getOwnerINLINE());
@@ -1316,6 +1330,7 @@ void CvCityAI::AI_chooseProduction()
 		{
 			if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, 30))
 			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses zero culture build", getName().GetCString());
 				return;
 			}
 		}
@@ -1324,7 +1339,7 @@ void CvCityAI::AI_chooseProduction()
 	// Early game worker logic
 /***
 **** K-Mod, 10/sep/10, Karadoc
-**** Changed "AI_totalBestBuildValue(area()) > 10" to "(AI_totalBestBuildValue(area())+5*iLandBonuses) > 10"
+**** Changed "AI_totalBestBuildValue(area()) > 10" to "(AI_totalBestBuildValue(area())+50*iLandBonuses) > 100"
 **** Also, I moved the iLandBonuses declaration here. It use to be lower down.
 ***/
 	int iLandBonuses = AI_countNumImprovableBonuses(true, kPlayer.getCurrentResearch());
@@ -1347,7 +1362,7 @@ void CvCityAI::AI_chooseProduction()
 			}
 
 			//if( iExistingWorkers == 0 && AI_totalBestBuildValue(area()) > 10)
-			if( iExistingWorkers == 0 && (AI_totalBestBuildValue(area())+5*iLandBonuses) > 10)
+			if (iExistingWorkers == 0 && AI_totalBestBuildValue(area())+50*iLandBonuses > 100)
 			{
 				if (!bChooseWorker && AI_chooseUnit(UNITAI_WORKER))
 				{
@@ -1433,18 +1448,6 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}*/
 
-	// K-Mod, short-circuit production choice if we already have something really good in mind
-	if (kPlayer.getNumCities() > 1) // don't use this short circuit if this is our only city.
-	{
-		int iOdds = std::max(0, 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10);
-		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
-		{
-			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 1 (odds: %d)", getName().GetCString(), iOdds);
-   			return;
-		}
-	}
-	// K-Mod end
-     
 	// -------------------- BBAI Notes -------------------------
 	// Minimal attack force, both land and sea
     if (bDanger) 
@@ -3310,7 +3313,12 @@ UnitTypes CvCityAI::AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync, AdvisorTypes
 		// BBAI NOTE: This is where small city worker and settler production is blocked
 		if (GET_PLAYER(getOwnerINLINE()).getNumCities() <= 2)
 		{
-			bGrowMore = ((getPopulation() < 3) && (AI_countGoodTiles(true, false, 100) >= getPopulation()));
+			/* original bts code
+			bGrowMore = ((getPopulation() < 3) && (AI_countGoodTiles(true, false, 100) >= getPopulation())); */
+			// K-Mod. We need to allow the starting city to build a worker at size 1.
+			bGrowMore = (eUnitAI != UNITAI_WORKER || GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_WORKER) > 0)
+				&& getPopulation() < 3 && AI_countGoodTiles(true, false, 100) >= getPopulation();
+			// K-Mod end
 		}
 		else
 		{
@@ -7605,9 +7613,9 @@ void CvCityAI::AI_updateBestBuild()
 				AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, 0, 0, iDesiredFoodChange);
 				int iWorkerCount = GET_PLAYER(getOwner()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD); // K-Mod, originally this was all workers at the city.
 				m_aiBestBuildValue[iI] *= 4;
-				m_aiBestBuildValue[iI] += 3 + iWorkerCount;
-				m_aiBestBuildValue[iI] /= (4 + iWorkerCount);
-				
+				m_aiBestBuildValue[iI] += 4 + iWorkerCount; // was 3 (and 4)
+				m_aiBestBuildValue[iI] /= (5 + iWorkerCount);
+
 				if (m_aiBestBuildValue[iI] > 0)
 				{
 					FAssert(m_aeBestBuild[iI] != NO_BUILD);
@@ -10431,6 +10439,16 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 	//Chop - maybe integrate this better with the other feature-clear code tho the logic
 	//is kinda different
+	// K-Mod. Don't chop the feature if we need it for our best improvement!
+	if (bChop)
+	{
+		if (eBestBuild != NO_BUILD && GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT
+			&& GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature())
+		{
+			bChop = false;
+		}
+	}
+	// K-Mod end
 	if (bChop && (eBonus == NO_BONUS) && (pPlot->getFeatureType() != NO_FEATURE) &&
 		(pPlot->getImprovementType() == NO_IMPROVEMENT) && !(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS)))
 	{

@@ -18381,10 +18381,14 @@ void CvPlayerAI::AI_updateStrategyHash()
 				{
 					CvUnitInfo& kLoopUnit = GC.getUnitInfo(eLoopUnit);
 					bool bIsUU = (GC.getUnitClassInfo((UnitClassTypes)iI).getDefaultUnitIndex()) != (GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI));
+					/* original bts code
 					if (kLoopUnit.getUnitAIType(UNITAI_RESERVE) || kLoopUnit.getUnitAIType(UNITAI_ATTACK_CITY)
-						|| kLoopUnit.getUnitAIType(UNITAI_COUNTER) || kLoopUnit.getUnitAIType(UNITAI_PILLAGE))
+						|| kLoopUnit.getUnitAIType(UNITAI_COUNTER) || kLoopUnit.getUnitAIType(UNITAI_PILLAGE)) */
+					// K-Mod. Original code was missing the obvious: UNITAI_ATTACK. Was this a bug? (I'm skipping "pillage".)
+					if (kLoopUnit.getUnitAIType(UNITAI_ATTACK) || kLoopUnit.getUnitAIType(UNITAI_ATTACK_CITY)
+						|| kLoopUnit.getUnitAIType(UNITAI_RESERVE) || kLoopUnit.getUnitAIType(UNITAI_COUNTER))
+					// K-Mod end
 					{
-
 						iAttackUnitCount++;
 
 						//UU love
@@ -18485,15 +18489,15 @@ void CvPlayerAI::AI_updateStrategyHash()
 	}
 
 	//if (iAttackUnitCount <= 1)
-	if (iAttackUnitCount <= 1 ||
-		(100*iAverageEnemyUnit > 140*iTypicalAttack && 100*iAverageEnemyUnit > 140*iTypicalDefence))
+	if ((iAttackUnitCount <= 1 && GC.getGame().getGameTurn() > GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getBarbPercent()/20)
+		|| (100*iAverageEnemyUnit > 140*iTypicalAttack && 100*iAverageEnemyUnit > 140*iTypicalDefence))
 	{
 		m_iStrategyHash |= AI_STRATEGY_GET_BETTER_UNITS;
 	}
 	// K-Mod end
 	if (iBestFastUnitCombat > iBestSlowUnitCombat)
 	{
-		m_iStrategyHash |= AI_STRATEGY_FASTMOVERS;		
+		m_iStrategyHash |= AI_STRATEGY_FASTMOVERS;
 		if (bHasMobileArtillery && bHasMobileAntiair)
 		{
 			m_iStrategyHash |= AI_STRATEGY_LAND_BLITZ;
