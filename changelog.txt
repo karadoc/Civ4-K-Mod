@@ -1,5 +1,36 @@
-This is K-Mod version 0.99.
+This is K-Mod version 1.00.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.00 changelist
+
+NOTE: This patch changes the save file format. K-Mod saves from previous versions will not work with this version.
+
++ Added a new religion mechanic: existing religions may be removed from cities when a new religion is spread to them with a missionary. The following factors reduce the likelihood that a religion will be removed: number of religious buildings in the city, proximity to the holy city, the existence of the holy building (wherever it is), the turn the religion was founded (religions founded later will be less likely to be removed), the population of the city (larger cities are less likely to have religions removed). Note: the effects of this new religion system are actually very minor in the current version. It's a somewhat experimental feature.
++ Adjusted the missionary spread probability. Bigger cities are now less likely to have religions fail to spread (and less likely to lose religions).
++ Added some loading tips (hints) for K-Mod specific features. (Currently these are in English only.)
++ Tweaked global warming plot targeting.
+
++ Made some changes to espionage & spy usage; mostly to scale better with different game speeds and map sizes, but also to make better use of spies when espionage rate is low.
++ The AI will now send spies to destroy improvement only when at war.
++ The AI will no longer agree to requests for gifts from civs which it is planning war with.
++ Made some changes to the AI's macro-economics decision making... unit supply limit, empire splitting, financial trouble.
++ Changed the way "unit cost percentage" is calculated. The original calculation wrongly assumes that high unit cost, or low maintenance cost, imply large military - this is bad on many levels. This change is actually quite far reaching; and more work needs to be done to correct some of the flow-on effects.
++ Made several adjustments / fixes to the AI's building evaluation function.
++ Restructured and adjusted the value of yield all through the AI.
++ Changed default AI mode for axemen and macemen, from both "counter" to "attack" and "attack_city" respectively.
++ Tweaked some of the great person AI.
++ Further increased the AI's value of space techs when aiming for space victory.
++ Fixed an original BtS bug which, under most conditions, prevented settlers from moving towards the same target site two turns in a row. (It's a wonder how they managed to get anywhere useful at all!)
++ Adjusted the rules the AI uses for deciding when not to build workers - the original rules would often block them from choosing a worker in their starting city.
++ Changed to city site evaluation formula so that it rates cities as zero if they are too close to existing planned city sites.
++ Fixed a K-Mod bug which was preventing the AI from using great merchant trade missions.
++ Fixed a K-Mod bug which caused the AI to never actually carry out their intended sabotage plot improvement espionage missions.
+
++ Added a new unit AI type: UNITAI_GREAT_SPY. (Previously, great spies shared their AI with great merchants.)
++ Added four new AI mission types (these are just names that are useful when writing AI code).
++ Reduced the use of mutable variables in the cache system. Restructured when and where cache is refreshed. (This should have no effect on gameplay, but I think it will make it harder to create OOS bugs.)
 
 --
 
