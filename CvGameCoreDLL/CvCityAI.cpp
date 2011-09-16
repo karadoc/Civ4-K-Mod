@@ -674,7 +674,7 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist)
 
 	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD);
 	iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION);
-	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE);
+	iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE);
 
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
@@ -10636,7 +10636,7 @@ int CvCityAI::AI_cityValue() const
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
 	iValue *= kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)? 2 : 1;
 	int iCosts = 2 * calculateColonyMaintenanceTimes100() + getMaintenanceTimes100() / 2;
-	int iTargetPop = AI_getTargetPopulation();
+	int iTargetPop = std::max(5, AI_getTargetPopulation()); // target pop is not a good measure for small cities w/ unimproved tiles.
 	if (getPopulation() > 0 && getPopulation() < iTargetPop)
 	{
 		iValue *= iTargetPop;

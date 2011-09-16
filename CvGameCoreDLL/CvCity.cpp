@@ -11003,7 +11003,7 @@ int CvCity::getReligionGrip(ReligionTypes eReligion) const
 
 	int iCurrentTurn = GC.getGame().getGameTurn();
 	int iTurnFounded = GC.getGame().getReligionGameTurnFounded(eReligion);
-	int iTimeScale = GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()/2;
+	int iTimeScale = GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()/3;
 	iScore += GC.getDefineINT("RELIGION_INFLUENCE_TIME_WEIGHT") * (iTurnFounded + iTimeScale) / (iCurrentTurn + iTimeScale);
 
 	return iScore; // note. the random part is not included in this function.

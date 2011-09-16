@@ -8170,7 +8170,11 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 
 	if (iOurValue > 0 && 0 == pTheirList->getLength() && 0 == iTheirValue)
 	{
-		// K-Mod. Don't cancel gift deals to vassals that you like, unless you need the gift back.
+		// K-Mod
+		// Don't give any gifts to civs that you are about to go to war with.
+		if (GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(ePlayer).getTeam()) != NO_WARPLAN)
+			return false;
+		//Don't cancel gift deals to vassals that you like, unless you need the gift back.
 		if (iChange < 0 && GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(getTeam()))
 		{
 			/*if (iOurValue > AI_dealVal(ePlayer, pOurList, false, 1))
