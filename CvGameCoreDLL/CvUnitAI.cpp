@@ -5300,7 +5300,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	{
 		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()))
 		{
-			if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)) && generatePath(pLoopCity->plot(), MOVE_SAFE_TERRITORY, true))
+			if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)) && generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true))
 			{
 				// Join
 				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -5455,12 +5455,15 @@ bool CvUnitAI::AI_greatPersonMove()
 			break;
 
 		case GP_TRADE:
-			if (AI_doTrade(pBestTradePlot))
 			{
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'trade mission' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getName(0).GetCString(), iTradeValue, iChoice);
-				return true;
+				MissionAITypes eOldMission = getGroup()->AI_getMissionAIType(); // just used for the log message below
+				if (AI_doTrade(pBestTradePlot))
+				{
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'trade mission' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), eOldMission == MISSIONAI_TRADE?"continues" :"chooses", getName(0).GetCString(), iTradeValue, iChoice);
+					return true;
+				}
+				break;
 			}
-			break;
 
 		case GP_GOLDENAGE:
 			if (AI_goldenAge())
@@ -5512,7 +5515,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 					else
 					{
-						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_JOIN);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_JOIN);
 						return true;
 					}
 				}
@@ -5527,7 +5530,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 					else
 					{
-						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_CONSTRUCT);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_CONSTRUCT);
 						return true;
 					}
 				}
@@ -22163,7 +22166,7 @@ int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
                     {
                         if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
                         {
-                            if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+                            if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
                             {
                                 if (iValue / (4 + iPathTurns) > iBestValue / (4 + iBestPathTurns))
                                 {
@@ -22199,7 +22202,7 @@ bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pTradePlot->getX_INLINE(), pTradePlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_TRADE);
+			getGroup()->pushMission(MISSION_MOVE_TO, pTradePlot->getX_INLINE(), pTradePlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_TRADE);
 			return true;
 		}
 	}
