@@ -15284,78 +15284,31 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 }
 
 // Returns true if a mission was pushed...
+// This function has been completely rewriten (and greatly simplified) for K-Mod
 bool CvUnitAI::AI_bombardCity()
 {
-	PROFILE_FUNC();
+	if (!canBombard(plot()))
+		return false;
 
-	CvCity* pBombardCity;
+	CvCity* pBombardCity = bombardTarget(plot());
 
-	if (canBombard(plot()))
+	FAssertMsg(pBombardCity != NULL, "BombardCity is not assigned a valid value");
+
+	int iAttackOdds = getGroup()->AI_attackOdds(pBombardCity->plot(), true);
+	int iBase = GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO();
+	int iMin = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
+	int iBombardTurns = getGroup()->getBombardTurns(pBombardCity);
+	int iThreshold = (iBase * (100 - iAttackOdds) + (1 + iBombardTurns/2) * iMin * iAttackOdds) / (100 + (iBombardTurns/2) * iAttackOdds);
+	int iComparison = getGroup()->AI_compareStacks(pBombardCity->plot(), true, true, true);
+
+	if (iComparison > iThreshold)
 	{
-		pBombardCity = bombardTarget(plot());
-		FAssertMsg(pBombardCity != NULL, "BombardCity is not assigned a valid value");
-
-		// do not bombard cities with no defenders
-		int iDefenderStrength = pBombardCity->plot()->AI_sumStrength(NO_PLAYER, getOwnerINLINE(), DOMAIN_LAND, /*bDefensiveBonuses*/ true, /*bTestAtWar*/ true, false);
-		if (iDefenderStrength == 0)
-		{
-			return false;
-		}
-		
-		// do not bombard cities if we have overwelming odds
-		int iAttackOdds = getGroup()->AI_attackOdds(pBombardCity->plot(), /*bPotentialEnemy*/ true);
-		if ( (iAttackOdds > 95) )
-		{
-			return false;
-		}
-
-		// If we have reasonable odds, check for attacking without waiting for bombards
-		if( (iAttackOdds >= GC.getBBAI_SKIP_BOMBARD_BEST_ATTACK_ODDS()) )
-		{
-			int iBase = GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO();
-			int iComparison = getGroup()->AI_compareStacks(pBombardCity->plot(), /*bPotentialEnemy*/ true, /*bCheckCanAttack*/ true, /*bCheckCanMove*/ true);
-			
-			// Big troop advantage plus pretty good starting odds, don't wait to allow reinforcements
-			if( iComparison > (iBase - 4*iAttackOdds) )
-			{
-				if( gUnitLogLevel > 2 ) logBBAI("      Stack skipping bombard of %S with compare %d and starting odds %d", pBombardCity->getName().GetCString(), iComparison, iAttackOdds);
-				return false;
-			}
-
-			int iMin = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
-			bool bHasWaited = false;
-			CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
-			while (pUnitNode != NULL)
-			{
-				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-
-				if( pLoopUnit->getFortifyTurns() > 0 )
-				{
-					bHasWaited = true;
-					break;
-				}
-
-				pUnitNode = getGroup()->nextUnitNode(pUnitNode);
-			}
-
-			// Bombard at least one turn to allow bombers/ships to get some shots in too
-			if( bHasWaited && (pBombardCity->getDefenseDamage() > 0) )
-			{
-				int iBombardTurns = getGroup()->getBombardTurns(pBombardCity);
-				if( iComparison > std::max(iMin, iBase - 3*iAttackOdds - 3*iBombardTurns) )
-				{
-					if( gUnitLogLevel > 2 ) logBBAI("      Stack skipping bombard of %S with compare %d, starting odds %d, and bombard turns %d", pBombardCity->getName().GetCString(), iComparison, iAttackOdds, iBombardTurns);
-					return false;
-				}
-			}
-		}
-
-		//getGroup()->pushMission(MISSION_PILLAGE);
-		getGroup()->pushMission(MISSION_BOMBARD);
-		return true;
+		if( gUnitLogLevel > 2 ) logBBAI("      Stack skipping bombard of %S with compare %d, starting odds %d, bombard turns %d, threshold %d", pBombardCity->getName().GetCString(), iComparison, iAttackOdds, iBombardTurns, iThreshold);
+		return false;
 	}
 
-	return false;
+	getGroup()->pushMission(MISSION_BOMBARD);
+	return true;
 }
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */

@@ -1817,12 +1817,10 @@ void CvPlayerAI::AI_makeProductionDirty()
 void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 {
 	bool bRaze = false;
-	int iRazeValue;
-	int iI;
 
 	if (canRaze(pCity))
 	{
-	    iRazeValue = 0;
+	    int iRazeValue = 0;
 		int iCloseness = pCity->AI_playerCloseness(getID());
 
 		// Reasons to always raze
@@ -1881,7 +1879,9 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 				bool bFinancialTrouble = AI_isFinancialTrouble();
 				bool bBarbCity = (pCity->getPreviousOwner() == BARBARIAN_PLAYER) && (pCity->getOriginalOwner() == BARBARIAN_PLAYER);
 				bool bPrevOwnerBarb = (pCity->getPreviousOwner() == BARBARIAN_PLAYER);
+				bool bTotalWar = GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(pCity->getPreviousOwner()).getTeam()) == WARPLAN_TOTAL; // K-Mod
 				
+				/* original code
 				if (GET_TEAM(getTeam()).countNumCitiesByArea(pCity->area()) == 0)
 				{
 					// Conquered city in new continent/island
@@ -1919,8 +1919,19 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 						}
 					}
 				}
-				else
+				else */ // K-Mod disabled. I don't see the point treating the above as a special case.
 				{
+					// K-Mod (moved this from above)
+					int iUnused;
+
+					if (pCity->area()->getNumCities() == 1 && AI_getNumAreaCitySites(pCity->area()->getID(), iUnused) == 0)
+					{
+						// Probably small island
+						if (iCloseness == 0)
+							iRazeValue += 20;
+					}
+					// K-Mod end
+
 					// Distance related aspects
 					if (iCloseness > 0)
 					{
@@ -1932,11 +1943,20 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 
 						CvCity* pNearestTeamAreaCity = GC.getMapINLINE().findCity(pCity->getX_INLINE(), pCity->getY_INLINE(), NO_PLAYER, getTeam(), true, false, NO_TEAM, NO_DIRECTION, pCity);
 
-						if( pNearestTeamAreaCity == NULL )
+						/*if( pNearestTeamAreaCity == NULL )
 						{
 							// Shouldn't happen
 							iRazeValue += 30;
+						} */
+						// K-Mod
+						if (pNearestTeamAreaCity == NULL)
+						{
+							if (bTotalWar && GET_TEAM(GET_PLAYER(pCity->getPreviousOwner()).getTeam()).AI_isPrimaryArea(pCity->area()))
+								iRazeValue += 5;
+							else
+								iRazeValue += 30;
 						}
+						// K-Mod end
 						else
 						{
 							int iDistance = plotDistance(pCity->getX_INLINE(), pCity->getY_INLINE(), pNearestTeamAreaCity->getX_INLINE(), pNearestTeamAreaCity->getY_INLINE());
@@ -1974,6 +1994,10 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 
 					// Non-distance related aspects
 					iRazeValue += GC.getLeaderHeadInfo(getPersonalityType()).getRazeCityProb();
+
+					// K-Mod
+					iRazeValue -= AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION2) ? 20 : 0;
+					// K-Mod end
 		                
 					if (getStateReligion() != NO_RELIGION)
 					{
@@ -1999,10 +2023,16 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 							}
 						}
 					}
+					// K-Mod
+					else
+					{
+						iRazeValue -= 5; // Free religion does not mean we hate everyone equally...
+					}
+					// K-Mod end
 				}
 
 
-				for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
+				for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 				{
 					if (pCity->isHolyCity((ReligionTypes)iI))
 					{
@@ -2018,10 +2048,24 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 					}
 				}
 
+				// K-Mod
+				// corp HQ value.
+				for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
+				{
+					if (pCity->isHeadquarters((CorporationTypes)iI))
+					{
+						logBBAI("      Reduction for corp headquarters");
+						iRazeValue -= 10 + 100 * GC.getGameINLINE().countCorporationLevels((CorporationTypes)iI) / GC.getGameINLINE().getNumCities();
+					}
+				}
+				// great people
+				iRazeValue -= 2 * pCity->getNumGreatPeople();
+				// K-Mod end
+
 				iRazeValue -= 15 * pCity->getNumActiveWorldWonders();
 
 				CvPlot* pLoopPlot = NULL;
-				for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+				for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 				{
 					pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
 
