@@ -893,7 +893,7 @@ void CvCityAI::AI_chooseProduction()
 
 	/* original bts code
 	int iUnitCostPercentage = (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts()); */
-	int iUnitCostPercentage = kPlayer.AI_unitCostRating(); // K-Mod
+	int iUnitSpending = kPlayer.AI_unitCostPerMil() / 3; // K-Mod
 	int iWaterPercent = AI_calculateWaterWorldPercent();
 	
 	int iBuildUnitProb = AI_buildUnitProb();
@@ -2118,7 +2118,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 	
 	//int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
-	int iMaxUnitSpending = (bAggressiveAI ? 10 : 5) + iBuildUnitProb / 2; // K-Mod. (unit spending is not what it use to be)
+	int iMaxUnitSpending = (bAggressiveAI ? 8 : 4) + iBuildUnitProb / 2; // K-Mod. (unit spending is not what it use to be)
 
 	if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
 	{
@@ -2180,7 +2180,7 @@ void CvCityAI::AI_chooseProduction()
 	int iCarriers = kPlayer.AI_totalUnitAIs(UNITAI_CARRIER_SEA);
 	
 	// Revamped logic for production for invasions
-    if (iUnitCostPercentage < (iMaxUnitSpending + 10))
+    if (iUnitSpending < (iMaxUnitSpending + 10))
 	{
 		bool bBuildAssault = bAssault;
 		CvArea* pAssaultWaterArea = NULL;
@@ -2291,7 +2291,7 @@ void CvCityAI::AI_chooseProduction()
 						
 					if ((iAttackSea < ((1 + 2 * iTransports) / iDivisor)))
 					{
-						if (AI_chooseUnit(UNITAI_ATTACK_SEA, (iUnitCostPercentage < iMaxUnitSpending) ? 50 : 20))
+						if (AI_chooseUnit(UNITAI_ATTACK_SEA, (iUnitSpending < iMaxUnitSpending) ? 50 : 20))
 						{
 							AI_chooseBuilding(BUILDINGFOCUS_DOMAINSEA, 12);
 							return;
@@ -2301,7 +2301,7 @@ void CvCityAI::AI_chooseProduction()
 				
 				if (iUnitsToTransport > iTransportCapacity)
 				{
-					if ((iUnitCostPercentage < iMaxUnitSpending) || (iUnitsToTransport > 2*iTransportCapacity))
+					if ((iUnitSpending < iMaxUnitSpending) || (iUnitsToTransport > 2*iTransportCapacity))
 					{
 						if (AI_chooseUnit(UNITAI_ASSAULT_SEA))
 						{
@@ -2312,7 +2312,7 @@ void CvCityAI::AI_chooseProduction()
 				}
 			}
 
-			if (iUnitCostPercentage < iMaxUnitSpending)
+			if (iUnitSpending < iMaxUnitSpending)
 			{
 				if (NULL != pAssaultWaterArea)
 				{
@@ -2380,7 +2380,7 @@ void CvCityAI::AI_chooseProduction()
 				return;
 			}
 
-			if (iUnitCostPercentage < (iMaxUnitSpending))
+			if (iUnitSpending < (iMaxUnitSpending))
 			{
 				int iMissileCarriers = kPlayer.AI_totalUnitAIs(UNITAI_MISSILE_CARRIER_SEA);
 			
@@ -2419,7 +2419,7 @@ void CvCityAI::AI_chooseProduction()
     UnitTypes eBestAttackAircraft = NO_UNIT;
     UnitTypes eBestMissile = NO_UNIT;
     
-	if (iUnitCostPercentage < (iMaxUnitSpending + 4) && (!bImportantCity || bDefenseWar) )
+	if (iUnitSpending < (iMaxUnitSpending + 4) && (!bImportantCity || bDefenseWar) )
 	{
 		if( bLandWar || bAssault || (iFreeAirExperience > 0) || (GC.getGame().getSorenRandNum(3, "AI train air") == 0) )
 		{
@@ -2487,7 +2487,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	// Check for whether to produce planes to fill carriers
-	if ( (bLandWar || bAssault) && iUnitCostPercentage < (iMaxUnitSpending))
+	if ( (bLandWar || bAssault) && iUnitSpending < (iMaxUnitSpending))
 	{			
 		if (iCarriers > 0 && !bImportantCity)
 		{
@@ -2537,7 +2537,7 @@ void CvCityAI::AI_chooseProduction()
 	}   
 
 	// Assault case now completely handled above
-	if (!bAssault && (!bImportantCity || bDefenseWar) && (iUnitCostPercentage < iMaxUnitSpending))
+	if (!bAssault && (!bImportantCity || bDefenseWar) && (iUnitSpending < iMaxUnitSpending))
     {
         if (!bFinancialTrouble && (bLandWar || (kPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER) && !bGetBetterUnits)))
         {
@@ -2777,7 +2777,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	if (iUnitCostPercentage < iMaxUnitSpending + 4 && !bFinancialTrouble)
+	if (iUnitSpending < iMaxUnitSpending + 4 && !bFinancialTrouble)
 	{
 		if ((iAircraftHave * 2 >= iAircraftNeed) && (iAircraftHave < iAircraftNeed))
 		{
@@ -2943,7 +2943,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	bChooseUnit = false;
-	if (iUnitCostPercentage < iMaxUnitSpending + 5)
+	if (iUnitSpending < iMaxUnitSpending + 5)
 	{
 		// K-Mod
 		iBuildUnitProb *= (150 + iBestBuildingValue);
@@ -10626,7 +10626,7 @@ int CvCityAI::AI_cityValue() const
 	iValue -= 3 * calculateColonyMaintenanceTimes100(); */
 	// K-Mod. The original code fails for civs using high espionage or high culture.
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwner());
-	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
+	iValue += getCommerceRateTimes100(COMMERCE_GOLD) * 100;
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH) * kOwner.AI_commerceWeight(COMMERCE_RESEARCH);
 	iValue += getCommerceRateTimes100(COMMERCE_ESPIONAGE) * kOwner.AI_commerceWeight(COMMERCE_ESPIONAGE);
 	iValue /= 100;

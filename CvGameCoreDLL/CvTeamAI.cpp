@@ -2821,7 +2821,8 @@ void CvTeamAI::AI_getWarThresholds( int &iTotalWarThreshold, int &iLimitedWarThr
 	iLimitedWarThreshold = 0;
 	iDogpileWarThreshold = 0;
 
-	int iHighUnitSpendingPercent = 0;
+	//int iHighUnitSpendingPercent = 0;
+	int iHighUnitSpending = 0; // K-Mod
 	bool bConq2 = false;
 	bool bDom3 = false;
 	bool bAggressive = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
@@ -2831,9 +2832,10 @@ void CvTeamAI::AI_getWarThresholds( int &iTotalWarThreshold, int &iLimitedWarThr
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
-				//int iUnitSpendingPercent = (GET_PLAYER((PlayerTypes)iI).calculateUnitCost() * 100) / std::max(1, GET_PLAYER((PlayerTypes)iI).calculatePreInflatedCosts());
-				int iUnitSpendingPercent = GET_PLAYER((PlayerTypes)iI).AI_unitCostRating(); // K-Mod
-				iHighUnitSpendingPercent += (std::max(0, iUnitSpendingPercent - 7) / 2);
+				/* int iUnitSpendingPercent = (GET_PLAYER((PlayerTypes)iI).calculateUnitCost() * 100) / std::max(1, GET_PLAYER((PlayerTypes)iI).calculatePreInflatedCosts());
+				iHighUnitSpendingPercent += (std::max(0, iUnitSpendingPercent - 7) / 2); */
+				int iUnitSpendingPerMil = GET_PLAYER((PlayerTypes)iI).AI_unitCostPerMil(); // K-Mod
+				iHighUnitSpending += (std::max(0, iUnitSpendingPerMil - 16) / 6); // K-Mod
 
 				if( GET_PLAYER((PlayerTypes)iI).AI_isDoStrategy(AI_STRATEGY_DAGGER))
 				{
@@ -2859,11 +2861,9 @@ void CvTeamAI::AI_getWarThresholds( int &iTotalWarThreshold, int &iLimitedWarThr
 		}
 	}
 
-	// BBAI TODO: Current UU, up aggression?
+	iHighUnitSpending /= std::max(1, getNumMembers());
 
-	iHighUnitSpendingPercent /= std::max(1, getNumMembers());
-
-	iTotalWarThreshold = iHighUnitSpendingPercent * (bAggressive ? 3 : 2);
+	iTotalWarThreshold = iHighUnitSpending * (bAggressive ? 3 : 2);
 	if( bDom3 )
 	{
 		iTotalWarThreshold *= 3;

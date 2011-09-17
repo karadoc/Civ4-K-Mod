@@ -11096,7 +11096,7 @@ int CvPlayerAI::AI_neededExecutives(CvArea* pArea, CorporationTypes eCorporation
 }
 
 // K-Mod. This function is used to replace the old (broken) "unit cost percentage" calculation used by the AI
-int CvPlayerAI::AI_unitCostRating() const
+int CvPlayerAI::AI_unitCostPerMil() const
 {
 	// original "cost percentage" = calculateUnitCost() * 100 / std::max(1, calculatePreInflatedCosts());
 	// If iUnitCostPercentage is calculated as above, decreasing maintenance will actually decrease the max units.
@@ -11107,9 +11107,7 @@ int CvPlayerAI::AI_unitCostRating() const
 	int iFunds = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
 	iFunds += getGoldPerTurn() - calculateInflatedCosts();
 	iFunds += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
-	return calculateUnitCost() * 400 / std::max(1, iFunds);
-	// I've set the scale to 400 rather than 100, because the code below that actually uses iUnitCostPercentage is expecting
-	// the scale to be roughly the uninflated maintenance, not the total income.
+	return calculateUnitCost() * 1000 / std::max(1, iFunds);
 }
 // K-Mod end
 
