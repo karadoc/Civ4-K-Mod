@@ -1,4 +1,4 @@
-This is K-Mod version 1.00.
+This is K-Mod version 1.00b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -31,6 +31,11 @@ NOTE: This patch changes the save file format. K-Mod saves from previous version
 + Added a new unit AI type: UNITAI_GREAT_SPY. (Previously, great spies shared their AI with great merchants.)
 + Added four new AI mission types (these are just names that are useful when writing AI code).
 + Reduced the use of mutable variables in the cache system. Restructured when and where cache is refreshed. (This should have no effect on gameplay, but I think it will make it harder to create OOS bugs.)
+
+v1.00b
++ Fixed a bug which prevented religions from being removed as intended.
++ Added a missing factor of 100 in gold value for AI_cityValue.
++ Adjusted the AI's decision making regarding unit spending to bring the probability of war back down closer to standard BtS levels.
 
 --
 

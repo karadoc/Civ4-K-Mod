@@ -5734,7 +5734,7 @@ bool CvUnit::spread(ReligionTypes eReligion)
 		int iPresentReligions = pCity->getReligionCount();
 		int iMissingReligions = GC.getNumReligionInfos() - iPresentReligions;
 		int iSpreadProb = iPresentReligions * (m_pUnitInfo->getReligionSpreads(eReligion) + pCity->getPopulation())
-			+ iMissingReligions * std::max(100, 100 - 10 * iPresentReligions + pCity->getPopulation());
+			+ iMissingReligions * std::max(100, 100 - 10 * iPresentReligions);
 		iSpreadProb /= GC.getNumReligionInfos();
 
 		bool bSuccess;
@@ -5761,11 +5761,11 @@ bool CvUnit::spread(ReligionTypes eReligion)
 				{
 					if (pCity != GC.getGame().getHolyCity((ReligionTypes)iI)) // holy city can't lose its religion!
 					{
-						int iInfluence = pCity->getReligionGrip(eReligion);
+						int iInfluence = pCity->getReligionGrip((ReligionTypes)iI);
 						iInfluence += GC.getGameINLINE().getSorenRandNum(iRandomWeight, "Religion influence");
 						iInfluence += (iI == eReligion) ? m_pUnitInfo->getReligionSpreads(eReligion)/2 : 0;
 
-						rankedReligions.push_back(std::make_pair(iInfluence, eReligion));
+						rankedReligions.push_back(std::make_pair(iInfluence, (ReligionTypes)iI));
 					}
 				}
 			}
