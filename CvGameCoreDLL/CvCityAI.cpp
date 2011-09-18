@@ -3515,7 +3515,7 @@ BuildingTypes CvCityAI::AI_bestBuilding(int iFocusFlags, int iMaxTurns, bool bAs
 
 BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns, int iMinThreshold, bool bAsync, AdvisorTypes eIgnoreAdvisor)
 {
-	BuildingTypes eLoopBuilding;
+	/*BuildingTypes eLoopBuilding;
 	BuildingTypes eBestBuilding;
 	bool bAreaAlone;
 	int iProductionRank;
@@ -3523,24 +3523,22 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 	int iValue;
 	int iTempValue;
 	int iBestValue;
-	int iI, iJ;
+	int iI, iJ; */ // K-Mod. I've moved the declarations to where they are actually used - to reduce the likelihood of mistakes
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod (and I've replaced all other GET_PLAYER calls in this function)
 
-	bAreaAlone = kOwner.AI_isAreaAlone(area());
+	bool bAreaAlone = kOwner.AI_isAreaAlone(area());
+	int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 
-	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
-
-	iBestValue = 0;
-	eBestBuilding = NO_BUILDING;
-
+	int iBestValue = 0;
+	BuildingTypes eBestBuilding = NO_BUILDING;
 
 	if (iFocusFlags & BUILDINGFOCUS_CAPITAL)
 	{
 		int iBestTurnsLeft = iMaxTurns > 0 ? iMaxTurns : MAX_INT;
-		for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+		for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 		{
-			eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
+			BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
 
 			if (NO_BUILDING != eLoopBuilding)
 			{
@@ -3565,11 +3563,11 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 		return eBestBuilding;
 	}
 
-	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 	{
 		if (!(kOwner.isBuildingClassMaxedOut(((BuildingClassTypes)iI), GC.getBuildingClassInfo((BuildingClassTypes)iI).getExtraPlayerInstances())))
 		{
-			eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
+			BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
 
 			if ((eLoopBuilding != NO_BUILDING) && (getNumBuilding(eLoopBuilding) < GC.getCITY_MAX_NUM_BUILDINGS())
 			&&  (!isProductionAutomated() || !(isWorldWonderClass((BuildingClassTypes)iI) || isNationalWonderClass((BuildingClassTypes)iI))))
@@ -3601,7 +3599,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 						if (canConstruct(eLoopBuilding))
 						{
 							//iValue = AI_buildingValueThreshold(eLoopBuilding, iFocusFlags, iMinThreshold);
-							AI_buildingValue(eLoopBuilding, iFocusFlags, iMinThreshold, bAsync); // K-Mod
+							int iValue = AI_buildingValue(eLoopBuilding, iFocusFlags, iMinThreshold, bAsync); // K-Mod
 
 							if (GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass() != NO_BUILDINGCLASS)
 							{
@@ -3614,7 +3612,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 							}
 							if (isProductionAutomated())
 							{
-								for (iJ = 0; iJ < GC.getNumBuildingClassInfos(); iJ++)
+								for (int iJ = 0; iJ < GC.getNumBuildingClassInfos(); iJ++)
 								{
 									if (GC.getBuildingInfo(eLoopBuilding).getPrereqNumOfBuildingClass(iJ) > 0)
 									{
@@ -3626,7 +3624,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 
 							if (iValue > 0)
 							{
-								iTurnsLeft = getProductionTurnsLeft(eLoopBuilding, 0);
+								int iTurnsLeft = getProductionTurnsLeft(eLoopBuilding, 0);
 
 								// K-Mod
 								// Block construction of limited buildings in bad places
@@ -3696,6 +3694,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 								{
 									if (iProductionRank <= std::min(3, ((kOwner.getNumCities() + 2) / 3)))
 									{
+										int iTempValue;
 										if (bAsync)
 										{
 											iTempValue = GC.getASyncRand().get(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand ASYNC");
