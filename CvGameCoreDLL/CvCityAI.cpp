@@ -10804,6 +10804,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	AI_setChooseProductionDirty(false);
 	clearOrderQueue();
 
+	CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 	CvArea* pWaterArea = waterArea();
 	bool bWasFoodProduction = isFoodProduction();
 	bool bDanger = AI_isDanger();
@@ -10828,28 +10829,32 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	//workboat
 	if (pWaterArea != NULL)
 	{
-		if (GET_PLAYER(getOwnerINLINE()).AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_WORKER_SEA) == 0)
+		if (kOwner.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_WORKER_SEA) == 0)
 		{
 			if (AI_neededSeaWorkers() > 0)
 			{
-				int iOdds = 100;
-				iOdds *= 50 + iBestBuildingValue;
-				iOdds /= 50 + 5 * iBestBuildingValue;
-				if (AI_chooseUnit(UNITAI_WORKER_SEA, iOdds))
+				bool bLocalResource = AI_countNumImprovableBonuses(true, NO_TECH, false, true) > 0;
+				if (bLocalResource || iBestBuildingValue < 20)
 				{
-					return;
+					int iOdds = 100;
+					iOdds *= 50 + iBestBuildingValue;
+					iOdds /= 50 + 5 * iBestBuildingValue;
+					if (AI_chooseUnit(UNITAI_WORKER_SEA, iOdds))
+					{
+						return;
+					}
 				}
 			}
 		}
 	}
 	
-	if (GET_PLAYER(getOwner()).AI_isPrimaryArea(area())) // if its not a primary area, let the player ship units in.
+	if (kOwner.AI_isPrimaryArea(area())) // if its not a primary area, let the player ship units in.
 	{
 		//worker
 		if (!bDanger)
 		{
-			int iExistingWorkers = GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
-			int iNeededWorkers = GET_PLAYER(getOwner()).AI_neededWorkers(area());
+			int iExistingWorkers = kOwner.AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
+			int iNeededWorkers = kOwner.AI_neededWorkers(area());
 
 			if (iExistingWorkers < (iNeededWorkers + 1)/2) // I don't want to build more workers than the player actually wants.
 			{
@@ -10867,9 +10872,10 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		}
 
 		//military
-		if (GET_TEAM(getTeam()).getAtWarCount(true) > 0 && (bDanger || iBestBuildingValue < 20))
+		bool bWar = GET_TEAM(getTeam()).getAtWarCount(true) > 0;
+		if (bDanger || iBestBuildingValue < (bWar ? 30 : 20))
 		{
-			int iOdds = 100;
+			int iOdds = (bWar ? 100 : 50) - kOwner.AI_unitCostPerMil()/2;
 			iOdds *= 50 + iBestBuildingValue;
 			iOdds /= 50 + 10 * iBestBuildingValue;
 			if (AI_chooseUnit(NO_UNITAI, iOdds))

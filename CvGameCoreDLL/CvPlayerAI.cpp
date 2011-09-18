@@ -2060,6 +2060,7 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 				}
 				// great people
 				iRazeValue -= 2 * pCity->getNumGreatPeople();
+				iRazeValue += bBarbCity ? 5 : 0;
 				// K-Mod end
 
 				iRazeValue -= 15 * pCity->getNumActiveWorldWonders();
