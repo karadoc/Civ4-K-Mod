@@ -1093,55 +1093,51 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc) const
 {
 	PROFILE_FUNC();
 
-	CvArea* pLoopArea;
-	CvPlot* pLoopPlot;
-	int iValue;
-	int iLoop;
-	int iI;
 	bool bCitySiteCalculations = (GC.getGame().getGameTurn() > GC.getGame().getStartTurn());
 	
-
-	for(pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
+	int iLoop;
+	for (CvArea* pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
 		pLoopArea->setBestFoundValue(getID(), 0);
 	}
 
 	if (bStartingLoc)
 	{
-		for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+		for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 		{
 			GC.getMapINLINE().plotByIndexINLINE(iI)->setFoundValue(getID(), -1);
 		}
 	}
 	else
 	{
+		// K-Mod. (I've also changed some of the code style all through this function)
+		CvFoundSettings kFoundSet(*this, false);
+		//
+
 		if (!isBarbarian())
 		{
 			AI_invalidateCitySites(AI_getMinFoundValue());
 		}
-		for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+		for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 		{
-			pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+			CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
 			if (pLoopPlot->isRevealed(getTeam(), false))// || AI_isPrimaryArea(pLoopPlot->area()))
 			{
-				long lResult=-1;
-				if(GC.getUSE_GET_CITY_FOUND_VALUE_CALLBACK())
+				long iValue = -1;
+				if (GC.getUSE_GET_CITY_FOUND_VALUE_CALLBACK())
 				{
 					CyArgsList argsList;
 					argsList.add((int)getID());
 					argsList.add(pLoopPlot->getX());
 					argsList.add(pLoopPlot->getY());
-					gDLL->getPythonIFace()->callFunction(PYGameModule, "getCityFoundValue", argsList.makeFunctionArgs(), &lResult);
+					gDLL->getPythonIFace()->callFunction(PYGameModule, "getCityFoundValue", argsList.makeFunctionArgs(), &iValue);
 				}
 
-				if (lResult == -1)
+				if (iValue == -1)
 				{
-					iValue = AI_foundValue(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE());
-				}
-				else
-				{
-					iValue = lResult;
+					//iValue = AI_foundValue(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE());
+					iValue = AI_foundValueBulk(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), kFoundSet); // K-Mod
 				}
 
 				pLoopPlot->setFoundValue(getID(), iValue);
@@ -2605,30 +2601,168 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 	return iWeight;
 }
 
+// K-Mod: I've moved the bulk of this function into AI_foundValueBulk...
+int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const
+{
+	CvFoundSettings kSet(*this, bStartingLoc);
+	kSet.iMinRivalRange = iMinRivalRange;
+	return AI_foundValueBulk(iX, iY, kSet);
+}
+
+CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bStartingLoc) : bStartingLoc(bStartingLoc)
+{
+	iMinRivalRange = -1;
+	iGreed = 100;
+	bEasyCulture = false;
+	bAmbitious = false;
+	bFinancial = false;
+	bDefensive = false;
+	bSeafaring = false;
+
+	if (!bStartingLoc)
+	{
+		for (int iI = 0; iI < GC.getNumTraitInfos(); iI++)
+		{
+			if (kPlayer.hasTrait((TraitTypes)iI))
+			{
+				if (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE) > 0)
+				{
+					bEasyCulture = true;
+					if (GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getBasePeaceWeight() <= 5)
+						bAmbitious = true;
+					iGreed += 15 * GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE);
+				}
+				if (GC.getTraitInfo((TraitTypes)iI).getExtraYieldThreshold(YIELD_COMMERCE) > 0)
+				{
+					bFinancial = true;
+				}
+
+				for (int iJ = 0; iJ < GC.getNumPromotionInfos(); iJ++)
+				{
+					if (GC.getTraitInfo((TraitTypes)iI).isFreePromotion(iJ))
+					{
+						// aggressive, protective... it doesn't really matter to me.
+						if (GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getBasePeaceWeight() >= 5)
+						{
+							bDefensive = true;
+						}
+					}
+				}
+
+				for (int iJ = 0; iJ < GC.getNumUnitInfos(); iJ++)
+				{
+					if (GC.getUnitInfo((UnitTypes)iJ).isFound() &&
+						GC.getUnitInfo((UnitTypes)iJ).getProductionTraits(iI) &&
+						kPlayer.canTrain((UnitTypes)iJ))
+					{
+						iGreed += 20;
+						if (GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getMaxWarRand() <= 150)
+							bAmbitious = true;
+					}
+				}
+			}
+		}
+		// seafaring test for unique unit and unique building
+		if (kPlayer.getCoastalTradeRoutes() > 0)
+			bSeafaring = true;
+		if (!bSeafaring)
+		{
+			for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+			{
+				UnitTypes eCivUnit = (UnitTypes)GC.getCivilizationInfo(kPlayer.getCivilizationType()).getCivilizationUnits(iI);
+				UnitTypes eDefaultUnit = (UnitTypes)GC.getUnitClassInfo((UnitClassTypes)iI).getDefaultUnitIndex();
+				if (eCivUnit != NO_UNIT && eCivUnit != eDefaultUnit)
+				{
+					if (GC.getUnitInfo(eCivUnit).getDomainType() == DOMAIN_SEA)
+					{
+						bSeafaring = true;
+						break;
+					}
+				}
+			}
+		}
+		if (!bSeafaring)
+		{
+			for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+			{
+				BuildingTypes eCivBuilding = (BuildingTypes)GC.getCivilizationInfo(kPlayer.getCivilizationType()).getCivilizationBuildings(iI);
+				BuildingTypes eDefaultBuilding = (BuildingTypes)GC.getBuildingClassInfo((BuildingClassTypes)iI).getDefaultBuildingIndex();
+				if (eCivBuilding != NO_UNIT && eCivBuilding != eDefaultBuilding)
+				{
+					if (GC.getBuildingInfo(eCivBuilding).isWater())
+					{
+						bSeafaring = true;
+						break;
+					}
+				}
+			}
+		}
+		// culture building process
+		if (!bEasyCulture)
+		{
+			for (int iJ = 0; iJ < GC.getNumProcessInfos(); iJ++)
+			{
+				if (GET_TEAM(kPlayer.getTeam()).isHasTech((TechTypes)GC.getProcessInfo((ProcessTypes)iJ).getTechPrereq()) &&
+					GC.getProcessInfo((ProcessTypes)iJ).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0)
+				{
+					bEasyCulture = true;
+					break;
+				}
+			}
+		}
+		// free culture building
+		if (!bEasyCulture)
+		{
+			for (int iJ = 0; iJ < GC.getNumBuildingInfos(); iJ++)
+			{
+				if (kPlayer.isBuildingFree((BuildingTypes)iJ) && GC.getBuildingInfo((BuildingTypes)iJ).getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0)
+				{
+					bEasyCulture = true;
+					break;
+				}
+			}
+		}
+		// easy artists
+		if (!bEasyCulture)
+		{
+			for (int iJ = 0; iJ < GC.getNumSpecialistInfos(); iJ++)
+			{
+				if (kPlayer.isSpecialistValid((SpecialistTypes)iJ) && kPlayer.specialistCommerce((SpecialistTypes)iJ, COMMERCE_CULTURE) > 0)
+				{
+					bEasyCulture = true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (kPlayer.getAdvancedStartPoints() >= 0)
+	{
+		iGreed = 150; // overruling previous value;
+	}
+
+    iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
+    iClaimThreshold = std::max(1, iClaimThreshold);
+	iClaimThreshold *= (bEasyCulture ? 140 : 100);
+	iClaimThreshold *= (bAmbitious ? 140 : 100);
+	iClaimThreshold /= 100;
+	// note, plot culture is 100x city culture. So I've left a factor of 100 on iClaimThreshold.
+}
+
 // Heavily edited for K-Mod (some changes marked, others not.)
 // note, this function is called for every revealed plot for every player at the start of every turn.
 // try to not make it too slow!
-int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const
+int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const
 {
 	CvCity* pNearestCity;
-	CvArea* pArea;
-	CvPlot* pPlot;
-	CvPlot* pLoopPlot;
-	FeatureTypes eFeature;
-	BonusTypes eBonus;
-	ImprovementTypes eBonusImprovement;
 	bool bHasGoodBonus;
 	int iOwnedTiles;
 	int iBadTile;
 	int iTakenTiles;
 	int iTeammateTakenTiles;
-	int iDifferentAreaTile;
 	int iTeamAreaCities;
 	int iHealth;
 	int iValue;
-	int iTempValue;
-	int iRange;
-	bool bIsCoastal;
 	int iResourceValue = 0;
 	int iSpecialFood = 0;
 	int iSpecialFoodPlus = 0;
@@ -2638,23 +2772,20 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	
 	bool bNeutralTerritory = true;
 
-	int iGreed;
-	int iNumAreaCities;
-
-	pPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 	
 	if (!canFound(iX, iY))
 	{
 		return 0;
 	}
 	
-	bIsCoastal = pPlot->isCoastalLand(GC.getMIN_WATER_SIZE_FOR_OCEAN());
-	pArea = pPlot->area();
-	iNumAreaCities = pArea->getCitiesPerPlayer(getID());
+	CvPlot* pPlot = GC.getMapINLINE().plotINLINE(iX, iY);
+	CvArea* pArea = pPlot->area();
+	bool bIsCoastal = pPlot->isCoastalLand(GC.getMIN_WATER_SIZE_FOR_OCEAN());
+	int iNumAreaCities = pArea->getCitiesPerPlayer(getID());
 	
 	bool bAdvancedStart = (getAdvancedStartPoints() >= 0);
 
-	if (!bStartingLoc && !bAdvancedStart)
+	if (!kSet.bStartingLoc && !bAdvancedStart)
 	{
 		if (!bIsCoastal && iNumAreaCities == 0)
 		{
@@ -2666,7 +2797,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	{
 		//FAssert(!bStartingLoc);
 		FAssert(GC.getGameINLINE().isOption(GAMEOPTION_ADVANCED_START));
-		if (bStartingLoc)
+		if (kSet.bStartingLoc)
 		{
 			bAdvancedStart = false;
 		}
@@ -2675,13 +2806,13 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	// K-Mod. city site radius check used to be here. I've moved it down a bit.
 	// ... and also the bonus vector initializtion
 
-	if (iMinRivalRange != -1)
+	if (kSet.iMinRivalRange != -1)
 	{
-		for (int iDX = -(iMinRivalRange); iDX <= iMinRivalRange; iDX++)
+		for (int iDX = -(kSet.iMinRivalRange); iDX <= kSet.iMinRivalRange; iDX++)
 		{
-			for (int iDY = -(iMinRivalRange); iDY <= iMinRivalRange; iDY++)
+			for (int iDY = -(kSet.iMinRivalRange); iDY <= kSet.iMinRivalRange; iDY++)
 			{
-				pLoopPlot	= plotXY(iX, iY, iDX, iDY);
+				CvPlot* pLoopPlot = plotXY(iX, iY, iDX, iDY);
 
 				if (pLoopPlot != NULL)
 				{
@@ -2694,7 +2825,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		}
 	}
 
-	if (bStartingLoc)
+	if (kSet.bStartingLoc)
 	{
 		if (pPlot->isGoody())
 		{
@@ -2703,7 +2834,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
-			pLoopPlot = plotCity(iX, iY, iI);
+			CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
 			if (pLoopPlot == NULL)
 			{
@@ -2716,7 +2847,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
-		pLoopPlot = plotCity(iX, iY, iI);
+		CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
 		if (pLoopPlot == NULL)
 		{
@@ -2770,7 +2901,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		}
 	}*/
 	// K-Mod
-	if (!bStartingLoc)
+	if (!kSet.bStartingLoc)
 	{
 		if (!AI_isPlotCitySite(pPlot))
 		{
@@ -2791,7 +2922,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				}
 				for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 				{
-					pLoopPlot = plotCity(iX, iY, iI);
+					CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 					if (pLoopPlot != NULL)
 					{
 						if (plotDistance(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= CITY_PLOTS_RADIUS)
@@ -2818,7 +2949,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
-		pLoopPlot = plotCity(iX, iY, iI);
+		CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
 		if (iI != CITY_HOME_PLOT)
 		{
@@ -2852,7 +2983,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	iBadTile /= 2;
 
-	if (!bStartingLoc)
+	if (!kSet.bStartingLoc)
 	{
 		if ((iBadTile > (NUM_CITY_PLOTS / 2)) || (pArea->getNumTiles() <= 2))
 		{
@@ -2860,7 +2991,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 			for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 			{
-				pLoopPlot = plotCity(iX, iY, iI);
+				CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
 				if (pLoopPlot != NULL)
 				{
@@ -2868,7 +2999,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					{
 						if (pLoopPlot->isWater() || (pLoopPlot->area() == pArea) || (pLoopPlot->area()->getCitiesPerPlayer(getID()) > 0))
 						{
-							eBonus = pLoopPlot->getBonusType(getTeam());
+							BonusTypes eBonus = pLoopPlot->getBonusType(getTeam());
 
 							if (eBonus != NO_BONUS)
 							{
@@ -2896,137 +3027,6 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	iHealth = 0;
 	iValue = 1000;
 
-	iGreed = 100;
-
-	// K-Mod
-	// some trait information that will influence where we settle
-	bool bEasyCulture = false; // easy for us to pop the culture to the 2nd border
-	bool bAmbitious = false; // expectation of taking foreign land, either by culture or by force
-	bool bFinancial = false; // more value for rivers
-	bool bDefensive = false; // more value for settlings on hills
-	bool bSeafaring = false; // special affection for coast cities due to unique building or unit.
-
-	if (!bStartingLoc)
-	{
-		for (int iI = 0; iI < GC.getNumTraitInfos(); iI++)
-		{
-			if (hasTrait((TraitTypes)iI))
-			{
-				if (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE) > 0)
-				{
-					bEasyCulture = true;
-					if (GC.getLeaderHeadInfo(getPersonalityType()).getBasePeaceWeight() <= 5)
-						bAmbitious = true;
-					iGreed += 15 * GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE);
-				}
-				if (GC.getTraitInfo((TraitTypes)iI).getExtraYieldThreshold(YIELD_COMMERCE) > 0)
-				{
-					bFinancial = true;
-				}
-
-				for (int iJ = 0; iJ < GC.getNumPromotionInfos(); iJ++)
-				{
-					if (GC.getTraitInfo((TraitTypes)iI).isFreePromotion(iJ))
-					{
-						// aggressive, protective... it doesn't really matter to me.
-						if (GC.getLeaderHeadInfo(getPersonalityType()).getBasePeaceWeight() >= 5)
-						{
-							bDefensive = true;
-						}
-					}
-				}
-
-				for (int iJ = 0; iJ < GC.getNumUnitInfos(); iJ++)
-				{
-					if (GC.getUnitInfo((UnitTypes)iJ).isFound() &&
-						GC.getUnitInfo((UnitTypes)iJ).getProductionTraits(iI) &&
-						canTrain((UnitTypes)iJ))
-					{
-						iGreed += 20;
-						if (GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand() <= 150)
-							bAmbitious = true;
-					}
-				}
-			}
-		}
-		// seafaring test for unique unit and unique building
-		if (getCoastalTradeRoutes() > 0)
-			bSeafaring = true;
-		if (!bSeafaring)
-		{
-			for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
-			{
-				UnitTypes eCivUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI);
-				UnitTypes eDefaultUnit = (UnitTypes)GC.getUnitClassInfo((UnitClassTypes)iI).getDefaultUnitIndex();
-				if (eCivUnit != NO_UNIT && eCivUnit != eDefaultUnit)
-				{
-					if (GC.getUnitInfo(eCivUnit).getDomainType() == DOMAIN_SEA)
-					{
-						bSeafaring = true;
-						break;
-					}
-				}
-			}
-		}
-		if (!bSeafaring)
-		{
-			for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
-			{
-				BuildingTypes eCivBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
-				BuildingTypes eDefaultBuilding = (BuildingTypes)GC.getBuildingClassInfo((BuildingClassTypes)iI).getDefaultBuildingIndex();
-				if (eCivBuilding != NO_UNIT && eCivBuilding != eDefaultBuilding)
-				{
-					if (GC.getBuildingInfo(eCivBuilding).isWater())
-					{
-						bSeafaring = true;
-						break;
-					}
-				}
-			}
-		}
-		// culture building process
-		if (!bEasyCulture)
-		{
-			for (int iJ = 0; iJ < GC.getNumProcessInfos(); iJ++)
-			{
-				if (GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getProcessInfo((ProcessTypes)iJ).getTechPrereq()) &&
-					GC.getProcessInfo((ProcessTypes)iJ).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0)
-				{
-					bEasyCulture = true;
-					break;
-				}
-			}
-		}
-		// free culture building
-		if (!bEasyCulture)
-		{
-			for (int iJ = 0; iJ < GC.getNumBuildingInfos(); iJ++)
-			{
-				if (isBuildingFree((BuildingTypes)iJ) && GC.getBuildingInfo((BuildingTypes)iJ).getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0)
-				{
-					bEasyCulture = true;
-					break;
-				}
-			}
-		}
-		// easy artists
-		if (!bEasyCulture)
-		{
-			for (int iJ = 0; iJ < GC.getNumSpecialistInfos(); iJ++)
-			{
-				if (isSpecialistValid((SpecialistTypes)iJ) && specialistCommerce((SpecialistTypes)iJ, COMMERCE_CULTURE) > 0)
-				{
-					bEasyCulture = true;
-					break;
-				}
-			}
-		}
-	}
-	// K-Mod end
-	if (bAdvancedStart)
-	{
-		iGreed = 150;		
-	}
 	/* original bts code
 	else if (!bStartingLoc)
     {
@@ -3043,21 +3043,16 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
     } */
 
     //iClaimThreshold is the culture required to pop the 2nd borders.
-    int iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
+    /*int iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
     iClaimThreshold = std::max(1, iClaimThreshold);
-    /*iClaimThreshold *= (std::max(100, iGreed));
+    iClaimThreshold *= (std::max(100, iGreed));
 	iClaimThreshold /= 100;*/
-	// K-Mod
-	iClaimThreshold *= (bEasyCulture ? 140 : 100);
-	iClaimThreshold *= (bAmbitious ? 140 : 100);
-	iClaimThreshold /= 100;
-	// note, plot culture is now 100x city culture. So I've left a factor of 100 on iClaimThreshold.
     
     int iYieldLostHere = 0;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
-		pLoopPlot = plotCity(iX, iY, iI);
+		CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
 		if (pLoopPlot == NULL)
 		{
@@ -3074,11 +3069,11 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		}
 		else // K-Mod Note: it kind of sucks that no value is counted for taken tiles. Tile sharing / stealing should be allowed.
 		{
-			iTempValue = 0;
+			int iTempValue = 0;
 
-			eFeature = pLoopPlot->getFeatureType();
-			eBonus = pLoopPlot->getBonusType((bStartingLoc) ? NO_TEAM : getTeam());
-			eBonusImprovement = NO_IMPROVEMENT;
+			FeatureTypes eFeature = pLoopPlot->getFeatureType();
+			BonusTypes eBonus = pLoopPlot->getBonusType((kSet.bStartingLoc) ? NO_TEAM : getTeam());
+			ImprovementTypes eBonusImprovement = NO_IMPROVEMENT;
 
 			// K-Mod
 			bool bRemoveableFeature = false;
@@ -3110,8 +3105,8 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
             	bNeutralTerritory = false;
                 int iOurCulture = pLoopPlot->getCulture(getID());
                 int iOtherCulture = std::max(1, pLoopPlot->getCulture(pLoopPlot->getOwnerINLINE()));
-                iCultureMultiplier = 100 * (iOurCulture + iClaimThreshold);
-                iCultureMultiplier /= (iOtherCulture + iClaimThreshold);
+                iCultureMultiplier = 100 * (iOurCulture + kSet.iClaimThreshold);
+                iCultureMultiplier /= (iOtherCulture + kSet.iClaimThreshold);
                 iCultureMultiplier = std::min(100, iCultureMultiplier);
                 //The multiplier is basically normalized...
                 //100% means we own (or rightfully own) the tile.
@@ -3220,7 +3215,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				iTempValue += aiYield[YIELD_PRODUCTION] * 40;
 				iTempValue += aiYield[YIELD_COMMERCE] * 30;
 
-				if (bStartingLoc)
+				if (kSet.bStartingLoc)
 				{
 					iTempValue *= 2;
 				}
@@ -3251,7 +3246,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					{
 						iSpecialFoodPlus += 1;
 					}
-					if (bStartingLoc && !pPlot->isStartingPlot())
+					if (kSet.bStartingLoc && !pPlot->isStartingPlot())
 					{
 						// I'm pretty much forbidding starting 1 tile inland non-coastal.
 						// with more than a few coast tiles.
@@ -3264,7 +3259,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 			{
 				//iTempValue += 10;
 				// K-Mod
-				iTempValue += (bFinancial ? 25 : 5);
+				iTempValue += (kSet.bFinancial ? 25 : 5);
 				iTempValue += (pPlot->isRiver() ? 15 : 0);
 			}
 			// K-Mod
@@ -3291,7 +3286,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				iTempValue /= 100;
 			}*/
 			// K-Mod version
-			if (bEasyCulture)
+			if (kSet.bEasyCulture)
 			{
 				// 5/4 * 21 ~= 9 * 1.5 + 12 * 1;
 				iTempValue *= 5;
@@ -3305,7 +3300,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					iTempValue /= 2;
 				}
 			}
-			iTempValue *= iGreed;
+			iTempValue *= kSet.iGreed;
 			iTempValue /= 100;
 			// K-Mod end
 
@@ -3333,11 +3328,11 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
                     paiBonusCount[eBonus]++;
                     FAssert(paiBonusCount[eBonus] > 0);
 
-                    iTempValue = (AI_bonusVal(eBonus) * ((!bStartingLoc && (getNumTradeableBonuses(eBonus) == 0) && (paiBonusCount[eBonus] == 1)) ? 80 : 20));
-                    iTempValue *= ((bStartingLoc) ? 100 : iGreed);
+                    iTempValue = (AI_bonusVal(eBonus) * ((!kSet.bStartingLoc && (getNumTradeableBonuses(eBonus) == 0) && (paiBonusCount[eBonus] == 1)) ? 80 : 20));
+                    iTempValue *= (kSet.bStartingLoc ? 100 : kSet.iGreed);
                     iTempValue /= 100;
 
-                    if (iI != CITY_HOME_PLOT && !bStartingLoc)
+                    if (iI != CITY_HOME_PLOT && !kSet.bStartingLoc)
                     {
                         if ((pLoopPlot->getOwnerINLINE() != getID()) && stepDistance(pPlot->getX_INLINE(),pPlot->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) > 1)
 						{
@@ -3347,7 +3342,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
                             /* iTempValue *= std::min(150, iGreed);
                             iTempValue /= 100; */
 							// K-Mod
-							iTempValue *= (bAmbitious ? 140 : 100);
+							iTempValue *= (kSet.bAmbitious ? 140 : 100);
 							iTempValue /= 100;
 						}
 					}
@@ -3393,7 +3388,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	iResourceValue += iSpecialFood * 50;
 	iResourceValue += iSpecialProduction * 50;
 	iResourceValue += iSpecialCommerce * 50;
-    if (bStartingLoc)
+    if (kSet.bStartingLoc)
     {
         iResourceValue /= 2;
     }
@@ -3415,7 +3410,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	if (bIsCoastal)
 	{
-		if (!bStartingLoc)
+		if (!kSet.bStartingLoc)
 		{
 			if (pArea->getCitiesPerPlayer(getID()) == 0)
 			{
@@ -3438,11 +3433,11 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 				CvArea* pWaterArea = pPlot->waterArea(true);
 				if( pWaterArea != NULL )
 				{
-					iValue += 100 + (bSeafaring ? 150 : 0);
+					iValue += 100 + (kSet.bSeafaring ? 150 : 0);
 
 					if( GET_TEAM(getTeam()).AI_isWaterAreaRelevant(pWaterArea) )
 					{
-						iValue += 100 + (bSeafaring ? 150 : 0);
+						iValue += 100 + (kSet.bSeafaring ? 150 : 0);
 
 						//if( (countNumCoastalCities() < (getNumCities()/4)) || (countNumCoastalCitiesByArea(pPlot->area()) == 0) )
 						if (countNumCoastalCities() < getNumCities()/4 ||
@@ -3475,7 +3470,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	{
 		// iValue += 200;
 		// K-Mod
-		iValue += 100 + (bDefensive ? 100 : 0);
+		iValue += 100 + (kSet.bDefensive ? 100 : 0);
 	}
 
 	if (pPlot->isFreshWater())
@@ -3484,16 +3479,16 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		iValue += (GC.getDefineINT("FRESH_WATER_HEALTH_CHANGE") * 30);
 	}
 
-	if (bStartingLoc)
+	if (kSet.bStartingLoc)
 	{
-		iRange = GREATER_FOUND_RANGE;
+		int iRange = GREATER_FOUND_RANGE;
 		int iGreaterBadTile = 0;
 
 		for (int iDX = -(iRange); iDX <= iRange; iDX++)
 		{
 			for (int iDY = -(iRange); iDY <= iRange; iDY++)
 			{
-				pLoopPlot = plotXY(iX, iY, iDX, iDY);
+				CvPlot* pLoopPlot = plotXY(iX, iY, iDX, iDY);
 
 				if (pLoopPlot != NULL)
 				{
@@ -3501,7 +3496,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 					{
 						if (plotDistance(iX, iY, pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= iRange)
 						{
-						    iTempValue = 0;
+						    int iTempValue = 0;
 							iTempValue += (pLoopPlot->getYield(YIELD_FOOD) * 15);
 							iTempValue += (pLoopPlot->getYield(YIELD_PRODUCTION) * 11);
 							iTempValue += (pLoopPlot->getYield(YIELD_COMMERCE) * 5);
@@ -3538,7 +3533,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		
 		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
-		    pLoopPlot = plotCity(iX, iY, iI);
+		    CvPlot* pLoopPlot = plotCity(iX, iY, iI);
             
             if (pLoopPlot != NULL)
 		    {
@@ -3564,7 +3559,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		}
 	}
 
-	if (bStartingLoc)
+	if (kSet.bStartingLoc)
 	{
 		if (pPlot->getMinOriginalStartDist() == -1)
 		{
@@ -3736,7 +3731,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		}
 	}
 
-	if (!bStartingLoc)
+	if (!kSet.bStartingLoc)
 	{
 		int iFoodSurplus = std::max(0, iSpecialFoodPlus - iSpecialFoodMinus);
 		int iFoodDeficit = std::max(0, iSpecialFoodMinus - iSpecialFoodPlus);
@@ -3744,8 +3739,8 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 		iValue *= 100 + 20 * std::max(0, std::min(iFoodSurplus, 2 * GC.getFOOD_CONSUMPTION_PER_POPULATION()));
 		iValue /= 100 + 20 * std::max(0, iFoodDeficit);
 	}
-	
-	if ((!bStartingLoc) && (getNumCities() > 0))
+
+	if (!kSet.bStartingLoc && getNumCities() > 0)
 	{
 	    int iBonusCount = 0;
 	    int iUniqueBonusCount = 0;
@@ -3766,7 +3761,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 	    }
 	}
 	
-	if (!bStartingLoc)
+	if (!kSet.bStartingLoc)
 	{
 		int iDeadLockCount = AI_countDeadlockedBonuses(pPlot);
 		if (bAdvancedStart && (iDeadLockCount > 0))
@@ -3778,13 +3773,13 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 
 	iValue /= (std::max(0, (iBadTile - (NUM_CITY_PLOTS / 4))) + 3);
 
-	if (bStartingLoc)
+	if (kSet.bStartingLoc)
 	{
-		iDifferentAreaTile = 0;
+		int iDifferentAreaTile = 0;
 
 		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
-			pLoopPlot = plotCity(iX, iY, iI);
+			CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
 			if ((pLoopPlot == NULL) || !(pLoopPlot->isWater() || pLoopPlot->area() == pArea))
 			{

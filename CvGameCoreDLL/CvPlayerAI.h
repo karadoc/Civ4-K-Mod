@@ -73,6 +73,24 @@ public:
 	int AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity = NULL) const;
 
 	int AI_foundValue(int iX, int iY, int iMinRivalRange = -1, bool bStartingLoc = false) const;
+	// K-Mod
+	struct CvFoundSettings
+	{
+		CvFoundSettings(const CvPlayerAI& kPlayer, bool bStartingLoc);
+		int iMinRivalRange;
+		bool bStartingLoc;
+		int iClaimThreshold; // culture required to pop the 2nd borders. (from original bts)
+
+		// some trait information that will influence where we settle
+		int iGreed; // a number from the original bts code.
+		bool bEasyCulture; // easy for us to pop the culture to the 2nd border
+		bool bAmbitious; // expectation of taking foreign land, either by culture or by force
+		bool bFinancial; // more value for rivers
+		bool bDefensive; // more value for settlings on hills
+		bool bSeafaring; // special affection for coast cities due to unique building or unit.
+	};
+	int AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const;
+	// K-Mod end
 
 	bool AI_isAreaAlone(CvArea* pArea) const;
 	bool AI_isCapitalAreaAlone() const;

@@ -6675,13 +6675,10 @@ void CvGame::doDiploVote()
 
 void CvGame::createBarbarianCities()
 {
-	CvPlot* pLoopPlot;
 	CvPlot* pBestPlot;
 	long lResult;
 	int iTargetCities;
-	int iValue;
 	int iBestValue;
-	int iI;
 
 	if (getMaxCityElimination() > 0)
 	{
@@ -6745,9 +6742,12 @@ void CvGame::createBarbarianCities()
 	}
 
 
-	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	CvPlayerAI::CvFoundSettings kFoundSet(GET_PLAYER(BARBARIAN_PLAYER), false); // K-Mod
+	kFoundSet.iMinRivalRange = GC.getDefineINT("MIN_BARBARIAN_CITY_STARTING_DISTANCE");
+
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
-		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
 		if (!(pLoopPlot->isWater()))
 		{
@@ -6772,7 +6772,8 @@ void CvGame::createBarbarianCities()
 
 				if (pLoopPlot->area()->getCitiesPerPlayer(BARBARIAN_PLAYER) < iTargetCities)
 				{
-					iValue = GET_PLAYER(BARBARIAN_PLAYER).AI_foundValue(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), GC.getDefineINT("MIN_BARBARIAN_CITY_STARTING_DISTANCE"));
+					//iValue = GET_PLAYER(BARBARIAN_PLAYER).AI_foundValue(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), GC.getDefineINT("MIN_BARBARIAN_CITY_STARTING_DISTANCE"));
+					int iValue = GET_PLAYER(BARBARIAN_PLAYER).AI_foundValueBulk(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), kFoundSet); // K-Mod
 				
 					if (iTargetCitiesMultiplier > 100)
 					{

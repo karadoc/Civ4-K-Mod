@@ -169,16 +169,16 @@ protected:
 	BuildTypes m_aeBestBuild[NUM_CITY_PLOTS];
 
 	bool* m_pbEmphasize;
-	
+
 	int* m_aiSpecialYieldMultiplier;
-	
+
 	int m_iCachePlayerClosenessTurn;
 	int m_iCachePlayerClosenessDistance;
 	int* m_aiPlayerCloseness;
-	
+
 	int m_iNeededFloatingDefenders;
 	int m_iNeededFloatingDefendersCacheTurn;
-	
+
 	int m_iWorkersNeeded;
 	int m_iWorkersHave;
 
