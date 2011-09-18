@@ -69,8 +69,8 @@ public:
 
 	DomainTypes AI_unitAIDomainType(UnitAITypes eUnitAI) const;
 
-	int AI_yieldWeight(YieldTypes eYield, CvCity* pCity = 0) const; // K-Mod added city argument
-	int AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity = NULL) const;
+	int AI_yieldWeight(YieldTypes eYield, const CvCity* pCity = 0) const; // K-Mod added city argument
+	int AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity = NULL) const;
 
 	int AI_foundValue(int iX, int iY, int iMinRivalRange = -1, bool bStartingLoc = false) const;
 
@@ -191,7 +191,7 @@ public:
 	int AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, PlayerTypes* peBestPlayer = NULL) const;
 	int AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer = NULL) const;
 	
-	int AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity = NULL) const;
+	int AI_corporationValue(CorporationTypes eCorporation, const CvCity* pCity = NULL) const;
 	
 	int AI_adjacentPotentialAttackers(CvPlot* pPlot, bool bTestCanMove = false) const;
 	int AI_totalMissionAIs(MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup = NULL) const;

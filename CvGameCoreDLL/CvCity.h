@@ -952,13 +952,13 @@ public:
 	virtual void AI_assignWorkingPlots() = 0;
 	virtual void AI_updateAssignWork() = 0;
 	virtual bool AI_avoidGrowth() = 0;											// Exposed to Python
-	virtual int AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) = 0;
-	virtual int AI_permanentSpecialistValue(SpecialistTypes eSpecialist) = 0; // K-Mod
+	virtual int AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) const = 0;
+	virtual int AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const = 0; // K-Mod
 	virtual void AI_chooseProduction() = 0;
 	virtual UnitTypes AI_bestUnit(bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR, UnitAITypes* peBestUnitAI = NULL) = 0;
 	virtual UnitTypes AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) = 0;
 	virtual BuildingTypes AI_bestBuilding(int iFocusFlags = 0, int iMaxTurns = MAX_INT, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) = 0;
-	virtual int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0) = 0;
+	virtual int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0) const = 0;
 	virtual int AI_projectValue(ProjectTypes eProject) = 0;
 	virtual int AI_neededSeaWorkers() = 0;
 	virtual bool AI_isDefended(int iExtra = 0) = 0;
@@ -978,11 +978,11 @@ public:
 	virtual int AI_neededDefenders() = 0;
 	virtual int AI_neededAirDefenders() = 0;
 	virtual int AI_minDefenders() = 0;
-	virtual bool AI_isEmphasizeAvoidGrowth() = 0;
-	virtual bool AI_isAssignWorkDirty() = 0;
+	virtual bool AI_isEmphasizeAvoidGrowth() const = 0;
+	virtual bool AI_isAssignWorkDirty() const = 0;
 	virtual CvCity* AI_getRouteToCity() const = 0;
 	virtual void AI_setAssignWorkDirty(bool bNewValue) = 0;
-	virtual bool AI_isChooseProductionDirty() = 0;
+	virtual bool AI_isChooseProductionDirty() const = 0;
 	virtual void AI_setChooseProductionDirty(bool bNewValue) = 0;
 	virtual bool AI_isEmphasize(EmphasizeTypes eIndex) const = 0;											// Exposed to Python
 	virtual void AI_setEmphasize(EmphasizeTypes eIndex, bool bNewValue) = 0;
@@ -994,13 +994,13 @@ public:
 	virtual void AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange ) const = 0;
 	// K-Mod end
 	virtual int AI_totalBestBuildValue(CvArea* pArea) = 0;
-	virtual int AI_countBestBuilds(CvArea* pArea) = 0;													// Exposed to Python
-	virtual BuildTypes AI_getBestBuild(int iIndex) = 0;
+	virtual int AI_countBestBuilds(CvArea* pArea) const = 0;													// Exposed to Python
+	virtual BuildTypes AI_getBestBuild(int iIndex) const = 0;
 	virtual void AI_updateBestBuild() = 0;
 	virtual int AI_cityValue() const = 0;
 	virtual int AI_clearFeatureValue(int iIndex) = 0;
 
-	virtual int AI_calculateCulturePressure(bool bGreatWork = false) = 0;
+	virtual int AI_calculateCulturePressure(bool bGreatWork = false) const = 0;
 	virtual int AI_calculateWaterWorldPercent() = 0;
 	virtual int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true) = 0;
 	virtual int AI_yieldMultiplier(YieldTypes eYield) const = 0;
@@ -1012,7 +1012,7 @@ public:
 	virtual int AI_getWorkersNeeded() = 0;
 	virtual void AI_changeWorkersHave(int iChange) = 0;
 
-	bool hasShrine(ReligionTypes eReligion);
+	bool hasShrine(ReligionTypes eReligion) const;
 	void processVoteSourceBonus(VoteSourceTypes eVoteSource, bool bActive);
 
 	void invalidatePopulationRankCache();

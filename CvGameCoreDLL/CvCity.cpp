@@ -14056,7 +14056,7 @@ void CvCity::setEventOccured(EventTypes eEvent, bool bOccured)
 
 // CACHE: cache frequently used values
 ///////////////////////////////////////
-bool CvCity::hasShrine(ReligionTypes eReligion)
+bool CvCity::hasShrine(ReligionTypes eReligion) const
 {
 	bool bHasShrine = false;
 	

@@ -57,7 +57,7 @@ CvCityAI::CvCityAI()
 	m_bForceEmphasizeCulture = false;
 	m_aiSpecialYieldMultiplier = new int[NUM_YIELD_TYPES];
 	m_aiPlayerCloseness = new int[MAX_PLAYERS];
-	m_aiConstructionValue = new int[GC.getNumBuildingClassInfos()]; // K-Mod
+	m_aiConstructionValue.assign(GC.getNumBuildingClassInfos(), -1); // K-Mod
 
 	m_pbEmphasize = NULL;
 
@@ -73,7 +73,6 @@ CvCityAI::~CvCityAI()
 	SAFE_DELETE_ARRAY(m_aiEmphasizeCommerceCount);
 	SAFE_DELETE_ARRAY(m_aiSpecialYieldMultiplier);
 	SAFE_DELETE_ARRAY(m_aiPlayerCloseness);
-	SAFE_DELETE_ARRAY(m_aiConstructionValue); // K-Mod
 }
 
 
@@ -155,10 +154,7 @@ void CvCityAI::AI_reset()
 	{
 		m_aiPlayerCloseness[iI] = 0;
 	}
-	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++) // K-Mod
-	{
-		m_aiConstructionValue[iI] = -1;
-	}
+	AI_ClearConstructionValueCache(); // K-Mod
 
 	m_iCachePlayerClosenessTurn = -1;
 	m_iCachePlayerClosenessDistance = -1;
@@ -475,7 +471,7 @@ bool CvCityAI::AI_ignoreGrowth()
 }
 
 // (this function has been edited heavily for K-Mod)
-int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove)
+int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) const
 {
 	PROFILE_FUNC();
 
@@ -662,7 +658,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 
 // K-Mod. The value of a long-term specialist, for use in calculating great person value, and value of free specialists from buildings.
 // value is roughly 4 * 100 * commerce
-int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist)
+int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 {
 	const CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
 
@@ -3774,7 +3770,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 }
 
 
-int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags)
+int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags) const
 {
 	return AI_buildingValueThreshold(eBuilding, iFocusFlags, 0);
 }
@@ -3782,7 +3778,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags)
 // XXX should some of these count cities, buildings, etc. based on teams (because wonders are shared...)
 // XXX in general, this function needs to be more sensitive to what makes this city unique (more likely to build airports if there already is a harbor...)
 // This function has been heavily edited for K-Mod
-int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags, int iThreshold)
+int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags, int iThreshold) const
 {
 	PROFILE_FUNC();
 
@@ -6224,31 +6220,31 @@ bool CvCityAI::AI_isDanger()
 }
 
 
-int CvCityAI::AI_getEmphasizeAvoidGrowthCount()
+int CvCityAI::AI_getEmphasizeAvoidGrowthCount() const
 {
 	return m_iEmphasizeAvoidGrowthCount;
 }
 
 
-bool CvCityAI::AI_isEmphasizeAvoidGrowth()
+bool CvCityAI::AI_isEmphasizeAvoidGrowth() const
 {
 	return (AI_getEmphasizeAvoidGrowthCount() > 0);
 }
 
 
-int CvCityAI::AI_getEmphasizeGreatPeopleCount()
+int CvCityAI::AI_getEmphasizeGreatPeopleCount() const
 {
 	return m_iEmphasizeGreatPeopleCount;
 }
 
 
-bool CvCityAI::AI_isEmphasizeGreatPeople()
+bool CvCityAI::AI_isEmphasizeGreatPeople() const
 {
 	return (AI_getEmphasizeGreatPeopleCount() > 0);
 }
 
 
-bool CvCityAI::AI_isAssignWorkDirty()
+bool CvCityAI::AI_isAssignWorkDirty() const
 {
 	return m_bAssignWorkDirty;
 }
@@ -6260,7 +6256,7 @@ void CvCityAI::AI_setAssignWorkDirty(bool bNewValue)
 }
 
 
-bool CvCityAI::AI_isChooseProductionDirty()
+bool CvCityAI::AI_isChooseProductionDirty() const
 {
 	return m_bChooseProductionDirty;
 }
@@ -7521,7 +7517,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 	
-BuildTypes CvCityAI::AI_getBestBuild(int iIndex)
+BuildTypes CvCityAI::AI_getBestBuild(int iIndex) const
 {
 	FAssertMsg(iIndex >= 0, "iIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(iIndex < NUM_CITY_PLOTS, "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -7529,7 +7525,7 @@ BuildTypes CvCityAI::AI_getBestBuild(int iIndex)
 }
 
 
-int CvCityAI::AI_countBestBuilds(CvArea* pArea)
+int CvCityAI::AI_countBestBuilds(CvArea* pArea) const
 {
 	CvPlot* pLoopPlot;
 	int iCount;
@@ -9405,7 +9401,7 @@ void CvCityAI::AI_juggleCitizens()
 }
 
 
-bool CvCityAI::AI_potentialPlot(short* piYields)
+bool CvCityAI::AI_potentialPlot(short* piYields) const
 {
 	int iNetFood = piYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION();
 
@@ -9431,7 +9427,7 @@ bool CvCityAI::AI_potentialPlot(short* piYields)
 }
 
 
-bool CvCityAI::AI_foodAvailable(int iExtra)
+bool CvCityAI::AI_foodAvailable(int iExtra) const
 {
 	PROFILE_FUNC();
 
@@ -9516,7 +9512,7 @@ bool CvCityAI::AI_foodAvailable(int iExtra)
 }
 
 
-int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation, bool bWorkerOptimization)
+int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation, bool bWorkerOptimization) const
 {
 	/* const int iBaseProductionValue = 15;
 	const int iBaseCommerceValue = 7; */
@@ -10085,7 +10081,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 }
 
 
-int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation)
+int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation) const
 {
 	PROFILE_FUNC();
 
@@ -10575,12 +10571,12 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 }
 
 
-int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry)
+int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry) const
 {
 	return AI_getHappyFromHurry(hurryPopulation(eHurry));
 }
 
-int CvCityAI::AI_getHappyFromHurry(int iHurryPopulation)
+int CvCityAI::AI_getHappyFromHurry(int iHurryPopulation) const
 {
 	int iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
 	if (iHappyDiff > 0)
@@ -10597,12 +10593,12 @@ int CvCityAI::AI_getHappyFromHurry(int iHurryPopulation)
 	return 0;
 }
 
-int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry, UnitTypes eUnit, bool bIgnoreNew)
+int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry, UnitTypes eUnit, bool bIgnoreNew) const
 {
 	return AI_getHappyFromHurry(getHurryPopulation(eHurry, getHurryCost(true, eUnit, bIgnoreNew)));
 }
 
-int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry, BuildingTypes eBuilding, bool bIgnoreNew)
+int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry, BuildingTypes eBuilding, bool bIgnoreNew) const
 {
 	return AI_getHappyFromHurry(getHurryPopulation(eHurry, getHurryCost(true, eBuilding, bIgnoreNew)));
 }
@@ -10705,7 +10701,7 @@ bool CvCityAI::AI_doPanic()
 	return false;
 }
 
-int CvCityAI::AI_calculateCulturePressure(bool bGreatWork)
+int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
 {
     CvPlot* pLoopPlot;
     BonusTypes eNonObsoleteBonus;
@@ -10945,7 +10941,7 @@ int CvCityAI::AI_calculateWaterWorldPercent()
 }
 
 //Please note, takes the yield multiplied by 100
-int CvCityAI::AI_getYieldMagicValue(const int* piYieldsTimes100, bool bHealthy)
+int CvCityAI::AI_getYieldMagicValue(const int* piYieldsTimes100, bool bHealthy) const
 {
 	FAssert(piYieldsTimes100 != NULL);
 
@@ -10965,7 +10961,7 @@ int CvCityAI::AI_getYieldMagicValue(const int* piYieldsTimes100, bool bHealthy)
 //50-100 means it's okay.
 //Above 100 means it's definitely decent - seriously question ever not working it.
 //This function deliberately doesn't use emphasize settings.
-int CvCityAI::AI_getPlotMagicValue(CvPlot* pPlot, bool bHealthy, bool bWorkerOptimization)
+int CvCityAI::AI_getPlotMagicValue(CvPlot* pPlot, bool bHealthy, bool bWorkerOptimization) const
 {
     int aiYields[NUM_YIELD_TYPES];
     ImprovementTypes eCurrentImprovement;
@@ -11010,7 +11006,7 @@ int CvCityAI::AI_getPlotMagicValue(CvPlot* pPlot, bool bHealthy, bool bWorkerOpt
 //useful for deciding whether or not to grow... or whether the city needs terrain
 //improvement.
 //if healthy is false it assumes bad health conditions.
-int CvCityAI::AI_countGoodTiles(bool bHealthy, bool bUnworkedOnly, int iThreshold, bool bWorkerOptimization)
+int CvCityAI::AI_countGoodTiles(bool bHealthy, bool bUnworkedOnly, int iThreshold, bool bWorkerOptimization) const
 {
     CvPlot* pLoopPlot;
     int iI;
@@ -11037,7 +11033,7 @@ int CvCityAI::AI_countGoodTiles(bool bHealthy, bool bUnworkedOnly, int iThreshol
     return iCount;
 }
 
-int CvCityAI::AI_calculateTargetCulturePerTurn()
+int CvCityAI::AI_calculateTargetCulturePerTurn() const
 {
 	/*
 	int iTarget = 0;
@@ -11078,7 +11074,7 @@ int CvCityAI::AI_calculateTargetCulturePerTurn()
 	return 1;
 }
 	
-int CvCityAI::AI_countGoodSpecialists(bool bHealthy)
+int CvCityAI::AI_countGoodSpecialists(bool bHealthy) const
 {
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 	int iCount = 0;
@@ -11209,7 +11205,7 @@ void CvCityAI::AI_stealPlots()
 // +4 if a bonus.
 // Unworked ocean ranks very lowly. Unworked lake ranks at 3. Worked lake at 7.
 // Worked bonus in ocean ranks at like 11
-int CvCityAI::AI_buildingSpecialYieldChangeValue(BuildingTypes eBuilding, YieldTypes eYield)
+int CvCityAI::AI_buildingSpecialYieldChangeValue(BuildingTypes eBuilding, YieldTypes eYield) const
 {
     int iI;
     CvPlot* pLoopPlot;
@@ -11394,7 +11390,7 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 	}
 }
 
-int CvCityAI::AI_specialYieldMultiplier(YieldTypes eYield)
+int CvCityAI::AI_specialYieldMultiplier(YieldTypes eYield) const
 {
 	return m_aiSpecialYieldMultiplier[eYield];
 }
@@ -12033,7 +12029,8 @@ void CvCityAI::read(FDataStreamBase* pStream)
 	// K-Mod
 	if (uiFlag >= 1)
 	{
-		pStream->Read(GC.getNumBuildingClassInfos(), m_aiConstructionValue);
+		FAssert(m_aiConstructionValue.size() == GC.getNumBuildingClassInfos());
+		pStream->Read(GC.getNumBuildingClassInfos(), &m_aiConstructionValue[0]);
 	}
 	// K-Mod end
 }
@@ -12071,17 +12068,14 @@ void CvCityAI::write(FDataStreamBase* pStream)
 	pStream->Write(m_iWorkersNeeded);
 	pStream->Write(m_iWorkersHave);
 	// K-Mod (note: cache needs to be saved, otherwise players who join mid-turn might go out of sync when the cache is used)
-	pStream->Write(GC.getNumBuildingClassInfos(), m_aiConstructionValue); // uiFlag >= 1
+	pStream->Write(GC.getNumBuildingClassInfos(), &m_aiConstructionValue[0]); // uiFlag >= 1
 	// K-Mod end
 }
 
 // K-Mod
 void CvCityAI::AI_ClearConstructionValueCache()
 {
-	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
-	{
-		m_aiConstructionValue[iI] = -1;
-	}
+	m_aiConstructionValue.assign(GC.getNumBuildingClassInfos(), -1);
 }
 
 /***

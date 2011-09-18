@@ -2270,7 +2270,7 @@ DomainTypes CvPlayerAI::AI_unitAIDomainType(UnitAITypes eUnitAI) const
 }
 
 
-int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, CvCity* pCity) const // K-Mod added city argument
+int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, const CvCity* pCity) const // K-Mod added city argument
 {
 	/* original bts code
 	if (eYield == YIELD_PRODUCTION)
@@ -2312,7 +2312,7 @@ int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, CvCity* pCity) const // K-Mod 
 }
 
 
-int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, CvCity* pCity) const
+int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) const
 {
 	int iWeight;
 
@@ -11569,7 +11569,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 }
 
 //Returns approximately 100 x gpt value of the corporation.
-int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, CvCity* pCity) const
+int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity* pCity) const
 {
 	/* original bts code
 	if (pCity == NULL)
