@@ -958,7 +958,8 @@ public:
 	virtual UnitTypes AI_bestUnit(bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR, UnitAITypes* peBestUnitAI = NULL) = 0;
 	virtual UnitTypes AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) = 0;
 	virtual BuildingTypes AI_bestBuilding(int iFocusFlags = 0, int iMaxTurns = MAX_INT, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) = 0;
-	virtual int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0) const = 0;
+	//virtual int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0) const = 0;
+	virtual int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0, int iThreshold = 0, bool bConstCache = false) const = 0; // K-Mod
 	virtual int AI_projectValue(ProjectTypes eProject) = 0;
 	virtual int AI_neededSeaWorkers() = 0;
 	virtual bool AI_isDefended(int iExtra = 0) = 0;

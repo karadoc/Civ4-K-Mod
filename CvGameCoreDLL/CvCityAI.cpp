@@ -660,7 +660,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 // value is roughly 4 * 100 * commerce
 int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 {
-	const CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
 	const int iCommerceValue = 4;
 	const int iProdValue = 7;
@@ -754,7 +754,7 @@ void CvCityAI::AI_chooseProduction()
 
 	bDanger = AI_isDanger();
 	
-	CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
+	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
 	if (isProduction())
 	{
@@ -1000,7 +1000,7 @@ void CvCityAI::AI_chooseProduction()
 	// K-Mod, military exemption for commerce cities and underdeveloped cities
 	bool bUnitExempt = false;
 	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
-	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValueThreshold(eBestBuilding);
+	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
 
 	// Don't give exemptions to cities that don't have anything good to do anyway.
 	if (iBestBuildingValue >= 50)
@@ -3525,7 +3525,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 	int iBestValue;
 	int iI, iJ;
 
-	const CvPlayerAI& kOwner = GET_PLAYER(getOwner()); // K-Mod (and I've replaced all other GET_PLAYER calls in this function)
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod (and I've replaced all other GET_PLAYER calls in this function)
 
 	bAreaAlone = kOwner.AI_isAreaAlone(area());
 
@@ -3600,14 +3600,16 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 					{
 						if (canConstruct(eLoopBuilding))
 						{
-							iValue = AI_buildingValueThreshold(eLoopBuilding, iFocusFlags, iMinThreshold);
+							//iValue = AI_buildingValueThreshold(eLoopBuilding, iFocusFlags, iMinThreshold);
+							AI_buildingValue(eLoopBuilding, iFocusFlags, iMinThreshold, bAsync); // K-Mod
 
 							if (GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass() != NO_BUILDINGCLASS)
 							{
 								BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass());
 								if (NO_BUILDING != eFreeBuilding)
 								{
-									iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass())));
+									//iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass())));
+									iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags, 0, bAsync) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)GC.getBuildingInfo(eLoopBuilding).getFreeBuildingClass())));
 								}
 							}
 							if (isProductionAutomated())
@@ -3667,7 +3669,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 										{
 											if (pLoopCity->canConstruct(eLoopBuilding))
 											{
-												int iLoopValue = static_cast<CvCityAI*>(pLoopCity)->AI_buildingValueThreshold(eLoopBuilding);
+												int iLoopValue = pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bAsync);
 												if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
 												{
 													iLoopValue *= iMaxNumWonders + 1 - pLoopCity->getNumNationalWonders();
@@ -3770,15 +3772,17 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 }
 
 
+/* original BtS code. (I don't see the point of this function being separate to the "threshold" version)
 int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags) const
 {
 	return AI_buildingValueThreshold(eBuilding, iFocusFlags, 0);
-}
+} */
 
 // XXX should some of these count cities, buildings, etc. based on teams (because wonders are shared...)
 // XXX in general, this function needs to be more sensitive to what makes this city unique (more likely to build airports if there already is a harbor...)
 // This function has been heavily edited for K-Mod
-int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags, int iThreshold) const
+//int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags, int iThreshold, bool bConstCache) const
+int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iThreshold, bool bConstCache) const
 {
 	PROFILE_FUNC();
 
@@ -4667,7 +4671,7 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 								for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 								{
 									if (canConstruct(eLoopBuilding, false, true) && getProductionBuilding() != eLoopBuilding)
-										iHighestValue = std::max(pLoopCity->AI_buildingValue(eLoopBuilding, 0), iHighestValue);
+										iHighestValue = std::max(pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache), iHighestValue);
 								}
 
 								int iTempValue = iHighestValue;
@@ -5610,9 +5614,11 @@ int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags
 	iValue /= 100;
 
 	// constructionValue cache
-	if (iFocusFlags == 0 && iThreshold == 0)
+	if (!bConstCache && iFocusFlags == 0 && iThreshold == 0)
 	{
-		m_aiConstructionValue[eBuildingClass] = iValue;
+		// please don't hate me for using const_cast.
+		// The const-correctness was my idea in the first place, but the original code doesn't make it easy for me.
+		const_cast<std::vector<int>&>(m_aiConstructionValue)[eBuildingClass] = iValue;
 	}
 	// K-Mod end
 
@@ -7607,7 +7613,7 @@ void CvCityAI::AI_updateBestBuild()
 
 				//AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, iHappyAdjust, iHealthAdjust, iDesiredFoodChange);
 				AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, 0, 0, iDesiredFoodChange);
-				int iWorkerCount = GET_PLAYER(getOwner()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD); // K-Mod, originally this was all workers at the city.
+				int iWorkerCount = GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD); // K-Mod, originally this was all workers at the city.
 				m_aiBestBuildValue[iI] *= 4;
 				m_aiBestBuildValue[iI] += 4 + iWorkerCount; // was 3 (and 4)
 				m_aiBestBuildValue[iI] /= (5 + iWorkerCount);
@@ -8105,7 +8111,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 				if (eProductionBuilding != NO_BUILDING)
 				{
-					int iValuePerTurn = AI_buildingValueThreshold(eProductionBuilding, BUILDINGFOCUS_GOLD | BUILDINGFOCUS_MAINTENANCE | BUILDINGFOCUS_PRODUCTION);
+					int iValuePerTurn = AI_buildingValue(eProductionBuilding, BUILDINGFOCUS_GOLD | BUILDINGFOCUS_MAINTENANCE | BUILDINGFOCUS_PRODUCTION);
 					
 					iValuePerTurn /= 3;
 					
@@ -10621,7 +10627,7 @@ int CvCityAI::AI_cityValue() const
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
 	iValue -= 3 * calculateColonyMaintenanceTimes100(); */
 	// K-Mod. The original code fails for civs using high espionage or high culture.
-	const CvPlayerAI& kOwner = GET_PLAYER(getOwner());
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD) * 100;
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH) * kOwner.AI_commerceWeight(COMMERCE_RESEARCH);
 	iValue += getCommerceRateTimes100(COMMERCE_ESPIONAGE) * kOwner.AI_commerceWeight(COMMERCE_ESPIONAGE);
@@ -10820,7 +10826,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	}
 	
 	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
-	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValueThreshold(eBestBuilding);
+	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
 
 	//workboat
 	if (pWaterArea != NULL)
@@ -11274,7 +11280,7 @@ int CvCityAI::AI_yieldMultiplier(YieldTypes eYield) const
 		iMultiplier += (getCommerceRateModifier(COMMERCE_CULTURE) * 15) / 100; */
 		// K-Mod
 		// this breakdown seems wrong... lets try it a different way.
-		const CvPlayer& kPlayer = GET_PLAYER(getOwner());
+		const CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
 		int iExtra = 0;
 		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{

@@ -39,8 +39,9 @@ public:
 	BuildingTypes AI_bestBuilding(int iFocusFlags = 0, int iMaxTurns = 0, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR);
 	BuildingTypes AI_bestBuildingThreshold(int iFocusFlags = 0, int iMaxTurns = 0, int iMinThreshold = 0, bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR);
 	
-	int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0) const;
-	int AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags = 0, int iThreshold = 0) const;
+	/* int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0) const;
+	int AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags = 0, int iThreshold = 0) const; */
+	int AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags = 0, int iThreshold = 0, bool bConstCache = false) const;
 
 	ProjectTypes AI_bestProject();
 	int AI_projectValue(ProjectTypes eProject);
@@ -181,7 +182,7 @@ protected:
 	int m_iWorkersNeeded;
 	int m_iWorkersHave;
 
-	mutable std::vector<int> m_aiConstructionValue; // K-Mod. (cache)
+	std::vector<int> m_aiConstructionValue; // K-Mod. (cache)
 
 	void AI_doDraft(bool bForce = false);
 	void AI_doHurry(bool bForce = false);

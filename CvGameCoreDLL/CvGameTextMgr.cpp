@@ -4809,8 +4809,8 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					//
 					int iBuildUnitProb = static_cast<CvCityAI*>(pCity)->AI_buildUnitProb();
 					szString.append(CvWString::format(L"\nBuild unit prob: %d%%", iBuildUnitProb));
-					BuildingTypes eBestBuilding = static_cast<CvCityAI*>(pCity)->AI_bestBuildingThreshold(0, 0, 0, true /* async */);
-					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : static_cast<CvCityAI*>(pCity)->AI_buildingValueThreshold(eBestBuilding);
+					BuildingTypes eBestBuilding = static_cast<CvCityAI*>(pCity)->AI_bestBuildingThreshold(0, 0, 0, true);
+					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : pCity->AI_buildingValue(eBestBuilding);
 					iBuildUnitProb *= (150 + iBestBuildingValue);
 					iBuildUnitProb /= (60 + 3 * iBestBuildingValue);
 					szString.append(CvWString::format(L" (%d%%)", iBuildUnitProb));
