@@ -668,7 +668,8 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 				bool bKilled = false;
 				if (!bNoDisband)
 				{
-					if (pLoopUnit->canFight())
+					//if (pLoopUnit->canFight()) // original bts code
+					if (pLoopUnit->getUnitCombatType() != NO_UNITCOMBAT) // K-Mod - bug fix for the rare case of a barb city spawning on top of an animal
 					{
 						int iExp = pLoopUnit->getExperience();
 						CvCity* pPlotCity = pLoopUnit->plot()->getPlotCity();
@@ -11147,7 +11148,7 @@ int CvPlayerAI::AI_unitCostPerMil() const
 	int iFunds = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
 	iFunds += getGoldPerTurn() - calculateInflatedCosts();
 	iFunds += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
-	return calculateUnitCost() * 1000 / std::max(1, iFunds);
+	return std::max(0, calculateUnitCost()-getNumCities()) * 1000 / std::max(1, iFunds); // # cities is there to offset early-game distortion.
 }
 // K-Mod end
 

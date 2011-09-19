@@ -11588,16 +11588,10 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 			{
 				changeOverflowProduction(iOverflow, getProductionModifier(eTrainUnit));
 			}
+
+			/* original code (this stuff has been moved)
 			setUnitProduction(eTrainUnit, 0);
-/*************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/10/10                           EmperorFool         */
-/*                                                                                               */
-/* Bugfix                                                                                        */
-/*************************************************************************************************/
-			setUnitProductionTime(eTrainUnit, 0);
-/*************************************************************************************************/
-/* UNOFFICIAL_PATCH                         END                                                  */
-/*************************************************************************************************/
+			setUnitProductionTime(eTrainUnit, 0); // unofficial patch
 
 			// * Limited which production modifiers affect gold from production overflow. 1/3
 			iLostProduction *= getBaseYieldRateModifier(YIELD_PRODUCTION);
@@ -11608,60 +11602,86 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 			if (iProductionGold > 0)
 			{
 				GET_PLAYER(getOwnerINLINE()).changeGold(iProductionGold);
-			}
+			} */
 
-
-			pUnit = GET_PLAYER(getOwnerINLINE()).initUnit(eTrainUnit, getX_INLINE(), getY_INLINE(), eTrainAIUnit);
-			FAssertMsg(pUnit != NULL, "pUnit is expected to be assigned a valid unit object");
-
-			pUnit->finishMoves();
-
-			addProductionExperience(pUnit);
-
-			pRallyPlot = getRallyPlot();
-
-			if (pRallyPlot != NULL)
+			// K-Mod. use excess production to build more of the same unit
+			int iToBuild = 1 + iLostProduction / iProductionNeeded;
+			int iBuilt = 0;
+			for (iBuilt = 0; iBuilt < iToBuild; iBuilt++)
 			{
-				pUnit->getGroup()->pushMission(MISSION_MOVE_TO, pRallyPlot->getX_INLINE(), pRallyPlot->getY_INLINE());
-			}
+				// original build code
+				pUnit = GET_PLAYER(getOwnerINLINE()).initUnit(eTrainUnit, getX_INLINE(), getY_INLINE(), eTrainAIUnit);
+				FAssertMsg(pUnit != NULL, "pUnit is expected to be assigned a valid unit object");
 
-			if (isHuman())
-			{
-				if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_START_AUTOMATED))
+				pUnit->finishMoves();
+
+				addProductionExperience(pUnit);
+
+				pRallyPlot = getRallyPlot();
+
+				if (pRallyPlot != NULL)
 				{
-					pUnit->automate(AUTOMATE_BUILD);
+					pUnit->getGroup()->pushMission(MISSION_MOVE_TO, pRallyPlot->getX_INLINE(), pRallyPlot->getY_INLINE());
 				}
 
-				if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_MISSIONARIES_AUTOMATED))
+				if (isHuman())
 				{
-					pUnit->automate(AUTOMATE_RELIGION);
+					if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_START_AUTOMATED))
+					{
+						pUnit->automate(AUTOMATE_BUILD);
+					}
+
+					if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_MISSIONARIES_AUTOMATED))
+					{
+						pUnit->automate(AUTOMATE_RELIGION);
+					}
+				}
+
+				CvEventReporter::getInstance().unitBuilt(this, pUnit);
+
+				if( gCityLogLevel >= 1 )
+				{
+					CvWString szString;
+					getUnitAIString(szString, pUnit->AI_getUnitAIType());
+					logBBAI("    City %S finishes production of unit %S with UNITAI %S", getName().GetCString(), pUnit->getName(0).GetCString(), szString.GetCString() );
+				}
+
+				if (GC.getUnitInfo(eTrainUnit).getDomainType() == DOMAIN_AIR)
+				{
+					if (plot()->countNumAirUnits(getTeam()) > getAirUnitCapacity(getTeam()))
+					{
+						pUnit->jumpToNearestValidPlot();  // can destroy unit
+					}
+				}
+				// end original build code
+				if (!canTrain(eTrainUnit))
+					break; //  can't build any more.
+			}
+			iLostProduction -= iProductionNeeded * (iBuilt-1);
+			FAssert(iLostProduction >= 0);
+
+			if (canTrain(eTrainUnit))
+			{
+				FAssert(iLostProduction < iProductionNeeded);
+				setUnitProduction(eTrainUnit, iLostProduction);
+				iLostProduction = 0;
+			}
+			else
+				setUnitProduction(eTrainUnit, 0);
+			setUnitProductionTime(eTrainUnit, 0);
+
+			if (iLostProduction > 0)
+			{
+				iLostProduction *= getBaseYieldRateModifier(YIELD_PRODUCTION);
+				iLostProduction /= std::max(1, getBaseYieldRateModifier(YIELD_PRODUCTION, getProductionModifier(eTrainUnit)));
+
+				int iProductionGold = iLostProduction * GC.getDefineINT("MAXED_UNIT_GOLD_PERCENT") / 100;
+				if (iProductionGold > 0)
+				{
+					GET_PLAYER(getOwnerINLINE()).changeGold(iProductionGold);
 				}
 			}
-
-			CvEventReporter::getInstance().unitBuilt(this, pUnit);
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
-			if( gCityLogLevel >= 1 )
-			{
-				CvWString szString;
-				getUnitAIString(szString, pUnit->AI_getUnitAIType());
-				logBBAI("    City %S finishes production of unit %S with UNITAI %S", getName().GetCString(), pUnit->getName(0).GetCString(), szString.GetCString() );
-			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-			if (GC.getUnitInfo(eTrainUnit).getDomainType() == DOMAIN_AIR)
-			{
-				if (plot()->countNumAirUnits(getTeam()) > getAirUnitCapacity(getTeam()))
-				{
-					pUnit->jumpToNearestValidPlot();  // can destroy unit
-				}
-			}
+			// K-Mod end
 		}
 		break;
 
