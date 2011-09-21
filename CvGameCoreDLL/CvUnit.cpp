@@ -1716,10 +1716,11 @@ bool CvUnit::isActionRecommended(int iAction)
 			{
 				eImprovement = ((ImprovementTypes)(GC.getBuildInfo(eBuild).getImprovement()));
 				eRoute = ((RouteTypes)(GC.getBuildInfo(eBuild).getRoute()));
-				eBonus = pPlot->getBonusType(getTeam());
+				//eBonus = pPlot->getBonusType(getTeam());
+				eBonus = pPlot->getNonObsoleteBonusType(getTeam()); // K-Mod
 				pWorkingCity = pPlot->getWorkingCity();
 
-				if (pPlot->getImprovementType() == NO_IMPROVEMENT)
+				// if (pPlot->getImprovementType() == NO_IMPROVEMENT) // Disabled by K-Mod (this looks like a bug to me)
 				{
 					if (pWorkingCity != NULL)
 					{

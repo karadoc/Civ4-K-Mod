@@ -2477,40 +2477,25 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		break;
 	case COMMERCE_ESPIONAGE:
 		{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/29/09                                jdog5000      */
-/*                                                                                              */
-/* Espionage AI, Bugfix                                                                         */
-/************************************************************************************************/
-			// Fixed bug where espionage weight set to 0 if winning all esp point races
-			// Smoothed out emphasis
+			// K-Mod version, based loosely on BBAI code.
 			int iEspBehindWeight = 0;
 			int iEspAttackWeight = 0;
-			int iAllTeamTotalPoints = 0; // K-Mod
-			int iTeamCount = 0; // K-Mod
-			int iLocalTeamCount = 0; // K-Mod
+			int iAllTeamTotalPoints = 0;
+			int iTeamCount = 0;
+			int iLocalTeamCount = 0;
+			int iTotalUnspent = 0;
 			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 			{
 				CvTeamAI& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
-				// K-Mod, added "has met"
+
 				if (kLoopTeam.isAlive() && iTeam != getTeam() && GET_TEAM(getTeam()).isHasMet((TeamTypes)iTeam) && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
 				{
-					/*
-					int iPointDiff = kLoopTeam.getEspionagePointsAgainstTeam(getTeam()) - GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
-					if (iPointDiff > 0)
-					{
-						iEspBehindWeight += 1;
-						if( GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) < ATTITUDE_CAUTIOUS )
-						{
-							iEspBehindWeight += 1;
-						}
-					}*/
-					// K-Mod
 					iAllTeamTotalPoints += kLoopTeam.getEspionagePointsEver();
 					iTeamCount++;
 
 					int iTheirPoints = kLoopTeam.getEspionagePointsAgainstTeam(getTeam());
 					int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
+					iTotalUnspent += iOurPoints;
 					int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
 					iTheirPoints -= (iTheirPoints*iAttitude)/(2*12);
 
@@ -2536,50 +2521,26 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 							iEspAttackWeight += 1;
 						}
 					}
-					// K-Mod end
 				}
 			}
 			
-			// K-Mod
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
 			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 24*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
 			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
+			// lower weight by up to 75% if we have spent less than a quarter of our total points
+			iWeight *= 100 - 300*std::max(iTotalUnspent - (3*GET_TEAM(getTeam()).getEspionagePointsEver()/4 + 2*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
+			iWeight /= 100;
+			//
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 			{
 				iWeight *= 2;
 			}
-			//iWeight *= 2*iEspBehindWeight + (3*GET_TEAM(getTeam()).getHasMetCivCount(true))/4 + 1;
 			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 1;
-			// K-Mod end
+
 			iWeight *= AI_getEspionageWeight();
 			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 1;
 			iWeight /= 100;
 
-			/* if( getCommercePercent(COMMERCE_ESPIONAGE) == 0 )
-			{
-				iWeight *= 2;
-				iWeight /= 3;
-			}
-			else if( isHuman() )
-			{
-				// UNOFFICIAL_PATCH todo:  should this tweak come over in some form?
-				// There's still an issue with upping espionage slider for human player.
-				if( getCommercePercent(COMMERCE_ESPIONAGE) > 50 )
-				{
-					iWeight *= getCommercePercent(COMMERCE_ESPIONAGE);
-					iWeight /= 50;
-				}
-			}
-			else
-			{
-				// AI Espionage slider use maxed out at 20 percent.
-				if( getCommercePercent(COMMERCE_ESPIONAGE) >= 20 )
-				{
-					iWeight *= 3;
-					iWeight /= 2;
-				}
-			} */
-			// K-Mod
 			if (AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || (isHuman() && getCommercePercent(COMMERCE_ESPIONAGE) >= 60))
 			{
 				iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
@@ -2589,9 +2550,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 				iWeight *= 100 + 2*getCommercePercent(COMMERCE_ESPIONAGE);
 				iWeight /= 110;
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+			// K-Mod end
 		}
 		break;
 		
@@ -4311,11 +4270,15 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 
 	if (iBorderDanger > 0)
 	{
-	    //if (!isHuman() && !pPlot->isCity())
-		// Commented out by K-Mod. I don't want auto-workers on the frontline; and Cities can be attacked too!
+	    /* original bts code
+		if (!isHuman() && !pPlot->isCity())
 	    {
             iCount += iBorderDanger;
-	    }
+	    } */
+		// K-Mod. I don't want auto-workers on the frontline; and Cities can be attacked too!
+		// but on the other hand, I don't think two border tiles are really more dangerous than one border tile...
+		iCount++;
+		// K-Mod end
 	}
 
 	return iCount;
@@ -18374,7 +18337,9 @@ void CvPlayerAI::AI_updateStrategyHash()
     const FlavorTypes AI_FLAVOR_SCIENCE = (FlavorTypes)4;
     const FlavorTypes AI_FLAVOR_CULTURE = (FlavorTypes)5;
     const FlavorTypes AI_FLAVOR_GROWTH = (FlavorTypes)6;
-    
+
+	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod. (and replaced all through this function)
+
     UnitTypes eLoopUnit;
 
 	int iLastStrategyHash = m_iStrategyHash;
@@ -18393,7 +18358,7 @@ void CvPlayerAI::AI_updateStrategyHash()
     
     //int iNonsense = AI_getStrategyRand();
     
-	int iMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
+	int iMetCount = kTeam.getHasMetCivCount(true);
     
     //Unit Analysis
     int iBestSlowUnitCombat = -1;
@@ -18508,17 +18473,17 @@ void CvPlayerAI::AI_updateStrategyHash()
 		int iTotalWeightedValue = 0;
 		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
-			CvPlayer &kPlayer = GET_PLAYER((PlayerTypes)iI);
-			if (kPlayer.getTeam() != getTeam())
+			CvPlayer &kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+			if (kLoopPlayer.getTeam() != getTeam())
 			{
-				if (kPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kPlayer.getTeam()))
+				if (kLoopPlayer.isAlive() && kTeam.isHasMet(kLoopPlayer.getTeam()))
 				{
 					// Attack units are scaled down to roughly reflect their limitations.
 					// (eg. Knights (10) vs Macemen (8). Cavalry (15) vs Rifles (14). Tank (28) vs Infantry (20) / Marine (24) )
-					int iValue = std::max(100*kPlayer.getTypicalUnitValue(UNITAI_ATTACK)/110, kPlayer.getTypicalUnitValue(UNITAI_CITY_DEFENSE));
+					int iValue = std::max(100*kLoopPlayer.getTypicalUnitValue(UNITAI_ATTACK)/110, kLoopPlayer.getTypicalUnitValue(UNITAI_CITY_DEFENSE));
 
-					iTotalWeightedValue += kPlayer.getPower() * iValue;
-					iTotalPower += kPlayer.getPower();
+					iTotalWeightedValue += kLoopPlayer.getPower() * iValue;
+					iTotalPower += kLoopPlayer.getPower();
 				}
 			}
 		}
@@ -18609,9 +18574,9 @@ void CvPlayerAI::AI_updateStrategyHash()
                 {
 					if (iI != getID())
                     {
-						if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_TEAM(getTeam()).isHasMet(GET_PLAYER((PlayerTypes)iI).getTeam()))
+						if (GET_PLAYER((PlayerTypes)iI).isAlive() && kTeam.isHasMet(GET_PLAYER((PlayerTypes)iI).getTeam()))
 						{
-                            if (GET_TEAM(getTeam()).isOpenBorders(GET_PLAYER((PlayerTypes)iI).getTeam()))
+                            if (kTeam.isOpenBorders(GET_PLAYER((PlayerTypes)iI).getTeam()))
                             {
 								if ((GET_PLAYER((PlayerTypes)iI).getStateReligion() == getStateReligion()))
 								{
@@ -18667,14 +18632,23 @@ void CvPlayerAI::AI_updateStrategyHash()
 		iTempValue += AI_commerceWeight(COMMERCE_ESPIONAGE) / 8;
 		// note, although AI_commerceWeight is doubled for Big Espionage, this value here is unaffected
 		// because the strategy hash has been cleared.
-		iTempValue += GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 ? 3 : 0;
-		iTempValue -= GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 ? 0 : 3;
+		iTempValue += kTeam.getBestKnownTechScorePercent() < 85 ? 3 : 0;
+		iTempValue -= kTeam.getAnyWarPlanCount(true) == 0 ? 0 : 3;
 		iTempValue += AI_getStrategyRand(10) % 8;
 		// K-Mod end
 	
 		if (iTempValue > 10)
 		{
-			m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
+			// K-Mod. Don't allow big esp if we have no local esp targets
+			//m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
+			for (int i = 0; i < MAX_CIV_TEAMS; i++)
+			{
+				if (i != getTeam() && kTeam.isHasMet((TeamTypes)i) && kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)i))
+				{
+					m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
+					break;
+				}
+			}
 		}
 
 		// K-Mod
@@ -18685,7 +18659,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	}
 
 	// Turtle strategy
-	if( GET_TEAM(getTeam()).getAtWarCount(true) > 0 && getNumCities() > 0 )
+	if( kTeam.getAtWarCount(true) > 0 && getNumCities() > 0 )
 	{
 		int iMaxWarCounter = 0;
 		for( int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++ )
@@ -18694,15 +18668,15 @@ void CvPlayerAI::AI_updateStrategyHash()
 			{
 				if( GET_TEAM((TeamTypes)iTeam).isAlive() && !GET_TEAM((TeamTypes)iTeam).isMinorCiv() )
 				{
-					iMaxWarCounter = std::max( iMaxWarCounter, GET_TEAM(getTeam()).AI_getAtWarCounter((TeamTypes)iTeam) );
+					iMaxWarCounter = std::max( iMaxWarCounter, kTeam.AI_getAtWarCounter((TeamTypes)iTeam) );
 				}
 			}
 		}
 
 		// Are we losing badly or recently attacked?
-		if( GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() < -50 || iMaxWarCounter < 10 )
+		if( kTeam.AI_getWarSuccessCapitulationRatio() < -50 || iMaxWarCounter < 10 )
 		{
-			if( GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true) > std::max(150, GC.getDefineINT("BBAI_TURTLE_ENEMY_POWER_RATIO")) )
+			if( kTeam.AI_getEnemyPowerPercent(true) > std::max(150, GC.getDefineINT("BBAI_TURTLE_ENEMY_POWER_RATIO")) )
 			{
 				m_iStrategyHash |= AI_STRATEGY_TURTLE;
 			}
@@ -18725,21 +18699,21 @@ void CvPlayerAI::AI_updateStrategyHash()
 	int iCurrentEra = getCurrentEra();
 	int iParanoia = 0;
 	int iCloseTargets = 0;
-	int iOurDefensivePower = GET_TEAM(getTeam()).getDefensivePower();
+	int iOurDefensivePower = kTeam.getDefensivePower();
 
     for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
     {
 		if( GET_PLAYER((PlayerTypes)iI).isAlive() && !GET_PLAYER((PlayerTypes)iI).isMinorCiv() && !GET_PLAYER((PlayerTypes)iI).isBarbarian() )
 		{
-    		if ((GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam()) && GET_TEAM(getTeam()).isHasMet(GET_PLAYER((PlayerTypes)iI).getTeam()) )
+			if ((GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam()) && kTeam.isHasMet(GET_PLAYER((PlayerTypes)iI).getTeam()) )
 			{
-				if (!GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isAVassal() && !GET_TEAM(getTeam()).isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()))
+				if (!GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isAVassal() && !kTeam.isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()))
     			{
-					if( GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER((PlayerTypes)iI).getTeam()) != NO_WARPLAN )
+					if( kTeam.AI_getWarPlan(GET_PLAYER((PlayerTypes)iI).getTeam()) != NO_WARPLAN )
 					{
 						iCloseTargets++;
 					}
-					else if( !GET_TEAM(getTeam()).isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()) )
+					else if( !kTeam.isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()) )
 					{
 						// Are they a threat?
 						int iTempParanoia = 0;
@@ -18840,7 +18814,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	iParanoia /= 3*(std::max(1, GC.getNumEraInfos()));
 	// That starts as a factor of 1, and drop to 1/3.  And now for game size...
 	iParanoia *= 14;
-	iParanoia /= (7+std::max(GET_TEAM(getTeam()).getHasMetCivCount(true), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getDefaultPlayers()));
+	iParanoia /= (7+std::max(kTeam.getHasMetCivCount(true), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getDefaultPlayers()));
 
 	// Alert strategy
 	if( iParanoia >= 200 )
@@ -18853,7 +18827,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	}
 
 	// Economic focus (K-Mod) - Note: this strategy is a gambit. The goal is catch up in tech by avoiding building units.
-	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0 &&
+	if (kTeam.getAnyWarPlanCount(true) == 0 &&
 		(100*iAverageEnemyUnit >= 150*iTypicalAttack && 100*iAverageEnemyUnit >= 180*iTypicalDefence))
 	{
 		m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
@@ -18925,7 +18899,7 @@ void CvPlayerAI::AI_updateStrategyHash()
                         {
                             if (GC.getTechInfo((TechTypes)(GC.getUnitInfo(eLoopUnit).getPrereqAndTech())).getEra() <= (iCurrentEra + 1))
                             {
-                                if (GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getUnitInfo(eLoopUnit).getPrereqAndTech()))
+                                if (kTeam.isHasTech((TechTypes)GC.getUnitInfo(eLoopUnit).getPrereqAndTech()))
                                 {
                                 	//we have the tech but can't train the unit, dejection.
                                     iDagger += 10;
@@ -19035,7 +19009,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
 	// On second thought, lets try this
 		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
-		iCrushValue += std::min(0, GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio()/15);
+		iCrushValue += std::min(0, kTeam.AI_getWarSuccessCapitulationRatio()/15);
 		// note: flavor military is between 0 and 10
 		// K-Mod end
 		if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3))
@@ -19067,11 +19041,11 @@ void CvPlayerAI::AI_updateStrategyHash()
 /* UNOFFICIAL_PATCH                        END                                                  */
 /************************************************************************************************/
 			{
-				if (GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iI) != NO_WARPLAN)
+				if (kTeam.AI_getWarPlan((TeamTypes)iI) != NO_WARPLAN)
 				{
 					if (!GET_TEAM((TeamTypes)iI).isAVassal())
 					{
-						if (GET_TEAM(getTeam()).AI_teamCloseness((TeamTypes)iI) > 0)
+						if (kTeam.AI_teamCloseness((TeamTypes)iI) > 0)
 						{
 							iWarCount++;
 						}
@@ -19083,16 +19057,16 @@ void CvPlayerAI::AI_updateStrategyHash()
 						}						
 					}
 
-					if (GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iI) == WARPLAN_PREPARING_TOTAL)
+					if (kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_PREPARING_TOTAL)
 					{
 						iCrushValue += 6;					
 					}
-					else if ((GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iI) == WARPLAN_TOTAL) && (GET_TEAM(getTeam()).AI_getWarPlanStateCounter((TeamTypes)iI) < 20))
+					else if ((kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_TOTAL) && (kTeam.AI_getWarPlanStateCounter((TeamTypes)iI) < 20))
 					{
 						iCrushValue += 6;						
 					}
 					
-					if ((GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE) && (GET_TEAM(getTeam()).AI_getWarPlanStateCounter((TeamTypes)iI) < 20))
+					if ((kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE) && (kTeam.AI_getWarPlanStateCounter((TeamTypes)iI) < 20))
 					{
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       02/14/10                             jdog5000         */
@@ -19142,7 +19116,6 @@ void CvPlayerAI::AI_updateStrategyHash()
 	}
 	
 	{
-		CvTeamAI& kTeam = GET_TEAM(getTeam());
 		int iOurVictoryCountdown = kTeam.AI_getLowestVictoryCountdown();
 
 		int iTheirVictoryCountdown = MAX_INT;
@@ -19232,7 +19205,6 @@ void CvPlayerAI::AI_updateStrategyHash()
 		
 		int iThreshold = std::max(1, (GC.getGame().countCivTeamsAlive() + 1) / 4);
 		
-		CvTeamAI& kTeam = GET_TEAM(getTeam());
 		for (int iVictory = 0; iVictory < GC.getNumVictoryInfos(); iVictory++)
 		{
 			CvVictoryInfo& kVictory = GC.getVictoryInfo((VictoryTypes)iVictory);

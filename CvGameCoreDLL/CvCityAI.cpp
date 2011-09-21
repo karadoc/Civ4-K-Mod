@@ -725,7 +725,7 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 		iTempValue += (getMilitaryProductionModifier() * iExperience * 8);
 
 		iTempValue *= 100;
-		iTempValue /= (100+10*(getFreeExperience()/5));
+		iTempValue /= (100+15*(getFreeExperience()/5));
 
 		iValue += iTempValue;
 	}
