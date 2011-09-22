@@ -22429,6 +22429,7 @@ bool CvUnitAI::AI_revoltCitySpy()
 			// K-Mod
 			if (GET_PLAYER(getOwnerINLINE()).canDoEspionageMission((EspionageMissionTypes)iMission, pCity->getOwnerINLINE(), pCity->plot(), -1, this))
 			{
+				if (gUnitLogLevel > 2) logBBAI("      %S uses city revolt at %S.", GET_PLAYER(getOwner()).getCivilizationDescription(0), pCity->getName().GetCString());
 				getGroup()->pushMission(MISSION_ESPIONAGE, iMission);
 				return true;
 			}

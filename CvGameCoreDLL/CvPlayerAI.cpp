@@ -2528,8 +2528,11 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 24*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
 			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
 			// lower weight by up to 75% if we have spent less than a quarter of our total points
-			iWeight *= 100 - 300*std::max(iTotalUnspent - (3*GET_TEAM(getTeam()).getEspionagePointsEver()/4 + 2*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
-			iWeight /= 100;
+			if (getCommercePercent(COMMERCE_ESPIONAGE) == 0) // ...only if we aren't explicitly trying to get espionage.
+			{
+				iWeight *= 100 - 300*std::max(iTotalUnspent - (3*GET_TEAM(getTeam()).getEspionagePointsEver()/4 + 2*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
+				iWeight /= 100;
+			}
 			//
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 			{

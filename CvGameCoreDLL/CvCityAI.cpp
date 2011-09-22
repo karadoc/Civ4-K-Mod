@@ -1303,7 +1303,8 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	//minimal defense.
-	if (iPlotCityDefenderCount <= iPlotSettlerCount)
+	//if (iPlotCityDefenderCount <= iPlotSettlerCount)
+	if (!bUnitExempt && iPlotSettlerCount > 0 && iPlotCityDefenderCount <= iPlotSettlerCount)
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S needs escort for existing settler", getName().GetCString());
 		if (AI_chooseUnit(UNITAI_CITY_DEFENSE))
@@ -1707,7 +1708,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	// BBAI TODO: Check that this works to produce early rushes on tight maps
-	if (!bGetBetterUnits && (bIsCapitalArea) && (iAreaBestFoundValue < (iMinFoundValue * 2)))
+	if (!bUnitExempt && !bGetBetterUnits && (bIsCapitalArea) && (iAreaBestFoundValue < (iMinFoundValue * 2)))
 	{
 		//Building city hunting stack.
 
@@ -2114,7 +2115,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 	
 	//int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
-	int iMaxUnitSpending = (bAggressiveAI ? 8 : 4) + iBuildUnitProb / 2; // K-Mod. (unit spending is not what it use to be)
+	int iMaxUnitSpending = (bAggressiveAI ? 8 : 4) + iBuildUnitProb / 3; // K-Mod. (unit spending is not what it use to be)
 
 	if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
 	{
@@ -2139,33 +2140,34 @@ void CvCityAI::AI_chooseProduction()
     }
     else
     {
+		iMaxUnitSpending += bTotalWar ? iBuildUnitProb / 5 : 0; // K-Mod
     	iMaxUnitSpending += bDefenseWar ? 4 : 0;
     	switch (pArea->getAreaAIType(getTeam()))
     	{
 			case AREAAI_OFFENSIVE:
 				iMaxUnitSpending += 5;
 				break;
-			
+
 			case AREAAI_DEFENSIVE:
 				iMaxUnitSpending += 10;
 				break;
-			
+
 			case AREAAI_MASSING:
 				iMaxUnitSpending += 25;
 				break;
-			
+
 			case AREAAI_ASSAULT:
 				iMaxUnitSpending += 8;
 				break;
-				
+
 			case AREAAI_ASSAULT_MASSING:
 				iMaxUnitSpending += 16;
 				break;
-			
+
 			case AREAAI_ASSAULT_ASSIST:
 				iMaxUnitSpending += 6;
 				break;
-			
+
 			case AREAAI_NEUTRAL:
 				break;
 			default:
@@ -2856,7 +2858,7 @@ void CvCityAI::AI_chooseProduction()
 
 	// Short-circuit 3 - a last chance to catch important buildings
 	{
-		int iOdds = std::max(0, (bLandWar ? 150 : 200) * iBestBuildingValue / (iBestBuildingValue + 20) - 100);
+		int iOdds = std::max(0, (bLandWar ? 160 : 220) * iBestBuildingValue / (iBestBuildingValue + 20) - 100);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 3 (odds: %d)", getName().GetCString(), iOdds);
