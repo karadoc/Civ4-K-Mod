@@ -1,5 +1,17 @@
-This is K-Mod version 1.00b.
+This is K-Mod version 1.01.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.01 changelist
+
++ "Lost production" for units is now assigned to another unit of the same type (previously, it was converted into gold). With this change, it is possible to build more than one unit per turn. (Note: this does not affect normal production overflow. It only affects the production beyond the overflow limit.)
++ Made some minor changes to the auto-build city governor. (I think auto-build works pretty well now.)
++ Espionage AI value is now reduced if the player has spent less than a quarter of their total points (this means that if you aren't spending your espionage points, the city governor should stop automatically assigning spy specialists.)
++ Rewrote the decision code for bombarding / skipping bombard for city attack.
++ Rewrote parts of the raze city decision code - the AI will now be less likely to keep useless ice cities, and more likely to keep conquered land on other continents.
++ Fixed a couple of minor BtS bugs in worker recommendations.
++ Made a lot of backend changes which will speed up some parts of the game, but also make the game more resistant to OOS bugs.
 
 --
 

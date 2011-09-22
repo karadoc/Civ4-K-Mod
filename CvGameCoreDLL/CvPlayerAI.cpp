@@ -11111,7 +11111,7 @@ int CvPlayerAI::AI_unitCostPerMil() const
 	int iFunds = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
 	iFunds += getGoldPerTurn() - calculateInflatedCosts();
 	iFunds += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
-	return std::max(0, calculateUnitCost()-getNumCities()) * 1000 / std::max(1, iFunds); // # cities is there to offset early-game distortion.
+	return std::max(0, calculateUnitCost()-getNumCities()/2) * 1000 / std::max(1, iFunds); // # cities is there to offset early-game distortion.
 }
 // K-Mod end
 
