@@ -10183,14 +10183,10 @@ int CvCityAI::AI_experienceWeight()
 }
 
 
+// BBAI / K-Mod
 int CvCityAI::AI_buildUnitProb()
 {
 	int iProb;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/29/10                                jdog5000      */
-/*                                                                                              */
-/* City AI, Barbarian AI     (K-Mod edition)                                                    */
-/************************************************************************************************/
 	iProb = (GC.getLeaderHeadInfo(getPersonalityType()).getBuildUnitProb() + AI_experienceWeight());
 
 	if (!isBarbarian() && GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
@@ -10211,10 +10207,8 @@ int CvCityAI::AI_buildUnitProb()
 
 	iProb *= (100 + 2*getMilitaryProductionModifier());
 	iProb /= 100;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-	return iProb;
+	//return iProb;
+	return std::min(100, iProb); // experimental (K-Mod)
 }
 
 

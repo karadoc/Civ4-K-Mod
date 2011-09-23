@@ -126,6 +126,7 @@ public:
 /* Tech AI                                                                                      */
 /************************************************************************************************/
 	int AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const;
+	int AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) const; // K-Mod
 	int AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bEnablesWonder ) const;
 	int AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnablesUnitWonder ) const;
 /************************************************************************************************/

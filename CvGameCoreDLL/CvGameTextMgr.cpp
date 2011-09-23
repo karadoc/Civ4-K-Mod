@@ -4388,7 +4388,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      11/30/08                                jdog5000      */
 /*                                                                                              */
-/* Debug                                                                                        */
+/* Debug                (K-Mod edited)                                                          */
 /************************************************************************************************/
 /* original code
 			for (int iI = 0; iI < GC.getNumCivicInfos(); iI++)
@@ -4398,6 +4398,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 */
 			if( bShift && !bAlt)
 			{
+				const CvPlayerAI& kPlayer = GET_PLAYER(pPlot->getOwnerINLINE());
 				int* paiBonusClassRevealed;
 				int* paiBonusClassUnrevealed;
 				int* paiBonusClassHave;
@@ -4428,11 +4429,11 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 							paiBonusClassUnrevealed[eBonusClass]++;
 						}
 
-						if (GET_PLAYER(pPlot->getOwner()).getNumAvailableBonuses((BonusTypes)iI) > 0)
+						if (kPlayer.getNumAvailableBonuses((BonusTypes)iI) > 0)
 						{
 							paiBonusClassHave[eBonusClass]++;                
 						}
-						else if (GET_PLAYER(pPlot->getOwner()).countOwnedBonuses((BonusTypes)iI) > 0)
+						else if (kPlayer.countOwnedBonuses((BonusTypes)iI) > 0)
 						{
 							paiBonusClassHave[eBonusClass]++;
 						}
@@ -4443,13 +4444,16 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				bool bDummy;
 				for (int iI = 0; iI < GC.getNumTechInfos(); iI++)
 				{
-					iPathLength = GET_PLAYER(pPlot->getOwner()).findPathLength(((TechTypes)iI), false);
+					iPathLength = kPlayer.findPathLength(((TechTypes)iI), false);
 
 					if( iPathLength <= 3 && !GET_TEAM(pPlot->getTeam()).isHasTech((TechTypes)iI) )
 					{
-						szString.append(CvWString::format(L"\n%s(%d)=%7d", GC.getTechInfo((TechTypes)iI).getDescription(), iPathLength, GET_PLAYER(pPlot->getOwner()).AI_techValue((TechTypes)iI, 1, false, false, paiBonusClassRevealed, paiBonusClassUnrevealed, paiBonusClassHave)));
-						szString.append(CvWString::format(L" (bld:%5d, ", GET_PLAYER(pPlot->getOwner()).AI_techBuildingValue((TechTypes)iI, 1, bDummy)));
-						szString.append(CvWString::format(L"unt:%5d)", GET_PLAYER(pPlot->getOwner()).AI_techUnitValue((TechTypes)iI, 1, bDummy)));
+						szString.append(CvWString::format(L"\n%s(%d)=%8d", GC.getTechInfo((TechTypes)iI).getDescription(), iPathLength, kPlayer.AI_techValue((TechTypes)iI, 1, false, true, paiBonusClassRevealed, paiBonusClassUnrevealed, paiBonusClassHave)));
+						szString.append(CvWString::format(L" (bld:%4d, ", kPlayer.AI_techBuildingValue((TechTypes)iI, 1, bDummy)));
+						int iObs = kPlayer.AI_obsoleteBuildingPenalty((TechTypes)iI, true);
+						if (iObs != 0)
+							szString.append(CvWString::format(L"obs:%3d, )", -iObs));
+						szString.append(CvWString::format(L"unt:%4d)", kPlayer.AI_techUnitValue((TechTypes)iI, 1, bDummy)));
 					}
 				}
 			}

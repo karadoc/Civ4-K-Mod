@@ -4715,14 +4715,14 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	PROFILE_FUNC();
 
 	CvCity* pCapitalCity;
-	ImprovementTypes eImprovement;
-	RouteTypes eRoute;
+	//ImprovementTypes eImprovement;
+	//RouteTypes eRoute;
 	
-	int iNumBonuses;
+	//int iNumBonuses;
 	int iValue;
-	int iTempValue;
-	int iBuildValue;
-	int iBonusValue;
+	//int iTempValue;
+	//int iBuildValue;
+	//int iBonusValue;
 	//int iI, iJ, iK, iL;
 
 	pCapitalCity = getCapitalCity();
@@ -4861,6 +4861,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	iValue += (GC.getTechInfo(eTech).getWorkerSpeedModifier() * 4);
 	iValue += (GC.getTechInfo(eTech).getTradeRoutes() * (std::max((getNumCities() + 2), iConnectedForeignCities) + 1) * ((bFinancialTrouble) ? 200 : 100));
 	
+	/* original bts code
 	if ( AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION4) )
 	{
 		iValue += (GC.getTechInfo(eTech).getHealth() * 350);
@@ -4868,7 +4869,18 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	else
 	{
 		iValue += (GC.getTechInfo(eTech).getHealth() * 200);
+	} */
+	// K-Mod
+	if (GC.getTechInfo(eTech).getHealth() != 0)
+	{
+		iValue += 4 * AI_getHealthWeight(GC.getTechInfo(eTech).getHealth(), 1);
 	}
+	if (GC.getTechInfo(eTech).getHappiness() != 0)
+	{
+		// (this part of the evaluation was completely missing from the original bts code)
+		iValue += 6 * AI_getHappinessWeight(GC.getTechInfo(eTech).getHappiness(), 1);
+	}
+	// K-Mod end
 
 	for (int iJ = 0; iJ < GC.getNumRouteInfos(); iJ++)
 	{
@@ -4928,7 +4940,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	{
 		for (int iK = 0; iK < NUM_YIELD_TYPES; iK++)
 		{
-			iTempValue = 0;
+			int iTempValue = 0;
 
 			/* original code
 			iTempValue += (GC.getImprovementInfo((ImprovementTypes)iJ).getTechYieldChanges(eTech, iK) * getImprovementCount((ImprovementTypes)iJ) * 50); */
@@ -4945,12 +4957,12 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	iBuildValue = 0;
+	int iBuildValue = 0;
 	for (int iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
 	{
 		if (GC.getBuildInfo((BuildTypes)iJ).getTechPrereq() == eTech)
 		{
-			eImprovement = (ImprovementTypes)(GC.getBuildInfo((BuildTypes)iJ).getImprovement());
+			ImprovementTypes eImprovement = (ImprovementTypes)(GC.getBuildInfo((BuildTypes)iJ).getImprovement());
 			if (eImprovement != NO_IMPROVEMENT)
 			{
 				eImprovement = finalImprovementUpgrade(eImprovement);
@@ -4967,6 +4979,10 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				
 				int iImprovementValue = 300;
 
+				// K-Mod note: I haven't changed much of this, but I think it's pretty bogus.
+				// The xxMakesValid stuff should be scored and then _multiplied_ by the value of the improvement, not added.
+				// Also, the improvement should be valued based on how much better it is compared to the improvements we can
+				// already build.
 				iImprovementValue += ((kImprovement.isActsAsCity()) ? 100 : 0);
 				iImprovementValue += ((kImprovement.isHillsMakesValid()) ? 100 : 0);
 				iImprovementValue += ((kImprovement.isFreshWaterMakesValid()) ? 200 : 0);
@@ -4983,53 +4999,81 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					iImprovementValue += (kImprovement.getFeatureMakesValid(iK) ? 50 : 0);
 				}
 
-				for (int iK = 0; iK < NUM_YIELD_TYPES; iK++)
 				{
-					iTempValue = 0;
-
-					iTempValue += (kImprovement.getYieldChange(iK) * 200);
-					iTempValue += (kImprovement.getRiverSideYieldChange(iK) * 100);
-					iTempValue += (kImprovement.getHillsYieldChange(iK) * 100);
-					iTempValue += (kImprovement.getIrrigatedYieldChange(iK) * 150);
-
-					/* original bts code
-					// land food yield is more valueble
-					if (iK == YIELD_FOOD && !kImprovement.isWater())
+					int iYieldValue = 0; // K-Mod
+					for (int iK = 0; iK < NUM_YIELD_TYPES; iK++)
 					{
-						iTempValue *= 3;
-						iTempValue /= 2;
+						int iTempValue = 0;
+
+						iTempValue += (kImprovement.getYieldChange(iK) * 200);
+						iTempValue += (kImprovement.getRiverSideYieldChange(iK) * 100);
+						iTempValue += (kImprovement.getHillsYieldChange(iK) * 100);
+						iTempValue += (kImprovement.getIrrigatedYieldChange(iK) * 150);
+
+						/* original bts code
+						// land food yield is more valueble
+						if (iK == YIELD_FOOD && !kImprovement.isWater())
+						{
+							iTempValue *= 3;
+							iTempValue /= 2;
+						}
+						
+						if (bFinancialTrouble && iK == YIELD_COMMERCE)
+						{
+							iTempValue *= 2;
+						} */
+						// K-Mod note: value adjustments are now rolled into AI_yieldWeight
+
+						iTempValue *= AI_yieldWeight((YieldTypes)iK);
+						iTempValue /= 100;
+
+						// iImprovementValue += iTempValue;
+						iYieldValue += iTempValue;
 					}
-					
-					if (bFinancialTrouble && iK == YIELD_COMMERCE)
-					{
-						iTempValue *= 2;
-					} */
-					// K-Mod. value adjustments are now rolled into AI_yieldWeight
+					// K-Mod
+					iImprovementValue -= 100;
 					if (kImprovement.isWater())
 					{
-						iTempValue *= 2;
-						iTempValue /= 3;
+						iYieldValue *= 2;
+						iYieldValue /= 3;
 					}
+					iImprovementValue += std::max(0, iYieldValue); // workshops would be negative value!
 					// K-Mod end
-
-					iTempValue *= AI_yieldWeight((YieldTypes)iK);
-					iTempValue /= 100;
-
-					iImprovementValue += iTempValue;
 				}
 
 				for (int iK = 0; iK < GC.getNumBonusInfos(); iK++)
 				{
-					iBonusValue = 0;
+					int iBonusValue = 0;
 
 					iBonusValue += ((kImprovement.isImprovementBonusMakesValid(iK)) ? 450 : 0);
 					iBonusValue += ((kImprovement.isImprovementBonusTrade(iK)) ? (45 * AI_bonusVal((BonusTypes) iK)) : 0);
 
+					// K-Mod
+					int iNumBonuses = 0; // only spend time counting if it's worth something.
 					if (iBonusValue > 0)
 					{
+						iNumBonuses = countOwnedBonuses((BonusTypes)iK);
+						if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo((BonusTypes)iK).getTechReveal()))
+						{
+							iBonusValue *= 2;
+							iBonusValue /= 3;
+						}
+						else if (iNumBonuses == 0)
+						{
+							iBonusValue = 0;
+						}
+						else
+						{
+							iBonusValue += (iNumBonuses -1) * iBonusValue / 10;
+						}
+					}
+					// K-Mod end
+					if (iBonusValue > 0)
+					{
+						int iYieldValue = 0; // K-Mod
 						for (int iL = 0; iL < NUM_YIELD_TYPES; iL++)
 						{
-							iTempValue = 0;
+							int iTempValue = 0;
 
 							/* original bts code
 							iTempValue += (kImprovement.getImprovementBonusYield(iK, iL) * 300);
@@ -5055,46 +5099,44 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 							if (bAdvancedStart && getCurrentEra() < 2)
 							{
 								iValue *= (iL == YIELD_FOOD) ? 3 : 2;
-							} */
-							// K-Mod. value adjustments are now rolled into AI_yieldWeight
+							}
+							iTempValue *= AI_yieldWeight((YieldTypes)iL);
+							iTempValue /= 100;
+
+							iBonusValue += iTempValue; */
+							// K-Mod. Note: value adjustments are now rolled into AI_yieldWeight
 							iTempValue += (kImprovement.getImprovementBonusYield(iK, iL) * 200);
-							iTempValue += (kImprovement.getIrrigatedYieldChange(iL) * 120);
-							// K-Mod end
+							iTempValue += (kImprovement.getIrrigatedYieldChange(iL) * 100); // already taken into account?
 
 							iTempValue *= AI_yieldWeight((YieldTypes)iL);
 							iTempValue /= 100;
 
-							iBonusValue += iTempValue;
+							iYieldValue += iTempValue;
+							// K-Mod end
 						}
 
+						/* original bts code
 						iNumBonuses = countOwnedBonuses((BonusTypes)iK);
-/***
-**** K-Mod, 10/sep/10, Karadoc
-**** Some ad-hoc scaling adjustments.
-***/
-						/* old code
 						if (iNumBonuses > 0)
 						{
 							iBonusValue *= (iNumBonuses + 2);
 							iBonusValue /= kImprovement.isWater() ? 4 : 3;	// water resources are worth less
 							iImprovementValue += iBonusValue;
-						}
-						*/
+						} */
+						// K-Mod
 						if (kImprovement.isWater())
 						{
-							iBonusValue *= (iNumBonuses + 2);
-							iBonusValue /= 4;
+							iYieldValue *= (iNumBonuses + 2);
+							iYieldValue /= 4;
 						}
 						else
 						{
-							iBonusValue *= (2*iNumBonuses + 2);
-							iBonusValue /= 3;
+							iYieldValue *= (2*iNumBonuses + 2);
+							iYieldValue /= 3;
 						}
-						// iBonusValue *= 1 + (4 / cities + 1);
-						iImprovementValue += iBonusValue;
-/***
-**** END
-***/
+
+						iImprovementValue += iBonusValue + iYieldValue;
+						// K-Mod end
 					}
 				}
 				
@@ -5108,7 +5150,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				iBuildValue += iImprovementValue;
 			}
 
-			eRoute = ((RouteTypes)(GC.getBuildInfo((BuildTypes)iJ).getRoute()));
+			RouteTypes eRoute = ((RouteTypes)(GC.getBuildInfo((BuildTypes)iJ).getRoute()));
 
 			if (eRoute != NO_ROUTE)
 			{
@@ -5117,7 +5159,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 				for (int iK = 0; iK < NUM_YIELD_TYPES; iK++)
 				{
-					iTempValue = 0;
+					int iTempValue = 0;
 
 					/* original bts code
 					iTempValue += (GC.getRouteInfo(eRoute).getYieldChange(iK) * 100);
@@ -5309,6 +5351,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	/* ------------------ Building Value  ------------------ */
 	bool bEnablesWonder;
 	iValue += AI_techBuildingValue( eTech, iPathLength, bEnablesWonder );
+	iValue -= AI_obsoleteBuildingPenalty(eTech, bAsync); // K-Mod!
 
 	// if it gives at least one wonder
 	if (bEnablesWonder)
@@ -5389,7 +5432,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 			for (int iK = 0; iK < NUM_COMMERCE_TYPES; iK++)
 			{
-				iTempValue = (GC.getProcessInfo((ProcessTypes)iJ).getProductionToCommerceModifier(iK) * 4);
+				int iTempValue = (GC.getProcessInfo((ProcessTypes)iJ).getProductionToCommerceModifier(iK) * 4);
 
 				iTempValue *= AI_commerceWeight((CommerceTypes)iK);
 				iTempValue /= 100;
@@ -5689,6 +5732,35 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	return iValue;
 }
 
+// K-mod. This function returns the (positive) value of the buildings we will lose by researching eTech.
+// (I think it's crazy that this stuff wasn't taken into account in original BtS)
+int CvPlayerAI::AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) const
+{
+	int iTotalPenalty = 0;
+	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	{
+		BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
+
+		if (eLoopBuilding == NO_BUILDING || getBuildingClassCount((BuildingClassTypes)iI) == 0)
+			continue;
+
+		int iLoop;
+		for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			int n = pLoopCity->getNumActiveBuilding(eLoopBuilding);
+			if (n > 0)
+			{
+				iTotalPenalty += n * pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache);
+			}
+		}
+	}
+	// I don't really want to do this, but it has to scale like the rest of the tech values...
+	iTotalPenalty *= 5;
+	iTotalPenalty /= std::max(1, getNumCities());
+
+	return iTotalPenalty;
+}
+// K-Mod
 
 int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bEnablesWonder ) const
 {
