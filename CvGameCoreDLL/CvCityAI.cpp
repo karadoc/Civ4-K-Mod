@@ -1859,7 +1859,12 @@ void CvCityAI::AI_chooseProduction()
 	}
 	
 	//minimal defense.
-	if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount))
+	//if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount))
+	// K-Mod.. take into account any defenders that are on their way. (recall that in AI_guardCityMinDefender, defenders can be shuffled around)
+	// (I'm doing the min defender check twice for efficiency - so that we don't count targetmissionAIs when we don't need to)
+	if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount)
+		&& iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount - kPlayer.AI_plotTargetMissionAIs(plot(), MISSIONAI_GUARD_CITY)))
+	// K-Mod end
 	{
 		if (AI_chooseUnit(UNITAI_CITY_DEFENSE))
 		{

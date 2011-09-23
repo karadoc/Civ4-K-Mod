@@ -15060,6 +15060,8 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 			if (!atPlot(pBestPlot))
 			{
 				getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags);
+				// K-Mod note: maybe we should use MISSIONAI_ASSAULT signal to our spies and other units that we're attacking this city?
+				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false MISSIONAI_ASSAULT, pTargetCity->plot());
 				return true;
 			}
 		}
@@ -22587,8 +22589,8 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 						{
 							int iValue = AI_getEspionageTargetValue(pLoopPlot);
 
-							iValue *= 4;
-							iValue /= (4 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
+							iValue *= 5;
+							iValue /= (5 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
 							iValue *= iTeamWeight;
 							if (iValue > iBestValue)
 							{
@@ -22665,8 +22667,8 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 							//iValue *= GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN ? 3: 1;
 							//iValue *= GET_TEAM(getTeam()).AI_isSneakAttackPreparing(pLoopPlot->getTeam()) ? 2 : 1;
 
-							iValue *= 3;
-							iValue /= (3 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
+							iValue *= 4;
+							iValue /= (4 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup()));
 							if (iValue > iBestValue)
 							{
 								iBestValue = iValue;
