@@ -4675,7 +4675,7 @@ void CvTeamAI::AI_doWar()
 
 														if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == iI )
 														{
-															MissionAITypes eMissionAI = MISSIONAI_ASSAULT;
+															//MissionAITypes eMissionAI = MISSIONAI_ASSAULT;
 															if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions(getID()) > 0 )
 															{
 																bValid = false;

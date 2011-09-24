@@ -1466,7 +1466,7 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_PILLAGE,
 	MISSIONAI_FOUND,
 	MISSIONAI_BUILD,
-	MISSIONAI_ASSAULT,
+	MISSIONAI_ASSAULT, // K-Mod note: this is now used for land forces targeting a city as well as sea forces.
 	MISSIONAI_CARRIER,
 	MISSIONAI_PICKUP,
 };

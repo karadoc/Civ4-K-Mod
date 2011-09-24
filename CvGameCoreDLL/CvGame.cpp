@@ -280,6 +280,24 @@ void CvGame::setInitialItems()
 {
 	PROFILE_FUNC();
 
+	// K-Mod: Adjust the AI handicap to be the minimum of all the human player's handicap.
+	if (isGameMultiPlayer())
+	{
+		HandicapTypes eMinHandicap = (HandicapTypes)INT_MAX;
+		for (int iI = 0; iI < MAX_PLAYERS; iI++)
+		{
+			if (GET_PLAYER((PlayerTypes)iI).isHuman())
+			{
+				eMinHandicap = std::min(GET_PLAYER((PlayerTypes)iI).getHandicapType(), eMinHandicap);
+			}
+		}
+		if (eMinHandicap != INT_MAX)
+			setHandicapType(eMinHandicap);
+		else
+			FAssert(false); // all AI game. Not necessary wrong - but unexpected.
+	}
+	// K-Mod end
+
 	initFreeState();
 	assignStartingPlots();
 	normalizeStartingPlots();
@@ -343,35 +361,6 @@ void CvGame::regenerateMap()
 	gDLL->getEngineIFace()->RebuildAllPlots();
 
 	CvEventReporter::getInstance().resetStatistics();
-
-/*
-** K-Mod, 25/apr/2011, karadoc
-** Adjust the AI handicap to be the minimum of all the human player's handicap.
-*/
-	if (isGameMultiPlayer())
-	{
-		HandicapTypes eMinHandicap = (HandicapTypes)INT_MAX;
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
-		{
-			if (GET_PLAYER((PlayerTypes)iI).isHuman())
-			{
-				eMinHandicap = std::min(GET_PLAYER((PlayerTypes)iI).getHandicapType(), eMinHandicap);
-			}
-		}
-		setHandicapType(eMinHandicap);
-
-		/* I don't think we need this. In fact, I think it might be the opposite of what we want. But I haven't checked...
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
-		{
-			if (!GET_PLAYER((PlayerTypes)iI).isHuman())
-			{
-				GC.getInitCore().setHandicap(PlayerTypes(iI), eMinHandicap)
-			}
-		}*/
-	}
-/*
-** K-Mod end
-*/
 
 	setInitialItems();
 
