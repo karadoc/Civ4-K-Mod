@@ -5741,21 +5741,22 @@ int CvPlayerAI::AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) co
 	{
 		BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
 
-		if (eLoopBuilding == NO_BUILDING || getBuildingClassCount((BuildingClassTypes)iI) == 0)
-			continue;
-
-		int iLoop;
-		for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		if (eLoopBuilding != NO_BUILDING && GC.getBuildingInfo(eLoopBuilding).getObsoleteTech() == eTech
+			&& getBuildingClassCount((BuildingClassTypes)iI) > 0)
 		{
-			int n = pLoopCity->getNumActiveBuilding(eLoopBuilding);
-			if (n > 0)
+			int iLoop;
+			for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 			{
-				iTotalPenalty += n * pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache);
+				int n = pLoopCity->getNumActiveBuilding(eLoopBuilding);
+				if (n > 0)
+				{
+					iTotalPenalty += n * pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache);
+				}
 			}
 		}
 	}
 	// I don't really want to do this, but it has to scale like the rest of the tech values...
-	iTotalPenalty *= 5;
+	iTotalPenalty *= 8;
 	iTotalPenalty /= std::max(1, getNumCities());
 
 	return iTotalPenalty;
