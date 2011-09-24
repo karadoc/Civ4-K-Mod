@@ -1623,7 +1623,11 @@ void CvUnitAI::AI_workerMove()
 //	}
 	if (pCity != NULL)
 	{
-		if ((pCity->AI_getWorkersNeeded() > 0) && (plot()->isCity() || (pCity->AI_getWorkersNeeded() < ((1 + pCity->AI_getWorkersHave() * 2) / 3))))
+		/* original bts code (is it just me, or did they get this backwards?)
+		if ((pCity->AI_getWorkersNeeded() > 0) && (plot()->isCity() || (pCity->AI_getWorkersNeeded() < ((1 + pCity->AI_getWorkersHave() * 2) / 3)))) */
+		// K-Mod
+		if (pCity->AI_getWorkersNeeded() > 0 && (plot()->isCity() || pCity->AI_getWorkersHave() < (1 + pCity->AI_getWorkersNeeded() * 2) / 3))
+		// K-Mod end
 		{
 			if (AI_improveCity(pCity))
 			{

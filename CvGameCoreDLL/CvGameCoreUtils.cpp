@@ -1259,7 +1259,11 @@ bool PUF_makeInfoBarDirty(CvUnit* pUnit, int iData1, int iData2)
 
 bool PUF_isNoMission(const CvUnit* pUnit, int iData1, int iData2)
 {
-	return (pUnit->getGroup()->getActivityType() != ACTIVITY_MISSION);
+	/* original bts code
+	return (pUnit->getGroup()->getActivityType() != ACTIVITY_MISSION); */
+	// K-Mod
+	return (pUnit->getGroup()->AI_getMissionAIType() == NO_MISSIONAI);
+	// K-Mod end
 }
 
 bool PUF_isFiniteRange(const CvUnit* pUnit, int iData1, int iData2)
