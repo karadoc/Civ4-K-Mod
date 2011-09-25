@@ -7685,31 +7685,25 @@ void CvCityAI::AI_updateBestBuild()
 				}
 				// K-Mod end
 
-				if( eLastBestBuildType != NO_BUILD )
+				// K-Mod
+				if( iWorkerCount > 0 )
 				{
-					if( eLastBestBuildType != m_aeBestBuild[iI] )
+					CvUnit* pLoopUnit;
+					CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
+
+					while (pUnitNode != NULL)
 					{
-						if( iWorkerCount > 0 )
+						pLoopUnit = ::getUnit(pUnitNode->m_data);
+						pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+
+						if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE() && pLoopUnit->getBuildType() != NO_BUILD && pLoopUnit->getBuildType() != m_aeBestBuild[iI])
 						{
-							// K-Mod
-							CvUnit* pLoopUnit;
-							CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
-
-							while (pUnitNode != NULL)
-							{
-								pLoopUnit = ::getUnit(pUnitNode->m_data);
-								pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
-
-								if (pLoopUnit->getBuildType() != NO_BUILD && pLoopUnit->getBuildType() != m_aeBestBuild[iI])
-								{
-									FAssert(pLoopUnit->getGroup() != NULL);
-									pLoopUnit->getGroup()->clearMissionQueue();
-								}
-							}
-							// K-Mod end
+							FAssert(pLoopUnit->getGroup() != NULL);
+							pLoopUnit->getGroup()->clearMissionQueue();
 						}
 					}
 				}
+				// K-Mod end
 			}
 		}
 	}
@@ -10444,8 +10438,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	// K-Mod. Don't chop the feature if we need it for our best improvement!
 	if (bChop)
 	{
-		if (eBestBuild != NO_BUILD && GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT
-			&& GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature())
+		if (eBestBuild == NO_BUILD || (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT
+			&& GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature()))
 		{
 			bChop = false;
 		}
