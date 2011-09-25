@@ -8011,7 +8011,9 @@ int CvUnit::maxCombatStr(const CvPlot* pPlot, const CvUnit* pAttacker, CombatDet
 		{
 			if (pAttacker->isHuman())
 			{
-				iExtraModifier = GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAnimalCombatModifier();
+				// K-Mod. Give bonus based on player's difficulty, not game difficulty.
+				//iExtraModifier = GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAnimalCombatModifier();
+				iExtraModifier = GC.getHandicapInfo(GET_PLAYER(pAttacker->getOwnerINLINE()).getHandicapType()).getAnimalCombatModifier(); // K-Mod
 				iModifier += iExtraModifier;
 				if (pCombatDetails != NULL)
 				{
@@ -8033,7 +8035,8 @@ int CvUnit::maxCombatStr(const CvPlot* pPlot, const CvUnit* pAttacker, CombatDet
 		{
 			if (isHuman())
 			{
-				iExtraModifier = -GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAnimalCombatModifier();
+				//iExtraModifier = -GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAnimalCombatModifier();
+				iExtraModifier = -GC.getHandicapInfo(GET_PLAYER(getOwnerINLINE()).getHandicapType()).getAnimalCombatModifier(); // K-Mod
 				iModifier += iExtraModifier;
 				if (pCombatDetails != NULL)
 				{
@@ -8055,7 +8058,8 @@ int CvUnit::maxCombatStr(const CvPlot* pPlot, const CvUnit* pAttacker, CombatDet
 		{
 			if (pAttacker->isHuman())
 			{
-				iExtraModifier = GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getBarbarianCombatModifier();
+				//iExtraModifier = GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getBarbarianCombatModifier();
+				iExtraModifier = GC.getHandicapInfo(GET_PLAYER(pAttacker->getOwnerINLINE()).getHandicapType()).getBarbarianCombatModifier(); // K-Mod
 				iModifier += iExtraModifier;
 				if (pCombatDetails != NULL)
 				{
@@ -8077,7 +8081,8 @@ int CvUnit::maxCombatStr(const CvPlot* pPlot, const CvUnit* pAttacker, CombatDet
 		{
 			if (isHuman())
 			{
-				iExtraModifier = -GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getBarbarianCombatModifier();
+				//iExtraModifier = -GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getBarbarianCombatModifier();
+				iExtraModifier = -GC.getHandicapInfo(GET_PLAYER(getOwnerINLINE()).getHandicapType()).getBarbarianCombatModifier(); // K-Mod
 				iModifier += iExtraModifier;
 				if (pCombatDetails != NULL)
 				{
