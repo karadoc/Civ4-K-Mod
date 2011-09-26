@@ -270,6 +270,21 @@ protected:
 	void deactivateHeadMission();
 	
 	bool sentryAlert() const;
+
+//	KOSHLING Mod - add path validity results cache
+public:
+	//	These have to be static due to some assumptions the game engine seems to make about
+	//	this class which prsumably relates to the comment earlier that adding to this class causes
+	//	a crash in the main engine.  This is a bit untidy, but essentially fine due to the
+	//	single threaded nature of the application and the fact that cache validity is only
+	//	required across a single path generation call, which cannot interleave
+	static int m_cachedPathValidityFromPlotX;
+	static int m_cachedPathValidityFromPlotY;
+	static bool m_cachedPathValidityResult;
+	static int m_pathValidityCacheReads;
+	static int m_pathValidityCacheHits;
+	bool HaveCachedPathValidityResult(CvPlot* pFromPlot, bool* cachedResult);
+	void CachePathValidityResult(CvPlot* pFromPlot, bool cachedResult);
 };
 
 #endif
