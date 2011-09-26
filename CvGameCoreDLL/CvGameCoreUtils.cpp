@@ -1722,48 +1722,14 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	return iWorstCost;
 }
 
-
-int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)
+int pathValidInternal(FAStarNode* parent, CvPlot* pFromPlot, int data, CvSelectionGroup* pSelectionGroup, FAStar* finder)
 {
-	PROFILE_FUNC();
-
-	CvSelectionGroup* pSelectionGroup;
-	CvPlot* pFromPlot;
-	CvPlot* pToPlot;
 	bool bAIControl;
-
-	if (parent == NULL)
-	{
-		return TRUE;
-	}
-
-	pFromPlot = GC.getMapINLINE().plotSorenINLINE(parent->m_iX, parent->m_iY);
-	FAssert(pFromPlot != NULL);
-	pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
-	FAssert(pToPlot != NULL);
-
-	pSelectionGroup = ((CvSelectionGroup *)pointer);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      03/03/10                                jdog5000      */
 /*                                                                                              */
 /* Efficiency                                                                                   */
 /************************************************************************************************/
-	if (pSelectionGroup->getDomainType() == DOMAIN_SEA)
-	{
-		PROFILE("pathValid domain sea");
-
-		if (pFromPlot->isWater() && pToPlot->isWater())
-		{
-			if (!(GC.getMapINLINE().plotINLINE(parent->m_iX, node->m_iY)->isWater()) && !(GC.getMapINLINE().plotINLINE(node->m_iX, parent->m_iY)->isWater()))
-			{
-				if( !(pSelectionGroup->canMoveAllTerrain()) )
-				{
-					return FALSE;
-				}
-			}
-		}
-	}
-
 	if (pSelectionGroup->atPlot(pFromPlot))
 	{
 		return TRUE;
@@ -1853,6 +1819,60 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 /************************************************************************************************/
 
 	return TRUE;
+}
+
+
+int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)
+{
+	PROFILE_FUNC();
+
+	CvSelectionGroup* pSelectionGroup;
+	CvPlot* pFromPlot;
+	CvPlot* pToPlot;
+
+	if (parent == NULL)
+	{
+		return TRUE;
+	}
+
+	pFromPlot = GC.getMapINLINE().plotSorenINLINE(parent->m_iX, parent->m_iY);
+	FAssert(pFromPlot != NULL);
+	pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
+	FAssert(pToPlot != NULL);
+
+	pSelectionGroup = ((CvSelectionGroup *)pointer);
+
+	// XXX might want to take this out...
+	if (pSelectionGroup->getDomainType() == DOMAIN_SEA)
+	{
+		PROFILE("pathValid domain sea");
+
+		if (pFromPlot->isWater() && pToPlot->isWater())
+		{
+			if (!(GC.getMapINLINE().plotINLINE(pFromPlot->getX_INLINE(), pToPlot->getY_INLINE())->isWater()) && !(GC.getMapINLINE().plotINLINE(pToPlot->getX_INLINE(), pFromPlot->getY_INLINE())->isWater()))
+			{
+				if( !(pSelectionGroup->canMoveAllTerrain()) )
+				{
+					return FALSE;
+				}
+			}
+		}
+	}
+
+	//	KOSHLING MOD - none of the rest of the calculation depends on pToPlot, 
+	//	so we can cache the results from one request for each parent/pFromPlot.
+	//	The cache is reset prior to each path generation
+	bool bResult;
+	if ( pSelectionGroup->HaveCachedPathValidityResult( pFromPlot, &bResult ) )
+	{
+		return bResult;
+	}
+
+	bResult = pathValidInternal(parent, pFromPlot, data, pSelectionGroup, finder);
+
+	pSelectionGroup->CachePathValidityResult( pFromPlot, bResult );
+
+	return bResult;
 }
 
 
