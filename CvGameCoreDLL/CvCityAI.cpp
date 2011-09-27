@@ -1033,7 +1033,7 @@ void CvCityAI::AI_chooseProduction()
 	// K-Mod end
 
 
-	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%s, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
+	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%S, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
 
 	// -------------------- BBAI Notes -------------------------
 	// Start special circumstances
@@ -10613,6 +10613,11 @@ int CvCityAI::AI_cityValue() const
     {
         return 0;
     }
+
+	// K-Mod: disorder causes the commerce rates to go to zero... so that would  mess up our calculations
+	if (isDisorder())
+		return 0;
+	// K-Mod end
     
 	int iValue = 0;
 	
@@ -10632,7 +10637,7 @@ int CvCityAI::AI_cityValue() const
 	// but the problem is that CULTURE4 doesn't always run its full course. ... so I'm going to make a small ad hoc adjustment...
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
 	iValue *= kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)? 2 : 1;
-	int iCosts = 2 * calculateColonyMaintenanceTimes100() + getMaintenanceTimes100() / 2;
+	int iCosts = calculateColonyMaintenanceTimes100() + 2*getMaintenanceTimes100()/3;
 	int iTargetPop = std::max(5, AI_getTargetPopulation()); // target pop is not a good measure for small cities w/ unimproved tiles.
 	if (getPopulation() > 0 && getPopulation() < iTargetPop)
 	{

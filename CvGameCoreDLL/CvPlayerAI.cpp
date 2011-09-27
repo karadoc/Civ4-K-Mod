@@ -509,8 +509,8 @@ void CvPlayerAI::AI_doTurnUnitsPre()
 		return;
 	}
 	
-	// Uncommented by K-Mod
-	if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
+	// Uncommented by K-Mod, and added warplan condition.
+	if (AI_isDoStrategy(AI_STRATEGY_CRUSH) && GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
 	{
 		AI_convertUnitAITypesForCrush();		
 	}
@@ -548,9 +548,12 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 	bool bAnyWar = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
 	int iStartingGold = getGold();
 	int iTargetGold = AI_goldTarget();
+	/* BBAI code
 	int iUpgradeBudget = (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
-
-	iUpgradeBudget = std::min(iUpgradeBudget, iStartingGold - ((iTargetGold > iUpgradeBudget) ? (iTargetGold - iUpgradeBudget) : iStartingGold/2));
+	iUpgradeBudget = std::min(iUpgradeBudget, iStartingGold - ((iTargetGold > iUpgradeBudget) ? (iTargetGold - iUpgradeBudget) : iStartingGold/2)); */
+	// K-Mod. Note: (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2) is actually one of the components of AI_goldTarget().
+	int iUpgradeBudget = iStartingGold - std::max(0, iTargetGold - AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
+	// K-Mod end
 
 	if( AI_isFinancialTrouble() )
 	{
@@ -13767,7 +13770,7 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 		int iAnarchyLength = getCivicAnarchyLength(paeBestCivic);
 		if (iAnarchyLength > 0)
 		{
-			// we would switch; so what's it worth?
+			// we would switch; so what is the negation of anarchy worth?
 			for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 			{
 				iTempValue = getCommerceRate((CommerceTypes)iI) * iAnarchyLength;
@@ -14535,7 +14538,7 @@ void CvPlayerAI::AI_doCivics()
 
 			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > (100+iThreshold)*paiCurrentValue[iI])
 			{
-				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%s)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
+				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%S)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
 				iAnarchyLength = iTestAnarchy;
 				paeBestCivic[iI] = eNewCivic;
 				paiCurrentValue[iI] = iBestValue;
@@ -20011,6 +20014,13 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	{
 		if (it->first > 0 && spare_units[it->second->area()->getID()] > 0)
 		{
+			if (gPlayerLogLevel >= 2)
+			{
+				CvWString sOldType;
+				getUnitAIString(sOldType, it->second->AI_getUnitAIType());
+				logBBAI("    %S converts %S from %S to attack city for crush.", getName(), it->second->getName().GetCString(), sOldType.GetCString());
+			}
+
 			it->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);
 			// only convert half of our spare units, so that we can reevaluate which units we need before converting more.
 			spare_units[it->second->area()->getID()]-=2;
