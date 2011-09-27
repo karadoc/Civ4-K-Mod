@@ -4452,12 +4452,12 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 
 					if( iPathLength <= 3 && !GET_TEAM(pPlot->getTeam()).isHasTech((TechTypes)iI) )
 					{
-						szString.append(CvWString::format(L"\n%s(%d)=%8d", GC.getTechInfo((TechTypes)iI).getDescription(), iPathLength, kPlayer.AI_techValue((TechTypes)iI, 1, false, true, paiBonusClassRevealed, paiBonusClassUnrevealed, paiBonusClassHave)));
-						szString.append(CvWString::format(L" (bld:%4d, ", kPlayer.AI_techBuildingValue((TechTypes)iI, 1, bDummy)));
+						szString.append(CvWString::format(L"\n%s(%d)=%9d", GC.getTechInfo((TechTypes)iI).getDescription(), iPathLength, kPlayer.AI_techValue((TechTypes)iI, 1, false, true, paiBonusClassRevealed, paiBonusClassUnrevealed, paiBonusClassHave)));
+						szString.append(CvWString::format(L" (bld:%d, ", kPlayer.AI_techBuildingValue((TechTypes)iI, 1, bDummy)));
 						int iObs = kPlayer.AI_obsoleteBuildingPenalty((TechTypes)iI, true);
 						if (iObs != 0)
-							szString.append(CvWString::format(L"obs:%3d, )", -iObs));
-						szString.append(CvWString::format(L"unt:%4d)", kPlayer.AI_techUnitValue((TechTypes)iI, 1, bDummy)));
+							szString.append(CvWString::format(L"obs:%d, ", -iObs));
+						szString.append(CvWString::format(L"unt:%d)", kPlayer.AI_techUnitValue((TechTypes)iI, 1, bDummy)));
 					}
 				}
 			}
@@ -4818,7 +4818,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					int iBuildUnitProb = static_cast<CvCityAI*>(pCity)->AI_buildUnitProb();
 					szString.append(CvWString::format(L"\nBuild unit prob: %d%%", iBuildUnitProb));
 					BuildingTypes eBestBuilding = static_cast<CvCityAI*>(pCity)->AI_bestBuildingThreshold(0, 0, 0, true);
-					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : pCity->AI_buildingValue(eBestBuilding);
+					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : pCity->AI_buildingValue(eBestBuilding, 0, 0, true);
 					iBuildUnitProb *= (150 + iBestBuildingValue);
 					iBuildUnitProb /= (60 + 3 * iBestBuildingValue);
 					szString.append(CvWString::format(L" (%d%%)", iBuildUnitProb));
@@ -10394,7 +10394,7 @@ void CvGameTextMgr::setBuildingHelp(CvWStringBuffer &szBuffer, BuildingTypes eBu
 		
 		if ((gDLL->getChtLvl() > 0) && gDLL->ctrlKey() && (pCity != NULL))
 		{
-			int iBuildingValue = pCity->AI_buildingValue(eBuilding);
+			int iBuildingValue = pCity->AI_buildingValue(eBuilding, 0, 0, true);
 			szBuffer.append(CvWString::format(L"\nAI Building Value = %d", iBuildingValue));
 		}
 	}

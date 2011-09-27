@@ -2431,51 +2431,68 @@ int CvTeamAI::AI_getEnemyPowerPercent( bool bConsiderOthers ) const
 	// K-Mod end
 }
 
+// K-Mod
+int CvTeamAI::AI_getAirPower() const
+{
+	int iTotalPower = 0;
+
+	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+	{
+		// Since units of each class are counted per team rather than units of each type, just assume the default unit type.
+		UnitTypes eLoopUnit = (UnitTypes)GC.getUnitClassInfo((UnitClassTypes)iI).getDefaultUnitIndex();
+		if (eLoopUnit != NO_UNIT)
+		{
+			const CvUnitInfo& kUnitInfo = GC.getUnitInfo(eLoopUnit);
+
+			if (kUnitInfo.getDomainType() == DOMAIN_AIR && kUnitInfo.getAirCombat() > 0)
+			{
+				iTotalPower += getUnitClassCount((UnitClassTypes)iI) * kUnitInfo.getPowerValue();
+			}
+		}
+	}
+
+	return iTotalPower;
+}
+
 /// \brief Sum up air power of enemies plus average of other civs we've met.
 ///
+// K-Mod: I've rewritten this function to loop over unit classes rather than unit types.
+// This is because a loop over unit types will double-count if there are two units in the same class.
 int CvTeamAI::AI_getRivalAirPower( ) const
 {
 	// Count enemy air units, not just those visible to us
 	int iRivalAirPower = 0;
 	int iEnemyAirPower = 0;
+	int iTeamCount = 0;
 
-	for (int iI = 0; iI < GC.getNumUnitInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
 	{
-		CvUnitInfo& kUnitInfo = GC.getUnitInfo((UnitTypes)iI);
-
-		if( kUnitInfo.getDomainType() == DOMAIN_AIR ) 
+		// Since units of each class are counted per team rather than units of each type, just assume the default unit type.
+		UnitTypes eLoopUnit = (UnitTypes)GC.getUnitClassInfo((UnitClassTypes)iI).getDefaultUnitIndex();
+		if (eLoopUnit != NO_UNIT)
 		{
-			if( kUnitInfo.getAirCombat() > 0 )
+			const CvUnitInfo& kUnitInfo = GC.getUnitInfo(eLoopUnit);
+
+			if (kUnitInfo.getDomainType() == DOMAIN_AIR && kUnitInfo.getAirCombat() > 0)
 			{
-				for( int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++ )
+				for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++)
 				{
-					if( iTeam != getID() )
+					if (iTeam != getID() && GET_TEAM((TeamTypes)iTeam).isAlive()
+						&& isHasMet((TeamTypes)iTeam) && !GET_TEAM((TeamTypes)iTeam).isMinorCiv())
 					{
-						if( GET_TEAM((TeamTypes)iTeam).isAlive() && isHasMet((TeamTypes)iTeam) )
-						{
-							int iUnitPower = GET_TEAM((TeamTypes)iTeam).getUnitClassCount((UnitClassTypes)kUnitInfo.getUnitClassType());
+						iTeamCount++;
 
-							if( iUnitPower > 0 )
-							{
-								iUnitPower *= kUnitInfo.getPowerValue();
+						int iUnitPower = kUnitInfo.getPowerValue() * GET_TEAM((TeamTypes)iTeam).getUnitClassCount((UnitClassTypes)iI);
 
-								if( AI_getWarPlan((TeamTypes)iTeam) == NO_WARPLAN )
-								{
-									iRivalAirPower += iUnitPower;
-								}
-								else
-								{
-									iEnemyAirPower += iUnitPower;
-								}
-							}
-						}
+						iRivalAirPower += iUnitPower;
+						if (AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
+							iEnemyAirPower += iUnitPower;
 					}
 				}
 			}
 		}
 	}
-
-	return (iEnemyAirPower + (iRivalAirPower / std::max(1,getHasMetCivCount(true))));
+	return iEnemyAirPower + iRivalAirPower / std::max(1, iTeamCount);
 }
 
 bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam )

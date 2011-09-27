@@ -9665,7 +9665,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 	int iValue;
 	int iTemp;
 	int iExtra;
-	int iI;
+	//int iI;
 
 	iValue = 0;
 
@@ -10018,7 +10018,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 	// try to use Warlords to create super-medic units
 	if (GC.getPromotionInfo(ePromotion).getAdjacentTileHealChange() > 0 || GC.getPromotionInfo(ePromotion).getSameTileHealChange() > 0)
 	{
-		PromotionTypes eLeader = NO_PROMOTION;
+		/* original bts code PromotionTypes eLeader = NO_PROMOTION;
 		for (iI = 0; iI < GC.getNumPromotionInfos(); iI++)
 		{
 			if (GC.getPromotionInfo((PromotionTypes)iI).isLeader())
@@ -10030,7 +10030,18 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 		if (isHasPromotion(eLeader) && eLeader != NO_PROMOTION)
 		{
 			iValue += GC.getPromotionInfo(ePromotion).getAdjacentTileHealChange() + GC.getPromotionInfo(ePromotion).getSameTileHealChange();
+		} */
+		// K-Mod, I've changed the way we work out if we are a leader or not.
+		// The original method would break if there was more than one "leader" promotion)
+		for (int iI = 0; iI < GC.getNumPromotionInfos(); iI++)
+		{
+			if (GC.getPromotionInfo((PromotionTypes)iI).isLeader() && isHasPromotion((PromotionTypes)iI))
+			{
+				iValue += GC.getPromotionInfo(ePromotion).getAdjacentTileHealChange() + GC.getPromotionInfo(ePromotion).getSameTileHealChange();
+				break;
+			}
 		}
+		// K-Mod end
 	}
 
 	iTemp = GC.getPromotionInfo(ePromotion).getCombatPercent();
@@ -10209,7 +10220,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 		iValue += (iTemp / 64);
 	}
 
-	for (iI = 0; iI < GC.getNumTerrainInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumTerrainInfos(); iI++)
 	{
 		iTemp = GC.getPromotionInfo(ePromotion).getTerrainAttackPercent(iI);
 		if (iTemp != 0)
@@ -10268,7 +10279,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 		}
 	}
 
-	for (iI = 0; iI < GC.getNumFeatureInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumFeatureInfos(); iI++)
 	{
 		iTemp = GC.getPromotionInfo(ePromotion).getFeatureAttackPercent(iI);
 		if (iTemp != 0)
@@ -10334,7 +10345,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
     int iOtherCombat = 0; 
     int iSameCombat = 0;
     
-    for (iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
+    for (int iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
     {
         if ((UnitCombatTypes)iI == getUnitCombatType())
         {
@@ -10346,7 +10357,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
         }
     }
 
-	for (iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
 	{
 		iTemp = GC.getPromotionInfo(ePromotion).getUnitCombatModifierPercent(iI);
 		int iCombatWeight = 0;
@@ -10393,7 +10404,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 		}
 	}
 
-	for (iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
+	for (int iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
 	{
 		//WTF? why float and cast to int?
 		//iTemp = ((int)((GC.getPromotionInfo(ePromotion).getDomainModifierPercent(iI) + getExtraDomainModifier((DomainTypes)iI)) * 100.0f));

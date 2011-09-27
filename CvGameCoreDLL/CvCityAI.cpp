@@ -3247,9 +3247,10 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 		aiUnitAIVal[UNITAI_ATTACK] /= 2;
 		aiUnitAIVal[UNITAI_ATTACK_AIR] *= 2;
 	}
-	if (GET_TEAM(getTeam()).AI_getRivalAirPower() <= 10 * GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_DEFENSE_AIR))
+	if (GET_TEAM(getTeam()).AI_getRivalAirPower() <= 8 * GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_DEFENSE_AIR))
 	{
-		// if each of our air defence units has a power of around 50, then this means the rival air power is very low.
+		// unfortunately, I don't have an easy way to get the approximate power of our air defence units.
+		// So I'm just going to assume the power of each unit is around 12 - the power of a fighter plane.
 		aiUnitAIVal[UNITAI_DEFENSE_AIR] /= 4;
 	}
 	// K-Mod end
@@ -3892,6 +3893,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 /************************************************************************************************/		
 
 	bool bCanPopRush = GET_PLAYER(getOwnerINLINE()).canPopRush();
+	bool bWarPlan = GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0; // K-Mod
 
 	bool bForeignTrade = false;
 	int iNumTradeRoutes = getTradeRoutes();
@@ -3944,6 +3946,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 		    
 			if ((iFocusFlags & BUILDINGFOCUS_DEFENSE) || (iPass > 0))
 			{
+				/* original bts code
 				if (!bAreaAlone)
 				{
 					if ((GC.getGameINLINE().getBestLandUnit() == NO_UNIT) || !(GC.getUnitInfo(GC.getGameINLINE().getBestLandUnit()).isIgnoreBuildingDefense()))
@@ -3959,7 +3962,44 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				
 				iValue += ((kBuilding.getAllCityDefenseModifier() * iNumCities) / 5);
 				
-				iValue += kBuilding.getAirlift() * 25;
+				iValue += kBuilding.getAirlift() * 25; */
+
+				// K-Mod. I've merged and modified the code from here and the code from higher up.
+				if (!bAreaAlone)
+				{
+					if (GC.getGameINLINE().getBestLandUnit() == NO_UNIT || !GC.getUnitInfo(GC.getGameINLINE().getBestLandUnit()).isIgnoreBuildingDefense())
+					{
+						// bRemove means that we're evaluating the cost of losing this building rather than adding it.
+						// the definition used here is just a kludge because there currently isn't any other to tell the difference.
+						// Also, this isn't the only part of the evaluation that depends on whether we are adding or removing
+						// but this is a particular important case due to the way walls and castles get obsoleted...
+						bool bRemove = getNumActiveBuilding(eBuilding) > 0;
+
+						int iTemp = 0;
+						// bombard reduction
+						int iOldBombardMod = getBuildingBombardDefense() - (bRemove ? kBuilding.getBombardDefenseModifier() : 0);
+						iTemp += std::max((bRemove ?0 :kBuilding.getDefenseModifier()) + getBuildingDefense(), getNaturalDefense()) * std::min(kBuilding.getBombardDefenseModifier(), 100-iOldBombardMod) / std::max(80, 8 * (100 - iOldBombardMod));
+						// defence bonus
+						iTemp += std::max(0, std::min((bRemove? 0 :kBuilding.getDefenseModifier()) + getBuildingDefense() - getNaturalDefense() - 10, kBuilding.getDefenseModifier())) / 4;
+
+						iTemp *= (bWarPlan ? 3 : 2);
+						iTemp /= 3;
+						iValue += iTemp;
+					}
+				}
+				iValue += kBuilding.getAirlift() * 10 + (iNumCitiesInArea < iNumCities && kBuilding.getAirlift() > 0 ? getPopulation()+25 : 0);
+
+				int iAirDefense = -kBuilding.getAirModifier();
+				if (iAirDefense > 0)
+				{
+					int iTemp = iAirDefense;
+					iTemp *= std::max(200, 100 * GET_TEAM(getTeam()).AI_getRivalAirPower() / std::max(1, GET_TEAM(getTeam()).AI_getAirPower()));
+					iTemp /= 200;
+					iValue += iTemp;
+				}
+
+				iValue += -kBuilding.getNukeModifier() / (GC.getGameINLINE().isNukesValid() && !GC.getGameINLINE().isNoNukes() ? 4 : 40);
+				// K-Mod end
 			}
 
 			if ((iFocusFlags & BUILDINGFOCUS_ESPIONAGE) || (iPass > 0))
@@ -4402,7 +4442,20 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 				if (kBuilding.getFreePromotion() != NO_PROMOTION)
 				{
-					iValue += ((iHasMetCount > 0) ? 100 : 40); // XXX some sort of promotion value???
+					/* original bts code
+					iValue += ((iHasMetCount > 0) ? 100 : 40); // XXX some sort of promotion value??? */
+					// K-Mod.
+					// Ideally, we'd use AI_promotionValue to work out what the promotion is worth
+					// but unfortunately, that function requires a target unit, and I can't think of a good
+					// way to choose a suitable unit for evaluation.
+					// So.. I'm just going to do a really basic kludge to stop the Dun from being worth more than Red Cross
+					const CvPromotionInfo& kInfo = GC.getPromotionInfo((PromotionTypes)kBuilding.getFreePromotion());
+					bool bAdvanced = kInfo.getPrereqPromotion() != NO_PROMOTION ||
+						kInfo.getPrereqOrPromotion1() != NO_PROMOTION || kInfo.getPrereqOrPromotion2() != NO_PROMOTION || kInfo.getPrereqOrPromotion3() != NO_PROMOTION;
+					iValue += (bAdvanced ? 200 : 20);
+					// cf. iValue += (kBuilding.getFreeExperience() * ((iHasMetCount > 0) ? 12 : 6));
+					// just don't make the mistake of thinking that I'm happy with this...
+					// K-Mod end
 				}
 
 				if (kBuilding.getCivicOption() != NO_CIVICOPTION)
@@ -4446,12 +4499,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 				iValue += (kBuilding.getGlobalFreeExperience() * iNumCities * ((iHasMetCount > 0) ? 6 : 3));
 
+				/* original bts code. (moved to where the rest of foodKept is valued)
 				if (bCanPopRush)
 				{
 					iValue += kBuilding.getFoodKept() / 2;
-				}
+				} */
 
-				iValue += kBuilding.getAirlift() * (getPopulation() + 10); // originally population * 3 + 10
+				/* original bts code. (This stuff is already counted in the defense section.)
+				iValue += kBuilding.getAirlift() * (getPopulation()*3 + 10);
 				
 				int iAirDefense = -kBuilding.getAirModifier();
 				if (iAirDefense > 0)
@@ -4462,9 +4517,11 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					}
 				}
 
-				iValue += kBuilding.getAirUnitCapacity() * (getPopulation() * 2 + 10) / 2; // originally didn't have /2
+				iValue += kBuilding.getAirUnitCapacity() * (getPopulation() * 2 + 10);
 
-				iValue += (-(kBuilding.getNukeModifier()) / ((iHasMetCount > 0) ? 10 : 20));
+				iValue += (-(kBuilding.getNukeModifier()) / ((iHasMetCount > 0) ? 10 : 20)); */
+
+				iValue += std::max(0, kBuilding.getAirUnitCapacity() - plot()->airUnitSpaceAvailable(getTeam())/2) * (getPopulation() + 12); // K-Mod
 
 				iValue += (kBuilding.getFreeSpecialist() * 16);
 				iValue += (kBuilding.getAreaFreeSpecialist() * iNumCitiesInArea * 12);
@@ -4748,7 +4805,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 										if (iI == YIELD_PRODUCTION)
 										{
 											// priority += 2% per 1% in production increase. roughly. More when at war.
-											iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
+											iPriorityFactor += std::min(100, (bWarPlan ? 300 : 200)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
 										}
 										// K-Mod end
 										iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iYield, this);
@@ -4791,7 +4848,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				if (iFoodDifference > 0)
 				{
 					//iValue += kBuilding.getFoodKept() / 2;
-					iValue += std::max(0, 2*(AI_getTargetPopulation() - getPopulation())+1) * kBuilding.getFoodKept() / 4;
+					iValue += std::max(0, 2*(AI_getTargetPopulation() - getPopulation())+(bCanPopRush ?3 :1)) * kBuilding.getFoodKept() / 4;
 				}
 
 				for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -4876,7 +4933,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						if (iI == YIELD_PRODUCTION)
 						{
 							// priority += 2% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
+							iPriorityFactor += std::min(100, (bWarPlan ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
 						}
 						// K-Mod end
 
@@ -10880,9 +10937,36 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 			int iOdds = (bWar ? 100 : 50) - kOwner.AI_unitCostPerMil()/2;
 			iOdds *= 50 + iBestBuildingValue;
 			iOdds /= 50 + 10 * iBestBuildingValue;
+
+   			if (AI_chooseBuilding(BUILDINGFOCUS_EXPERIENCE, 10, iOdds))
+			{
+				return;
+			}
+
 			if (AI_chooseUnit(NO_UNITAI, iOdds))
 			{
 				return;
+			}
+		}
+
+		//spread
+		int iSpreadUnitOdds = (100 - iBestBuildingValue) / 3;
+
+		int iSpreadUnitThreshold = 1000 + (bWar ? 1000: 0);
+		// is it wrong to use UNITAI values for human players?
+		iSpreadUnitThreshold += kOwner.AI_totalAreaUnitAIs(area(), UNITAI_MISSIONARY) * 300;
+
+		UnitTypes eBestSpreadUnit = NO_UNIT;
+		int iBestSpreadUnitValue = -1;
+		if (AI_bestSpreadUnit(true, true, iSpreadUnitOdds, &eBestSpreadUnit, &iBestSpreadUnitValue))
+		{
+			if (iBestSpreadUnitValue > iSpreadUnitThreshold)
+			{
+				if (AI_chooseUnit(eBestSpreadUnit, UNITAI_MISSIONARY))
+				{
+					return;
+				}
+				FAssertMsg(false, "AI_bestSpreadUnit should provide a valid unit when it returns true");
 			}
 		}
 	}
@@ -11513,19 +11597,6 @@ int CvCityAI::AI_countNumImprovableBonuses( bool bIncludeNeutral, TechTypes eExt
 int CvCityAI::AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance)
 {
 	FAssert(GET_PLAYER(eIndex).isAlive());
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/16/10                              jdog5000        */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
-/* original bts code
-	FAssert(eIndex != getID());
-*/
-	// No point checking player type against city ID ... Firaxis copy and paste error from
-	// CvPlayerAI version of this function
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	if ((m_iCachePlayerClosenessTurn != GC.getGame().getGameTurn())
 		|| (m_iCachePlayerClosenessDistance != iMaxDistance))

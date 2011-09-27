@@ -126,6 +126,7 @@ public:
 /************************************************************************************************/
 	int AI_getWarSuccessCapitulationRatio() const;
 	int AI_getEnemyPowerPercent( bool bConsiderOthers = false ) const;
+	int AI_getAirPower() const; // K-Mod
 	int AI_getRivalAirPower( ) const;
 	bool AI_acceptSurrender( TeamTypes eSurrenderTeam );
 	bool AI_isOkayVassalTarget( TeamTypes eTeam );

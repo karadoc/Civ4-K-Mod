@@ -5744,16 +5744,22 @@ int CvPlayerAI::AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) co
 	{
 		BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
 
-		if (eLoopBuilding != NO_BUILDING && GC.getBuildingInfo(eLoopBuilding).getObsoleteTech() == eTech
-			&& getBuildingClassCount((BuildingClassTypes)iI) > 0)
+		if (eLoopBuilding != NO_BUILDING)
 		{
-			int iLoop;
-			for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+			bool bObsolete = GC.getBuildingInfo(eLoopBuilding).getObsoleteTech() == eTech
+				|| (GC.getBuildingInfo(eLoopBuilding).getSpecialBuildingType() != NO_SPECIALBUILDING
+				&& GC.getSpecialBuildingInfo((SpecialBuildingTypes)GC.getBuildingInfo(eLoopBuilding).getSpecialBuildingType()).getObsoleteTech() == eTech);
+
+			if (bObsolete && getBuildingClassCount((BuildingClassTypes)iI) > 0)
 			{
-				int n = pLoopCity->getNumActiveBuilding(eLoopBuilding);
-				if (n > 0)
+				int iLoop;
+				for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 				{
-					iTotalPenalty += n * pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache);
+					int n = pLoopCity->getNumActiveBuilding(eLoopBuilding);
+					if (n > 0)
+					{
+						iTotalPenalty += n * pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache);
+					}
 				}
 			}
 		}
