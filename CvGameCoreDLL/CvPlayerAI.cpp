@@ -4722,7 +4722,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	//RouteTypes eRoute;
 	
 	//int iNumBonuses;
-	int iValue;
+	//int iValue;
+	long iValue; // K-Mod. (the int was overflowing in parts of the calculation)
 	//int iTempValue;
 	//int iBuildValue;
 	//int iBonusValue;
@@ -5661,7 +5662,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			bool bCheapBooster = ((iTurnsLeft < (2 * iAdjustment)) && (0 == ((bAsync) ? GC.getASyncRand().get(5, "AI Choose Cheap Tech") : GC.getGameINLINE().getSorenRandNum(5, "AI Choose Cheap Tech"))));
 			
 			
-			iValue *= 100000;
+			//iValue *= 100000;
+			iValue *= 2000; // K-Mod
 			
             iValue /= (iTurnsLeft + (bCheapBooster ? 1 : (5 * iAdjustment)));
 		}
@@ -5730,7 +5732,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 **** END
 ***/
 
-	iValue = std::max(1, iValue);
+	FAssert(iValue < INT_MAX);
+	iValue = std::max(1, (int)iValue);
 
 	return iValue;
 }
@@ -18742,6 +18745,14 @@ void CvPlayerAI::AI_updateStrategyHash()
 			m_iStrategyHash |= AI_STRATEGY_ESPIONAGE_ECONOMY;
 		}
 	}
+	if( gPlayerLogLevel >= 2 )
+	{
+		if ((m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY) != (iLastStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY))
+		{
+			logBBAI( "    Player %d (%S) %S strategy AI_STRATEGY_ESPIONAGE_ECONOMY on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY ? "starts" : "stops", GC.getGameINLINE().getGameTurn());
+		}
+	}
+
 
 	// Turtle strategy
 	if( kTeam.getAtWarCount(true) > 0 && getNumCities() > 0 )
