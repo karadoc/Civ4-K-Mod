@@ -5768,7 +5768,7 @@ int CvPlayerAI::AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) co
 		}
 	}
 	// I don't really want to do this, but it has to scale like the rest of the tech values...
-	iTotalPenalty *= 8;
+	iTotalPenalty *= 6;
 	iTotalPenalty /= std::max(1, getNumCities());
 
 	return iTotalPenalty;

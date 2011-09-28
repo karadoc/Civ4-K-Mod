@@ -6449,12 +6449,7 @@ void CvUnitAI::AI_attackSeaMove()
 	
 	if (!plot()->isOwned() || !isEnemy(plot()->getTeam()))
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/11/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
-/* original bts code
+		/* original bts code
 		if (AI_shadow(UNITAI_ASSAULT_SEA, 4, 34))
 		{
 			return;
@@ -6474,25 +6469,35 @@ void CvUnitAI::AI_attackSeaMove()
 	if (AI_group(UNITAI_CARRIER_SEA, -1, 1, -1, false, false, false))
 	{
 		return;
-	}
-*/
+	} */
+		// K-Mod / BBAI. I've changed the order of group / shadow.
+		// What I'd really like is to join the assault group if the group needs escorts, but shadow if it doesn't.
+
+		// Get at least one shadow per assault group.
+		if (AI_shadow(UNITAI_ASSAULT_SEA, 1, -1, true, false, 4))
+		{
+			return;
+		}
+
+		// Allow several attack_sea with large flotillas 
+		if (AI_group(UNITAI_ASSAULT_SEA, -1, 4, 4, false, false, false, 4, false, true, false))
+		{
+			return;
+		}
+
+		// allow just a couple with small asault teams
+		if (AI_group(UNITAI_ASSAULT_SEA, -1, 2, -1, false, false, false, 5, false, true, false))
+		{
+			return;
+		}
+
+		// Otherwise, try to shadow.
 		if (AI_shadow(UNITAI_ASSAULT_SEA, 4, 34, true, false, 4))
 		{
 			return;
 		}
-		
+
 		if (AI_shadow(UNITAI_CARRIER_SEA, 4, 51, true, false, 5))
-		{
-			return;
-		}
-
-		// Group with large flotillas first
-		if (AI_group(UNITAI_ASSAULT_SEA, -1, 4, 3, false, false, false, 3, false, true, false))
-		{
-			return;
-		}
-
-		if (AI_group(UNITAI_ASSAULT_SEA, -1, 2, -1, false, false, false, 5, false, true, false))
 		{
 			return;
 		}
@@ -6502,10 +6507,7 @@ void CvUnitAI::AI_attackSeaMove()
 	{
 		return;
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
+	// K-Mod / BBAI end
 	
 	if (plot()->isOwned() && (isEnemy(plot()->getTeam())))
 	{

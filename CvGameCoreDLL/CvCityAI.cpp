@@ -2264,16 +2264,25 @@ void CvCityAI::AI_chooseProduction()
 
 				int iTransportViability = kPlayer.AI_calculateUnitAIViability(UNITAI_ASSAULT_SEA, DOMAIN_SEA);
 
-				int iDesiredEscorts = ((1 + 2 * iTransports) / 3);
+				//int iDesiredEscorts = ((1 + 2 * iTransports) / 3);
+				int iDesiredEscorts = iTransports; // K-Mod
 				if( iTransportViability > 95 )
 				{
 					// Transports are stronger than escorts (usually Galleons and Caravels)
-					iDesiredEscorts /= 3;
+					iDesiredEscorts /= 2; // was /3
 				}
 				
-				if ((iEscorts < iDesiredEscorts))
+				/*if (iEscorts < iDesiredEscorts)
 				{
-					if (AI_chooseUnit(UNITAI_ESCORT_SEA, (iEscorts < iDesiredEscorts/3) ? -1 : 50))
+					if (AI_chooseUnit(UNITAI_ESCORT_SEA, (iEscorts < iDesiredEscorts/3) ? -1 : 50)) */
+				// K-Mod
+				if (iEscorts < iDesiredEscorts && iDesiredEscorts > 0)
+				{
+					int iOdds = 100;
+					iOdds *= iDesiredEscorts;
+					iOdds /= iDesiredEscorts + 2*iEscorts;
+					if (AI_chooseUnit(UNITAI_ESCORT_SEA, iOdds))
+				// K-Mod end
 					{
 						AI_chooseBuilding(BUILDINGFOCUS_DOMAINSEA, 12);
 						return;
@@ -4452,9 +4461,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					const CvPromotionInfo& kInfo = GC.getPromotionInfo((PromotionTypes)kBuilding.getFreePromotion());
 					bool bAdvanced = kInfo.getPrereqPromotion() != NO_PROMOTION ||
 						kInfo.getPrereqOrPromotion1() != NO_PROMOTION || kInfo.getPrereqOrPromotion2() != NO_PROMOTION || kInfo.getPrereqOrPromotion3() != NO_PROMOTION;
-					iValue += (bAdvanced ? 200 : 20);
+					int iTemp = (bAdvanced ? 200 : 40);
+					int iProduction = getYieldRate(YIELD_PRODUCTION);
+					iTemp *= 2*iProduction;
+					iTemp /= 30 + iProduction;
+					iTemp *= getFreeExperience() + 1;
+					iTemp /= getFreeExperience() + 2;
+					iValue += iTemp;
 					// cf. iValue += (kBuilding.getFreeExperience() * ((iHasMetCount > 0) ? 12 : 6));
-					// just don't make the mistake of thinking that I'm happy with this...
 					// K-Mod end
 				}
 
@@ -10949,12 +10963,30 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 			}
 		}
 
-		//spread
-		int iSpreadUnitOdds = (100 - iBestBuildingValue) / 3;
+		//spies
+		int iNumSpies = kOwner.AI_totalAreaUnitAIs(area(), UNITAI_SPY) + kOwner.AI_getNumTrainAIUnits(UNITAI_SPY);
+		int iNeededSpies = 1 + area()->getCitiesPerPlayer(kOwner.getID()) / 3;
+		iNeededSpies += kOwner.getCommercePercent(COMMERCE_ESPIONAGE)/20;
 
-		int iSpreadUnitThreshold = 1000 + (bWar ? 1000: 0);
+		if (iNumSpies < iNeededSpies)
+		{
+			int iOdds = 35;
+			iOdds *= (40 + iBestBuildingValue);
+			iOdds /= (20 + 3 * iBestBuildingValue);
+			iOdds *= iNeededSpies;
+			iOdds /= (4*iNumSpies+iNeededSpies);
+			if (AI_chooseUnit(UNITAI_SPY, iOdds))
+			{
+				return;
+			}
+		}
+
+		//spread
+		int iSpreadUnitOdds = std::max(0, 80 - iBestBuildingValue*2);
+
+		int iSpreadUnitThreshold = 1000 + (bWar ? 1000: 0) + iBestBuildingValue * 10;
 		// is it wrong to use UNITAI values for human players?
-		iSpreadUnitThreshold += kOwner.AI_totalAreaUnitAIs(area(), UNITAI_MISSIONARY) * 300;
+		iSpreadUnitThreshold += kOwner.AI_totalAreaUnitAIs(area(), UNITAI_MISSIONARY) * 500;
 
 		UnitTypes eBestSpreadUnit = NO_UNIT;
 		int iBestSpreadUnitValue = -1;
