@@ -5463,7 +5463,7 @@ bool CvUnitAI::AI_greatPersonMove()
 				MissionAITypes eOldMission = getGroup()->AI_getMissionAIType(); // just used for the log message below
 				if (AI_doTrade(pBestTradePlot))
 				{
-					if (gUnitLogLevel > 2) logBBAI("    %S %S 'trade mission' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), eOldMission == MISSIONAI_TRADE?"continues" :"chooses", getName(0).GetCString(), iTradeValue, iChoice);
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'trade mission' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), eOldMission == MISSIONAI_TRADE?"continues" :"chooses", getName(0).GetCString(), iTradeValue, iChoice);
 					return true;
 				}
 				break;
@@ -5511,7 +5511,7 @@ bool CvUnitAI::AI_greatPersonMove()
 			{
 				if (eBestSpecialist != NO_SPECIALIST)
 				{
-					if (gUnitLogLevel > 2) logBBAI("    %S %S 'join' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_JOIN?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'join' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_JOIN?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
 					if (atPlot(pBestPlot))
 					{
 						getGroup()->pushMission(MISSION_JOIN, eBestSpecialist);
@@ -5526,7 +5526,7 @@ bool CvUnitAI::AI_greatPersonMove()
 
 				if (eBestBuilding != NO_BUILDING)
 				{
-					if (gUnitLogLevel > 2) logBBAI("    %S %S 'build' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_CONSTRUCT?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'build' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwner()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_CONSTRUCT?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
 					if (atPlot(pBestPlot))
 					{
 						getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
@@ -5738,7 +5738,7 @@ void CvUnitAI::AI_spyMove()
 						? GC.getDefineINT("ESPIONAGE_SPY_NO_INTRUDE_INTERCEPT_MOD")
 						: GC.getDefineINT("ESPIONAGE_SPY_INTERCEPT_MOD"));
 					iInterceptChance /= 100;
-					if (GC.getGame().getSorenRandNum(100, "AI Spy early attack") < iInterceptChance/2 + getFortifyTurns())
+					if (GC.getGame().getSorenRandNum(100, "AI Spy early attack") < iInterceptChance + getFortifyTurns())
 					{
 						if (AI_espionageSpy())
 							return;
@@ -22819,7 +22819,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 				if (GET_TEAM(eTargetTeam).getCounterespionageModAgainstTeam(getTeam()) > 0)
 					iBaseIntercept += GC.getDefineINT("ESPIONAGE_INTERCEPT_COUNTERESPIONAGE_MISSION");
 			}
-			int iEscapeCost = iSpyValue * iBaseIntercept * (100+GC.getDefineINT("ESPIONAGE_SPY_MISSION_ESCAPE_MOD")) / 20000;
+			int iEscapeCost = 2*iSpyValue * iBaseIntercept * (100+GC.getDefineINT("ESPIONAGE_SPY_MISSION_ESCAPE_MOD")) / 10000;
 
 			// One espionage mission loop to rule them all.
 			for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
@@ -22863,9 +22863,9 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 							int iTurns = (iCost - iEspPoints) / std::max(1, iEspionageRate);
 							iTurns *= kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)? 1 : 2;
 							// The number of turns is approximated (poorly) by assuming our entire esp rate is targeting eTargetTeam.
-							iValue *= 2;
-							iValue /= iTurns + 2;
-							// eg, 1 turn left -> 2/3. 2 turns -> 2/4, 3 turns -> 2/5. Etc.
+							iValue *= 3;
+							iValue /= iTurns + 3;
+							// eg, 1 turn left -> 3/4. 2 turns -> 3/5, 3 turns -> 3/6. Etc.
 						}
 						else
 						{

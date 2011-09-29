@@ -8619,37 +8619,6 @@ int CvCity::getCommerceRateTimes100(CommerceTypes eIndex) const
 	FAssertMsg(eIndex < NUM_COMMERCE_TYPES, "eIndex expected to be < NUM_COMMERCE_TYPES");
 
 	int iRate = m_aiCommerceRate[eIndex];
-/**
-*** K-Mod, 26/sep/10, Karadoc
-*** Trade culture
-**/
-	/* 11/dec/10, disabled (trade culture only affects plots now
-	*
-	if (eIndex == COMMERCE_CULTURE)
-	{
-		CvCity* pLoopCity;
-		int iI, iLevel;
-
-		iLevel = getCultureLevel();
-
-		if (iLevel > 0)
-		{
-			for (iI = 0; iI < GC.getDefineINT("MAX_TRADE_ROUTES"); iI++)
-			{
-				pLoopCity = getTradeCity(iI);
-
-				if(pLoopCity != NULL)
-				{
-					// Domestic culture only. Foreign culture is done in doCulture()
-					iRate += pLoopCity->getTradeCultureRateTimes100(iLevel);
-				}
-			}
-		}
-	}
-	*/
-/*
-** K-Mod END
-*/
 
 	if (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 	{

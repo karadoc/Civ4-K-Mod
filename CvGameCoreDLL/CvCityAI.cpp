@@ -894,6 +894,7 @@ void CvCityAI::AI_chooseProduction()
 	int iWaterPercent = AI_calculateWaterWorldPercent();
 	
 	int iBuildUnitProb = AI_buildUnitProb();
+	iBuildUnitProb /= kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 2 : 1; // K-Mod
     
     int iExistingWorkers = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_WORKER);
     int iNeededWorkers = kPlayer.AI_neededWorkers(pArea);
@@ -1006,11 +1007,7 @@ void CvCityAI::AI_chooseProduction()
 	// Don't give exemptions to cities that don't have anything good to do anyway.
 	if (iBestBuildingValue >= 50)
 	{
-		if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
-		{
-			bUnitExempt = true;
-		}
-		else if (iProductionRank > kPlayer.getNumCities()/2)
+		if (iProductionRank > kPlayer.getNumCities()/2)
 		{
 			bool bBelowMedian = true;
 			for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
@@ -1033,7 +1030,7 @@ void CvCityAI::AI_chooseProduction()
 	// K-Mod end
 
 
-	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%S, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
+	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%s, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
 
 	// -------------------- BBAI Notes -------------------------
 	// Start special circumstances
@@ -1567,6 +1564,7 @@ void CvCityAI::AI_chooseProduction()
 	
 	bool bCrushStrategy = kPlayer.AI_isDoStrategy(AI_STRATEGY_CRUSH);
 	int iNeededFloatingDefenders = (isBarbarian() || bCrushStrategy) ?  0 : kPlayer.AI_getTotalFloatingDefendersNeeded(pArea);
+	iNeededFloatingDefenders /= kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 2 : 1; // K-Mod
  	int iTotalFloatingDefenders = (isBarbarian() ? 0 : kPlayer.AI_getTotalFloatingDefenders(pArea));
 	
 	UnitTypeWeightArray floatingDefenderTypes;
@@ -2001,10 +1999,12 @@ void CvCityAI::AI_chooseProduction()
 			const CvCity* pCapitalCity = kPlayer.getCapitalCity();
 			if (pCapitalCity != NULL && pCapitalCity->area() == area())
 				iNeededSpies++;
-			if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
-				iNeededSpies++;
 		}
 		iNeededSpies -= (bDefenseWar ? 1 : 0);
+		if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
+			iNeededSpies++;
+		else
+			iNeededSpies /= kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 2 : 1;
 
 		if (iNumSpies < iNeededSpies)
 		{
@@ -4002,7 +4002,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				if (iAirDefense > 0)
 				{
 					int iTemp = iAirDefense;
-					iTemp *= std::max(200, 100 * GET_TEAM(getTeam()).AI_getRivalAirPower() / std::max(1, GET_TEAM(getTeam()).AI_getAirPower()));
+					iTemp *= std::min(200, 100 * GET_TEAM(getTeam()).AI_getRivalAirPower() / std::max(1, GET_TEAM(getTeam()).AI_getAirPower()+4*iNumCities));
 					iTemp /= 200;
 					iValue += iTemp;
 				}
@@ -5088,7 +5088,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					{
 					    if (bSpaceVictory1)
 					    {
-					        iTempValue *= 3;		
+							iTempValue *= 3;
 							iTempValue /= 2;
 					    }
 					}
@@ -5124,8 +5124,16 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 								// if we at culture level 3, then these need to get built asap
 								if (bCulturalVictory3)
 								{
+									int iLoop;
+									int iHighestRate = 0;
+									for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+									{
+										iHighestRate = std::max(iHighestRate, pLoopCity->getCommerceRate(COMMERCE_CULTURE));
+									}
+									FAssert(iHighestRate >= getCommerceRate(COMMERCE_CULTURE));
+
 									// its most important to build in the lowest rate city, but important everywhere
-									iCommerceMultiplierValue += std::max(100, 500 - iBaseCommerceRate) * iCommerceModifier;
+									iCommerceMultiplierValue += (iHighestRate - getCommerceRate(COMMERCE_CULTURE)) * iCommerceModifier / 8;
 								}
 							}
 							else
@@ -8819,9 +8827,15 @@ bool CvCityAI::AI_chooseUnit(UnitAITypes eUnitAI, int iOdds)
 
 	if (eBestUnit != NO_UNIT)
 	{
+		/* original BBAI code
 		if( iOdds < 0 ||
 			getUnitProduction(eBestUnit) > 0 ||
-			GC.getGameINLINE().getSorenRandNum(100, "City AI choose unit") < iOdds )
+			GC.getGameINLINE().getSorenRandNum(100, "City AI choose unit") < iOdds ) */
+		// K-Mod. boost the odds based on our completion percentage.
+		if (iOdds < 0 ||
+			GC.getGameINLINE().getSorenRandNum(100, "City AI choose unit")
+			< iOdds + 100 * getUnitProduction(eBestUnit) / std::max(1, getProductionNeeded(eBestUnit)))
+		// K-Mod end
 		{
 			pushOrder(ORDER_TRAIN, eBestUnit, eUnitAI, false, false, false);
 			return true;
@@ -10929,7 +10943,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 			int iExistingWorkers = kOwner.AI_totalAreaUnitAIs(area(), UNITAI_WORKER);
 			int iNeededWorkers = kOwner.AI_neededWorkers(area());
 
-			if (iExistingWorkers < (iNeededWorkers + 1)/2) // I don't want to build more workers than the player actually wants.
+			if (iExistingWorkers < (iNeededWorkers + 2)/3) // I don't want to build more workers than the player actually wants.
 			{
 				int iOdds = 100;
 				iOdds *= iNeededWorkers - iExistingWorkers;
@@ -10965,7 +10979,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 
 		//spies
 		int iNumSpies = kOwner.AI_totalAreaUnitAIs(area(), UNITAI_SPY) + kOwner.AI_getNumTrainAIUnits(UNITAI_SPY);
-		int iNeededSpies = 1 + area()->getCitiesPerPlayer(kOwner.getID()) / 3;
+		int iNeededSpies = 2 + area()->getCitiesPerPlayer(kOwner.getID()) / 5;
 		iNeededSpies += kOwner.getCommercePercent(COMMERCE_ESPIONAGE)/20;
 
 		if (iNumSpies < iNeededSpies)
@@ -10984,7 +10998,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		//spread
 		int iSpreadUnitOdds = std::max(0, 80 - iBestBuildingValue*2);
 
-		int iSpreadUnitThreshold = 1000 + (bWar ? 1000: 0) + iBestBuildingValue * 10;
+		int iSpreadUnitThreshold = 1200 + (bWar ? 800: 0) + iBestBuildingValue * 10;
 		// is it wrong to use UNITAI values for human players?
 		iSpreadUnitThreshold += kOwner.AI_totalAreaUnitAIs(area(), UNITAI_MISSIONARY) * 500;
 

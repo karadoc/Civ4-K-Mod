@@ -2530,10 +2530,10 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
 			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 24*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
 			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
-			// lower weight by up to 75% if we have spent less than a quarter of our total points
+			// lower weight if we have spent less than a third of our total points
 			if (getCommercePercent(COMMERCE_ESPIONAGE) == 0) // ...only if we aren't explicitly trying to get espionage.
 			{
-				iWeight *= 100 - 300*std::max(iTotalUnspent - (3*GET_TEAM(getTeam()).getEspionagePointsEver()/4 + 2*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
+				iWeight *= 100 - 240*std::max(iTotalUnspent - std::max(2*GET_TEAM(getTeam()).getEspionagePointsEver()/3, 8*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
 				iWeight /= 100;
 			}
 			//
@@ -5480,7 +5480,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	{
 		if (GC.getCivicInfo((CivicTypes)iJ).getTechPrereq() == eTech)
 		{
-			iValue += 200;
+			//iValue += 200; // disabled by K-Mod
 
 			CivicTypes eCivic = getCivics((CivicOptionTypes)(GC.getCivicInfo((CivicTypes)iJ).getCivicOptionType()));
 			if (NO_CIVIC != eCivic)
@@ -5492,12 +5492,17 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				{
 					iValue += std::min(2400, (2400 * (iNewCivicValue - iCurrentCivicValue)) / std::max(1, iCurrentCivicValue));
 				}
+				iValue += std::max(0, 200 * iNewCivicValue / std::max(1, iCurrentCivicValue)); // K-Mod, replacing the flat 200 above.
 				
 				if (eCivic == GC.getLeaderHeadInfo(getPersonalityType()).getFavoriteCivic())
 				{
 					iValue += 600;
 				}
 			}
+			// K-Mod
+			else
+				iValue += 1000;
+			// K-Mod end
 		}
 	}
 
@@ -18749,7 +18754,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	{
 		if ((m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY) != (iLastStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY))
 		{
-			logBBAI( "    Player %d (%S) %S strategy AI_STRATEGY_ESPIONAGE_ECONOMY on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY ? "starts" : "stops", GC.getGameINLINE().getGameTurn());
+			logBBAI( "    Player %d (%S) %s strategy AI_STRATEGY_ESPIONAGE_ECONOMY on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY ? "starts" : "stops", GC.getGameINLINE().getGameTurn());
 		}
 	}
 
@@ -18922,13 +18927,6 @@ void CvPlayerAI::AI_updateStrategyHash()
 		}
 	}
 
-	// Economic focus (K-Mod) - Note: this strategy is a gambit. The goal is catch up in tech by avoiding building units.
-	if (kTeam.getAnyWarPlanCount(true) == 0 &&
-		(100*iAverageEnemyUnit >= 150*iTypicalAttack && 100*iAverageEnemyUnit >= 180*iTypicalDefence))
-	{
-		m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
-	}
-
 	if( gPlayerLogLevel >= 2 )
 	{
 		if( (m_iStrategyHash & AI_STRATEGY_ALERT1) && !(iLastStrategyHash & AI_STRATEGY_ALERT1) )
@@ -18951,7 +18949,26 @@ void CvPlayerAI::AI_updateStrategyHash()
 			logBBAI( "    Player %d (%S) stops strategy AI_STRATEGY_ALERT2 on turn %d with iParanoia %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iParanoia);
 		}
 	}
-	
+
+	// Economic focus (K-Mod) - This strategy is a gambit. The goal is to tech faster by neglecting military.
+	if (kTeam.getAnyWarPlanCount(true) == 0)
+	{
+		int iFocus = (100 - iParanoia) / 20;
+		iFocus += std::abs(iAverageEnemyUnit - iTypicalDefence) / 10; // either above, or below.
+		//Note: if we haven't met anyone then average enemy is zero. So this essentially assures economic strategy when in isolation.
+		iFocus += (AI_getPeaceWeight() + AI_getStrategyRand(2)%10)/3; // note: peace weight will be between 0 and 12
+
+		if (iFocus >= 12)
+			m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
+	}
+	if( gPlayerLogLevel >= 2 )
+	{
+		if ((m_iStrategyHash & AI_STRATEGY_ECONOMY_FOCUS) != (iLastStrategyHash & AI_STRATEGY_ECONOMY_FOCUS))
+		{
+			logBBAI( "    Player %d (%S) %s strategy AI_STRATEGY_ECONOMY_FOCUS on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & AI_STRATEGY_ECONOMY_FOCUS ? "starts" : "stops", GC.getGameINLINE().getGameTurn());
+		}
+	}
+
 	// BBAI TODO: Integrate Dagger with new conquest victory strategy, have Dagger focus on early rushes
     //dagger
 	if( !(AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2)) 

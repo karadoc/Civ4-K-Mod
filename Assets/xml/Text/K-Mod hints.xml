@@ -25,19 +25,19 @@
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_2</Tag>
-	<English>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</English>
-	<French>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</French>
-	<German>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</German>
-	<Italian>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Italian>
-	<Spanish>The cultural influence of a city extends beyond the city's cultural border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Spanish>
+	<English>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</English>
+	<French>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</French>
+	<German>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</German>
+	<Italian>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Italian>
+	<Spanish>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_3</Tag>
-	<English>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</English>
-	<French>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</French>
-	<German>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</German>
-	<Italian>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</Italian>
-	<Spanish>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to help "save the planet" in the future.</Spanish>
+	<English>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</English>
+	<French>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</French>
+	<German>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</German>
+	<Italian>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</Italian>
+	<Spanish>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_4</Tag>
@@ -49,11 +49,11 @@
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_5</Tag>
-	<English>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</English>
-	<French>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</French>
-	<German>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</German>
-	<Italian>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</Italian>
-	<Spanish>Factories and assembly lines create extra pollution with coal and oil. If aren't using your fossil fuels, then consider removing them from your civilization to make your people healthier.</Spanish>
+	<English>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</English>
+	<French>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</French>
+	<German>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</German>
+	<Italian>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</Italian>
+	<Spanish>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_6</Tag>
@@ -65,11 +65,11 @@
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_7</Tag>
-	<English>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</English>
-	<French>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</French>
-	<German>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</German>
-	<Italian>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</Italian>
-	<Spanish>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. The total experience points to be shared is bigger for bigger groups.</Spanish>
+	<English>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</English>
+	<French>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</French>
+	<German>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</German>
+	<Italian>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</Italian>
+	<Spanish>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</Spanish>
 </TEXT>
 <!-- replacement text for the inaccurate barbarian tip (changed english only)-->
 <TEXT>
