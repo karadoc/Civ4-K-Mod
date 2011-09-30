@@ -14336,7 +14336,7 @@ void CvPlayerAI::AI_doCommerce()
 							int iTargetCities = 0;
 							for (pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 							{
-								if (pLoopCity->area() != NULL && AI_isPrimaryArea(pLoopCity->area()))
+								if (pLoopCity->plot()->isVisible(getTeam(), false) && pLoopCity->area() != NULL && AI_isPrimaryArea(pLoopCity->area()))
 								{
 									cityModifiers.push_back(getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, (PlayerTypes)iPlayer, pLoopCity->plot()));
 								}

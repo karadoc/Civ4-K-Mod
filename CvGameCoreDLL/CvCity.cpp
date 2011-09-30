@@ -7716,6 +7716,7 @@ void CvCity::setOccupationTimer(int iNewValue)
 			updateCorporation();
 			updateMaintenance();
 			updateTradeRoutes();
+			updateCommerce(); // K-Mod
 
 			updateCultureLevel(true);
 

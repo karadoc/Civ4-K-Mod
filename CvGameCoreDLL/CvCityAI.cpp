@@ -255,13 +255,13 @@ void CvCityAI::AI_assignWorkingPlots()
 			setWorkingPlot(iI, false);
 		}
 	} */ // Disabled by K-Mod (experimental change, for speed)
-	
+
 	//update the special yield multiplier to be current
 	AI_updateSpecialYieldMultiplier();
-	
+
 	// remove any plots we can no longer work for any reason
 	verifyWorkingPlots();
-	
+
 	// if forcing specialists, try to make all future specialists of the same type
 	bool bIsSpecialistForced = false;
 	int iTotalForcedSpecialists = 0;
@@ -10722,15 +10722,6 @@ int CvCityAI::AI_cityValue() const
 	iValue -= iCosts;
 	// K-Mod end
 
-/*
-** K-Mod, 30/oct/10, Karadoc
-** reduced the multiplier from 3* to 2*... this whole calculation is still a kludge though.
-*/
-	iValue -= 2 * calculateColonyMaintenanceTimes100(); // original code was 3*
-/*
-** end K-Mod
-*/
-
 	return iValue;
 }
 
@@ -10867,7 +10858,6 @@ int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
 		}
     }
 
-
     return iValue;
 }
 
@@ -10883,11 +10873,6 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	CvArea* pWaterArea = waterArea();
 	bool bWasFoodProduction = isFoodProduction();
 	bool bDanger = AI_isDanger();
-
-	if (bWasFoodProduction)
-	{
-		AI_assignWorkingPlots();
-	}
 
     // pop borders
 	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) < 2)

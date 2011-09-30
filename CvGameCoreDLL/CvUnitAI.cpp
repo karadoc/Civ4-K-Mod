@@ -22605,7 +22605,7 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 			int iLoop;
 			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); NULL != pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 			{
-				if( pLoopCity == pSkipCity )
+				if (pLoopCity == pSkipCity || !pLoopCity->isVisible(getTeam(), false))
 				{
 					continue;
 				}

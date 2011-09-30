@@ -5375,7 +5375,7 @@ bool CvTeamAI::AI_isWaterAreaRelevant(CvArea* pArea)
 	{
 		CvPlayerAI& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
 		
-		if ((iTeamCities < 2 && (kPlayer.getTeam() == getID())) || (iOtherTeamCities < 2 && (kPlayer.getTeam() != getID())))
+		if ((iTeamCities < 2 && kPlayer.getTeam() == getID()) || (iOtherTeamCities < 2 && kPlayer.getTeam() != getID()))
 		{
 			int iLoop;
 			CvCity* pLoopCity;
@@ -5396,10 +5396,6 @@ bool CvTeamAI::AI_isWaterAreaRelevant(CvArea* pArea)
 					else
 					{
 						iOtherTeamCities++;
-						if (iOtherTeamCities >= 2)
-						{
-							break;
-						}
 					}
 				}				
 			}
