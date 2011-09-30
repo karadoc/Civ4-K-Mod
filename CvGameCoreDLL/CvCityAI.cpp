@@ -3591,11 +3591,6 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 			&&  (!isProductionAutomated() || !(isWorldWonderClass((BuildingClassTypes)iI) || isNationalWonderClass((BuildingClassTypes)iI))))
 			{
 				//don't build wonders?
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/08/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
 				// BBAI TODO: Temp testing, remove once centralized building is working
 				bool bWonderOk = false;
 				//if( isHuman() || getOwner()%2 == 1 )
@@ -3603,14 +3598,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 					bWonderOk = ((iFocusFlags == 0) || (iFocusFlags & BUILDINGFOCUS_WONDEROK) || (iFocusFlags & BUILDINGFOCUS_WORLDWONDER));
 				//}
 
-				if( bWonderOk ||
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-					!(isWorldWonderClass((BuildingClassTypes)iI) || 
-					 isTeamWonderClass((BuildingClassTypes)iI) || 
-					  isNationalWonderClass((BuildingClassTypes)iI) ||
-					   isLimitedWonderClass((BuildingClassTypes)iI)))
+				if (bWonderOk || !isLimitedWonderClass((BuildingClassTypes)iI))
 				{
 					if ((eIgnoreAdvisor == NO_ADVISOR) || (GC.getBuildingInfo(eLoopBuilding).getAdvisorType() != eIgnoreAdvisor))
 					{
@@ -3703,7 +3691,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 										}
 										// Subtract some points from wonder value, just to stop us from wasting it
 										if (isNationalWonderClass((BuildingClassTypes)iI))
-											iValue -= 20;
+											iValue -= 40;
 									}
 								}
 								// K-Mod end

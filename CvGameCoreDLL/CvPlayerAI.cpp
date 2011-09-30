@@ -2579,7 +2579,7 @@ int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStarting
 CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bStartingLoc) : bStartingLoc(bStartingLoc)
 {
 	iMinRivalRange = -1;
-	iGreed = 100;
+	iGreed = 120;
 	bEasyCulture = false;
 	bAmbitious = false;
 	bFinancial = false;
@@ -2705,12 +2705,12 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 
 	if (kPlayer.getAdvancedStartPoints() >= 0)
 	{
-		iGreed = 150; // overruling previous value;
+		iGreed = 200; // overruling previous value;
 	}
 
     iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
     iClaimThreshold = std::max(1, iClaimThreshold);
-	iClaimThreshold *= (bEasyCulture ? 140 : 100);
+	iClaimThreshold *= (bEasyCulture && kPlayer.getCurrentEra() < 2 ? 140 : 100);
 	iClaimThreshold *= (bAmbitious ? 140 : 100);
 	iClaimThreshold /= 100;
 	// note, plot culture is 100x city culture. So I've left a factor of 100 on iClaimThreshold.
@@ -3013,7 +3013,7 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 	iTakenTiles = 0;
 	iTeammateTakenTiles = 0;
 	iHealth = 0;
-	iValue = 1000;
+	iValue = 800; // was 1000
 
 	/* original bts code
 	else if (!bStartingLoc)
@@ -3628,17 +3628,23 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 		}
 		else
 		{
-		    int iDistance = plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE());
-		    int iNumCities = getNumCities();
-		    if (iDistance > 5)
-		    {
-		    	iValue -= (iDistance - 5) * 500;		    	
-		    }
-		    /* original bts code
+			int iDistance = plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE());
+			int iNumCities = getNumCities();
+			/* original bts code
+			if (iDistance > 5)
+			{
+				iValue -= (iDistance - 5) * 500;
+			}
 			else if (iDistance < 4)
-		    {
-		    	iValue -= (4 - iDistance) * 2000;
-		    } */ // disabled by K-Mod. (close cities and penalised in other ways)
+			{
+				iValue -= (4 - iDistance) * 2000;
+			} */
+			// K-Mod. (close cities and penalised in other ways)
+			if (iDistance > 5)
+			{
+				iValue -= std::min(5, iDistance - 5) * 400; // with that max distance, we could fit a city in the middle!
+			}
+			// K-Mod end
 			iValue *= (8 + iNumCities * 4);
 			iValue /= (2 + (iNumCities * 4) + iDistance);
 			if (pNearestCity->isCapital())
@@ -21487,7 +21493,6 @@ void CvPlayerAI::AI_invalidateCitySites(int iMinFoundValueThreshold) const
 int CvPlayerAI::AI_getNumCitySites() const
 {
 	return m_aiAICitySites.size();
-	
 }
 
 bool CvPlayerAI::AI_isPlotCitySite(CvPlot* pPlot) const
@@ -21503,7 +21508,6 @@ bool CvPlayerAI::AI_isPlotCitySite(CvPlot* pPlot) const
 		}		
 	}
 	return false;
-	
 }
 
 int CvPlayerAI::AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const
@@ -21542,9 +21546,7 @@ int CvPlayerAI::AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeAre
 			}	
 		}
 	}
-	return iCount;	
-	
-	
+	return iCount;
 }
 
 CvPlot* CvPlayerAI::AI_getCitySite(int iIndex) const
@@ -21603,9 +21605,8 @@ int CvPlayerAI::AI_bestAreaUnitAIValue(UnitAITypes eUnitAI, CvArea* pArea, UnitT
 			}
 		}
 	}
-	
+
 	return AI_bestCityUnitAIValue(eUnitAI, pCity, peBestUnitType);
-	
 }
 
 int CvPlayerAI::AI_bestCityUnitAIValue(UnitAITypes eUnitAI, CvCity* pCity, UnitTypes* peBestUnitType) const

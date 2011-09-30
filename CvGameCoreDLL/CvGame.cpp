@@ -4546,6 +4546,7 @@ void CvGame::toggleDebugMode()
 	GC.getMapINLINE().updateVisibility();
 	GC.getMapINLINE().updateSymbols();
 	GC.getMapINLINE().updateMinimapColor();
+	updateColoredPlots(); // K-Mod
 
 	gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true);
 	gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
