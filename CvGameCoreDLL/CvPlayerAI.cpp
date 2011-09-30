@@ -14330,21 +14330,28 @@ void CvPlayerAI::AI_doCommerce()
 						CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
 						if (kLoopPlayer.getTeam() == iTeam && kLoopPlayer.getNumCities() > 0)
 						{
+							std::vector<int> cityModifiers;
 							CvCity* pLoopCity;
 							int iLoop;
-							int iModifier = 0;
 							int iTargetCities = 0;
 							for (pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 							{
 								if (pLoopCity->area() != NULL && AI_isPrimaryArea(pLoopCity->area()))
 								{
-									iTargetCities++;
-									iModifier += getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, (PlayerTypes)iPlayer, pLoopCity->plot());
+									cityModifiers.push_back(getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, (PlayerTypes)iPlayer, pLoopCity->plot()));
 								}
 							}
-							if (iTargetCities > 0)
+							if (cityModifiers.size() > 0)
 							{
-								iModifier /= iTargetCities; // average modifier of targetable cities
+								// Get the average of the lowest 3 cities.
+								int iSampleSize = std::min(3, (int)cityModifiers.size());
+								std::partial_sort(cityModifiers.begin(), cityModifiers.begin()+iSampleSize, cityModifiers.end());
+								int iModifier = 0;
+								for (std::vector<int>::iterator it = cityModifiers.begin(); it != cityModifiers.begin()+iSampleSize; ++it)
+								{
+									iModifier += *it;
+								}
+								iModifier /= iSampleSize;
 
 								if (iModifier < iMinModifier ||
 									(iModifier == iMinModifier && iAttitude < GET_TEAM(getTeam()).AI_getAttitudeVal(eMinModTeam)))
