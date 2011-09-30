@@ -4550,13 +4550,16 @@ void CvTeamAI::AI_doWar()
 
 									AreaAITypes eAreaAI = AI_calculateAreaAIType(pLoopArea, true);
 
+									/* original bts code
 									if ( eAreaAI == AREAAI_DEFENSIVE)
 									{
 										bAreaValid = false;
 									}
-									else if( eAreaAI == AREAAI_OFFENSIVE )
+									else */ // disabled by K-Mod. Doing it that way means the order the areas are checked is somehow important...
+									if( eAreaAI == AREAAI_OFFENSIVE )
 									{
 										bAreaValid = true;
+										break; // K-Mod: we now have all we need to know.
 									}
 								}
 							}

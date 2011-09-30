@@ -1120,7 +1120,8 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc) const
 
 		if (!isBarbarian())
 		{
-			AI_invalidateCitySites(AI_getMinFoundValue());
+			//AI_invalidateCitySites(AI_getMinFoundValue());
+			AI_invalidateCitySites(-1); // K-Mod
 		}
 		for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 		{
@@ -2866,50 +2867,46 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 			}
 		}
 	}*/
-	// K-Mod
+	// K-Mod. bug fixes etc.
 	if (!kSet.bStartingLoc)
 	{
-		if (!AI_isPlotCitySite(pPlot))
+		for (int iJ = 0; iJ < AI_getNumCitySites(); iJ++)
 		{
-			for (int iJ = 0; iJ < AI_getNumCitySites(); iJ++)
+			CvPlot* pCitySitePlot = AI_getCitySite(iJ);
+			if (pCitySitePlot == pPlot)
+				continue;
+			FAssert(pCitySitePlot != NULL);
+
+			if (plotDistance(iX, iY, pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= GC.getMIN_CITY_RANGE() &&
+				pPlot->area() == pCitySitePlot->area())
 			{
-				CvPlot* pCitySitePlot = AI_getCitySite(iJ);
-				if (pCitySitePlot == NULL)
+				// this tile is too close to one of the sites we've already chosen.
+				return 0; // we can't settle here.
+			}
+			for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+			{
+				CvPlot* pLoopPlot = plotCity(iX, iY, iI);
+				if (pLoopPlot != NULL)
 				{
-					// I don't think this can happen, but it's not a big deal.
-					FAssert(false);
-					continue;
-				}
-				if (plotDistance(iX, iY, pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= GC.getMIN_CITY_RANGE() &&
-					pPlot->area() == pCitySitePlot->area())
-				{
-					// this tile is too close to one of the sites we've already chosen.
-					return 0; // we can't settle here.
-				}
-				for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
-				{
-					CvPlot* pLoopPlot = plotCity(iX, iY, iI);
-					if (pLoopPlot != NULL)
+					if (plotDistance(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= CITY_PLOTS_RADIUS)
 					{
-						if (plotDistance(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= CITY_PLOTS_RADIUS)
-						{
-							//Plot is inside the radius of a city site
-							abCitySiteRadius[iI] = true;
-							break;
-						}
+						//Plot is inside the radius of a city site
+						abCitySiteRadius[iI] = true;
 					}
 				}
 			}
 		}
 	}
 	// K-Mod end
-	
+
+	/* original bts code
 	std::vector<int> paiBonusCount;
 
     for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
     {
         paiBonusCount.push_back(0);
-    }
+    } */
+	std::vector<int> paiBonusCount(GC.getNumBonusInfos(), 0); // K-Mod
 
 	iBadTile = 0;
 
@@ -2923,6 +2920,7 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 			{
 				iBadTile += 2;
 			}
+			/* original bts code
 			else if (!(pLoopPlot->isFreshWater()) && !(pLoopPlot->isHills()))
 			{
 				if ((pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getTeam()) == 0) || (pLoopPlot->calculateTotalBestNatureYield(getTeam()) <= 1))
@@ -2943,7 +2941,30 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
                         iBadTile += bAdvancedStart ? 2 : 1;
                     }
                 }
-            }
+            } */
+			// K-Mod
+			else if (!pLoopPlot->isFreshWater() && !pLoopPlot->isHills() &&
+				(pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getTeam()) == 0 || pLoopPlot->calculateTotalBestNatureYield(getTeam()) <= 1))
+			{
+				iBadTile += 2;
+			}
+			else if (pLoopPlot->isWater() && !bIsCoastal && pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getTeam()) <= 1)
+			{
+				iBadTile++;
+			}
+			else if (pLoopPlot->isOwned())
+			{
+				if (pLoopPlot->getTeam() != getTeam() || pLoopPlot->isBeingWorked())
+				{
+					iBadTile++;
+				}
+				// note: this final condition is... not something I intend to keep permanently.
+				else if (pLoopPlot->isCityRadius() || abCitySiteRadius[iI])
+				{
+					iBadTile++;
+				}
+			}
+			// K-Mod end
 		}
 	}
 
@@ -2965,7 +2986,8 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 					{
 						if (pLoopPlot->isWater() || (pLoopPlot->area() == pArea) || (pLoopPlot->area()->getCitiesPerPlayer(getID()) > 0))
 						{
-							BonusTypes eBonus = pLoopPlot->getBonusType(getTeam());
+							//BonusTypes eBonus = pLoopPlot->getBonusType(getTeam());
+							BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam()); // K-Mod
 
 							if (eBonus != NO_BONUS)
 							{
@@ -3612,10 +3634,11 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 		    {
 		    	iValue -= (iDistance - 5) * 500;		    	
 		    }
-		    else if (iDistance < 4)
+		    /* original bts code
+			else if (iDistance < 4)
 		    {
 		    	iValue -= (4 - iDistance) * 2000;
-		    }
+		    } */ // disabled by K-Mod. (close cities and penalised in other ways)
 			iValue *= (8 + iNumCities * 4);
 			iValue /= (2 + (iNumCities * 4) + iDistance);
 			if (pNearestCity->isCapital())
@@ -21445,7 +21468,20 @@ void CvPlayerAI::AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites) 
 
 void CvPlayerAI::AI_invalidateCitySites(int iMinFoundValueThreshold) const
 {
-	m_aiAICitySites.clear();
+	/* original bts code
+	m_aiAICitySites.clear(); */
+	// K-Mod. note: this clear-by-value stuff isn't actually used yet... but at least it works now.
+	std::vector<int> keptSites;
+	if (iMinFoundValueThreshold > 0) // less than zero means clear all.
+	{
+		for (size_t iI = 0; iI < m_aiAICitySites.size(); iI++)
+		{
+			if (GC.getMapINLINE().plotByIndexINLINE(m_aiAICitySites[iI])->getFoundValue(getID()) >= iMinFoundValueThreshold)
+				keptSites.push_back(m_aiAICitySites[iI]);
+		}
+	}
+	m_aiAICitySites.swap(keptSites);
+	// K-Mod end
 }
 
 int CvPlayerAI::AI_getNumCitySites() const

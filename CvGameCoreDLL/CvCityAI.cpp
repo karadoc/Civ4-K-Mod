@@ -7170,7 +7170,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	iCommerceMultiplier *= 100;
 	iCommerceMultiplier /= iGreatPeopleAdvantage;
 	iFoodMultiplier *= iGreatPeopleAdvantage;
-	iFoodMultiplier /= 100;	
+	iFoodMultiplier /= 100;
 
 	// if leader flavor likes production, increase production, reduce commerce
 	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_PRODUCTION))
@@ -7192,7 +7192,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		iCommerceMultiplier = 10000 / (200 - iCommerceMultiplier);
 	}
 
-	/* original bts code (this seems like a good way to screw up your tile improvement at the drop of a hat...)
+	/* original bts code (this seems like a good way to screw up your tile improvements at the drop of a hat...)
 	if (angryPopulation(1) > 0)
 	{
 		iFoodMultiplier /= 2;
