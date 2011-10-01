@@ -263,7 +263,8 @@ void CvCityAI::AI_assignWorkingPlots()
 	verifyWorkingPlots();
 
 	// if forcing specialists, try to make all future specialists of the same type
-	bool bIsSpecialistForced = false;
+	//bool bIsSpecialistForced = false;
+	bool bIsSpecialistForced = isSpecialistForced();
 	int iTotalForcedSpecialists = 0;
 
 	// make sure at least the forced amount of specialists are assigned
@@ -275,13 +276,14 @@ void CvCityAI::AI_assignWorkingPlots()
 			bIsSpecialistForced = true;
 			iTotalForcedSpecialists += iForcedSpecialistCount;
 		}
-		
-		if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
+
+		//if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
+		if (bIsSpecialistForced && !isHuman() || isCitizensAutomated() || getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount)
 		{
 			setSpecialistCount(((SpecialistTypes)iI), iForcedSpecialistCount);
 		}
 	}
-	
+
 	// if we have more specialists of any type than this city can have, reduce to the max
 	for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 	{
@@ -291,6 +293,7 @@ void CvCityAI::AI_assignWorkingPlots()
 			{
 				setSpecialistCount(((SpecialistTypes)iI), getMaxSpecialistCount((SpecialistTypes)iI));
 			}
+			FAssert(isSpecialistValid((SpecialistTypes)iI));
 		}
 	}
 	
@@ -9399,85 +9402,135 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 	return false;
 }
 
-
+// This function has been completely rewritten for K-Mod - original code deleted
 void CvCityAI::AI_juggleCitizens()
 {
 	bool bAvoidGrowth = AI_avoidGrowth();
 	bool bIgnoreGrowth = AI_ignoreGrowth();
-	
-	// one at a time, remove the worst citizen, then add the best citizen
-	// until we add back the same one we removed
-	for (int iPass = 0; iPass < 2; iPass++)
+
+	int iTotalFreeSpecialists = totalFreeSpecialists(); // just for debug / preventing infinite loops
+
+	// count the total forced specialists
+	int iTotalForcedSpecialists = 0;
+	bool bForcedSpecialists = false;
+	for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 	{
-		bool bCompletedChecks = false;
-		int iCount = 0;
-
-		std::vector<int> aWorstPlots;
-
-		while (!bCompletedChecks)
+		int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
+		if (iForcedSpecialistCount > 0)
 		{
-			int iLowestValue = MAX_INT;
-			int iWorstPlot = -1;
-			int iValue;
+			bForcedSpecialists = true;
+			iTotalForcedSpecialists += iForcedSpecialistCount;
+		}
+	}
 
-			for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	bool bDone = false;
+	int iCycles = 0;
+
+	do
+	{
+		int iWorkedPlot = -1;
+		SpecialistTypes eWorkedSpecialist = NO_SPECIALIST;
+		int iWorkedValue = INT_MAX; // lowest value worked job
+
+		int iUnworkedPlot = -1;
+		int iUnworkedPlotValue = 0; // highest value unworked plot
+		SpecialistTypes eUnworkedSpecialist = NO_SPECIALIST;
+		int iUnworkedSpecValue = 0; // highest value unworked specialist
+		int iUnworkedSpecForce = 0;
+
+		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		{
+			if (iI != CITY_HOME_PLOT)
 			{
-				if (iI != CITY_HOME_PLOT)
+				CvPlot* pLoopPlot = getCityIndexPlot(iI);
+
+				if (pLoopPlot != NULL)
 				{
 					if (isWorkingPlot(iI))
 					{
-						CvPlot* pLoopPlot = getCityIndexPlot(iI);
-
-						if (pLoopPlot != NULL)
+						int iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, true, false, bIgnoreGrowth);
+						if (iValue <= iWorkedValue)
 						{
-								iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, /*bRemove*/ true, /*bIgnoreFood*/ false, bIgnoreGrowth, (iPass == 0));
-
-								// use <= so that we pick the last one that is lowest, to avoid infinite loop with AI_addBestCitizen
-								if (iValue <= iLowestValue)
-								{
-									iLowestValue = iValue;
-									iWorstPlot = iI;
-								}
-							}
+							iWorkedPlot = iI;
+							iWorkedValue = iValue;
+						}
+					}
+					else if (canWork(pLoopPlot))
+					{
+						int iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, false, false, bIgnoreGrowth);
+						if (iValue >= iUnworkedPlotValue)
+						{
+							iUnworkedPlot = iI;
+							iUnworkedPlotValue = iValue;
 						}
 					}
 				}
+			}
+		}
 
-			// if no worst plot, or we looped back around and are trying to remove the first plot we removed, stop
-			if (iWorstPlot == -1 || std::find(aWorstPlots.begin(), aWorstPlots.end(), iWorstPlot) != aWorstPlots.end())
+		FAssert(!bForcedSpecialists || iTotalForcedSpecialists > 0); // otherwise we will divide by zero soon...
+
+		for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+		{
+			if (getSpecialistCount((SpecialistTypes)iI) > getForceSpecialistCount((SpecialistTypes)iI))
 			{
-				bCompletedChecks = true;
+				int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, true);
+				if (iValue <= iWorkedValue)
+				{
+					iWorkedPlot = -1;
+					eWorkedSpecialist = (SpecialistTypes)iI;
+					iWorkedValue = iValue;
+				}
+			}
+			if (isSpecialistValid((SpecialistTypes)iI, 1))
+			{
+				int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, false);
+				int iForceValue = bForcedSpecialists ? getForceSpecialistCount((SpecialistTypes)iI) * 128 / iTotalForcedSpecialists - (getSpecialistCount((SpecialistTypes)iI)+1) * 128 / (getSpecialistPopulation()+1) : 0;
+				if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
+				{
+					eUnworkedSpecialist = (SpecialistTypes)iI;
+					iUnworkedSpecValue = iValue;
+					iUnworkedSpecForce = iForceValue;
+				}
+			}
+		}
+		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > iWorkedValue)
+		{
+			if (iWorkedPlot != -1)
+			{
+				setWorkingPlot(iWorkedPlot, false);
+			}
+			else if (eWorkedSpecialist != NO_SPECIALIST)
+			{
+				changeSpecialistCount(eWorkedSpecialist, -1);
 			}
 			else
 			{
-				// if this the first worst plot, remember it
-				aWorstPlots.push_back(iWorstPlot);
-
-				setWorkingPlot(iWorstPlot, false);
-
-				if (AI_addBestCitizen(true, true))
-				{
-					if (isWorkingPlot(iWorstPlot))
-					{
-						bCompletedChecks = true;
-					}
-				}
+				FAssert(false);
+				break;
 			}
 
-			iCount++;
-			if (iCount > (NUM_CITY_PLOTS + 1))
+			if (iUnworkedPlotValue > iUnworkedSpecValue)
 			{
-				FAssertMsg(false, "infinite loop");
-				break; // XXX
+				FAssert(iUnworkedPlot != -1);
+				setWorkingPlot(iUnworkedPlot, true);
+			}
+			else
+			{
+				FAssert(eUnworkedSpecialist != NO_SPECIALIST);
+				changeSpecialistCount(eUnworkedSpecialist, 1);
 			}
 		}
+		else
+			bDone = true;
 
-		if ((iPass == 0) && (foodDifference(false) >= 0))
+		if (iCycles > getPopulation() + iTotalFreeSpecialists)
 		{
-			//good enough, the starvation code
+			FAssertMsg(false, "juggle citizens failed to find a stable solution.");
 			break;
 		}
-	}
+		iCycles++;
+	} while (!bDone);
 }
 
 
@@ -9644,11 +9697,11 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			aiYields[iI] = (bRemove ? (iOldCityYield - iNewCityYield) : (iNewCityYield - iOldCityYield));
 		}
 	}
-			
+
 	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
 	{
 		int iModifier = getTotalCommerceRateModifier((CommerceTypes)iJ);
-				    
+
 		int iCommerceTimes100 = aiYields[YIELD_COMMERCE] * GET_PLAYER(getOwnerINLINE()).getCommercePercent((CommerceTypes)iJ);
 		if (piCommerceYields != NULL)
 		{
@@ -9689,7 +9742,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		// we still prefer more food if everything else is equal
 		iValue += (aiYields[YIELD_FOOD] * 1);
 
-		int iFoodPerTurn = (foodDifference(false) - ((bRemove) ? aiYields[YIELD_FOOD] : 0));
+		//int iFoodPerTurn = (foodDifference(false) - ((bRemove) ? aiYields[YIELD_FOOD] : 0));
+		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption() + (bRemove? -aiYields[YIELD_FOOD] : aiYields[YIELD_FOOD]); // K-Mod
 		int iFoodLevel = getFood();
 		int iFoodToGrow = growthThreshold();
 		int iHealthLevel = goodHealth() - badHealth(/*bNoAngry*/ false, 0);

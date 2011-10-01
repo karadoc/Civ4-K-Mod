@@ -3415,26 +3415,29 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 /* Settler AI           (edited by K-Mod)                                                       */
 /************************************************************************************************/
 				//iValue += 200;
-				iValue += 50;
+				int iSeaValue = 50;
 
 				// Push players to get more coastal cities so they can build navies
 				CvArea* pWaterArea = pPlot->waterArea(true);
 				if( pWaterArea != NULL )
 				{
-					iValue += 100 + (kSet.bSeafaring ? 150 : 0);
+					iSeaValue += 100 + (kSet.bSeafaring ? 160 : 0);
 
 					if( GET_TEAM(getTeam()).AI_isWaterAreaRelevant(pWaterArea) )
 					{
-						iValue += 100 + (kSet.bSeafaring ? 150 : 0);
+						iSeaValue += 100 + (kSet.bSeafaring ? 160 : 0);
 
 						//if( (countNumCoastalCities() < (getNumCities()/4)) || (countNumCoastalCitiesByArea(pPlot->area()) == 0) )
 						if (countNumCoastalCities() < getNumCities()/4 ||
 							(pPlot->area()->getCitiesPerPlayer(getID()) > 0 && countNumCoastalCitiesByArea(pPlot->area()) == 0))
 						{
-							iValue += 200;
+							iSeaValue += 200;
 						}
 					}
 				}
+				iSeaValue *= kSet.iGreed;
+				iSeaValue /= 100;
+				iValue += iSeaValue;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
