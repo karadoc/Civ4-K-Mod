@@ -2585,6 +2585,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 	bFinancial = false;
 	bDefensive = false;
 	bSeafaring = false;
+	bAllSeeing = bStartingLoc || kPlayer.isBarbarian();
 
 	if (!bStartingLoc)
 	{
@@ -2706,6 +2707,13 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 	if (kPlayer.getAdvancedStartPoints() >= 0)
 	{
 		iGreed = 200; // overruling previous value;
+	}
+
+	if (kPlayer.isHuman())
+	{
+		// don't use personality based traits for human players.
+		bAmbitious = false;
+		bDefensive = false;
 	}
 
     iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
@@ -2980,7 +2988,7 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 			{
 				CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
-				if (pLoopPlot != NULL)
+				if (pLoopPlot != NULL && (kSet.bAllSeeing || pLoopPlot->isVisible(getTeam(), false)))
 				{
 					if (!(pLoopPlot->isOwned()))
 					{
@@ -3055,7 +3063,8 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 				iTeammateTakenTiles++;
 			}
 		}
-		else // K-Mod Note: it kind of sucks that no value is counted for taken tiles. Tile sharing / stealing should be allowed.
+		// K-Mod Note: it kind of sucks that no value is counted for taken tiles. Tile sharing / stealing should be allowed.
+		else if (kSet.bAllSeeing || pLoopPlot->isVisible(getTeam(), false))
 		{
 			int iTempValue = 0;
 
@@ -18992,8 +19001,9 @@ void CvPlayerAI::AI_updateStrategyHash()
 	// Economic focus (K-Mod) - This strategy is a gambit. The goal is to tech faster by neglecting military.
 	if (kTeam.getAnyWarPlanCount(true) == 0)
 	{
-		int iFocus = (100 - iParanoia) / 20;
-		iFocus += std::abs(iAverageEnemyUnit - iTypicalDefence) / 10; // either above, or below.
+		int iFocus = 100 - iParanoia / 20;
+		iFocus += std::max(0, iTypicalDefence - iAverageEnemyUnit) / 10;
+		iFocus += std::max(0, iAverageEnemyUnit - iTypicalAttack) / 10;
 		//Note: if we haven't met anyone then average enemy is zero. So this essentially assures economic strategy when in isolation.
 		iFocus += (AI_getPeaceWeight() + AI_getStrategyRand(2)%10)/3; // note: peace weight will be between 0 and 12
 

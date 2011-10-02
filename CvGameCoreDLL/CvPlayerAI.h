@@ -88,6 +88,7 @@ public:
 		bool bFinancial; // more value for rivers
 		bool bDefensive; // more value for settlings on hills
 		bool bSeafaring; // special affection for coast cities due to unique building or unit.
+		bool bAllSeeing; // doesn't need vision of a plot to know what's there.
 	};
 	int AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const;
 	// K-Mod end

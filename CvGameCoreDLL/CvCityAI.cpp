@@ -9666,7 +9666,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	// K-Mod, reduced the scale to match the building evaluation code.
 	const int iBaseProductionValue = 7;
 	const int iBaseCommerceValue = 4;
-	
+
 	int iMaxFoodValue = (3 * iBaseProductionValue) - 1; // K-Mod, originally was const int.
 
 	int aiYields[NUM_YIELD_TYPES];
@@ -9674,11 +9674,11 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 
 	int iExtraProductionModifier = 0;
 	int iBaseProductionModifier = 100;
-	
+
 	bool bEmphasizeFood = AI_isEmphasizeYield(YIELD_FOOD);
 	bool bFoodIsProduction = isFoodProduction();
 	bool bCanPopRush = GET_PLAYER(getOwnerINLINE()).canPopRush();
-	
+
 	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
 	{
 		aiCommerceYieldsTimes100[iJ] = 0;
@@ -9746,15 +9746,16 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 
 	int iValue = 0;
 	int iSlaveryValue = 0;
-	
+
 	int iFoodGrowthValue = 0;
 	int iFoodGPPValue = 0;
-	
+
 	if (!bIgnoreFood && aiYields[YIELD_FOOD] != 0)
 	{
 		// tiny food factor, to ensure that even when we don't want to grow, 
 		// we still prefer more food if everything else is equal
-		iValue += (aiYields[YIELD_FOOD] * 1);
+		//iValue += (aiYields[YIELD_FOOD] * 1);
+		iValue += bFoodIsProduction ? 0 : aiYields[YIELD_FOOD] * 1; // K-Mod
 
 		//int iFoodPerTurn = (foodDifference(false) - ((bRemove) ? aiYields[YIELD_FOOD] : 0));
 		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption() - (bRemove? aiYields[YIELD_FOOD] : 0); // K-Mod
