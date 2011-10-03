@@ -9659,119 +9659,109 @@ bool CvCityAI::AI_foodAvailable(int iExtra) const
 }
 
 
+// K-Mod: I've rewritten large chunks of this function. I've deleted much of the original code, rather than commenting it; just to keep things a bit tidier and clearer.
+// Note. I've changed the scale to match the building evaluation code: ~4x commerce.
 int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation, bool bWorkerOptimization) const
 {
-	/* const int iBaseProductionValue = 15;
-	const int iBaseCommerceValue = 7; */
-	// K-Mod, reduced the scale to match the building evaluation code.
 	const int iBaseProductionValue = 7;
 	const int iBaseCommerceValue = 4;
-
-	int iMaxFoodValue = (3 * iBaseProductionValue) - 1; // K-Mod, originally was const int.
-
-	int aiYields[NUM_YIELD_TYPES];
-	int aiCommerceYieldsTimes100[NUM_COMMERCE_TYPES];
-
-	int iExtraProductionModifier = 0;
-	int iBaseProductionModifier = 100;
 
 	bool bEmphasizeFood = AI_isEmphasizeYield(YIELD_FOOD);
 	bool bFoodIsProduction = isFoodProduction();
 	bool bCanPopRush = GET_PLAYER(getOwnerINLINE()).canPopRush();
 
-	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
+	int iBaseProductionModifier = getBaseYieldRateModifier(YIELD_PRODUCTION);
+	int iExtraProductionModifier = getProductionModifier();
+	int iProductionTimes100 = piYields[YIELD_PRODUCTION] * (iBaseProductionModifier + iExtraProductionModifier);
+	int iCommerceYieldTimes100 = piYields[YIELD_COMMERCE] * getBaseYieldRateModifier(YIELD_COMMERCE);
+	int iFoodYieldTimes100 = piYields[YIELD_FOOD] * getBaseYieldRateModifier(YIELD_FOOD);
+	int iFoodYield = iFoodYieldTimes100/100;
+
+	int iValue = 0; // total value
+
+	// Commerce
+	int iCommerceValue = 0;
+	ProcessTypes eProcess = getProductionProcess();
+
+	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
-		aiCommerceYieldsTimes100[iJ] = 0;
-	}
-
-	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
-	{
-		if (piYields[iI] == 0)
-		{
-			aiYields[iI] = 0;
-		}
-		else
-		{
-			// Get yield for city after adding/removing the citizen in question
-			int iOldCityYield = getBaseYieldRate((YieldTypes)iI);
-			int iNewCityYield = (bRemove ? (iOldCityYield - piYields[iI]) : (iOldCityYield + piYields[iI]));
-			int iModifier = getBaseYieldRateModifier((YieldTypes)iI);
-			if (iI == YIELD_PRODUCTION)
-			{
-				iBaseProductionModifier = iModifier;
-				iExtraProductionModifier = getProductionModifier();
-				iModifier += iExtraProductionModifier;
-			}
-
-			iNewCityYield = (iNewCityYield * iModifier) / 100;
-			iOldCityYield = (iOldCityYield * iModifier) / 100;
-
-			// The yield of the citizen in question is the difference of total yields
-			// to account for rounding of modifiers
-			aiYields[iI] = (bRemove ? (iOldCityYield - iNewCityYield) : (iNewCityYield - iOldCityYield));
-		}
-	}
-
-	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
-	{
-		int iModifier = getTotalCommerceRateModifier((CommerceTypes)iJ);
-
-		int iCommerceTimes100 = aiYields[YIELD_COMMERCE] * GET_PLAYER(getOwnerINLINE()).getCommercePercent((CommerceTypes)iJ);
+		int iCommerceTimes100 = iCommerceYieldTimes100 * GET_PLAYER(getOwnerINLINE()).getCommercePercent((CommerceTypes)iI) / 100;
 		if (piCommerceYields != NULL)
 		{
-			iCommerceTimes100 += piCommerceYields[iJ] * 100;
+			iCommerceTimes100 += piCommerceYields[iI] * 100;
 		}
-		aiCommerceYieldsTimes100[iJ] += (iCommerceTimes100 * iModifier) / 100;
-	}
 
-	if (isProductionProcess() && !bWorkerOptimization)
-	{
-		for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
+		iCommerceTimes100 *= getTotalCommerceRateModifier((CommerceTypes)iI);
+		iCommerceTimes100 /= 100;
+
+		if (eProcess != NO_PROCESS)
+			iCommerceTimes100 += GC.getProcessInfo(getProductionProcess()).getProductionToCommerceModifier(iI) * iProductionTimes100 / 100;
+
+		if (iCommerceTimes100 != 0)
 		{
-			aiCommerceYieldsTimes100[iJ] += GC.getProcessInfo(getProductionProcess()).getProductionToCommerceModifier(iJ) * aiYields[YIELD_PRODUCTION];
+			int iCommerceWeight = GET_PLAYER(getOwnerINLINE()).AI_commerceWeight((CommerceTypes)iI, this);
+			if (AI_isEmphasizeCommerce((CommerceTypes)iI))
+			{
+				iCommerceWeight *= 2;
+			}
+			iCommerceValue += iCommerceWeight * iCommerceTimes100 * iBaseCommerceValue * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI) / 1000000;
 		}
-
-		aiYields[YIELD_PRODUCTION] = 0;
-		// K-Mod, Note, this if block was commented out by the Unofficial Patch. They say that this code causes an
-		// over-emphasis of food. I've restored the original code, but to deal with the food issue I'm adding the following line.
-		iMaxFoodValue = (3 * iBaseCommerceValue) - 1;
 	}
+	//
 
-	// should not really use this much, but making it accurate
-	aiYields[YIELD_COMMERCE] = 0;
-	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
+	// Production
+	int iProductionValue = 0;
+	if (eProcess == NO_PROCESS)
 	{
-		aiYields[YIELD_COMMERCE] += aiCommerceYieldsTimes100[iJ] / 100;
-	}
+		iProductionTimes100 += bFoodIsProduction ? iFoodYieldTimes100 : 0;
 
-	int iValue = 0;
+		iProductionValue += iProductionTimes100 * iBaseProductionValue / 100;
+		// BBAI adjustment
+		// If city has more than enough food, but very little production, add large value to production
+		// Particularly helps coastal cities with plains forests
+		if (iProductionTimes100 > 0)
+		{
+			if (!bFoodIsProduction && isProduction())
+			{
+				if (foodDifference(false) >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
+				{
+					if (getYieldRate(YIELD_PRODUCTION) - (bRemove ? iProductionTimes100/100 : 0)  < 1 + getPopulation()/3)
+					{
+						iValue += 60 + iBaseProductionValue * iProductionTimes100 / 100;
+					}
+				}
+			}
+		}
+		if (!isProduction() && !isHuman())
+		{
+			iProductionValue /= 2;
+		}
+	}
+	//
+
 	int iSlaveryValue = 0;
 
 	int iFoodGrowthValue = 0;
 	int iFoodGPPValue = 0;
 
-	if (!bIgnoreFood && aiYields[YIELD_FOOD] != 0)
+	if (!bIgnoreFood && iFoodYield != 0)
 	{
 		// tiny food factor, to ensure that even when we don't want to grow, 
 		// we still prefer more food if everything else is equal
-		//iValue += (aiYields[YIELD_FOOD] * 1);
-		iValue += bFoodIsProduction ? 0 : aiYields[YIELD_FOOD] * 1; // K-Mod
+		iValue += bFoodIsProduction ? 0 : (iFoodYieldTimes100+50)/100;
 
-		//int iFoodPerTurn = (foodDifference(false) - ((bRemove) ? aiYields[YIELD_FOOD] : 0));
-		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption() - (bRemove? aiYields[YIELD_FOOD] : 0); // K-Mod
+		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption() - (bRemove? iFoodYield : 0);
 		int iFoodLevel = getFood();
 		int iFoodToGrow = growthThreshold();
-		int iHealthLevel = goodHealth() - badHealth(/*bNoAngry*/ false, 0);
+		int iHealthLevel = goodHealth() - badHealth();
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
-		//int	iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + ((bRemove) ? 1 : 0);
 		int	iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation();
 		int iConsumtionPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION();
 
-		//int iAdjustedFoodDifference = (getYieldRate(YIELD_FOOD) + std::min(0, iHealthLevel)) - ((iPopulation + std::min(0, iHappinessLevel) - ((bRemove) ? 1 : 0)) * iConsumtionPerPop);
-		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? aiYields[YIELD_FOOD] : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop; // K-Mod
+		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 
-		iFoodPerTurn += iExtraPopulationThatCanWork * iConsumtionPerPop; // K-Mod
+		iFoodPerTurn += iExtraPopulationThatCanWork * iConsumtionPerPop;
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
 		{
@@ -9790,14 +9780,14 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			if ((iFoodPerTurn + iStarvingAllowance) < 0)
 			{
 				// if working plots all like this one will save us from starving
-				if (std::max(0, iExtraPopulationThatCanWork * aiYields[YIELD_FOOD]) >= -iFoodPerTurn)
+				if (std::max(0, iExtraPopulationThatCanWork * iFoodYield) >= -iFoodPerTurn)
 				{
 					// if this is high food, then we want to pick it first, this will allow us to pick some great non-food later
 					int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
-					if (iFoodPerTurn <= (AI_isEmphasizeGreatPeople() ? 0 : -iHighFoodThreshold) && aiYields[YIELD_FOOD] >= iHighFoodThreshold)
+					if (iFoodPerTurn <= (AI_isEmphasizeGreatPeople() ? 0 : -iHighFoodThreshold) && iFoodYield >= iHighFoodThreshold)
 					{
 						// value all the food that will contribute to not starving
-						iValue += 2048 * std::min(aiYields[YIELD_FOOD], -iFoodPerTurn);
+						iValue += 2048 * std::min(iFoodYield, -iFoodPerTurn);
 					}
 					else
 					{
@@ -9809,7 +9799,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				else
 				{
 					// value food high(32), but not forced
-					iValue += 32 * std::min(aiYields[YIELD_FOOD], -iFoodPerTurn);
+					iValue += 32 * std::min(iFoodYield, -iFoodPerTurn);
 				}
 			}
 		}
@@ -9824,16 +9814,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				// the emp food case will just give a big boost to all food under all circumstances
 				if (bWorkerOptimization || (!bIgnoreGrowth))// && !bEmphasizeFood))
 				{
-					// also avail: iFoodLevel, iFoodToGrow
-					
-					// adjust iFoodPerTurn assuming that we work plots all equal to iConsumtionPerPop
-					// that way it is our guesstimate of how much excess food we will have
-					/* original bts code
-					iFoodPerTurn += (iExtraPopulationThatCanWork * iConsumtionPerPop); */
-					// K-Mod.
-					//iFoodPerTurn += iExtraPopulationThatCanWork * iConsumtionPerPop + (bRemove ? (-iConsumtionPerPop + aiYields[YIELD_FOOD])/2 : 0);
-					// K-Mod end
-					
 					// we have less than 10 extra happy, do some checks to see if we can increase it
 					//if (iHappinessLevel < 10)
 					if (iHappinessLevel < 5) // K-Mod. make it 5. We shouldn't really be worried about growing 10 pop all at once...
@@ -9859,7 +9839,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						// K-Mod.
 						if (iHappinessLevel + kMaxHappyIncrease > 2)
 						{
-							int iNewFoodPerTurn = iFoodPerTurn + aiYields[YIELD_FOOD];
+							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield;
 						// K-Mod end
 							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel) / iNewFoodPerTurn) : MAX_INT;
 
@@ -9947,7 +9927,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					{
 						
 						// will multiply this by factors
-						iFoodGrowthValue = aiYields[YIELD_FOOD];
+						iFoodGrowthValue = iFoodYield;
 						if (iHealthLevel < (bFillingBar ? 0 : 1))
 						{
 							iFoodGrowthValue--;
@@ -9966,7 +9946,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							iFactorPopToGrow = 41; */
 						// K-Mod, reduced the scale to match the building evaluation code.
 						if (bFillingBar)
-							iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + aiYields[YIELD_FOOD]) / iFoodToGrow;
+							iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + iFoodYield) / iFoodToGrow;
 						else if (iPopToGrow < 7)
 							iFactorPopToGrow = 9 + 2 * iPopToGrow;
 						else
@@ -9985,10 +9965,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						}
 						
 						//if (iFoodPerTurn > iHighGrowthThreshold)
-						if (iFoodPerTurn + aiYields[YIELD_FOOD] > iHighGrowthThreshold) // K-Mod
+						if (iFoodPerTurn + iFoodYield > iHighGrowthThreshold) // K-Mod
 						{
 							//iFoodGrowthValue *= 25 + ((75 * iHighGrowthThreshold) / iFoodPerTurn);
-							iFoodGrowthValue *= 25 + 75 * iHighGrowthThreshold / (iFoodPerTurn + aiYields[YIELD_FOOD]); // K-Mod
+							iFoodGrowthValue *= 25 + 75 * iHighGrowthThreshold / (iFoodPerTurn + iFoodYield); // K-Mod
 							iFoodGrowthValue /= 100;
 						}
 					}
@@ -10014,7 +9994,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				{
 					//iSlaveryValue = 30 * 14 * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0));
 					// K-Mod. Rescaled values. "30" represents GC.getHurryInfo(eHurry).getProductionPerPopulation()
-					iSlaveryValue = 30 * iBaseProductionValue * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0)); // K-Mod
+					iSlaveryValue = 30 * iBaseProductionValue * std::max(0, iFoodYield - ((iHealthLevel < 0) ? 1 : 0)); // K-Mod
 					// K-Mod end
 					iSlaveryValue /= std::max(10, (growthThreshold() * (100 - getMaxFoodKeptPercent())));
 					
@@ -10035,7 +10015,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					}
 					//iFoodGPPValue += std::max(0, aiYields[YIELD_FOOD] - iAdjust) * std::max(0, (12 + 5 * std::min(0, iHappinessLevel)));
 					// K-Mod, rescaling
-					iFoodGPPValue += std::max(0, aiYields[YIELD_FOOD] - iAdjust) * std::max(0, 3 * iBaseCommerceValue * (2 + std::min(0, iHappinessLevel))/2);
+					iFoodGPPValue += std::max(0, iFoodYield - iAdjust) * std::max(0, 3 * iBaseCommerceValue * (2 + std::min(0, iHappinessLevel))/2);
 					// K-Mod end
 				}
 			}
@@ -10043,84 +10023,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	}
 
 
-	int iProductionValue = 0;
-	int iCommerceValue = 0;
-	int iFoodValue = std::min(iFoodGrowthValue, iMaxFoodValue * aiYields[YIELD_FOOD]);
-	// if food is production, the count it
-	int adjustedYIELD_PRODUCTION = (((bFoodIsProduction) ? aiYields[YIELD_FOOD] : 0) + aiYields[YIELD_PRODUCTION]);
+	int iMaxFoodValue = 3 * (eProcess == NO_PROCESS ? iBaseProductionValue : iBaseCommerceValue) - 1;
+	int iFoodValue = std::min(iFoodGrowthValue, iMaxFoodValue * iFoodYield);
 
-	// value production medium(15)
-	iProductionValue += (adjustedYIELD_PRODUCTION * iBaseProductionValue);
-	if (!isProduction() && !isHuman())
-	{
-		iProductionValue /= 2;
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/18/09                                jdog5000      */
-/*                                                                                              */
-/* City AI				                                                                         */
-/************************************************************************************************/
-	// If city has more than enough food, but very little production, add large value to production
-	// Particularly helps coastal cities with plains forests
-	if( aiYields[YIELD_PRODUCTION] > 0 )
-	{
-		if( !bFoodIsProduction && isProduction() )
-		{
-			if( foodDifference(false) >= GC.getFOOD_CONSUMPTION_PER_POPULATION() )
-			{
-				//if( getYieldRate(YIELD_PRODUCTION) < (1 + getPopulation()/3) )
-				if (getYieldRate(YIELD_PRODUCTION) - (bRemove ? aiYields[YIELD_PRODUCTION] : 0)  < 1 + getPopulation()/3) // K-Mod
-				{
-					//iValue += 128 + 8 * aiYields[YIELD_PRODUCTION];
-					iValue += 60 + iBaseProductionValue * aiYields[YIELD_PRODUCTION]; // K-Mod
-				}
-			}
-		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-	// value commerce low(6)
-
-	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
-	{
-		if (aiCommerceYieldsTimes100[iI] != 0)
-		{
-			int iCommerceWeight = GET_PLAYER(getOwnerINLINE()).AI_commerceWeight((CommerceTypes)iI, this);
-			if (AI_isEmphasizeCommerce((CommerceTypes)iI))
-			{
-				iCommerceWeight *= 200;
-				iCommerceWeight /= 100;
-			}
-			if (iI == COMMERCE_CULTURE)
-			{
-				if (getCultureLevel() <= (CultureLevelTypes) 1)
-				{
-					//iCommerceValue += (15 * aiCommerceYieldsTimes100[iI]) / 100;
-					iCommerceValue += (2 * iBaseCommerceValue * aiCommerceYieldsTimes100[iI]) / 100; // K-mod
-				}
-			}
-			iCommerceValue += (iCommerceWeight * (aiCommerceYieldsTimes100[iI] * iBaseCommerceValue) * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI)) / 1000000;
-		}
-	}
-/*
-	if (!bWorkerOptimization && bEmphasizeFood)
-	{
-		if (!bFoodIsProduction)
-		{
-			// value food extremely high(180)
-			iFoodValue *= 125;
-			iFoodValue /= 100;
-		}
-	}
-	
-	if (!bWorkerOptimization && AI_isEmphasizeYield(YIELD_PRODUCTION))
-	{
-		// value production high(80)
-		iProductionValue += (adjustedYIELD_PRODUCTION * 80);
-	}
-*/
 	//Slavery translation
 	if ((iSlaveryValue > 0) && (iSlaveryValue > iFoodValue))
 	{
@@ -10134,24 +10039,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	}
 	
 	iFoodValue += iFoodGPPValue;
-/*
-	if (!bWorkerOptimization && AI_isEmphasizeYield(YIELD_COMMERCE))
-	{
-		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
-		{
-			iCommerceValue += ((iCommerceYields[iI] * 40) * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI)) / 100;
-		}
-	}
 
-	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
-	{
-		if (!bWorkerOptimization && AI_isEmphasizeCommerce((CommerceTypes) iJ))
-		{
-			// value the part of our commerce that goes to our emphasis medium (40)
-			iCommerceValue += (iCommerceYields[iJ] * 40);
-		}
-	}
-*/
 	//Lets have some fun with the multipliers, this basically bluntens the impact of
 	//massive bonuses.....
 	
