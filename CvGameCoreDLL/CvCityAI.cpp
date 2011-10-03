@@ -5082,7 +5082,17 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					    {
 					        iTempValue *= 2;					        
 					    }
+
+						// K-Mod
+						if (iTempValue > 0 &&
+							getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRateTimes100(COMMERCE_CULTURE) < 100)
+						{
+							iTempValue += 16;
+							iPriorityFactor += 30;
+						}
+						// K-Mod end
 					}
+
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/25/10                              jdog5000        */
@@ -9704,6 +9714,16 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			{
 				iCommerceWeight *= 2;
 			}
+			if (iI == COMMERCE_CULTURE && getCultureLevel() <= (CultureLevelTypes)1)
+			{
+				// bring on the artists
+				if (getCommerceRateTimes100(COMMERCE_CULTURE) - (bRemove ? iCommerceTimes100 : 0) < 100)
+				{
+					iCommerceValue += 20;
+				}
+				iCommerceWeight = std::max(iCommerceWeight, 200);
+			}
+
 			iCommerceValue += iCommerceWeight * iCommerceTimes100 * iBaseCommerceValue * GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI) / 1000000;
 		}
 	}

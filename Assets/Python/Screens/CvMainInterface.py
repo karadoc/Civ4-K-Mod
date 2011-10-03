@@ -3621,7 +3621,8 @@ class CvMainInterface:
 
 # BUG - Anger Display - start
 					if (CityScreenOpt.isShowAngerCounter()
-					and pHeadSelectedCity.getTeam() == gc.getGame().getActiveTeam()):
+					and (pHeadSelectedCity.getTeam() == gc.getGame().getActiveTeam()
+					or gc.getGame().isDebugMode())): # K-Mod
 						iAngerTimer = max(pHeadSelectedCity.getHurryAngerTimer(), pHeadSelectedCity.getConscriptAngerTimer())
 						if iAngerTimer > 0:
 							szBuffer += u" (%i)" % iAngerTimer

@@ -2426,10 +2426,14 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			iWeight += iPressureWeight;
 			// K-Mod end
 			
+			/* original bts code
 			if (pCity->getCultureLevel() <= (CultureLevelTypes) 1)
 			{
-				iWeight = std::max(iWeight, 800);				
-			}
+				iWeight = std::max(iWeight, 800);
+			} */
+			// Disabled by K-Mod. This massive weight boost messes up the evaluation of national wonders.
+			// We can have this kind of adjustment elsewhere.
+			// What we really want is a high value for having non-zero culture - the actual quantity of culture is less important.
 		}
 		// pCity == NULL
 		else
@@ -2988,7 +2992,7 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 			{
 				CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
-				if (pLoopPlot != NULL && (kSet.bAllSeeing || pLoopPlot->isVisible(getTeam(), false)))
+				if (pLoopPlot != NULL && (kSet.bAllSeeing || pLoopPlot->isRevealed(getTeam(), false)))
 				{
 					if (!(pLoopPlot->isOwned()))
 					{
@@ -3064,7 +3068,7 @@ int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) c
 			}
 		}
 		// K-Mod Note: it kind of sucks that no value is counted for taken tiles. Tile sharing / stealing should be allowed.
-		else if (kSet.bAllSeeing || pLoopPlot->isVisible(getTeam(), false))
+		else if (kSet.bAllSeeing || pLoopPlot->isRevealed(getTeam(), false))
 		{
 			int iTempValue = 0;
 

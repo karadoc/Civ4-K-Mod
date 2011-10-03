@@ -10928,8 +10928,8 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 /************************************************************************************************/
 			if( gPlayerLogLevel > 0 ) 
 			{
-				logBBAI("Player %d (%S) setTurnActive for turn %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn() );
-			
+				logBBAI("Player %d (%S) setTurnActive for turn %d (%d)", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), GC.getGameINLINE().getGameTurnYear());
+
 				if( GC.getGameINLINE().getGameTurn() > 0 && (GC.getGameINLINE().getGameTurn() % 25) == 0 && !isBarbarian() )
 				{
 					CvWStringBuffer szBuffer;
