@@ -519,7 +519,8 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		int iGPPValue = 4;
 		if (AI_isEmphasizeGreatPeople())
 		{
-			iGPPValue = isHuman() ? 30 : 20;
+			//iGPPValue = isHuman() ? 30 : 20;
+			iGPPValue = 16; // K-Mod. If the value is too high, it becomes worth more than the food that feeds them.
 		}
 		else 
 		{
@@ -9450,6 +9451,9 @@ void CvCityAI::AI_juggleCitizens()
 	bool bDone = false;
 	int iCycles = 0;
 
+	int iLatestPlot = -1;
+	SpecialistTypes eLatestSpecialist = NO_SPECIALIST;
+
 	do
 	{
 		int iWorkedPlot = -1;
@@ -9544,6 +9548,16 @@ void CvCityAI::AI_juggleCitizens()
 				FAssert(eUnworkedSpecialist != NO_SPECIALIST);
 				changeSpecialistCount(eUnworkedSpecialist, 1);
 			}
+
+			if ((iWorkedPlot != -1 && iWorkedPlot == iLatestPlot) ||
+				(eWorkedSpecialist != NO_SPECIALIST && eWorkedSpecialist == eLatestSpecialist))
+			{
+				// we've just unassigned our more recent assignment... that suggests we should break now
+				// to avoid getting into an endless loop.
+				bDone = true;
+			}
+			iLatestPlot = iUnworkedPlot;
+			eLatestSpecialist = eUnworkedSpecialist;
 		}
 		else
 			bDone = true;
@@ -9745,9 +9759,14 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			{
 				if (foodDifference(false) >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
 				{
-					if (getYieldRate(YIELD_PRODUCTION) - (bRemove ? iProductionTimes100/100 : 0)  < 1 + getPopulation()/3)
+					/*if (getYieldRate(YIELD_PRODUCTION) - (bRemove ? iProductionTimes100/100 : 0)  < 1 + getPopulation()/3)
 					{
 						iValue += 60 + iBaseProductionValue * iProductionTimes100 / 100;
+					}*/
+					int iCurrentProduction = getYieldRate(YIELD_PRODUCTION) - (bRemove ? iProductionTimes100/100 : 0);
+					if (iCurrentProduction < 1 + getPopulation()/3)
+					{
+						iValue += 5 * iBaseProductionValue * std::min(iProductionTimes100, (1 + getPopulation()/3 - iCurrentProduction)*100) / 100;
 					}
 				}
 			}
@@ -9770,18 +9789,22 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		// we still prefer more food if everything else is equal
 		iValue += bFoodIsProduction ? 0 : (iFoodYieldTimes100+50)/100;
 
+		int iConsumtionPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION();
 		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption() - (bRemove? iFoodYield : 0);
 		int iFoodLevel = getFood();
 		int iFoodToGrow = growthThreshold();
 		int iHealthLevel = goodHealth() - badHealth();
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
-		int	iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation();
-		int iConsumtionPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION();
+		int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
+		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation();
 
 		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 
-		iFoodPerTurn += iExtraPopulationThatCanWork * iConsumtionPerPop;
+		// approximate the food that can be gained by working other plots (and refund the food removed at the start)
+		iFoodPerTurn += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
+		iAdjustedFoodDifference += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
+
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
 		{
@@ -9800,7 +9823,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			if ((iFoodPerTurn + iStarvingAllowance) < 0)
 			{
 				// if working plots all like this one will save us from starving
-				if (std::max(0, iExtraPopulationThatCanWork * iFoodYield) >= -iFoodPerTurn)
+				if (std::max(0, iExtraPopulationThatCanWork * (iFoodYield-std::min(iConsumtionPerPop, iFoodYield))) >= -iFoodPerTurn)
 				{
 					// if this is high food, then we want to pick it first, this will allow us to pick some great non-food later
 					int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
@@ -9966,7 +9989,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							iFactorPopToGrow = 41; */
 						// K-Mod, reduced the scale to match the building evaluation code.
 						if (bFillingBar)
-							iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + iFoodYield) / iFoodToGrow;
+							//iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + iFoodYield) / iFoodToGrow;
+							iFactorPopToGrow = 9 * iFoodToGrow / (iFoodLevel + iFoodPerTurn + iFoodYield);
 						else if (iPopToGrow < 7)
 							iFactorPopToGrow = 9 + 2 * iPopToGrow;
 						else
@@ -9984,11 +10008,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							iHighGrowthThreshold *= 2;
 						}
 						
-						//if (iFoodPerTurn > iHighGrowthThreshold)
-						if (iFoodPerTurn + iFoodYield > iHighGrowthThreshold) // K-Mod
+						if (iFoodPerTurn > iHighGrowthThreshold)
 						{
-							//iFoodGrowthValue *= 25 + ((75 * iHighGrowthThreshold) / iFoodPerTurn);
-							iFoodGrowthValue *= 25 + 75 * iHighGrowthThreshold / (iFoodPerTurn + iFoodYield); // K-Mod
+							iFoodGrowthValue *= 25 + (75 * iHighGrowthThreshold) / iFoodPerTurn;
 							iFoodGrowthValue /= 100;
 						}
 					}
@@ -10017,19 +10039,19 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					iSlaveryValue = 30 * iBaseProductionValue * std::max(0, iFoodYield - ((iHealthLevel < 0) ? 1 : 0)); // K-Mod
 					// K-Mod end
 					iSlaveryValue /= std::max(10, (growthThreshold() * (100 - getMaxFoodKeptPercent())));
-					
+
 					iSlaveryValue *= 100;
 					iSlaveryValue /= getHurryCostModifier(true);
-					
+
 					iSlaveryValue *= iConsumtionPerPop * 2;
 					iSlaveryValue /= iConsumtionPerPop * 2 + std::max(0, iAdjustedFoodDifference);
 				}
-				
+
 				//Great People Override
 				if ((iExtraPopulationThatCanWork > 1) && AI_isEmphasizeGreatPeople())
 				{
 					int iAdjust = iConsumtionPerPop;
-					if (iFoodPerTurn == 0)
+					if (iFoodPerTurn <= 0)
 					{
 						iAdjust -= 1;
 					}
@@ -10136,29 +10158,29 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		if (isFoodProduction())
 		{
 			iProductionValue *= 100 + (bWorkerOptimization ? 0 : AI_specialYieldMultiplier(YIELD_PRODUCTION));
-			iProductionValue /= 100;		
+			iProductionValue /= 100;
 		}
 		else
 		{
 			iProductionValue *= iBaseProductionModifier;
 			iProductionValue /= (iBaseProductionModifier + iExtraProductionModifier);
-			
+
 			iProductionValue += iSlaveryValue;
 			iProductionValue *= (100 + (bWorkerOptimization ? 0 : AI_specialYieldMultiplier(YIELD_PRODUCTION)));
-			
+
 			iProductionValue /= GET_PLAYER(getOwnerINLINE()).AI_averageYieldMultiplier(YIELD_PRODUCTION);
 		}
-	
+
 		iValue += std::max(1,iProductionValue);
 	}
-	
+
 	if( iCommerceValue > 0 )
 	{
 		iCommerceValue *= (100 + (bWorkerOptimization ? 0 : AI_specialYieldMultiplier(YIELD_COMMERCE)));
 		iCommerceValue /= GET_PLAYER(getOwnerINLINE()).AI_averageYieldMultiplier(YIELD_COMMERCE);
 		iValue += std::max(1, iCommerceValue);
 	}
-//	
+//
 	if( iFoodValue > 0 )
 	{
 		iFoodValue *= 100;
@@ -10168,7 +10190,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                        END                                                  */
 /************************************************************************************************/
-	
+
 	return iValue;
 }
 
