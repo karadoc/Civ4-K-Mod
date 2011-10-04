@@ -18856,25 +18856,29 @@ void CvPlayerAI::AI_updateStrategyHash()
 
     for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
     {
-		if( GET_PLAYER((PlayerTypes)iI).isAlive() && !GET_PLAYER((PlayerTypes)iI).isMinorCiv() && !GET_PLAYER((PlayerTypes)iI).isBarbarian() )
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+		const CvTeamAI& kLoopTeam = GET_TEAM(kLoopPlayer.getTeam());
+		if (kLoopPlayer.isAlive() && !kLoopPlayer.isMinorCiv() && !kLoopPlayer.isBarbarian() )
 		{
-			if ((GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam()) && kTeam.isHasMet(GET_PLAYER((PlayerTypes)iI).getTeam()) )
+			if (kLoopPlayer.getTeam() != getTeam() && kTeam.isHasMet(kLoopPlayer.getTeam()))
 			{
-				if (!GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isAVassal() && !kTeam.isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()))
+				if (!kLoopTeam.isAVassal() && !kTeam.isVassal(kLoopPlayer.getTeam()))
     			{
-					if( kTeam.AI_getWarPlan(GET_PLAYER((PlayerTypes)iI).getTeam()) != NO_WARPLAN )
+					bool bCitiesInPrime = kTeam.AI_hasCitiesInPrimaryArea(kLoopPlayer.getTeam()); // K-Mod
+
+					if (kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
 					{
 						iCloseTargets++;
 					}
-					else if( !kTeam.isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()) )
+					else
 					{
 						// Are they a threat?
 						int iTempParanoia = 0;
 
-						int iTheirPower = GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).getPower(true);
-						if( 4*iTheirPower > 3*iOurDefensivePower )
+						int iTheirPower = kLoopTeam.getPower(true);
+						if (4*iTheirPower > 3*iOurDefensivePower)
 						{
-							if( GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).getAtWarCount(true) == 0 || GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).AI_getEnemyPowerPercent(false) < 140 )
+							if (kLoopTeam.getAtWarCount(true) == 0 || kLoopTeam.AI_getEnemyPowerPercent(false) < 140 )
 							{
 								// Memory of them declaring on us and our friends
 								int iWarMemory = AI_getMemoryCount((PlayerTypes)iI, MEMORY_DECLARED_WAR);
@@ -18895,9 +18899,11 @@ void CvPlayerAI::AI_updateStrategyHash()
 
 						// Do we think our relations are bad?
 						int iCloseness = AI_playerCloseness((PlayerTypes)iI, DEFAULT_PLAYER_CLOSENESS);
-						if (iCloseness > 0)
+						// if (iCloseness > 0)
+						if (iCloseness > 0 || bCitiesInPrime) // K-Mod
 						{
 							int iAttitudeWarProb = 100 - GC.getLeaderHeadInfo(getPersonalityType()).getNoWarAttitudeProb(AI_getAttitude((PlayerTypes)iI));
+							/* original BBAI code
 							if( iAttitudeWarProb > 10 )
 							{
 								if( 4*iTheirPower > 3*iOurDefensivePower )
@@ -18906,7 +18912,14 @@ void CvPlayerAI::AI_updateStrategyHash()
 								}
 
 								iCloseTargets++;
+							} */
+							// K-Mod. Paranoia gets scaled by relative power anyway...
+							iTempParanoia += std::max(0, iAttitudeWarProb/2);
+							if (iAttitudeWarProb > 10 && iCloseness > 0)
+							{
+								iCloseTargets++;
 							}
+							// K-Mod end
 
 							if( iTheirPower > 2*iOurDefensivePower )
 							{
@@ -18921,18 +18934,24 @@ void CvPlayerAI::AI_updateStrategyHash()
 						{
 							iTempParanoia *= iTheirPower;
 							iTempParanoia /= std::max(1, iOurDefensivePower);
+							// K-Mod
+							if (kLoopTeam.AI_getWorstEnemy() == getTeam())
+							{
+								iTempParanoia *= 2;
+							}
+							// K-Mod end
 						}
 
 						// Do they look like they're going for militaristic victory?
-						if( GET_PLAYER((PlayerTypes)iI).AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
+						if( kLoopPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
 						{
 							iTempParanoia += 200;
 						}
-						else if( GET_PLAYER((PlayerTypes)iI).AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3) )
+						else if( kLoopPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3) )
 						{
 							iTempParanoia += 100;
 						}
-						else if( GET_PLAYER((PlayerTypes)iI).AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3) )
+						else if( kLoopPlayer.AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3) )
 						{
 							iTempParanoia += 50;
 						}
@@ -19005,9 +19024,8 @@ void CvPlayerAI::AI_updateStrategyHash()
 	// Economic focus (K-Mod) - This strategy is a gambit. The goal is to tech faster by neglecting military.
 	if (kTeam.getAnyWarPlanCount(true) == 0)
 	{
-		int iFocus = 100 - iParanoia / 20;
-		iFocus += std::max(0, iTypicalDefence - iAverageEnemyUnit) / 10;
-		iFocus += std::max(0, iAverageEnemyUnit - iTypicalAttack) / 10;
+		int iFocus = (100 - iParanoia) / 20;
+		iFocus += std::max(iAverageEnemyUnit - std::max(iTypicalAttack, iTypicalDefence), std::min(iTypicalAttack, iTypicalDefence) - iAverageEnemyUnit) / 12;
 		//Note: if we haven't met anyone then average enemy is zero. So this essentially assures economic strategy when in isolation.
 		iFocus += (AI_getPeaceWeight() + AI_getStrategyRand(2)%10)/3; // note: peace weight will be between 0 and 12
 

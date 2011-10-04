@@ -1582,7 +1582,10 @@ void CvCityAI::AI_chooseProduction()
 	
 	bool bCrushStrategy = kPlayer.AI_isDoStrategy(AI_STRATEGY_CRUSH);
 	int iNeededFloatingDefenders = (isBarbarian() || bCrushStrategy) ?  0 : kPlayer.AI_getTotalFloatingDefendersNeeded(pArea);
-	iNeededFloatingDefenders /= kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 2 : 1; // K-Mod
+	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS)) // K-Mod
+	{
+		iNeededFloatingDefenders = (2 * iNeededFloatingDefenders + 2)/3;
+	}
  	int iTotalFloatingDefenders = (isBarbarian() ? 0 : kPlayer.AI_getTotalFloatingDefenders(pArea));
 	
 	UnitTypeWeightArray floatingDefenderTypes;
@@ -1874,7 +1877,7 @@ void CvCityAI::AI_chooseProduction()
 			//}
 		}
 	}
-	
+
 	//minimal defense.
 	//if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount))
 	// K-Mod.. take into account any defenders that are on their way. (recall that in AI_guardCityMinDefender, defenders can be shuffled around)
@@ -9554,7 +9557,9 @@ void CvCityAI::AI_juggleCitizens()
 			{
 				// we've just unassigned our more recent assignment... that suggests we should break now
 				// to avoid getting into an endless loop.
-				bDone = true;
+				// But lets try to make it stop on a configuration that won't make us strave...
+				if (foodDifference() >= 0 || 2*getFood() >= growthThreshold())
+					bDone = true;
 			}
 			iLatestPlot = iUnworkedPlot;
 			eLatestSpecialist = eUnworkedSpecialist;

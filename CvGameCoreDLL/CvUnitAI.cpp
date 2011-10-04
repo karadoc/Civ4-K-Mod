@@ -1257,7 +1257,8 @@ void CvUnitAI::AI_settleMove()
 	
 	if (iDanger > 0)
 	{
-		if ((plot()->getOwnerINLINE() == getOwnerINLINE()) || (iDanger > 2))
+		//if ((plot()->getOwnerINLINE() == getOwnerINLINE()) || (iDanger > 2))
+		if (plot()->getOwnerINLINE() == getOwnerINLINE() || iDanger > 2 || !getGroup()->canDefend()) // K-Mod
 		{
 			joinGroup(NULL);
 			if (AI_retreatToCity())
@@ -1411,13 +1412,14 @@ void CvUnitAI::AI_settleMove()
 		}
 	}
 
+	/* original bts code
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE) && !GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) && !getGroup()->canDefend())
 	{
 		if (AI_retreatToCity())
 		{
 			return;
 		}
-	}
+	} */ // disabled by K-Mod. Let them risk moving an undefended settler.. there are other checks in place to help them.
 
 	if (plot()->isCity() && (plot()->getOwnerINLINE() == getOwnerINLINE()))
 	{
@@ -1458,6 +1460,37 @@ void CvUnitAI::AI_settleMove()
 
 		// BBAI TODO: Go to a good city (like one with a transport) ...
 	}
+
+	// K-Mod: sometimes an unescorted settlers will join up with an escort mid-mission..
+	{
+		int iLoop;
+		for (CvSelectionGroup* pLoopSelectionGroup = GET_PLAYER(getOwnerINLINE()).firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = GET_PLAYER(getOwnerINLINE()).nextSelectionGroup(&iLoop))
+		{
+			if (pLoopSelectionGroup != getGroup())
+			{
+				if (pLoopSelectionGroup->AI_getMissionAIUnit() == this && pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_GROUP)
+				{
+					int iPathTurns = MAX_INT;
+
+					generatePath(pLoopSelectionGroup->plot(), 0, true, &iPathTurns);
+					if (iPathTurns <= 2)
+					{
+						CvPlot* pEndTurnPlot = getPathEndTurnPlot();
+						if (atPlot(pEndTurnPlot))
+						{
+							getGroup()->pushMission(MISSION_SKIP, 0, 0, 0, false, false, MISSIONAI_GROUP, pEndTurnPlot);
+						}
+						else
+						{
+							getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_GROUP, pEndTurnPlot);
+						}
+						return;
+					}
+				}
+			}
+		}
+	}
+	// K-Mod end
 
 	if (AI_retreatToCity())
 	{
@@ -3717,24 +3750,9 @@ void CvUnitAI::AI_reserveMove()
 			return;
 		}
 	}
-	
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/18/09                                jdog5000      */
-/*                                                                                              */
-/* Settler AI                                                                                   */
-/************************************************************************************************/
-	if( !(plot()->isOwned()) )
-	{
-		if (AI_group(UNITAI_SETTLE, 1, -1, -1, false, false, false, 1, true))
-		{
-			return;
-		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
-	if (!bDanger)
+	//if (!bDanger)
+	if (!bDanger || !plot()->isOwned()) // K-Mod
 	{
 		if (AI_group(UNITAI_SETTLE, 2, -1, -1, false, false, false, 3, true))
 		{
