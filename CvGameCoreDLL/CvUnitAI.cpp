@@ -11095,7 +11095,8 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 		int iCityDefenderCount = pPlotCity->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE());
 		if ((iCityDefenderCount - 1) < pPlotCity->AI_minDefenders())
 		{
-			if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
+			//if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
+			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0) // K-mod
 			{
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
 				return true;
@@ -11140,11 +11141,13 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 						if (iDefendersHave < iDefendersNeed + 1)
 						{
 							int iPathTurns;
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+							//if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+							if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns)) // K-Mod
 							{
 								if (iPathTurns <= 10)
 								{
 									int iValue = (iDefendersNeed - iDefendersHave) * 20;
+									iValue += iDefendersHave == 0 ? 20 : 0; // K-Mod
 									iValue += 2 * std::min(15, iCurrentTurn - pLoopCity->getGameTurnAcquired());
 									if (pLoopCity->isOccupation())
 									{

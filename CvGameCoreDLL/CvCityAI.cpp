@@ -10914,18 +10914,25 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	bool bWasFoodProduction = isFoodProduction();
 	bool bDanger = AI_isDanger();
 
+	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
+	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
+
     // pop borders
 	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) < 2)
 	{
+		const CvBuildingInfo& kBestBuilding = GC.getBuildingInfo(eBestBuilding);
+		if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0)
+		{
+			pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+			return;
+		}
+
         if (AI_chooseProcess(COMMERCE_CULTURE))
         {
             return;
         }
 	}
 	
-	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
-	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
-
 	//workboat
 	if (pWaterArea != NULL)
 	{
@@ -10991,20 +10998,23 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		}
 
 		//spies
-		int iNumSpies = kOwner.AI_totalAreaUnitAIs(area(), UNITAI_SPY) + kOwner.AI_getNumTrainAIUnits(UNITAI_SPY);
-		int iNeededSpies = 2 + area()->getCitiesPerPlayer(kOwner.getID()) / 5;
-		iNeededSpies += kOwner.getCommercePercent(COMMERCE_ESPIONAGE)/20;
-
-		if (iNumSpies < iNeededSpies)
+		if (!kOwner.AI_isAreaAlone(area()))
 		{
-			int iOdds = 35;
-			iOdds *= (40 + iBestBuildingValue);
-			iOdds /= (20 + 3 * iBestBuildingValue);
-			iOdds *= iNeededSpies;
-			iOdds /= (4*iNumSpies+iNeededSpies);
-			if (AI_chooseUnit(UNITAI_SPY, iOdds))
+			int iNumSpies = kOwner.AI_totalAreaUnitAIs(area(), UNITAI_SPY) + kOwner.AI_getNumTrainAIUnits(UNITAI_SPY);
+			int iNeededSpies = 2 + area()->getCitiesPerPlayer(kOwner.getID()) / 5;
+			iNeededSpies += kOwner.getCommercePercent(COMMERCE_ESPIONAGE)/20;
+
+			if (iNumSpies < iNeededSpies)
 			{
-				return;
+				int iOdds = 35;
+				iOdds *= (40 + iBestBuildingValue);
+				iOdds /= (20 + 3 * iBestBuildingValue);
+				iOdds *= iNeededSpies;
+				iOdds /= (4*iNumSpies+iNeededSpies);
+				if (AI_chooseUnit(UNITAI_SPY, iOdds))
+				{
+					return;
+				}
 			}
 		}
 

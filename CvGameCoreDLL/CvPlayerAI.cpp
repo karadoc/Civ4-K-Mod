@@ -6107,26 +6107,26 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 					case UNITAI_ATTACK:
 						iMilitaryValue += ((bWarPlan) ? 600 : 300);
-						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER ) ? 800 : 0);
+						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 600 : 0); // was 800
 						iUnitValue += 100;
 						break;
 
 					case UNITAI_ATTACK_CITY:
 						iMilitaryValue += ((bWarPlan) ? 800 : 400);
-						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER ) ? 800 : 0);
+						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER ) ? 600 : 0); // was 800
 						if (kLoopUnit.getBombardRate() > 0)
 						{
 							iMilitaryValue += 200;
-							
+
 							if (AI_calculateTotalBombard(DOMAIN_LAND) == 0)
 							{
 								iMilitaryValue += 800;
 								if (AI_isDoStrategy(AI_STRATEGY_DAGGER))
 								{
-									iMilitaryValue += 1000;
-								}															
+									iMilitaryValue += 400; // was 1000
+								}
 							}
-						}					
+						}
 						iUnitValue += 100;
 						break;
 
@@ -6144,7 +6144,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 					case UNITAI_COUNTER:
 						iMilitaryValue += ((bWarPlan) ? 600 : 300);
-						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER ) ? 600 : 0);
+						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 300 : 0); // was 600
 						break;
 
 					case UNITAI_PARADROP:
