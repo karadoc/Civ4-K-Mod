@@ -1211,10 +1211,22 @@ void CvCityAI::AI_chooseProduction()
 	// if we need to pop borders, then do that immediately if we have drama and can do it
 	if ((iTargetCulturePerTurn > 0) && (getCultureLevel() <= (CultureLevelTypes) 1))
 	{
-        if (AI_chooseProcess(COMMERCE_CULTURE))
-        {
-            return;
-        }
+		// K-Mod. If our best building is a cultural building, just start building it.
+		if (AI_countGoodTiles(true, false) > 0)
+		{
+			const CvBuildingInfo& kBestBuilding = GC.getBuildingInfo(eBestBuilding);
+			if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
+				&& (GC.getNumCultureLevelInfos() < 2 || getProductionTurnsLeft(eBestBuilding, 0) <= GC.getGame().getCultureThreshold((CultureLevelTypes)2)))
+			{
+				pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+				return;
+			}
+		}
+		// K-Mod end
+		if (AI_chooseProcess(COMMERCE_CULTURE))
+		{
+			return;
+		}
 	}
 
 	/* original bts code. (K-Mod, we don't need this. The normal decision making should be fine.)
@@ -10921,16 +10933,16 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) < 2)
 	{
 		const CvBuildingInfo& kBestBuilding = GC.getBuildingInfo(eBestBuilding);
-		if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0)
+		if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
+			&& (GC.getNumCultureLevelInfos() < 2 || getProductionTurnsLeft(eBestBuilding, 0) <= GC.getGame().getCultureThreshold((CultureLevelTypes)2)))
 		{
 			pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
 			return;
 		}
-
-        if (AI_chooseProcess(COMMERCE_CULTURE))
-        {
-            return;
-        }
+		if (AI_chooseProcess(COMMERCE_CULTURE))
+		{
+			return;
+		}
 	}
 	
 	//workboat
@@ -11045,7 +11057,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	{
 		return;
 	}
-	
+
 	if (AI_chooseProcess())
 	{
 		return;
@@ -11059,9 +11071,9 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 
 int CvCityAI::AI_calculateWaterWorldPercent()
 {
-    int iI;
-    int iWaterPercent = 0;
-    int iTeamCityCount = 0;
+	int iI;
+	int iWaterPercent = 0;
+	int iTeamCityCount = 0;
 	int iOtherCityCount = 0;
 	for (iI = 0; iI < MAX_TEAMS; iI++)
 	{
@@ -11079,24 +11091,24 @@ int CvCityAI::AI_calculateWaterWorldPercent()
 		}
 	}
 
-    if (iOtherCityCount == 0)
-    {
-        iWaterPercent = 100;
-    }
-    else
-    {
-        iWaterPercent = 100 - ((iTeamCityCount + iOtherCityCount) * 100) / std::max(1, (GC.getGame().getNumCities()));
-    }
-    
-    iWaterPercent *= 50;
-    iWaterPercent /= 100;
-    
-    iWaterPercent += (50 * (2 + iTeamCityCount)) / (2 + iTeamCityCount + iOtherCityCount);
-    
-    iWaterPercent = std::max(1, iWaterPercent);
-    
-    
-    return iWaterPercent;
+	if (iOtherCityCount == 0)
+	{
+		iWaterPercent = 100;
+	}
+	else
+	{
+		iWaterPercent = 100 - ((iTeamCityCount + iOtherCityCount) * 100) / std::max(1, (GC.getGame().getNumCities()));
+	}
+
+	iWaterPercent *= 50;
+	iWaterPercent /= 100;
+
+	iWaterPercent += (50 * (2 + iTeamCityCount)) / (2 + iTeamCityCount + iOtherCityCount);
+
+	iWaterPercent = std::max(1, iWaterPercent);
+
+
+	return iWaterPercent;
 }
 
 //Please note, takes the yield multiplied by 100
@@ -11104,13 +11116,13 @@ int CvCityAI::AI_getYieldMagicValue(const int* piYieldsTimes100, bool bHealthy) 
 {
 	FAssert(piYieldsTimes100 != NULL);
 
-    int iPopEats = GC.getFOOD_CONSUMPTION_PER_POPULATION();
-    iPopEats += (bHealthy ? 0 : 1);
-    iPopEats *= 100;
+	int iPopEats = GC.getFOOD_CONSUMPTION_PER_POPULATION();
+	iPopEats += (bHealthy ? 0 : 1);
+	iPopEats *= 100;
 
-    int iValue = ((piYieldsTimes100[YIELD_FOOD] * 100 + piYieldsTimes100[YIELD_PRODUCTION]*55 + piYieldsTimes100[YIELD_COMMERCE]*40) - iPopEats * 102);
-    iValue /= 100;
-    return iValue;
+	int iValue = ((piYieldsTimes100[YIELD_FOOD] * 100 + piYieldsTimes100[YIELD_PRODUCTION]*55 + piYieldsTimes100[YIELD_COMMERCE]*40) - iPopEats * 102);
+	iValue /= 100;
+	return iValue;
 }
 
 //The magic value is basically "Look at this plot, is it worth working"
@@ -11122,44 +11134,44 @@ int CvCityAI::AI_getYieldMagicValue(const int* piYieldsTimes100, bool bHealthy) 
 //This function deliberately doesn't use emphasize settings.
 int CvCityAI::AI_getPlotMagicValue(CvPlot* pPlot, bool bHealthy, bool bWorkerOptimization) const
 {
-    int aiYields[NUM_YIELD_TYPES];
-    ImprovementTypes eCurrentImprovement;
-    ImprovementTypes eFinalImprovement;
-    int iI;
-    int iYieldDiff;
-    
-    FAssert(pPlot != NULL);
+	int aiYields[NUM_YIELD_TYPES];
+	ImprovementTypes eCurrentImprovement;
+	ImprovementTypes eFinalImprovement;
+	int iI;
+	int iYieldDiff;
 
-    for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
-    {
-    	if ((bWorkerOptimization) && (pPlot->getWorkingCity() == this) && (AI_getBestBuild(getCityPlotIndex(pPlot)) != NO_BUILD))
-    	{
-    		aiYields[iI] = pPlot->getYieldWithBuild(AI_getBestBuild(getCityPlotIndex(pPlot)), (YieldTypes)iI, true);
-    	}
-    	else
-    	{
-        	aiYields[iI] = pPlot->getYield((YieldTypes)iI) * 100;
-    	}
-    }
+	FAssert(pPlot != NULL);
 
-    eCurrentImprovement = pPlot->getImprovementType();
+	for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	{
+		if ((bWorkerOptimization) && (pPlot->getWorkingCity() == this) && (AI_getBestBuild(getCityPlotIndex(pPlot)) != NO_BUILD))
+		{
+			aiYields[iI] = pPlot->getYieldWithBuild(AI_getBestBuild(getCityPlotIndex(pPlot)), (YieldTypes)iI, true);
+		}
+		else
+		{
+			aiYields[iI] = pPlot->getYield((YieldTypes)iI) * 100;
+		}
+	}
 
-    if (eCurrentImprovement != NO_IMPROVEMENT)
-    {
-        eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
+	eCurrentImprovement = pPlot->getImprovementType();
 
-        if ((eFinalImprovement != NO_IMPROVEMENT) && (eFinalImprovement != eCurrentImprovement))
-        {
-            for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
-            {
-                iYieldDiff = 100 * pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iI), getOwnerINLINE());
-                iYieldDiff -= 100 * pPlot->calculateImprovementYieldChange(eCurrentImprovement, ((YieldTypes)iI), getOwnerINLINE());
-                aiYields[iI] += iYieldDiff / 2;
-            }
-        }
-    }
-    
-    return AI_getYieldMagicValue(aiYields, bHealthy);
+	if (eCurrentImprovement != NO_IMPROVEMENT)
+	{
+		eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
+
+		if ((eFinalImprovement != NO_IMPROVEMENT) && (eFinalImprovement != eCurrentImprovement))
+		{
+			for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+			{
+				iYieldDiff = 100 * pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iI), getOwnerINLINE());
+				iYieldDiff -= 100 * pPlot->calculateImprovementYieldChange(eCurrentImprovement, ((YieldTypes)iI), getOwnerINLINE());
+				aiYields[iI] += iYieldDiff / 2;
+			}
+		}
+	}
+
+	return AI_getYieldMagicValue(aiYields, bHealthy);
 }
 
 //useful for deciding whether or not to grow... or whether the city needs terrain
@@ -11167,29 +11179,29 @@ int CvCityAI::AI_getPlotMagicValue(CvPlot* pPlot, bool bHealthy, bool bWorkerOpt
 //if healthy is false it assumes bad health conditions.
 int CvCityAI::AI_countGoodTiles(bool bHealthy, bool bUnworkedOnly, int iThreshold, bool bWorkerOptimization) const
 {
-    CvPlot* pLoopPlot;
-    int iI;
-    int iCount;
-    
-    iCount = 0;
-    for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
-    {
-        pLoopPlot = plotCity(getX_INLINE(),getY_INLINE(), iI);
-        if ((iI != CITY_HOME_PLOT) && (pLoopPlot != NULL))
-        {
-            if (pLoopPlot->getWorkingCity() == this)
-            {
-                if (!bUnworkedOnly || !(pLoopPlot->isBeingWorked()))
-                {
-                    if (AI_getPlotMagicValue(pLoopPlot, bHealthy) > iThreshold)
-                    {
-                        iCount++;
-                    }                    
-                }
-            }
-        }
-    }
-    return iCount;
+	CvPlot* pLoopPlot;
+	int iI;
+	int iCount;
+
+	iCount = 0;
+	for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	{
+		pLoopPlot = plotCity(getX_INLINE(),getY_INLINE(), iI);
+		if ((iI != CITY_HOME_PLOT) && (pLoopPlot != NULL))
+		{
+			if (pLoopPlot->getWorkingCity() == this)
+			{
+				if (!bUnworkedOnly || !(pLoopPlot->isBeingWorked()))
+				{
+					if (AI_getPlotMagicValue(pLoopPlot, bHealthy) > iThreshold)
+					{
+						iCount++;
+					}
+				}
+			}
+		}
+	}
+	return iCount;
 }
 
 int CvCityAI::AI_calculateTargetCulturePerTurn() const
