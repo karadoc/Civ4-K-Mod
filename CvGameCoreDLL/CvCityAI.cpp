@@ -4364,17 +4364,36 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 			if ((iFocusFlags & (BUILDINGFOCUS_GOLD | BUILDINGFOCUS_RESEARCH)) || iPass > 0)
 			{
 				// trade routes
-				int iTempValue = ((kBuilding.getTradeRoutes() * ((6 * std::max(0, (totalTradeModifier() + 100))) / 100)) // orignally 8 * std::max
+				/* original bts code
+				int iTempValue = ((kBuilding.getTradeRoutes() * ((8 * std::max(0, (totalTradeModifier() + 100))) / 100))
 								* (getPopulation() / 5 + 1));
 				int iGlobalTradeValue = (((6 * iTotalPopulation) / 5) / iNumCities);
+
 				iTempValue += (kBuilding.getCoastalTradeRoutes() * kOwner.countNumCoastalCities() * iGlobalTradeValue);
 				iTempValue += (kBuilding.getGlobalTradeRoutes() * iNumCities * iGlobalTradeValue);
-				
+
 				iTempValue += ((kBuilding.getTradeRouteModifier() * getTradeYield(YIELD_COMMERCE)) / (bForeignTrade ? 12 : 25));
 				if (bForeignTrade)
 				{
 					iTempValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield(YIELD_COMMERCE)) / 12);
+				} */
+				// K-Mod
+				int iTotalTradeModifier = totalTradeModifier();
+				int iTempValue = kBuilding.getTradeRoutes() * (getTradeRoutes() > 0 ? 6*getTradeYield(YIELD_COMMERCE) / getTradeRoutes() : 6 * (getPopulation() / 5 + 1) * iTotalTradeModifier / 100);
+				int iGlobalTradeValue = (6 * iTotalPopulation / (5 * iNumCities) + 1) * kOwner.AI_averageYieldMultiplier(YIELD_COMMERCE) / 100;
+
+				iTempValue += 6 * kBuilding.getTradeRouteModifier() * getTradeYield(YIELD_COMMERCE) / std::max(1, iTotalTradeModifier);
+				if (bForeignTrade)
+				{
+					iTempValue += 4 * kBuilding.getForeignTradeRouteModifier() * getTradeYield(YIELD_COMMERCE) / std::max(1, iTotalTradeModifier+getForeignTradeRouteModifier());
 				}
+
+				iTempValue *= AI_yieldMultiplier(YIELD_COMMERCE);
+				iTempValue /= 100;
+
+				iTempValue += (kBuilding.getCoastalTradeRoutes() * kOwner.countNumCoastalCities() * iGlobalTradeValue);
+				iTempValue += (kBuilding.getGlobalTradeRoutes() * iNumCities * iGlobalTradeValue);
+				// K-Mod end
 					
 				if (bFinancialTrouble)
 				{
@@ -4383,7 +4402,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					
 				if (kOwner.isNoForeignTrade())
 				{
-					iTempValue /= 3;
+					iTempValue /= 2; // was /3
 				}
 
 
@@ -9575,8 +9594,14 @@ void CvCityAI::AI_juggleCitizens()
 			{
 				// ... that suggests we should break now to avoid getting into an endless loop.
 				// But lets try to stop on a configuration that won't make us strave.
-				if (foodDifference() >= 0 || 2*getFood() >= growthThreshold())
+				// Note: the following condition should be consistent with the starvation allowances in AI_yieldValue
+				// ie. if AI_yieldValue thinks our current foodDifference is ok, then we should break here.
+				if (foodDifference() >= 0 ||
+					(2*getFood() >= growthThreshold() && (bAvoidGrowth || happyLevel() - unhappyLevel() < 1 || goodHealth() - badHealth() < 1)))
 					bDone = true;
+				// K-Mod note: what tends to happen is that when the city evaluates stopping work on a 2-food tile,
+				// it assumes that the citizen will go on to work some other 2-food plot.
+				// That's usually a fair assumption; except when the citizen instead becomes a specialist... that screws it up.
 			}
 
 			// remember which job we just assigned, to use in the above check on the next cycle.
@@ -9846,7 +9871,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((9 * iFoodToGrow) / 10))));
 			}
 
-			if ((iStarvingAllowance < 1) && (iFoodLevel > ((iFoodToGrow * 75) / 100)))
+			if (iStarvingAllowance < 1 && iFoodLevel > iFoodToGrow * 75 / 100 && (iHappinessLevel < 1 || iHealthLevel < 1))
 			{
 				iStarvingAllowance = 1;
 			}
@@ -9855,7 +9880,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			if ((iFoodPerTurn + iStarvingAllowance) < 0)
 			{
 				// if working plots all like this one will save us from starving
-				if (std::max(0, iExtraPopulationThatCanWork * (iFoodYield-std::min(iConsumtionPerPop, iFoodYield))) >= -iFoodPerTurn)
+				if (std::max(0, iExtraPopulationThatCanWork * (iFoodYield-std::min(iConsumtionPerPop, iFoodYield)) + iFoodYield * std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) >= -iFoodPerTurn)
 				{
 					// if this is high food, then we want to pick it first, this will allow us to pick some great non-food later
 					int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
@@ -9873,8 +9898,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				}
 				else
 				{
-					// value food high(32), but not forced
-					iValue += 32 * std::min(iFoodYield, -iFoodPerTurn);
+					// value food high, but not forced
+					iValue += 36 * std::min(iFoodYield, -iFoodPerTurn);
 				}
 			}
 		}

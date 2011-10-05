@@ -10928,7 +10928,7 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 /************************************************************************************************/
 			if( gPlayerLogLevel > 0 ) 
 			{
-				logBBAI("Player %d (%S) setTurnActive for turn %d (%d)", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), GC.getGameINLINE().getGameTurnYear());
+				logBBAI("Player %d (%S) setTurnActive for turn %d (%d %s)", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), std::abs(GC.getGameINLINE().getGameTurnYear()), GC.getGameINLINE().getGameTurnYear()>0 ? "AD" : "BC");
 
 				if( GC.getGameINLINE().getGameTurn() > 0 && (GC.getGameINLINE().getGameTurn() % 25) == 0 && !isBarbarian() )
 				{
