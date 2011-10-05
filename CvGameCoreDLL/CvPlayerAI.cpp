@@ -6047,7 +6047,11 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 	if( !bWarPlan )
 	{
 		// Aggressive players will stick with war civics
-		if( GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400 )
+		/* BBAI code
+		if( GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400 ) */
+		// K-Mod .. unless they are able to switch civics freely anyway..
+		if (GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400
+			&& getMaxAnarchyTurns() != 0 && getAnarchyModifier() + 100 > 0)
 		{
 			bWarPlan = true;
 		}
@@ -14352,7 +14356,7 @@ void CvPlayerAI::AI_doCommerce()
 							int iTargetCities = 0;
 							for (pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 							{
-								if (pLoopCity->plot()->isVisible(getTeam(), false) && pLoopCity->area() != NULL && AI_isPrimaryArea(pLoopCity->area()))
+								if (pLoopCity->plot()->isRevealed(getTeam(), false) && pLoopCity->area() != NULL && AI_isPrimaryArea(pLoopCity->area()))
 								{
 									cityModifiers.push_back(getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, (PlayerTypes)iPlayer, pLoopCity->plot()));
 								}

@@ -11096,7 +11096,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 		if ((iCityDefenderCount - 1) < pPlotCity->AI_minDefenders())
 		{
 			//if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
-			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0) // K-mod
+			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(area()->getCitiesPerPlayer(getOwnerINLINE())/2 + 1, "AI shuffle defender") <= 1) // K-mod
 			{
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
 				return true;
@@ -11815,7 +11815,7 @@ bool CvUnitAI::AI_guardSpy(int iRandomPercent)
 	{
 		if (AI_plotValid(pLoopCity->plot()))
 		{
-			if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
+			// if (!(pLoopCity->plot()->isVisibleEnemyUnit(this))) // disabled by K-Mod. This isn't required for spies...
 			{
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
@@ -22626,7 +22626,7 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 			int iLoop;
 			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); NULL != pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 			{
-				if (pLoopCity == pSkipCity || !pLoopCity->isVisible(getTeam(), false))
+				if (pLoopCity == pSkipCity || !pLoopCity->isRevealed(getTeam(), false))
 				{
 					continue;
 				}

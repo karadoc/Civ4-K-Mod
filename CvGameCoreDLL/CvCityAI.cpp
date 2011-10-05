@@ -1565,15 +1565,15 @@ void CvCityAI::AI_chooseProduction()
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_FOOD 1", getName().GetCString());
 			return;
 		}
-	} */ // (K-Mod disabled)
+	}
 	
 	if (!bDanger && ((kPlayer.getCurrentEra() > (GC.getGame().getStartEra() + iProductionRank / 2))) || (kPlayer.getCurrentEra() > (GC.getNumEraInfos() / 2)))
 	{
-		/* if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20 - iWarTroubleThreshold, 15, ((bLandWar || bAssault) ? 25 : -1)))
+		if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20 - iWarTroubleThreshold, 15, ((bLandWar || bAssault) ? 25 : -1)))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 1", getName().GetCString());
 			return;	
-		} */ // K-Mod.
+		}
 
 		if( !(bDefenseWar && iWarSuccessRatio < -30) )
 		{
@@ -1590,7 +1590,7 @@ void CvCityAI::AI_chooseProduction()
 				}
 			}
 		}
-	}
+	} */ // K-Mod disabled this stuff
 	
 	bool bCrushStrategy = kPlayer.AI_isDoStrategy(AI_STRATEGY_CRUSH);
 	int iNeededFloatingDefenders = (isBarbarian() || bCrushStrategy) ?  0 : kPlayer.AI_getTotalFloatingDefendersNeeded(pArea);
@@ -1664,9 +1664,9 @@ void CvCityAI::AI_chooseProduction()
 ***/
 		//if (!(iExistingWorkers == 0))
 		{
-			if (!bDanger && (iExistingWorkers < ((iNeededWorkers + 1) / 2)))
+			if (!bDanger && iExistingWorkers < (iNeededWorkers + 1) / 2)
 			{
-				if( getPopulation() >= 3 || (iProductionRank < (kPlayer.getNumCities() + 1) / 2) )
+				if (getPopulation() >= 3 || (iProductionRank <= (kPlayer.getNumCities() + 1) / 2))
 				{
 					if (!bChooseWorker && AI_chooseUnit(UNITAI_WORKER))
 					{
@@ -1685,7 +1685,7 @@ void CvCityAI::AI_chooseProduction()
 **** K-Mod, 10/sep/10, Karadoc
 **** It was "if (bDanger", I have changed it to "if (!bDanger"
 ***/
-    if (!bDanger && (iExistingWorkers == 0) && (isCapital() || (iNeededWorkers > 0) || (iNeededSeaWorkers > iExistingSeaWorkers)))
+    if (!bDanger && iExistingWorkers == 0 && (isCapital() || (iNeededWorkers > 0) || (iNeededSeaWorkers > iExistingSeaWorkers)))
     {
 		if( !(bDefenseWar && iWarSuccessRatio < -30) && !(kPlayer.AI_isDoStrategy(AI_STRATEGY_TURTLE)) )
 		{
@@ -2093,7 +2093,8 @@ void CvCityAI::AI_chooseProduction()
 			}
 		}
 	}
-	
+
+	/* BBAI code
 	if( !(bLandWar && iWarSuccessRatio < -30) && !bDanger )
 	{
 		if (iExistingWorkers < iNeededWorkers )
@@ -2112,9 +2113,8 @@ void CvCityAI::AI_chooseProduction()
 			}
 		}
 	}
-    
 	//essential economic builds
-	/* if (AI_chooseBuilding(iEconomyFlags, 10, 25 + iWarTroubleThreshold, (bLandWar ? 40 : -1)))
+	if (AI_chooseBuilding(iEconomyFlags, 10, 25 + iWarTroubleThreshold, (bLandWar ? 40 : -1)))
 	{
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 1", getName().GetCString());
 		return;
@@ -2127,6 +2127,24 @@ void CvCityAI::AI_chooseProduction()
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 2 (odds: %d)", getName().GetCString(), iOdds);
    			return;
+		}
+	}
+
+	// note: this is the only worker test that allows us to reach the full number of needed workers.
+	if (!(bLandWar && iWarSuccessRatio < -30) && !bDanger)
+	{
+		if (iExistingWorkers < iNeededWorkers)
+		{
+			if (AI_getWorkersHave() < AI_getWorkersNeeded()
+				|| GC.getGame().getSorenRandNum(100, "choose worker 6") > iBestBuildingValue + iBuildUnitProb)
+			{
+				if (!bChooseWorker && AI_chooseUnit(UNITAI_WORKER))
+				{
+					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose worker 6", getName().GetCString());
+					return;
+				}
+				bChooseWorker = true;
+			}
 		}
 	}
 	// K-Mod end
@@ -4914,7 +4932,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));*/
 					// K-Mod
 					iTempValue += kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / 20;
-					iTempValue += kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / (bProvidesPower || isPower() ? 21 : 40);
+					iTempValue += kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / (bProvidesPower || isPower() ? 21 : 30);
 
 					if (bProvidesPower && !isPower())
 					{
@@ -4986,8 +5004,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						// K-Mod
 						if (iI == YIELD_PRODUCTION)
 						{
-							// priority += 2% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, (bWarPlan ? 300 : 200)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
+							// priority += 2.4% per 1% in production increase. roughly. More when at war.
+							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 240)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
 						}
 						// K-Mod end
 
@@ -6745,7 +6763,7 @@ int CvCityAI::AI_getGoodTileCount() const
 						}
 					}
 				}
-				
+
 				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
 					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 21))
 				{
@@ -6842,12 +6860,12 @@ int CvCityAI::AI_getTargetPopulation() const
 
 	iTargetSize = std::min(iTargetSize, 2 + getPopulation() + iHealth/2);
 
-	if( iTargetSize < getPopulation() )
+	if (iTargetSize < getPopulation())
 	{
-		iTargetSize = std::max(iTargetSize, getPopulation() - (AI_countWorkedPoorTiles()/2));
+		iTargetSize = std::max(iTargetSize, getPopulation() - AI_countWorkedPoorTiles() + std::min(0, iHealth/2));
 	}
-	
-	iTargetSize = std::min(iTargetSize, 2 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
+
+	iTargetSize = std::min(iTargetSize, 1 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
 
 	return iTargetSize;
 }
@@ -7053,7 +7071,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		iSpecialistAdjustment = (std::min(iSpecialistCount, iWorkableFoodPlotCount) * iWorkableFood) / iWorkableFoodPlotCount;
 	}
 	// iFoodTotal += iSpecialistAdjustment; // commented by K-Mod
-	
+
 	int iBonusFoodDiff = ((iBonusFoodSurplus + iFeatureFoodSurplus) - (iBonusFoodDeficit + iHillFoodDeficit / 2));
 
 	// K-Mod, based on ideas from BBAI
@@ -7062,14 +7080,14 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 
 	iTargetSize = std::min(iTargetSize, 2 + getPopulation() + iHealth/2);
 
-	if( iTargetSize < getPopulation() )
+	if (iTargetSize < getPopulation())
 	{
-		iTargetSize = std::max(iTargetSize, getPopulation() - (AI_countWorkedPoorTiles()/2));
+		iTargetSize = std::max(iTargetSize, getPopulation() - AI_countWorkedPoorTiles() + std::min(0, iHealth/2));
 	}
-	
-	iTargetSize = std::min(iTargetSize, 2 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
+
+	iTargetSize = std::min(iTargetSize, 1 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
 	// K-Mod end
-	
+
 
 	/* original bts code. (Do we really want fat cities in advanced start games?)
 	if (GET_PLAYER(getOwnerINLINE()).getAdvancedStartPoints() >= 0)
@@ -7102,7 +7120,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	// K-Mod end
 
 	int iFoodDifference = iFoodTotal - ((iTargetSize * GC.getFOOD_CONSUMPTION_PER_POPULATION()) + iExtraFoodForGrowth);
-	
+
 	iDesiredFoodChange = -iFoodDifference + std::max(0, -iHealth);
 	/* original bts code (K-Mod, after my other changes, we don't need this.)
 	if (iTargetSize > getPopulation())
