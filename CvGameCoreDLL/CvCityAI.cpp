@@ -9448,7 +9448,7 @@ void CvCityAI::AI_juggleCitizens()
 	bool bAvoidGrowth = AI_avoidGrowth();
 	bool bIgnoreGrowth = AI_ignoreGrowth();
 
-	int iTotalFreeSpecialists = totalFreeSpecialists(); // just for debug / preventing infinite loops
+	int iTotalFreeSpecialists = totalFreeSpecialists();
 
 	// count the total forced specialists
 	int iTotalForcedSpecialists = 0;
@@ -9472,8 +9472,9 @@ void CvCityAI::AI_juggleCitizens()
 	do
 	{
 		int iWorkedPlot = -1;
+		int iWorkedPlotValue = INT_MAX; // lowest value worked plot
 		SpecialistTypes eWorkedSpecialist = NO_SPECIALIST;
-		int iWorkedValue = INT_MAX; // lowest value worked job
+		int iWorkedSpecValue = INT_MAX; // lowest value worked specialist
 
 		int iUnworkedPlot = -1;
 		int iUnworkedPlotValue = 0; // highest value unworked plot
@@ -9492,10 +9493,10 @@ void CvCityAI::AI_juggleCitizens()
 					if (isWorkingPlot(iI))
 					{
 						int iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, true, false, bIgnoreGrowth);
-						if (iValue < iWorkedValue)
+						if (iValue < iWorkedPlotValue)
 						{
 							iWorkedPlot = iI;
-							iWorkedValue = iValue;
+							iWorkedPlotValue = iValue;
 						}
 					}
 					else if (canWork(pLoopPlot))
@@ -9518,11 +9519,10 @@ void CvCityAI::AI_juggleCitizens()
 			if (getSpecialistCount((SpecialistTypes)iI) > getForceSpecialistCount((SpecialistTypes)iI))
 			{
 				int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, true);
-				if (iValue <= iWorkedValue)
+				if (iValue <= iWorkedSpecValue)
 				{
-					iWorkedPlot = -1;
 					eWorkedSpecialist = (SpecialistTypes)iI;
-					iWorkedValue = iValue;
+					iWorkedSpecValue = iValue;
 				}
 			}
 			if (isSpecialistValid((SpecialistTypes)iI, 1))
@@ -9537,22 +9537,28 @@ void CvCityAI::AI_juggleCitizens()
 				}
 			}
 		}
-		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > iWorkedValue)
+		// don't let us reassign our free specialists onto plots
+		if (iWorkedSpecValue < iWorkedPlotValue && iUnworkedPlotValue > iUnworkedSpecValue &&
+			getSpecialistPopulation() <= iTotalFreeSpecialists)
 		{
-			if (iWorkedPlot != -1)
+			iWorkedSpecValue = INT_MAX; // block spec removal
+		}
+		//
+		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
+		{
+			// remove lowest value job
+			if (iWorkedPlotValue < iWorkedSpecValue)
 			{
+				FAssert(iWorkedPlot != -1);
 				setWorkingPlot(iWorkedPlot, false);
-			}
-			else if (eWorkedSpecialist != NO_SPECIALIST)
-			{
-				changeSpecialistCount(eWorkedSpecialist, -1);
 			}
 			else
 			{
-				FAssert(false);
-				break;
+				FAssert(eWorkedSpecialist != NO_SPECIALIST);
+				changeSpecialistCount(eWorkedSpecialist, -1);
 			}
 
+			// assign highest value job
 			if (iUnworkedPlotValue > iUnworkedSpecValue)
 			{
 				FAssert(iUnworkedPlot != -1);
@@ -9564,17 +9570,26 @@ void CvCityAI::AI_juggleCitizens()
 				changeSpecialistCount(eUnworkedSpecialist, 1);
 			}
 
-			if ((iWorkedPlot != -1 && iWorkedPlot == iLatestPlot) ||
-				(eWorkedSpecialist != NO_SPECIALIST && eWorkedSpecialist == eLatestSpecialist))
+			// check to see if we just removed the same job we more recently assigned
+			if (iWorkedPlotValue < iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
 			{
-				// we've just unassigned our more recent assignment... that suggests we should break now
-				// to avoid getting into an endless loop.
-				// But lets try to make it stop on a configuration that won't make us strave...
+				// ... that suggests we should break now to avoid getting into an endless loop.
+				// But lets try to stop on a configuration that won't make us strave.
 				if (foodDifference() >= 0 || 2*getFood() >= growthThreshold())
 					bDone = true;
 			}
-			iLatestPlot = iUnworkedPlot;
-			eLatestSpecialist = eUnworkedSpecialist;
+
+			// remember which job we just assigned, to use in the above check on the next cycle.
+			if (iUnworkedPlotValue > iUnworkedSpecValue)
+			{
+				iLatestPlot = iUnworkedPlot;
+				eLatestSpecialist  = NO_SPECIALIST;
+			}
+			else
+			{
+				iLatestPlot = -1;
+				eLatestSpecialist = eUnworkedSpecialist;
+			}
 		}
 		else
 			bDone = true;

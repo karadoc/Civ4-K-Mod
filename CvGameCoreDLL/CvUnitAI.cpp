@@ -18780,7 +18780,7 @@ bool CvUnitAI::AI_nextCityToImprove(CvCity* pCity)
 									iBestValue = iValue;
 									eBestBuild = eBuild;
 									pBestPlot = pPlot;
-									FAssert(!atPlot(pBestPlot) || NULL == pCity || pCity->AI_getWorkersNeeded() == 0 || pCity->AI_getWorkersHave() > pCity->AI_getWorkersNeeded() + 1);
+									//FAssert(!atPlot(pBestPlot) || NULL == pCity || pCity->AI_getWorkersNeeded() == 0 || pCity->AI_getWorkersHave() > pCity->AI_getWorkersNeeded() + 1);
 								}
 							}
 						}
