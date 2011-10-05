@@ -18,7 +18,7 @@
 	<Define>
 		<!-- Minimum stack strength ratio at which AI will attack enemy city it is next to, higher means less suicide.  BTS default: 120 -->
 		<DefineName>BBAI_ATTACK_CITY_STACK_RATIO</DefineName>
-		<iDefineIntVal>120</iDefineIntVal>
+		<iDefineIntVal>125</iDefineIntVal>
 	</Define>
 	<Define>
 		<!-- Minimum attack odds of best attacker for AI to skip bombarding a city and just attack.  BBAI default: 12 -->
