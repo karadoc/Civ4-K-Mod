@@ -1145,7 +1145,8 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc) const
 					iValue = AI_foundValueBulk(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), kFoundSet); // K-Mod
 				}
 
-				pLoopPlot->setFoundValue(getID(), iValue);
+				iValue = std::min((long)MAX_SHORT, iValue); // K-Mod
+				pLoopPlot->setFoundValue(getID(), (short)iValue);
 
 				if (iValue > pLoopPlot->area()->getBestFoundValue(getID()))
 				{
@@ -2573,7 +2574,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 }
 
 // K-Mod: I've moved the bulk of this function into AI_foundValueBulk...
-int CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const
+short CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const
 {
 	CvFoundSettings kSet(*this, bStartingLoc);
 	kSet.iMinRivalRange = iMinRivalRange;
@@ -2731,7 +2732,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 // Heavily edited for K-Mod (some changes marked, others not.)
 // note, this function is called for every revealed plot for every player at the start of every turn.
 // try to not make it too slow!
-int CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const
+short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const
 {
 	CvCity* pNearestCity;
 	bool bHasGoodBonus;
@@ -4007,6 +4008,7 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+	iValue = std::min((int)MAX_SHORT, iValue); // K-Mod
 	return iValue;
 }
 
@@ -21369,7 +21371,7 @@ void CvPlayerAI::AI_recalculateFoundValues(int iX, int iY, int iInnerRadius, int
 {
 	CvPlot* pLoopPlot;
 	int iLoopX, iLoopY;
-	int iValue;
+	//int iValue;
 	
 	for (iLoopX = -iOuterRadius; iLoopX <= iOuterRadius; iLoopX++)
 	{
@@ -21399,13 +21401,15 @@ void CvPlayerAI::AI_recalculateFoundValues(int iX, int iY, int iInnerRadius, int
 							gDLL->getPythonIFace()->callFunction(PYGameModule, "getCityFoundValue", argsList.makeFunctionArgs(), &lResult);
 						}
 
+						short iValue; // K-Mod
 						if (lResult == -1)
 						{
 							iValue = AI_foundValue(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE());
 						}
 						else
 						{
-							iValue = lResult;
+							//iValue = lResult;
+							iValue = (short)std::min((long)MAX_SHORT, lResult); // K-Mod
 						}
 
 						pLoopPlot->setFoundValue(getID(), iValue);

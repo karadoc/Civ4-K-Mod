@@ -11148,11 +11148,17 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 								{
 									int iValue = (iDefendersNeed - iDefendersHave) * 20;
 									iValue += iDefendersHave == 0 ? 20 : 0; // K-Mod
+									/* original bts code
 									iValue += 2 * std::min(15, iCurrentTurn - pLoopCity->getGameTurnAcquired());
 									if (pLoopCity->isOccupation())
 									{
 										iValue += 5;
-									}
+									} */
+									// K-Mod
+									iValue += 3 * pLoopCity->getCultureLevel();
+									iValue += pLoopCity->getPopulation() / 2;
+									iValue += pLoopCity->isOccupation() ? 10 : 0;
+									// K-Mod end
 									iValue -= iPathTurns;
 
 									if (iValue > iBestValue)

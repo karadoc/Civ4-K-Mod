@@ -6753,7 +6753,7 @@ bool CvPlot::isBestAdjacentFound(PlayerTypes eIndex)
 }
 
 
-void CvPlot::setFoundValue(PlayerTypes eIndex, int iNewValue)
+void CvPlot::setFoundValue(PlayerTypes eIndex, short iNewValue)
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < MAX_PLAYERS, "eIndex is expected to be within maximum bounds (invalid Index)");

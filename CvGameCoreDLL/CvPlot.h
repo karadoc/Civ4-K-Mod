@@ -412,9 +412,10 @@ public:
 /* 	BETTER_BTS_AI_MOD						END								*/
 /********************************************************************************/
 
-	int getFoundValue(PlayerTypes eIndex);																															// Exposed to Python
-	bool isBestAdjacentFound(PlayerTypes eIndex);																												// Exposed to Python
-	void setFoundValue(PlayerTypes eIndex, int iNewValue);
+	int getFoundValue(PlayerTypes eIndex);							// Exposed to Python
+	bool isBestAdjacentFound(PlayerTypes eIndex);						// Exposed to Python
+	void setFoundValue(PlayerTypes eIndex, short iNewValue);
+	// K-Mod: I've changed iNewValue to be 'short' instead of 'int', so that it matches the cache.
 
 	int getPlayerCityRadiusCount(PlayerTypes eIndex) const;																							// Exposed to Python
 	bool isPlayerCityRadius(PlayerTypes eIndex) const;																									// Exposed to Python

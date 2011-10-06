@@ -72,8 +72,8 @@ public:
 	int AI_yieldWeight(YieldTypes eYield, const CvCity* pCity = 0) const; // K-Mod added city argument
 	int AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity = NULL) const;
 
-	int AI_foundValue(int iX, int iY, int iMinRivalRange = -1, bool bStartingLoc = false) const;
-	// K-Mod
+	short AI_foundValue(int iX, int iY, int iMinRivalRange = -1, bool bStartingLoc = false) const;
+	// K-Mod. (note, I also changed AI_foundValue to return short instead of int)
 	struct CvFoundSettings
 	{
 		CvFoundSettings(const CvPlayerAI& kPlayer, bool bStartingLoc);
@@ -90,7 +90,7 @@ public:
 		bool bSeafaring; // special affection for coast cities due to unique building or unit.
 		bool bAllSeeing; // doesn't need vision of a plot to know what's there.
 	};
-	int AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const;
+	short AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const;
 	// K-Mod end
 
 	bool AI_isAreaAlone(CvArea* pArea) const;

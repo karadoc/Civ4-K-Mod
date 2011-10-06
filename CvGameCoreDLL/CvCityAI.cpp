@@ -1212,7 +1212,7 @@ void CvCityAI::AI_chooseProduction()
 	if ((iTargetCulturePerTurn > 0) && (getCultureLevel() <= (CultureLevelTypes) 1))
 	{
 		// K-Mod. If our best building is a cultural building, just start building it.
-		if (AI_countGoodTiles(true, false) > 0)
+		if (eBestBuilding != NO_BUILDING && AI_countGoodTiles(true, false) > 0)
 		{
 			const CvBuildingInfo& kBestBuilding = GC.getBuildingInfo(eBestBuilding);
 			if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
@@ -9583,6 +9583,33 @@ void CvCityAI::AI_juggleCitizens()
 		//
 		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
 		{
+			// check to see if we're trying to remove the same job we most recently assigned
+			if (iWorkedPlotValue < iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
+			{
+				// ... that suggests we should break now to avoid getting into an endless loop.
+				// But lets try to stop on a configuration that won't make us strave.
+				// Note: the following condition should be consistent with the starvation allowances in AI_yieldValue
+				// ie. if AI_yieldValue thinks our current foodDifference is ok, then we should break here.
+				if (foodDifference() >= 0 ||
+					(2*getFood() >= growthThreshold() && (bAvoidGrowth || happyLevel() - unhappyLevel() < 1 || goodHealth() - badHealth() < 1)))
+					break;
+				// K-Mod note: what tends to happen is that when the city evaluates stopping work on a 2-food tile,
+				// it assumes that the citizen will go on to work some other 2-food plot.
+				// That's usually a fair assumption; except when the citizen instead becomes a specialist... that screws it up.
+			}
+
+			// remember which job we are assigning, to use in the above check on the next cycle.
+			if (iUnworkedPlotValue > iUnworkedSpecValue)
+			{
+				iLatestPlot = iUnworkedPlot;
+				eLatestSpecialist  = NO_SPECIALIST;
+			}
+			else
+			{
+				iLatestPlot = -1;
+				eLatestSpecialist = eUnworkedSpecialist;
+			}
+
 			// remove lowest value job
 			if (iWorkedPlotValue < iWorkedSpecValue)
 			{
@@ -9605,33 +9632,6 @@ void CvCityAI::AI_juggleCitizens()
 			{
 				FAssert(eUnworkedSpecialist != NO_SPECIALIST);
 				changeSpecialistCount(eUnworkedSpecialist, 1);
-			}
-
-			// check to see if we just removed the same job we more recently assigned
-			if (iWorkedPlotValue < iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
-			{
-				// ... that suggests we should break now to avoid getting into an endless loop.
-				// But lets try to stop on a configuration that won't make us strave.
-				// Note: the following condition should be consistent with the starvation allowances in AI_yieldValue
-				// ie. if AI_yieldValue thinks our current foodDifference is ok, then we should break here.
-				if (foodDifference() >= 0 ||
-					(2*getFood() >= growthThreshold() && (bAvoidGrowth || happyLevel() - unhappyLevel() < 1 || goodHealth() - badHealth() < 1)))
-					bDone = true;
-				// K-Mod note: what tends to happen is that when the city evaluates stopping work on a 2-food tile,
-				// it assumes that the citizen will go on to work some other 2-food plot.
-				// That's usually a fair assumption; except when the citizen instead becomes a specialist... that screws it up.
-			}
-
-			// remember which job we just assigned, to use in the above check on the next cycle.
-			if (iUnworkedPlotValue > iUnworkedSpecValue)
-			{
-				iLatestPlot = iUnworkedPlot;
-				eLatestSpecialist  = NO_SPECIALIST;
-			}
-			else
-			{
-				iLatestPlot = -1;
-				eLatestSpecialist = eUnworkedSpecialist;
 			}
 		}
 		else
@@ -10990,12 +10990,15 @@ void CvCityAI::AI_buildGovernorChooseProduction()
     // pop borders
 	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) < 2)
 	{
-		const CvBuildingInfo& kBestBuilding = GC.getBuildingInfo(eBestBuilding);
-		if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
-			&& (GC.getNumCultureLevelInfos() < 2 || getProductionTurnsLeft(eBestBuilding, 0) <= GC.getGame().getCultureThreshold((CultureLevelTypes)2)))
+		if (eBestBuilding != NO_BUILDING && AI_countGoodTiles(true, false) > 0)
 		{
-			pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
-			return;
+			const CvBuildingInfo& kBestBuilding = GC.getBuildingInfo(eBestBuilding);
+			if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
+				&& (GC.getNumCultureLevelInfos() < 2 || getProductionTurnsLeft(eBestBuilding, 0) <= GC.getGame().getCultureThreshold((CultureLevelTypes)2)))
+			{
+				pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+				return;
+			}
 		}
 		if (AI_chooseProcess(COMMERCE_CULTURE))
 		{
