@@ -2725,7 +2725,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
     iClaimThreshold = std::max(1, iClaimThreshold);
 	iClaimThreshold *= (bEasyCulture && kPlayer.getCurrentEra() < 2 ? 140 : 100);
 	iClaimThreshold *= (bAmbitious ? 140 : 100);
-	iClaimThreshold /= 100;
+	iClaimThreshold /= 200;
 	// note, plot culture is 100x city culture. So I've left a factor of 100 on iClaimThreshold.
 }
 

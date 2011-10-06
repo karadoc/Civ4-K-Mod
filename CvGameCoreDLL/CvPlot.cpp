@@ -6640,7 +6640,7 @@ void CvPlot::setCulture(PlayerTypes eIndex, int iNewValue, bool bUpdate, bool bU
 {
 	PROFILE_FUNC();
 
-	CvCity* pCity;
+	//CvCity* pCity;
 
 	FAssertMsg(eIndex >= 0, "iIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < MAX_PLAYERS, "iIndex is expected to be within maximum bounds (invalid Index)");
@@ -6655,6 +6655,9 @@ void CvPlot::setCulture(PlayerTypes eIndex, int iNewValue, bool bUpdate, bool bU
 				m_aiCulture[iI] = 0;
 			}
 		}
+		
+		CvCity* pCity = getPlotCity(); //
+		int iOldAnger = (pCity ? pCity->getCulturePercentAnger() : 0); // K-Mod
 
 		m_aiCulture[eIndex] = iNewValue;
 		FAssert(getCulture(eIndex) >= 0);
@@ -6664,11 +6667,23 @@ void CvPlot::setCulture(PlayerTypes eIndex, int iNewValue, bool bUpdate, bool bU
 			updateCulture(true, bUpdatePlotGroups);
 		}
 
-		pCity = getPlotCity();
+		// pCity = getPlotCity(); // moved up
 
 		if (pCity != NULL)
 		{
-			pCity->AI_setAssignWorkDirty(true);
+			/* original bts code
+			pCity->AI_setAssignWorkDirty(true); */
+			// K-Mod. As far as I can tell, the reason AI_setAssignWorkDirty is called here is
+			// that changing the culture might change cultural anger in the city.
+			// So I've changed the code to only set assign dirty if the that anger really has changed.
+			if (iOldAnger != pCity->getCulturePercentAnger())
+			{
+				pCity->AI_setAssignWorkDirty(true);
+			}
+			// Really, this whole anger / assign working plots system is a mess.
+			// This function shouldn't have to worry about what will / won't affect the number of angry citizens.
+			// It's a design flaw.
+			// K-Mod end
 		}
 	}
 }
