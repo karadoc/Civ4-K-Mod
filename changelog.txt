@@ -1,6 +1,38 @@
-This is K-Mod version 1.01.
+This is K-Mod version 1.02.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+--
+
+v1.02 changelist
+
++ Reduced the global warming defence of forests and jungles, from 20 to 15.
++ Reduced the grip effect of religious shrines from 20 to 10. (This affects the probability that a religion will be bumped out of a city when a new missionary comes.)
+
++ Adjusted the AI's max unit spending formula so that it is very close to the original BtS formula, but without the BtS problems.
++ The AI will now take obsoletion of buildings into account when evaluating techs.
++ Made some other adjustments to AI tech evaluation.
++ Restructured and adjusted the evaluation code for defensive buildings, and made some other building evaluation adjustments - the main purpose was the reduce of perceived value of city walls by the time Rifling is being considered, so that Rifling isn't blocked by the obsolete penalty for techs.
++ Automated / AI workers will no longer chop tundra forests. More specifically, they won't chop forests unless they are able to replace it with a better improvement.
++ Fixed some problems with the original BtS evaluation of clearing features for improvement building. (It was over-valuing, and double-counting yield changes; but these problems only started to manifest strongly after my feature chopping change.)
++ Fixed an over-counting problem with of workers in the AI, which caused the AI to think it had more workers near a city than it actually had.
++ The AI is now more likely to make escort ships available for their assault groups.
++ Redesigned the trigger conditions and the effects of the "economy focus" AI strategy. (This is a rare strategy in which the AI will choose to neglect its military so that they can focus on boosting their economy.)
++ Tweaked the espionage AI. On large maps, it will now be more likely to use the "espionage economy" strategy.
++ Fixed some original BtS city site placement bugs and problems. In particular, there was a bug which caused the AI to not take planned city sites into account properly. Also, the AI will no longer count the value of tiles that haven't been revealed. (This also affects the blue circle settler recommendations for human players.)
++ Made some other adjustments to city site evaluation. Most noticeably, the AI is now a lot more willing to found cities that are close to one another.
++ Taught the AI how to send unescorted settlers to city locations, and meet an escort mid-way. (Hopefully this doesn't cause the AI to be too reckless with their settlers. Let me know if you see the AI doing something stupid.)
+
++ Rewrote the code for how the AI and city governor allocate city citizens. The new method is faster, and I think it is also a bit smarter. In particular, it is more likely to work low-food high-value tiles when close to the happiness limit.
++ The city governor will now build spies, missionaries, and execs (but not when you don't need them).
+
++ Moved (corrected?) the K-Mod multiplayer handicap adjustment. (In multiplayer games of K-Mod, the AI handicap level is set to be the minimum of the human player's level - but I suspect this feature was implemented incorrectly until now.)
++ Combat bonus vs animals and barbarians is now based on player handicap level rather than game handicap level. (This just means that in multiplayer games when players has different difficulty settings they will get different bonuses.)
++ Copied, from Koshling's C2C code, a fix for an original BtS pathfinding bug and pathfinding optimization. This fixes several AI problems.
++ Fixed a possible overflow bug in AI_foundValue and related functions. (thanks to Koshling for the tip)
++ Fixed a possible overflow bug in in AI_techValue.
++ Fixed an original BtS bug which affected when / who would receive feature growth messages. (With this change, you'll probably see more "a forest as grown" messages. The actual growth rate is unchanged, but the message will show up a bit more often.)
++ Fixed a potential double-counting bug in AI_rivalAirPower (triggered by the existence of any unique air units).
++ Fixed a minor problem with super-medic creation in AI_promotionValue (triggered if there is more than one "leader" promotion).
 --
 
 v1.01 changelist
