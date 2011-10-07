@@ -6684,11 +6684,11 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 			iHealthValue *= 3;
 			iHealthValue /= 2;
 		} */
-		// K-Mod
-		iHealthValue += (iHealth < 0 ? 300 : 300/(2+iHealth)) *  kFeatureInfo.getHealthPercent() / 100;
-		iHealthValue *= (pPlot->getPlayerCityRadiusCount(getOwnerINLINE()) + 1);
-		iHealthValue /= 2;
-		// note: health is not more valuable just because we aren't working it.
+		// K-Mod -
+		iHealthValue += (iHealth < 0 ? 100 : 100/(2+iHealth)) + 60 * pPlot->getPlayerCityRadiusCount(getOwnerINLINE());
+		iHealthValue *= kFeatureInfo.getHealthPercent();
+		iHealthValue /= 100;
+		// note: health is not any more valuable when we aren't working it.
 		// That kind of thing should be handled by the chop code.
 		// K-Mod end
 	}
@@ -10093,7 +10093,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						// K-Mod, reduced the scale to match the building evaluation code.
 						if (bFillingBar)
 							//iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + iFoodYield) / iFoodToGrow;
-							iFactorPopToGrow = 9 * iFoodToGrow / (iFoodLevel + iFoodPerTurn + iFoodYield);
+							iFactorPopToGrow = 9 * iFoodToGrow / std::max(1, iFoodToGrow + iFoodLevel + iFoodPerTurn + iFoodYield);
 						else if (iPopToGrow < 7)
 							iFactorPopToGrow = 9 + 2 * iPopToGrow;
 						else
