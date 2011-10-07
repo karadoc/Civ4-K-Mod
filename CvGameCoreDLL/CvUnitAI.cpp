@@ -11096,7 +11096,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 		if ((iCityDefenderCount - 1) < pPlotCity->AI_minDefenders())
 		{
 			//if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
-			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(area()->getCitiesPerPlayer(getOwnerINLINE())/2 + 1, "AI shuffle defender") <= 1) // K-mod
+			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(area()->getCitiesPerPlayer(getOwnerINLINE()) + 5, "AI shuffle defender") > 1) // K-mod
 			{
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
 				return true;
@@ -11328,7 +11328,7 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 			else
 			{
 				//This unit is not suited for defense, skip the mission
-				//to protect this city but encourage others to defend instead.
+				//to protect this city to encourage others to defend instead.
 				getGroup()->pushMission(MISSION_SKIP);
 				/* original bts code (commented by K-Mod. Why the hell was this here?)
 				if (!isHurt())
@@ -11412,7 +11412,8 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 			
 			if (pEjectedUnit != NULL)
 			{
-				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, NULL);
+				//pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, NULL);
+				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot); // K-Mod
 				if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
 				{
 					return true;
@@ -11425,7 +11426,7 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 			else
 			{
 				//This unit is not suited for defense, skip the mission
-				//to protect this city but encourage others to defend instead.
+				//to protect this city to encourage others to defend instead.
 				if (atPlot(pBestGuardPlot))
 				{
 					getGroup()->pushMission(MISSION_SKIP);

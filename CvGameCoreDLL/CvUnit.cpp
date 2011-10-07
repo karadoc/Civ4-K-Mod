@@ -536,7 +536,8 @@ void CvUnit::kill(bool bDelay, PlayerTypes ePlayer)
 				
 				pLoopUnit->kill(false, ePlayer);
 
-				oldUnits = tempUnits;
+				//oldUnits = tempUnits;
+				oldUnits.swap(tempUnits); // K-Mod (speed)
 			}
 		}
 	}
