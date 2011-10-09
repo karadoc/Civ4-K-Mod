@@ -6604,17 +6604,20 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 void CvPlayerAI::AI_chooseFreeTech()
 {
-	TechTypes eBestTech;
+	TechTypes eBestTech = NO_TECH;
 
 	clearResearchQueue();
 
-	CyArgsList argsList;
-	long lResult;
-	argsList.add(getID());
-	argsList.add(true);
-	lResult = -1;
-	gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_chooseTech", argsList.makeFunctionArgs(), &lResult);
-	eBestTech = ((TechTypes)lResult);
+	if (GC.getUSE_AI_CHOOSE_TECH_CALLBACK()) // K-Mod. block unused python callbacks
+	{
+		CyArgsList argsList;
+		long lResult;
+		argsList.add(getID());
+		argsList.add(true);
+		lResult = -1;
+		gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_chooseTech", argsList.makeFunctionArgs(), &lResult);
+		eBestTech = ((TechTypes)lResult);
+	}
 
 	if (eBestTech == NO_TECH)
 	{
@@ -6630,14 +6633,14 @@ void CvPlayerAI::AI_chooseFreeTech()
 
 void CvPlayerAI::AI_chooseResearch()
 {
-	TechTypes eBestTech;
-	int iI;
+	//TechTypes eBestTech;
+	//int iI;
 
 	clearResearchQueue();
 
 	if (getCurrentResearch() == NO_TECH)
 	{
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_PLAYERS; iI++)
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
@@ -6657,13 +6660,17 @@ void CvPlayerAI::AI_chooseResearch()
 
 	if (getCurrentResearch() == NO_TECH)
 	{
-		CyArgsList argsList;
-		long lResult;
-		argsList.add(getID());
-		argsList.add(false);
-		lResult = -1;
-		gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_chooseTech", argsList.makeFunctionArgs(), &lResult);
-		eBestTech = ((TechTypes)lResult);
+		TechTypes eBestTech = NO_TECH; // K-Mod
+		if (GC.getUSE_AI_CHOOSE_TECH_CALLBACK()) // K-Mod. block unused python callbacks
+		{
+			CyArgsList argsList;
+			long lResult;
+			argsList.add(getID());
+			argsList.add(false);
+			lResult = -1;
+			gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_chooseTech", argsList.makeFunctionArgs(), &lResult);
+			eBestTech = ((TechTypes)lResult);
+		}
 
 		if (eBestTech == NO_TECH)
 		{
@@ -14724,13 +14731,16 @@ void CvPlayerAI::AI_doDiplo()
 	FAssert(!isBarbarian());
 
 	// allow python to handle it
-	CyArgsList argsList;
-	argsList.add(getID());
-	long lResult=0;
-	gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_doDiplo", argsList.makeFunctionArgs(), &lResult);
-	if (lResult == 1)
+	if (GC.getUSE_AI_DO_DIPLO_CALLBACK()) // K-Mod. block unused python callbacks
 	{
-		return;
+		CyArgsList argsList;
+		argsList.add(getID());
+		long lResult=0;
+		gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_doDiplo", argsList.makeFunctionArgs(), &lResult);
+		if (lResult == 1)
+		{
+			return;
+		}
 	}
 	
 	iGoldValuePercent = AI_goldTradeValuePercent();

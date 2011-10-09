@@ -212,6 +212,13 @@ m_iUSE_ON_UNIT_SELECTED_CALLBACK(0),
 m_iUSE_ON_UPDATE_CALLBACK(0),
 m_iUSE_ON_UNIT_CREATED_CALLBACK(0),
 m_iUSE_ON_UNIT_LOST_CALLBACK(0),
+// K-Mod
+m_bUSE_AI_UNIT_UPDATE_CALLBACK(false),
+m_bUSE_AI_DO_DIPLO_CALLBACK(false),
+m_bUSE_AI_CHOOSE_PRODUCTION_CALLBACK(false),
+m_bUSE_AI_DO_WAR_CALLBACK(false),
+m_bUSE_AI_CHOOSE_TECH_CALLBACK(false),
+// K-Mod end
 m_paHints(NULL),
 m_paMainMenus(NULL)
 /************************************************************************************************/
@@ -2700,6 +2707,13 @@ void CvGlobals::cacheGlobals()
 	m_iUSE_ON_UPDATE_CALLBACK = getDefineINT("USE_ON_UPDATE_CALLBACK");
 	m_iUSE_ON_UNIT_CREATED_CALLBACK = getDefineINT("USE_ON_UNIT_CREATED_CALLBACK");
 	m_iUSE_ON_UNIT_LOST_CALLBACK = getDefineINT("USE_ON_UNIT_LOST_CALLBACK");
+	// K-Mod
+	m_bUSE_AI_UNIT_UPDATE_CALLBACK = getDefineINT("USE_AI_UNIT_UPDATE_CALLBACK") != 0;
+	m_bUSE_AI_DO_DIPLO_CALLBACK = getDefineINT("USE_AI_DO_DIPLO_CALLBACK") != 0;
+	m_bUSE_AI_CHOOSE_PRODUCTION_CALLBACK = getDefineINT("USE_AI_CHOOSE_PRODUCTION_CALLBACK") != 0;
+	m_bUSE_AI_DO_WAR_CALLBACK = getDefineINT("USE_AI_DO_WAR_CALLBACK") != 0;
+	m_bUSE_AI_CHOOSE_TECH_CALLBACK = getDefineINT("USE_AI_CHOOSE_TECH_CALLBACK") != 0;
+	// K-Mod end
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */

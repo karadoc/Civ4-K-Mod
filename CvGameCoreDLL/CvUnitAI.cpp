@@ -89,15 +89,18 @@ bool CvUnitAI::AI_update()
 	FAssertMsg(isGroupHead(), "isGroupHead is expected to be true"); // XXX is this a good idea???
 
 	// allow python to handle it
-	CyUnit* pyUnit = new CyUnit(this);
-	CyArgsList argsList;
-	argsList.add(gDLL->getPythonIFace()->makePythonObject(pyUnit));	// pass in unit class
-	long lResult=0;
-	gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_unitUpdate", argsList.makeFunctionArgs(), &lResult);
-	delete pyUnit;	// python fxn must not hold on to this pointer
-	if (lResult == 1)
+	if (GC.getUSE_AI_UNIT_UPDATE_CALLBACK()) // K-Mod. block unused python callbacks
 	{
-		return false;
+		CyUnit* pyUnit = new CyUnit(this);
+		CyArgsList argsList;
+		argsList.add(gDLL->getPythonIFace()->makePythonObject(pyUnit));	// pass in unit class
+		long lResult=0;
+		gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_unitUpdate", argsList.makeFunctionArgs(), &lResult);
+		delete pyUnit;	// python fxn must not hold on to this pointer
+		if (lResult == 1)
+		{
+			return false;
+		}
 	}
 
 	if (getDomainType() == DOMAIN_LAND)
@@ -470,6 +473,7 @@ bool CvUnitAI::AI_follow()
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+	/* original bts code
 	if (isFound())
 	{
 		if (area()->getBestFoundValue(getOwnerINLINE()) > 0)
@@ -479,7 +483,12 @@ bool CvUnitAI::AI_follow()
 				return true;
 			}
 		}
-	}
+	} */
+	// K-Mod. AI_foundRange is AI. It doesn't always found when we want to, and it has the potential to found when we don't!
+	// So I've replaced it.
+	if (AI_foundFollow())
+		return true;
+	// K-Mod end
 
 	return false;
 }
@@ -16676,6 +16685,7 @@ bool CvUnitAI::AI_found()
 }
 
 
+/* original bts code - disabled by K-Mod
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_foundRange(int iRange, bool bFollow)
 {
@@ -16750,8 +16760,26 @@ bool CvUnitAI::AI_foundRange(int iRange, bool bFollow)
 	}
 
 	return false;
-}
+} */
 
+// K-Mod: this function simply checks if we are standing at our target destination
+// and if we are, we issue the found command and return true.
+// I've disabled (badly flawed) AI_foundRange, which was previously used for 'follow' AI.
+bool CvUnitAI::AI_foundFollow()
+{
+	if (canFound(plot()) && getGroup()->AI_getMissionAIPlot() == plot() && getGroup()->AI_getMissionAIType() == MISSIONAI_FOUND)
+	{
+		if( gUnitLogLevel >= 2 )
+		{
+			logBBAI("    Settler founding at plot %d, %d (follow)", getX_INLINE(), getY_INLINE());
+		}
+		getGroup()->pushMission(MISSION_FOUND);
+		return true;
+	}
+
+	return false;
+}
+// K-Mod end
 
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_assaultSeaTransport(bool bBarbarian)
@@ -23142,11 +23170,11 @@ bool CvUnitAI::AI_airAttackDamagedSkip()
 // Returns true if a mission was pushed or we should wait for another unit to bombard...
 bool CvUnitAI::AI_followBombard()
 {
-	CLLNode<IDInfo>* pUnitNode;
+	/*CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
 	CvPlot* pAdjacentPlot1;
 	CvPlot* pAdjacentPlot2;
-	int iI, iJ;
+	int iI, iJ; */ // K-mod disabled
 
 	if (canBombard(plot()))
 	{
@@ -23154,6 +23182,12 @@ bool CvUnitAI::AI_followBombard()
 		return true;
 	}
 
+	// K-Mod note: I've disabled the following code because it seems like a timewaster with very little benefit.
+	// The code checks if we are standing next to a city, and then checks if we have any other readyToMove group
+	// next to the same city which can bombard... if so, return true.
+	// I suppose the point of the code is to block our units from issuing a follow-attack order if we still have
+	// some bombarding to do. -- But in my opinion, such checks, if we want them, should be done by the attack code.
+	/* original bts code
 	if (getDomainType() == DOMAIN_LAND)
 	{
 		for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
@@ -23202,7 +23236,7 @@ bool CvUnitAI::AI_followBombard()
 				}
 			}
 		}
-	}
+	} */
 
 	return false;
 }
@@ -24103,8 +24137,15 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive)
 	{
 		if (atPlot(pBestPlot))
 		{
+			/* original BBAI code
 			if(canPillage(plot())) getGroup()->pushMission(MISSION_PILLAGE);
-			getGroup()->pushMission(MISSION_SKIP);
+			getGroup()->pushMission(MISSION_SKIP); */
+			// K-Mod
+			if (canPillage(plot()))
+				getGroup()->pushMission(MISSION_PILLAGE);
+			else
+				getGroup()->pushMission(MISSION_SKIP);
+			// K-Mod end
 			return true;
 		}
 		else

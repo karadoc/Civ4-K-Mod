@@ -204,7 +204,8 @@ bool CvSelectionGroupAI::AI_update()
 /*                                                                                              */
 /* Unit AI                                                                                      */
 /************************************************************************************************/
-	if( !(isHuman()) && !(getHeadUnit()->isCargo()) && getActivityType() == ACTIVITY_SLEEP )
+	//if( !(isHuman()) && !(getHeadUnit()->isCargo()) && getActivityType() == ACTIVITY_SLEEP )
+	if (getActivityType() == ACTIVITY_SLEEP && !isHuman() && !getHeadUnit()->isCargo()) // K-Mod (just for efficiency)
 	{
 		setForceUpdate(true);
 	}

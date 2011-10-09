@@ -791,6 +791,13 @@ public:
 	int getUSE_ON_UPDATE_CALLBACK();
 	int getUSE_ON_UNIT_CREATED_CALLBACK();
 	int getUSE_ON_UNIT_LOST_CALLBACK();
+	// K-Mod
+	inline bool getUSE_AI_UNIT_UPDATE_CALLBACK() { return m_bUSE_AI_UNIT_UPDATE_CALLBACK; }
+	inline bool getUSE_AI_DO_DIPLO_CALLBACK() { return m_bUSE_AI_DO_DIPLO_CALLBACK; }
+	inline bool getUSE_AI_CHOOSE_PRODUCTION_CALLBACK() { return m_bUSE_AI_CHOOSE_PRODUCTION_CALLBACK; }
+	inline bool getUSE_AI_DO_WAR_CALLBACK() { return m_bUSE_AI_DO_WAR_CALLBACK; }
+	inline bool getUSE_AI_CHOOSE_TECH_CALLBACK() { return m_bUSE_AI_CHOOSE_TECH_CALLBACK; }
+	// K-Mod end
 
 	DllExport int getMAX_CIV_PLAYERS();
 	DllExport int getMAX_PLAYERS();
@@ -1210,6 +1217,13 @@ protected:
 	int m_iUSE_ON_UPDATE_CALLBACK;
 	int m_iUSE_ON_UNIT_CREATED_CALLBACK;
 	int m_iUSE_ON_UNIT_LOST_CALLBACK;
+	// K-Mod
+	bool m_bUSE_AI_UNIT_UPDATE_CALLBACK;
+	bool m_bUSE_AI_DO_DIPLO_CALLBACK;
+	bool m_bUSE_AI_CHOOSE_PRODUCTION_CALLBACK;
+	bool m_bUSE_AI_DO_WAR_CALLBACK;
+	bool m_bUSE_AI_CHOOSE_TECH_CALLBACK;
+	// K-Mod end
 
 	// DLL interface
 	CvDLLUtilityIFaceBase* m_pDLL;

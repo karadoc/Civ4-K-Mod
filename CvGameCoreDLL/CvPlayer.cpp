@@ -3873,6 +3873,7 @@ bool CvPlayer::hasBusyUnit() const
 		    if (pLoopSelectionGroup->getNumUnits() == 0)
 		    {
 		        pLoopSelectionGroup->kill();
+				FAssertMsg(false, "Karadoc told me this could never happen..."); // K-Mod. (just say'n)
 		        return false;
 		    }
 

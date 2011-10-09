@@ -196,7 +196,8 @@ protected:
 	bool AI_pillage(int iBonusValueThreshold = 0);
 	bool AI_pillageRange(int iRange, int iBonusValueThreshold = 0);
 	bool AI_found();
-	bool AI_foundRange(int iRange, bool bFollow = false);
+	//bool AI_foundRange(int iRange, bool bFollow = false); // disabled by K-Mod
+	bool AI_foundFollow(); // K-Mod
 	bool AI_assaultSeaTransport(bool bBarbarian = false);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      01/04/09                                jdog5000      */

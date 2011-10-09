@@ -4422,13 +4422,16 @@ void CvTeamAI::AI_doWar()
 	}
 
 	// allow python to handle it
-	CyArgsList argsList;
-	argsList.add(getID());
-	long lResult=0;
-	gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_doWar", argsList.makeFunctionArgs(), &lResult);
-	if (lResult == 1)
+	if (GC.getUSE_AI_DO_WAR_CALLBACK()) // K-Mod. block unused python callbacks
 	{
-		return;
+		CyArgsList argsList;
+		argsList.add(getID());
+		long lResult=0;
+		gDLL->getPythonIFace()->callFunction(PYGameModule, "AI_doWar", argsList.makeFunctionArgs(), &lResult);
+		if (lResult == 1)
+		{
+			return;
+		}
 	}
 
 	int iEnemyPowerPercent = AI_getEnemyPowerPercent();
