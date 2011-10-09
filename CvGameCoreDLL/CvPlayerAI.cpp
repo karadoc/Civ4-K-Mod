@@ -1414,9 +1414,9 @@ void CvPlayerAI::AI_unitUpdate()
 
 	CLLNode<int>* pCurrUnitNode;
 	CvSelectionGroup* pLoopSelectionGroup;
-	CLinkList<int> tempGroupCycle;
-	CLinkList<int> finalGroupCycle;
-	int iValue;
+	//CLinkList<int> tempGroupCycle;
+	//CLinkList<int> finalGroupCycle;
+	//int iValue;
 
 	if (!hasBusyUnit())
 	{
@@ -1454,6 +1454,7 @@ void CvPlayerAI::AI_unitUpdate()
 		}
 		else
 		{
+			/* original bts code
 			tempGroupCycle.clear();
 			finalGroupCycle.clear();
 
@@ -1505,7 +1506,34 @@ void CvPlayerAI::AI_unitUpdate()
 				}
 
 				pCurrUnitNode = finalGroupCycle.next(pCurrUnitNode);
+			} */
+			// K-Mod. It seems to me that all we're trying to do is run AI_update
+			// on the highest priority groups until one of them becomes busy.
+			// ... if only they had used the STL, this would be a lot easier.
+			std::vector<std::pair<int, int> > groupList;
+
+			pCurrUnitNode = headGroupCycleNode();
+			while (pCurrUnitNode != NULL)
+			{
+				pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
+				FAssertMsg(pLoopSelectionGroup != NULL, "selection group node with NULL selection group");
+
+				int iPriority = AI_movementPriority(pLoopSelectionGroup);
+				groupList.push_back(std::make_pair(iPriority, pCurrUnitNode->m_data));
+
+				pCurrUnitNode = nextGroupCycleNode(pCurrUnitNode);
 			}
+
+			std::sort(groupList.begin(), groupList.end());
+			for (size_t i = 0; i < groupList.size(); i++)
+			{
+				pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
+				if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
+				{
+					return;
+				}
+			}
+			// K-Mod end
 		}
 	}
 }

@@ -1,4 +1,4 @@
-This is K-Mod version 1.02.
+This is K-Mod version 1.02c.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -7,6 +7,7 @@ v1.02 changelist
 
 + Reduced the global warming defence of forests and jungles, from 20 to 15.
 + Reduced the grip effect of religious shrines from 20 to 10. (This affects the probability that a religion will be bumped out of a city when a new missionary comes.)
++ Tech trades in which the receiving player is more than 2/3 of the way through researching the tech or when the tech is behind the 'game era' no longer count towards tech trade memory. ie. They don't contribute to causing "we fear you are becoming too advanced".
 
 + Adjusted the AI's max unit spending formula so that it is very close to the original BtS formula, but without the BtS problems.
 + The AI will now take obsoletion of buildings into account when evaluating techs.
@@ -33,6 +34,8 @@ v1.02 changelist
 + Fixed an original BtS bug which affected when / who would receive feature growth messages. (With this change, you'll probably see more "a forest as grown" messages. The actual growth rate is unchanged, but the message will show up a bit more often.)
 + Fixed a potential double-counting bug in AI_rivalAirPower (triggered by the existence of any unique air units).
 + Fixed a minor problem with super-medic creation in AI_promotionValue (triggered if there is more than one "leader" promotion).
++ Added some new options to PythonCallbackDefines.xml to allow various AI python callbacks to be blocked (for efficiency).
+
 --
 
 v1.01 changelist
