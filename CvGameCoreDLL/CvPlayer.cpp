@@ -3870,12 +3870,12 @@ bool CvPlayer::hasBusyUnit() const
 	{
 		if (pLoopSelectionGroup->isBusy())
 		{
+			/* original bts code
 		    if (pLoopSelectionGroup->getNumUnits() == 0)
 		    {
 		        pLoopSelectionGroup->kill();
-				FAssertMsg(false, "Karadoc told me this could never happen..."); // K-Mod. (just say'n)
 		        return false;
-		    }
+		    } */ // disabled by K-Mod. isBusy returns false if there are no units in the group.
 
 			return true;
 		}

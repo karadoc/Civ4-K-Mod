@@ -13215,11 +13215,11 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		// K-Mod (I didn't comment that line out, btw.)
 		const TeamTypes eTeam = GET_PLAYER(eTargetPlayer).getTeam();
 		const int iEra = getCurrentEra();
-		int iCounterValue = 5 + 2*iEra + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3 || AI_VICTORY_SPACE3) ? 10 : 0);
+		int iCounterValue = 5 + 3*iEra + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3 || AI_VICTORY_SPACE3) ? 20 : 0);
 		// this is pretty bogus. I'll try to come up with something better some other time.
-		iCounterValue *= 50*iEra*(iEra+1) + GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
-		iCounterValue /= std::max(1, 50*iEra*(iEra+1) + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam));
-		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0) + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4)?1 : 0);
+		iCounterValue *= 50*iEra*(iEra+1)/2 + GET_TEAM(eTeam).getEspionagePointsAgainstTeam(getTeam());
+		iCounterValue /= std::max(1, 50*iEra*(iEra+1) + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTeam))/2;
+		iCounterValue *= AI_getMemoryCount(eTargetPlayer, MEMORY_SPY_CAUGHT) + (GET_TEAM(getTeam()).isAtWar(eTeam)?2 :0) + (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE3)?2 : 0);
 		iValue += iCounterValue;
 	}
 
@@ -14458,7 +14458,7 @@ void CvPlayerAI::AI_doCommerce()
 
 		// now, the big question is whether or not we can steal techs more easilly than we can research them.
 		bool bCheapTechSteal = false;
-		if (eMinModTeam != NO_TEAM && !AI_avoidScience() && !isNoResearchAvailable())
+		if (eMinModTeam != NO_TEAM && !AI_avoidScience() && !isNoResearchAvailable() && !AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
 		{
 			if (eStealTechMission != NO_ESPIONAGEMISSION)
 			{

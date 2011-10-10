@@ -3840,7 +3840,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags) const
 // XXX should some of these count cities, buildings, etc. based on teams (because wonders are shared...)
 // XXX in general, this function needs to be more sensitive to what makes this city unique (more likely to build airports if there already is a harbor...)
 // This function has been heavily edited for K-Mod
-//int CvCityAI::AI_buildingValueThreshold(BuildingTypes eBuilding, int iFocusFlags, int iThreshold, bool bConstCache) const
 int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iThreshold, bool bConstCache) const
 {
 	PROFILE_FUNC();
@@ -3867,11 +3866,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	ReligionTypes eStateReligion = kOwner.getStateReligion();
 
 	bool bAreaAlone = kOwner.AI_isAreaAlone(area());
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/24/10                        jdog5000 & Fuyu       */
-/*                                                                                              */
-/* City AI, Bugfix                                                                              */
-/************************************************************************************************/
 	int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
 
 	int iFoodDifference = foodDifference(false);
@@ -3900,9 +3894,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	}*/
 
 	bool bProvidesPower = (kBuilding.isPower() || ((kBuilding.getPowerBonus() != NO_BONUS) && hasBonus((BonusTypes)(kBuilding.getPowerBonus()))) || kBuilding.isAreaCleanPower());
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	int iTotalPopulation = kOwner.getTotalPopulation();
 	int iNumCities = kOwner.getNumCities();
@@ -4104,24 +4095,25 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						+ (std::max(0, iBuildingActualHappiness - iAngryPopulation) * iHappyModifier);
 				}*/
 				// K-Mod
+				int iCitValue = 6 + kOwner.getCurrentEra(); // (estimating citizen value to be 6 + era commerce per turn)
 				int iAngerDelta = std::max(0, -(iHappinessLevel+iBuildingActualHappiness)) - std::max(0, -iHappinessLevel);
-				// High value for any immediate change in anger. (estimating citizen value to be 5 + era)
-				iValue -= iAngerDelta * 4 * (5 + kOwner.getCurrentEra());
+				// High value for any immediate change in anger.
+				iValue -= iAngerDelta * 4 * iCitValue;
 				// some extra value if we are still growing (this is a positive change bias)
 				if (iAngerDelta < 0 && iFoodDifference > 1)
 				{
 					iValue -= 10 * iAngerDelta;
 				}
 				// finally, a little bit of value for happiness which gives us some padding
-				iValue += 64 * std::max(0, iBuildingActualHappiness)/(4 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel));
+				iValue += 16 * iCitValue * std::max(0, iBuildingActualHappiness)/(4 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel));
 
 				// I'll now define the "iHappinessModifer" that some of the other happy effects use.
-				int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 4) ? 8 : 4;
+				int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 4) ? iCitValue : iCitValue/2;
 				if (iHappinessLevel >= 10)
 				{
 					iHappyModifier = 1;
 				}
-				// K-Mod
+				// K-Mod end
 
 				iValue += (-kBuilding.getHurryAngerModifier() * getHurryPercentAnger()) / 100;
 
@@ -4136,8 +4128,15 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					iValue += (-iWarWearinessModifer * iHappyModifier) / 16;
 				}
 
-				iValue += (kBuilding.getAreaHappiness() * (iNumCitiesInArea - 1) * 8);
-				iValue += (kBuilding.getGlobalHappiness() * iNumCities * 8);
+				/*iValue += (kBuilding.getAreaHappiness() * (iNumCitiesInArea - 1) * 8);
+				iValue += (kBuilding.getGlobalHappiness() * iNumCities * 8);*/
+				// K-Mod - just a tweak.. nothing fancy.
+				{
+					int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+					iValue += kBuilding.getAreaHappiness() * (iNumCitiesInArea + iTargetCities/3) * 8;
+					iValue += kBuilding.getGlobalHappiness() * (iNumCities + iTargetCities/2) * 8;
+				}
+				// K-Mod end
 
 				int iWarWearinessPercentAnger = kOwner.getWarWearinessPercentAnger();
 				int iGlobalWarWearinessModifer = kBuilding.getGlobalWarWearinessModifier();
@@ -4190,18 +4189,19 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						+ (std::max(0, iBuildingActualHealth - iBadHealth) * iHealthModifier);
 				}*/
 
+				int iCitValue = 6 + kOwner.getCurrentEra(); // (estimating citizen value to be 6 + era commerce per turn)
 				int iWasteDelta = std::max(0, -(iHealthLevel+iBuildingActualHealth)) - std::max(0, -iHealthLevel);
-				// High value for any change in our food deficit.
-				iValue -= 20 * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
+				// High value for change in our food deficit.
+				iValue -= 2 * iCitValue * (std::max(0, -(iFoodDifference - iWasteDelta)) - std::max(0, -iFoodDifference));
 				// medium value for change in waste
-				iValue -= 8 * iWasteDelta;
+				iValue -= iCitValue * iWasteDelta;
 				// some extra value if the change will help us grow (this is a positive change bias)
 				if (iWasteDelta < 0 && iHappinessLevel > 1)
 				{
-					iValue -= 8 * iWasteDelta;
+					iValue -= iCitValue * iWasteDelta;
 				}
 				// finally, a little bit of value for health which gives us some padding
-				iValue += 36 * std::max(0, iBuildingActualHealth)/(2 + std::max(0, iHealthLevel+iBuildingActualHealth) + std::max(0, iHealthLevel));
+				iValue += 10 * iCitValue * std::max(0, iBuildingActualHealth)/(6 + std::max(0, iHealthLevel+iBuildingActualHealth) + std::max(0, iHealthLevel));
 
 				// If the GW threshold has been reached,
 				// add some additional value for pollution reduction

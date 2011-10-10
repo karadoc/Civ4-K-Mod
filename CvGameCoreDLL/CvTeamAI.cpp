@@ -1418,7 +1418,8 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 /* BETTER_BTS_AI_MOD                      05/19/10                                jdog5000      */
 /*                                                                                              */
 /* War strategy AI, Victory Strategy AI                                                         */
-/************************************************************************************************/	
+/************************************************************************************************/
+	/* original BBAI code
 	if( AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4) )
 	{
 		iValue *= 4;
@@ -1426,8 +1427,22 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 	else if( AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE3) || AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE4) )
 	{
 		iValue *= 2;
+	} */
+	// K-Mod
+	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4))
+	{
+		iValue *= 3;
 	}
-
+	else if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE4))
+	{
+		iValue *= 2;
+	}
+	else if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE3) || AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE3))
+	{
+		iValue *= 4;
+		iValue /= 3;
+	}
+	// K-Mod end
 
 	if ((!(isHuman()) && (eWarPlan == WARPLAN_TOTAL)) ||
 		  (!(GET_TEAM(eTeam).isHuman()) && (GET_TEAM(eTeam).AI_getWarPlan(getID()) == WARPLAN_TOTAL)))
@@ -3012,12 +3027,21 @@ DenialTypes CvTeamAI::AI_makePeaceTrade(TeamTypes ePeaceTeam, TeamTypes eTeam) c
 	{
 		return DENIAL_CONTACT_THEM;
 	}
-	
+
+	/* original bts code
     int iLandRatio = ((getTotalLand(true) * 100) / std::max(20, GET_TEAM(eTeam).getTotalLand(true)));
     if (iLandRatio > 250)
     {
 		return DENIAL_VICTORY;
+	} */
+	// K-Mod
+	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
+		(AI_isChosenWar(eTeam) || getAtWarCount(true, true) == 1) &&
+		AI_getWarSuccessCapitulationRatio() > 0)
+	{
+		return DENIAL_VICTORY;
 	}
+	// K-Mod end
 
 	return NO_DENIAL;
 }
