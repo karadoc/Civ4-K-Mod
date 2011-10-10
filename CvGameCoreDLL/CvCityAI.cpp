@@ -9142,7 +9142,7 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 
 										int iCost = std::max(0, GC.getCorporationInfo(eCorporation).getSpreadCost() * (100 + GET_PLAYER(getOwnerINLINE()).calculateInflationRate()));
 										iCost /= 100;
-										
+
 										if (kPlayer.getGold() >= iCost)
 										{
 											iCost *= GC.getDefineINT("CORPORATION_FOREIGN_SPREAD_COST_PERCENT");
@@ -9613,6 +9613,8 @@ void CvCityAI::AI_juggleCitizens()
 			{
 				// ... that suggests we should break now to avoid getting into an endless loop.
 
+				//FAssertMsg(false, "circuit break"); // (for testing)
+
 				// Note: what tends to happen is that when the city evaluates stopping work on a food tile,
 				// it assumes that the citizen will go on to work some other 2-food plot.
 				// That's usually a fair assumption, but it can sometimes cause loops.
@@ -9670,6 +9672,7 @@ void CvCityAI::AI_juggleCitizens()
 
 		if (iCycles > getPopulation() + iTotalFreeSpecialists)
 		{
+			// This isn't a serious problem. I just want to know how offen it happens.
 			FAssertMsg(false, "juggle citizens failed to find a stable solution.");
 			break;
 		}
@@ -10064,6 +10067,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							}
 						}
 					}
+					// don't count high food growht for plots which don't contribute any net value.
+					if (iFoodYield - iConsumtionPerPop <= 0 && iProductionValue <= 0 && iCommerceValue <= 0)
+						bFillingBar = true;
 					
 					if (getPopulation() < 3)
 					{
@@ -10108,7 +10114,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						//If we already grow somewhat fast, devalue further food
 						//Remember growth acceleration is not dependent on food eaten per 
 						//pop, 4f twice as fast as 2f twice as fast as 1f...
-						int iHighGrowthThreshold = 2 + std::max(std::max(0, 5 - getPopulation()), (iPopToGrow + 1) / 2);
+						/*int iHighGrowthThreshold = 2 + std::max(std::max(0, 5 - getPopulation()), (iPopToGrow + 1) / 2);
 						if (bEmphasizeFood)
 						{
 							iHighGrowthThreshold *= 2;
@@ -10118,7 +10124,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						{
 							iFoodGrowthValue *= 25 + (75 * iHighGrowthThreshold) / iFoodPerTurn;
 							iFoodGrowthValue /= 100;
-						}
+						}*/
 					}
 				}
 
@@ -10328,8 +10334,7 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool 
 	{
 		eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
 	}
-	
-	
+
 	int iYieldValue = (AI_yieldValue(aiYields, NULL, bAvoidGrowth, bRemove, bIgnoreFood, bIgnoreGrowth, bIgnoreStarvation) * 100);
 
 	//if (eFinalImprovement != NO_IMPROVEMENT)
@@ -10369,7 +10374,8 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool 
 				{
 					if (GC.getImprovementInfo(eCurrentImprovement).getImprovementBonusDiscoverRand(iI) > 0)
 					{
-						iValue += 35;
+						//iValue += 35;
+						iValue += 20; // K-Mod (rescaling to match new yield values)
 					}
 				}
 			}
@@ -10378,8 +10384,13 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool 
 
 	if ((eCurrentImprovement != NO_IMPROVEMENT) && (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementUpgrade() != NO_IMPROVEMENT))
 	{
+		/* original bts code
 		iValue += 200;
-		iValue -= pPlot->getUpgradeTimeLeft(eCurrentImprovement, NO_PLAYER);		
+		iValue -= pPlot->getUpgradeTimeLeft(eCurrentImprovement, NO_PLAYER); */
+		// K-Mod. Note: this is still just an ugly kludge, just rescaled to match the new yield value.
+		// (the goal of this is to prefer plots that are close to upgrading, but not over immediate yield differences.)
+		iValue += 100 * pPlot->getUpgradeProgress() / std::max(1, GC.getGameINLINE().getImprovementUpgradeTime(eCurrentImprovement));
+		// K-Mod
 	}
 
 	return iValue;
