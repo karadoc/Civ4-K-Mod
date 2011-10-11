@@ -10035,7 +10035,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							}
 						}
 					}
-					
+
 					if (bEmphasizeFood)
 					{
 						//If we are emphasize food, pay less heed to caps.
@@ -10048,11 +10048,12 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					int iPopToGrow = std::max(0, iHappinessLevel);
 					int iGoodTiles = AI_countGoodTiles(iHealthLevel > 0, true, 50, true);
 					iGoodTiles += AI_countGoodSpecialists(iHealthLevel > 0);
-					iGoodTiles += bBarFull ? 0 : 1;
+					//iGoodTiles += bBarFull ? 0 : 1;
 
 					if (!bEmphasizeFood)
 					{
-						iPopToGrow = std::min(iPopToGrow, iGoodTiles + ((bRemove) ? 1 : 0));
+						//iPopToGrow = std::min(iPopToGrow, iGoodTiles + ((bRemove) ? 1 : 0));
+						iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
 					}
 
 					// if we have growth pontential, fill food bar to 85%
@@ -10070,12 +10071,12 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					// don't count high food growht for plots which don't contribute any net value.
 					if (iFoodYield - iConsumtionPerPop <= 0 && iProductionValue <= 0 && iCommerceValue <= 0)
 						bFillingBar = true;
-					
-					if (getPopulation() < 3)
+
+					/*if (getPopulation() < 3)
 					{
 						iPopToGrow = std::max(iPopToGrow, 3 - getPopulation());
 						iPopToGrow += 2;
-					}
+					}*/
 
 					// if we want to grow
 					if (iPopToGrow > 0 || bFillingBar)
@@ -10103,10 +10104,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						if (bFillingBar)
 							//iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + iFoodYield) / iFoodToGrow;
 							iFactorPopToGrow = 9 * iFoodToGrow / std::max(1, iFoodToGrow + iFoodLevel + iFoodPerTurn);
-						else if (iPopToGrow < 7)
+						else if (iPopToGrow < 6)
 							iFactorPopToGrow = 9 + 2 * iPopToGrow;
 						else
-							iFactorPopToGrow = 23;
+							iFactorPopToGrow = 21;
 						// K-Mod end
 
 						iFoodGrowthValue *= iFactorPopToGrow;
@@ -10305,7 +10306,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 
 	return iValue;
 }
-
 
 int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation) const
 {
@@ -11390,12 +11390,18 @@ int CvCityAI::AI_countGoodSpecialists(bool bHealthy) const
 		
 		if (iValue >= (bHealthy ? 200 : 300))
 		{
+			// K-Mod
+			if (isSpecialistValid(eSpecialist))
+				return getPopulation(); // unlimited
+			// K-Mod end
 			iCount += getMaxSpecialistCount(eSpecialist);
 		}
 	}
-	iCount -= getFreeSpecialist();
-	
-	return iCount;
+	//iCount -= getFreeSpecialist();
+	iCount -= totalFreeSpecialists(); // K-Mod
+
+	//return iCount;
+	return std::max(0, iCount); // K-Mod
 }
 //0 is normal
 //higher than zero means special.

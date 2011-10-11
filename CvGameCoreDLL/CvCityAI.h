@@ -115,18 +115,18 @@ public:
 	void AI_updateBestBuild();
 
 	virtual int AI_cityValue() const;
-    
-    int AI_calculateWaterWorldPercent();
-    
-    int AI_getCityImportance(bool bEconomy, bool bMilitary);
+
+	int AI_calculateWaterWorldPercent();
+
+	int AI_getCityImportance(bool bEconomy, bool bMilitary);
 
 	int AI_calculateMilitaryOutput() const; // K-Mod
-    
-    int AI_yieldMultiplier(YieldTypes eYield) const;
-    void AI_updateSpecialYieldMultiplier();
-    int AI_specialYieldMultiplier(YieldTypes eYield) const;
-    
-    int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true);
+
+	int AI_yieldMultiplier(YieldTypes eYield) const;
+	void AI_updateSpecialYieldMultiplier();
+	int AI_specialYieldMultiplier(YieldTypes eYield) const;
+
+	int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      11/14/09                                jdog5000      */
 /*                                                                                              */
@@ -139,12 +139,12 @@ public:
 
 	int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance);
 	int AI_cityThreat(bool bDangerPercent = false);
-	
+
 	int AI_getWorkersHave();
 	int AI_getWorkersNeeded();
 	void AI_changeWorkersHave(int iChange);
 	BuildingTypes AI_bestAdvancedStartBuilding(int iPass);
-	
+
 	void read(FDataStreamBase* pStream);
 	void write(FDataStreamBase* pStream);
 
