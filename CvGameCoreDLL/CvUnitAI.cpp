@@ -11105,7 +11105,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 		if ((iCityDefenderCount - 1) < pPlotCity->AI_minDefenders())
 		{
 			//if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
-			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(area()->getCitiesPerPlayer(getOwnerINLINE()) + 5, "AI shuffle defender") > 1) // K-mod
+			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(area()->getNumAIUnits(getOwnerINLINE(), UNITAI_CITY_DEFENSE) + 5, "AI shuffle defender") > 1) // K-mod
 			{
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
 				return true;
@@ -11142,6 +11142,10 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 /************************************************************************************************/
 				int iDefendersHave = pLoopCity->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE());
 				int iDefendersNeed = pLoopCity->AI_minDefenders();
+				// K-Mod. don't count ourself
+				if (pPlotCity == pLoopCity && AI_getUnitAIType() == UNITAI_CITY_DEFENSE)
+					iDefendersHave--;
+				// K-Mod end
 				if (iDefendersHave < iDefendersNeed)
 				{
 					if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))

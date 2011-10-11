@@ -11552,27 +11552,18 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 }
 
 // K-Mod note: the original BtS code for this was totally inconsistant with the calculation in AI_missionaryValue
-// -- which is bad news, since the results are compared directly.
-// I've changed a lot of this function, so that it is more sane, and more compariable to the other value.
-// but I'm not necessary happy with it yet.
+// -- which is bad news since the results are compared directly.
+// I've changed a lot of this function so that it is more sane and more compariable to the missionary value.
+// The original code is deleted.
 int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer) const
 {
 	CvTeam& kTeam = GET_TEAM(getTeam());
 	CvGame& kGame = GC.getGame();
 	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
 
-	//int iSpreadInternalValue = 100;
-	int iSpreadInternalValue = 0; // K-Mod
+	int iSpreadInternalValue = 0;
 	int iSpreadExternalValue = 0;
 
-	/* original bts code
-	if (kTeam.hasHeadquarters(eCorporation))
-	{
-		int iGoldMultiplier = kGame.getHeadquarters(eCorporation)->getTotalCommerceRateModifier(COMMERCE_GOLD);
-		iSpreadInternalValue += 10 * std::max(0, (iGoldMultiplier - 100));
-		iSpreadExternalValue += 15 * std::max(0, (iGoldMultiplier - 150));
-	} */
-	// K-Mod
 	if (kTeam.hasHeadquarters(eCorporation))
 	{
 		int iHqValue = 0;
@@ -11585,7 +11576,6 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 		iSpreadInternalValue += iHqValue;
 		iSpreadExternalValue += iHqValue;
 	}
-	// K-Mod end
 	
 	int iOurCitiesHave = 0;
 	int iOurCitiesCount = 0;
@@ -11597,15 +11587,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	}
 	else
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      11/14/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
 		iOurCitiesHave = pArea->countHasCorporation(eCorporation, getID()) + countCorporationSpreadUnits(pArea,eCorporation,true);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		iOurCitiesCount = pArea->getCitiesPerPlayer(getID());
 	}
 	
@@ -11627,57 +11609,13 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	if (iOurCitiesHave >= iOurCitiesCount)
 	{
 		iSpreadInternalValue = 0;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/23/10                                  denev       */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-		if (iSpreadExternalValue = 0)
-*/
 		if (iSpreadExternalValue == 0)
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 		{
 			return 0;
 		}
 	}
 	
-	/* original bts code
-	int iBonusValue = 0;
-	CvCity* pCity = getCapitalCity();
-	if (pCity != NULL)
-	{
-		iBonusValue = AI_corporationValue(eCorporation, pCity);
-		iBonusValue /= 100;
-	} */
-	iSpreadInternalValue += AI_corporationValue(eCorporation); // K-Mod
-
-	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
-	{
-		//CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
-		const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer); // K-Mod
-		if (kLoopPlayer.isAlive() && (kLoopPlayer.getNumCities() > 0))
-		{
-			if ((kLoopPlayer.getTeam() == getTeam()) || GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
-			{
-				if (kLoopPlayer.getHasCorporationCount(eCorporation) == 0)
-				{
-					//iBonusValue += 1000;
-					iSpreadInternalValue += kLoopPlayer.AI_corporationValue(eCorporation) * kLoopPlayer.getNumCities() * 2 /3; // K-Mod
-				}
-			}
-		}
-	}
-
-	/* original bts code
-	if (iBonusValue == 0)
-	{
-		return 0;
-	}
-
-	iSpreadInternalValue += iBonusValue; */
+	iSpreadInternalValue += AI_corporationValue(eCorporation);
 
 	if (iSpreadExternalValue > 0)
 	{
@@ -11687,39 +11625,14 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 		{
 			if (iPlayer != getID())
 			{
-				//CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer); // K-Mod
-				//if (kLoopPlayer.isAlive() && (kLoopPlayer.getTeam() != getTeam()) && (kLoopPlayer.getNumCities() > 0))
-				if (kLoopPlayer.isAlive() && kLoopPlayer.getNumCities() > 0) // K-Mod
+				int iNumCities = pArea ? pArea->getCitiesPerPlayer((PlayerTypes)iPlayer) : kLoopPlayer.getNumCities(); // K-Mod
+				if (kLoopPlayer.isAlive() && iNumCities > 0) // K-Mod
 				{
 					if (GET_TEAM(kLoopPlayer.getTeam()).isOpenBorders(getTeam()))
 					{
 						if (!kLoopPlayer.isNoCorporations() && !kLoopPlayer.isNoForeignCorporations())
 						{
-							/* original bts code
-							int iCitiesCount = 0;
-							int iCitiesHave = 0;
-							int iMultiplier = AI_getAttitudeWeight((PlayerTypes)iPlayer);
-							if (NULL == pArea)
-							{
-								iCitiesCount += 1 + (kLoopPlayer.getNumCities() * 50) / 100;
-								iCitiesHave += kLoopPlayer.getHasCorporationCount(eCorporation);
-							}
-							else
-							{
-								int iPlayerSpreadPercent = (100 * kLoopPlayer.getHasCorporationCount(eCorporation)) / kLoopPlayer.getNumCities();
-								iCitiesCount += pArea->getCitiesPerPlayer((PlayerTypes)iPlayer);
-								iCitiesHave += std::min(iCitiesCount, (iCitiesCount * iPlayerSpreadPercent) / 50);
-							}
-
-							if (iCitiesHave < iCitiesCount)
-							{
-								/* original bts code
-								int iValue = (iMultiplier * iSpreadExternalValue);
-								iValue += ((iMultiplier - 55) * iBonusValue) / 4;
-								iValue /= 100;
-							} */
-							// K-Mod. (wtf is with the iCitiesCount & iCitiesHave stuff? They are unused, and wrong!)
 							int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
 							int iAttitudeWeight;
 
@@ -11746,12 +11659,11 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 									iValue *= (kLoopPlayer.getNumCities()+3)/4;
 								}
 							}
-							if (iValue > iBestValue)
+							if (iValue > iBestValue && kLoopPlayer.countCorporations(eCorporation, pArea) < iNumCities)
 							{
 								iBestValue = iValue;
 								iBestPlayer = iPlayer;
 							}
-							// K-Mod end
 						}
 					}
 				}
@@ -11764,8 +11676,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 			{
 				*peBestPlayer = (PlayerTypes)iBestPlayer;
 			}
-			//return iBestValue;
-			return 6 * iBestValue; // K-Mod (see comment below)
+			return 10 * iBestValue; // K-Mod (see comment below)
 		}
 	}
 
@@ -11773,11 +11684,9 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	{
 		*peBestPlayer = getID();
 	}
-	//return iSpreadInternalValue;
-	// K-Mod... I'm putting in a fudge-factor of 6 just to bring the value up to scale with AI_missionaryValue.
+	// I'm putting in a fudge-factor of 10 just to bring the value up to scale with AI_missionaryValue.
 	// This isn't something that i'm happy about, but it's easier than rewriting AI_missionaryValue.
-	return 6 * iSpreadInternalValue;
-	// K-Mod end
+	return 10 * iSpreadInternalValue;
 }
 
 //Returns approximately 100 x gpt value of the corporation.

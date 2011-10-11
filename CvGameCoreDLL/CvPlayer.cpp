@@ -8353,16 +8353,20 @@ int CvPlayer::countHeadquarters() const
 }
 
 
-int CvPlayer::countCorporations(CorporationTypes eCorporation) const
+//int CvPlayer::countCorporations(CorporationTypes eCorporation) const
+int CvPlayer::countCorporations(CorporationTypes eCorporation, CvArea* pArea) const // K-Mod
 {
 	int iCount = 0;
 
 	int iLoop;
 	for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
-		if (pLoopCity->isHasCorporation(eCorporation))
+		if (!pArea || pLoopCity->area() == pArea) // K-Mod
 		{
-			++iCount;
+			if (pLoopCity->isHasCorporation(eCorporation))
+			{
+				++iCount;
+			}
 		}
 	}
 

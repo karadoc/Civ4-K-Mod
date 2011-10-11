@@ -125,4 +125,32 @@
 		<DefineName>USE_AI_CHOOSE_TECH_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_GROWTH_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_CULTURE_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_PLOT_CULTURE_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_PRODUCTION_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_RELIGION_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_GREAT_PEOPLE_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>m_bUSE_DO_MELTDOWN_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
 </Civ4Defines>

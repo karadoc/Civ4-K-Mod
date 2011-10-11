@@ -520,9 +520,9 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		if (AI_isEmphasizeGreatPeople())
 		{
 			//iGPPValue = isHuman() ? 30 : 20;
-			iGPPValue = 16; // K-Mod. If the value is too high, it becomes worth more than the food that feeds them.
+			iGPPValue = 12; // K-Mod. If the value is too high, it becomes worth more than city growth
 		}
-		else 
+		else
 		{
 			if (AI_isEmphasizeYield(YIELD_COMMERCE))
 			{
@@ -625,19 +625,22 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		}
 
 		// Scale based on how often this city will actually get a great person.
-		int iCityRate = getGreatPeopleRate();
-		int iHighestRate = 0;
-		int iLoop;
-		for( CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop) )
+		if (!AI_isEmphasizeGreatPeople())
 		{
-			int x = pLoopCity->getGreatPeopleRate();
-			if (x > iHighestRate)
-				iHighestRate = x;
-		}
-		if (iHighestRate > iCityRate)
-		{
-			iTempValue *= 100;
-			iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
+			int iCityRate = getGreatPeopleRate();
+			int iHighestRate = 0;
+			int iLoop;
+			for( CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop) )
+			{
+				int x = pLoopCity->getGreatPeopleRate();
+				if (x > iHighestRate)
+					iHighestRate = x;
+			}
+			if (iHighestRate > iCityRate)
+			{
+				iTempValue *= 100;
+				iTempValue /= (2*100*(iHighestRate+4))/(iCityRate+4) - 100;
+			}
 		}
 		
 		iTempValue *= getTotalGreatPeopleRateModifier();
@@ -647,7 +650,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
 	}
-	/*else
+	else
 	{
 		SpecialistTypes eGenericCitizen = (SpecialistTypes) GC.getDefineINT("DEFAULT_SPECIALIST");
 		
@@ -657,7 +660,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			iValue *= 60;
 			iValue /= 100;
 		}
-	}*/
+	}
 	
 	int iExperience = GC.getSpecialistInfo(eSpecialist).getExperience();
 	if (0 != iExperience)
@@ -709,6 +712,7 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 		int iTempValue = 100 * iGreatPeopleRate * iGPPValue;
 		
 		// Scale based on how often this city will actually get a great person.
+		/* Actually... don't do that. That's not the kind of thing we should take into account for permanent specialists.
 		int iCityRate = getGreatPeopleRate();
 		int iHighestRate = 0;
 		int iLoop;
@@ -722,7 +726,7 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 		{
 			iTempValue *= 100;
 			iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
-		}
+		} */
 		
 		iTempValue *= getTotalGreatPeopleRateModifier();
 		iTempValue /= 100;
@@ -4201,7 +4205,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				// medium value for change in waste
 				iValue -= iCitValue * iWasteDelta;
 				// some extra value if the change will help us grow (this is a positive change bias)
-				if (iWasteDelta < 0 && iHappinessLevel > 1)
+				if (iWasteDelta < 0 && iHappinessLevel > 0)
 				{
 					iValue -= iCitValue * iWasteDelta;
 				}
@@ -5013,8 +5017,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						// K-Mod
 						if (iI == YIELD_PRODUCTION)
 						{
-							// priority += 2.4% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 240)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
+							// priority += 2.5% per 1% in production increase. roughly. More when at war.
+							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 250)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
 						}
 						// K-Mod end
 
@@ -5154,6 +5158,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						}
 						// K-Mod end
 					}
+
+					// K-Mod. help get the ball rolling on espionage.
+					if (iI == COMMERCE_ESPIONAGE && iTempValue > 0 && !GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+					{
+						// priority += 1% per 1% increase in total espionage, more for big espionage strategy
+						iPriorityFactor += std::min(100, (kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?150 : 100) * iTempValue/std::max(1, 4*kOwner.getCommerceRate(COMMERCE_ESPIONAGE)));
+					}
+					// K-Mod end
 
 
 /************************************************************************************************/
@@ -10084,7 +10096,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 
 					// if we want to grow
 					// don't count growth value for tiles with nothing else to contribute.
-					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 && iCommerceValue > 0))
+					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 || iCommerceValue > 0))
 					{
 						
 						// will multiply this by factors
@@ -10403,7 +10415,10 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool 
 
 int CvCityAI::AI_experienceWeight()
 {
-	return ((getProductionExperience() + getDomainFreeExperience(DOMAIN_SEA)) * 2);
+	//return ((getProductionExperience() + getDomainFreeExperience(DOMAIN_SEA)) * 2);
+	// K-Mod
+	return 2 * getProductionExperience() + getDomainFreeExperience(DOMAIN_LAND) + getDomainFreeExperience(DOMAIN_SEA);
+	// K-Mod end
 }
 
 
@@ -11054,7 +11069,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
 
     // pop borders
-	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) < 2)
+	if (getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRate(COMMERCE_CULTURE) == 0)
 	{
 		if (eBestBuilding != NO_BUILDING && AI_countGoodTiles(true, false) > 0)
 		{
@@ -11084,7 +11099,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 				{
 					int iOdds = 100;
 					iOdds *= 50 + iBestBuildingValue;
-					iOdds /= 50 + 5 * iBestBuildingValue;
+					iOdds /= 50 + (bLocalResource ? 3 : 5) * iBestBuildingValue;
 					if (AI_chooseUnit(UNITAI_WORKER_SEA, iOdds))
 					{
 						return;
@@ -11119,20 +11134,27 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 
 		//military
 		bool bWar = GET_TEAM(getTeam()).getAtWarCount(true) > 0;
-		if (bDanger || iBestBuildingValue < (bWar ? 30 : 20))
+		if (bDanger || iBestBuildingValue < (bWar ? 35 : 20))
 		{
 			int iOdds = (bWar ? 100 : 50) - kOwner.AI_unitCostPerMil()/2;
+			iOdds += AI_experienceWeight();
+			iOdds *= 100 + 2*getMilitaryProductionModifier();
+			iOdds /= 100;
+
 			iOdds *= 50 + iBestBuildingValue;
 			iOdds /= 50 + 10 * iBestBuildingValue;
 
-   			if (AI_chooseBuilding(BUILDINGFOCUS_EXPERIENCE, 10, iOdds))
+			if (GC.getGameINLINE().getSorenRandNum(100, "City governor choose military") < iOdds)
 			{
-				return;
-			}
+				if (AI_chooseBuilding(BUILDINGFOCUS_EXPERIENCE, 10))
+				{
+					return;
+				}
 
-			if (AI_chooseUnit(NO_UNITAI, iOdds))
-			{
-				return;
+				if (AI_chooseUnit(NO_UNITAI))
+				{
+					return;
+				}
 			}
 		}
 

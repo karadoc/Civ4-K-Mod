@@ -113,6 +113,7 @@ public:
 /*                                                                                              */
 /* Victory Strategy AI                                                                          */
 /************************************************************************************************/
+	int AI_countMembersWithStrategy(int iStrategy) const; // K-Mod
 	bool AI_isAnyMemberDoVictoryStrategy( int iVictoryStrategy ) const;
 	bool AI_isAnyMemberDoVictoryStrategyLevel4() const;
 	bool AI_isAnyMemberDoVictoryStrategyLevel3() const;

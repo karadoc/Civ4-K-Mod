@@ -310,7 +310,8 @@ public:
 
 	bool hasHeadquarters(CorporationTypes eCorporation) const;																											// Exposed to Python
 	int countHeadquarters() const;																																					// Exposed to Python
-	int countCorporations(CorporationTypes eCorporation) const;																																					// Exposed to Python
+	//int countCorporations(CorporationTypes eCorporation) const;	// Exposed to Python
+	int countCorporations(CorporationTypes eCorporation, CvArea* pArea = 0) const; // K-Mod, exposed to Python
 	void foundCorporation(CorporationTypes eCorporation);																										// Exposed to Python
 
 	DllExport int getCivicAnarchyLength(CivicTypes* paeNewCivics) const;																	// Exposed to Python

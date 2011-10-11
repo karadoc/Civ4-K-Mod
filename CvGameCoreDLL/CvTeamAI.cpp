@@ -2271,6 +2271,28 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 	return NO_DENIAL;
 }
 
+// K-Mod
+int CvTeamAI::AI_countMembersWithStrategy(int iStrategy) const
+{
+	int iCount = 0;
+	for (int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++)
+	{
+		if (GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID())
+		{
+			if (GET_PLAYER((PlayerTypes)iPlayer).isAlive())
+			{
+				if (GET_PLAYER((PlayerTypes)iPlayer).AI_isDoStrategy(iStrategy))
+				{
+					iCount++;
+				}
+			}
+		}
+	}
+
+	return iCount;
+}
+// K-Mod end
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      03/20/10                                jdog5000      */
 /*                                                                                              */
@@ -4475,6 +4497,13 @@ void CvTeamAI::AI_doWar()
 						iTimeModifier *= iEnemyPowerPercent;
 						iTimeModifier /= iThreshold;
 					}
+					// K-Mod. with crush strategy, use just 2/3 of the prep time.
+					{
+						int iCrushMembers = AI_countMembersWithStrategy(AI_STRATEGY_CRUSH);
+						iTimeModifier *= 3 * (getNumMembers()-iCrushMembers) + 2 * iCrushMembers;
+						iTimeModifier /= 3;
+					}
+					// K-Mod end
 					
 					iTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
 					iTimeModifier /= 150;
