@@ -10946,11 +10946,11 @@ int CvCity::getReligionGrip(ReligionTypes eReligion) const
 	if (isHasReligion(eReligion))
 	{
 		iScore += GC.getDefineINT("RELIGION_INFLUENCE_POPULATION_WEIGHT") * getPopulation();
-	}
 
-	if (GET_PLAYER(getOwner()).getStateReligion() == eReligion)
-	{
-		iScore += GC.getDefineINT("RELIGION_INFLUENCE_STATE_RELIGION_WEIGHT");
+		if (GET_PLAYER(getOwner()).getStateReligion() == eReligion)
+		{
+			iScore += GC.getDefineINT("RELIGION_INFLUENCE_STATE_RELIGION_WEIGHT");
+		}
 	}
 
 	for (int iI = 0; iI < GC.getNumBuildingInfos(); iI++)
@@ -10962,7 +10962,7 @@ int CvCity::getReligionGrip(ReligionTypes eReligion) const
 	}
 
 	CvCity* pHolyCity = GC.getGame().getHolyCity(eReligion);
-	if (pHolyCity)
+	if (pHolyCity && isConnectedTo(pHolyCity))
 	{
 		if (pHolyCity->hasShrine(eReligion))
 			iScore += GC.getDefineINT("RELIGION_INFLUENCE_SHRINE_WEIGHT");
@@ -12553,7 +12553,7 @@ void CvCity::doReligion()
 	int iRandThreshold;
 	int iSpread;
 	int iLoop;
-	int iI, iJ;
+	//int iI, iJ;
 
 	CyCity* pyCity = new CyCity(this);
 	CyArgsList argsList;
@@ -12566,12 +12566,65 @@ void CvCity::doReligion()
 		return;
 	}
 
+	// K-Mod
+	ReligionTypes eStrongestReligion = NO_RELIGION;
+	int iStrongestGrip = 0;
+	int iRandomWeight = GC.getDefineINT("RELIGION_INFLUENCE_RANDOM_WEIGHT");
+
+	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
+	{
+		int iGrip = getReligionGrip((ReligionTypes)iI) + GC.getGameINLINE().getSorenRandNum(iRandomWeight, "Religion influence");
+		if (iGrip > iStrongestGrip)
+		{
+			iStrongestGrip = iGrip;
+			eStrongestReligion = (ReligionTypes)iI;
+		}
+	}
+	if (eStrongestReligion != NO_RELIGION && !isHasReligion(eStrongestReligion))
+	{
+		if (eStrongestReligion == GET_PLAYER(getOwnerINLINE()).getStateReligion() || !GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread())
+		{
+			iRandThreshold = 0;
+
+			for (int iJ = 0; iJ < MAX_PLAYERS; iJ++)
+			{
+				if (GET_PLAYER((PlayerTypes)iJ).isAlive())
+				{
+					for (pLoopCity = GET_PLAYER((PlayerTypes)iJ).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iJ).nextCity(&iLoop))
+					{
+						if (pLoopCity->isConnectedTo(this))
+						{
+							iSpread = pLoopCity->getReligionInfluence(eStrongestReligion);
+
+							iSpread *= GC.getReligionInfo(eStrongestReligion).getSpreadFactor();
+
+							if (iSpread > 0)
+							{
+								iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
+
+								//iSpread /= (getReligionCount() + 1);
+
+								iRandThreshold = std::max(iRandThreshold, iSpread);
+							}
+						}
+					}
+				}
+			}
+
+			if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
+			{
+				setHasReligion(eStrongestReligion, true, true, true);
+			}
+		}
+	} 
+	// K-Mod end
+
+	/* original bts code
 	if (getReligionCount() == 0)
 	{
 		for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
 		{
-			//if (!isHasReligion((ReligionTypes)iI))
-			if (!isHasReligion((ReligionTypes)iI) && GC.getGame().isReligionFounded((ReligionTypes)iI)) // K-Mod
+			if (!isHasReligion((ReligionTypes)iI))
 			{
 				if ((iI == GET_PLAYER(getOwnerINLINE()).getStateReligion()) || !(GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread()))
 				{
@@ -12610,7 +12663,7 @@ void CvCity::doReligion()
 				}
 			}
 		}
-	}
+	} */
 }
 
 

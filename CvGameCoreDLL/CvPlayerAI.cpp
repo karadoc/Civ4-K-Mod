@@ -6076,12 +6076,8 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 	bool bWarPlan = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
 	if( !bWarPlan )
 	{
-		// Aggressive players will stick with war civics
-		/* BBAI code
-		if( GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400 ) */
-		// K-Mod .. unless they are able to switch civics freely anyway..
-		if (GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400
-			&& getMaxAnarchyTurns() != 0 && getAnarchyModifier() + 100 > 0)
+		// Aggressive players will stick with war techs
+		if (GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400)
 		{
 			bWarPlan = true;
 		}
@@ -6148,19 +6144,8 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					case UNITAI_ATTACK_CITY:
 						iMilitaryValue += ((bWarPlan) ? 800 : 400);
 						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER ) ? 600 : 0); // was 800
-						if (kLoopUnit.getBombardRate() > 0)
-						{
-							iMilitaryValue += 200;
-
-							if (AI_calculateTotalBombard(DOMAIN_LAND) == 0)
-							{
-								iMilitaryValue += 800;
-								if (AI_isDoStrategy(AI_STRATEGY_DAGGER))
-								{
-									iMilitaryValue += 400; // was 1000
-								}
-							}
-						}
+						//if (kLoopUnit.getBombardRate() > 0)
+						// ... moved out of the switch
 						iUnitValue += 100;
 						break;
 
@@ -6342,7 +6327,35 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						FAssert(false);
 						break;
 					}
-					
+
+					// K-Mod
+					if (kLoopUnit.getBombardRate() > 0) // block moved from UNITAI_ATTACK_CITY:
+					{
+						iMilitaryValue += 200;
+
+						if (AI_calculateTotalBombard(DOMAIN_LAND) == 0)
+						{
+							iMilitaryValue += 800;
+							if (AI_isDoStrategy(AI_STRATEGY_DAGGER))
+							{
+								iMilitaryValue += 400; // was 1000
+							}
+						}
+					}
+
+					if (kLoopUnit.getCollateralDamage() > 0)
+					{
+						int iOldValue = getTypicalUnitValue(UNITAI_COLLATERAL);
+						if (iOldValue > 0)
+						{
+							int iNewValue = GC.getGameINLINE().AI_combatValue(eLoopUnit);
+							iMilitaryValue += 100 * iNewValue / iOldValue;
+							// this boost is a bit ad hoc. But so is the rest of the stuff in here!
+							// my goal with this component is to boost the value of canons.
+						}
+					}
+					// K-Mod end
+
 					if( AI_isDoStrategy(AI_STRATEGY_ALERT1) )
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
@@ -6353,10 +6366,10 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 						if( kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE) )
 						{
-							iMilitaryValue += (1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
+							iMilitaryValue += (1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue +=
 						}
 					}
-					
+
 					if( AI_isDoStrategy(AI_STRATEGY_TURTLE) && iPathLength <= 1)
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
@@ -6367,7 +6380,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 						if( kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE) )
 						{
-							iMilitaryValue += (2000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
+							iMilitaryValue += (2000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue +=
 						}
 					}
 
@@ -6385,7 +6398,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							iMilitaryValue += (500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
 						}
 					}
-					
+
 					if (kLoopUnit.getUnitAIType(UNITAI_ASSAULT_SEA) && iCoastalCities > 0)
 					{
 						int iAssaultValue = 0;
@@ -6403,7 +6416,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 							iAssaultValue += (800 * (iNewCapacity - iOldCapacity)) / std::max(1, iOldCapacity);
 						}
-						
+
 						if (iAssaultValue > 0)
 						{
 							int iLoop;
@@ -6430,13 +6443,13 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							}
 						}
 					}
-					
+
 					// K-Mod
 					if (kLoopUnit.getDomainType() == DOMAIN_AIR)
 					{
 						iMilitaryValue += (bWarPlan? 600 : 400) * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100;
 					}
-					
+
 					if (iNavalValue > 0)
 					{
 						if (getCapitalCity() != NULL)
@@ -6516,7 +6529,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							}
 						}
 					}
-					
+
 					if( iMilitaryValue > 0 )
 					{
 						if (iHasMetCount == 0)
@@ -6540,7 +6553,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 						iUnitValue += iMilitaryValue;
 					}
-					
+
 					if (iPathLength <= 1)
 					{
 						if (getTotalPopulation() > 5)

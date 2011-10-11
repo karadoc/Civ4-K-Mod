@@ -1020,12 +1020,17 @@ void CvCityAI::AI_chooseProduction()
 
 	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 
-	// K-Mod, military exemption for commerce cities and underdeveloped cities
-	bool bUnitExempt = false;
+	// K-Mod.
 	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
 	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
+	// for the purpose of adjusting production probabilities, scale the building value up for early eras
+	// (because early game buildings are relatively weaker)
+	iBestBuildingValue *= 2*GC.getNumEraInfos() - kPlayer.getCurrentEra();
+	iBestBuildingValue /= std::max(1, GC.getNumEraInfos());
 
-	// Don't give exemptions to cities that don't have anything good to do anyway.
+	// Check for military exemption for commerce cities and underdeveloped cities.
+	// Don't give exemptions to cities that don't have anything good to build anyway.
+	bool bUnitExempt = false;
 	if (iBestBuildingValue >= 50)
 	{
 		if (iProductionRank > kPlayer.getNumCities()/2)
