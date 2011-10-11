@@ -2560,9 +2560,9 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 					}
 				}
 			}
-			
+
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
-			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 24*GC.getGame().getGameTurn(), 6*iAllTeamTotalPoints);
+			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 16*GC.getGame().getGameTurn(), 5*iAllTeamTotalPoints);
 			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
 			// lower weight if we have spent less than a third of our total points
 			if (getCommercePercent(COMMERCE_ESPIONAGE) == 0) // ...only if we aren't explicitly trying to get espionage.
@@ -11566,7 +11566,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 		CvCity* kHqCity = kGame.getHeadquarters(eCorporation);
 		for (int i = 0; i < NUM_COMMERCE_TYPES; i++)
 		{
-			iHqValue += kCorp.getHeadquarterCommerce(i) * kHqCity->getTotalCommerceRateModifier((CommerceTypes)i);
+			iHqValue += kCorp.getHeadquarterCommerce(i) * kHqCity->getTotalCommerceRateModifier((CommerceTypes)i) * AI_commerceWeight((CommerceTypes)i)/100;
 		}
 
 		iSpreadInternalValue += iHqValue;
@@ -11676,7 +11676,8 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 			{
 				//CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer); // K-Mod
-				if (kLoopPlayer.isAlive() && (kLoopPlayer.getTeam() != getTeam()) && (kLoopPlayer.getNumCities() > 0))
+				//if (kLoopPlayer.isAlive() && (kLoopPlayer.getTeam() != getTeam()) && (kLoopPlayer.getNumCities() > 0))
+				if (kLoopPlayer.isAlive() && kLoopPlayer.getNumCities() > 0) // K-Mod
 				{
 					if (GET_TEAM(kLoopPlayer.getTeam()).isOpenBorders(getTeam()))
 					{
@@ -11706,8 +11707,32 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 								iValue /= 100;
 							} */
 							// K-Mod. (wtf is with the iCitiesCount & iCitiesHave stuff? They are unused, and wrong!)
+							int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
+							int iAttitudeWeight;
+
+							if (kLoopPlayer.getTeam() == getTeam())
+								iAttitudeWeight = 100;
+							else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
+								iAttitudeWeight = 50;
+							else
+								iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - 75;
+
 							int iValue = iSpreadExternalValue;
-							iValue += (AI_getAttitudeWeight((PlayerTypes)iPlayer) - 50) * kLoopPlayer.AI_corporationValue(eCorporation);
+							iValue += iCorpValue * iAttitudeWeight;
+							if (iValue > 0 && iCorpValue > 0 && kLoopPlayer.countCorporations(eCorporation) == 0)
+							{
+								// if the player will spread the corp themselves, then that's good for us.
+								if (iAttitudeWeight >= 50)
+								{
+									// estimate spread to 2/3 of total cities.
+									iValue *= (2*kLoopPlayer.getNumCities()+1)/3;
+								}
+								else
+								{
+									// estimate spread to 1/4 of total cities, rounded up.
+									iValue *= (kLoopPlayer.getNumCities()+3)/4;
+								}
+							}
 							if (iValue > iBestValue)
 							{
 								iBestValue = iValue;

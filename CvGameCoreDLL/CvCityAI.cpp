@@ -647,7 +647,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
 	}
-	else
+	/*else
 	{
 		SpecialistTypes eGenericCitizen = (SpecialistTypes) GC.getDefineINT("DEFAULT_SPECIALIST");
 		
@@ -657,7 +657,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			iValue *= 60;
 			iValue /= 100;
 		}
-	}
+	}*/
 	
 	int iExperience = GC.getSpecialistInfo(eSpecialist).getExperience();
 	if (0 != iExperience)
@@ -4314,9 +4314,10 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 			{
 				int iSpecialistsValue = 0;
 				int iCurrentSpecialistsRunnable = 0;
+				SpecialistTypes eDefaultSpecialist = (SpecialistTypes)GC.getDefineINT("DEFAULT_SPECIALIST");
 				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 				{
-					if (iI != GC.getDefineINT("DEFAULT_SPECIALIST"))
+					if (iI != eDefaultSpecialist)
 					{
 						bool bUnlimited = (GET_PLAYER(getOwnerINLINE()).isSpecialistValid((SpecialistTypes)iI));
 						int iRunnable = (getMaxSpecialistCount((SpecialistTypes)iI) > 0);
@@ -9987,13 +9988,14 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						/* original bts code
 						int iNewFoodPerTurn = iFoodPerTurn + aiYields[YIELD_FOOD] - iConsumtionPerPop;
 						if ((iHappinessLevel + kMaxHappyIncrease) > 0 && iNewFoodPerTurn > 0)
-						{ */
-						// K-Mod.
-						if (iHappinessLevel + kMaxHappyIncrease > 2)
 						{
-							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield;
+							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel) / iNewFoodPerTurn) : MAX_INT; */
+						// K-Mod.
+						if (iHappinessLevel + kMaxHappyIncrease > 0)
+						{
+							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield - (bRemove ? std::min(iConsumtionPerPop, iFoodYield) : 0);
+							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel + iNewFoodPerTurn-1) / iNewFoodPerTurn) : MAX_INT;
 						// K-Mod end
-							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel) / iNewFoodPerTurn) : MAX_INT;
 
 							// do we have hurry anger?
 							int iHurryAngerTimer = getHurryAngerTimer();
@@ -10068,9 +10070,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							}
 						}
 					}
-					// don't count high food growht for plots which don't contribute any net value.
-					if (iFoodYield - iConsumtionPerPop <= 0 && iProductionValue <= 0 && iCommerceValue <= 0)
-						bFillingBar = true;
 
 					/*if (getPopulation() < 3)
 					{
@@ -10079,7 +10078,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					}*/
 
 					// if we want to grow
-					if (iPopToGrow > 0 || bFillingBar)
+					// don't count growth value for tiles with nothing else to contribute.
+					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 && iCommerceValue > 0))
 					{
 						
 						// will multiply this by factors
@@ -10102,7 +10102,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							iFactorPopToGrow = 41; */
 						// K-Mod, reduced the scale to match the building evaluation code.
 						if (bFillingBar)
-							//iFactorPopToGrow = 12 - 6 * (iFoodLevel + iFoodPerTurn + iFoodYield) / iFoodToGrow;
 							iFactorPopToGrow = 9 * iFoodToGrow / std::max(1, iFoodToGrow + iFoodLevel + iFoodPerTurn);
 						else if (iPopToGrow < 6)
 							iFactorPopToGrow = 9 + 2 * iPopToGrow;

@@ -12764,6 +12764,7 @@ bool CvUnitAI::AI_spreadReligion()
 }
 
 
+// K-Mod: I've basically rewritten this whole function.
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_spreadCorporation()
 {
@@ -12785,27 +12786,80 @@ bool CvUnitAI::AI_spreadCorporation()
 	{
 		return false;
 	}
-	bool bHasHQ = (GET_TEAM(getTeam()).hasHeadquarters((CorporationTypes)iI));
+	//bool bHasHQ = (GET_TEAM(getTeam()).hasHeadquarters((CorporationTypes)iI));
 
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
 	CvPlot* pBestSpreadPlot = NULL;
 
+	// K-Mod
+	// first, if we are already doing a spread mission, continue that.
+	if (getGroup()->AI_getMissionAIType() == MISSIONAI_SPREAD_CORPORATION)
+	{
+		CvPlot* pMissionPlot = getGroup()->AI_getMissionAIPlot();
+		if (pMissionPlot != NULL &&
+			pMissionPlot->getPlotCity() != NULL &&
+			canSpreadCorporation(pMissionPlot, eCorporation) &&
+			!pMissionPlot->isVisibleEnemyUnit(this) &&
+			generatePath(pMissionPlot, MOVE_NO_ENEMY_TERRITORY, true))
+		{
+			pBestPlot = getPathEndTurnPlot();
+			pBestSpreadPlot = pMissionPlot;
+		}
+	}
+
+	if (pBestSpreadPlot == NULL)
+	{
+		PlayerTypes eTargetPlayer = NO_PLAYER;
+		const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+		if (isHuman())
+			eTargetPlayer = plot()->isOwned() ? plot()->getOwnerINLINE() : getOwnerINLINE();
+		else if (kOwner.AI_executiveValue(area(), eCorporation, &eTargetPlayer) <= 0)
+			return false;
+
+		FAssert(eTargetPlayer != NO_PLAYER);
+		const CvPlayer& kTargetPlayer = GET_PLAYER(eTargetPlayer);
+		FAssert(kTargetPlayer.isAlive() && canEnterTerritory(kTargetPlayer.getTeam()));
+		int iLoop;
+		for (CvCity* pLoopCity = kTargetPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kTargetPlayer.nextCity(&iLoop))
+		{
+			if (AI_plotValid(pLoopCity->plot()) &&
+				pLoopCity->isRevealed(getTeam(), false) &&
+				pLoopCity->area() == area() &&
+				canSpreadCorporation(pLoopCity->plot(), eCorporation) &&
+				!pLoopCity->plot()->isVisibleEnemyUnit(this) &&
+				GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_SPREAD_CORPORATION, getGroup()) == 0)
+			{
+				int iPathTurns;
+				if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
+				{
+					int iValue = 10 + pLoopCity->getPopulation() * 2;
+					iValue += pLoopCity->getTeam() == getTeam() ? kOwner.AI_corporationValue(eCorporation, pLoopCity) : 0;
+
+					iValue *= 1000;
+
+					iValue /= (iPathTurns + 1);
+
+					if (iValue > iBestValue)
+					{
+						iBestValue = iValue;
+						pBestPlot = isHuman() ? pLoopCity->plot() : getPathEndTurnPlot();
+						pBestSpreadPlot = pLoopCity->plot();
+					}
+				}
+			}
+		}
+	}
+	// K-Mod end
+
+	/* original bts code w/ BBAI changes
 	CvTeam& kTeam = GET_TEAM(getTeam());
 	for (int iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/21/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-		//if (kLoopPlayer.isAlive() && (bHasHQ || (getTeam() == kLoopPlayer.getTeam())))
 		if (kLoopPlayer.isAlive() && ((bHasHQ && canEnterTerritory(GET_PLAYER((PlayerTypes)iI).getTeam())) || (getTeam() == kLoopPlayer.getTeam())))
 		{			
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			int iLoopPlayerCorpCount = kLoopPlayer.countCorporations(eCorporation);
 			CvTeam& kLoopTeam = GET_TEAM(kLoopPlayer.getTeam());
 			int iLoop;
@@ -12813,34 +12867,15 @@ bool CvUnitAI::AI_spreadCorporation()
 			{
 				if (AI_plotValid(pLoopCity->plot()))
 				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-					// BBAI efficiency: check same area
 					if ( pLoopCity->area() == area() && canSpreadCorporation(pLoopCity->plot(), eCorporation))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 					{
 						if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
 						{
 							if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_SPREAD_CORPORATION, getGroup()) == 0)
 							{
 								int iPathTurns;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/03/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 								if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 								{
-									// BBAI TODO: Serious need for more intelligent self spread, keep certain corps from
-									// enemies based on their victory pursuits (culture ...)
 									int iValue = (10 + pLoopCity->getPopulation() * 2);
 
 									if (pLoopCity->getOwnerINLINE() == getOwnerINLINE())
@@ -12907,9 +12942,9 @@ bool CvUnitAI::AI_spreadCorporation()
 				}
 			}
 		}
-	}
+	} */
 
-	if ((pBestPlot != NULL) && (pBestSpreadPlot != NULL))
+	if (pBestPlot != NULL && pBestSpreadPlot != NULL)
 	{
 		if (atPlot(pBestSpreadPlot))
 		{
@@ -12926,15 +12961,7 @@ bool CvUnitAI::AI_spreadCorporation()
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/09/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_SPREAD_CORPORATION, pBestSpreadPlot);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			return true;
 		}
 	}
