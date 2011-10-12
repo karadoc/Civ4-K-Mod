@@ -12028,7 +12028,7 @@ void CvGameTextMgr::setReligionHelpCity(CvWStringBuffer &szBuffer, ReligionTypes
 	// K-Mod
 	if (pCity && gDLL->getChtLvl() > 0 && gDLL->ctrlKey())
 	{
-		szBuffer.append(CvWString::format(L"grip: %d", pCity->getReligionGrip(eReligion)));
+		szBuffer.append(CvWString::format(L" - grip: %d", pCity->getReligionGrip(eReligion)));
 		szBuffer.append(NEWLINE);
 	}
 	// K-Mod end
