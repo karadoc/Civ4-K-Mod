@@ -1,5 +1,22 @@
-This is K-Mod version 1.02c.
+This is K-Mod version 1.03.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.03 changelist
+
++ Changed the mechanics of the natural spread of religions. With the new system, only the religion with the highest 'grip' gets a chance to spread to a city - but religions may still spread even if the city already has religion. Also, if an existing religion in the city has a lower grip than the new religion, there is a chance that the existing religion will be removed. "grip" is a measure of how strong the religion is in a particular city. It is calculated based on several factors, including proximity to the holy city, the number of religious buildings in the city, the year the religion was founded, and so on. The new system is a fairly significant change, but it isn't one you should have to worry about if you don't want to.
++ Culture flipping is now blocked for the most recent previous owner of a city instead of for all previous owners (when using the default "no flipping after conquest")
+
++ Fixed some problems in the new automatic citizen assignment code.
++ Changed the way the AI counts food when deciding on plot improvements.
++ Rewrote the AI's strategy for spreading corporations. Hopefully it will spread them a bit smarter now.
++ AIs using the crush strategy will now spend less time preparing for war. (2/3 of the prep normal time)
++ AIs who are fully committed to a conquest victory will no longer make peace for any price unless they don't want a particular war.
++ AIs who are trying to get the last techs for a space victory will no longer use espionage economy.
++ Refined the AIs building value calculations, and production selection calculations.
+
++ Blocked some more python callbacks.
 
 --
 
