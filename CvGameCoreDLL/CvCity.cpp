@@ -12583,8 +12583,10 @@ void CvCity::doReligion()
 	}
 
 	// K-Mod
-	ReligionTypes eStrongestReligion = NO_RELIGION;
+	ReligionTypes eStrongestReligion = NO_RELIGION; // strongest religion, either already in city or not
+	ReligionTypes eWeakestReligion = NO_RELIGION; // weakest religion already in the city
 	int iStrongestGrip = 0;
+	int iWeakestGrip = INT_MAX;
 	int iRandomWeight = GC.getDefineINT("RELIGION_INFLUENCE_RANDOM_WEIGHT");
 
 	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
@@ -12597,6 +12599,11 @@ void CvCity::doReligion()
 			{
 				iStrongestGrip = iGrip;
 				eStrongestReligion = (ReligionTypes)iI;
+			}
+			if (isHasReligion((ReligionTypes)iI) && !isHolyCity((ReligionTypes)iI) && iGrip < iWeakestGrip)
+			{
+				iWeakestGrip = iGrip;
+				eWeakestReligion = (ReligionTypes)iI;
 			}
 		}
 	}
@@ -12637,6 +12644,16 @@ void CvCity::doReligion()
 
 			if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
 			{
+				if (eWeakestReligion != NO_RELIGION && iWeakestGrip < iStrongestGrip)
+				{
+					// If the weakest religion is only has half the strength of the new releigion,
+					// then it deserves to go. sorry.
+					int iOdds = 200*(iStrongestGrip - iWeakestGrip) / std::max(1, iStrongestGrip);
+					if (GC.getGameINLINE().getSorenRandNum(100, "Religion departure") < iOdds)
+					{
+						setHasReligion(eWeakestReligion, false, true, true);
+					}
+				}
 				setHasReligion(eStrongestReligion, true, true, true);
 			}
 		}
