@@ -11606,10 +11606,10 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 		}
 	}
 	
-	if (iOurCitiesHave >= iOurCitiesCount)
+	if (iOurCitiesHave >= iOurCitiesCount+1) // K-Mod, +1 just so that we can build a spare, perhaps to airlift to another area.
 	{
 		iSpreadInternalValue = 0;
-		if (iSpreadExternalValue == 0)
+		if (iSpreadExternalValue <= 0)
 		{
 			return 0;
 		}

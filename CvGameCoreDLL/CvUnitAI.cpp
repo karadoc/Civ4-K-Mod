@@ -11143,7 +11143,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 				int iDefendersHave = pLoopCity->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE());
 				int iDefendersNeed = pLoopCity->AI_minDefenders();
 				// K-Mod. don't count ourself
-				if (pPlotCity == pLoopCity && AI_getUnitAIType() == UNITAI_CITY_DEFENSE)
+				if (pPlotCity == pLoopCity && (AI_getUnitAIType() == UNITAI_CITY_DEFENSE || getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY))
 					iDefendersHave--;
 				// K-Mod end
 				if (iDefendersHave < iDefendersNeed)
@@ -11160,7 +11160,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 								if (iPathTurns <= 10)
 								{
 									int iValue = (iDefendersNeed - iDefendersHave) * 20;
-									iValue += iDefendersHave == 0 ? 20 : 0; // K-Mod
+									iValue += iDefendersHave <= 0 ? 20 : 0; // K-Mod
 									/* original bts code
 									iValue += 2 * std::min(15, iCurrentTurn - pLoopCity->getGameTurnAcquired());
 									if (pLoopCity->isOccupation())
@@ -12790,7 +12790,7 @@ bool CvUnitAI::AI_spreadCorporation()
 	{
 		return false;
 	}
-	//bool bHasHQ = (GET_TEAM(getTeam()).hasHeadquarters((CorporationTypes)iI));
+	bool bHasHQ = (GET_TEAM(getTeam()).hasHeadquarters((CorporationTypes)iI));
 
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
@@ -12803,7 +12803,7 @@ bool CvUnitAI::AI_spreadCorporation()
 		CvPlot* pMissionPlot = getGroup()->AI_getMissionAIPlot();
 		if (pMissionPlot != NULL &&
 			pMissionPlot->getPlotCity() != NULL &&
-			canSpreadCorporation(pMissionPlot, eCorporation) &&
+			canSpreadCorporation(pMissionPlot, eCorporation, true) && // don't check gold here
 			!pMissionPlot->isVisibleEnemyUnit(this) &&
 			generatePath(pMissionPlot, MOVE_NO_ENEMY_TERRITORY, true))
 		{
@@ -12820,36 +12820,56 @@ bool CvUnitAI::AI_spreadCorporation()
 		if (isHuman())
 			eTargetPlayer = plot()->isOwned() ? plot()->getOwnerINLINE() : getOwnerINLINE();
 		else if (kOwner.AI_executiveValue(area(), eCorporation, &eTargetPlayer) <= 0)
-			return false;
+			return false; // corp is not worth spreading in this region.
 
-		FAssert(eTargetPlayer != NO_PLAYER);
-		const CvPlayer& kTargetPlayer = GET_PLAYER(eTargetPlayer);
-		FAssert(kTargetPlayer.isAlive() && canEnterTerritory(kTargetPlayer.getTeam()));
-		int iLoop;
-		for (CvCity* pLoopCity = kTargetPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kTargetPlayer.nextCity(&iLoop))
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
-			if (AI_plotValid(pLoopCity->plot()) &&
-				pLoopCity->isRevealed(getTeam(), false) &&
-				pLoopCity->area() == area() &&
-				canSpreadCorporation(pLoopCity->plot(), eCorporation) &&
-				!pLoopCity->plot()->isVisibleEnemyUnit(this) &&
-				GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_SPREAD_CORPORATION, getGroup()) == 0)
+			const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+			if (kLoopPlayer.isAlive() && canEnterTerritory(kLoopPlayer.getTeam()) && area()->getCitiesPerPlayer((PlayerTypes)iI) > 0)
 			{
-				int iPathTurns;
-				if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
+				AttitudeTypes eAttitude = GET_TEAM(getTeam()).AI_getAttitude(kLoopPlayer.getTeam());
+				if (iI == eTargetPlayer || getTeam() == kLoopPlayer.getTeam() || GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()) ||
+					(bHasHQ && kLoopPlayer.countCorporations(eCorporation) > 0 && (eAttitude >= ATTITUDE_PLEASED || kLoopPlayer.AI_corporationValue(eCorporation) <= 0)) ||
+					(bHasHQ && (eAttitude >= ATTITUDE_FRIENDLY || kLoopPlayer.AI_corporationValue(eCorporation) <= 0)))
 				{
-					int iValue = 10 + pLoopCity->getPopulation() * 2;
-					iValue += pLoopCity->getTeam() == getTeam() ? kOwner.AI_corporationValue(eCorporation, pLoopCity) : 0;
-
-					iValue *= 1000;
-
-					iValue /= (iPathTurns + 1);
-
-					if (iValue > iBestValue)
+					int iLoop;
+					for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 					{
-						iBestValue = iValue;
-						pBestPlot = isHuman() ? pLoopCity->plot() : getPathEndTurnPlot();
-						pBestSpreadPlot = pLoopCity->plot();
+						if (AI_plotValid(pLoopCity->plot()) &&
+							pLoopCity->isRevealed(getTeam(), false) &&
+							pLoopCity->area() == area() &&
+							canSpreadCorporation(pLoopCity->plot(), eCorporation) &&
+							!pLoopCity->plot()->isVisibleEnemyUnit(this) &&
+							kOwner.AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_SPREAD_CORPORATION, getGroup()) == 0)
+						{
+							int iPathTurns;
+							if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
+							{
+								int iValue = 10 + pLoopCity->getPopulation() * 2;
+								iValue += bHasHQ ? 1000 : 0; // we should probably calculate the true HqValue, but I couldn't be bothered right now.
+								iValue += pLoopCity->getTeam() == getTeam() ? kOwner.AI_corporationValue(eCorporation, pLoopCity) : 0;
+
+								if (iI == eTargetPlayer)
+									iValue *= 15;
+								else if (kLoopPlayer.getTeam() == getTeam())
+									iValue *= 10;
+								else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
+									iValue *= 5;
+								else if (eAttitude >= ATTITUDE_FRIENDLY)
+									iValue *= 2;
+
+								iValue *= 1000;
+
+								iValue /= (iPathTurns + 1);
+
+								if (iValue > iBestValue)
+								{
+									iBestValue = iValue;
+									pBestPlot = isHuman() ? pLoopCity->plot() : getPathEndTurnPlot();
+									pBestSpreadPlot = pLoopCity->plot();
+								}
+							}
+						}
 					}
 				}
 			}
@@ -12956,8 +12976,10 @@ bool CvUnitAI::AI_spreadCorporation()
 			{
 				getGroup()->pushMission(MISSION_SPREAD_CORPORATION, eCorporation);
 			}
-			else
+			//else
+			else if (GET_PLAYER(getOwnerINLINE()).getGold() < spreadCorporationCost(eCorporation, pBestSpreadPlot->getPlotCity()))
 			{
+				// wait for more money
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_SPREAD_CORPORATION, pBestSpreadPlot);
 			}
 			return true;

@@ -119,7 +119,7 @@
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_TIME_WEIGHT</DefineName>
-		<iDefineIntVal>40</iDefineIntVal>
+		<iDefineIntVal>60</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_SHRINE_WEIGHT</DefineName>

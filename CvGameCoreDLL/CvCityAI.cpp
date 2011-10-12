@@ -4889,8 +4889,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 										iTempValue /= 100;
 										if (iI == YIELD_PRODUCTION)
 										{
-											// priority += 2% per 1% in production increase. roughly. More when at war.
-											iPriorityFactor += std::min(100, (bWarPlan ? 300 : 200)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
+											// priority += 2.8% per 1% in production increase. roughly. More when at war.
+											iPriorityFactor += std::min(100, (bWarPlan ? 320 : 280)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
 										}
 										// K-Mod end
 										iTempValue *= kOwner.AI_yieldWeight((YieldTypes)iYield, this);
@@ -5017,8 +5017,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						// K-Mod
 						if (iI == YIELD_PRODUCTION)
 						{
-							// priority += 2.5% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 250)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
+							// priority += 2.8% per 1% in production increase. roughly. More when at war.
+							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 280)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
 						}
 						// K-Mod end
 
@@ -6718,7 +6718,7 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 	// K-Mod
 	if (GC.getGame().getGwEventTally() >= 0) // if GW Threshold has been reached
 	{
-		iValue += kFeatureInfo.getWarmingDefense() * (100 + 2 * GET_PLAYER(getOwner()).getGwPercentAnger()) / 100;
+		iValue += kFeatureInfo.getWarmingDefense() * (150 + 5 * GET_PLAYER(getOwner()).getGwPercentAnger()) / 100;
 	}
 	// K-Mod end
 	
@@ -7043,6 +7043,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 				{
 					iWorkedFood += aiFinalYields[YIELD_FOOD];					
 				}
+				/* original code
 				else
 				{
 					if (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
@@ -7050,7 +7051,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 						iWorkableFood += aiFinalYields[YIELD_FOOD];
 						iWorkableFoodPlotCount++;
 					}
-				}
+				} */
 				
 				/* original code
 				if (pLoopPlot->isBeingWorked() || (((aiFinalYields[YIELD_FOOD]*10) + (aiFinalYields[YIELD_PRODUCTION]*6) + (aiFinalYields[YIELD_COMMERCE]*4)) > 21))
@@ -7070,7 +7071,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
                     }
 				}*/
 				// K-Mod experimental changes.
-				if (pLoopPlot->isBeingWorked() || aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
+				if (pLoopPlot->isBeingWorked() || aiFinalYields[YIELD_FOOD] > GC.getFOOD_CONSUMPTION_PER_POPULATION())
 				{
 					iFoodTotal += aiFinalYields[YIELD_FOOD];
 				}
@@ -7079,6 +7080,12 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 				{
 					iGoodTileCount++;
 					iProductionTotal += aiFinalYields[YIELD_PRODUCTION];
+					if (!pLoopPlot->isBeingWorked())
+					{
+						iWorkableFood += aiFinalYields[YIELD_FOOD];
+						iWorkableFoodPlotCount++;
+						// note. this can count plots that are low on food.
+					}
 				}
 				else if (pLoopPlot->isBeingWorked())
 				{
@@ -7105,19 +7112,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 			}
 		}
 	}
-
-	//XXX rewrite this to fix too many farms issue
-	int iSpecialistAdjustment = 0;
-	if (iWorkableFoodPlotCount > 0)
-	{
-		//Calculate approximately how much food the assigned specialists could work
-		iSpecialistAdjustment = (std::min(iSpecialistCount, iWorkableFoodPlotCount) * iWorkableFood) / iWorkableFoodPlotCount;
-	}
-	// iFoodTotal += iSpecialistAdjustment; // commented by K-Mod
-
-	int iBonusFoodDiff = ((iBonusFoodSurplus + iFeatureFoodSurplus) - (iBonusFoodDeficit + iHillFoodDeficit / 2));
-
-	// K-Mod, based on ideas from BBAI
+	// K-Mod, based on ideas from BBAI, and original bts code
 	int iHealth = goodHealth() - badHealth() + getEspionageHealthCounter();
 	int iTargetSize = iGoodTileCount;
 
@@ -7129,7 +7124,17 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	}
 
 	iTargetSize = std::min(iTargetSize, 1 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
+
+	int iFutureFoodAdjustment = 0;
+	if (iWorkableFoodPlotCount > 0)
+	{
+		// calculate approximately how much extra food we could work if we used our specialists and our extra population.
+		iFutureFoodAdjustment = (std::min(iSpecialistCount + std::max(0, iTargetSize - getPopulation()), iWorkableFoodPlotCount) * iWorkableFood) / iWorkableFoodPlotCount;
+	}
+	iFoodTotal += iFutureFoodAdjustment;
 	// K-Mod end
+
+	int iBonusFoodDiff = ((iBonusFoodSurplus + iFeatureFoodSurplus) - (iBonusFoodDeficit + iHillFoodDeficit / 2));
 
 
 	/* original bts code. (Do we really want fat cities in advanced start games?)
@@ -7158,7 +7163,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	int iExtraFoodForGrowth = 0;
 	if (iTargetSize > getPopulation())
 	{
-		iExtraFoodForGrowth = (iTargetSize - getPopulation()+3)/4 + 1;
+		iExtraFoodForGrowth = (iTargetSize - getPopulation())/2 + 1;
 	}
 	// K-Mod end
 

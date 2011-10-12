@@ -90,6 +90,11 @@ public:
 		{
 			addMessage(ePlayer, bForce, iLength, szString, pszSound, eType, pszIcon, eFlashColor, iFlashX, iFlashY, bShowOffScreenArrows, bShowOnScreenArrows);
 		}
+		else if (GC.getGameINLINE().getActivePlayer() == ePlayer)
+		{
+			// this means ePlayer is human, but currently using auto-play
+			addMessage(ePlayer, bForce, iLength, szString, pszSound, eType, NULL, NO_COLOR, -1, -1, false, false);
+		}
 	}
 	// K-Mod
 	virtual void addCombatMessage(PlayerTypes ePlayer, CvWString szString) = 0;
