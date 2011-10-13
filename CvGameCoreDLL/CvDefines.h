@@ -26,6 +26,7 @@
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
+#define MOVE_ATTACK_STACK									(0x00000200) // K-Mod.. allow the path to fight through enemy defences, but prefer not to.
 
 /*
 ** K-Mod, 18/dec/10, karadoc

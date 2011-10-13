@@ -9928,14 +9928,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		int iHealthLevel = goodHealth() - badHealth();
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
-		int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
-		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation();
+		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
+		int iExtraPopulationThatCanWork = std::max(NUM_CITY_PLOTS, std::max(0, extraPopulation()+(bRemove?1:0))) - getWorkingPopulation();
 
 		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
-
-		// approximate the food that can be gained by working other plots (and refund the food removed at the start)
-		iFoodPerTurn += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
-		iAdjustedFoodDifference += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
 
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
@@ -9952,10 +9948,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			}
 
 			// if still starving
-			if ((iFoodPerTurn + iStarvingAllowance) < 0)
+			if (iFoodPerTurn + (bRemove ? std::min(iFoodYield, iConsumtionPerPop) : 0) + iStarvingAllowance < 0)
 			{
 				// if working plots all like this one will save us from starving
-				if (std::max(0, iExtraPopulationThatCanWork * (iFoodYield-std::min(iConsumtionPerPop, iFoodYield)) + iFoodYield * std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) >= -iFoodPerTurn)
+				if ((iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
 				{
 					// if this is high food, then we want to pick it first, this will allow us to pick some great non-food later
 					int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
@@ -10015,7 +10011,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						// K-Mod.
 						if (iHappinessLevel + kMaxHappyIncrease > 0)
 						{
-							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield - (bRemove ? std::min(iConsumtionPerPop, iFoodYield) : 0);
+							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield;
 							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel + iNewFoodPerTurn-1) / iNewFoodPerTurn) : MAX_INT;
 						// K-Mod end
 
@@ -10067,6 +10063,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						iHappinessLevel += 2;
 					}
 
+					// approximate the food that can be gained by working other plots (and refund the food removed at the start)
+					iFoodPerTurn += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
+					iAdjustedFoodDifference += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
+
 					bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
 
 					int iPopToGrow = std::max(0, iHappinessLevel);
@@ -10106,10 +10106,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						
 						// will multiply this by factors
 						iFoodGrowthValue = iFoodYield;
-						if (iHealthLevel < (bFillingBar ? 0 : 1))
+						/*if (iHealthLevel < (bFillingBar ? 0 : 1))
 						{
 							iFoodGrowthValue--;
-						}
+						}*/ // moved lower.
 
 						// (range 1-25) - we want to grow more if we have a lot of growth to do
 						// factor goes up like this: 0:1, 1:8, 2:9, 3:10, 4:11, 5:13, 6:14, 7:15, 8:16, 9:17, ... 17:25
@@ -10124,15 +10124,20 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							iFactorPopToGrow = 41; */
 						// K-Mod, reduced the scale to match the building evaluation code.
 						if (bFillingBar)
-							iFactorPopToGrow = 9 * iFoodToGrow / std::max(1, iFoodToGrow + iFoodLevel + iFoodPerTurn);
+							iFactorPopToGrow = 11 * iFoodToGrow / std::max(1, iFoodToGrow + iFoodLevel + iFoodPerTurn);
 						else if (iPopToGrow < 6)
-							iFactorPopToGrow = 9 + 2 * iPopToGrow;
+							iFactorPopToGrow = 11 + 2 * iPopToGrow;
 						else
-							iFactorPopToGrow = 21;
+							iFactorPopToGrow = 23;
+
+						if (iHealthLevel < (bFillingBar ? 0 : 1))
+						{
+							iFactorPopToGrow = iFactorPopToGrow * iFoodYield / (iFoodYield + 1);
+						}
 						// K-Mod end
 
 						iFoodGrowthValue *= iFactorPopToGrow;
-						
+
 						//If we already grow somewhat fast, devalue further food
 						//Remember growth acceleration is not dependent on food eaten per 
 						//pop, 4f twice as fast as 2f twice as fast as 1f...

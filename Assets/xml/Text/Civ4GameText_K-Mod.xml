@@ -21,6 +21,14 @@
 		<Italian>[ICON_BULLET]Pu&#242; creare una Grande Opera (%D1_Change[ICON_CULTURE] per era)</Italian>
 		<Spanish>[ICON_BULLET]Puede crear una gran obra (%D1_Change [ICON_CULTURE] por &#233;poca)</Spanish>
 	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_MISC_RELIGION_REMOVE</Tag>
+		<English>[COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] has died out in %s2_CityName.</English>
+		<French>Cette religion ([COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT]) s'est &#233;teinte &#224; %s2_CityName.</French>
+		<German>Die Religion [COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] hat aus %s2_CityName entfernt worden.</German>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] ha [NUM1:lasciato:lasciata] %s2_CityName</Italian>
+		<Spanish>El [COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] ha dejado %s2_CityName.</Spanish>
+	</TEXT>
 	<!-- K-Mod trade culture -->
 	<TEXT>
 		<Tag>TXT_KEY_MISC_HELP_TRADE_CULTURE</Tag>

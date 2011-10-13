@@ -10921,7 +10921,17 @@ void CvCity::setHasReligion(ReligionTypes eIndex, bool bNewValue, bool bAnnounce
 				}
 			}
 		}
-		
+		// K-Mod
+		else // religion removed
+		{
+			if (bAnnounce)
+			{
+				CvWString szBuffer = gDLL->getText("TXT_KEY_MISC_RELIGION_REMOVE", GC.getReligionInfo(eIndex).getTextKeyWide(), getNameKey());
+				gDLL->getInterfaceIFace()->addHumanMessage(getOwnerINLINE(), false, GC.getDefineINT("EVENT_MESSAGE_TIME_LONG"), szBuffer, "AS2D_BLIGHT", MESSAGE_TYPE_MAJOR_EVENT, GC.getReligionInfo(eIndex).getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_WHITE"), getX_INLINE(), getY_INLINE(), bArrows, bArrows);
+			}
+		}
+		// K-Mod end
+
 		if (bNewValue)
 		{
 			// Python Event
@@ -12644,17 +12654,16 @@ void CvCity::doReligion()
 
 			if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
 			{
+				setHasReligion(eStrongestReligion, true, true, true);
 				if (eWeakestReligion != NO_RELIGION && iWeakestGrip < iStrongestGrip)
 				{
-					// If the weakest religion is only has half the strength of the new releigion,
-					// then it deserves to go. sorry.
-					int iOdds = 200*(iStrongestGrip - iWeakestGrip) / std::max(1, iStrongestGrip);
+					// If the existing religion is weak compared to the new religion, the existing religion can get removed.
+					int iOdds = getReligionCount()*100*(iStrongestGrip - iWeakestGrip) / std::max(1, iStrongestGrip);
 					if (GC.getGameINLINE().getSorenRandNum(100, "Religion departure") < iOdds)
 					{
 						setHasReligion(eWeakestReligion, false, true, true);
 					}
 				}
-				setHasReligion(eStrongestReligion, true, true, true);
 			}
 		}
 	} 

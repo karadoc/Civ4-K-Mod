@@ -820,7 +820,7 @@ def applyVolcano1(argsList):
 	for iDX in range(-1, 2):
 		for iDY in range(-1, 2):
 			loopPlot = plotXY(kTriggeredData.iPlotX, kTriggeredData.iPlotY, iDX, iDY)
-			if not loopPlot.isNone():
+			if not loopPlot.isNone() and not loopPlot.isWater():
 				if (iDX != 0 or iDY != 0):
 					if gc.getGame().getPlotExtraYield(loopPlot.getX(), loopPlot.getY(), YieldTypes.YIELD_FOOD) == 0:
 						listPlots.append(loopPlot)

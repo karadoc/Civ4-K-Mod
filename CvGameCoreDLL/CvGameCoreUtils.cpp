@@ -1486,9 +1486,12 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 	pSelectionGroup = ((CvSelectionGroup *)pointer);
 
-	iWorstCost = MAX_INT;
+	//iWorstCost = MAX_INT;
+	iWorstCost = 0; // K-Mod
 	iWorstMovesLeft = MAX_INT;
 	iWorstMax = MAX_INT;
+
+	int iFlags = gDLL->getFAStarIFace()->GetInfo(finder); // K-Mod
 
 	pUnitNode = pSelectionGroup->headUnitNode();
 
@@ -1540,20 +1543,19 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/03/09                                jdog5000      */
 /*                                                                                              */
-/* General AI                                                                                   */
+/* General AI       (edited by K-Mod)                                                           */
 /************************************************************************************************/
 					// Add additional cost for ending turn in or adjacent to enemy territory based on flags
-					if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_AVOID_ENEMY_WEIGHT_3)
+					if (iFlags & (MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_AVOID_ENEMY_WEIGHT_3))
 					{
 						if (pToPlot->isOwned() && ((GET_TEAM(pSelectionGroup->getHeadTeam()).AI_getWarPlan(pToPlot->getTeam()) != NO_WARPLAN) || (pToPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pToPlot))))
 						{
-							iCost *= 3;
+							iCost *= (iFlags & MOVE_AVOID_ENEMY_WEIGHT_3) ? 3 : 2;
 						}
 						else
 						{
 							CvPlot* pAdjacentPlot;
-							int iI;
-							for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+							for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 							{
 								pAdjacentPlot = plotDirection(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), ((DirectionTypes)iI));
 
@@ -1561,33 +1563,16 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 								{
 									if (pAdjacentPlot->isOwned() && (atWar(pAdjacentPlot->getTeam(), pSelectionGroup->getHeadTeam()) || (pAdjacentPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pAdjacentPlot))))
 									{
-										iCost *= 3;
-										iCost /= 2;
-									}
-								}
-							}
-						}
-					}
-					else if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_AVOID_ENEMY_WEIGHT_2)
-					{
-						if (pToPlot->isOwned() && ((GET_TEAM(pSelectionGroup->getHeadTeam()).AI_getWarPlan(pToPlot->getTeam()) != NO_WARPLAN) || (pToPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pToPlot))))
-						{
-							iCost *= 2;
-						}
-						else
-						{
-							CvPlot* pAdjacentPlot;
-							int iI;
-							for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-							{
-								pAdjacentPlot = plotDirection(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), ((DirectionTypes)iI));
-								
-								if( pAdjacentPlot != NULL )
-								{
-									if (pAdjacentPlot->isOwned() && (atWar(pAdjacentPlot->getTeam(), pSelectionGroup->getHeadTeam()) || (pAdjacentPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pAdjacentPlot))))
-									{
-										iCost *= 4;
-										iCost /= 3;
+										if (iFlags & MOVE_AVOID_ENEMY_WEIGHT_3)
+										{
+											iCost *= 3;
+											iCost /= 2;
+										}
+										else
+										{
+											iCost *= 4;
+											iCost /= 3;
+										}
 									}
 								}
 							}
@@ -1600,66 +1585,6 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 				else
 				{
 					iCost = (PATH_MOVEMENT_WEIGHT * iCost);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/03/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-/*					// Add additional cost for movement in or adjacent to enemy territory based on flags
-					if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_AVOID_ENEMY_WEIGHT_3)
-					{
-						if (pToPlot->isOwned() && ((GET_TEAM(pSelectionGroup->getHeadTeam()).AI_getWarPlan(pToPlot->getTeam()) != NO_WARPLAN) || (pToPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pToPlot))))
-						{
-							iCost *= 2;
-						}
-						else
-						{
-							CvPlot* pAdjacentPlot;
-							int iI;
-							for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-							{
-								pAdjacentPlot = plotDirection(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), ((DirectionTypes)iI));
-
-								if( pAdjacentPlot != NULL )
-								{
-									if (pAdjacentPlot->isOwned() && (atWar(pAdjacentPlot->getTeam(), pSelectionGroup->getHeadTeam()) || (pAdjacentPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pAdjacentPlot))))
-									{
-										iCost *= 4;
-										iCost /= 3;
-									}
-								}
-							}
-						}
-					}
-					else if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_AVOID_ENEMY_WEIGHT_2)
-					{
-						if (pToPlot->isOwned() && ((GET_TEAM(pSelectionGroup->getHeadTeam()).AI_getWarPlan(pToPlot->getTeam()) != NO_WARPLAN) || (pToPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pToPlot))))
-						{
-							iCost *= 3;
-							iCost /= 2;
-						}
-						else
-						{
-							CvPlot* pAdjacentPlot;
-							int iI;
-							for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-							{
-								pAdjacentPlot = plotDirection(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), ((DirectionTypes)iI));
-								
-								if( pAdjacentPlot != NULL )
-								{
-									if (pAdjacentPlot->isOwned() && (atWar(pAdjacentPlot->getTeam(), pSelectionGroup->getHeadTeam()) || (pAdjacentPlot->getTeam() != pLoopUnit->getTeam() && pLoopUnit->isAlwaysHostile(pAdjacentPlot))))
-									{
-										iCost *= 6;
-										iCost /= 5;
-									}
-								}
-							}
-						}
-					}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 				}
 
 				if (pLoopUnit->canFight())
@@ -1698,7 +1623,8 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 					}
 				}
 
-				if (iCost < iWorstCost)
+				//if (iCost < iWorstCost)
+				if (iCost > iWorstCost) // K-Mod. (no comment)
 				{
 					iWorstCost = iCost;
 					iWorstMovesLeft = iMovesLeft;
@@ -1708,7 +1634,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		}
 	}
 
-	FAssert(iWorstCost != MAX_INT);
+	//FAssert(iWorstCost != MAX_INT);
 
 	iWorstCost += PATH_STEP_WEIGHT;
 
@@ -1725,17 +1651,13 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 int pathValidInternal(FAStarNode* parent, CvPlot* pFromPlot, int data, CvSelectionGroup* pSelectionGroup, FAStar* finder)
 {
 	bool bAIControl;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/03/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
 	if (pSelectionGroup->atPlot(pFromPlot))
 	{
 		return TRUE;
 	}
 
-	if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_SAFE_TERRITORY)
+	int iFlags = gDLL->getFAStarIFace()->GetInfo(finder); // K-Mod. (and now used throughout this function)
+	if (iFlags & MOVE_SAFE_TERRITORY)
 	{
 		PROFILE("pathValid move save");
 
@@ -1753,7 +1675,7 @@ int pathValidInternal(FAStarNode* parent, CvPlot* pFromPlot, int data, CvSelecti
 		}
 	}
 
-	if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_NO_ENEMY_TERRITORY)
+	if (iFlags & MOVE_NO_ENEMY_TERRITORY)
 	{
 		PROFILE("pathValid no enemy");
 
@@ -1773,20 +1695,11 @@ int pathValidInternal(FAStarNode* parent, CvPlot* pFromPlot, int data, CvSelecti
 		PROFILE("pathValid danger & invisible");
 		if ((parent->m_iData2 > 1) || (parent->m_iData1 == 0))
 		{
-			if (!(gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_IGNORE_DANGER))
+			if (!(iFlags & MOVE_IGNORE_DANGER))
 			{
 				if (!(pSelectionGroup->canFight()) && !(pSelectionGroup->alwaysInvisible()))
 				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-					//if (GET_PLAYER(pSelectionGroup->getHeadOwner()).AI_getPlotDanger(pFromPlot) > 0)
 					if (GET_PLAYER(pSelectionGroup->getHeadOwner()).AI_getAnyPlotDanger(pFromPlot))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 					{
 						return FALSE;
 					}
@@ -1799,7 +1712,8 @@ int pathValidInternal(FAStarNode* parent, CvPlot* pFromPlot, int data, CvSelecti
 	{
 		PROFILE("pathValid move through");
 
-		if (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_THROUGH_ENEMY)
+		//if (iFlags & MOVE_THROUGH_ENEMY)
+		if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK)) // K-Mod
 		{
 			if (!(pSelectionGroup->canMoveOrAttackInto(pFromPlot)))
 			{
@@ -1814,9 +1728,6 @@ int pathValidInternal(FAStarNode* parent, CvPlot* pFromPlot, int data, CvSelecti
 			}
 		}
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	return TRUE;
 }

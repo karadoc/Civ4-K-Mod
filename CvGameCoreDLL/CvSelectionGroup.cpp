@@ -3615,7 +3615,7 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							{
 								AI_queueGroupAttack(iX, iY);
 							}
-							
+
 							break;
 						}
 					}
