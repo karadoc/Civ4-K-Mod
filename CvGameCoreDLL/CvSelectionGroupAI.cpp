@@ -383,7 +383,7 @@ int CvSelectionGroupAI::AI_attackOdds(const CvPlot* pPlot, bool bPotentialEnemy)
 	{
 		return 100;
 	}
-	
+
 	int iOdds = 0;
 	pAttacker = AI_getBestGroupAttacker(pPlot, bPotentialEnemy, iOdds);
 

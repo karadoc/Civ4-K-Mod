@@ -435,15 +435,15 @@ bool CvUnitAI::AI_follow()
 	{
 		return true;
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/31/10                              jdog5000        */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
+
+	// BBAI -
 	// Pushing MISSION_MOVE_TO missions when not all units could move resulted in stack being
 	// broken up on the next turn.  Also, if we can't attack now we don't want to queue up an
 	// attack for next turn, better to re-evaluate.
-	bool bCanAllMove = getGroup()->canAllMove();
+	// K-Mod. The above comment is more or less true. The AI_attack functions did not work in a useful
+	// way with follow. But checking of all units can move kind of misses the point of a follow command...
+	// I've changed the original attack functions to deal with follow in a more practical way.
+	/* bool bCanAllMove = getGroup()->canAllMove();
 
 	if( bCanAllMove )
 	{
@@ -451,7 +451,13 @@ bool CvUnitAI::AI_follow()
 		{
 			return true;
 		}
-	}
+	} */
+	// K-Mod, I've changed attack-follow code so that it will only attack with a single unit, not the whole group.
+	if (AI_cityAttack(1, 70, true))
+		return true;
+	if (AI_anyAttack(1, 70, 2, true, true))
+		return true;
+	//
 
 	if (isEnemy(plot()->getTeam()))
 	{
@@ -462,16 +468,13 @@ bool CvUnitAI::AI_follow()
 		}
 	}
 
-	if( bCanAllMove )
+	/* if( bCanAllMove )
 	{
 		if (AI_anyAttack(1, 70, 2, true, true))
 		{
 			return true;
 		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	} */
 
 	/* original bts code
 	if (isFound())
@@ -15524,7 +15527,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK : 0));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK : 0));
 		return true;
 	}
 
@@ -15610,7 +15613,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iMinStack, bool 
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK : 0));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK : 0));
 		return true;
 	}
 
