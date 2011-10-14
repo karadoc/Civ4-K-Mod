@@ -2607,9 +2607,13 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 
 	// The following change makes it possible to capture defenseless units after having 
 	// made a previous attack or paradrop
-	if( bAttack )
+	if (bAttack)
 	{
-		if (isMadeAttack() && !isBlitz() && (pPlot->getNumVisibleEnemyDefenders(this) > 0))
+		//if (isMadeAttack() && !isBlitz() && (pPlot->getNumVisibleEnemyDefenders(this) > 0))
+		// K-Mod. We don't want to only count "visible" defenders...
+		if (isMadeAttack() && !isBlitz() &&
+			pPlot->plotCount(PUF_canDefendEnemy, getOwnerINLINE(), isAlwaysHostile(pPlot)) > 0)
+		// K-Mod end
 		{
 			return false;
 		}
@@ -4864,21 +4868,35 @@ bool CvUnit::pillage()
 		if (pPlot->getTeam() != getTeam())
 		{
 			// Use python to determine pillage amounts...
-			lPillageGold = 0;
-			
-			CyPlot* pyPlot = new CyPlot(pPlot);
-			CyUnit* pyUnit = new CyUnit(this);
+			//lPillageGold = 0;
+			lPillageGold = -1; // K-Mod
 
-			CyArgsList argsList;
-			argsList.add(gDLL->getPythonIFace()->makePythonObject(pyPlot));	// pass in plot class
-			argsList.add(gDLL->getPythonIFace()->makePythonObject(pyUnit));	// pass in unit class
+			if (GC.getUSE_DO_PILLAGE_GOLD_CALLBACK()) // K-Mod. I've writen C to replace the python callback.
+			{
+				CyPlot* pyPlot = new CyPlot(pPlot);
+				CyUnit* pyUnit = new CyUnit(this);
 
-			gDLL->getPythonIFace()->callFunction(PYGameModule, "doPillageGold", argsList.makeFunctionArgs(),&lPillageGold);
+				CyArgsList argsList;
+				argsList.add(gDLL->getPythonIFace()->makePythonObject(pyPlot));	// pass in plot class
+				argsList.add(gDLL->getPythonIFace()->makePythonObject(pyUnit));	// pass in unit class
 
-			delete pyPlot;	// python fxn must not hold on to this pointer 
-			delete pyUnit;	// python fxn must not hold on to this pointer 
+				gDLL->getPythonIFace()->callFunction(PYGameModule, "doPillageGold", argsList.makeFunctionArgs(),&lPillageGold);
 
-			iPillageGold = (int)lPillageGold;
+				delete pyPlot;	// python fxn must not hold on to this pointer 
+				delete pyUnit;	// python fxn must not hold on to this pointer 
+
+				iPillageGold = (int)lPillageGold;
+			}
+			// K-Mod. C version of the original python code
+			if (lPillageGold < 0)
+			{
+				int iPillageBase = GC.getImprovementInfo((ImprovementTypes)pPlot->getImprovementType()).getPillageGold();
+				iPillageGold = 0;
+				iPillageGold += GC.getGameINLINE().getSorenRandNum(iPillageBase, "Pillage Gold 1");
+				iPillageGold += GC.getGameINLINE().getSorenRandNum(iPillageBase, "Pillage Gold 2");
+				iPillageGold += getPillageChange() * iPillageGold / 100;
+			}
+			// K-Mod end
 
 			if (iPillageGold > 0)
 			{
@@ -8861,22 +8879,35 @@ int CvUnit::fortifyModifier() const
 
 int CvUnit::experienceNeeded() const
 {
-	// Use python to determine pillage amounts...
-	int iExperienceNeeded;
-	long lExperienceNeeded;
+	if (GC.getUSE_GET_EXPERIENCE_NEEDED_CALLBACK()) // K-Mod. I've writen C to replace the python callback.
+	{
+		// Use python to determine pillage amounts...
+		int iExperienceNeeded;
+		long lExperienceNeeded;
 
-	lExperienceNeeded = 0;
-	iExperienceNeeded = 0;
+		lExperienceNeeded = 0;
+		iExperienceNeeded = 0;
 
-	CyArgsList argsList;
-	argsList.add(getLevel());	// pass in the units level
-	argsList.add(getOwnerINLINE());	// pass in the units 
+		CyArgsList argsList;
+		argsList.add(getLevel());	// pass in the units level
+		argsList.add(getOwnerINLINE());	// pass in the units 
 
-	gDLL->getPythonIFace()->callFunction(PYGameModule, "getExperienceNeeded", argsList.makeFunctionArgs(),&lExperienceNeeded);
+		gDLL->getPythonIFace()->callFunction(PYGameModule, "getExperienceNeeded", argsList.makeFunctionArgs(),&lExperienceNeeded);
 
-	iExperienceNeeded = (int)lExperienceNeeded;
+		iExperienceNeeded = (int)lExperienceNeeded;
+
+		if (lExperienceNeeded >= 0) // K-Mod
+			return iExperienceNeeded;
+	}
+	// K-Mod. C version of the original python code.
+	int iExperienceNeeded = iExperienceNeeded = getLevel() * getLevel() + 1;
+
+	int iModifier = GET_PLAYER(getOwnerINLINE()).getLevelExperienceModifier();
+	if (iModifier != 0)
+		iExperienceNeeded += (iExperienceNeeded * iModifier + 99) / 100;
 
 	return iExperienceNeeded;
+	// K-Mod end
 }
 
 

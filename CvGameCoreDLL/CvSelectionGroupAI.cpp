@@ -562,7 +562,6 @@ int CvSelectionGroupAI::AI_compareStacks(const CvPlot* pPlot, bool bPotentialEne
 			eDomainType = DOMAIN_SEA;
 		else
 			eDomainType = DOMAIN_LAND;
-
 	}
 
 	compareRatio = AI_sumStrength(pPlot, eDomainType, bCheckCanAttack, bCheckCanMove);

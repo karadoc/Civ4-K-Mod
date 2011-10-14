@@ -11915,11 +11915,16 @@ int CvPlayerAI::AI_plotTargetMissionAIs(CvPlot* pPlot, MissionAITypes* aeMission
 /*                                                                                              */
 /* General AI                                                                                   */
 /************************************************************************************************/
-int CvPlayerAI::AI_cityTargetUnitsByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
+
+// K-Mod. I've changed this function to calculation the attack power of our groups, rather than just the number of units.
+
+//int CvPlayerAI::AI_cityTargetUnitsByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
+int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
 {
 	PROFILE_FUNC();
 
-	int iCount = 0;
+	//int iCount = 0;
+	int iTotalStrength = 0;
 
 	int iLoop;
 	int iPathTurns;
@@ -11944,7 +11949,8 @@ int CvPlayerAI::AI_cityTargetUnitsByPath(CvCity* pCity, CvSelectionGroup* pSkipS
 
 						if( iPathTurns <= iMaxPathTurns )
 						{
-							iCount += pLoopSelectionGroup->getNumUnits();
+							//iCount += pLoopSelectionGroup->getNumUnits();
+							iTotalStrength += pLoopSelectionGroup->AI_sumStrength(pCity->plot(), DOMAIN_LAND);
 						}
 					}
 				}
@@ -11952,7 +11958,8 @@ int CvPlayerAI::AI_cityTargetUnitsByPath(CvCity* pCity, CvSelectionGroup* pSkipS
 		}
 	}
 
-	return iCount;
+	//return iCount;
+	return iTotalStrength;
 }
 
 int CvPlayerAI::AI_unitTargetMissionAIs(CvUnit* pUnit, MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup) const

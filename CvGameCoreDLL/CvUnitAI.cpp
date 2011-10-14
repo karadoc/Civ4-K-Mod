@@ -1973,7 +1973,7 @@ void CvUnitAI::AI_barbAttackMove()
 				return;
 			}
 			
-			if (AI_goToTargetCity(0, 12))
+			if (AI_goToTargetCity(MOVE_ATTACK_STACK, 12))
 			{
 				return;
 			}
@@ -2016,7 +2016,7 @@ void CvUnitAI::AI_barbAttackMove()
 				return;
 			}
 			
-			if (AI_goToTargetCity(0, 12))
+			if (AI_goToTargetCity(MOVE_ATTACK_STACK, 12))
 			{
 				return;
 			}
@@ -2421,7 +2421,7 @@ void CvUnitAI::AI_attackMove()
 			if (getGroup()->getNumUnits() > 1)
 			{
 				//if (AI_targetCity())
-				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 12))
+				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 12))
 				{
 					return;
 				}
@@ -2914,7 +2914,7 @@ void CvUnitAI::AI_attackCityMove()
 						{
 						// K-Mod end
 							// Move to good tile to attack from unless we're way more powerful
-							if( AI_goToTargetCity(0,1,pTargetCity) )
+							if( AI_goToTargetCity(MOVE_ATTACK_STACK,1,pTargetCity) )
 							{
 								return;
 							}
@@ -2930,8 +2930,8 @@ void CvUnitAI::AI_attackCityMove()
 					//stack attack
 					if (getGroup()->getNumUnits() > 1)
 					{ 
-						// BBAI TODO: What is right ratio?
-						if (AI_stackAttackCity(1, iAttackRatio, true))
+						//if (AI_stackAttackCity(1, iAttackRatio, true))
+						if (AI_stackAttackCity(iAttackRatio)) // K-Mod
 						{
 							return;
 						}
@@ -2989,7 +2989,7 @@ void CvUnitAI::AI_attackCityMove()
 			}
 			else
 			{
-				if( AI_goToTargetCity(0,4,pTargetCity) )
+				if( AI_goToTargetCity(MOVE_ATTACK_STACK,4,pTargetCity) )
 				{
 					return;
 				}
@@ -3139,7 +3139,7 @@ void CvUnitAI::AI_attackCityMove()
 	{
 		if( isBarbarian() )
 		{
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 12))
+			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 12))
 			{
 				return;
 			}
@@ -3188,7 +3188,7 @@ void CvUnitAI::AI_attackCityMove()
 				}
 			}
 
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 5, pTargetCity))
+			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 5, pTargetCity))
 			{
 				return;
 			}
@@ -3198,7 +3198,7 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 8, pTargetCity))
+			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 8, pTargetCity))
 			{
 				return;
 			}
@@ -3209,7 +3209,7 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 12, pTargetCity))
+			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 12, pTargetCity))
 			{
 				return;
 			}
@@ -3219,7 +3219,7 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, MAX_INT, pTargetCity))
+			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
 			{
 				return;
 			}
@@ -15014,6 +15014,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 								{
 									// If city is visible and our force already in position is dominantly powerful or we have a huge force
 									// already on the way, pick a different target
+									/* original BBAI code
 									if( iPathTurns > 2 && pLoopCity->isVisible(getTeam(), false) )
 									{
 										int iOurOffense = GET_TEAM(getTeam()).AI_getOurPlotStrength(pLoopCity->plot(),2,false,false,true);	
@@ -15028,7 +15029,24 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										{
 											continue;
 										}
+									}*/
+									// K-Mod
+									int iEnemyDefence = -1; // used later.
+									if (pLoopCity->isVisible(getTeam(), false))
+									{
+										iEnemyDefence = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(pLoopCity->plot(),1,true,false);
+
+										if (iPathTurns > 2)
+										{
+											int iAttackRatio = ((GC.getMAX_CITY_DEFENSE_DAMAGE()-pLoopCity->getDefenseDamage()) * GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO() + pLoopCity->getDefenseDamage() * GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO()) / std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE());
+
+											if (100 * GET_PLAYER(getOwnerINLINE()).AI_cityTargetStrengthByPath(pLoopCity, getGroup(), iPathTurns) > iAttackRatio * iEnemyDefence)
+											{
+												continue;
+											}
+										}
 									}
+									// K-Mod end
 
 									iValue = 0;
 									if (AI_getUnitAIType() == UNITAI_ATTACK_CITY) //lemming?
@@ -15051,6 +15069,20 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										iValue /= 50;
 									}
 
+									// K-Mod
+									if (pLoopCity->isVisible(getTeam(), false) && iPathTurns <= 4)
+									{
+										FAssert(iEnemyDefence != -1);
+										int iOurOffence = getGroup()->AI_sumStrength(pLoopCity->plot());
+										if (iOurOffence > iEnemyDefence)
+										{
+											// dont' boost it by too much, otherwise human players will exploit us. :(
+											iValue *= std::min(150, 100 * iOurOffence / std::max(1, iEnemyDefence));
+											iValue /= 100;
+										}
+									}
+									// K-Mod end
+
 									iValue *= 1000;
 
 									// If city is minor civ, less interesting
@@ -15061,7 +15093,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 
 									// If stack has poor bombard, direct towards lower defense cities
 									//iPathTurns += std::min(12, getGroup()->getBombardTurns(pLoopCity)/4);
-									iPathTurns += std::min(6, getGroup()->getBombardTurns(pLoopCity)/4); // K-Mod. That's 24 turns!
+									iPathTurns += std::min(6, getGroup()->getBombardTurns(pLoopCity)/3); // K-Mod. That's 18 turns!
 
 									iValue /= (4 + iPathTurns*iPathTurns);
 
@@ -15408,6 +15440,7 @@ bool CvUnitAI::AI_bombardCity()
 	int iBase = GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO();
 	int iMin = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
 	int iBombardTurns = getGroup()->getBombardTurns(pBombardCity);
+	iBase = (iBase * (GC.getMAX_CITY_DEFENSE_DAMAGE()-pBombardCity->getDefenseDamage()) + iMin * pBombardCity->getDefenseDamage())/std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE());
 	int iThreshold = (iBase * (100 - iAttackOdds) + (1 + iBombardTurns/2) * iMin * iAttackOdds) / (100 + (iBombardTurns/2) * iAttackOdds);
 	int iComparison = getGroup()->AI_compareStacks(pBombardCity->plot(), true, true, true);
 
@@ -15417,7 +15450,8 @@ bool CvUnitAI::AI_bombardCity()
 		return false;
 	}
 
-	getGroup()->pushMission(MISSION_BOMBARD);
+	//getGroup()->pushMission(MISSION_BOMBARD);
+	getGroup()->pushMission(MISSION_BOMBARD, -1, -1, 0, false, false, MISSIONAI_ASSAULT, pBombardCity->plot()); // K-Mod
 	return true;
 }
 /************************************************************************************************/
@@ -23699,84 +23733,62 @@ int CvUnitAI::AI_stackOfDoomExtra()
 	return ((AI_getBirthmark() % (1 + GET_PLAYER(getOwnerINLINE()).getCurrentEra())) + 4);
 }
 
-bool CvUnitAI::AI_stackAttackCity(int iRange, int iPowerThreshold, bool bFollow)
+// This function has been significantly modified for K-Mod
+bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 {
     PROFILE_FUNC();
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	int iSearchRange;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iDX, iDY;
+	CvPlot* pCityPlot = NULL;
+	int iSearchRange = 1;
 
 	FAssert(canMove());
 
-	if (bFollow)
+	/*if (bFollow)
 	{
 		iSearchRange = 1;
 	}
 	else
 	{
 		iSearchRange = AI_searchRange(iRange);
-	}
+	}*/ // disabled by K-Mod. It isn't wrong, but we just don't need this here.
 
-	iBestValue = 0;
-	pBestPlot = NULL;
-
-	for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
+	for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 	{
-		for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
+		for (int iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
 		{
-			pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
-			if (pLoopPlot != NULL)
+			if (pLoopPlot != NULL && AI_plotValid(pLoopPlot))
 			{
-				if (AI_plotValid(pLoopPlot))
+				//if (pLoopPlot->isCity() || (pLoopPlot->isCity(true) && pLoopPlot->isVisibleEnemyUnit(this)))
+				if (pLoopPlot->isCity()) // K-Mod. We want to attack a city. We don't care about guarded forts!
 				{
-					if (pLoopPlot->isCity() || (pLoopPlot->isCity(true) && pLoopPlot->isVisibleEnemyUnit(this)))
+					if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 					{
-						if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
+						//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, /*bAttack*/ true, /*bDeclareWar*/ true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
+						if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true, true))
 						{
-							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, /*bAttack*/ true, /*bDeclareWar*/ true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
+							if (iPowerThreshold <= 0 || getGroup()->AI_compareStacks(pLoopPlot, true, true, true) >= iPowerThreshold)
 							{
-								iValue = getGroup()->AI_compareStacks(pLoopPlot, /*bPotentialEnemy*/ true, /*bCheckCanAttack*/ true, /*bCheckCanMove*/ true);
-
-								if (iValue >= iPowerThreshold)
-								{
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										pBestPlot = ((bFollow) ? pLoopPlot : getPathEndTurnPlot());
-										FAssert(!atPlot(pBestPlot));
-									}
-								}
+								pCityPlot = pLoopPlot;
 							}
 						}
 					}
+					break; // there can only be one.
 				}
 			}
 		}
 	}
 
-	if (pBestPlot != NULL)
+	if (pCityPlot != NULL)
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/05/10                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
-		if( gUnitLogLevel >= 1 && pBestPlot->getPlotCity() != NULL )
+		if( gUnitLogLevel >= 1 && pCityPlot->getPlotCity() != NULL )
 		{
-			logBBAI("    Stack for player %d (%S) decides to attack city %S with stack ratio %d", getOwner(), GET_PLAYER(getOwner()).getCivilizationDescription(0), pBestPlot->getPlotCity()->getName(0).GetCString(), iBestValue );
-			logBBAI("    City %S has defense modifier %d, %d with ignore building", pBestPlot->getPlotCity()->getName(0).GetCString(), pBestPlot->getPlotCity()->getDefenseModifier(false), pBestPlot->getPlotCity()->getDefenseModifier(true) );
+			logBBAI("    Stack for player %d (%S) decides to attack city %S with stack ratio %d", getOwner(), GET_PLAYER(getOwner()).getCivilizationDescription(0), pCityPlot->getPlotCity()->getName(0).GetCString(), getGroup()->AI_compareStacks(pCityPlot, true, true, true) );
+			logBBAI("    City %S has defense modifier %d, %d with ignore building", pCityPlot->getPlotCity()->getName(0).GetCString(), pCityPlot->getPlotCity()->getDefenseModifier(false), pCityPlot->getPlotCity()->getDefenseModifier(true) );
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
-		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK : 0));
+		FAssert(!atPlot(pCityPlot));
+		getGroup()->pushMission(MISSION_MOVE_TO, pCityPlot->getX_INLINE(), pCityPlot->getY_INLINE(), MOVE_DIRECT_ATTACK);
 		return true;
 	}
 
@@ -24263,19 +24275,8 @@ bool CvUnitAI::AI_solveBlockageProblem(CvPlot* pDestPlot, bool bDeclareWar)
 											}
 										}
 										kTeam.AI_setWarPlan(pPlot->getTeam(), eWarPlan, true);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/29/10                                jdog5000      */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
-/* original bts code
-										return (AI_targetCity());
-*/
-										return (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2));
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-										
+										//return (AI_targetCity());
+										return AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK); // K-Mod / BBAI
 									}
 								}
 							}

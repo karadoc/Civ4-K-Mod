@@ -7,13 +7,13 @@
 
 // The following #defines should not be moddable...
 
-#define MOVE_IGNORE_DANGER										(0x00000001)
-#define MOVE_SAFE_TERRITORY										(0x00000002)
+#define MOVE_IGNORE_DANGER									(0x00000001)
+#define MOVE_SAFE_TERRITORY									(0x00000002)
 #define MOVE_NO_ENEMY_TERRITORY								(0x00000004)
-#define MOVE_DECLARE_WAR											(0x00000008)
-#define MOVE_DIRECT_ATTACK										(0x00000010)
-#define MOVE_THROUGH_ENEMY										(0x00000020)
-#define MOVE_MAX_MOVES											(0x00000040)
+#define MOVE_DECLARE_WAR									(0x00000008)
+#define MOVE_DIRECT_ATTACK									(0x00000010)
+#define MOVE_THROUGH_ENEMY									(0x00000020)
+#define MOVE_MAX_MOVES										(0x00000040)
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      01/01/09                                jdog5000      */
 /*                                                                                              */
@@ -21,12 +21,13 @@
 /************************************************************************************************/
 // These two flags signal to weight the cost of moving through or adjacent to enemy territory higher
 // Used to reduce exposure to attack for approaching enemy cities
-#define MOVE_AVOID_ENEMY_WEIGHT_2								(0x00000080)
-#define MOVE_AVOID_ENEMY_WEIGHT_3								(0x00000100)
+#define MOVE_AVOID_ENEMY_WEIGHT_2							(0x00000080)
+#define MOVE_AVOID_ENEMY_WEIGHT_3							(0x00000100)
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 #define MOVE_ATTACK_STACK									(0x00000200) // K-Mod.. allow the path to fight through enemy defences, but prefer not to.
+#define MOVE_SINGLE_ATTACK									(0x00000400) // K-Mod. only attack with one unit, not the whole stack
 
 /*
 ** K-Mod, 18/dec/10, karadoc

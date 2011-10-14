@@ -226,6 +226,9 @@ m_bUSE_DO_PRODUCTION_CALLBACK(false),
 m_bUSE_DO_RELIGION_CALLBACK(false),
 m_bUSE_DO_GREAT_PEOPLE_CALLBACK(false),
 m_bUSE_DO_MELTDOWN_CALLBACK(false),
+m_bUSE_DO_PILLAGE_GOLD_CALLBACK(false),
+m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK(false),
+m_bUSE_DO_COMBAT_CALLBACK(false),
 // K-Mod end
 m_paHints(NULL),
 m_paMainMenus(NULL)
@@ -2729,6 +2732,10 @@ void CvGlobals::cacheGlobals()
 	m_bUSE_DO_RELIGION_CALLBACK = getDefineINT("USE_DO_RELIGION_CALLBACK") != 0;
 	m_bUSE_DO_GREAT_PEOPLE_CALLBACK = getDefineINT("USE_DO_GREAT_PEOPLE_CALLBACK") != 0;
 	m_bUSE_DO_MELTDOWN_CALLBACK = getDefineINT("USE_DO_MELTDOWN_CALLBACK") != 0;
+
+	m_bUSE_DO_PILLAGE_GOLD_CALLBACK = getDefineINT("USE_DO_PILLAGE_GOLD_CALLBACK") != 0;
+	m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK = getDefineINT("USE_GET_EXPERIENCE_NEEDED_CALLBACK") != 0;
+	m_bUSE_DO_COMBAT_CALLBACK = getDefineINT("USE_DO_COMBAT_CALLBACK") != 0;
 	// K-Mod end
 
 /************************************************************************************************/

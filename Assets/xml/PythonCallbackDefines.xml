@@ -126,31 +126,43 @@
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_GROWTH_CALLBACK</DefineName>
+		<DefineName>USE_DO_GROWTH_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_CULTURE_CALLBACK</DefineName>
+		<DefineName>USE_DO_CULTURE_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_PLOT_CULTURE_CALLBACK</DefineName>
+		<DefineName>USE_DO_PLOT_CULTURE_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_PRODUCTION_CALLBACK</DefineName>
+		<DefineName>USE_DO_PRODUCTION_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_RELIGION_CALLBACK</DefineName>
+		<DefineName>USE_DO_RELIGION_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_GREAT_PEOPLE_CALLBACK</DefineName>
+		<DefineName>USE_DO_GREAT_PEOPLE_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
-		<DefineName>m_bUSE_DO_MELTDOWN_CALLBACK</DefineName>
+		<DefineName>USE_DO_MELTDOWN_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>USE_DO_PILLAGE_GOLD_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>USE_GET_EXPERIENCE_NEEDED_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>USE_DO_COMBAT_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 </Civ4Defines>

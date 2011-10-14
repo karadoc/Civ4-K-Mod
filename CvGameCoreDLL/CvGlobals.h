@@ -805,6 +805,10 @@ public:
 	inline bool getUSE_DO_RELIGION_CALLBACK() { return m_bUSE_DO_RELIGION_CALLBACK; }
 	inline bool getUSE_DO_GREAT_PEOPLE_CALLBACK() { return m_bUSE_DO_GREAT_PEOPLE_CALLBACK; }
 	inline bool getUSE_DO_MELTDOWN_CALLBACK() { return m_bUSE_DO_MELTDOWN_CALLBACK; }
+
+	inline bool getUSE_DO_PILLAGE_GOLD_CALLBACK() { return m_bUSE_DO_PILLAGE_GOLD_CALLBACK; }
+	inline bool getUSE_GET_EXPERIENCE_NEEDED_CALLBACK() { return m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK; }
+	inline bool getUSE_DO_COMBAT_CALLBACK() { return m_bUSE_DO_COMBAT_CALLBACK; }
 	// K-Mod end
 
 	DllExport int getMAX_CIV_PLAYERS();
@@ -1239,6 +1243,10 @@ protected:
 	bool m_bUSE_DO_RELIGION_CALLBACK;
 	bool m_bUSE_DO_GREAT_PEOPLE_CALLBACK;
 	bool m_bUSE_DO_MELTDOWN_CALLBACK;
+
+	bool m_bUSE_DO_PILLAGE_GOLD_CALLBACK;
+	bool m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK;
+	bool m_bUSE_DO_COMBAT_CALLBACK;
 	// K-Mod end
 
 	// DLL interface
