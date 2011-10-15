@@ -305,6 +305,7 @@ bool CvSelectionGroupAI::AI_update()
 			if (!m_bGroupAttack)
 			{
 				pEntityNode = headUnitNode();
+				bool bFirst = true; // K-Mod
 
 				while ((pEntityNode != NULL) && readyToMove(true))
 				{
@@ -315,12 +316,13 @@ bool CvSelectionGroupAI::AI_update()
 					{
 						resetPath();
 
-						if (pLoopUnit->AI_follow())
+						if (pLoopUnit->AI_follow(bFirst))
 						{
 							bFollow = true;
 							break;
 						}
 					}
+					bFirst = false; // K-Mod
 				}
 			}
 

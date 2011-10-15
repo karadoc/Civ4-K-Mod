@@ -759,7 +759,8 @@ public:
 	virtual void AI_uninit() = 0;
 	virtual void AI_reset(UnitAITypes eUnitAI = NO_UNITAI) = 0;
 	virtual bool AI_update() = 0;
-	virtual bool AI_follow() = 0;
+	//virtual bool AI_follow() = 0;
+	virtual bool AI_follow(bool bFirst = true) = 0; // K-Mod
 	virtual void AI_upgrade() = 0;
 	virtual void AI_promote() = 0;
 	virtual int AI_groupFirstVal() = 0;

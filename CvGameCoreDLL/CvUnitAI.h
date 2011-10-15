@@ -22,7 +22,8 @@ public:
 	void AI_reset(UnitAITypes eUnitAI = NO_UNITAI);
 
 	bool AI_update();
-	bool AI_follow();
+	//bool AI_follow();
+	bool AI_follow(bool bFirst = true); // K-Mod
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/05/10                                jdog5000      */
 /*                                                                                              */

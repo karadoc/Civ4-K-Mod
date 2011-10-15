@@ -429,7 +429,10 @@ bool CvUnitAI::AI_update()
 
 
 // Returns true if took an action or should wait to move later...
-bool CvUnitAI::AI_follow()
+// K-Mod added 'bFirst'. bFirst should be "true" if this is the first unit in the group to use this follow function.
+// the point is that there are some calculations and checks in here which only depend on the group, not the unit
+// so for efficiency, we should only check them once.
+bool CvUnitAI::AI_follow(bool bFirst)
 {
 	if (AI_followBombard())
 	{
@@ -453,9 +456,9 @@ bool CvUnitAI::AI_follow()
 		}
 	} */
 	// K-Mod, I've changed attack-follow code so that it will only attack with a single unit, not the whole group.
-	if (AI_cityAttack(1, 70, true))
+	if (bFirst && AI_cityAttack(1, 70, true))
 		return true;
-	if (AI_anyAttack(1, 70, 2, true, true))
+	if (bFirst && AI_anyAttack(1, 70, 2, true, true))
 		return true;
 	//
 
@@ -487,7 +490,7 @@ bool CvUnitAI::AI_follow()
 			}
 		}
 	} */
-	// K-Mod. AI_foundRange is AI. It doesn't always found when we want to, and it has the potential to found when we don't!
+	// K-Mod. AI_foundRange is bad AI. It doesn't always found when we want to, and it has the potential to found when we don't!
 	// So I've replaced it.
 	if (AI_foundFollow())
 		return true;
