@@ -3733,7 +3733,8 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	if(pPathPlot == pDestPlot)
 		bEndMove = true;
     
-	groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
+	//groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
+	groupMove(pPathPlot, iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK), NULL, bEndMove); // K-Mod
 
 	return true;
 }

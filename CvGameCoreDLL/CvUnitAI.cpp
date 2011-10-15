@@ -1978,7 +1978,7 @@ void CvUnitAI::AI_barbAttackMove()
 			{
 				return;
 			}
-			
+
 			if (AI_goToTargetCity(MOVE_ATTACK_STACK, 12))
 			{
 				return;
@@ -2021,7 +2021,7 @@ void CvUnitAI::AI_barbAttackMove()
 			{
 				return;
 			}
-			
+
 			if (AI_goToTargetCity(MOVE_ATTACK_STACK, 12))
 			{
 				return;
