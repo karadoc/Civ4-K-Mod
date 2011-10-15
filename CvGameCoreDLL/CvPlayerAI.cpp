@@ -20080,7 +20080,8 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	int iLoop;
 
 	std::map<int, int> spare_units;
-	std::vector<std::pair<int, CvUnit*> > unit_list;
+	std::vector<std::pair<int, int> > unit_list; // { score, unitID }.
+	// note unitID is used rather than CvUnit* to ensure that the list gives the same order for players on different computers.
 
 	CvArea *pLoopArea = NULL;
 	for (pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
@@ -20142,27 +20143,27 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		if (bValid)
 		{
 			int iValue = AI_unitValue(pLoopUnit->getUnitType(), UNITAI_ATTACK_CITY, pLoopUnit->area());
-			unit_list.push_back(std::make_pair(iValue, pLoopUnit));
+			unit_list.push_back(std::make_pair(iValue, pLoopUnit->getID()));
 		}
 	}
 
 	// convert the highest scoring units first.
-	std::sort(unit_list.begin(), unit_list.end(), std::greater<std::pair<int, CvUnit*> >());
-	std::vector<std::pair<int, CvUnit*> >::iterator it;
+	std::sort(unit_list.begin(), unit_list.end(), std::greater<std::pair<int, int> >());
+	std::vector<std::pair<int, int> >::iterator it;
 	for (it = unit_list.begin(); it != unit_list.end(); ++it)
 	{
-		if (it->first > 0 && spare_units[it->second->area()->getID()] > 0)
+		if (it->first > 0 && spare_units[getUnit(it->second)->area()->getID()] > 0)
 		{
 			if (gPlayerLogLevel >= 2)
 			{
 				CvWString sOldType;
-				getUnitAIString(sOldType, it->second->AI_getUnitAIType());
-				logBBAI("    %S converts %S from %S to attack city for crush.", getName(), it->second->getName().GetCString(), sOldType.GetCString());
+				getUnitAIString(sOldType, getUnit(it->second)->AI_getUnitAIType());
+				logBBAI("    %S converts %S from %S to attack city for crush. (%d)", getName(), getUnit(it->second)->getName().GetCString(), sOldType.GetCString(), getUnit(it->second)->getID());
 			}
 
-			it->second->AI_setUnitAIType(UNITAI_ATTACK_CITY);
+			getUnit(it->second)->AI_setUnitAIType(UNITAI_ATTACK_CITY);
 			// only convert half of our spare units, so that we can reevaluate which units we need before converting more.
-			spare_units[it->second->area()->getID()]-=2;
+			spare_units[getUnit(it->second)->area()->getID()]-=2;
 		}
 	}
 }

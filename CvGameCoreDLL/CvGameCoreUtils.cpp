@@ -31,7 +31,7 @@
 #define PATH_STRAIGHT_WEIGHT    (1)
 
 // #define PATH_DAMAGE_WEIGHT      (500) // K-Mod (disabled because it isn't used)
-#define PATH_COMBAT_WEIGHT      (400) // K-Mod. penalty for having to fight along the way.
+#define PATH_COMBAT_WEIGHT      (200) // K-Mod. penalty for having to fight along the way.
 // Note: there will also be other combat penalties added, for example from defence weight and city weight.
 
 CvPlot* plotCity(int iX, int iY, int iIndex)
@@ -1544,7 +1544,8 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	// the cost of battle...
 	if (iFlags & (MOVE_ATTACK_STACK | MOVE_THROUGH_ENEMY) && // otherwise, the path will be invalid anyway...
 		pToPlot->isVisible(eTeam, false) &&
-		pToPlot->isVisibleEnemyUnit(GET_TEAM(eTeam).getLeaderID()))
+		pToPlot->isVisibleEnemyUnit(GET_TEAM(eTeam).getLeaderID()) &&
+		!gDLL->getFAStarIFace()->IsPathDest(finder, pToPlot->getX_INLINE(), pToPlot->getY_INLINE()))
 	{
 		iWorstCost += PATH_COMBAT_WEIGHT;
 
@@ -1552,7 +1553,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		{
 			FAssert(pSelectionGroup->AI_isControlled());
 			int iAttackPower = pSelectionGroup->AI_compareStacks(pToPlot, false, false, false);
-			int iCrushPower = 3*GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO(); // power required to reliably push through defences.
+			int iCrushPower = 3*GC.getBBAI_ATTACK_CITY_STACK_RATIO(); // power required to push through defences easilly.
 
 			FAssert(iCrushPower > GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO());
 
