@@ -314,7 +314,7 @@ bool CvSelectionGroupAI::AI_update()
 
 					if (pLoopUnit->canMove())
 					{
-						resetPath();
+						//resetPath(); // K-Mod disabled (this is now handled by generatePath)
 
 						if (pLoopUnit->AI_follow(bFirst))
 						{

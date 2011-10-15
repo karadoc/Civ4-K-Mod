@@ -164,7 +164,7 @@ public:
 	CvPlot* getPathFirstPlot() const;																																		// Exposed to Python
 	CvPlot* getPathEndTurnPlot() const;																																	// Exposed to Python
 	bool generatePath( const CvPlot* pFromPlot, const CvPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL) const;	// Exposed to Python
-	void resetPath();																																										// Exposed to Python
+	void resetPath() const;					// Exposed to Python
 
 	DllExport void clearUnits();
 	DllExport bool addUnit(CvUnit* pUnit, bool bMinimalChange);
@@ -278,6 +278,7 @@ public:
 	//	a crash in the main engine.  This is a bit untidy, but essentially fine due to the
 	//	single threaded nature of the application and the fact that cache validity is only
 	//	required across a single path generation call, which cannot interleave
+	static const CvSelectionGroup* lastPathGeneratedFor; // K-Mod
 	static int m_cachedPathValidityFromPlotX;
 	static int m_cachedPathValidityFromPlotY;
 	static bool m_cachedPathValidityResult;
