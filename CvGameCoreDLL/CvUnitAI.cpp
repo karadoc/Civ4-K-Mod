@@ -8717,8 +8717,8 @@ void CvUnitAI::AI_attackAirMove()
 /* 	Air AI																	*/
 /********************************************************************************/
 	CvCity* pCity = plot()->getPlotCity();
-	bool bSkiesClear = true;
-	int iDX, iDY;
+	//bool bSkiesClear = true;
+	//int iDX, iDY;
 
 	// Check for sufficient defenders to stay
 	int iDefenders = plot()->plotCount(PUF_canDefend, -1, -1, plot()->getOwner());
@@ -8797,10 +8797,10 @@ void CvUnitAI::AI_attackAirMove()
 					return;
 				}
 				
-				if (AI_defensiveAirStrike())
+				/*if (AI_defensiveAirStrike())
 				{
 					return;
-				}
+				} */
 
 				if (AI_airStrike())
 				{
@@ -8844,11 +8844,12 @@ void CvUnitAI::AI_attackAirMove()
 
 	if( getDamage() > 0 )
 	{
-		if (((100*currHitPoints()) / maxHitPoints()) < 40)
+		//if (((100*currHitPoints()) / maxHitPoints()) < 40)
 		{
 			getGroup()->pushMission(MISSION_SKIP);
 			return;
 		}
+		/* original bts / BBAI code. Disabled by K-Mod because it's time consuming and doesn't help much
 		else
 		{
 			CvPlot *pLoopPlot;
@@ -8876,7 +8877,7 @@ void CvUnitAI::AI_attackAirMove()
 				getGroup()->pushMission(MISSION_SKIP);
 				return;
 			}
-		}
+		} */
 	}
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						END								*/
@@ -8969,13 +8970,13 @@ void CvUnitAI::AI_attackAirMove()
 		bDefensive = pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE;
 	}
 
-	if (GC.getGameINLINE().getSorenRandNum(bDefensive ? 3 : 6, "AI Air Attack Move") == 0)
+	/* if (GC.getGameINLINE().getSorenRandNum(bDefensive ? 3 : 6, "AI Air Attack Move") == 0)
 	{
 		if( AI_defensiveAirStrike() )
 		{
 			return;
 		}
-	}
+	} */ // disabled by K-Mod
 
 	if (GC.getGameINLINE().getSorenRandNum(4, "AI Air Attack Move") == 0)
 	{
@@ -8987,6 +8988,7 @@ void CvUnitAI::AI_attackAirMove()
 	}
 
 	// Support ground attacks
+	/* original bts code
 	if (AI_airBombDefenses())
 	{
 		return;
@@ -9003,8 +9005,22 @@ void CvUnitAI::AI_attackAirMove()
 	if (AI_airStrike())
 	{
 		return;
+	} */
+	// K-Mod
+	if (AI_airStrike())
+	{
+		return;
 	}
-	
+	// switched probabilities from original bts. If we're on the offense, we don't want to smash up too many improvements...
+	// soon they will be _our_ improvements.
+	if (GC.getGameINLINE().getSorenRandNum(bDefensive ? 4 : 6, "AI Air Attack Move") == 0)
+	{
+		if (AI_airBombPlots())
+		{
+			return;
+		}
+	}
+
 	if (canAirAttack())
 	{
 		if (AI_airOffensiveCity())
@@ -9122,10 +9138,10 @@ void CvUnitAI::AI_defenseAirMove()
 				return;
 			}
 			
-			if (AI_defensiveAirStrike())
+			/* if (AI_defensiveAirStrike())
 			{
 				return;
-			}
+			} */
 
 			if (AI_airStrike())
 			{
@@ -9231,7 +9247,7 @@ void CvUnitAI::AI_defenseAirMove()
 		{
 			iBaseAirDefenders += pCity->AI_neededAirDefenders()/2;
 		}
-		
+
 		if( plot()->countAirInterceptorsActive(getTeam()) < iBaseAirDefenders )
 		{
 			getGroup()->pushMission(MISSION_AIRPATROL);
@@ -9277,10 +9293,10 @@ void CvUnitAI::AI_defenseAirMove()
 
 		if((GC.getGameINLINE().getSorenRandNum(3, "AI Air Defense Move") > 0))
 		{
-			if (AI_defensiveAirStrike())
+			/* if (AI_defensiveAirStrike())
 			{
 				return;
-			}
+			} */ // disabled by K-Mod
 
 			if (AI_airStrike())
 			{
@@ -9293,6 +9309,7 @@ void CvUnitAI::AI_defenseAirMove()
 		if ((GC.getGameINLINE().getSorenRandNum(3, "AI Air Defense Move") > 0))
 		{
 			// Clear out any enemy fighters, support offensive units
+			/* original bts code
 			if (AI_airBombDefenses())
 			{
 				return;
@@ -9305,14 +9322,15 @@ void CvUnitAI::AI_defenseAirMove()
 				{
 					return;
 				}
-			}
+			} */ // disabled by K-mod. That stuff is handled in AI_airStrike now.
 
 			if (AI_airStrike())
 			{
 				return;
 			}
 			
-			if (AI_getBirthmark() % 2 == 0 || bOffensive)
+			//if (AI_getBirthmark() % 2 == 0 || bOffensive)
+			if (AI_getBirthmark() % 2 == 0) // K-Mod
 			{
 				if (AI_airBombPlots())
 				{
@@ -9367,8 +9385,9 @@ void CvUnitAI::AI_carrierAirMove()
 
 	if (isCargo())
 	{
+		/* original bts code
 		int iRand = GC.getGameINLINE().getSorenRandNum(3, "AI Air Carrier Move");
-		
+
 		if (iRand == 2 && canAirDefend())
 		{
 			getGroup()->pushMission(MISSION_AIRPATROL);
@@ -9401,7 +9420,22 @@ void CvUnitAI::AI_carrierAirMove()
 			{
 				return;
 			}
+		} */
+		// K-Mod
+		if (canAirDefend() && (GC.getGameINLINE().getSorenRandNum(4, "AI Air Carrier Move") == 0 || plot()->countAirInterceptorsActive(getTeam()) < 1))
+		{
+			getGroup()->pushMission(MISSION_AIRPATROL);
+			return;
 		}
+		if (AI_airStrike())
+		{
+			return;
+		}
+		if (AI_airBombPlots())
+		{
+			return;
+		}
+		// K-Mod end
 
 		if (AI_travelToUpgradeCity())
 		{
@@ -9478,6 +9512,7 @@ void CvUnitAI::AI_missileAirMove()
 			}
 		}
 
+		/* original bts code
 		iRand = GC.getGameINLINE().getSorenRandNum(3, "AI Air Missile Carrier Move");
 		if (iRand == 0)
 		{
@@ -9502,7 +9537,13 @@ void CvUnitAI::AI_missileAirMove()
 			{
 				return;
 			}
+		} */
+		// K-Mod
+		if (AI_airStrike())
+		{
+			return;
 		}
+		// K-Mod end
 		
 		if (AI_airBombPlots())
 		{
@@ -9533,10 +9574,10 @@ void CvUnitAI::AI_missileAirMove()
 		return;
 	}
 
-	if (AI_airBombDefenses())
+	/* if (AI_airBombDefenses())
 	{
 		return;
-	}
+	} */ // disabled by K-Mod
 
 	if (!isCargo())
 	{
@@ -15502,7 +15543,8 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 			{
 				if (AI_plotValid(pLoopPlot))
 				{
-					if (pLoopPlot->isCity() || (pLoopPlot->isCity(true, getTeam()) && pLoopPlot->isVisibleEnemyUnit(this)))
+					//if (pLoopPlot->isCity() || (pLoopPlot->isCity(true, getTeam()) && pLoopPlot->isVisibleEnemyUnit(this)))
+					if (pLoopPlot->isCity()) // K-Mod.
 					{
 						if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 						{
@@ -20939,7 +20981,8 @@ int CvUnitAI::AI_airOffenseBaseValue( CvPlot* pPlot )
 									// Target enemy cities
 									iTempValue += (3*pLoopCity->getPopulation() + 30);
 
-									if( canAirBomb(pPlot) && pLoopCity->isBombardable(this) )
+									//if( canAirBomb(pPlot) && pLoopCity->isBombardable(this) )
+									if (canAirBombAt(pPlot, pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) // K-Mod
 									{
 										iTempValue *= 2;
 									}
@@ -21344,39 +21387,31 @@ bool CvUnitAI::AI_missileLoad(UnitAITypes eTargetUnitAI, int iMaxOwnUnitAI, bool
 
 
 // Returns true if a mission was pushed...
+// K-Mod: This function now considers bombarding city defences, and bombing improvements,
+// as well as air strikes against enemy troops. Also, it now prefers to hit targets that are in our territory.
 bool CvUnitAI::AI_airStrike()
 {
 	//PROFILE_FUNC();
 
-	CvUnit* pDefender;
-	CvUnit* pInterceptor;
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	int iSearchRange;
-	int iDamage;
-	int iPotentialAttackers;
-	int iInterceptProb;
-	int iValue;
-	int iBestValue;
-	int iDX, iDY;
+	int iSearchRange = airRange();
 
-	iSearchRange = airRange();
+	int iBestValue = (isSuicide() && m_pUnitInfo->getProductionCost() > 0) ? (5 * m_pUnitInfo->getProductionCost()) / 6 : 0;
+	CvPlot* pBestPlot = NULL;
+	bool bBombard = false; // K-Mod. bombard (city / improvement), rather than air strike (damage)
 
-	iBestValue = (isSuicide() && m_pUnitInfo->getProductionCost() > 0) ? (5 * m_pUnitInfo->getProductionCost()) / 6 : 0;
-	pBestPlot = NULL;
-
-	for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
+	for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 	{
-		for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
+		for (int iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
 		{
-			pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
 			if (pLoopPlot != NULL)
 			{
 				if (canMoveInto(pLoopPlot, true))
 				{
-					iValue = 0;
-					iPotentialAttackers = GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
+					int iStrikeValue = 0; // use to be just "iValue"
+					int iBombValue = 0; // K-Mod
+					int iPotentialAttackers = GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
 					if (pLoopPlot->isCity())
 					{
 						iPotentialAttackers += GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup(), 1) * 2;							
@@ -21397,43 +21432,97 @@ bool CvUnitAI::AI_airStrike()
 					/* 	BETTER_BTS_AI_MOD						END								*/
 					/********************************************************************************/
 					{
-						pDefender = pLoopPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
+						CvUnit* pDefender = pLoopPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
 
 						FAssert(pDefender != NULL);
 						FAssert(pDefender->canDefend());
 
 						// XXX factor in air defenses...
 
-						iDamage = airCombatDamage(pDefender);
+						int iDamage = airCombatDamage(pDefender);
 
-						iValue = std::max(0, (std::min((pDefender->getDamage() + iDamage), airCombatLimit()) - pDefender->getDamage()));
+						iStrikeValue = std::max(0, (std::min((pDefender->getDamage() + iDamage), airCombatLimit()) - pDefender->getDamage()));
 
-						iValue += ((((iDamage * collateralDamage()) / 100) * std::min((pLoopPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits())) / 2);
+						iStrikeValue += ((((iDamage * collateralDamage()) / 100) * std::min((pLoopPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits())) / 2);
 
-						iValue *= (3 + iPotentialAttackers);
-						iValue /= 4;
+						iStrikeValue *= (3 + iPotentialAttackers);
+						iStrikeValue /= 4;
 
-						pInterceptor = bestInterceptor(pLoopPlot);
+						// K-Mod
+						if (pLoopPlot->isCity())
+						{
+							// decrease value of collateral damage, because city units heal more easily
+							iStrikeValue *= 3;
+							iStrikeValue /= 4;
+							// consider bombarding instead
+							if (canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
+							{
+								const CvCity* pCity = pLoopPlot->getPlotCity();
+								iBombValue = std::max(0, std::min(pCity->getDefenseDamage() + airBombCurrRate(), GC.getMAX_CITY_DEFENSE_DAMAGE()) - pCity->getDefenseDamage());
+								iBombValue *= 1 + iPotentialAttackers;
+								iBombValue /= 2;
+							}
+						}
+						else
+						{
+							BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam(), true);
+							if (eBonus != NO_BONUS && canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
+								iBombValue = GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, -1) * 2;
+						}
+						// K-Mod end (apart from all the iBombValue / bBombard stuff)
+
+						/* original code
+						CvUnit* pInterceptor = bestInterceptor(pLoopPlot);
 
 						if (pInterceptor != NULL)
 						{
-							iInterceptProb = isSuicide() ? 100 : pInterceptor->currInterceptionProbability();
+							int iInterceptProb = isSuicide() ? 100 : pInterceptor->currInterceptionProbability();
 
 							iInterceptProb *= std::max(0, (100 - evasionProbability()));
 							iInterceptProb /= 100;
 
 							iValue *= std::max(0, 100 - iInterceptProb / 2);
 							iValue /= 100;
+						} */
+
+						// K-Mod. Try to avoid using bestInterceptor... because that's a slow function.
+						if (isSuicide())
+						{
+							iStrikeValue /= 2;
+							iBombValue /= 2;
 						}
-						
+						else if (!canAirDefend()) // assume that air defenders are strong.. and that they are willing to fight
+						{
+							CvUnit* pInterceptor = bestInterceptor(pLoopPlot);
+
+							if (pInterceptor != NULL)
+							{
+								int iInterceptProb = pInterceptor->currInterceptionProbability();
+
+								iInterceptProb *= std::max(0, (100 - evasionProbability()));
+								iInterceptProb /= 100;
+
+								iStrikeValue *= std::max(0, 100 - iInterceptProb / 2);
+								iStrikeValue /= 100;
+								iBombValue *= std::max(0, 100 - iInterceptProb / 2);
+								iBombValue /= 100;
+							}
+						}
+						// K-Mod end
+
 						if (pLoopPlot->isWater())
 						{
-							iValue *= 3;
+							iStrikeValue *= 3;
+						}
+						else if (pLoopPlot->getTeam() == getTeam()) // K-Mod. prefer defence
+						{
+							iStrikeValue *= 2;
 						}
 
-						if (iValue > iBestValue)
+						if (iStrikeValue > iBestValue || iBombValue > iBestValue)
 						{
-							iBestValue = iValue;
+							bBombard = iBombValue > iStrikeValue;
+							iBestValue = std::max(iBombValue, iStrikeValue);
 							pBestPlot = pLoopPlot;
 							FAssert(!atPlot(pBestPlot));
 						}
@@ -21446,7 +21535,10 @@ bool CvUnitAI::AI_airStrike()
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		if (bBombard)
+			getGroup()->pushMission(MISSION_AIRBOMB, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		else
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
 		return true;
 	}
 
@@ -21460,7 +21552,7 @@ bool CvUnitAI::AI_airStrike()
 /********************************************************************************/
 // Air strike focused on weakening enemy stacks threatening our cities
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_defensiveAirStrike()
+/* bool CvUnitAI::AI_defensiveAirStrike()
 {
 	PROFILE_FUNC();
 
@@ -21559,7 +21651,7 @@ bool CvUnitAI::AI_defensiveAirStrike()
 	}
 
 	return false;
-}
+} */
 
 // Air strike around base city
 // Returns true if a mission was pushed...
@@ -21710,6 +21802,7 @@ bool CvUnitAI::AI_airBombPlots()
 						if (iValue > 0)
 						{
 
+							/* original bts code
 							pInterceptor = bestInterceptor(pLoopPlot);
 
 							if (pInterceptor != NULL)
@@ -21721,7 +21814,28 @@ bool CvUnitAI::AI_airBombPlots()
 
 								iValue *= std::max(0, 100 - iInterceptProb / 2);
 								iValue /= 100;
+							} */
+							// K-Mod. Try to avoid using bestInterceptor... because that's a slow function.
+							if (isSuicide())
+							{
+								iValue /= 2;
 							}
+							else if (!canAirDefend()) // assume that air defenders are strong.. and that they are willing to fight
+							{
+								pInterceptor = bestInterceptor(pLoopPlot);
+
+								if (pInterceptor != NULL)
+								{
+									iInterceptProb = pInterceptor->currInterceptionProbability();
+
+									iInterceptProb *= std::max(0, (100 - evasionProbability()));
+									iInterceptProb /= 100;
+
+									iValue *= std::max(0, 100 - iInterceptProb / 2);
+									iValue /= 100;
+								}
+							}
+							// K-Mod end
 
 							if (iValue > iBestValue)
 							{
@@ -21745,7 +21859,7 @@ bool CvUnitAI::AI_airBombPlots()
 	return false;
 }	
 
-
+/* disabled by K-Mod - this is now handled in AI_airStrike.
 bool CvUnitAI::AI_airBombDefenses()
 {
 	//PROFILE_FUNC();
@@ -21800,7 +21914,7 @@ bool CvUnitAI::AI_airBombDefenses()
 								iValue *= 2;
 							}
 						}
-						
+
 						if (iValue > 0)
 						{
 							pInterceptor = bestInterceptor(pLoopPlot);
@@ -21837,7 +21951,7 @@ bool CvUnitAI::AI_airBombDefenses()
 
 	return false;	
 	
-}
+} */
 
 bool CvUnitAI::AI_exploreAir()
 {

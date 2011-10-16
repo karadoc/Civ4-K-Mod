@@ -11257,8 +11257,8 @@
 		<ScriptID>AS2D_BLIGHT</ScriptID>
 		<SoundID>SND_BLIGHT</SoundID>
 		<SoundType>GAME_INTERFACE</SoundType>
-		<iMinVolume>90</iMinVolume>
-		<iMaxVolume>90</iMaxVolume>
+		<iMinVolume>100</iMinVolume>
+		<iMaxVolume>100</iMaxVolume>
 		<iPitchChangeDown>0</iPitchChangeDown>
 		<iPitchChangeUp>0</iPitchChangeUp>
 		<iMinLeftPan>-1</iMinLeftPan>

@@ -244,20 +244,20 @@ protected:
 	bool AI_airDefensiveCity();
 	bool AI_airCarrier();
 	bool AI_missileLoad(UnitAITypes eTargetUnitAI, int iMaxOwnUnitAI = -1, bool bStealthOnly = false);
-	bool AI_airStrike();
+	bool AI_airStrike(); // K-Mod note. this function now handles bombing defences, and defensive strikes.
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						9/26/08				jdog5000	    */
 /* 																			    */
 /* 	Air AI																	    */
 /********************************************************************************/
 	int AI_airOffenseBaseValue( CvPlot* pPlot );
-	bool AI_defensiveAirStrike();
+	//bool AI_defensiveAirStrike(); // disabled by K-Mod
 	bool AI_defendBaseAirStrike();
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						END								    */
 /********************************************************************************/
 	bool AI_airBombPlots();
-	bool AI_airBombDefenses();	
+	//bool AI_airBombDefenses(); // disabled by K-Mod
 	bool AI_exploreAir();
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      01/12/09                                jdog5000      */
