@@ -1549,7 +1549,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	{
 		iWorstCost += PATH_COMBAT_WEIGHT;
 
-		if (!(iFlags & MOVE_THROUGH_ENEMY)) // MOVE_ATTACK_STACK.
+		if (iFlags & MOVE_ATTACK_STACK)
 		{
 			FAssert(pSelectionGroup->AI_isControlled());
 			int iAttackPower = std::max(1, pSelectionGroup->AI_compareStacks(pToPlot, false, false, false));

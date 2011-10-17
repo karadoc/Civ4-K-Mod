@@ -2427,7 +2427,7 @@ void CvUnitAI::AI_attackMove()
 			if (getGroup()->getNumUnits() > 1)
 			{
 				//if (AI_targetCity())
-				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 12))
+				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 12))
 				{
 					return;
 				}
