@@ -3505,7 +3505,8 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 
 	CvPlot* pDestPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 
-	if (iFlags & MOVE_THROUGH_ENEMY)
+	//if (iFlags & MOVE_THROUGH_ENEMY)
+	if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK)) // K-Mod
 	{
 		if (generatePath(plot(), pDestPlot, iFlags))
 		{
@@ -3525,7 +3526,8 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 	{
 		if ((getDomainType() == DOMAIN_AIR) || (stepDistance(getX(), getY(), pDestPlot->getX_INLINE(), pDestPlot->getY_INLINE()) == 1))
 		{
-			if ((iFlags & MOVE_DIRECT_ATTACK) || (getDomainType() == DOMAIN_AIR) || (iFlags & MOVE_THROUGH_ENEMY) || (generatePath(plot(), pDestPlot, iFlags) && (getPathFirstPlot() == pDestPlot)))
+			//if ((iFlags & MOVE_DIRECT_ATTACK) || (getDomainType() == DOMAIN_AIR) || (iFlags & MOVE_THROUGH_ENEMY) || (generatePath(plot(), pDestPlot, iFlags) && (getPathFirstPlot() == pDestPlot)))
+			if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK | MOVE_DIRECT_ATTACK) || getDomainType() == DOMAIN_AIR || (generatePath(plot(), pDestPlot, iFlags) && getPathFirstPlot() == pDestPlot)) // K-Mod
 			{
 				int iAttackOdds;
 				CvUnit* pBestAttackUnit = AI_getBestGroupAttacker(pDestPlot, true, iAttackOdds);
@@ -3595,6 +3597,7 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							}
 						}
 
+						/* origianl bts code
 						if (getNumUnits() > 1)
 						{
 							if (pBestAttackUnit->plot()->isFighting() || pDestPlot->isFighting())
@@ -3605,7 +3608,16 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							{
 								pBestAttackUnit->attack(pDestPlot, bStack);
 							}
+						} */
+						// K-Mod. bug fix
+						if (pBestAttackUnit->plot()->isFighting() || pDestPlot->isFighting())
+						{
+							bFailedAlreadyFighting = true;
 						}
+						else if (getNumUnits() > 1)
+						{
+							pBestAttackUnit->attack(pDestPlot, bStack);
+						} // K-Mod end
 						else
 						{
 							pBestAttackUnit->attack(pDestPlot, false);
