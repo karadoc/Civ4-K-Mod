@@ -5065,9 +5065,15 @@ DenialTypes CvPlayer::getTradeDenial(PlayerTypes eWhoTo, TradeData item) const
 {
 	CvCity* pCity;
 
+	// K-Mod note: I've changed it so that AI players on human teams can be contacted when not at war.
+	// So.. as a follow up on that change, I'm making the AI deny trades which affect the team, not just the player.
 	switch (item.m_eItemType)
 	{
 	case TRADE_TECHNOLOGIES:
+		// K-Mod
+		if (!isHuman() && GET_TEAM(getTeam()).isHuman())
+			return DENIAL_MYSTERY;
+		// K-Mod end
 		return GET_TEAM(getTeam()).AI_techTrade(((TechTypes)(item.m_iData)), GET_PLAYER(eWhoTo).getTeam());
 		break;
 
@@ -5096,6 +5102,10 @@ DenialTypes CvPlayer::getTradeDenial(PlayerTypes eWhoTo, TradeData item) const
 		break;
 
 	case TRADE_VASSAL:
+		// K-Mod
+		if (!isHuman() && GET_TEAM(getTeam()).isHuman())
+			return DENIAL_MYSTERY;
+		// K-Mod end
 		return GET_TEAM(getTeam()).AI_vassalTrade(GET_PLAYER(eWhoTo).getTeam());
 		break;
 
@@ -5124,10 +5134,18 @@ DenialTypes CvPlayer::getTradeDenial(PlayerTypes eWhoTo, TradeData item) const
 		break;
 
 	case TRADE_DEFENSIVE_PACT:
+		// K-Mod
+		if (!isHuman() && GET_TEAM(getTeam()).isHuman())
+			return DENIAL_MYSTERY;
+		// K-Mod end
 		return GET_TEAM(getTeam()).AI_defensivePactTrade(GET_PLAYER(eWhoTo).getTeam());
 		break;
 
 	case TRADE_PERMANENT_ALLIANCE:
+		// K-Mod
+		if (!isHuman() && GET_TEAM(getTeam()).isHuman())
+			return DENIAL_MYSTERY;
+		// K-Mod end
 		return GET_TEAM(getTeam()).AI_permanentAllianceTrade(GET_PLAYER(eWhoTo).getTeam());
 		break;
 

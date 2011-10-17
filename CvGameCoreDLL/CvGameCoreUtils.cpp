@@ -31,7 +31,7 @@
 #define PATH_STRAIGHT_WEIGHT    (1)
 
 // #define PATH_DAMAGE_WEIGHT      (500) // K-Mod (disabled because it isn't used)
-#define PATH_COMBAT_WEIGHT      (200) // K-Mod. penalty for having to fight along the way.
+#define PATH_COMBAT_WEIGHT      (400) // K-Mod. penalty for having to fight along the way.
 // Note: there will also be other combat penalties added, for example from defence weight and city weight.
 
 CvPlot* plotCity(int iX, int iY, int iIndex)
@@ -1552,14 +1552,11 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		if (!(iFlags & MOVE_THROUGH_ENEMY)) // MOVE_ATTACK_STACK.
 		{
 			FAssert(pSelectionGroup->AI_isControlled());
-			int iAttackPower = pSelectionGroup->AI_compareStacks(pToPlot, false, false, false);
-			int iCrushPower = 3*GC.getBBAI_ATTACK_CITY_STACK_RATIO(); // power required to push through defences easilly.
+			int iAttackPower = std::max(1, pSelectionGroup->AI_compareStacks(pToPlot, false, false, false));
 
-			FAssert(iCrushPower > GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO());
-
-			if (iAttackPower < iCrushPower)
+			if (iAttackPower < 400)
 			{
-				iWorstCost += PATH_MOVEMENT_WEIGHT * (iCrushPower-iAttackPower)/std::max(1, iAttackPower);
+				iWorstCost += PATH_MOVEMENT_WEIGHT * GC.getMOVE_DENOMINATOR() * (400-iAttackPower)/std::min(150, iAttackPower);
 			}
 			// else, don't worry about it too much.
 		}

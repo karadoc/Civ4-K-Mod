@@ -1610,7 +1610,7 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 			}
 		}
 	}
-	
+
 	if (isHuman())
 	{
 		return NO_DENIAL;

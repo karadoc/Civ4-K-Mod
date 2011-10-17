@@ -6781,13 +6781,18 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 		return true;
 	}
 
+	/* original bts code
 	if (GET_TEAM(getTeam()).isHuman())
 	{
 		return false;
-	}
+	} */ // disabled by K-Mod
 
 	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 	{
+		// K-Mod
+		if (GET_TEAM(getTeam()).isHuman())
+			return false;
+		// K-Mod end
 		int iRefuseDuration = (GC.getLeaderHeadInfo(getPersonalityType()).getRefuseToTalkWarThreshold() * ((GET_TEAM(getTeam()).AI_isChosenWar(GET_PLAYER(ePlayer).getTeam())) ? 2 : 1));
 		
 		int iOurSuccess = 1 + GET_TEAM(getTeam()).AI_getWarSuccess(GET_PLAYER(ePlayer).getTeam());
@@ -9528,7 +9533,8 @@ DenialTypes CvPlayerAI::AI_bonusTrade(BonusTypes eBonus, PlayerTypes ePlayer) co
 		return NO_DENIAL;
 	}
 
-	if (GET_PLAYER(ePlayer).getTeam() == getTeam())
+	//if (GET_PLAYER(ePlayer).getTeam() == getTeam())
+	if (GET_PLAYER(ePlayer).getTeam() == getTeam() && GET_PLAYER(ePlayer).isHuman()) // K-Mod
 	{
 		return NO_DENIAL;
 	}
@@ -9537,6 +9543,12 @@ DenialTypes CvPlayerAI::AI_bonusTrade(BonusTypes eBonus, PlayerTypes ePlayer) co
 	{
 		return (GET_PLAYER(ePlayer).isHuman() ? DENIAL_JOKING : DENIAL_NO_GAIN);
 	}
+
+	// K-Mod (The above case should be tested for humans trying to give stuff to AI teammates
+	// - otherwise the human won't know if the AI can actually use the resource.)
+	if (GET_PLAYER(ePlayer).getTeam() == getTeam())
+		return NO_DENIAL;
+	// K-Mod end
 
 	if (isHuman())
 	{
@@ -14778,7 +14790,7 @@ void CvPlayerAI::AI_doDiplo()
 				{
 					if (iI != getID())
 					{
-						if (GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam())
+						//if (GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam()) // disabled by K-Mod
 						{
 							for(pLoopDeal = GC.getGameINLINE().firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = GC.getGameINLINE().nextDeal(&iLoop))
 							{
@@ -14917,8 +14929,14 @@ void CvPlayerAI::AI_doDiplo()
 								{
 									if (getNumTradeableBonuses((BonusTypes)iJ) > 1)
 									{
+										/* original bts code
 										if ((GET_PLAYER((PlayerTypes)iI).AI_bonusTradeVal(((BonusTypes)iJ), getID(), 1) > 0)
-											&& (GET_PLAYER((PlayerTypes)iI).AI_bonusVal((BonusTypes)iJ, 1) > AI_bonusVal((BonusTypes)iJ, -1)))
+											&& (GET_PLAYER((PlayerTypes)iI).AI_bonusVal((BonusTypes)iJ, 1) > AI_bonusVal((BonusTypes)iJ, -1))) */
+										// K-Mod
+										bool bHasBonus = GET_PLAYER((PlayerTypes)iI).getNumAvailableBonuses((BonusTypes)iJ) > 0;
+										if (GET_PLAYER((PlayerTypes)iI).AI_bonusTradeVal(((BonusTypes)iJ), getID(), 1) > 0
+											&& 2 * GET_PLAYER((PlayerTypes)iI).AI_bonusVal((BonusTypes)iJ, 1) > (bHasBonus? 2 : 3) * AI_bonusVal((BonusTypes)iJ, -1))
+										// K-mod end
 										{
 											setTradeItem(&item, TRADE_RESOURCES, iJ);
 
