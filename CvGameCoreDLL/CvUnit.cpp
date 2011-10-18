@@ -1745,7 +1745,20 @@ bool CvUnit::isActionRecommended(int iAction)
 								return true;
 							}
 						}
+						// K-Mod
+						if (pPlot->getImprovementType() == NO_IMPROVEMENT && pWorkingCity == NULL)
+						{
+							if (!(pPlot->isIrrigated()) && pPlot->isIrrigationAvailable(true))
+							{
+								if (GC.getImprovementInfo(eImprovement).isCarriesIrrigation())
+								{
+									return true;
+								}
+							}
+						}
+						// K-Mod end
 
+						/* original bts code
 						if (pPlot->getImprovementType() == NO_IMPROVEMENT)
 						{
 							if (!(pPlot->isIrrigated()) && pPlot->isIrrigationAvailable(true))
@@ -1778,7 +1791,7 @@ bool CvUnit::isActionRecommended(int iAction)
 									}
 								}
 							}
-						}
+						} */ 
 					}
 				}
 

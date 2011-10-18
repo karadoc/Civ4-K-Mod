@@ -427,7 +427,9 @@ bool CvCityAI::AI_avoidGrowth()
 	{
 		return true;
 	}
-	
+
+	return false; // K-Mod. short-circuit all the other stuff. That's all taken into account in other places.
+
 	if (isFoodProduction())
 	{
 		return true;
@@ -9698,7 +9700,7 @@ void CvCityAI::AI_juggleCitizens()
 		if (iCycles > getPopulation() + iTotalFreeSpecialists)
 		{
 			// This isn't a serious problem. I just want to know how offen it happens.
-			//FAssertMsg(false, "juggle citizens failed to find a stable solution.");
+			FAssertMsg(false, "juggle citizens failed to find a stable solution.");
 			break;
 		}
 		iCycles++;
@@ -9931,7 +9933,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
 		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
-		int iExtraPopulationThatCanWork = std::max(NUM_CITY_PLOTS, std::max(0, extraPopulation()+(bRemove?1:0))) - getWorkingPopulation();
+		int iExtraPopulationThatCanWork = std::min(NUM_CITY_PLOTS, std::max(0, extraPopulation()+(bRemove?1:0))) - getWorkingPopulation();
 
 		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 
@@ -10105,7 +10107,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					// don't count growth value for tiles with nothing else to contribute.
 					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 || iCommerceValue > 0))
 					{
-						
 						// will multiply this by factors
 						iFoodGrowthValue = iFoodYield;
 						/*if (iHealthLevel < (bFillingBar ? 0 : 1))
@@ -10126,7 +10127,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							iFactorPopToGrow = 41; */
 						// K-Mod, reduced the scale to match the building evaluation code.
 						if (bFillingBar)
-							iFactorPopToGrow = 11 * iFoodToGrow / std::max(1, iFoodToGrow + iFoodLevel + iFoodPerTurn);
+							iFactorPopToGrow = 11 * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn);
 						else if (iPopToGrow < 6)
 							iFactorPopToGrow = 11 + 2 * iPopToGrow;
 						else
@@ -10173,7 +10174,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					iFoodGrowthValue += iTempValue;
 				} */ // Disabled by K-Mod. I don't see the point of this.
 				//Slavery Override
-				if (bCanPopRush && (iHappinessLevel > 0))
+				//if (bCanPopRush && (iHappinessLevel > 0))
+				if (bCanPopRush && getHurryAngerTimer() == 0 && iHappinessLevel >= 0) // K-Mod
 				{
 					//iSlaveryValue = 30 * 14 * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0));
 					// K-Mod. Rescaled values. "30" represents GC.getHurryInfo(eHurry).getProductionPerPopulation()

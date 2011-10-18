@@ -1156,7 +1156,8 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc) const
 		}
 		if (!isBarbarian())
 		{
-			int iMaxCityCount = 4;
+			//int iMaxCityCount = 4;
+			int iMaxCityCount = isHuman() ? 6 : 4; // K-Mod - because humans don't always walk towards the AI's top picks..
 			AI_updateCitySites(AI_getMinFoundValue(), iMaxCityCount);
 		}
 	}
