@@ -2571,6 +2571,7 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam )
 					{
 						if( (GET_TEAM(eSurrenderTeam).AI_getWarSuccess((TeamTypes)iI) + std::min(GET_TEAM(eSurrenderTeam).getNumCities(), 4) * GC.getWAR_SUCCESS_CITY_CAPTURING()) < GET_TEAM((TeamTypes)iI).AI_getWarSuccess(eSurrenderTeam))
 						{
+							// K-Mod todo: that's nothing like the capitulation condition. I'll have to come back and fix this later.
 							return true;
 						}
 					}
@@ -2701,10 +2702,17 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam )
 	{
 		// Keep others from capturing spoils, but let it go if surrender civ is too small
 		// to care about
+		/* original BBAI code
 		if( 6*(iValuableCities + GET_TEAM(eSurrenderTeam).getNumCities()) > getNumCities() )
 		{
 			return true;
+		} */
+		// K-Mod. That looks like it's the opposite of what you said it should do.
+		if (6*(iValuableCities + GET_TEAM(eSurrenderTeam).getNumCities()) < getNumCities())
+		{
+			return true;
 		}
+		// K-Mod end
 	}
 
 	// If we're low on the totem poll, accept so enemies don't drag anyone else into war with us
@@ -3058,7 +3066,7 @@ DenialTypes CvTeamAI::AI_makePeaceTrade(TeamTypes ePeaceTeam, TeamTypes eTeam) c
 	} */
 	// K-Mod
 	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
-		(AI_isChosenWar(eTeam) || getAtWarCount(true, true) == 1) &&
+		(AI_isChosenWar(ePeaceTeam) || getAtWarCount(true, true) == 1) &&
 		AI_getWarSuccessCapitulationRatio() > 0)
 	{
 		return DENIAL_VICTORY;
@@ -4497,14 +4505,24 @@ void CvTeamAI::AI_doWar()
 						iTimeModifier *= iEnemyPowerPercent;
 						iTimeModifier /= iThreshold;
 					}
-					// K-Mod. with crush strategy, use just 2/3 of the prep time.
+					// K-Mod
+					// intercontinental wars need more prep time
+					if (!AI_hasCitiesInPrimaryArea((TeamTypes)iI))
 					{
+						iTimeModifier *= 5;
+						iTimeModifier /= 4;
+						// maybe in the future I'll count the number of local cities and the number of overseas cities
+						// and use it to make a more appropriate modifier... but not now.
+					}
+					else
+					{
+						//with crush strategy, use just 2/3 of the prep time.
 						int iCrushMembers = AI_countMembersWithStrategy(AI_STRATEGY_CRUSH);
 						iTimeModifier *= 3 * (getNumMembers()-iCrushMembers) + 2 * iCrushMembers;
 						iTimeModifier /= 3;
 					}
 					// K-Mod end
-					
+
 					iTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
 					iTimeModifier /= 150;
 

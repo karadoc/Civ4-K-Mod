@@ -5451,17 +5451,18 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 							iHqValue *= getTotalCommerceRateModifier((CommerceTypes)iI);
 							iHqValue *= kOwner.AI_commerceWeight((CommerceTypes)iI, this);
 							iHqValue /= 10000;
-							// use rank as a tie-breaker
+							// use rank as a tie-breaker... with number of national wonders thrown in to,
+							// (I'm trying to boost the chance that the AI will put wallstreet with its corp HQs.)
 							if (iHqValue > 0)
 							{
-								iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI);
+								iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI) - getNumNationalWonders();
 								iHqValue /= 2*iNumCities;
 							}
 							iCorpValue += iHqValue;
 						}
 					}
 				}
-					
+
 				if (iCorpValue > 0)
 				{
 					if (kOwner.isNoCorporations())
@@ -8307,7 +8308,8 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 				if (eProductionBuilding != NO_BUILDING)
 				{
-					int iValuePerTurn = AI_buildingValue(eProductionBuilding, BUILDINGFOCUS_GOLD | BUILDINGFOCUS_MAINTENANCE | BUILDINGFOCUS_PRODUCTION);
+					//int iValuePerTurn = AI_buildingValue(eProductionBuilding, BUILDINGFOCUS_GOLD | BUILDINGFOCUS_MAINTENANCE | BUILDINGFOCUS_PRODUCTION);
+					int iValuePerTurn = AI_buildingValue(eProductionBuilding); // K-Mod
 					
 					iValuePerTurn /= 3;
 					
@@ -9696,7 +9698,7 @@ void CvCityAI::AI_juggleCitizens()
 		if (iCycles > getPopulation() + iTotalFreeSpecialists)
 		{
 			// This isn't a serious problem. I just want to know how offen it happens.
-			FAssertMsg(false, "juggle citizens failed to find a stable solution.");
+			//FAssertMsg(false, "juggle citizens failed to find a stable solution.");
 			break;
 		}
 		iCycles++;

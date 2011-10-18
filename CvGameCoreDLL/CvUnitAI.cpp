@@ -5647,10 +5647,10 @@ void CvUnitAI::AI_spyMove()
 				}
 				break;
 			case MISSIONAI_EXPLORE:
-				if (atPlot(pMissionPlot))
+				/*if (atPlot(pMissionPlot))
 				{
 					getGroup()->AI_setMissionAI(NO_MISSIONAI, 0, 0);
-				}
+				}*/
 			default:
 				break;
 			}
@@ -5706,9 +5706,17 @@ void CvUnitAI::AI_spyMove()
 
 			// would we have more power if enemy defenses were down?
 			int iOurPower = kOwner.AI_getOurPlotStrength(plot(),1,false,true);
-			int iEnemyPower = kOwner.AI_getEnemyPlotStrength(plot(),0,false,false);
+			// int iEnemyPower = kOwner.AI_getEnemyPlotStrength(plot(),0,false,false); // original BBAI code
+			// K-Mod note: telling AI_getEnemyPlotStrength to not count defensive bonuses is not what we want.
+			// That would make it not count hills and city defence promotions; and instead count collateral damage power.
+			// Instead, I'm going to count the defensive bonuses, and then try to approximately remove the city part.
+			int iEnemyPower = kOwner.AI_getEnemyPlotStrength(plot(), 0, true, false);
+			iEnemyPower *= 200 - plot()->getPlotCity()->getDefenseModifier(false);
+			iEnemyPower /= 200;
+			// cf. approximation used in AI_attackCityMove.
 
-			if( 5*iOurPower > 6*iEnemyPower && eWarPlan != NO_WARPLAN )
+			//if( 5*iOurPower > 6*iEnemyPower && eWarPlan != NO_WARPLAN )
+			if (100*iOurPower > GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO()*iEnemyPower && eWarPlan != NO_WARPLAN)
 			{
 				bTargetCity = true;
 
@@ -21407,37 +21415,22 @@ bool CvUnitAI::AI_airStrike()
 
 			if (pLoopPlot != NULL)
 			{
+				int iStrikeValue = 0;
+				int iBombValue = 0;
+				int iPotentialAttackers = 0; // (only count adjacent units if we can air-strike)
+				if (pLoopPlot->isCity())
+					iPotentialAttackers += GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup(), 1) * 2;							
+
+				// air strike (damage)
 				if (canMoveInto(pLoopPlot, true))
 				{
-					int iStrikeValue = 0; // use to be just "iValue"
-					int iBombValue = 0; // K-Mod
-					int iPotentialAttackers = GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
-					if (pLoopPlot->isCity())
-					{
-						iPotentialAttackers += GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup(), 1) * 2;							
-					}
-					/********************************************************************************/
-					/* 	BETTER_BTS_AI_MOD						10/13/08		jdog5000		*/
-					/* 																			*/
-					/* 	Air AI																	*/
-					/********************************************************************************/
-					/* original BTS code
-					if (pLoopPlot->isWater() || (iPotentialAttackers > 0) || pLoopPlot->isAdjacentTeam(getTeam()))
-					*/
-					// Bombers will always consider striking units adjacent to this team's territory
-					// to soften them up for potential attack.  This situation doesn't apply if this team's adjacent
-					// territory is water, land units won't be able to reach easily for attack
-					if (pLoopPlot->isWater() || (iPotentialAttackers > 0) || pLoopPlot->isAdjacentTeam(getTeam(),true))
-					/********************************************************************************/
-					/* 	BETTER_BTS_AI_MOD						END								*/
-					/********************************************************************************/
+					iPotentialAttackers += GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
+					//if (pLoopPlot->isWater() || (iPotentialAttackers > 0) || pLoopPlot->isAdjacentTeam(getTeam()))
 					{
 						CvUnit* pDefender = pLoopPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
 
 						FAssert(pDefender != NULL);
 						FAssert(pDefender->canDefend());
-
-						// XXX factor in air defenses...
 
 						int iDamage = airCombatDamage(pDefender);
 
@@ -21446,86 +21439,73 @@ bool CvUnitAI::AI_airStrike()
 						iStrikeValue += ((((iDamage * collateralDamage()) / 100) * std::min((pLoopPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits())) / 2);
 
 						iStrikeValue *= (3 + iPotentialAttackers);
-						iStrikeValue /= 4;
+						iStrikeValue /= iPotentialAttackers > 0 ? 4 : 6;
 
-						// K-Mod
-						if (pLoopPlot->isCity())
+						if (pLoopPlot->isCity(true, pDefender->getTeam()))
 						{
-							// decrease value of collateral damage, because city units heal more easily
+							// units heal more easily in a city / fort
 							iStrikeValue *= 3;
 							iStrikeValue /= 4;
-							// consider bombarding instead
-							if (canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
-							{
-								const CvCity* pCity = pLoopPlot->getPlotCity();
-								iBombValue = std::max(0, std::min(pCity->getDefenseDamage() + airBombCurrRate(), GC.getMAX_CITY_DEFENSE_DAMAGE()) - pCity->getDefenseDamage());
-								iBombValue *= 1 + iPotentialAttackers;
-								iBombValue /= 2;
-							}
 						}
-						else
+						if (pLoopPlot->isWater() && (iPotentialAttackers > 0 || pLoopPlot->getTeam() == getTeam()))
 						{
-							BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam(), true);
-							if (eBonus != NO_BONUS && canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
-								iBombValue = GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, -1) * 2;
+							iStrikeValue *= 3;
 						}
-						// K-Mod end (apart from all the iBombValue / bBombard stuff)
-
-						/* original code
+						else if (pLoopPlot->isAdjacentTeam(getTeam())) // prefer defensive strikes
+						{
+							iStrikeValue *= 2;
+						}
+					}
+				}
+				// bombard (destroy improvement / city defences)
+				if (canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
+				{
+					if (pLoopPlot->isCity())
+					{
+						const CvCity* pCity = pLoopPlot->getPlotCity();
+						iBombValue = std::max(0, std::min(pCity->getDefenseDamage() + airBombCurrRate(), GC.getMAX_CITY_DEFENSE_DAMAGE()) - pCity->getDefenseDamage());
+						iBombValue *= iPotentialAttackers + (area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE ? 5 : 1);
+						iBombValue /= 2;
+					}
+					else
+					{
+						BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam(), true);
+						if (eBonus != NO_BONUS && canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
+							iBombValue = GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, -1) * 2;
+					}
+				}
+				// factor in air defenses but try to avoid using bestInterceptor, because that's a slow function.
+				if (iBombValue > iBestValue || iStrikeValue > iBestValue) // values only decreased from here on.
+				{
+					if (isSuicide())
+					{
+						iStrikeValue /= 2;
+						iBombValue /= 2;
+					}
+					else if (!canAirDefend()) // assume that air defenders are strong.. and that they are willing to fight
+					{
 						CvUnit* pInterceptor = bestInterceptor(pLoopPlot);
 
 						if (pInterceptor != NULL)
 						{
-							int iInterceptProb = isSuicide() ? 100 : pInterceptor->currInterceptionProbability();
+							int iInterceptProb = pInterceptor->currInterceptionProbability();
 
 							iInterceptProb *= std::max(0, (100 - evasionProbability()));
 							iInterceptProb /= 100;
 
-							iValue *= std::max(0, 100 - iInterceptProb / 2);
-							iValue /= 100;
-						} */
-
-						// K-Mod. Try to avoid using bestInterceptor... because that's a slow function.
-						if (isSuicide())
-						{
-							iStrikeValue /= 2;
-							iBombValue /= 2;
+							iStrikeValue *= std::max(0, 100 - iInterceptProb / 2);
+							iStrikeValue /= 100;
+							iBombValue *= std::max(0, 100 - iInterceptProb / 2);
+							iBombValue /= 100;
 						}
-						else if (!canAirDefend()) // assume that air defenders are strong.. and that they are willing to fight
-						{
-							CvUnit* pInterceptor = bestInterceptor(pLoopPlot);
+					}
 
-							if (pInterceptor != NULL)
-							{
-								int iInterceptProb = pInterceptor->currInterceptionProbability();
-
-								iInterceptProb *= std::max(0, (100 - evasionProbability()));
-								iInterceptProb /= 100;
-
-								iStrikeValue *= std::max(0, 100 - iInterceptProb / 2);
-								iStrikeValue /= 100;
-								iBombValue *= std::max(0, 100 - iInterceptProb / 2);
-								iBombValue /= 100;
-							}
-						}
-						// K-Mod end
-
-						if (pLoopPlot->isWater())
-						{
-							iStrikeValue *= 3;
-						}
-						else if (pLoopPlot->getTeam() == getTeam()) // K-Mod. prefer defence
-						{
-							iStrikeValue *= 2;
-						}
-
-						if (iStrikeValue > iBestValue || iBombValue > iBestValue)
-						{
-							bBombard = iBombValue > iStrikeValue;
-							iBestValue = std::max(iBombValue, iStrikeValue);
-							pBestPlot = pLoopPlot;
-							FAssert(!atPlot(pBestPlot));
-						}
+					if (iStrikeValue > iBestValue || iBombValue > iBestValue)
+					{
+						bBombard = iBombValue > iStrikeValue;
+						iBestValue = std::max(iBombValue, iStrikeValue);
+						pBestPlot = pLoopPlot;
+						FAssert(!atPlot(pBestPlot));
 					}
 				}
 			}
@@ -22687,6 +22667,12 @@ bool CvUnitAI::AI_revoltCitySpy()
 		return false;
 	}
 
+	// K-Mod
+	if (100 * (GC.getMAX_CITY_DEFENSE_DAMAGE() - pCity->getDefenseDamage())/std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE()) < 20)
+		return false;
+	// K-Mod end
+
+	/* original BBAI code
 	int iOurPower = GET_PLAYER(getOwnerINLINE()).AI_getOurPlotStrength(plot(),1,false,true);
 	int iEnemyDefensePower = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(),0,true,false);
 	int iEnemyPostPower = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(),0,false,false);
@@ -22704,7 +22690,7 @@ bool CvUnitAI::AI_revoltCitySpy()
 	if( 10*iEnemyDefensePower < 11*iEnemyPostPower )
 	{
 		return false;
-	}
+	} */ // Disabled by K-Mod. The power comparisons are done in AI_spyMove().
 
 	for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
 	{

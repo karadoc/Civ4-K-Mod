@@ -4644,7 +4644,7 @@ int CvPlayerAI::AI_goldTarget() const
 
 		iGold *= iMultiplier;
 		iGold /= 100;
-		
+
 		bool bAnyWar = GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0;
 		if (bAnyWar)
 		{
@@ -4657,8 +4657,10 @@ int CvPlayerAI::AI_goldTarget() const
 			iGold *= 10;
 		}
 
-		iGold += (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
+		//iGold += (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
+		iGold += AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 3); // K-Mod
 
+		/* original bts code
 		CorporationTypes eActiveCorporation = NO_CORPORATION;
 		for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
 		{
@@ -4673,7 +4675,27 @@ int CvPlayerAI::AI_goldTarget() const
 			int iSpreadCost = std::max(0, GC.getCorporationInfo(eActiveCorporation).getSpreadCost() * (100 + calculateInflationRate()));
 			iSpreadCost /= 50;
 			iGold += iSpreadCost;
+		} */
+		// K-Mod
+		int iSpreadCost = 0;
+
+		if (!isNoCorporations())
+		{
+			for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
+			{
+				if (getHasCorporationCount((CorporationTypes)iI) > 0)
+				{
+					iSpreadCost = std::max(iSpreadCost, GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost());
+				}
+			}
 		}
+		if (iSpreadCost > 0)
+		{
+			iSpreadCost *= 100 + calculateInflationRate();
+			iSpreadCost /= 50;
+			iGold += iSpreadCost;
+		}
+		// K-Mod end
 	}
 
 	return iGold + AI_getExtraGoldTarget();
@@ -5875,7 +5897,12 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 	{
 		eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iJ)));
 
-		if (eLoopBuilding != NO_BUILDING)
+		//if (eLoopBuilding != NO_BUILDING)
+		// K-Mod. don't count corp hq, academies, or another buildings that require a great person.
+		// (it's not that these buildings don't deserve to be counted; but rather that this function isn't
+		// smart enough to properly account for their rarity. I'm not a fan of this function...)
+		if (eLoopBuilding != NO_BUILDING && GC.getBuildingInfo(eLoopBuilding).getProductionCost() > 0)
+		// K-Mod end
 		{
 			CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
 			if (isTechRequiredForBuilding((eTech), eLoopBuilding))
@@ -5990,9 +6017,13 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 
 									if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
 									{
-										if (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) >= 3 || 
+										/*if (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) >= 3 || 
 											kLoopBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) >= 3 ||
-											kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) >= 10)
+											kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) >= 10)*/
+										// K-Mod. Lets not fall over ourselves to get a small-culture wonder.
+										if (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) +
+											kLoopBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) >= 4 ||
+											kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) >= 20)
 										{
 											iValue += 400;
 										}
@@ -6774,9 +6805,11 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 	FAssertMsg(getPersonalityType() != NO_LEADER, "getPersonalityType() is not expected to be equal with NO_LEADER");
 	FAssertMsg(ePlayer != getID(), "shouldn't call this function on ourselves");
 
+	const CvTeamAI& kOurTeam = GET_TEAM(getTeam()); // K-Mod
+
 	if (GET_PLAYER(ePlayer).getTeam() == getTeam()
 		|| GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(getTeam())
-		|| GET_TEAM(getTeam()).isVassal(GET_PLAYER(ePlayer).getTeam()))
+		|| kOurTeam.isVassal(GET_PLAYER(ePlayer).getTeam()))
 	{
 		return true;
 	}
@@ -6790,12 +6823,25 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 	{
 		// K-Mod
-		if (GET_TEAM(getTeam()).isHuman())
+		if (kOurTeam.isHuman())
 			return false;
+
+		if (kOurTeam.AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
+			(kOurTeam.AI_isChosenWar(GET_PLAYER(ePlayer).getTeam()) || kOurTeam.getAtWarCount(true, true) == 1) &&
+			kOurTeam.AI_getWarSuccessCapitulationRatio() > 0)
+		{
+			return false;
+		}
 		// K-Mod end
-		int iRefuseDuration = (GC.getLeaderHeadInfo(getPersonalityType()).getRefuseToTalkWarThreshold() * ((GET_TEAM(getTeam()).AI_isChosenWar(GET_PLAYER(ePlayer).getTeam())) ? 2 : 1));
+
+		if (kOurTeam.isAVassal())
+		{
+			return false;
+		}
+
+		int iRefuseDuration = (GC.getLeaderHeadInfo(getPersonalityType()).getRefuseToTalkWarThreshold() * ((kOurTeam.AI_isChosenWar(GET_PLAYER(ePlayer).getTeam())) ? 2 : 1));
 		
-		int iOurSuccess = 1 + GET_TEAM(getTeam()).AI_getWarSuccess(GET_PLAYER(ePlayer).getTeam());
+		int iOurSuccess = 1 + kOurTeam.AI_getWarSuccess(GET_PLAYER(ePlayer).getTeam());
 		int iTheirSuccess = 1 + GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_getWarSuccess(getTeam());
 		if (iTheirSuccess > iOurSuccess * 2)
 		{
@@ -6803,12 +6849,7 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 			iRefuseDuration /= 100;
 		}
 
-		if (GET_TEAM(getTeam()).AI_getAtWarCounter(GET_PLAYER(ePlayer).getTeam()) < iRefuseDuration)
-		{
-			return false;
-		}
-
-		if (GET_TEAM(getTeam()).isAVassal())
+		if (kOurTeam.AI_getAtWarCounter(GET_PLAYER(ePlayer).getTeam()) < iRefuseDuration)
 		{
 			return false;
 		}
@@ -20154,6 +20195,13 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 					{
 						bValid = false;
 					}
+				}
+				if (pLoopUnit->AI_getUnitAIType() == UNITAI_CITY_DEFENSE && GET_TEAM(getTeam()).getAtWarCount(true) > 0)
+				{
+					int iCityDefenders = pLoopUnit->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getID());
+
+					if (iCityDefenders <= pLoopUnit->plot()->getPlotCity()->AI_minDefenders())
+						bValid = false;
 				}
 			}
 		}

@@ -17223,6 +17223,8 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(&m_bExtendedGame);
 	pStream->Read(&m_bFoundedFirstCity);
 	pStream->Read(&m_bStrike);
+	if (uiFlag >= 2)
+		pStream->Read(&m_bChoosingFreeTech); // K-Mod
 
 	pStream->Read((int*)&m_eID);
 	pStream->Read((int*)&m_ePersonalityType);
@@ -17581,7 +17583,7 @@ void CvPlayer::write(FDataStreamBase* pStream)
 {
 	int iI;
 
-	uint uiFlag = 1;
+	uint uiFlag = 2;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iStartingX);
@@ -17688,6 +17690,7 @@ void CvPlayer::write(FDataStreamBase* pStream)
 	pStream->Write(m_bExtendedGame);
 	pStream->Write(m_bFoundedFirstCity);
 	pStream->Write(m_bStrike);
+	pStream->Write(m_bChoosingFreeTech); // K-Mod (uiFlag >= 2)
 
 	pStream->Write(m_eID);
 	pStream->Write(m_ePersonalityType);
