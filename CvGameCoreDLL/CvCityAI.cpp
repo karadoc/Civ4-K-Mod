@@ -9985,6 +9985,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			int iPopToGrow = 0;
 			if (!bAvoidGrowth)
 			{
+				int iFutureHappy = 0; // K-Mod. Happiness boost we expect before we grow. (originally, the boost was added directly to iHappyLevel)
+
 				// only do relative checks on food if we want to grow AND we not emph food
 				// the emp food case will just give a big boost to all food under all circumstances
 				if (bWorkerOptimization || (!bIgnoreGrowth))// && !bEmphasizeFood))
@@ -10003,21 +10005,13 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 							}
 						}
 
-						// currently we can at most increase happy by 2 in the following checks
 						const int kMaxHappyIncrease = 2;
 
 						// if happy is large enough so that it will be over zero after we do the checks
-						/* original bts code
-						int iNewFoodPerTurn = iFoodPerTurn + aiYields[YIELD_FOOD] - iConsumtionPerPop;
-						if ((iHappinessLevel + kMaxHappyIncrease) > 0 && iNewFoodPerTurn > 0)
-						{
-							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel) / iNewFoodPerTurn) : MAX_INT; */
-						// K-Mod.
 						if (iHappinessLevel + kMaxHappyIncrease > 0)
 						{
 							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield;
 							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel + iNewFoodPerTurn-1) / iNewFoodPerTurn) : MAX_INT;
-						// K-Mod end
 
 							// do we have hurry anger?
 							int iHurryAngerTimer = getHurryAngerTimer();
@@ -10028,7 +10022,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 								// angry population is bad but if we'll recover by the time we grow...
 								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
 								{
-									iHappinessLevel++;
+									iFutureHappy++;
 								}
 							}
 
@@ -10041,7 +10035,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 								// angry population is bad but if we'll recover by the time we grow...
 								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
 								{
-									iHappinessLevel++;
+									iFutureHappy++;
 								}
 							}
 
@@ -10054,7 +10048,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 								// angry population is bad but if we'll recover by the time we grow...
 								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
 								{
-									iHappinessLevel++;
+									iFutureHappy++;
 								}
 							}
 						}
@@ -10064,7 +10058,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					{
 						//If we are emphasize food, pay less heed to caps.
 						iHealthLevel += 5;
-						iHappinessLevel += 2;
+						iFutureHappy += 2;
 					}
 
 					// approximate the food that can be gained by working other plots (and refund the food removed at the start)
@@ -10073,7 +10067,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 
 					bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
 
-					int iPopToGrow = std::max(0, iHappinessLevel);
+					int iPopToGrow = std::max(0, iHappinessLevel+iFutureHappy);
 					int iGoodTiles = AI_countGoodTiles(iHealthLevel > 0, true, 50, true);
 					iGoodTiles += AI_countGoodSpecialists(iHealthLevel > 0);
 					//iGoodTiles += bBarFull ? 0 : 1;
@@ -10175,7 +10169,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				} */ // Disabled by K-Mod. I don't see the point of this.
 				//Slavery Override
 				//if (bCanPopRush && (iHappinessLevel > 0))
-				if (bCanPopRush && getHurryAngerTimer() == 0 && iHappinessLevel >= 0) // K-Mod
+				if (bCanPopRush && getHurryAngerTimer() == 0 && iHappinessLevel >= (getPopulation()%2 == 0 ? 1 : 0)) // K-Mod
 				{
 					//iSlaveryValue = 30 * 14 * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0));
 					// K-Mod. Rescaled values. "30" represents GC.getHurryInfo(eHurry).getProductionPerPopulation()
@@ -10200,7 +10194,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					}
 					//iFoodGPPValue += std::max(0, aiYields[YIELD_FOOD] - iAdjust) * std::max(0, (12 + 5 * std::min(0, iHappinessLevel)));
 					// K-Mod, rescaling
-					iFoodGPPValue += std::max(0, iFoodYield - iAdjust) * std::max(0, 3 * iBaseCommerceValue * (2 + std::min(0, iHappinessLevel))/2);
+					iFoodGPPValue += std::max(0, iFoodYield - iAdjust) * std::max(0, 3 * iBaseCommerceValue * (2 + std::min(0, iHappinessLevel+iFutureHappy))/2);
 					// K-Mod end
 				}
 			}
@@ -10744,12 +10738,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 							{
 								if (GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_DAGGER))
 								{
-									/* original bts code
 									iValue += 20;
-									iValue *= 2; */
-									// K-Mod. no need to fall over ourselves to chop stuff...
 									iValue *= 2;
-									// K-Mod end
 								}
 								iValue *= 500;
 								iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));

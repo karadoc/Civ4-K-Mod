@@ -14327,12 +14327,13 @@ void CvPlayerAI::AI_doCommerce()
 		int iMinModifier = INT_MAX;
 		int iApproxTechCost = 0;
 		TeamTypes eMinModTeam = NO_TEAM;
+		bool bFocusEspionage = AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0;
 
 		// For this part of the AI, I will assume there is only mission for each purpose.
 		EspionageMissionTypes eSeeDemographicsMission = NO_ESPIONAGEMISSION;
 		EspionageMissionTypes eSeeResearchMission = NO_ESPIONAGEMISSION;
 		EspionageMissionTypes eStealTechMission = NO_ESPIONAGEMISSION;
-		EspionageMissionTypes eCityRevoltMission = NO_ESPIONAGEMISSION; // Not used yet.
+		EspionageMissionTypes eCityRevoltMission = NO_ESPIONAGEMISSION;
 
 		for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
 		{
@@ -14377,6 +14378,14 @@ void CvPlayerAI::AI_doCommerce()
 					iTheirEspPoints /= 2;
 
 					int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
+					if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && getCapitalCity())
+					{
+						CvCity* pTargetCity = getCapitalCity()->area()->getTargetCity(getID());
+						if (pTargetCity && pTargetCity->getTeam() == iTeam)
+							iMissionCost = std::max(iMissionCost, getEspionageMissionCost(eCityRevoltMission, pTargetCity->getOwnerINLINE(), pTargetCity->plot()));
+					}
+
+					iMissionCost = getEspionageMissionCost(eCityRevoltMission, kLoopTeam.getLeaderID());
 					iMissionCost *= 12;
 					iMissionCost /= 10;
 					if (iDesiredMissionPoints < iMissionCost)
@@ -14424,7 +14433,7 @@ void CvPlayerAI::AI_doCommerce()
 				}
 
 				// Individual player targeting
-				if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
+				if (bFocusEspionage)
 				{
 					for (int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; ++iPlayer)
 					{
@@ -18614,6 +18623,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	int iAverageEnemyUnit = 0;
 	int iTypicalAttack = getTypicalUnitValue(UNITAI_ATTACK);
 	int iTypicalDefence = getTypicalUnitValue(UNITAI_CITY_DEFENSE);
+	int iWarSuccessRatio = kTeam.AI_getWarSuccessCapitulationRatio();
 	// K-Mod end
 
 	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
@@ -18872,11 +18882,13 @@ void CvPlayerAI::AI_updateStrategyHash()
 		// note, although AI_commerceWeight is doubled for Big Espionage, this value here is unaffected
 		// because the strategy hash has been cleared.
 		iTempValue += kTeam.getBestKnownTechScorePercent() < 85 ? 3 : 0;
-		iTempValue -= kTeam.getAnyWarPlanCount(true) == 0 ? 0 : 3;
+		iTempValue += kTeam.getAnyWarPlanCount(true) > kTeam.getAtWarCount(true) ? 2 : 0; // build up espionage before the start of a war
+		if (iWarSuccessRatio < 0)
+			iTempValue += iWarSuccessRatio/15 - 1;
 		iTempValue += AI_getStrategyRand(10) % 8;
 		// K-Mod end
-	
-		if (iTempValue > 10)
+
+		if (iTempValue > 11)
 		{
 			// K-Mod. Don't allow big esp if we have no local esp targets
 			//m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
@@ -18890,11 +18902,9 @@ void CvPlayerAI::AI_updateStrategyHash()
 			}
 		}
 
-		// K-Mod
+		// K-Mod.. the espionage economy decision is actually somewhere else. This is just a marker.
 		if (getCommercePercent(COMMERCE_ESPIONAGE) > 20)
-		{
 			m_iStrategyHash |= AI_STRATEGY_ESPIONAGE_ECONOMY;
-		}
 	}
 	if( gPlayerLogLevel >= 2 )
 	{
@@ -18921,7 +18931,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		}
 
 		// Are we losing badly or recently attacked?
-		if( kTeam.AI_getWarSuccessCapitulationRatio() < -50 || iMaxWarCounter < 10 )
+		if( iWarSuccessRatio < -50 || iMaxWarCounter < 10 )
 		{
 			if( kTeam.AI_getEnemyPowerPercent(true) > std::max(150, GC.getDefineINT("BBAI_TURTLE_ENEMY_POWER_RATIO")) )
 			{

@@ -1489,27 +1489,30 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	int iFlags = gDLL->getFAStarIFace()->GetInfo(finder);
 	TeamTypes eTeam = pSelectionGroup->getHeadTeam();
 
-	CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode();
+	CvDLLFAStarIFaceBase* pAStar = gDLL->getFAStarIFace();
 
-	while (pUnitNode != NULL)
 	{
-		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-		pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode);
-		FAssert(pLoopUnit->getDomainType() != DOMAIN_AIR);
-
-		int iMaxMoves = parent->m_iData1 > 0 ? parent->m_iData1 : pLoopUnit->maxMoves();
-		int iMoveCost = pToPlot->movementCost(pLoopUnit, pFromPlot);
-		int iMovesLeft = std::max(0, (iMaxMoves - iMoveCost));
-
-		iWorstMovesLeft = std::min(iWorstMovesLeft, iMovesLeft);
-		iWorstMaxMoves = std::min(iWorstMaxMoves, iMaxMoves);
-
-		int iCost = PATH_MOVEMENT_WEIGHT * (iMovesLeft == 0 ? iMaxMoves : iMoveCost);
-		if (iCost > iWorstCost)
+		CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode();
+		while (pUnitNode != NULL)
 		{
-			iWorstCost = iCost;
-			iWorstMovesLeft = iMovesLeft;
-			iWorstMaxMoves = iMaxMoves;
+			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+			pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode);
+			FAssert(pLoopUnit->getDomainType() != DOMAIN_AIR);
+
+			int iMaxMoves = parent->m_iData1 > 0 ? parent->m_iData1 : pLoopUnit->maxMoves();
+			int iMoveCost = pToPlot->movementCost(pLoopUnit, pFromPlot);
+			int iMovesLeft = std::max(0, (iMaxMoves - iMoveCost));
+
+			iWorstMovesLeft = std::min(iWorstMovesLeft, iMovesLeft);
+			iWorstMaxMoves = std::min(iWorstMaxMoves, iMaxMoves);
+
+			int iCost = PATH_MOVEMENT_WEIGHT * (iMovesLeft == 0 ? iMaxMoves : iMoveCost);
+			if (iCost > iWorstCost)
+			{
+				iWorstCost = iCost;
+				iWorstMovesLeft = iMovesLeft;
+				iWorstMaxMoves = iMaxMoves;
+			}
 		}
 	}
 
@@ -1545,7 +1548,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	if (iFlags & (MOVE_ATTACK_STACK | MOVE_THROUGH_ENEMY) && // otherwise, the path will be invalid anyway...
 		pToPlot->isVisible(eTeam, false) &&
 		pToPlot->isVisibleEnemyUnit(GET_TEAM(eTeam).getLeaderID()) &&
-		!gDLL->getFAStarIFace()->IsPathDest(finder, pToPlot->getX_INLINE(), pToPlot->getY_INLINE()))
+		!pAStar->IsPathDest(finder, pToPlot->getX_INLINE(), pToPlot->getY_INLINE()))
 	{
 		iWorstCost += PATH_COMBAT_WEIGHT;
 
@@ -1610,7 +1613,9 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 				// but that seems like overkill. I'm worried it would be too slow.
 
 				// defence for units who stay behind after attacking an enemy.
-				//if (pSelectionGroup->AI_isControlled()) // let human players have this convenience
+				//if (pSelectionGroup->AI_isControlled()) // let human players have this convenience...
+				if (pSelectionGroup->AI_isControlled() || // but only if we aren't trying to do a 1 step move.
+					stepDistance(pAStar->GetStartX(finder), pAStar->GetStartY(finder), pAStar->GetDestX(finder), pAStar->GetDestY(finder)) > 1)
 				{
 					if (pLoopUnit->canAttack())
 					{
