@@ -2201,7 +2201,6 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 
 	if (!isAtWar(eTeam))
 	{
-		FAssertMsg(false, "surrender trade while not at war"); // K-Mod. I just want to know if this can even happen! (surrendering while not at war)
 		if (!GET_TEAM(eTeam).isParent(getID()))
 		{
 			if (AI_getWorstEnemy() == eTeam)

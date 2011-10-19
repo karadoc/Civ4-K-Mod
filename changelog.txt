@@ -1,5 +1,29 @@
-This is K-Mod version 1.03.
+This is K-Mod version 1.04.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.04 changelist
+
++ In the diplomacy screen, pressing "Lets stop this fighting..." will now bring up the trade screen with the AI's suggested peace terms. (Originally, it just made peace instantly without any trades - it was a horrible button.)
++ Added a notification message for when a religion is removed from a city.
++ Adjusted some of the action recommendations for human players. (ie. the blue circles for recommended improvements and city locations.)
+
++ Adjusted the diplomatic behaviour of AI players who are allied with human players. In particular, the AI will no longer refuse to talk to other humans.
++ Made some more changes ("improvements") to the automatic city citizen allocation system - particularly for the AI.
++ Restructured and simplified the air unit AI, so that now it will be faster - and probably a bit smarter too. (untested)
++ Fixed and reactivated the attack sections of AI_follow - the main benefit of this is that AI attack stacks will now be able to make better use of the blitz ability of tanks.
++ Corrected the code which was meant to stop AIs from making peace when aiming for conquest victory. (The first attempt was wrong - it basically did nothing.)
++ Gave the AI some basic ability to target poorly defended cities. (I have some ideas to futher improve this in the next version.)
++ Changed some of the trigger conditions and effects of the AI's "big espionage" strategy.
++ Made many minor changes to various AI value weights and decision thresholds and so on.
+
++ Rewrote the pathCost function used by the pathfinding. This fixes several pathfinding problems & bugs. Most notably, the new code allows the AI to choose a path with involves fighting through enemy units that are in the way; the new code does not take into account movement costs or defensive bonuses for tiles that have not been revealed (this makes the AI cheat less, but it also removes an exploit which allowed human players to determin the positions of islands, roads, etc.).
++ Fixed a potential OOS bug in the K-Mod convert-for-crush code.
++ Fixed a bug in my new volcano event which allowed it to increase the soil fertility of water.
++ (hopefully) Fixed an original BtS bug which did strange things when a unit was ordered to attack a tile which was already mid-battle in simultaneous turn multiplayer. (untested)
++ Fixed a bug in the unofficial patch which causes players to miss out on free techs if they load the autosave from the turn the tech is meant to be awarded. (before this fix, the player got accused of cheating instead of getting their free tech.)
++ Blocked some more python callbacks (for speed).
 
 --
 
