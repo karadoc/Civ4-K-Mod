@@ -30,7 +30,7 @@
 		This ratio is reduced by the AI's best attacker odds and how long it will take to bombard the city.
 		Lower means AI will more readily skip bombarding.  BBAI default: 300 -->
 		<DefineName>BBAI_SKIP_BOMBARD_BASE_STACK_RATIO</DefineName>
-		<iDefineIntVal>250</iDefineIntVal>
+		<iDefineIntVal>260</iDefineIntVal>
 	</Define>
 	<Define>
 		<!-- Minimum stack strength ratio for AI to skip bombarding city and just attack, higher is more conservative.  BBAI default: 150 -->

@@ -6826,13 +6826,6 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 		// K-Mod
 		if (kOurTeam.isHuman())
 			return false;
-
-		if (kOurTeam.AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
-			(kOurTeam.AI_isChosenWar(GET_PLAYER(ePlayer).getTeam()) || kOurTeam.getAtWarCount(true, true) == 1) &&
-			kOurTeam.AI_getWarSuccessCapitulationRatio() > 0)
-		{
-			return false;
-		}
 		// K-Mod end
 
 		if (kOurTeam.isAVassal())
@@ -18747,7 +18740,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 
 	//if (iAttackUnitCount <= 1)
 	if ((iAttackUnitCount <= 1 && GC.getGame().getGameTurn() > GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getBarbPercent()/20)
-		|| (100*iAverageEnemyUnit > 140*iTypicalAttack && 100*iAverageEnemyUnit > 140*iTypicalDefence))
+		|| (100*iAverageEnemyUnit > 135*iTypicalAttack && 100*iAverageEnemyUnit > 135*iTypicalDefence))
 	{
 		m_iStrategyHash |= AI_STRATEGY_GET_BETTER_UNITS;
 	}

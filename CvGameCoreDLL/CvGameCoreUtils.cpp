@@ -2467,6 +2467,14 @@ void getMissionAIString(CvWString& szString, MissionAITypes eMissionAI)
 	case MISSIONAI_ASSAULT: szString = L"MISSIONAI_ASSAULT"; break;
 	case MISSIONAI_CARRIER: szString = L"MISSIONAI_CARRIER"; break;
 	case MISSIONAI_PICKUP: szString = L"MISSIONAI_PICKUP"; break;
+// K-Mod
+#define mission_string(x) case x: szString = L#x; break;
+	mission_string(MISSIONAI_RECON_SPY)
+	mission_string(MISSIONAI_JOIN)
+	mission_string(MISSIONAI_TRADE)
+	mission_string(MISSIONAI_INFILTRATE)
+#undef mission_string
+// K-Mod end
 
 	default: szString = CvWString::format(L"UNKOWN_MISSION_AI(%d)", eMissionAI); break;
 	}

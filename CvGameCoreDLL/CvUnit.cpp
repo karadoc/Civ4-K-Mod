@@ -1715,6 +1715,11 @@ bool CvUnit::isActionRecommended(int iAction)
 
 			if (canBuild(pPlot, eBuild))
 			{
+				/// K-Mod
+				if (pPlot->getBuildProgress(eBuild) > 0)
+					return true;
+				// K-Mod end
+
 				eImprovement = ((ImprovementTypes)(GC.getBuildInfo(eBuild).getImprovement()));
 				eRoute = ((RouteTypes)(GC.getBuildInfo(eBuild).getRoute()));
 				//eBonus = pPlot->getBonusType(getTeam());

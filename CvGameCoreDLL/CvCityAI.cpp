@@ -1033,6 +1033,15 @@ void CvCityAI::AI_chooseProduction()
 	// (because early game buildings are relatively weaker)
 	iBestBuildingValue *= 2*GC.getNumEraInfos() - kPlayer.getCurrentEra();
 	iBestBuildingValue /= std::max(1, GC.getNumEraInfos());
+	// also, reduce the value to encourage early expansion until we reach the recommend city target
+	{
+		int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+		if (iNumAreaCitySites > 0 && kPlayer.getNumCities() < iTargetCities)
+		{
+			iBestBuildingValue *= kPlayer.getNumCities() + iTargetCities;
+			iBestBuildingValue /= 2*iTargetCities;
+		}
+	}
 
 	// Check for military exemption for commerce cities and underdeveloped cities.
 	// Don't give exemptions to cities that don't have anything good to build anyway.
@@ -4947,7 +4956,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));*/
 					// K-Mod
 					iTempValue += kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / 20;
-					iTempValue += kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / (bProvidesPower || isPower() ? 21 : 30);
+					iTempValue += kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / (bProvidesPower || isPower() ? 21 : 32);
 
 					if (bProvidesPower && !isPower())
 					{
@@ -11150,13 +11159,29 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 
 			if (GC.getGameINLINE().getSorenRandNum(100, "City governor choose military") < iOdds)
 			{
-				if (AI_chooseBuilding(BUILDINGFOCUS_EXPERIENCE, 10))
+				UnitAITypes eUnitAI;
+				UnitTypes eBestUnit = AI_bestUnit(false, NO_ADVISOR, &eUnitAI);
+				if (eBestUnit != NO_UNIT)
 				{
-					return;
-				}
+					const CvUnitInfo& kUnit = GC.getUnitInfo(eBestUnit);
 
-				if (AI_chooseUnit(NO_UNITAI))
-				{
+					BuildingTypes eExperienceBuilding = AI_bestBuildingThreshold(BUILDINGFOCUS_EXPERIENCE);
+
+					if (eExperienceBuilding != NO_BUILDING)
+					{
+						const CvBuildingInfo& kBuilding = GC.getBuildingInfo(eExperienceBuilding);
+						if (kBuilding.getFreeExperience() > 0 ||
+							kBuilding.getUnitCombatFreeExperience(kUnit.getUnitCombatType()) > 0 ||
+							kBuilding.getDomainFreeExperience(kUnit.getDomainType()) > 0)
+						{
+							// This building helps the unit we want
+							// ...so do the building first.
+							pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+							return;
+						}
+					}
+					// otherwise, we're ready to build the unit
+					pushOrder(ORDER_TRAIN, eBestUnit, eUnitAI, false, false, false);
 					return;
 				}
 			}

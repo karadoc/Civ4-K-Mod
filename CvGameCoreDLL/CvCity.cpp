@@ -10927,7 +10927,7 @@ void CvCity::setHasReligion(ReligionTypes eIndex, bool bNewValue, bool bAnnounce
 			if (bAnnounce)
 			{
 				CvWString szBuffer = gDLL->getText("TXT_KEY_MISC_RELIGION_REMOVE", GC.getReligionInfo(eIndex).getTextKeyWide(), getNameKey());
-				gDLL->getInterfaceIFace()->addHumanMessage(getOwnerINLINE(), false, GC.getDefineINT("EVENT_MESSAGE_TIME_LONG"), szBuffer, "AS2D_BLIGHT", MESSAGE_TYPE_MAJOR_EVENT, GC.getReligionInfo(eIndex).getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_WHITE"), getX_INLINE(), getY_INLINE(), bArrows, bArrows);
+				gDLL->getInterfaceIFace()->addHumanMessage(getOwnerINLINE(), false, GC.getDefineINT("EVENT_MESSAGE_TIME_LONG"), szBuffer, "AS2D_BLIGHT", MESSAGE_TYPE_MAJOR_EVENT, GC.getReligionInfo(eIndex).getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), getX_INLINE(), getY_INLINE(), bArrows, bArrows);
 			}
 		}
 		// K-Mod end
