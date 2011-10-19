@@ -5552,7 +5552,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 					else
 					{
-						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_JOIN);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), alwaysInvisible() ? 0 : MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_JOIN);
 						return true;
 					}
 				}
@@ -5567,7 +5567,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 					else
 					{
-						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_CONSTRUCT);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), alwaysInvisible() ? 0 : MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_CONSTRUCT);
 						return true;
 					}
 				}
@@ -5716,7 +5716,7 @@ void CvUnitAI::AI_spyMove()
 			// cf. approximation used in AI_attackCityMove.
 
 			//if( 5*iOurPower > 6*iEnemyPower && eWarPlan != NO_WARPLAN )
-			if (100*iOurPower > GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO()*iEnemyPower && eWarPlan != NO_WARPLAN)
+			if (95*iOurPower > GC.getBBAI_ATTACK_CITY_STACK_RATIO()*iEnemyPower && eWarPlan != NO_WARPLAN)
 			{
 				bTargetCity = true;
 
@@ -22668,7 +22668,7 @@ bool CvUnitAI::AI_revoltCitySpy()
 	}
 
 	// K-Mod
-	if (100 * (GC.getMAX_CITY_DEFENSE_DAMAGE() - pCity->getDefenseDamage())/std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE()) < 20)
+	if (100 * (GC.getMAX_CITY_DEFENSE_DAMAGE() - pCity->getDefenseDamage())/std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE()) < 15)
 		return false;
 	// K-Mod end
 

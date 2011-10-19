@@ -838,18 +838,7 @@ void CvPlayerAI::AI_doPeace()
 											}
 											else
 											{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/22/09                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-												if( GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).AI_acceptSurrender(getTeam()) )
-												{
-													GC.getGameINLINE().implementDeal(getID(), ((PlayerTypes)iI), &ourList, &theirList);
-												}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+												GC.getGameINLINE().implementDeal(getID(), ((PlayerTypes)iI), &ourList, &theirList);
 											}
 										}
 
@@ -6807,9 +6796,10 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 	FAssertMsg(ePlayer != getID(), "shouldn't call this function on ourselves");
 
 	const CvTeamAI& kOurTeam = GET_TEAM(getTeam()); // K-Mod
+	const CvTeam& kTheirTeam = GET_TEAM(GET_PLAYER(ePlayer).getTeam()); // K-Mod
 
 	if (GET_PLAYER(ePlayer).getTeam() == getTeam()
-		|| GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(getTeam())
+		|| kTheirTeam.isVassal(getTeam())
 		|| kOurTeam.isVassal(GET_PLAYER(ePlayer).getTeam()))
 	{
 		return true;
@@ -6824,8 +6814,17 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 	{
 		// K-Mod
-		if (kOurTeam.isHuman())
+		if (kOurTeam.isHuman() && !isHuman())
 			return false;
+
+		if (kOurTeam.AI_refusePeace(GET_PLAYER(ePlayer).getTeam()))
+		{
+			TradeData item;
+			setTradeItem(&item, TRADE_SURRENDER);
+
+			if (!GET_PLAYER(ePlayer).canTradeItem(getID(), item, true))
+				return false; // if they can't (or won't) capitulate, don't talk to them.
+		}
 		// K-Mod end
 
 		if (kOurTeam.isAVassal())
@@ -6836,7 +6835,7 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 		int iRefuseDuration = (GC.getLeaderHeadInfo(getPersonalityType()).getRefuseToTalkWarThreshold() * ((kOurTeam.AI_isChosenWar(GET_PLAYER(ePlayer).getTeam())) ? 2 : 1));
 		
 		int iOurSuccess = 1 + kOurTeam.AI_getWarSuccess(GET_PLAYER(ePlayer).getTeam());
-		int iTheirSuccess = 1 + GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_getWarSuccess(getTeam());
+		int iTheirSuccess = 1 + kTheirTeam.AI_getWarSuccess(getTeam());
 		if (iTheirSuccess > iOurSuccess * 2)
 		{
 			iRefuseDuration *= 20 + ((80 * iOurSuccess * 2) / iTheirSuccess);
@@ -8335,6 +8334,26 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 		return true;
 	}
 
+	// K-Mod. Refuse all war-time offers unless it's part of a peace deal
+	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
+	{
+		bool bEndWar = false;
+		for (pNode = pTheirList->head(); !bEndWar && pNode; pNode = pTheirList->next(pNode))
+		{
+			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
+				bEndWar = true;
+		}
+		for (pNode = pOurList->head(); !bEndWar && pNode; pNode = pOurList->next(pNode))
+		{
+			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
+				bEndWar = true;
+		}
+
+		if (!bEndWar)
+			return false;
+	}
+	// K-Mod end
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      10/23/09                                jdog5000      */
 /*                                                                                              */
@@ -8540,6 +8559,63 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 	pTheirCounter->clear();
 	pOurCounter->clear();
+
+	// K-Mod. Refuse all war-time offers unless it's part of a peace deal
+	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
+	{
+		// Check to see if there is already an end-war item on the table
+		bool bEndWar = false;
+		for (pNode = pTheirList->head(); !bEndWar && pNode; pNode = pTheirList->next(pNode))
+		{
+			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
+				bEndWar = true;
+		}
+		for (pNode = pOurList->head(); !bEndWar && pNode; pNode = pOurList->next(pNode))
+		{
+			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
+				bEndWar = true;
+		}
+
+		// see if someone is willing to surrender
+		if (!bEndWar)
+		{
+			TradeData item;
+			setTradeItem(&item, TRADE_SURRENDER);
+			if (canTradeItem(ePlayer, item, true))
+			{
+				pOurCounter->insertAtEnd(item);
+				bEndWar = true;
+			}
+			else if (GET_PLAYER(ePlayer).canTradeItem(getID(), item, true))
+			{
+				pTheirCounter->insertAtEnd(item);
+				bEndWar = true;
+			}
+		}
+		// last chance: try a peace treaty.
+		if (!bEndWar)
+		{
+			TradeData item;
+			setTradeItem(&item, TRADE_PEACE_TREATY);
+			if (canTradeItem(ePlayer, item, true) && GET_PLAYER(ePlayer).canTradeItem(getID(), item, true))
+			{
+				//pOurCounter->insertAtEnd(item);
+				//pTheirCounter->insertAtEnd(item);
+				// unfortunately, there is some weirdness in the game engine which causes it to flip its wig
+				// if trade items are added to both sides of a peace deal... so we have to do it like this:
+				if (iAIDealWeight > iHumanDealWeight)
+					pTheirCounter->insertAtEnd(item);
+				else
+					pOurCounter->insertAtEnd(item);
+				bEndWar = true;
+			}
+			else
+			{
+				return false; // if there is no peace, there will be no trade
+			}
+		}
+	}
+	// K-Mod end
 
 	if (iAIDealWeight > iHumanDealWeight)
 	{
@@ -8806,6 +8882,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	{
 		if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 		{
+			/* original bts code
 			bool bSurrender = false;
 			for (pNode = pOurInventory->head(); pNode; pNode = pOurInventory->next(pNode))
 			{
@@ -8837,7 +8914,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 						}
 					}
 				}
-			}
+			} */ // Disabled by K-Mod. This is obsolete.
 
 			iBestValue = 0;
 			iBestWeight = 0;

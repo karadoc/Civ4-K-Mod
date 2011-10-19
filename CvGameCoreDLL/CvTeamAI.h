@@ -43,7 +43,7 @@ public:
 /* 																			    */
 /* 																			    */
 /********************************************************************************/
-	int AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves, bool bIncludeVassals = false);
+	int AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves, bool bIncludeVassals = false) const;
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						END								    */
 /********************************************************************************/
@@ -129,7 +129,8 @@ public:
 	int AI_getEnemyPowerPercent( bool bConsiderOthers = false ) const;
 	int AI_getAirPower() const; // K-Mod
 	int AI_getRivalAirPower( ) const;
-	bool AI_acceptSurrender( TeamTypes eSurrenderTeam );
+	bool AI_refusePeace(TeamTypes ePeaceTeam) const; // K-Mod. (refuse peace when we need war for conquest victory.)
+	bool AI_acceptSurrender( TeamTypes eSurrenderTeam ) const;
 	bool AI_isOkayVassalTarget( TeamTypes eTeam );
 
 	void AI_getWarRands( int &iMaxWarRand, int &iLimitedWarRand, int &iDogpileWarRand ) const;

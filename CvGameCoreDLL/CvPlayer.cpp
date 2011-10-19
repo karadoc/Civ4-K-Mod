@@ -5152,12 +5152,8 @@ DenialTypes CvPlayer::getTradeDenial(PlayerTypes eWhoTo, TradeData item) const
 
 	case TRADE_PEACE_TREATY:
 		// K-Mod
-		if (kOurTeam.AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
-			(kOurTeam.AI_isChosenWar(GET_PLAYER(eWhoTo).getTeam()) || kOurTeam.getAtWarCount(true, true) == 1) &&
-			kOurTeam.AI_getWarSuccessCapitulationRatio() > 0)
-		{
+		if (kOurTeam.AI_refusePeace(GET_PLAYER(eWhoTo).getTeam()))
 			return DENIAL_VICTORY;
-		}
 		// K-Mod end
 		break;
 	}
@@ -22599,7 +22595,8 @@ void CvPlayer::updateTradeList(PlayerTypes eOtherPlayer, CLinkList<TradeData>& o
 
 		if (pFirstOffer != NULL)
 		{
-			if (!CvDeal::isEndWar(pFirstOffer->m_data.m_eItemType) || !::atWar(getTeam(), GET_PLAYER(eOtherPlayer).getTeam()))
+			//if (!CvDeal::isEndWar(pFirstOffer->m_data.m_eItemType) || !::atWar(getTeam(), GET_PLAYER(eOtherPlayer).getTeam()))
+			if (!::atWar(getTeam(), GET_PLAYER(eOtherPlayer).getTeam())) // K-Mod
 			{
 				for (CLLNode<TradeData>* pNode = ourInventory.head(); pNode != NULL; pNode = ourInventory.next(pNode))
 				{

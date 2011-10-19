@@ -211,7 +211,7 @@ void CvTeamAI::AI_makeAssignWorkDirty()
 /* 	General AI																*/
 /********************************************************************************/
 // Find plot strength of teammates and potentially vassals
-int CvTeamAI::AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves, bool bIncludeVassals)
+int CvTeamAI::AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves, bool bIncludeVassals) const
 {
 	int iI;
 	int iPlotStrength = 0;
@@ -2201,6 +2201,7 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 
 	if (!isAtWar(eTeam))
 	{
+		FAssertMsg(false, "surrender trade while not at war"); // K-Mod. I just want to know if this can even happen! (surrendering while not at war)
 		if (!GET_TEAM(eTeam).isParent(getID()))
 		{
 			if (AI_getWorstEnemy() == eTeam)
@@ -2532,7 +2533,21 @@ int CvTeamAI::AI_getRivalAirPower( ) const
 	return iEnemyAirPower + iRivalAirPower / std::max(1, iTeamCount);
 }
 
-bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam )
+// K-Mod
+bool CvTeamAI::AI_refusePeace(TeamTypes ePeaceTeam) const
+{
+	// Refuse peace if we need the war for our conquest / domination victory.
+	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
+		(AI_isChosenWar(ePeaceTeam) || getAtWarCount(true, true) == 1) &&
+		AI_getWarSuccessCapitulationRatio() > 0)
+	{
+		return true;
+	}
+	return false;
+}
+// K-Mod end
+
+bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 {
 	PROFILE_FUNC();
 
@@ -3065,9 +3080,7 @@ DenialTypes CvTeamAI::AI_makePeaceTrade(TeamTypes ePeaceTeam, TeamTypes eTeam) c
 		return DENIAL_VICTORY;
 	} */
 	// K-Mod
-	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
-		(AI_isChosenWar(ePeaceTeam) || getAtWarCount(true, true) == 1) &&
-		AI_getWarSuccessCapitulationRatio() > 0)
+	if (AI_refusePeace(ePeaceTeam))
 	{
 		return DENIAL_VICTORY;
 	}
