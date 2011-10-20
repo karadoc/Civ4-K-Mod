@@ -15125,14 +15125,15 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 
 									// K-Mod
-									if (pLoopCity->isVisible(getTeam(), false) && iPathTurns <= 4)
+									if (pLoopCity->isVisible(getTeam(), false) && iPathTurns < 6)
 									{
 										FAssert(iEnemyDefence != -1);
 										int iOurOffence = getGroup()->AI_sumStrength(pLoopCity->plot());
 										if (iOurOffence > iEnemyDefence)
 										{
 											// dont' boost it by too much, otherwise human players will exploit us. :(
-											iValue *= std::min(150, 100 * iOurOffence / std::max(1, iEnemyDefence));
+											int iCap = 100 + 100 * (6 - iPathTurns) / 5;
+											iValue *= std::min(iCap, 100 * iOurOffence / std::max(1, iEnemyDefence));
 											iValue /= 100;
 										}
 									}

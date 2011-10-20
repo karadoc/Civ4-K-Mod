@@ -31,7 +31,7 @@
 #define PATH_STRAIGHT_WEIGHT    (1)
 
 // #define PATH_DAMAGE_WEIGHT      (500) // K-Mod (disabled because it isn't used)
-#define PATH_COMBAT_WEIGHT      (400) // K-Mod. penalty for having to fight along the way.
+#define PATH_COMBAT_WEIGHT      (300) // K-Mod. penalty for having to fight along the way.
 // Note: there will also be other combat penalties added, for example from defence weight and city weight.
 
 CvPlot* plotCity(int iX, int iY, int iIndex)
@@ -1646,6 +1646,11 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		//
 		iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iDefenceCount*200 - iDefenceMod) / std::max(1, iDefenceCount));
 		iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iAttackCount*200 - iAttackMod) / std::max(1, iAttackCount));
+		// if we're in enemy territory, consider the sum of our defensive bonuses as well as the average
+		if (pToPlot->isOwned() && atWar(pToPlot->getTeam(), eTeam))
+		{
+			iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iDefenceCount*200 - iDefenceMod)/5);
+		}
 
 		// additional cost for ending turn in or adjacent to enemy territory based on flags (based on BBAI)
 		if (iFlags & (MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_AVOID_ENEMY_WEIGHT_3))

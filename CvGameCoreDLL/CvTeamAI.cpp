@@ -972,7 +972,6 @@ AttitudeTypes CvTeamAI::AI_getAttitude(TeamTypes eTeam, bool bForced) const
 				{
 					if (GET_PLAYER((PlayerTypes)iJ).isAlive() && iI != iJ)
 					{
-						// BBAI TODO: Attitude averaging ... what to do?
 						TeamTypes eTeamLoop = GET_PLAYER((PlayerTypes)iJ).getTeam();
 /*
 ** K-Mod, 16/dec/10, karadoc

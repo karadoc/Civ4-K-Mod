@@ -4026,7 +4026,6 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-	iValue = std::min((int)MAX_SHORT, iValue); // K-Mod
 	return iValue;
 }
 
@@ -10105,7 +10104,12 @@ int CvPlayerAI::AI_religionTradeVal(ReligionTypes eReligion, PlayerTypes ePlayer
 	{
 		if (eBestReligion != eReligion)
 		{
-			iValue += std::max(0, (GET_PLAYER(ePlayer).AI_religionValue(eBestReligion) - GET_PLAYER(ePlayer).AI_religionValue(eReligion)));
+			//iValue += std::max(0, (GET_PLAYER(ePlayer).AI_religionValue(eBestReligion) - GET_PLAYER(ePlayer).AI_religionValue(eReligion)));
+			// K-Mod. AI_religionValue has arbitrary units.
+			// We need to give it some kind of scale for it to be meaningful in this function.
+			iValue *= 100 + std::min(100, 100 * GET_PLAYER(ePlayer).AI_religionValue(eBestReligion) / std::max(1, GET_PLAYER(ePlayer).AI_religionValue(eReligion)));
+			iValue /= 100;
+			// K-Mod end
 		}
 	}
 
@@ -11569,6 +11573,7 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 			iSpreadExternalValue += bStateReligion ? 300 : 200;
 			int iGoldMultiplier = kGame.getHolyCity(eReligion)->getTotalCommerceRateModifier(COMMERCE_GOLD);
 			iGoldValue = 6 * iGoldMultiplier;
+			// K-Mod. todo: use GC.getReligionInfo(eReligion).getGlobalReligionCommerce((CommerceTypes)iJ)
 		}
 	}
 	
@@ -13054,11 +13059,12 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 		{
 			iValue = AI_religionValue((ReligionTypes)iI);
 
+			/* original bts code
 			if (getStateReligion() == ((ReligionTypes)iI))
 			{
 				iValue *= 4;
 				iValue /= 3;
-			}
+			} */ // Disabled by K-Mod. state religion is now taken into account in AI_religionValue.
 
 			if (eFavorite == iI)
 			{
@@ -13078,10 +13084,19 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 	{
 		return eBestReligion;
 	}
-	
+
 	int iBestCount = getHasReligionCount(eBestReligion);
 	int iSpreadPercent = (iBestCount * 100) / std::max(1, getNumCities());
 	int iPurityPercent = (iBestCount * 100) / std::max(1, countTotalHasReligion());
+	// K-Mod. Don't instantly convert to the first religion available, unless it if your own religion.
+	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 25 &&
+		(GC.getGameINLINE().getHolyCity(eBestReligion) == NULL
+		|| GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
+	{
+		return NO_RELIGION;
+	}
+	// K-Mod end
+
 	if (iPurityPercent < 49)
 	{
 		if (iSpreadPercent > ((eBestReligion == eFavorite) ? 65 : 75))
@@ -13097,62 +13112,65 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 	return eBestReligion;
 }
 
-
+// This function has been completely rewriten for K-Mod
 int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 {
-	if (getHasReligionCount(eReligion) == 0)
-	{
-		return 0;
-	}
+	PROFILE_FUNC();
 
-	int iValue = GC.getGameINLINE().countReligionLevels(eReligion);
+	int iValue = 0;
+
+	if (getHasReligionCount(eReligion) == 0)
+		return 0;
+
+	//const FlavorTypes FLAVOR_RELIGION = (FlavorTypes)GC.getInfoTypeForString("FLAVOR_RELIGION");
+	const FlavorTypes FLAVOR_RELIGION = (FlavorTypes)1; // I don't know how to get this number from the xml. Sorry.
+	int iReligionFlavor = GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(FLAVOR_RELIGION);
 
 	int iLoop;
-	CvCity* pLoopCity;
-	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
-		if (pLoopCity->isHasReligion(eReligion))
-		{
-			iValue += pLoopCity->getPopulation();
-		}
+		iValue += pLoopCity->getReligionGrip(eReligion) * pLoopCity->getPopulation();
+		// note. this takes into account current state religion and number of religious buildings.
+	}
+	iValue *= getHasReligionCount(eReligion);
+	iValue /= getNumCities();
+
+	// holy city modifier
+	CvCity* pHolyCity = GC.getGameINLINE().getHolyCity(eReligion);
+	if (pHolyCity != NULL && pHolyCity->getTeam() == getTeam())
+	{
+		iValue *= 100 + 6 * iReligionFlavor + GC.getGameINLINE().calculateReligionPercent(eReligion);
+		iValue /= 100;
 	}
 
-	CvCity* pHolyCity = GC.getGameINLINE().getHolyCity(eReligion);
-	if (pHolyCity != NULL)
+	// diplomatic modifier
+	int iTotalCivs = 0; // x2
+	int iLikedReligionCivs = 0; // x2 for friendly
+	for (int i = 0; i < MAX_CIV_PLAYERS; i++)
 	{
-		bool bOurHolyCity = pHolyCity->getOwnerINLINE() == getID();
-		bool bOurTeamHolyCity = pHolyCity->getTeam() == getTeam();
-
-		if (bOurHolyCity || bOurTeamHolyCity)
+		const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)i);
+		if (i != getID() && kLoopPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam()) && !kLoopPlayer.isMinorCiv())
 		{
-			int iCommerceCount = 0;
-
-			for (int iI = 0; iI < GC.getNumBuildingInfos(); iI++)
+			iTotalCivs += 2;
+			if (kLoopPlayer.getStateReligion() == eReligion)
 			{
-				if (pHolyCity->getNumActiveBuilding((BuildingTypes)iI) > 0)
+				AttitudeTypes eAttitude = AI_getAttitude((PlayerTypes)i, false);
+				if (eAttitude >= ATTITUDE_PLEASED)
 				{
-					for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
-					{
-						if (GC.getBuildingInfo((BuildingTypes)iI).getGlobalReligionCommerce() == eReligion)
-						{
-							iCommerceCount += GC.getReligionInfo(eReligion).getGlobalReligionCommerce((CommerceTypes)iJ) * pHolyCity->getNumActiveBuilding((BuildingTypes)iI);
-						}
-					}
+					iLikedReligionCivs++;
+					if (eAttitude >= ATTITUDE_FRIENDLY)
+						iLikedReligionCivs++;
 				}
 			}
-
-			if (bOurHolyCity)
-			{
-				iValue *= (3 + iCommerceCount);
-				iValue /= 2;
-			}
-			else if (bOurTeamHolyCity)
-			{
-				iValue *= (4 + iCommerceCount);
-				iValue /= 3;
-			}
 		}
 	}
+
+	// up to +100% boost for liked civs having this has their state religion.
+	// less potential boost if we have aspirations of being a religious leader
+	iTotalCivs *= 10 + iReligionFlavor;
+	iTotalCivs /= 10;
+	iValue *= 100 + 100 * iLikedReligionCivs / std::max(1, iTotalCivs);
+	iValue /= 100;
 
 	return iValue;
 }
