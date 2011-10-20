@@ -505,6 +505,7 @@ protected:
 	int* m_aiBonusValue;
 	int* m_aiUnitClassWeights;
 	int* m_aiUnitCombatWeights;
+	//std::vector<int> m_aiGreatPersonWeights; // K-Mod... todo.
 
 	mutable int* m_aiCloseBordersAttitudeCache;
 

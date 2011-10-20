@@ -632,11 +632,9 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			int iCityRate = getGreatPeopleRate();
 			int iHighestRate = 0;
 			int iLoop;
-			for( CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop) )
+			for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 			{
-				int x = pLoopCity->getGreatPeopleRate();
-				if (x > iHighestRate)
-					iHighestRate = x;
+				iHighestRate = std::max(iHighestRate, pLoopCity->getGreatPeopleRate());
 			}
 			if (iHighestRate > iCityRate)
 			{
@@ -5466,7 +5464,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 							// (I'm trying to boost the chance that the AI will put wallstreet with its corp HQs.)
 							if (iHqValue > 0)
 							{
-								iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI) - getNumNationalWonders();
+								iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI) - getNumNationalWonders()/2;
 								iHqValue /= 2*iNumCities;
 							}
 							iCorpValue += iHqValue;

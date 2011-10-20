@@ -1,4 +1,4 @@
-This is K-Mod version 1.04.
+This is K-Mod version 1.04b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -11,6 +11,7 @@ v1.04 changelist
 
 + Adjusted the diplomatic behaviour of AI players who are allied with human players. In particular, the AI will no longer refuse to talk to other humans.
 + Made some more changes ("improvements") to the automatic city citizen allocation system - particularly for the AI.
++ Rewrote the decision making process for the AI's choice of state religion. It should be a bit less rigid now.
 + Restructured and simplified the air unit AI, so that now it will be faster - and probably a bit smarter too. (untested)
 + Fixed and reactivated the attack sections of AI_follow - the main benefit of this is that AI attack stacks will now be able to make better use of the blitz ability of tanks.
 + Corrected the code which was meant to stop AIs from making peace when aiming for conquest victory. (The first attempt was wrong - it basically did nothing.)

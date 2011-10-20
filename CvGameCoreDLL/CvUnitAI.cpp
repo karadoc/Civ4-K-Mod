@@ -21471,8 +21471,11 @@ bool CvUnitAI::AI_airStrike()
 					else
 					{
 						BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam(), true);
-						if (eBonus != NO_BONUS && canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
-							iBombValue = GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, -1) * 2;
+						if (eBonus != NO_BONUS && pLoopPlot->isOwned() && canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
+						{
+							iBombValue = GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, -1);
+							iBombValue += GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus);
+						}
 					}
 				}
 				// factor in air defenses but try to avoid using bestInterceptor, because that's a slow function.

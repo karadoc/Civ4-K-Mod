@@ -5963,6 +5963,13 @@ void CvGame::doTurn()
 	{
 		changeAIAutoPlay(-1);
 
+		// K-Mod
+		if (gDLL->getChtLvl() > 0 && gDLL->altKey() && gDLL->shiftKey() && gDLL->ctrlKey())
+		{
+			setAIAutoPlay(0);
+		}
+		// K-Mod end
+
 		if (getAIAutoPlay() == 0)
 		{
 			reviveActivePlayer();

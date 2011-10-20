@@ -2567,7 +2567,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			}
 			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 1;
 
-			iWeight *= AI_getEspionageWeight();
+			iWeight *= isHuman() ? 100 : AI_getEspionageWeight();
 			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 1;
 			iWeight /= 100;
 
@@ -13139,7 +13139,7 @@ int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 	CvCity* pHolyCity = GC.getGameINLINE().getHolyCity(eReligion);
 	if (pHolyCity != NULL && pHolyCity->getTeam() == getTeam())
 	{
-		iValue *= 100 + 6 * iReligionFlavor + GC.getGameINLINE().calculateReligionPercent(eReligion);
+		iValue *= 110 + 5 * iReligionFlavor + (10+iReligionFlavor)*GC.getGameINLINE().calculateReligionPercent(eReligion)/10;
 		iValue /= 100;
 	}
 
@@ -14854,6 +14854,11 @@ void CvPlayerAI::AI_doReligion()
 
 	if (canConvert(eBestReligion))
 	{
+		if (gPlayerLogLevel > 0)
+		{
+			logBBAI("    %S decides to convert to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getReligionInfo(eBestReligion).getDescription(0),
+				eBestReligion == NO_RELIGION ? 0 : AI_religionValue(eBestReligion), getStateReligion() == NO_RELIGION ? 0 : AI_religionValue(getStateReligion()));
+		}
 		convert(eBestReligion);
 		AI_setReligionTimer((getMaxAnarchyTurns() == 0) ? (GC.getDefineINT("MIN_CONVERSION_TURNS") * 2) : RELIGION_CHANGE_DELAY);
 	}
