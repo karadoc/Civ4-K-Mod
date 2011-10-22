@@ -3489,6 +3489,8 @@ bool CvSelectionGroup::groupDeclareWar(CvPlot* pPlot, bool bForce)
 		{
 			if (kTeam.canDeclareWar(ePlotTeam))
 			{
+				FAssertMsg(false, "war declared using groupDeclareWar"); // K-Mod, I'm trying to phase this out.
+				if (gUnitLogLevel > 0) logBBAI("    %S declares war on %S with groupDeclareWar (%S - %S).", kTeam.getName().GetCString(), GET_TEAM(ePlotTeam).getName().GetCString(), getHeadUnit()->getName(0).GetCString(), GC.getUnitAIInfo(getHeadUnitAI()).getDescription());
 				kTeam.declareWar(ePlotTeam, true, NO_WARPLAN);
 			}
 		}
@@ -3514,7 +3516,6 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 			pDestPlot = getPathFirstPlot();
 		}
 	}
-
 
 	FAssertMsg(pDestPlot != NULL, "DestPlot is not assigned a valid value");
 
@@ -3549,6 +3550,14 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 					//	return false;
 					//}
 					// modified
+
+					// K-Mod, bugfix. This needs to happen before hadDefender, since hasDefender tests for war..
+					// (note: this check is no longer going to be important at all once my new AI DOW code is complete.)
+					if (groupDeclareWar(pDestPlot))
+					{
+						return true;
+					}
+					// K-Mod end
 					if (!pDestPlot->hasDefender(false, NO_PLAYER, getOwnerINLINE(), pBestAttackUnit, true))
 						return false;
 /************************************************************************************************/
@@ -3557,10 +3566,10 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 
 					bool bNoBlitz = (!pBestAttackUnit->isBlitz() || !pBestAttackUnit->isMadeAttack());
 
-					if (groupDeclareWar(pDestPlot))
+					/*if (groupDeclareWar(pDestPlot))
 					{
 						return true;
-					}
+					}*/ // K-Mod, moved up.
 
 					while (true)
 					{
@@ -3747,8 +3756,7 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	if(pPathPlot == pDestPlot)
 		bEndMove = true;
     
-	//groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
-	groupMove(pPathPlot, iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK), NULL, bEndMove); // K-Mod
+	groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
 
 	return true;
 }

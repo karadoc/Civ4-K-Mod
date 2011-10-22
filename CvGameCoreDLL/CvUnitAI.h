@@ -66,6 +66,8 @@ protected:
 
 	int m_iAutomatedAbortTurn;
 
+	bool AI_considerDOW(CvPlot* pPlot); // K-Mod
+
 	void AI_animalMove();
 	void AI_settleMove();
 	void AI_workerMove();
@@ -179,9 +181,9 @@ protected:
 /*                                                                                              */
 /* War tactics AI                                                                               */
 /************************************************************************************************/
-	CvCity* AI_pickTargetCity(int iFlags = 0, int iMaxPath = MAX_INT, bool bHuntBarbs = false);
-	bool AI_goToTargetCity(int iFlags = 0, int iMaxPath = MAX_INT, CvCity* pTargetCity = NULL);
-	bool AI_goToTargetBarbCity(int iMaxPath = 10);
+	CvCity* AI_pickTargetCity(int iFlags = 0, int iMaxPathTurns = MAX_INT, bool bHuntBarbs = false);
+	bool AI_goToTargetCity(int iFlags = 0, int iMaxPathTurns = MAX_INT, CvCity* pTargetCity = NULL);
+	bool AI_goToTargetBarbCity(int iMaxPathTurns = 10);
 	bool AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshold = 0, int iMaxPathTurns = MAX_INT);
 	bool AI_bombardCity();
 	bool AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow = false);

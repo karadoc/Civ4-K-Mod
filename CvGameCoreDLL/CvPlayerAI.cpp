@@ -13064,7 +13064,14 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 			{
 				iValue *= 4;
 				iValue /= 3;
-			} */ // Disabled by K-Mod. state religion is now taken into account in AI_religionValue.
+			} */
+			// K-Mod
+			if (iI == getStateReligion() && getReligionAnarchyLength() > 0)
+			{
+				iValue *= 5;
+				iValue /= 4;
+			}
+			// K-Mod end
 
 			if (eFavorite == iI)
 			{
@@ -13088,10 +13095,9 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 	int iBestCount = getHasReligionCount(eBestReligion);
 	int iSpreadPercent = (iBestCount * 100) / std::max(1, getNumCities());
 	int iPurityPercent = (iBestCount * 100) / std::max(1, countTotalHasReligion());
-	// K-Mod. Don't instantly convert to the first religion available, unless it if your own religion.
-	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 25 &&
-		(GC.getGameINLINE().getHolyCity(eBestReligion) == NULL
-		|| GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
+	// K-Mod. Don't instantly convert to the first religion avaiable, unless it if your own religion.
+	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(1)
+		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
 	{
 		return NO_RELIGION;
 	}
