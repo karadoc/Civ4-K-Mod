@@ -3281,7 +3281,14 @@ void CvGlobals::enableDLLProfiler(bool bEnable)
 
 bool CvGlobals::isDLLProfilerEnabled() const
 {
-	return m_bDLLProfiler;
+	//return m_bDLLProfiler;
+	// K-Mod. (I don't know how to enable this in-game...)
+#ifdef FP_PROFILE_ENABLE
+	return true;
+#else
+	return false;
+#endif
+	// K-Mod end
 }
 
 bool CvGlobals::readBuildingInfoArray(FDataStreamBase* pStream)

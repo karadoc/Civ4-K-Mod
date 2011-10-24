@@ -2074,7 +2074,8 @@ int CvGame::getTeamClosenessScore(int** aaiDistances, int* aiStartingLocs)
 
 void CvGame::update()
 {
-	PROFILE("CvGame::update");
+	startProfilingDLL(false);
+	PROFILE_BEGIN("CvGame::update");
 
 	if (!gDLL->GetWorldBuilderMode() || isInAdvancedStart())
 	{
@@ -2128,6 +2129,8 @@ void CvGame::update()
 			gDLL->getInterfaceIFace()->setWorldBuilder(true);
 		}
 	}
+	PROFILE_END();
+	stopProfilingDLL(false);
 }
 
 
@@ -6059,7 +6062,7 @@ void CvGame::doTurn()
 
 	PROFILE_END();
 
-	stopProfilingDLL();
+	stopProfilingDLL(true);
 
 	gDLL->getEngineIFace()->AutoSave();
 }

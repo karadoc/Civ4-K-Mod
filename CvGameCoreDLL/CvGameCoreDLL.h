@@ -155,8 +155,68 @@ __forceinline DWORD FtoDW( float f ) { return *(DWORD*)&f; }
 __forceinline float DWtoF( dword n ) { return *(float*)&n; }
 __forceinline float MaxFloat() { return DWtoF(0x7f7fffff); }
 
-void startProfilingDLL();
-void stopProfilingDLL();
+void startProfilingDLL(bool longLived);
+void stopProfilingDLL(bool longLived);
+
+#ifdef USE_INTERNAL_PROFILER
+struct ProfileSample;
+void IFPBeginSample(ProfileSample* sample);
+void IFPEndSample(ProfileSample* sample);
+void dumpProfileStack(void);
+void EnableDetailedTrace(bool enable);
+#endif
+
+#ifdef _DEBUG
+//#define MEMORY_TRACKING
+#endif
+
+#ifdef MEMORY_TRACKING
+class CMemoryTrack
+{
+#define	MAX_TRACKED_ALLOCS	1000
+	void*	m_track[MAX_TRACKED_ALLOCS];
+	int		m_highWater;
+	const char* m_name;
+	bool	m_valid;
+#define MAX_TRACK_DEPTH		50
+	static	CMemoryTrack*	trackStack[MAX_TRACK_DEPTH];
+	static	m_trackStackDepth;
+
+public:
+	CMemoryTrack(const char* name, bool valid);
+
+	~CMemoryTrack();
+
+	void NoteAlloc(void* ptr);
+	void NoteDeAlloc(void* ptr);
+
+	static CMemoryTrack* GetCurrent(void);
+};
+
+class CMemoryTrace
+{
+	int		m_start;
+	const char* m_name;
+
+public:
+	CMemoryTrace(const char* name);
+
+	~CMemoryTrace();
+};
+
+void DumpMemUsage(const char* fn, int line);
+
+#define DUMP_MEMORY_USAGE()	DumpMemUsage(__FUNCTION__,__LINE__);
+#define MEMORY_TRACK()	CMemoryTrack __memoryTrack(__FUNCTION__, true);
+#define MEMORY_TRACK_EXEMPT()	CMemoryTrack __memoryTrackExemption(NULL, false);
+#define MEMORY_TRACE_FUNCTION()	CMemoryTrace __memoryTrace(__FUNCTION__);
+#else
+#define DUMP_MEMORY_USAGE()	
+#define	MEMORY_TRACK()
+#define MEMORY_TRACK_EXEMPT()
+#define MEMORY_TRACE_FUNCTION()
+#endif
+
 
 //
 // Boost Python

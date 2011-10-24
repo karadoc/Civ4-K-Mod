@@ -55,6 +55,26 @@
 				CompileAsManaged=""
 			/>
 		</Configuration>
+		<Configuration
+			Name="Profile|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake Profile"
+				ReBuildCommandLine="nmake Profile_clean&#x0D;&#x0A;nmake Profile"
+				CleanCommandLine="nmake Profile_clean"
+				Output=""
+				PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;FP_PROFILE_ENABLE;USE_INTERNAL_PROFILER"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>

@@ -3510,8 +3510,7 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 	//if (iFlags & MOVE_THROUGH_ENEMY)
 	if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK)) // K-Mod
 	{
-		//if (generatePath(plot(), pDestPlot, iFlags))
-		if (generatePath(plot(), pDestPlot, iFlags, true)) // K-Mod
+		if (generatePath(plot(), pDestPlot, iFlags))
 		{
 			pDestPlot = getPathFirstPlot();
 		}
@@ -3529,7 +3528,7 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 		if ((getDomainType() == DOMAIN_AIR) || (stepDistance(getX(), getY(), pDestPlot->getX_INLINE(), pDestPlot->getY_INLINE()) == 1))
 		{
 			//if ((iFlags & MOVE_DIRECT_ATTACK) || (getDomainType() == DOMAIN_AIR) || (iFlags & MOVE_THROUGH_ENEMY) || (generatePath(plot(), pDestPlot, iFlags) && (getPathFirstPlot() == pDestPlot)))
-			if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK | MOVE_DIRECT_ATTACK) || getDomainType() == DOMAIN_AIR || (generatePath(plot(), pDestPlot, iFlags, true) && getPathFirstPlot() == pDestPlot)) // K-Mod
+			if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK | MOVE_DIRECT_ATTACK) || getDomainType() == DOMAIN_AIR || (generatePath(plot(), pDestPlot, iFlags) && getPathFirstPlot() == pDestPlot)) // K-Mod
 			{
 				int iAttackOdds;
 				CvUnit* pBestAttackUnit = AI_getBestGroupAttacker(pDestPlot, true, iAttackOdds);
@@ -3726,8 +3725,7 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	}
 	else
 	{
-		//if (!generatePath(plot(), pDestPlot, iFlags))
-		if (!generatePath(plot(), pDestPlot, iFlags, true)) // K-Mod
+		if (!generatePath(plot(), pDestPlot, iFlags))
 		{
 			return false;
 		}
@@ -4483,7 +4481,7 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 	//	Invalidate the cache again so that callers from outside the DLL to path generation don't
 	//	invoke a stale cache
 	m_cachedPathValidityFromPlotX = -2;	//	-2 blocks all attempts to use the cache
-	//lastPathGeneratedFor = this;
+	lastPathGeneratedFor = this;
 
 	if (piPathTurns != NULL)
 	{

@@ -11163,7 +11163,7 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 			// start profiling DLL if desired
 			if (getID() == GC.getGameINLINE().getActivePlayer())
 			{
-				startProfilingDLL();
+				startProfilingDLL(true);
 			}
 
 			GC.getGameINLINE().changeNumGameTurnActive(-1);

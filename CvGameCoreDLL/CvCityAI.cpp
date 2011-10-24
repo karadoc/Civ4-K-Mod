@@ -9830,6 +9830,7 @@ bool CvCityAI::AI_foodAvailable(int iExtra) const
 // Note. I've changed the scale to match the building evaluation code: ~4x commerce.
 int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation, bool bWorkerOptimization) const
 {
+	PROFILE_FUNC();
 	const int iBaseProductionValue = 7;
 	const int iBaseCommerceValue = 4;
 

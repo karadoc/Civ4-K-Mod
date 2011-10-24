@@ -20124,19 +20124,19 @@ void CvPlayerAI::AI_calculateAverages()
 {
 	CvCity* pLoopCity;
 	int iLoop;
-	
+
 	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
 		m_aiAverageYieldMultiplier[iI] = 0;		
 	}
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
-		m_aiAverageCommerceMultiplier[iI] = 0;	
+		m_aiAverageCommerceMultiplier[iI] = 0;
 	}
 	m_iAverageGreatPeopleMultiplier = 0;
-	
+
 	int iTotalPopulation = 0;
-	
+
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
 		int iPopulation = std::max(pLoopCity->getPopulation(), NUM_CITY_PLOTS);
@@ -20152,8 +20152,8 @@ void CvPlayerAI::AI_calculateAverages()
 		}
 		m_iAverageGreatPeopleMultiplier += iPopulation * pLoopCity->getTotalGreatPeopleRateModifier();
 	}
-	
-	
+
+
 	if (iTotalPopulation > 0)
 	{
 		for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -20181,18 +20181,18 @@ void CvPlayerAI::AI_calculateAverages()
 		}
 		m_iAverageGreatPeopleMultiplier = 100;
 	}
-	
-	
+
+
 	//Calculate Exchange Rate
-	
+
 	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
 		m_aiAverageCommerceExchange[iI] = 0;		
 	}
-	
+
 	int iCommerce = 0;
 	int iTotalCommerce = 0;
-	
+
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
 		iCommerce = pLoopCity->getYieldRate(YIELD_COMMERCE);
