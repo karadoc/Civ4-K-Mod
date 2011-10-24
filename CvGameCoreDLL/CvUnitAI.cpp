@@ -909,7 +909,6 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 	iBestValue = 0;
 	BuildTypes eBestBuild = NO_BUILD;
 	CvPlot* pBestPlot = NULL;
-
 	
 	for (int iPass = 0; iPass < 2; iPass++)
 	{
@@ -917,7 +916,8 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 		{
 			CvPlot* pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
 
-			if (pLoopPlot != NULL)
+			//if (pLoopPlot != NULL)
+			if (pLoopPlot != NULL && pLoopPlot->getWorkingCity() == pCity) // K-Mod
 			{
 				if (AI_plotValid(pLoopPlot))
 				{
