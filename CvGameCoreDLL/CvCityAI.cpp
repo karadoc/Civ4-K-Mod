@@ -7783,7 +7783,7 @@ void CvCityAI::AI_updateBestBuild()
 	/* I've disabled these for now
 	int iHappyAdjust = 0;
 	int iHealthAdjust = 0; */
-	
+
 	bool bChop = false;
 
     if (!bChop)
@@ -7805,7 +7805,7 @@ void CvCityAI::AI_updateBestBuild()
 	{
 		bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
 	}
-	
+
 	/*if (getProductionBuilding() != NO_BUILDING)
 	{
 		iHappyAdjust += getBuildingHappiness(getProductionBuilding());
@@ -7913,8 +7913,8 @@ void CvCityAI::AI_updateBestBuild()
 			}
 		}
 	}
-	
-	
+
+
 	{	//new experimental yieldValue calcuation
 		short aiYields[NUM_YIELD_TYPES];
 		int iBestPlot = -1;

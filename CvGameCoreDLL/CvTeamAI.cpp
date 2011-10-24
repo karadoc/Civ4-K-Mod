@@ -2535,7 +2535,8 @@ int CvTeamAI::AI_getRivalAirPower( ) const
 bool CvTeamAI::AI_refusePeace(TeamTypes ePeaceTeam) const
 {
 	// Refuse peace if we need the war for our conquest / domination victory.
-	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
+	if (!isHuman() &&
+		AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
 		(AI_isChosenWar(ePeaceTeam) || getAtWarCount(true, true) == 1) &&
 		AI_getWarSuccessCapitulationRatio() > 0)
 	{
