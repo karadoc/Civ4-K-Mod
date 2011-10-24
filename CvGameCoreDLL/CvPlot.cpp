@@ -2816,13 +2816,20 @@ int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 		return GC.getMOVE_DENOMINATOR();
 	}
 
+	/* original bts code
 	if (pUnit->isHuman())
 	{
 		if (!isRevealed(pUnit->getTeam(), false))
 		{
 			return pUnit->maxMoves();
 		}
+	} */
+	// K-Mod. Why let the AI cheat this?
+	if (!isRevealed(pUnit->getTeam(), false))
+	{
+		return pUnit->maxMoves();
 	}
+	// K-Mod end
 
 	if (!pFromPlot->isValidDomainForLocation(*pUnit))
 	{

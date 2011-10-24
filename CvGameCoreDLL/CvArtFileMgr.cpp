@@ -58,7 +58,7 @@ class Cv##name##ArtInfoItem : public CvArtFileMgr::ArtInfoItem \
 	void buildMap() { BUILD_INFO_MAP(*ARTFILEMGR.m_map##name##ArtInfos, ARTFILEMGR.get##name##ArtInfo, ARTFILEMGR.getNum##name##ArtInfos()); } \
 }; \
 \
-static Cv##name##ArtInfoItem g##name##ArtInfoItem; \
+static Cv##name##ArtInfoItem* g##name##ArtInfoItem; \
 \
 CvArtInfo##name##* CvArtFileMgr::get##name##ArtInfo( const char *szArtDefineTag ) const \
 { \
@@ -91,6 +91,23 @@ void Cv##name##ArtInfoItem::deInit() \
 } \
 CvArtInfo##name##& CvArtFileMgr::get##name##ArtInfo(int i) { return *(m_pa##name##ArtInfo[i]); }
 
+#define ART_INFO_INST(name) g##name##ArtInfoItem = new  Cv##name##ArtInfoItem();
+
+
+// Macros the declaration of the art file info maps
+ART_INFO_DEFN(Asset);
+ART_INFO_DEFN(Misc);
+ART_INFO_DEFN(Unit);
+ART_INFO_DEFN(Building);
+ART_INFO_DEFN(Civilization);
+ART_INFO_DEFN(Leaderhead);
+ART_INFO_DEFN(Bonus);
+ART_INFO_DEFN(Improvement);
+ART_INFO_DEFN(Terrain);
+ART_INFO_DEFN(Feature);
+ART_INFO_DEFN(Movie);
+ART_INFO_DEFN(Interface);
+
 //----------------------------------------------------------------------------
 //
 //	FUNCTION:	GetInstance()
@@ -98,10 +115,29 @@ CvArtInfo##name##& CvArtFileMgr::get##name##ArtInfo(int i) { return *(m_pa##name
 //	PURPOSE:	Get the instance of this class.
 //
 //----------------------------------------------------------------------------
+static CvArtFileMgr* gs_ArtFileMgr = NULL;
+
 CvArtFileMgr& CvArtFileMgr::GetInstance()
 {
-	static CvArtFileMgr gs_ArtFileMgr;
-	return gs_ArtFileMgr;
+	if ( gs_ArtFileMgr == NULL )
+	{
+		gs_ArtFileMgr = new CvArtFileMgr();
+
+		ART_INFO_INST(Asset);
+		ART_INFO_INST(Misc);
+		ART_INFO_INST(Unit);
+		ART_INFO_INST(Building);
+		ART_INFO_INST(Civilization);
+		ART_INFO_INST(Leaderhead);
+		ART_INFO_INST(Bonus);
+		ART_INFO_INST(Improvement);
+		ART_INFO_INST(Terrain);
+		ART_INFO_INST(Feature);
+		ART_INFO_INST(Movie);
+		ART_INFO_INST(Interface);
+	}
+
+	return *gs_ArtFileMgr;
 }
 
 //----------------------------------------------------------------------------
@@ -167,17 +203,3 @@ void CvArtFileMgr::buildArtFileInfoMaps()
 		m_artInfoItems[i]->buildMap();
 	}
 }
-
-// Macros the creation of the art file info maps
-ART_INFO_DEFN(Asset);
-ART_INFO_DEFN(Misc);
-ART_INFO_DEFN(Unit);
-ART_INFO_DEFN(Building);
-ART_INFO_DEFN(Civilization);
-ART_INFO_DEFN(Leaderhead);
-ART_INFO_DEFN(Bonus);
-ART_INFO_DEFN(Improvement);
-ART_INFO_DEFN(Terrain);
-ART_INFO_DEFN(Feature);
-ART_INFO_DEFN(Movie);
-ART_INFO_DEFN(Interface);

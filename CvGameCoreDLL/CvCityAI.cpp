@@ -421,7 +421,7 @@ void CvCityAI::AI_updateAssignWork()
 
 bool CvCityAI::AI_avoidGrowth()
 {
-	PROFILE_FUNC();
+	//PROFILE_FUNC();
 
 	if (AI_isEmphasizeAvoidGrowth())
 	{
@@ -9648,6 +9648,7 @@ void CvCityAI::AI_juggleCitizens()
 				// ... that suggests we should break now to avoid getting into an endless loop.
 
 				//FAssertMsg(false, "circuit break"); // (for testing)
+				PROFILE("juggle citizen circuit break"); // testing... (I want to know how often this happens)
 
 				// Note: what tends to happen is that when the city evaluates stopping work on a food tile,
 				// it assumes that the citizen will go on to work some other 2-food plot.
@@ -9707,7 +9708,8 @@ void CvCityAI::AI_juggleCitizens()
 		if (iCycles > getPopulation() + iTotalFreeSpecialists)
 		{
 			// This isn't a serious problem. I just want to know how offen it happens.
-			FAssertMsg(false, "juggle citizens failed to find a stable solution.");
+			//FAssertMsg(false, "juggle citizens failed to find a stable solution.");
+			PROFILE("juggle citizen failure");
 			break;
 		}
 		iCycles++;

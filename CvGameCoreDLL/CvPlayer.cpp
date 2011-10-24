@@ -3861,7 +3861,7 @@ bool CvPlayer::hasAutoUnit() const
 
 bool CvPlayer::hasBusyUnit() const
 {
-	PROFILE_FUNC();
+	//PROFILE_FUNC();
 
 	CvSelectionGroup* pLoopSelectionGroup;
 	int iLoop;

@@ -6178,6 +6178,7 @@ void CvGame::doGlobalWarming()
 */
 void CvGame::doGlobalWarming()
 {
+	PROFILE_FUNC();
 	/*
 	** Calculate change in GW index
 	*/

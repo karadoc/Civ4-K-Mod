@@ -1516,14 +1516,6 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		}
 	}
 
-	// lets try this without cheating, shall we?
-	if (!pToPlot->isRevealed(eTeam, false))
-	{
-		//return PATH_MOVEMENT_WEIGHT * iWorstMaxMoves;
-		// just a couple of minor adjustments...
-		iWorstCost = PATH_MOVEMENT_WEIGHT * iWorstMaxMoves;
-	}
-
 	iWorstCost += PATH_STEP_WEIGHT;
 
 	// K-Mod note: it's actually marginally better strategy to move diagonally - for mapping reasons.
@@ -1541,6 +1533,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 			iWorstCost += PATH_STRAIGHT_WEIGHT;
 	}
 
+	// lets try this without cheating, shall we?
 	if (!pToPlot->isRevealed(eTeam, false))
 		return iWorstCost;
 

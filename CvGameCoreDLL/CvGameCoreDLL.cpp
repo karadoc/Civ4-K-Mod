@@ -31,12 +31,11 @@ void DumpMemUsage(const char* fn, int line)
 #define	PROFILE_TRACK_ALLOC(x)		ProfileTrackAlloc(x);
 #define	PROFILE_TRACK_DEALLOC(x)	ProfileTrackDeAlloc(x);
 #else
-#define	PROFILE_TRACK_ALLOC(x)	
-#define	PROFILE_TRACK_DEALLOC(x)	
+#define	PROFILE_TRACK_ALLOC(x)
+#define	PROFILE_TRACK_DEALLOC(x)
 #endif
 
-static allocCount = 0;
-
+#ifdef USE_MEMMANAGER // K-Mod. There is a similar #ifdef in the header file, so I assume it's meant to be here as well...
 //
 // operator global new and delete override for gamecore DLL 
 //
@@ -145,6 +144,7 @@ unsigned int memSize(void* a)
 {
 	return gDLL->memSize(a);
 }
+#endif // K-Mod
 
 BOOL APIENTRY DllMain(HANDLE hModule, 
 					  DWORD  ul_reason_for_call, 
