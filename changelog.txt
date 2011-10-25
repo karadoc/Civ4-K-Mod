@@ -1,5 +1,12 @@
-This is K-Mod version 1.04c.
+This is K-Mod version 1.05.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.05 changelist
+
++ Fixed a major performance problem in the original BtS code. The AI's turns will now take around half the time they took before. ie. The AI is now 100% faster.
++ Fixed a bug K-Mod in the way the AI sorts their units.
 
 --
 
