@@ -291,7 +291,8 @@ bool CvSelectionGroupAI::AI_update()
 		if (!m_bGroupAttack && AI_isForceSeparate())
 		{
 			AI_separate();	// pointers could become invalid...
-			return true;
+			//return true;
+			return false; // K-Mod
 		}
 	}
 
@@ -353,7 +354,8 @@ bool CvSelectionGroupAI::AI_update()
 
 	if (bDead)
 	{
-		return true;
+		//return true;
+		return false; // K-Mod
 	}
 
 	return (isBusy() || isCargoBusy());

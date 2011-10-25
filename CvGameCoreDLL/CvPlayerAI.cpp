@@ -1403,7 +1403,7 @@ void CvPlayerAI::AI_unitUpdate()
 	PROFILE_FUNC();
 
 	CLLNode<int>* pCurrUnitNode;
-	CvSelectionGroup* pLoopSelectionGroup;
+	//CvSelectionGroup* pLoopSelectionGroup;
 	//CLinkList<int> tempGroupCycle;
 	//CLinkList<int> finalGroupCycle;
 	//int iValue;
@@ -1414,7 +1414,7 @@ void CvPlayerAI::AI_unitUpdate()
 
 		while (pCurrUnitNode != NULL)
 		{
-			pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
+			CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
 			pCurrUnitNode = nextGroupCycleNode(pCurrUnitNode);
 
 			if (pLoopSelectionGroup->AI_isForceSeparate())
@@ -1433,7 +1433,7 @@ void CvPlayerAI::AI_unitUpdate()
 
 			while (pCurrUnitNode != NULL)
 			{
-				pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
+				CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
 				pCurrUnitNode = nextGroupCycleNode(pCurrUnitNode);
 
 				if (pLoopSelectionGroup->AI_update())
@@ -1505,8 +1505,8 @@ void CvPlayerAI::AI_unitUpdate()
 			pCurrUnitNode = headGroupCycleNode();
 			while (pCurrUnitNode != NULL)
 			{
-				pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
-				FAssertMsg(pLoopSelectionGroup != NULL, "selection group node with NULL selection group");
+				CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
+				FAssert(pLoopSelectionGroup != NULL);
 
 				int iPriority = AI_movementPriority(pLoopSelectionGroup);
 				groupList.push_back(std::make_pair(iPriority, pCurrUnitNode->m_data));
@@ -1517,10 +1517,11 @@ void CvPlayerAI::AI_unitUpdate()
 			std::sort(groupList.begin(), groupList.end());
 			for (size_t i = 0; i < groupList.size(); i++)
 			{
-				pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
+				CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
 				if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
 				{
-					return;
+					FAssert(pLoopSelectionGroup && pLoopSelectionGroup->getNumUnits() > 0);
+					break;
 				}
 			}
 			// K-Mod end
