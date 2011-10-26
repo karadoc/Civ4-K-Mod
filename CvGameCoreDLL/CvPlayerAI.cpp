@@ -11683,18 +11683,18 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 
 // K-Mod note: the original BtS code for this was totally inconsistant with the calculation in AI_missionaryValue
 // -- which is bad news since the results are compared directly.
-// I've changed a lot of this function so that it is more sane and more compariable to the missionary value.
+// I've rewritten most of this function so that it is more sane and more compariable to the missionary value.
 // The original code is deleted.
 int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer) const
 {
-	CvTeam& kTeam = GET_TEAM(getTeam());
+	PROFILE_FUNC();
 	CvGame& kGame = GC.getGame();
 	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
 
-	int iSpreadInternalValue = 0;
 	int iSpreadExternalValue = 0;
+	int iExistingExecs = pArea ? countCorporationSpreadUnits(pArea, eCorporation, true) : 0;
 
-	if (kTeam.hasHeadquarters(eCorporation))
+	if (GET_TEAM(getTeam()).hasHeadquarters(eCorporation))
 	{
 		int iHqValue = 0;
 		CvCity* kHqCity = kGame.getHeadquarters(eCorporation);
@@ -11703,110 +11703,80 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 			iHqValue += kCorp.getHeadquarterCommerce(i) * kHqCity->getTotalCommerceRateModifier((CommerceTypes)i) * AI_commerceWeight((CommerceTypes)i)/100;
 		}
 
-		iSpreadInternalValue += iHqValue;
 		iSpreadExternalValue += iHqValue;
 	}
-	
-	int iOurCitiesHave = 0;
-	int iOurCitiesCount = 0;
-	
-	if (NULL == pArea)
-	{
-		iOurCitiesHave = kTeam.getHasCorporationCount(eCorporation);
-		iOurCitiesCount = kTeam.getNumCities();
-	}
-	else
-	{
-		iOurCitiesHave = pArea->countHasCorporation(eCorporation, getID()) + countCorporationSpreadUnits(pArea,eCorporation,true);
-		iOurCitiesCount = pArea->getCitiesPerPlayer(getID());
-	}
-	
-	for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
-	{
-		if (kGame.isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
-		{
-			if (NULL == pArea)
-			{
-				iOurCitiesHave += kTeam.getHasCorporationCount(eCorporation);
-			}
-			else
-			{
-				iOurCitiesHave += pArea->countHasCorporation(eCorporation, getID());
-			}
-		}
-	}
-	
-	if (iOurCitiesHave >= iOurCitiesCount+1) // K-Mod, +1 just so that we can build a spare, perhaps to airlift to another area.
-	{
-		iSpreadInternalValue = 0;
-		if (iSpreadExternalValue <= 0)
-		{
-			return 0;
-		}
-	}
-	
-	iSpreadInternalValue += AI_corporationValue(eCorporation);
 
-	if (iSpreadExternalValue > 0)
+	int iBestPlayer = NO_PLAYER;
+	int iBestValue = 0;
+	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
 	{
-		int iBestPlayer = NO_PLAYER;
-		int iBestValue = 0;
-		for (int iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
+		int iNumCities = pArea ? pArea->getCitiesPerPlayer((PlayerTypes)iPlayer) : kLoopPlayer.getNumCities();
+		if (kLoopPlayer.isAlive() && iNumCities > 0)
 		{
-			if (iPlayer != getID())
+			if (GET_TEAM(kLoopPlayer.getTeam()).isOpenBorders(getTeam()))
 			{
-				const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer); // K-Mod
-				int iNumCities = pArea ? pArea->getCitiesPerPlayer((PlayerTypes)iPlayer) : kLoopPlayer.getNumCities(); // K-Mod
-				if (kLoopPlayer.isAlive() && iNumCities > 0) // K-Mod
+				if (!kLoopPlayer.isNoCorporations() && (iPlayer == getID() || !kLoopPlayer.isNoForeignCorporations()))
 				{
-					if (GET_TEAM(kLoopPlayer.getTeam()).isOpenBorders(getTeam()))
+					int iAttitudeWeight;
+
+					if (kLoopPlayer.getTeam() == getTeam())
+						iAttitudeWeight = 100;
+					else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
+						iAttitudeWeight = 50;
+					else
+						iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - 75;
+
+					// a rough check to save us some time.
+					if (iAttitudeWeight < 0 && iSpreadExternalValue <= 0)
+						continue;
+
+					int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
+					int iValue = iSpreadExternalValue;
+					iValue += iCorpValue * iAttitudeWeight;
+					if (iValue > 0 && iCorpValue > 0 && kLoopPlayer.countCorporations(eCorporation) == 0)
 					{
-						if (!kLoopPlayer.isNoCorporations() && !kLoopPlayer.isNoForeignCorporations())
+						// if the player will spread the corp themselves, then that's good for us.
+						if (iAttitudeWeight >= 50)
 						{
-							int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
-							int iAttitudeWeight;
+							// estimate spread to 2/3 of total cities.
+							iValue *= (2*kLoopPlayer.getNumCities()+1)/3;
+						}
+						else
+						{
+							// estimate spread to 1/4 of total cities, rounded up.
+							iValue *= (kLoopPlayer.getNumCities()+3)/4;
+						}
+					}
+					if (iValue > iBestValue)
+					{
+						int iCitiesHave = kLoopPlayer.countCorporations(eCorporation, pArea);
 
-							if (kLoopPlayer.getTeam() == getTeam())
-								iAttitudeWeight = 100;
-							else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
-								iAttitudeWeight = 50;
-							else
-								iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - 75;
+						if (iCitiesHave + iExistingExecs >= iNumCities + (pArea && iPlayer==getID() ? 1 : 0))
+							continue;
+						// K-Mod note, +1 just so that we can build a spare, perhaps to airlift to another area.
 
-							int iValue = iSpreadExternalValue;
-							iValue += iCorpValue * iAttitudeWeight;
-							if (iValue > 0 && iCorpValue > 0 && kLoopPlayer.countCorporations(eCorporation) == 0)
+						for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
+						{
+							if (kGame.isCorporationFounded((CorporationTypes)iCorp) && kGame.isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
 							{
-								// if the player will spread the corp themselves, then that's good for us.
-								if (iAttitudeWeight >= 50)
-								{
-									// estimate spread to 2/3 of total cities.
-									iValue *= (2*kLoopPlayer.getNumCities()+1)/3;
-								}
-								else
-								{
-									// estimate spread to 1/4 of total cities, rounded up.
-									iValue *= (kLoopPlayer.getNumCities()+3)/4;
-								}
-							}
-							if (iValue > iBestValue && kLoopPlayer.countCorporations(eCorporation, pArea) < iNumCities)
-							{
-								iBestValue = iValue;
-								iBestPlayer = iPlayer;
+								int iExtra = kLoopPlayer.countCorporations((CorporationTypes)iCorp, pArea);
+
+								if (iExtra > 0 && iCorpValue > kLoopPlayer.AI_corporationValue((CorporationTypes)iCorp))
+									iExtra /= 2;
+
+								iCitiesHave += iExtra;
 							}
 						}
+
+						if (iCitiesHave + iExistingExecs >= iNumCities + (pArea && iPlayer==getID() ? 1 : 0))
+							continue;
+
+						iBestValue = iValue;
+						iBestPlayer = iPlayer;
 					}
 				}
 			}
-		}
-
-		if (iBestValue > iSpreadInternalValue)
-		{
-			if (NULL != peBestPlayer)
-			{
-				*peBestPlayer = (PlayerTypes)iBestPlayer;
-			}
-			return 10 * iBestValue; // K-Mod (see comment below)
 		}
 	}
 
@@ -11816,7 +11786,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	}
 	// I'm putting in a fudge-factor of 10 just to bring the value up to scale with AI_missionaryValue.
 	// This isn't something that i'm happy about, but it's easier than rewriting AI_missionaryValue.
-	return 10 * iSpreadInternalValue;
+	return 10 * iBestValue;
 }
 
 //Returns approximately 100 x gpt value of the corporation.

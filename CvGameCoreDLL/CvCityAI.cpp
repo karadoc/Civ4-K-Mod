@@ -390,13 +390,13 @@ void CvCityAI::AI_assignWorkingPlots()
 			break;
 		}
 	}
-	
+
 	// if automated, look for better choices than the current ones
 	if (!isHuman() || isCitizensAutomated())
 	{
 		AI_juggleCitizens();
 	}
-	
+
 	// at this point, we should not be over the limit
 	FAssert((getWorkingPopulation() + getSpecialistPopulation()) <= (totalFreeSpecialists() + getPopulation()));
 	FAssert(extraPopulation() == 0); // K-Mod.
@@ -9633,6 +9633,8 @@ void CvCityAI::AI_juggleCitizens()
 				}
 			}
 		}
+		// if values are equal - prefer to work the specialist job. (perhaps a different city can use the plot)
+
 		// don't let us reassign our free specialists onto plots
 		if (iWorkedSpecValue < iWorkedPlotValue && iUnworkedPlotValue > iUnworkedSpecValue &&
 			getSpecialistPopulation() <= iTotalFreeSpecialists)
@@ -9679,7 +9681,7 @@ void CvCityAI::AI_juggleCitizens()
 			}
 
 			// remove lowest value job
-			if (iWorkedPlotValue < iWorkedSpecValue)
+			if (iWorkedPlotValue <= iWorkedSpecValue)
 			{
 				FAssert(iWorkedPlot != -1);
 				setWorkingPlot(iWorkedPlot, false);
