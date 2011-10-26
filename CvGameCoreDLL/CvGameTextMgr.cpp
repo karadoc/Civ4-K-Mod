@@ -2032,6 +2032,7 @@ static float getCombatOddsSpecific(CvUnit* pAttacker, CvUnit* pDefender, int n_A
 	else
 	{
 		//Unexpected value.  Process should not reach here.
+		FAssertMsg(false, "unexpected value in getCombatOddsSpecific");
 	}
 
 	answer = answer / ((float)(AttFSC+DefFSC+1)); // dividing by (t+w+1) as is necessary
