@@ -5750,7 +5750,7 @@ void CvUnitAI::AI_spyMove()
 
 				if (GC.getGame().getSorenRandNum(6, "AI Spy Skip Turn") > 0)
 				{
-					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY, plot());
 					return;
 				}
 
@@ -5779,7 +5779,7 @@ void CvUnitAI::AI_spyMove()
 			{
 				bTargetCity = true;
 
-				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY, plot());
 				return;
 			}
 			
@@ -5812,7 +5812,7 @@ void CvUnitAI::AI_spyMove()
 				if (GC.getGame().getSorenRandNum(100, "AI Spy Skip Turn") > 5)
 				{
 					// don't wait forever
-					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY, plot());
 					return;
 				}
 			}
@@ -5876,7 +5876,8 @@ void CvUnitAI::AI_spyMove()
 		}
 	}
 	
-	if (plot()->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS && kOwner.isMaliciousEspionageTarget(plot()->getOwner()) && getGroup()->AI_getMissionAIType() == MISSIONAI_ATTACK_SPY)
+	if (getGroup()->AI_getMissionAIType() == MISSIONAI_ATTACK_SPY && plot()->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS
+		&& plot()->isOwned() && kOwner.isMaliciousEspionageTarget(plot()->getOwner()))
 	{
 		// assume this is the target of our destroy improvement mission.
 		if (getFortifyTurns() >= GC.getDefineINT("MAX_FORTIFY_TURNS"))
@@ -5889,7 +5890,7 @@ void CvUnitAI::AI_spyMove()
 
 		if (GC.getGame().getSorenRandNum(10, "AI Spy skip turn at improvement") > 0)
 		{
-			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY);
+			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY, plot());
 			return;
 		}
 	}
