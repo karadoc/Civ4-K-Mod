@@ -15710,7 +15710,8 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iMinStack, bool 
 						{
 							if (pLoopPlot->getNumVisibleEnemyDefenders(this) >= iMinStack)
 							{
-								if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
+								//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
+								if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true) && (bFollow ? true : generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))) // K-Mod
 								{
 	 
 									iValue = getGroup()->AI_attackOdds(pLoopPlot, true);

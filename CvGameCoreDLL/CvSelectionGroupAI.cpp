@@ -235,7 +235,7 @@ bool CvSelectionGroupAI::AI_update()
 		iTempHack++;
 		if (iTempHack > 100)
 		{
-			FAssert(false);
+			FAssertMsg(false, "unit stuck in a loop");
 			CvUnit* pHeadUnit = getHeadUnit();
 			if (NULL != pHeadUnit)
 			{

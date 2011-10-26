@@ -3606,9 +3606,9 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							}
 						}
 
-						/* origianl bts code
 						if (getNumUnits() > 1)
 						{
+							/* original bts code
 							if (pBestAttackUnit->plot()->isFighting() || pDestPlot->isFighting())
 							{
 								bFailedAlreadyFighting = true;
@@ -3616,19 +3616,22 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							else
 							{
 								pBestAttackUnit->attack(pDestPlot, bStack);
+							} */
+							// K-Mod
+							if (pBestAttackUnit->plot()->isFighting() || pDestPlot->isFighting())
+							{
+								bFailedAlreadyFighting = true;
 							}
-						} */
-						// K-Mod. bug fix
-						if (pBestAttackUnit->plot()->isFighting() || pDestPlot->isFighting())
-						{
-							bFailedAlreadyFighting = true;
+							if (!pBestAttackUnit->isAttacking())
+							{
+								// we need to issue the attack order to start the attack
+								pBestAttackUnit->attack(pDestPlot, bStack);
+							}
+							// K-Mod end
 						}
-						else if (getNumUnits() > 1)
-						{
-							pBestAttackUnit->attack(pDestPlot, bStack);
-						} // K-Mod end
 						else
 						{
+							// K-Mod note. We should do this even if the fight can't happen right away.
 							pBestAttackUnit->attack(pDestPlot, false);
 							break;
 						}
