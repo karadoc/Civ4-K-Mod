@@ -1325,21 +1325,22 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 
 	if (gDLL->altKey())
 	{
+		TeamTypes eWidgetTeam = GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(); // K-Mod
 		if( gDLL->shiftKey() )
 		{
 			// Warning: use of this is not multiplayer compatible
 // K-Mod, karadoc: since it isn't MP compatible, I'm going to disable it in multiplayer mode...
 			if (!GC.getGameINLINE().isGameMultiPlayer()) // K-Mod
 			{
-				if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()))
+				if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(eWidgetTeam))
 				{
-					if( GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_getWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()) == WARPLAN_PREPARING_TOTAL) 
+					if( GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_getWarPlan(eWidgetTeam) == WARPLAN_PREPARING_TOTAL) 
 					{
-						GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), NO_WARPLAN);
+						GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(eWidgetTeam, NO_WARPLAN);
 					}
 					else
 					{
-						GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), WARPLAN_PREPARING_TOTAL);
+						GET_TEAM(GC.getGameINLINE().getActiveTeam()).AI_setWarPlan(eWidgetTeam, WARPLAN_PREPARING_TOTAL);
 					}
 					gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 				}
@@ -1348,7 +1349,7 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 		}
 		else
 		{
-			if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()))
+			if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(eWidgetTeam))
 			{
 				/* original bts code
 				CvMessageControl::getInstance().sendChangeWar(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(), true); */
@@ -1356,14 +1357,14 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 				CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_DECLAREWARMOVE);
 				if (NULL != pInfo)
 				{
-					pInfo->setData1(widgetDataStruct.m_iData1);
+					pInfo->setData1(eWidgetTeam);
 					pInfo->setOption1(false); // shift key
 					pInfo->setFlags(1); // don't do the "move" part of the declare-war-move.
 					gDLL->getInterfaceIFace()->addPopup(pInfo);
 				}
 				// K-Mod end
 			}
-			else if (GET_TEAM(GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()).isVassal(GC.getGameINLINE().getActiveTeam()))
+			else if (GET_TEAM(eWidgetTeam).isVassal(GC.getGameINLINE().getActiveTeam()))
 			{
 				CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_VASSAL_DEMAND_TRIBUTE, widgetDataStruct.m_iData1);
 				if (pInfo)
