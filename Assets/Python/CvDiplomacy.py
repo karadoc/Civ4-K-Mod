@@ -57,6 +57,11 @@ class CvDiplomacy:
 		# The AI refuses to talk
 		elif (self.isComment(eComment, "AI_DIPLOCOMMENT_REFUSE_TO_TALK") ):
 	
+			# K-Mod: give the option to declare war!
+			if (gc.getTeam(gc.getGame().getActiveTeam()).canDeclareWar(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam())):
+				self.addUserComment("USER_DIPLOCOMMENT_WAR", -1, -1)
+			# K-Mod end
+
 			# Give the option to exit
 			self.addUserComment("USER_DIPLOCOMMENT_EXIT", -1, -1)
 			self.diploScreen.endTrade();
