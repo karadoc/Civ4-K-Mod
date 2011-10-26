@@ -557,7 +557,13 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			if (iProgress > 0)
 			{
 				int iThreshold = GET_PLAYER(getOwnerINLINE()).greatPeopleThreshold();
-				iTempValue += 100*(iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold);
+				//iTempValue += 100*(iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold);
+				// K-Mod. The original code overflows the int when iProgress is big.
+				int iCloseBonus = 100 * iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress / iThreshold;
+				iCloseBonus *= iProgress;
+				iCloseBonus /= iThreshold;
+				iTempValue += iCloseBonus;
+				// K-Mod end
 			}
 		}
 		
@@ -9576,7 +9582,7 @@ void CvCityAI::AI_juggleCitizens()
 		int iUnworkedPlotValue = 0; // highest value unworked plot
 		SpecialistTypes eUnworkedSpecialist = NO_SPECIALIST;
 		int iUnworkedSpecValue = 0; // highest value unworked specialist
-		int iUnworkedSpecForce = 0;
+		int iUnworkedSpecForce = INT_MIN; // (force value can be negative)
 
 		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{

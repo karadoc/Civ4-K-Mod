@@ -96,7 +96,7 @@ public:
 			addMessage(ePlayer, bForce, iLength, szString, pszSound, eType, NULL, NO_COLOR, -1, -1, false, false);
 		}
 	}
-	// K-Mod
+	// K-Mod end
 	virtual void addCombatMessage(PlayerTypes ePlayer, CvWString szString) = 0;
 	virtual void addQuestMessage(PlayerTypes ePlayer, CvWString szString, int iQuestId) = 0;
 	virtual void showMessage(CvTalkingHeadMessage& msg) = 0;
