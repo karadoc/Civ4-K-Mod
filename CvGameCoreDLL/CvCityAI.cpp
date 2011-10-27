@@ -2162,8 +2162,8 @@ void CvCityAI::AI_chooseProduction()
 	{
 		if (iExistingWorkers < iNeededWorkers)
 		{
-			if (AI_getWorkersHave() < AI_getWorkersNeeded()
-				|| GC.getGame().getSorenRandNum(100, "choose worker 6") > iBestBuildingValue + iBuildUnitProb)
+			if (3*AI_getWorkersHave()/2 < AI_getWorkersNeeded() // local
+				|| GC.getGame().getSorenRandNum(80, "choose worker 6") > iBestBuildingValue + (iBuildUnitProb + 50)/2)
 			{
 				if (!bChooseWorker && AI_chooseUnit(UNITAI_WORKER))
 				{
