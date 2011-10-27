@@ -3228,6 +3228,7 @@ void CvUnitAI::AI_attackCityMove()
 				}
 			}
 
+			/* original BBAI code
 			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 5, pTargetCity))
 			{
 				return;
@@ -3262,7 +3263,30 @@ void CvUnitAI::AI_attackCityMove()
 			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
 			{
 				return;
+			} */
+			// K-Mod. I reckon I can do the same thing, but in a simplier & faster way.
+			// Estimate the number of turns required.
+			int iPathTurns;
+			if (!generatePath(pTargetCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, true, &iPathTurns))
+			{
+				FAssertMsg(false, "failed to find path to target city.");
+				iPathTurns = 100;
 			}
+			// See if we can get there faster by boat..
+			if (iPathTurns > 5)// && !pTargetCity->isBarbarian())
+			{
+				int iLoadTurns = std::min(4, iPathTurns/2 - 1);
+				int iTransportTurns = iPathTurns - iLoadTurns - 2;
+
+				if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, iLoadTurns, iTransportTurns))
+					return;
+			}
+			// We have to walk.
+			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
+			{
+				return;
+			}
+			// K-Mod end
 
 			if (bAnyWarPlan)
 			{
