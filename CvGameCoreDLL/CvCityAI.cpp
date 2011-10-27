@@ -10914,7 +10914,6 @@ int CvCityAI::AI_cityValue() const
 	iValue -= 3 * calculateColonyMaintenanceTimes100(); */
 	// K-Mod. The original code fails for civs using high espionage or high culture.
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
-	iValue += getCommerceRateTimes100(COMMERCE_GOLD) * 100;
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH) * kOwner.AI_commerceWeight(COMMERCE_RESEARCH);
 	iValue += getCommerceRateTimes100(COMMERCE_ESPIONAGE) * kOwner.AI_commerceWeight(COMMERCE_ESPIONAGE);
 	iValue /= 100;
@@ -10923,14 +10922,17 @@ int CvCityAI::AI_cityValue() const
 	// but the problem is that CULTURE4 doesn't always run its full course. ... so I'm going to make a small ad hoc adjustment...
 	iValue += 100 * getYieldRate(YIELD_PRODUCTION);
 	iValue *= kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)? 2 : 1;
+	// Gold value is not weighted, and does not get the cultural victory boost, because gold is directly comparable to maintenance.
+	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
+
 	int iCosts = calculateColonyMaintenanceTimes100() + 2*getMaintenanceTimes100()/3;
 	int iTargetPop = std::max(5, AI_getTargetPopulation()); // target pop is not a good measure for small cities w/ unimproved tiles.
 	if (getPopulation() > 0 && getPopulation() < iTargetPop)
 	{
-		iValue *= iTargetPop;
-		iValue /= std::max(1, getPopulation());
-		iCosts *= getPopulation();
-		iCosts /= iTargetPop;
+		iValue *= iTargetPop + 3;
+		iValue /= getPopulation() + 3;
+		iCosts *= getPopulation() + 6;
+		iCosts /= iTargetPop + 6;
 	}
 	iValue -= iCosts;
 	// K-Mod end
