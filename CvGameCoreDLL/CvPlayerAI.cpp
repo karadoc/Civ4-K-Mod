@@ -2179,19 +2179,35 @@ bool CvPlayerAI::AI_acceptUnit(CvUnit* pUnit) const
 				return true;
 			}
 		}
-		
+
 		if (pUnit->AI_getUnitAIType() == UNITAI_WORKER_SEA)
 		{
 			return true;
 		}
-		
+
 		if (pUnit->AI_getUnitAIType() == UNITAI_MISSIONARY)
 		{
 			return true; //XXX
-		}		
+		}
+
+		// K-Mod
+		switch (pUnit->AI_getUnitAIType())
+		{
+		case UNITAI_PROPHET:
+		case UNITAI_ARTIST:
+		case UNITAI_SCIENTIST:
+		case UNITAI_GENERAL:
+		case UNITAI_MERCHANT:
+		case UNITAI_ENGINEER:
+		case UNITAI_GREAT_SPY:
+			return true;
+		default:
+			break;
+		}
+		// K-Mod end
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -17411,6 +17427,7 @@ bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
 								break;
 
 							case UNITAI_WORKER:
+								/* original bts code
 								if ((GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated()) > 10)
 								{
 									if (pLoopUnit->plot()->isCity())
@@ -17420,7 +17437,15 @@ bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
 											iValue *= 10;
 										}
 									}
+								} */
+								// K-Mod. The original code seems to be backwards...
+								if (GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated() <= 10 ||
+									!pLoopUnit->plot()->isCity() ||
+									pLoopUnit->plot()->getPlotCity()->AI_getWorkersNeeded() > 0)
+								{
+									iValue *= 10;
 								}
+								// K-Mod end
 								break;
 
 							case UNITAI_ATTACK:

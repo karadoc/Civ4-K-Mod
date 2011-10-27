@@ -1573,6 +1573,8 @@ void CvUnitAI::AI_workerMove()
 	bCanRoute = canBuildRoute();
 	bNextCity = false;
 
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
 	// XXX could be trouble...
 	if (plot()->getOwnerINLINE() != getOwnerINLINE())
 	{
@@ -1595,7 +1597,7 @@ void CvUnitAI::AI_workerMove()
 
     if (!(getGroup()->canDefend()))
 	{
-		if (GET_PLAYER(getOwnerINLINE()).AI_isPlotThreatened(plot(), 2))
+		if (kOwner.AI_isPlotThreatened(plot(), 2))
 		{
 			if (AI_retreatToCity()) // XXX maybe not do this??? could be working productively somewhere else...
 			{
@@ -1718,9 +1720,8 @@ void CvUnitAI::AI_workerMove()
 	if (GC.getGame().getSorenRandNum(5, "AI Worker build Fort with Priority"))
 	{
 		bool bCanal = ((100 * area()->getNumCities()) / std::max(1, GC.getGame().getNumCities()) < 85);
-		CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 		bool bAirbase = false;
-		bAirbase = (kPlayer.AI_totalUnitAIs(UNITAI_PARADROP) || kPlayer.AI_totalUnitAIs(UNITAI_ATTACK_AIR) || kPlayer.AI_totalUnitAIs(UNITAI_MISSILE_AIR));
+		bAirbase = (kOwner.AI_totalUnitAIs(UNITAI_PARADROP) || kOwner.AI_totalUnitAIs(UNITAI_ATTACK_AIR) || kOwner.AI_totalUnitAIs(UNITAI_MISSILE_AIR));
 		
 		if (bCanal || bAirbase)
 		{
@@ -1814,9 +1815,8 @@ void CvUnitAI::AI_workerMove()
 	if (!bBuildFort)
 	{
 		bool bCanal = ((100 * area()->getNumCities()) / std::max(1, GC.getGame().getNumCities()) < 85);
-		CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 		bool bAirbase = false;
-		bAirbase = (kPlayer.AI_totalUnitAIs(UNITAI_PARADROP) || kPlayer.AI_totalUnitAIs(UNITAI_ATTACK_AIR) || kPlayer.AI_totalUnitAIs(UNITAI_MISSILE_AIR));
+		bAirbase = (kOwner.AI_totalUnitAIs(UNITAI_PARADROP) || kOwner.AI_totalUnitAIs(UNITAI_ATTACK_AIR) || kOwner.AI_totalUnitAIs(UNITAI_MISSILE_AIR));
 		
 		if (bCanal || bAirbase)
 		{
@@ -1881,11 +1881,18 @@ void CvUnitAI::AI_workerMove()
 
 	if (!(isHuman()) && (AI_getUnitAIType() == UNITAI_WORKER))
 	{			
-		if (GC.getGameINLINE().getElapsedGameTurns() > 10)
+		/*if (GC.getGameINLINE().getElapsedGameTurns() > 10)
 		{
-			if (GET_PLAYER(getOwnerINLINE()).AI_totalUnitAIs(UNITAI_WORKER) > GET_PLAYER(getOwnerINLINE()).getNumCities())
+			if (GET_PLAYER(getOwnerINLINE()).AI_totalUnitAIs(UNITAI_WORKER) > GET_PLAYER(getOwnerINLINE()).getNumCities()) */
+
+		// K-Mod
+		if (GC.getGameINLINE().getElapsedGameTurns() > GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent()/6)
+		{
+			if (kOwner.AI_totalUnitAIs(UNITAI_WORKER) > kOwner.getNumCities() &&
+				area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) > kOwner.AI_neededWorkers(area()))
+		// K-Mod end
 			{
-				if (GET_PLAYER(getOwnerINLINE()).calculateUnitCost() > 0)
+				if (kOwner.calculateUnitCost() > 0)
 				{
 					scrap();
 					return;
