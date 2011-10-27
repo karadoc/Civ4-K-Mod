@@ -548,7 +548,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 			if (iJ != getID() && kLoopTeam.isAlive() && AI_getWarPlan((TeamTypes)iJ) != NO_WARPLAN)
 			{
 				int iPower = 100 * kLoopTeam.countPowerByArea(pArea);
-				int iCommitment = 10 + kLoopTeam.AI_countMilitaryWeight(pArea) * ((isAtWar((TeamTypes)iJ) ? 1 : 3) + kLoopTeam.getAtWarCount(true, true)) / 2;
+				int iCommitment = 10 + kLoopTeam.AI_countMilitaryWeight(pArea) * ((isAtWar((TeamTypes)iJ) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true)) / 2;
 				iPower /= iCommitment;
 				iEnemyRelativeStrength += iPower;
 				if (kLoopTeam.countNumCitiesByArea(pArea) > 0)

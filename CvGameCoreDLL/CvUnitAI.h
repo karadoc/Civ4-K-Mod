@@ -183,7 +183,7 @@ protected:
 /************************************************************************************************/
 	CvCity* AI_pickTargetCity(int iFlags = 0, int iMaxPathTurns = MAX_INT, bool bHuntBarbs = false);
 	bool AI_goToTargetCity(int iFlags = 0, int iMaxPathTurns = MAX_INT, CvCity* pTargetCity = NULL);
-	bool AI_goToTargetBarbCity(int iMaxPathTurns = 10);
+	//bool AI_goToTargetBarbCity(int iMaxPathTurns = 10); // disabled by K-Mod. (duplicate code ftl)
 	bool AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshold = 0, int iMaxPathTurns = MAX_INT);
 	bool AI_bombardCity();
 	bool AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow = false);

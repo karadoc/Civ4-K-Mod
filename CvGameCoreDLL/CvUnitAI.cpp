@@ -2143,8 +2143,8 @@ void CvUnitAI::AI_attackMove()
 
 					// Since ATTACK can try to joing ATTACK_CITY again, need these units to
 					// take a break to let ATTACK_CITY group move and avoid hang
-					getGroup()->pushMission(MISSION_SKIP);
-					return;
+					/* getGroup()->pushMission(MISSION_SKIP);
+					return; */ // K-Mod disabled. I think it'll be fine.
 				}
 			}
 		}
@@ -2464,6 +2464,7 @@ void CvUnitAI::AI_attackMove()
 				}
 			}
 		}
+		/* BBAI code
 		else if( area()->getAreaAIType(getTeam()) != AREAAI_DEFENSIVE )
 		{
 			if (area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > 0)
@@ -2476,7 +2477,7 @@ void CvUnitAI::AI_attackMove()
 					}
 				}
 			}
-		}
+		} */ // disabled by K-Mod. attack groups are currently limited to 2 units anyway. This test will never pass.
 
 		if (AI_guardCity(false, true, 3))
 		{
@@ -2861,8 +2862,7 @@ void CvUnitAI::AI_attackCityMove()
 	}
 	else
 	{
-		// BBAI TODO: Find some way of reliably targetting nearby cities with less defense ...
-		pTargetCity = AI_pickTargetCity(0, MAX_INT, bHuntBarbs);
+		pTargetCity = AI_pickTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, bHuntBarbs);
 	}
 
 	if( pTargetCity != NULL )
@@ -3191,16 +3191,19 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 		}
+		/* BBAI code
 		else if (bHuntBarbs && AI_goToTargetBarbCity((bAnyWarPlan ? 7 : 12)))
 		{
 			return;
 		}
-		else if (bLandWar && pTargetCity != NULL)
+		else if (bLandWar && pTargetCity != NULL) */
+		else if (pTargetCity) // K-Mod. Just go to the target city. Barb or not.
 		{
 			// Before heading out, check whether to wait to allow unit upgrades
 			if( bInCity && plot()->getOwnerINLINE() == getOwnerINLINE() )
 			{
-				if( !(GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble()) )
+				//if( !(GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble()) )
+				if (!GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble() && !pTargetCity->isBarbarian())
 				{
 					// Check if stack has units which can upgrade
 					int iNeedUpgradeCount = 0;
@@ -15321,6 +15324,7 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 }
 
 // Returns true if a mission was pushed...
+/* K-Mod. I've disabled this function, because it's basically just duplicating the normal "goToTargetCity" code.
 bool CvUnitAI::AI_goToTargetBarbCity(int iMaxPathTurns)
 {
 	PROFILE_FUNC();
@@ -15436,7 +15440,7 @@ bool CvUnitAI::AI_goToTargetBarbCity(int iMaxPathTurns)
 	}
 
 	return false;
-}
+}*/
 
 bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshold, int iMaxPathTurns )
 {
