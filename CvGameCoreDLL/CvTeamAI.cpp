@@ -548,7 +548,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 			if (iJ != getID() && kLoopTeam.isAlive() && AI_getWarPlan((TeamTypes)iJ) != NO_WARPLAN)
 			{
 				int iPower = 100 * kLoopTeam.countPowerByArea(pArea);
-				int iCommitment = 10 + kLoopTeam.AI_countMilitaryWeight(pArea) * (1 + kLoopTeam.getAtWarCount(true, true)) / 2;
+				int iCommitment = 10 + kLoopTeam.AI_countMilitaryWeight(pArea) * ((isAtWar((TeamTypes)iJ) ? 1 : 3) + kLoopTeam.getAtWarCount(true, true)) / 2;
 				iPower /= iCommitment;
 				iEnemyRelativeStrength += iPower;
 				if (kLoopTeam.countNumCitiesByArea(pArea) > 0)
@@ -4640,17 +4640,26 @@ void CvTeamAI::AI_doWar()
 
 									AreaAITypes eAreaAI = AI_calculateAreaAIType(pLoopArea, true);
 
-									/* original bts code
+									/* BBAI code
 									if ( eAreaAI == AREAAI_DEFENSIVE)
 									{
 										bAreaValid = false;
 									}
-									else */ // disabled by K-Mod. Doing it that way means the order the areas are checked is somehow important...
-									if( eAreaAI == AREAAI_OFFENSIVE )
+									else if( eAreaAI == AREAAI_OFFENSIVE )
 									{
 										bAreaValid = true;
-										break; // K-Mod: we now have all we need to know.
+									} */
+									// K-Mod. Doing it that way means the order the areas are checked is somehow important...
+									if (eAreaAI == AREAAI_OFFENSIVE)
+									{
+										bAreaValid = true; // require at least one offense area
 									}
+									else if (eAreaAI == AREAAI_DEFENSIVE)
+									{
+										bAreaValid = false;
+										break; // false if there are _any_ defence areas
+									}
+									// K-Mod end
 								}
 							}
 						}

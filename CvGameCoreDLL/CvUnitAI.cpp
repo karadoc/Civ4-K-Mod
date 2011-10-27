@@ -23241,17 +23241,11 @@ bool CvUnitAI::AI_moveToStagingCity()
 {
 	PROFILE_FUNC();
 
-	CvCity* pLoopCity;
-	CvPlot* pBestPlot;
+	CvPlot* pStagingPlot = NULL;
+	CvPlot* pEndTurnPlot = NULL;
 
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iLoop;
+	int iBestValue = 0;
 
-	iBestValue = 0;
-	pBestPlot = NULL;
-	
 	int iWarCount = 0;
 	TeamTypes eTargetTeam = NO_TEAM;
 	CvTeam& kTeam = GET_TEAM(getTeam());
@@ -23271,21 +23265,15 @@ bool CvUnitAI::AI_moveToStagingCity()
 	{
 		eTargetTeam = NO_TEAM;
 	}
-	
 
-	for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
+	int iLoop;
+	for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/22/10                                jdog5000      */
-/*                                                                                              */
-/* War tactics AI, Efficiency                                                                   */
-/************************************************************************************************/
-		// BBAI efficiency: check same area
 		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()))
 		{
 			// BBAI TODO: Need some knowledge of whether this is a good city to attack from ... only get that
 			// indirectly from threat.
-			iValue = pLoopCity->AI_cityThreat();
+			int iValue = pLoopCity->AI_cityThreat();
 
 			// Have attack stacks in assault areas move to coastal cities for faster loading
 			if( (area()->getAreaAIType(getTeam()) == AREAAI_ASSAULT) || (area()->getAreaAIType(getTeam()) == AREAAI_ASSAULT_MASSING) )
@@ -23317,10 +23305,8 @@ bool CvUnitAI::AI_moveToStagingCity()
 
 			if (iValue*200 > iBestValue)
 			{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-				if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+				int iPathTurns;
+				if (generatePath(pLoopCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
 				{
 					iValue *= 1000;
 					iValue /= (5 + iPathTurns);
@@ -23332,23 +23318,25 @@ bool CvUnitAI::AI_moveToStagingCity()
 					if (iValue > iBestValue)
 					{
 						iBestValue = iValue;
-						pBestPlot = getPathEndTurnPlot();
+						pStagingPlot = pLoopCity->plot();
+						pEndTurnPlot = getPathEndTurnPlot();
 					}
 				}
 			}
 		}
 	}
 
-	if (pBestPlot != NULL)
+	if (pStagingPlot != NULL)
 	{
-		if (atPlot(pBestPlot))
+		if (atPlot(pStagingPlot))
 		{
 			getGroup()->pushMission(MISSION_SKIP);
 			return true;
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+			//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+			getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), MOVE_AVOID_ENEMY_WEIGHT_3, false, false, MISSIONAI_GROUP, pStagingPlot); // K-Mod
 			return true;
 		}
 	}
