@@ -209,7 +209,7 @@ public:
 	int AI_unitCostPerMil() const; // K-Mod
 	
 	int AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, PlayerTypes* peBestPlayer = NULL) const;
-	int AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer = NULL) const;
+	int AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer = NULL, bool bSpreadOnly = false) const;
 	
 	int AI_corporationValue(CorporationTypes eCorporation, const CvCity* pCity = NULL) const;
 	

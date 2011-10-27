@@ -266,7 +266,8 @@ bool CvSelectionGroupAI::AI_update()
 		{
 			CvUnit* pHeadUnit = getHeadUnit();
 
-			if (pHeadUnit == NULL || pHeadUnit->isDelayedDeath())
+			//if (pHeadUnit == NULL || pHeadUnit->isDelayedDeath())
+			if (pHeadUnit == NULL || pHeadUnit->doDelayedDeath()) // K-Mod
 			{
 				break;
 			}
@@ -276,6 +277,7 @@ bool CvSelectionGroupAI::AI_update()
 			if (pHeadUnit->AI_update())
 			{
 				// AI_update returns true when we should abort the loop and wait until next slice
+				FAssert(!pHeadUnit->isDelayedDeath());
 				break;
 			}
 		}

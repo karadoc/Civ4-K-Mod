@@ -11685,14 +11685,20 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 // -- which is bad news since the results are compared directly.
 // I've rewritten most of this function so that it is more sane and more compariable to the missionary value.
 // The original code is deleted.
-int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer) const
+int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer, bool bSpreadOnly) const
 {
 	PROFILE_FUNC();
 	CvGame& kGame = GC.getGame();
 	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
 
 	int iSpreadExternalValue = 0;
-	int iExistingExecs = pArea ? countCorporationSpreadUnits(pArea, eCorporation, true) : 0;
+	int iExistingExecs = 0;
+	if (pArea)
+	{
+		iExistingExecs += bSpreadOnly ? 0 : countCorporationSpreadUnits(pArea, eCorporation, true) - 1;
+		// K-Mod note, -1 just so that we can build a spare, perhaps to airlift to another area. ("-1" execs is ok.)
+		// bSpreadOnly means that we are not calculating the value of building a new exec. Just the value of spreading.
+	}
 
 	if (GET_TEAM(getTeam()).hasHeadquarters(eCorporation))
 	{
@@ -11728,13 +11734,18 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 						iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - 75;
 
 					// a rough check to save us some time.
-					if (iAttitudeWeight < 0 && iSpreadExternalValue <= 0)
+					if (iAttitudeWeight <= 0 && iSpreadExternalValue <= 0)
+						continue;
+
+					int iCitiesHave = kLoopPlayer.countCorporations(eCorporation, pArea);
+
+					if (iCitiesHave + iExistingExecs >= iNumCities)
 						continue;
 
 					int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
 					int iValue = iSpreadExternalValue;
 					iValue += iCorpValue * iAttitudeWeight;
-					if (iValue > 0 && iCorpValue > 0 && kLoopPlayer.countCorporations(eCorporation) == 0)
+					if (iValue > 0 && iCorpValue > 0 && iCitiesHave == 0)
 					{
 						// if the player will spread the corp themselves, then that's good for us.
 						if (iAttitudeWeight >= 50)
@@ -11750,12 +11761,6 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 					}
 					if (iValue > iBestValue)
 					{
-						int iCitiesHave = kLoopPlayer.countCorporations(eCorporation, pArea);
-
-						if (iCitiesHave + iExistingExecs >= iNumCities + (pArea && iPlayer==getID() ? 1 : 0))
-							continue;
-						// K-Mod note, +1 just so that we can build a spare, perhaps to airlift to another area.
-
 						for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
 						{
 							if (kGame.isCorporationFounded((CorporationTypes)iCorp) && kGame.isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
@@ -11769,7 +11774,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 							}
 						}
 
-						if (iCitiesHave + iExistingExecs >= iNumCities + (pArea && iPlayer==getID() ? 1 : 0))
+						if (iCitiesHave + iExistingExecs >= iNumCities)
 							continue;
 
 						iBestValue = iValue;
@@ -11782,7 +11787,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 
 	if (NULL != peBestPlayer)
 	{
-		*peBestPlayer = getID();
+		*peBestPlayer = (PlayerTypes)iBestPlayer;
 	}
 	// I'm putting in a fudge-factor of 10 just to bring the value up to scale with AI_missionaryValue.
 	// This isn't something that i'm happy about, but it's easier than rewriting AI_missionaryValue.

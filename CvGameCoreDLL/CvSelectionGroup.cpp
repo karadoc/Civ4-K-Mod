@@ -392,7 +392,9 @@ void CvSelectionGroup::updateTimers()
 				}
 
 				bCombat = true;
-				break;
+				//break; // disabled by K-Mod.
+				// (I've changed groupAttack to fix a problem, and now multiple units in a single group can be queued for combat.)
+				// so this break can cause an infinite loop, as the currently fighting unit might not get updated.
 			}
 		}
 

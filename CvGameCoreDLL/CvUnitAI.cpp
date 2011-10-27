@@ -434,6 +434,7 @@ bool CvUnitAI::AI_update()
 // so for efficiency, we should only check them once.
 bool CvUnitAI::AI_follow(bool bFirst)
 {
+	FAssert(getDomainType() != DOMAIN_AIR);
 	if (AI_followBombard())
 	{
 		return true;
@@ -12899,7 +12900,7 @@ bool CvUnitAI::AI_spreadCorporation()
 
 		if (isHuman())
 			eTargetPlayer = plot()->isOwned() ? plot()->getOwnerINLINE() : getOwnerINLINE();
-		else if (kOwner.AI_executiveValue(area(), eCorporation, &eTargetPlayer) <= 0)
+		else if (kOwner.AI_executiveValue(area(), eCorporation, &eTargetPlayer, true) <= 0)
 			return false; // corp is not worth spreading in this region.
 
 		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
