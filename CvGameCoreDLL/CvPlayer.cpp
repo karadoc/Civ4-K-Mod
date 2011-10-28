@@ -4454,6 +4454,12 @@ bool CvPlayer::canContact(PlayerTypes ePlayer) const
 	return true;
 }
 
+// K-Mod
+bool CvPlayer::canContactAndTalk(PlayerTypes ePlayer) const
+{
+	return canContact(ePlayer) && AI_isWillingToTalk(ePlayer) && GET_PLAYER(ePlayer).AI_isWillingToTalk(getID());
+}
+// K-Mod end
 
 void CvPlayer::contact(PlayerTypes ePlayer)
 {

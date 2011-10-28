@@ -1870,8 +1870,10 @@ void CvTeam::makePeace(TeamTypes eTeam, bool bBumpUnits)
 	}
 }
 
-
-bool CvTeam::canContact(TeamTypes eTeam) const
+// K-Mod. I've added bCheckWillingness.
+// note. I would have done this the same way in CvPlayer::canContact
+// but unfortunately, changing the signiture of that function causes the game to crash - because it's a dll export.
+bool CvTeam::canContact(TeamTypes eTeam, bool bCheckWillingness) const
 {
 	int iI, iJ;
 
@@ -1887,7 +1889,10 @@ bool CvTeam::canContact(TeamTypes eTeam) const
 					{
 						if (GET_PLAYER((PlayerTypes)iJ).getTeam() == eTeam)
 						{
-							if (GET_PLAYER((PlayerTypes)iI).canContact((PlayerTypes)iJ))
+							//if (GET_PLAYER((PlayerTypes)iI).canContact((PlayerTypes)iJ))
+							if (bCheckWillingness
+								? GET_PLAYER((PlayerTypes)iI).canContactAndTalk((PlayerTypes)iJ)
+								: GET_PLAYER((PlayerTypes)iI).canContact((PlayerTypes)iJ))
 							{
 								return true;
 							}

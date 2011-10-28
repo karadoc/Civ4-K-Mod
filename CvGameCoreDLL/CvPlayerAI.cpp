@@ -792,7 +792,7 @@ void CvPlayerAI::AI_doPeace()
 		{
 			if (iI != getID())
 			{
-				if (canContact((PlayerTypes)iI) && AI_isWillingToTalk((PlayerTypes)iI))
+				if (canContactAndTalk((PlayerTypes)iI))
 				{
 					if (!(GET_TEAM(getTeam()).isHuman()) && (GET_PLAYER((PlayerTypes)iI).isHuman() || !(GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isHuman())))
 					{
@@ -1001,7 +1001,7 @@ void CvPlayerAI::AI_doPeace()
 													}
 
 													//if ((GET_PLAYER((PlayerTypes)iI).isHuman()) ? (iOurValue >= iTheirValue) : ((iOurValue > ((iTheirValue * 3) / 5)) && (iTheirValue > ((iOurValue * 3) / 5))))
-													if ((GET_PLAYER((PlayerTypes)iI).isHuman()) ? (iOurValue >= 4*iTheirValue/5) : ((iOurValue > ((iTheirValue * 3) / 5)) && (iTheirValue > ((iOurValue * 3) / 5))))
+													if ((GET_PLAYER((PlayerTypes)iI).isHuman() ? iOurValue >= 4*iTheirValue/5 : iOurValue > iTheirValue*3/5) && iTheirValue > iOurValue*3/5) // K-Mod
 													{
 														ourList.clear();
 														theirList.clear();
@@ -6805,7 +6805,7 @@ DiploCommentTypes CvPlayerAI::AI_getGreeting(PlayerTypes ePlayer) const
 	return (DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_GREETINGS");
 }
 
-
+// return true if we are willing to talk to ePlayer
 bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 {
 	FAssertMsg(getPersonalityType() != NO_LEADER, "getPersonalityType() is not expected to be equal with NO_LEADER");
@@ -6826,12 +6826,16 @@ bool CvPlayerAI::AI_isWillingToTalk(PlayerTypes ePlayer) const
 	{
 		return false;
 	} */ // disabled by K-Mod
+	// K-Mod
+	if (isHuman())
+		return true; // humans will speak to anyone, apparently.
+	// K-Mod end
 
 	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 	{
 		// K-Mod
-		if (kOurTeam.isHuman() && !isHuman())
-			return false;
+		if (kOurTeam.isHuman()) // ie. we are an AI player, but our team is human
+			return false; // let the human speak for us.
 
 		if (kOurTeam.AI_refusePeace(GET_PLAYER(ePlayer).getTeam()))
 		{
@@ -14999,66 +15003,71 @@ void CvPlayerAI::AI_doDiplo()
 
 										if (bCancelDeal)
 										{
-											if (canContact((PlayerTypes)iI) && AI_isWillingToTalk((PlayerTypes)iI))
+											if (GET_PLAYER((PlayerTypes)iI).isHuman() && canContactAndTalk((PlayerTypes)iI))
 											{
-												if (GET_PLAYER((PlayerTypes)iI).isHuman())
+												ourList.clear();
+												theirList.clear();
+												bool bVassalDeal = pLoopDeal->isVassalDeal(); // K-Mod
+
+												for (pNode = pLoopDeal->headFirstTradesNode(); (pNode != NULL); pNode = pLoopDeal->nextFirstTradesNode(pNode))
 												{
-													ourList.clear();
-													theirList.clear();
-
-													for (pNode = pLoopDeal->headFirstTradesNode(); (pNode != NULL); pNode = pLoopDeal->nextFirstTradesNode(pNode))
+													if (pLoopDeal->getFirstPlayer() == getID())
 													{
-														if (pLoopDeal->getFirstPlayer() == getID())
-														{
-															ourList.insertAtEnd(pNode->m_data);
-														}
-														else
-														{
-															theirList.insertAtEnd(pNode->m_data);
-														}
-													}
-
-													for (pNode = pLoopDeal->headSecondTradesNode(); (pNode != NULL); pNode = pLoopDeal->nextSecondTradesNode(pNode))
-													{
-														if (pLoopDeal->getSecondPlayer() == getID())
-														{
-															ourList.insertAtEnd(pNode->m_data);
-														}
-														else
-														{
-															theirList.insertAtEnd(pNode->m_data);
-														}
-													}
-
-													pDiplo = new CvDiploParameters(getID());
-													FAssertMsg(pDiplo != NULL, "pDiplo must be valid");
-
-													if (pLoopDeal->isVassalDeal())
-													{
-														pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_NO_VASSAL"));
-														pDiplo->setAIContact(true);
-														gDLL->beginDiplomacy(pDiplo, ((PlayerTypes)iI));
+														ourList.insertAtEnd(pNode->m_data);
 													}
 													else
 													{
-														pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_CANCEL_DEAL"));
-														pDiplo->setAIContact(true);
-														pDiplo->setOurOfferList(theirList);
-														pDiplo->setTheirOfferList(ourList);
-														gDLL->beginDiplomacy(pDiplo, (PlayerTypes)iI);
+														theirList.insertAtEnd(pNode->m_data);
 													}
-													abContacted[GET_PLAYER((PlayerTypes)iI).getTeam()] = true;
 												}
-											}
 
-											pLoopDeal->kill(); // XXX test this for AI...
+												for (pNode = pLoopDeal->headSecondTradesNode(); (pNode != NULL); pNode = pLoopDeal->nextSecondTradesNode(pNode))
+												{
+													if (pLoopDeal->getSecondPlayer() == getID())
+													{
+														ourList.insertAtEnd(pNode->m_data);
+													}
+													else
+													{
+														theirList.insertAtEnd(pNode->m_data);
+													}
+												}
+												pLoopDeal->kill(); // K-Mod. Kill the old deal first.
+
+												pDiplo = new CvDiploParameters(getID());
+												FAssertMsg(pDiplo != NULL, "pDiplo must be valid");
+
+												//if (pLoopDeal->isVassalDeal())
+												if (bVassalDeal)
+												{
+													pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_NO_VASSAL"));
+													pDiplo->setAIContact(true);
+													gDLL->beginDiplomacy(pDiplo, ((PlayerTypes)iI));
+												}
+												else
+												{
+													pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_CANCEL_DEAL"));
+													pDiplo->setAIContact(true);
+													pDiplo->setOurOfferList(theirList);
+													pDiplo->setTheirOfferList(ourList);
+													gDLL->beginDiplomacy(pDiplo, (PlayerTypes)iI);
+												}
+												abContacted[GET_PLAYER((PlayerTypes)iI).getTeam()] = true;
+											}
+											// K-Mod.
+											else
+												pLoopDeal->kill();
+											// K-Mod end
+
+											//pLoopDeal->kill(); // XXX test this for AI...
+											// K-Mod. I've rearranged stuff so that we can kill the deal before a diplomacy window.
 										}
 									}
 								}
 							}
 						}
 
-						if (canContact((PlayerTypes)iI) && AI_isWillingToTalk((PlayerTypes)iI))
+						if (canContactAndTalk((PlayerTypes)iI))
 						{
 							if (GET_PLAYER((PlayerTypes)iI).getTeam() == getTeam() || GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isVassal(getTeam()))
 							{

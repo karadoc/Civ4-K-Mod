@@ -1475,6 +1475,7 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_HEAL,
 	MISSIONAI_RETREAT,
 	MISSIONAI_PATROL,
+	MISSIONAI_GOLDEN_AGE, // ie. waiting for more golden age units.
 	? MISSIONAI_LAND_ASSAULT,
 	? MISSIONAI_SEA_ASSAULT,
 	*/

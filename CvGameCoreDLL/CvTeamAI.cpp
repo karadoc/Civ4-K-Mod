@@ -4764,7 +4764,7 @@ void CvTeamAI::AI_doWar()
 					{
 						if (!(GET_TEAM((TeamTypes)iI).isHuman()))
 						{
-							if (canContact((TeamTypes)iI))
+							if (canContact((TeamTypes)iI, true))
 							{
 								FAssert(!(GET_TEAM((TeamTypes)iI).isMinorCiv()));
 
