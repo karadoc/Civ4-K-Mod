@@ -588,7 +588,7 @@ void CvUnit::kill(bool bDelay, PlayerTypes ePlayer)
 
 			if (IsSelected())
 			{
-				gDLL->getInterfaceIFace()->setCycleSelectionCounter(1);
+				GC.getGameINLINE().cycleSelectionGroups_delayed(1, false);
 			}
 			else
 			{
@@ -2257,7 +2257,7 @@ void CvUnit::doCommand(CommandTypes eCommand, int iData1, int iData2)
 	{
 		if (IsSelected())
 		{
-			gDLL->getInterfaceIFace()->setCycleSelectionCounter(1);
+			GC.getGameINLINE().cycleSelectionGroups_delayed(1, false);
 		}
 	}
 

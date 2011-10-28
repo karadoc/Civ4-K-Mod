@@ -621,7 +621,7 @@ void CvSelectionGroup::updateMission()
 				{
 					if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
 					{
-						gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+						GC.getGameINLINE().cycleSelectionGroups_delayed(1, true);
 					}
 				}
 			}
@@ -1050,7 +1050,7 @@ void CvSelectionGroup::startMission()
 			{
 				if (IsSelected())
 				{
-					gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+					GC.getGameINLINE().cycleSelectionGroups_delayed(1, true);
 				}
 			}
 
@@ -1520,7 +1520,7 @@ void CvSelectionGroup::startMission()
 				{
 					if (IsSelected())
 					{
-						gDLL->getInterfaceIFace()->changeCycleSelectionCounter((GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES)) ? 1 : 2);
+						GC.getGameINLINE().cycleSelectionGroups_delayed(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES) ? 1 : 2, true);
 					}
 				}
 
@@ -1957,7 +1957,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 							(headMissionQueueNode()->m_data.eMissionType == MISSION_ROUTE_TO) ||
 							(headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO_UNIT))
 						{
-							gDLL->getInterfaceIFace()->changeCycleSelectionCounter((GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES)) ? 1 : 2);
+							GC.getGameINLINE().cycleSelectionGroups_delayed(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES) ? 1 : 2, true, true); // K-Mod
 						}
 					}
 				}
@@ -1998,7 +1998,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 				{
 					if (IsSelected())
 					{
-						gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+						GC.getGameINLINE().cycleSelectionGroups_delayed(1, true);
 					}
 				}
 			}
@@ -5271,7 +5271,7 @@ void CvSelectionGroup::deactivateHeadMission()
 		{
 			if (IsSelected())
 			{
-				gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+				GC.getGameINLINE().cycleSelectionGroups_delayed(1, true, canAllMove());
 			}
 		}
 	}

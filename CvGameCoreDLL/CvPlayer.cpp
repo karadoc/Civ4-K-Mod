@@ -11141,7 +11141,7 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 			{
 				if (gDLL->getInterfaceIFace()->getLengthSelectionList() == 0)
 				{
-					gDLL->getInterfaceIFace()->setCycleSelectionCounter(1);
+					GC.getGameINLINE().cycleSelectionGroups_delayed(1, false);
 				}
 
 				gDLL->getInterfaceIFace()->setDirty(SelectionCamera_DIRTY_BIT, true);
@@ -11270,7 +11270,7 @@ void CvPlayer::setAutoMoves(bool bNewValue)
 			{
 				if (getID() == GC.getGameINLINE().getActivePlayer())
 				{
-					gDLL->getInterfaceIFace()->setCycleSelectionCounter(1);
+					GC.getGameINLINE().cycleSelectionGroups_delayed(1, false, true);
 				}
 			}
 		}

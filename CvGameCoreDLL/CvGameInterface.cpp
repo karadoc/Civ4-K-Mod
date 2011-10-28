@@ -10,6 +10,7 @@
 #include "FAStarNode.h"
 #include "CvGameTextMgr.h"
 #include "CvMessageControl.h"
+#include "CvBugOptions.h"
 
 void CvGame::updateColoredPlots()
 {
@@ -735,6 +736,7 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 	if (pNextSelectionGroup != NULL)
 	{
 		FAssert(pNextSelectionGroup->getOwnerINLINE() == getActivePlayer());
+		FAssert(pNextSelectionGroup->getHeadUnit() != NULL); // K-Mod
 		gDLL->getInterfaceIFace()->selectUnit(pNextSelectionGroup->getHeadUnit(), bClear);
 	}
 
@@ -744,6 +746,30 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 	}
 }
 
+// K-Mod
+void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bDelayOnly) const
+{
+	PROFILE_FUNC(); // I'm just hoping that the python call doesn't hurt the respose times
+	bool bFastCycle = getBugOptionBOOL("MainInterface__RapidUnitCycling", false, "RAPID_UNIT_CYCLING");
+	if (bFastCycle)
+	{
+		if (!bDelayOnly)
+		{
+			cycleSelectionGroups(true);
+			CvUnit* pUnit = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
+			if (pUnit && !pUnit->getGroup()->readyToMove())
+				gDLL->getInterfaceIFace()->clearSelectionList();
+		}
+	}
+	else
+	{
+		if (bIncremental)
+			gDLL->getInterfaceIFace()->changeCycleSelectionCounter(iDelay);
+		else
+			gDLL->getInterfaceIFace()->setCycleSelectionCounter(iDelay);
+	}
+}
+// K-Mod end
 
 // Returns true if unit was cycled...
 bool CvGame::cyclePlotUnits(CvPlot* pPlot, bool bForward, bool bAuto, int iCount) const

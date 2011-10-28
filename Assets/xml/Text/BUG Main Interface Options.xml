@@ -265,4 +265,20 @@
 		<Italian>Small|Medium|Large</Italian>
 		<Spanish>Small|Medium|Large</Spanish>
 	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__RAPIDUNITCYCLING_TEXT</Tag>
+		<English>Rapid Unit Cycling</English>
+		<French>Rapid Unit Cycling</French>
+		<German>Rapid Unit Cycling</German>
+		<Italian>Rapid Unit Cycling</Italian>
+		<Spanish>Rapid Unit Cycling</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__RAPIDUNITCYCLING_HOVER</Tag>
+		<English>When checked, automatic unit selection happens instantly rather than with a delay.</English>
+		<French>When checked, automatic unit selection happens instantly rather than with a delay.</French>
+		<German>When checked, automatic unit selection happens instantly rather than with a delay.</German>
+		<Italian>When checked, automatic unit selection happens instantly rather than with a delay.</Italian>
+		<Spanish>When checked, automatic unit selection happens instantly rather than with a delay.</Spanish>
+	</TEXT>
 </Civ4GameText>

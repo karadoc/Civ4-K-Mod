@@ -372,7 +372,7 @@ void CvGame::regenerateMap()
 	gDLL->getEngineIFace()->SetDirty(MinimapTexture_DIRTY_BIT, true);
 	gDLL->getInterfaceIFace()->setDirty(ColoredPlots_DIRTY_BIT, true);
 
-	gDLL->getInterfaceIFace()->setCycleSelectionCounter(1);
+	cycleSelectionGroups_delayed(1, false);
 
 	gDLL->getEngineIFace()->AutoSave(true);
 

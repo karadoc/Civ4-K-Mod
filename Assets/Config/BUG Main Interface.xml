@@ -94,6 +94,10 @@
 				<choice id="Medium" get="isBuildIconSizeMedium"/>
 				<choice id="Large" get="isBuildIconSizeLarge"/>
 			</list>
+			
+			<!-- Rapid unit cycling, by karadoc -->
+			<option id="RapidUnitCycling" key="Rapid Unit Cycling"
+					type="boolean" default="False"/>
 		</section>
 	</options>
 	
