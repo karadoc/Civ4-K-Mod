@@ -6722,7 +6722,7 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 			iHealthValue /= 2;
 		} */
 		// K-Mod -
-		iHealthValue += (iHealth < 0 ? 100 : 100/(2+iHealth)) + 60 * pPlot->getPlayerCityRadiusCount(getOwnerINLINE());
+		iHealthValue += (iHealth < 0 ? 100 : 200/(3+iHealth)) + 100 * pPlot->getPlayerCityRadiusCount(getOwnerINLINE());
 		iHealthValue *= kFeatureInfo.getHealthPercent();
 		iHealthValue /= 100;
 		// note: health is not any more valuable when we aren't working it.
@@ -7487,10 +7487,10 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			aiFinalYields[iJ] = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature));
 			aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
 			aiFinalYields[iJ] += (pPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false, true));
-			if (bIgnoreFeature && pPlot->getFeatureType() != NO_FEATURE)
+			/* if (bIgnoreFeature && pPlot->getFeatureType() != NO_FEATURE)
 			{
 				aiFinalYields[iJ] -= 2 * GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange((YieldTypes)iJ);							
-			}
+			} */ // disabled by K-Mod. (this is already taken into account with bIgnoreFeature in calculateNatureYield)
 
 			int iCurYield = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), false));
 
@@ -7676,7 +7676,9 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 
 		if (pPlot->getImprovementType() == NO_IMPROVEMENT)
 		{
-			if (pPlot->isBeingWorked())
+			//if (pPlot->isBeingWorked())
+			if (pPlot->isBeingWorked()  // K-Mod. (don't boost the value if it means removing a good feature.)
+				&& (iClearFeatureValue >= 0 || eBestTempBuild == NO_BUILD || !GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType())))
 			{
 				iValue *= 5;
 				iValue /= 4;
