@@ -58,12 +58,14 @@ class BugAdvisorOptionsTab(BugOptionsTab.BugOptionsTab):
 		#self.addCheckbox(screen, center, "Advisors__BugVictoriesTab")
 		#self.addCheckbox(screen, center, "Advisors__BugMembersTab")
 
-		self.addLabel(screen, center, "Info_Screens", "Info [F9]:")
-		self.addCheckbox(screen, center, "Advisors__BugGraphsTab")
-		self.addCheckbox(screen, center, "Advisors__BugGraphsLogScale")
-		self.addCheckbox(screen, center, "Advisors__BugStatsTab")
-		self.addCheckbox(screen, center, "Advisors__BugInfoWonders")
-		self.addCheckbox(screen, center, "Advisors__BugInfoWondersPlayerColor", True)
+		# K-Mod, info stuff moved from center panel to right
+		self.addLabel(screen, right, "Info_Screens", "Info [F9]:")
+		self.addCheckbox(screen, right, "Advisors__BugGraphsTab")
+		self.addCheckbox(screen, right, "Advisors__BugGraphsLogScale")
+		self.addCheckbox(screen, right, "Advisors__BugStatsTab")
+		self.addCheckbox(screen, right, "Advisors__NonZeroStatsOnly") # K-Mod
+		self.addCheckbox(screen, right, "Advisors__BugInfoWonders")
+		self.addCheckbox(screen, right, "Advisors__BugInfoWondersPlayerColor", True)
 
 
 		self.addLabel(screen, right, "Sevopedia", "Sevopedia [F12]:")

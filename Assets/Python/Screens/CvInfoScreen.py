@@ -365,7 +365,7 @@ class CvInfoScreen:
 		self.STATS_TOP_CHART_W_COL_1 = 76
 
 		self.iNumTopChartCols = 2
-		self.iNumTopChartRows = 4
+		#self.iNumTopChartRows = 4 # disabled by K-Mod (not used)
 
 		self.X_LEADER_NAME = self.X_STATS_TOP_CHART
 		self.Y_LEADER_NAME = self.Y_STATS_TOP_CHART - 40
@@ -430,6 +430,7 @@ class CvInfoScreen:
 		self.TEXT_IMP_EXP_MEASURE = (u"  %c" % CyGame().getSymbolID(FontSymbols.BULLET_CHAR)) + localText.getText("TXT_KEY_DEMO_SCREEN_ECONOMY_MEASURE", ())
 
 		self.TEXT_TIME_PLAYED = localText.getText("TXT_KEY_INFO_SCREEN_TIME_PLAYED", ())
+		self.TEXT_CITIES_CURRENT = localText.getText("TXT_KEY_CONCEPT_CITIES", ()) # K-Mod
 		self.TEXT_CITIES_BUILT = localText.getText("TXT_KEY_INFO_SCREEN_CITIES_BUILT", ())
 		self.TEXT_CITIES_RAZED = localText.getText("TXT_KEY_INFO_SCREEN_CITIES_RAZED", ())
 		self.TEXT_NUM_GOLDEN_AGES = localText.getText("TXT_KEY_INFO_SCREEN_NUM_GOLDEN_AGES", ())
@@ -2683,7 +2684,8 @@ class CvInfoScreen:
 				 PanelStyles.PANEL_STYLE_DAWNTOP )
 
 		# Leaderhead graphic
-		player = gc.getPlayer(gc.getGame().getActivePlayer())
+		#player = gc.getPlayer(gc.getGame().getActivePlayer())
+		player = gc.getPlayer(self.iActivePlayer) # K-Mod
 		szLeaderWidget = self.getNextWidgetName()
 		screen.addLeaderheadGFC(szLeaderWidget, player.getLeaderType(), AttitudeTypes.ATTITUDE_PLEASED,
 			self.X_LEADER_ICON, self.Y_LEADER_ICON, self.W_LEADER_ICON, self.H_LEADER_ICON, WidgetTypes.WIDGET_GENERAL, -1, -1)
@@ -2704,34 +2706,66 @@ class CvInfoScreen:
 		screen.setTableColumnHeader(szTopChart, 1, "", self.STATS_TOP_CHART_W_COL_1)
 
 		# Add Rows
-		for i in range(self.iNumTopChartRows - 1):
-			screen.appendTableRow(szTopChart)
-		iNumRows = screen.getTableNumRows(szTopChart)
+		# for i in range(self.iNumTopChartRows - 1):
+			# screen.appendTableRow(szTopChart)
+		# iNumRows = screen.getTableNumRows(szTopChart)
 
 		# Graph itself
 		iRow = 0
+
+		screen.appendTableRow(szTopChart)
 		iCol = 0
 		screen.setTableText(szTopChart, iCol, iRow, self.TEXT_TIME_PLAYED, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
 		iCol = 1
 		screen.setTableText(szTopChart, iCol, iRow, szTimeString, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		
+		# K-Mod.
+		iNumCitiesCurrent = gc.getPlayer(self.iActivePlayer).getNumCities()
 
-		iRow = 1
-		iCol = 0
-		screen.setTableText(szTopChart, iCol, iRow, self.TEXT_CITIES_BUILT, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-		iCol = 1
-		screen.setTableText(szTopChart, iCol, iRow, str(iNumCitiesBuilt), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		if (iNumCitiesCurrent != 0 or not AdvisorOpt.isNonZeroStatsOnly()):
+			iRow += 1
+			screen.appendTableRow(szTopChart)
+			iCol = 0
+			screen.setTableText(szTopChart, iCol, iRow, self.TEXT_CITIES_CURRENT, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iCol = 1
+			screen.setTableText(szTopChart, iCol, iRow, str(iNumCitiesCurrent), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		# K-Mod end (note. I've also changed some of the structure of the surrounding code...)
 
-		iRow = 2
-		iCol = 0
-		screen.setTableText(szTopChart, iCol, iRow, self.TEXT_CITIES_RAZED, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-		iCol = 1
-		screen.setTableText(szTopChart, iCol, iRow, str(iNumCitiesRazed), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		if (iNumCitiesBuilt != 0 or not AdvisorOpt.isNonZeroStatsOnly()):
+			iRow += 1
+			screen.appendTableRow(szTopChart)
+			iCol = 0
+			screen.setTableText(szTopChart, iCol, iRow, self.TEXT_CITIES_BUILT, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iCol = 1
+			screen.setTableText(szTopChart, iCol, iRow, str(iNumCitiesBuilt), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
 
-		iRow = 3
-		iCol = 0
-		screen.setTableText(szTopChart, iCol, iRow, self.TEXT_NUM_RELIGIONS_FOUNDED, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-		iCol = 1
-		screen.setTableText(szTopChart, iCol, iRow, str(iNumReligionsFounded), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		if (iNumCitiesRazed != 0 or not AdvisorOpt.isNonZeroStatsOnly()):
+			iRow += 1
+			screen.appendTableRow(szTopChart)
+			iCol = 0
+			screen.setTableText(szTopChart, iCol, iRow, self.TEXT_CITIES_RAZED, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iCol = 1
+			screen.setTableText(szTopChart, iCol, iRow, str(iNumCitiesRazed), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+
+		if (iNumReligionsFounded != 0 or not AdvisorOpt.isNonZeroStatsOnly()):
+			iRow += 1
+			screen.appendTableRow(szTopChart)
+			iCol = 0
+			screen.setTableText(szTopChart, iCol, iRow, self.TEXT_NUM_RELIGIONS_FOUNDED, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iCol = 1
+			screen.setTableText(szTopChart, iCol, iRow, str(iNumReligionsFounded), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+
+		# K-Mod.
+		iNumGoldenAges = CyStatistics().getPlayerNumGoldenAges(self.iActivePlayer)
+		
+		if (iNumGoldenAges != 0 or not AdvisorOpt.isNonZeroStatsOnly()):
+			iRow += 1
+			screen.appendTableRow(szTopChart)
+			iCol = 0
+			screen.setTableText(szTopChart, iCol, iRow, self.TEXT_NUM_GOLDEN_AGES, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iCol = 1
+			screen.setTableText(szTopChart, iCol, iRow, str(iNumGoldenAges), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		# K-Mod end
 
 ################################################### BOTTOM PANEL ###################################################
 
@@ -2798,26 +2832,35 @@ class CvInfoScreen:
 			screen.setTableColumnHeader(szBuildingsTable, 1, self.TEXT_BUILT, iColWidth)
 #BUG: improvements - end
 
-		# Add Rows
-		for i in range(self.iNumUnitStatsChartRows):
-			screen.appendTableRow(szUnitsTable)
-		iNumUnitRows = screen.getTableNumRows(szUnitsTable)
+# K-Mod: I've disabled this pre-appending of rows code - because it messes up my other stuff.
+		# # Add Rows
+		# for i in range(self.iNumUnitStatsChartRows):
+			# screen.appendTableRow(szUnitsTable)
+		# iNumUnitRows = screen.getTableNumRows(szUnitsTable)
 
-		for i in range(self.iNumBuildingStatsChartRows):
-			screen.appendTableRow(szBuildingsTable)
-		iNumBuildingRows = screen.getTableNumRows(szBuildingsTable)
+		# for i in range(self.iNumBuildingStatsChartRows):
+			# screen.appendTableRow(szBuildingsTable)
+		# iNumBuildingRows = screen.getTableNumRows(szBuildingsTable)
 
-#BUG: improvements - start
-		if AdvisorOpt.isShowImprovements():
-			for i in range(self.iNumImprovementStatsChartRows):
-				if (aiImprovementsCurrent[i] > 0):
-					screen.appendTableRow(szImprovementsTable)
-			iNumImprovementRows = screen.getTableNumRows(szImprovementsTable)
-#BUG: improvements - end
+# #BUG: improvements - start
+		# if AdvisorOpt.isShowImprovements():
+			# for i in range(self.iNumImprovementStatsChartRows):
+				# if (aiImprovementsCurrent[i] > 0):
+					# screen.appendTableRow(szImprovementsTable)
+			# iNumImprovementRows = screen.getTableNumRows(szImprovementsTable)
+# #BUG: improvements - end
 
 		# Add Units to table
+		iRow = 0 # K-Mod
 		for iUnitLoop in range(iNumUnits):
-			iRow = iUnitLoop
+			# K-Mod. Hide zero rows option.
+			if (AdvisorOpt.isNonZeroStatsOnly()
+					and aiUnitsCurrent[iUnitLoop] == 0 and aiUnitsBuilt[iUnitLoop] == 0
+					and aiUnitsKilled[iUnitLoop] == 0 and aiUnitsLost[iUnitLoop] == 0):
+				continue
+			screen.appendTableRow(szUnitsTable)
+			# K-Mod end
+			#iRow = iUnitLoop
 
 			iCol = 0
 			szUnitName = gc.getUnitInfo(iUnitLoop).getDescription()
@@ -2838,10 +2881,17 @@ class CvInfoScreen:
 			iCol = 4
 			iNumUnitsLost = aiUnitsLost[iUnitLoop]
 			screen.setTableInt(szUnitsTable, iCol, iRow, str(iNumUnitsLost), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iRow += 1 # K-Mod
 
 		# Add Buildings to table
+		iRow = 0 # K-Mod
 		for iBuildingLoop in range(iNumBuildings):
-			iRow = iBuildingLoop
+			# K-Mod. Hide zero rows option.
+			if (AdvisorOpt.isNonZeroStatsOnly()	and aiBuildingsBuilt[iBuildingLoop] == 0):
+				continue
+			screen.appendTableRow(szBuildingsTable)
+			# K-Mod end
+			#iRow = iBuildingLoop
 
 			iCol = 0
 			szBuildingName = gc.getBuildingInfo(iBuildingLoop).getDescription()
@@ -2849,6 +2899,7 @@ class CvInfoScreen:
 			iCol = 1
 			iNumBuildingsBuilt = aiBuildingsBuilt[iBuildingLoop]
 			screen.setTableInt(szBuildingsTable, iCol, iRow, str(iNumBuildingsBuilt), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			iRow += 1 # K-Mod
 
 #BUG: improvements - start
 		if AdvisorOpt.isShowImprovements():
@@ -2858,6 +2909,7 @@ class CvInfoScreen:
 			for iImprovementLoop in range(iNumImprovements):
 				iNumImprovementsCurrent = aiImprovementsCurrent[iImprovementLoop]
 				if (iNumImprovementsCurrent > 0):
+					screen.appendTableRow(szImprovementsTable) # K-Mod
 					iCol = 0
 					szImprovementName = gc.getImprovementInfo(iImprovementLoop).getDescription()
 					screen.setTableText(szImprovementsTable, iCol, iRow, szImprovementName, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)

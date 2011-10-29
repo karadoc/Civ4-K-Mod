@@ -317,21 +317,36 @@
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ADVISORS__BUGSTATSTAB_TEXT</Tag>
-		<English>Stats tab</English>
-		<French>Stats tab</French>
+		<English>Improvement Stats</English>
+		<French>Improvement Stats</French>
 		<German>BUG Statistiken</German>
 		<Italian>Scheda Statistiche</Italian>
-		<Spanish>Stats tab</Spanish>
+		<Spanish>Improvement Stats</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ADVISORS__BUGSTATSTAB_HOVER</Tag>
-		<English>When checked, displays improvements on Stats tab.</English>
-		<French>When checked, displays improvements on Stats tab.</French>
+		<English>When checked, displays plot improvements on Stats tab.</English>
+		<French>When checked, displays plot improvements on Stats tab.</French>
 		<German>Zeigt die Statistiken auf der entsprechenden Seite des Info-Bildschirms in einer übersichtlicheren Anordnung an</German>
 		<Italian>Quando è selezionato, mostra la Scheda delle Statistiche nella versione migliorata del BUG Mod</Italian>
-		<Spanish>When checked, displays improvements on Stats tab.</Spanish>
+		<Spanish>When checked, displays plot improvements on Stats tab.</Spanish>
 	</TEXT>
-
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_ADVISORS__NONZEROSTATSONLY_TEXT</Tag>
+		<English>Non-Zero Stats Only</English>
+		<French>Non-Zero Stats Only</French>
+		<German>Non-Zero Stats Only</German>
+		<Italian>Non-Zero Stats Only</Italian>
+		<Spanish>Non-Zero Stats Only</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_ADVISORS__NONZEROSTATSONLY_HOVER</Tag>
+		<English>When checked, only non-zero entries are displayed in the Stats tab.</English>
+		<French>When checked, only non-zero entries are displayed in the Stats tab.</French>
+		<German>When checked, only non-zero entries are displayed in the Stats tab.</German>
+		<Italian>When checked, only non-zero entries are displayed in the Stats tab.</Italian>
+		<Spanish>When checked, only non-zero entries are displayed in the Stats tab.</Spanish>
+	</TEXT>
 <!-- Sevopedia -->
 
 	<TEXT>

@@ -84,6 +84,9 @@
 			<option id="BugStatsTab" key="Improvements" 
 					type="boolean" default="True" 
 					get="isShowImprovements"/>
+			<option id="NonZeroStatsOnly" key="Non-Zero Stats Only"
+					type="boolean" default="True"
+					get="isNonZeroStatsOnly"/> <!-- K-Mod -->
 			<option id="BugInfoWonders" key="Wonders" 
 					type="boolean" default="False" 
 					get="isShowInfoWonders"/>
