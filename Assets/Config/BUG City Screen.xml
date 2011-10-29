@@ -54,20 +54,20 @@
 			
 			<!-- Culture Turns by Chinese American -->
 			<option id="CultureTurns" key="Culture Turns" 
-					type="boolean" default="False" 
+					type="boolean" default="True" 
 					get="isShowCultureTurns" dirtyBit="CityScreen"/>
 			
 			<!-- Great Person Info by Chinese American, EmperorFool -->
 			<option id="GreatPersonTurns" key="Great Person Turns" 
-					type="boolean" default="False" 
+					type="boolean" default="True" 
 					get="isShowGreatPersonTurns" dirtyBit="CityScreen"/>
 			<option id="GreatPersonInfo" key="Great Person Info" 
-					type="boolean" default="False" 
+					type="boolean" default="True" 
 					get="isShowCityGreatPersonInfo" dirtyBit="CityScreen"/>
 			
 			<!-- Anger Counter by Ruff_Hi -->
 			<option id="Anger_Counter" key="Anger Counter" 
-					type="boolean" default="False" 
+					type="boolean" default="True" 
 					get="isShowAngerCounter" dirtyBit="CityScreen"/>
 			
 			<!-- Show Only Present and Extra Religions/Corporations by johny smith -->

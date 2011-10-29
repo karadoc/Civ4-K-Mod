@@ -98,7 +98,7 @@
 			
 			<!-- Power Ratio -->
 			<option id="Power" key="Power" 
-					type="boolean" default="True" 
+					type="boolean" default="False" 
 					get="isShowPower" set="setShowPower" dirtyBit="Score"/>
 			<list   id="PowerFormula" key="Power Formula" 
 					type="int" default="1" listType="string" 

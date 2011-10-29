@@ -18,7 +18,7 @@
 		<section id="Advisors">
 			<!-- Finance Advisor by EmperorFool -->
 			<option id="BugFinanceAdvisor" key="BUG Finance Advisor" 
-					type="boolean" default="False" 
+					type="boolean" default="False"
 					get="isBugFinanceAdvisor"/>
 
 			<!-- Exotic Foreign Advisor (F4) by Requies, Dresden, EmperorFool -->
@@ -32,7 +32,7 @@
 				<choice id="Both" get="isShowGlanceNumbers isShowGlanceSmilies"/>
 			</list>
 			<option id="EFAImprovedInfo" key="EFA Improved Info" 
-					type="boolean" default="False" 
+					type="boolean" default="True" 
 					get="isUseImprovedEFAInfo"/>
 			<option id="EFADealTurnsLeft" key="EFA Deal Turns Left" 
 					type="boolean" default="True" 
@@ -82,7 +82,7 @@
 					type="boolean" default="False" 
 					get="isGraphsLogScale"/>
 			<option id="BugStatsTab" key="Improvements" 
-					type="boolean" default="False" 
+					type="boolean" default="True" 
 					get="isShowImprovements"/>
 			<option id="BugInfoWonders" key="Wonders" 
 					type="boolean" default="False" 
