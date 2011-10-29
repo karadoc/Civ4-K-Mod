@@ -5271,7 +5271,7 @@ void CvSelectionGroup::deactivateHeadMission()
 		{
 			if (IsSelected())
 			{
-				GC.getGameINLINE().cycleSelectionGroups_delayed(1, true, canAllMove());
+				GC.getGameINLINE().cycleSelectionGroups_delayed(1, true, canAnyMove());
 			}
 		}
 	}
