@@ -9953,7 +9953,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
 		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
-		int iExtraPopulationThatCanWork = std::min(NUM_CITY_PLOTS, std::max(0, extraPopulation()+(bRemove?1:0))) - getWorkingPopulation();
+		int iExtraPopulationThatCanWork = std::min(NUM_CITY_PLOTS-1 - getWorkingPopulation(), std::max(0, extraPopulation()+(bRemove?1:0)));
+		bool bReassign = extraPopulation() <= 0;
 
 		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 
@@ -9975,26 +9976,26 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			if (iFoodPerTurn + (bRemove ? std::min(iFoodYield, iConsumtionPerPop) : 0) + iStarvingAllowance < 0)
 			{
 				// if working plots all like this one will save us from starving
-				if ((iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
+				if (((bReassign?1:0)+iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
 				{
 					// if this is high food, then we want to pick it first, this will allow us to pick some great non-food later
-					int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
+					/*int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
 					if (iFoodPerTurn <= (AI_isEmphasizeGreatPeople() ? 0 : -iHighFoodThreshold) && iFoodYield >= iHighFoodThreshold)
 					{
 						// value all the food that will contribute to not starving
 						iValue += 2048 * std::min(iFoodYield, -iFoodPerTurn);
 					}
-					else
+					else */
 					{
 						// give a huge boost to this plot, but not based on how much food it has
 						// ie, if working a bunch of 1f 7h plots will stop us from starving, then do not force working unimproved 2f plot
 						iValue += 2048;
 					}
 				}
-				else
+				//else
 				{
 					// value food high, but not forced
-					iValue += 36 * std::min(iFoodYield, -iFoodPerTurn);
+					iValue += 36 * std::min(iFoodYield, -iFoodPerTurn+(bReassign ? iConsumtionPerPop : 0));
 				}
 			}
 		}
