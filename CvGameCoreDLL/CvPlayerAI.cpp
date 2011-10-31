@@ -4687,18 +4687,29 @@ int CvPlayerAI::AI_goldTarget() const
 
 		if (!isNoCorporations())
 		{
+			// recall: target turns for gold target = 4 * gamespeed.getResearchPercent()/100
+			// so if we want to get enough money to spread next turn, we need to inflate the target gold
+			int iImmediateMultiplier = 4 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
+
 			for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
 			{
 				if (getHasCorporationCount((CorporationTypes)iI) > 0)
 				{
-					iSpreadCost = std::max(iSpreadCost, GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost());
+					int iExecs = countCorporationSpreadUnits(NULL, (CorporationTypes)iI, true);
+					if (iExecs > 0)
+					{
+						int iTempCost = GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost();
+						iTempCost *= iImmediateMultiplier * (iExecs + 1); // execs + 1 because actual spread cost can be higher than the base cost.
+						iTempCost /= 100;
+						iSpreadCost = std::max(iTempCost, GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost());
+					}
 				}
 			}
 		}
 		if (iSpreadCost > 0)
 		{
 			iSpreadCost *= 100 + calculateInflationRate();
-			iSpreadCost /= 50;
+			iSpreadCost /= 100;
 			iGold += iSpreadCost;
 		}
 		// K-Mod end
@@ -11740,7 +11751,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 		int iNumCities = pArea ? pArea->getCitiesPerPlayer((PlayerTypes)iPlayer) : kLoopPlayer.getNumCities();
 		if (kLoopPlayer.isAlive() && iNumCities > 0)
 		{
-			if (GET_TEAM(kLoopPlayer.getTeam()).isOpenBorders(getTeam()))
+			if (GET_TEAM(getTeam()).isFriendlyTerritory(kLoopPlayer.getTeam()) || GET_TEAM(kLoopPlayer.getTeam()).isOpenBorders(getTeam()))
 			{
 				if (!kLoopPlayer.isNoCorporations() && (iPlayer == getID() || !kLoopPlayer.isNoForeignCorporations()))
 				{
@@ -11764,7 +11775,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 
 					int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
 					int iValue = iSpreadExternalValue;
-					iValue += iCorpValue * iAttitudeWeight;
+					iValue += (iCorpValue * iAttitudeWeight)/100;
 					if (iValue > 0 && iCorpValue > 0 && iCitiesHave == 0)
 					{
 						// if the player will spread the corp themselves, then that's good for us.
@@ -14208,7 +14219,8 @@ void CvPlayerAI::AI_doCommerce()
 				int iResearchTurnsLeft = getResearchTurnsLeft(eCurrentResearch, true);
 				
 				// if we can finish the current research without running out of gold, let us spend 2/3rds of our gold 
-				if (getGold() >= iResearchTurnsLeft * iGoldRate)
+				//if (getGold() >= iResearchTurnsLeft * iGoldRate)
+				if (getGold() >= iResearchTurnsLeft * -iGoldRate) // K-Mod
 				{
 					iGoldTarget /= 3;
 				}

@@ -2143,8 +2143,8 @@ void CvUnitAI::AI_attackMove()
 
 					// Since ATTACK can try to joing ATTACK_CITY again, need these units to
 					// take a break to let ATTACK_CITY group move and avoid hang
-					/* getGroup()->pushMission(MISSION_SKIP);
-					return; */ // K-Mod disabled. I think it'll be fine.
+					getGroup()->pushMission(MISSION_SKIP);
+					return;
 				}
 			}
 		}
@@ -12889,6 +12889,8 @@ bool CvUnitAI::AI_spreadCorporation()
 {
 	PROFILE_FUNC();
 
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
 	CorporationTypes eCorporation = NO_CORPORATION;	
 
 	int iI;
@@ -12901,7 +12903,8 @@ bool CvUnitAI::AI_spreadCorporation()
 		}
 	}
 
-	if (NO_CORPORATION == eCorporation)
+	//if (NO_CORPORATION == eCorporation)
+	if (NO_CORPORATION == eCorporation || !kOwner.isActiveCorporation(eCorporation))
 	{
 		return false;
 	}
@@ -12930,7 +12933,6 @@ bool CvUnitAI::AI_spreadCorporation()
 	if (pBestSpreadPlot == NULL)
 	{
 		PlayerTypes eTargetPlayer = NO_PLAYER;
-		const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
 		if (isHuman())
 			eTargetPlayer = plot()->isOwned() ? plot()->getOwnerINLINE() : getOwnerINLINE();

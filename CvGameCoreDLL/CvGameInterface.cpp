@@ -750,8 +750,10 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bDelayOnly) const
 {
 	PROFILE_FUNC(); // I'm just hoping that the python call doesn't hurt the respose times
-	bool bFastCycle = getBugOptionBOOL("MainInterface__RapidUnitCycling", false, "RAPID_UNIT_CYCLING");
-	if (bFastCycle)
+	// Only rapid-cycle when not doing auto-play.
+	PlayerTypes eActive = getActivePlayer();
+	if (eActive != NO_PLAYER && GET_PLAYER(eActive).isHuman() &&
+		getBugOptionBOOL("MainInterface__RapidUnitCycling", false, "RAPID_UNIT_CYCLING"))
 	{
 		if (!bDelayOnly)
 		{

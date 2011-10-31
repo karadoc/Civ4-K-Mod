@@ -71,11 +71,10 @@ void CvSelectionGroupAI::AI_separate()
 		pEntityNode = nextUnitNode(pEntityNode);
 
 		pLoopUnit->joinGroup(NULL);
-		/* original bts code
 		if (pLoopUnit->plot()->getTeam() == getTeam())
 		{
 			pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-		} */ // disabled by K-Mod
+		}
 	}
 }
 
@@ -98,11 +97,10 @@ void CvSelectionGroupAI::AI_separateNonAI(UnitAITypes eUnitAI)
 		if (pLoopUnit->AI_getUnitAIType() != eUnitAI)
 		{
 			pLoopUnit->joinGroup(NULL);
-			/* original bts code
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			} */ // disabled by K-Mod
+			}
 		}
 	}
 }
@@ -122,11 +120,10 @@ void CvSelectionGroupAI::AI_separateAI(UnitAITypes eUnitAI)
 		{
 			pLoopUnit->joinGroup(NULL);
 			// Was potential crash in use of plot() if group emptied
-			/* original bts code
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			} */ // disabled by K-Mod
+			}
 		}
 	}
 }
@@ -146,11 +143,10 @@ void CvSelectionGroupAI::AI_separateImpassable()
 		if( (kPlayer.AI_unitImpassableCount(pLoopUnit->getUnitType()) > 0) )
 		{
 			pLoopUnit->joinGroup(NULL);
-			/* original bts code
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			} */ // disabled by K-Mod
+			}
 		}
 	}
 }
@@ -169,11 +165,10 @@ void CvSelectionGroupAI::AI_separateEmptyTransports()
 		if ((pLoopUnit->AI_getUnitAIType() == UNITAI_ASSAULT_SEA) && (pLoopUnit->getCargo() == 0))
 		{
 			pLoopUnit->joinGroup(NULL);
-			/* original bts code
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			} */ // disabled by K-Mod
+			}
 		}
 	}
 }

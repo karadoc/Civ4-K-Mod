@@ -4054,7 +4054,8 @@ int CvPlayer::countCorporationSpreadUnits(CvArea* pArea, CorporationTypes eCorpo
 	int iLoop;
 	for (CvUnit* pLoopUnit = firstUnit(&iLoop); NULL != pLoopUnit; pLoopUnit = nextUnit(&iLoop))
 	{
-		if (pLoopUnit->area() == pArea)
+		//if (pLoopUnit->area() == pArea)
+		if (pArea == NULL || pLoopUnit->area() == pArea) // K-Mod
 		{
 			if (pLoopUnit->getUnitInfo().getCorporationSpreads(eCorporation) > 0)
 			{
@@ -4063,18 +4064,20 @@ int CvPlayer::countCorporationSpreadUnits(CvArea* pArea, CorporationTypes eCorpo
 		}
 	}
 
-	if( bIncludeTraining )
+	if (bIncludeTraining)
 	{
-		CvCity* pLoopCity;
-		for( pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop) )
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 		{
-			UnitTypes eUnit = pLoopCity->getProductionUnit();
-
-			if( eUnit != NO_UNIT )
+			if (pArea == NULL || pLoopCity->area() == pArea) // K-Mod
 			{
-				if(GC.getUnitInfo(eUnit).getCorporationSpreads(eCorporation) > 0)
+				UnitTypes eUnit = pLoopCity->getProductionUnit();
+
+				if (eUnit != NO_UNIT)
 				{
-					iCount++;
+					if(GC.getUnitInfo(eUnit).getCorporationSpreads(eCorporation) > 0)
+					{
+						iCount++;
+					}
 				}
 			}
 		}
