@@ -9636,7 +9636,7 @@ void CvCityAI::AI_juggleCitizens()
 			if (isSpecialistValid((SpecialistTypes)iI, 1))
 			{
 				int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, false);
-				int iForceValue = bForcedSpecialists ? getForceSpecialistCount((SpecialistTypes)iI) * 128 / iTotalForcedSpecialists - (getSpecialistCount((SpecialistTypes)iI)+1) * 128 / (getSpecialistPopulation()+1) : 0;
+				int iForceValue = bForcedSpecialists ? getForceSpecialistCount((SpecialistTypes)iI) * 128 / iTotalForcedSpecialists - getSpecialistCount((SpecialistTypes)iI) * 128 / (getSpecialistPopulation()+1) : 0;
 				if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
 				{
 					eUnworkedSpecialist = (SpecialistTypes)iI;

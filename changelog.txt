@@ -1,5 +1,37 @@
-This is K-Mod version 1.05.
+This is K-Mod version 1.06.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.06 changelist
+
++ Fixed some problems with AI unit training probability being too small (caused by side effects of some of my other changes)
++ Fixed several problems with the new corporation spread AI.
++ Fixed an original BtS bug which essentially always caused the AI's gold target to be divided by 3.
++ Rewrote some of the AI's gold budgeting functions to compensate for the gold target bugfix and to improve their gold usage.
++ Removed double-counting of the yield value of plot features when calculating improvement value, and rebalanced some other values to compensate for the change.
++ Fixed a problem with AI_calculateAreaAIType which caused the AI to overestimate enemy power while preparing for war. (This caused the AI to abandon war-plans more often than it should.)
++ Made some adjustments to the AI's reasoning for splitting their empire.
++ Tightened the AI's rules for when to disband workers.
++ Tightened the conditions for when the AI will choose to build a new worker. (these two changes are meant to fix a problem which sometimes caused the AI to constantly build and disband workers.)
++ Fixed an original BtS bug in evaluation of workers in AI_disbandUnit. (This is not currently being used anyway.)
++ The AI will now accept gifted great people even while in financial trouble. (not that anyone is likely to want to give away great people anyway...)
++ Fixed a bug in the original code which could (very rarely) cause AI units to get stuck trying to attack an enemy that is inside the borders of some third civ.
++ Fixed an int overflow bug in the original BtS code for AI_specialistValue.
++ Made some changes to AI diplomacy. The game will now check that _both players_ are willing to talk to one another before they set up a trade. (Previously the check was one-sided.)
++ Made structural changes to some parts of the AI. (Some changes for efficiency; some to lay the foundations for future changes - I'm just mentioning this because there might be new bugs...)
+
++ Fixed a problem with the new auto citizen assignment - a rare case which could cause cities to unnecessarily starve while building settlers.
++ Fixed a rare bug which sometimes allowed the automatic citizen assignment to assign a free specialist to a plot. (Triggered when the value of the plot was exactly equal to the value of the specialist.)
++ Fixed a rare crash bug. (Triggered when an AI spy arrives at a targeted bonus improvement on the same turn that the plot loses all player ownership.)
+
++ Added a new BUG option: Rapid Unit Cycling. This option removes the delay between issuing a command to a unit and the automatic selection of your next unit.
++ Added a new BUG option for the stats tab of the info screen: "non-zero stats only".
++ Changed some of the default BUG settings and fixed some minor interface problems. (Note: there was a minor problem in the previous defaults settings which will only be fixed if "Advanced Scoreboard.ini" is deleted from the K-Mod settings folder.)
++ Changed the behaviour of automatic citizen assignment with forced specialists. (Previously, having any forced specialists would forbid the assignment of any non-forced specialists. Now it will allow other specialists when no more of the forced type can be placed.)
++ The diplomacy screen should now allow the human player to declare war even if the AI player refuses to talk. (untested)
++ Alt+click on a leader's name will now open a declare-war popup window rather than just instantly declaring war.
++ Right clicking on a unit in neutral territory will no longer open a declare-war popup. (This makes it more consistent with other right-click behaviour.)
 
 --
 
