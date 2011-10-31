@@ -118,7 +118,8 @@ public:
 
 	bool AI_avoidScience() const;
 	bool AI_isFinancialTrouble() const;
-	int AI_goldTarget() const;
+	//int AI_goldTarget() const;
+	int AI_goldTarget(bool bUpgradeBudgetOnly = false) const; // K-Mod
 
 	TechTypes AI_bestTech(int iMaxPathLength = 1, bool bIgnoreCost = false, bool bAsync = false, TechTypes eIgnoreTech = NO_TECH, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) const;
 /************************************************************************************************/

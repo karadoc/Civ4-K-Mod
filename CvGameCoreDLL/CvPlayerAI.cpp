@@ -545,25 +545,18 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 /*                                                                                              */
 /* Gold AI                                                                                      */
 /************************************************************************************************/
-	bool bAnyWar = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
+	//bool bAnyWar = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
 	int iStartingGold = getGold();
-	int iTargetGold = AI_goldTarget();
 	/* BBAI code
+	int iTargetGold = AI_goldTarget();
 	int iUpgradeBudget = (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
 	iUpgradeBudget = std::min(iUpgradeBudget, iStartingGold - ((iTargetGold > iUpgradeBudget) ? (iTargetGold - iUpgradeBudget) : iStartingGold/2)); */
-	// K-Mod. Note: (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2) is actually one of the components of AI_goldTarget().
-	int iUpgradeBudget = iStartingGold - std::max(0, iTargetGold - AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
+	// K-Mod. Note: AI_getGoldToUpgradeAllUnits() is actually one of the components of AI_goldTarget()
+	int iUpgradeBudget = std::min(getGold(), AI_goldTarget(true));
 	// K-Mod end
-
-	if( AI_isFinancialTrouble() )
-	{
-		iUpgradeBudget /= 3;
-	}
 
 	// Always willing to upgrade 1 unit if we have the money
 	iUpgradeBudget = std::max(iUpgradeBudget,1);
-
-	bool bUnderBudget = true;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -598,16 +591,7 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 					}
 
 					// try to upgrade units which are in danger... but don't get obsessed
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-					//if (!bValid && (pLastUpgradePlot != pUnitPlot) && ((AI_getPlotDanger(pUnitPlot, 1, false)) > 0))
-					if (!bValid && (pLastUpgradePlot != pUnitPlot) && ((AI_getAnyPlotDanger(pUnitPlot, 1, false))))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/	
+					if (!bValid && pLastUpgradePlot != pUnitPlot && AI_getAnyPlotDanger(pUnitPlot, 1, false))
 					{
 						bNoDisband = true;
 						bValid = true;
@@ -616,50 +600,28 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 				}
 				break;
 			case 2:
-				/********************************************************************************/
-				/* 	BETTER_BTS_AI_MOD						9/15/08			jdog5000		*/
-				/* 																			*/
-				/* 	Gold AI																	*/
-				/********************************************************************************/
 				/* original BTS code
 				if (pLoopUnit->cargoSpace() > 0)
 				{
 					bValid = true;
-				}
-				*/
-				bUnderBudget = (iStartingGold - getGold()) < iUpgradeBudget;
+				} */
 
 				// Only normal transports
-				if ( (pLoopUnit->cargoSpace() > 0) && (pLoopUnit->specialCargo() == NO_SPECIALUNIT) )
+				if (pLoopUnit->cargoSpace() > 0 && pLoopUnit->specialCargo() == NO_SPECIALUNIT)
 				{
-					bValid = (bAnyWar || bUnderBudget);
+					bValid = iStartingGold - getGold() < iUpgradeBudget;
 				}
 				// Also upgrade escort ships
-				if ( pLoopUnit->AI_getUnitAIType() == UNITAI_ESCORT_SEA )
+				if (pLoopUnit->AI_getUnitAIType() == UNITAI_ESCORT_SEA)
 				{
-					bValid = (bAnyWar || bUnderBudget);
+					bValid = iStartingGold - getGold() < iUpgradeBudget;
 				}
-				/********************************************************************************/
-				/* 	BETTER_BTS_AI_MOD						END								*/
-				/********************************************************************************/
 				
 				break;
 			case 3:
-				/********************************************************************************/
-				/* 	BETTER_BTS_AI_MOD						9/15/08			jdog5000		*/
-				/* 																			*/
-				/* 	Gold AI																	*/
-				/********************************************************************************/
 				/* original BTS code
-				bValid = true;
-				*/
-				bUnderBudget = (iStartingGold - getGold()) < iUpgradeBudget;
-
-				bValid = (bAnyWar || bUnderBudget);
-				/********************************************************************************/
-				/* 	BETTER_BTS_AI_MOD						END								*/
-				/********************************************************************************/
-				
+				bValid = true; */
+				bValid = iStartingGold - getGold() < iUpgradeBudget;
 				break;
 			default:
 				FAssert(false);
@@ -4621,9 +4583,34 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 }
 
 
-int CvPlayerAI::AI_goldTarget() const
+int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 {
 	int iGold = 0;
+
+	bool bAnyWar = GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0;
+
+	// K-Mod.
+	int iUpgradeBudget = AI_getGoldToUpgradeAllUnits();
+
+	if (!bAnyWar)
+	{
+		iUpgradeBudget /= AI_isFinancialTrouble() ? 10 : 3;
+	}
+	else
+	{
+		if (GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() < 0)
+			iUpgradeBudget *= 2; // cf. iTargetTurns in AI_doCommerce
+		else if (AI_isFinancialTrouble())
+		{
+			iUpgradeBudget /= 2;
+		}
+	}
+
+	if (bUpgradeBudgetOnly)
+		return iUpgradeBudget;
+
+	iGold += iUpgradeBudget;
+	// K-Mod end
 
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       02/24/10                                jdog5000      */
@@ -4651,20 +4638,19 @@ int CvPlayerAI::AI_goldTarget() const
 		iGold *= iMultiplier;
 		iGold /= 100;
 
-		bool bAnyWar = GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0;
+		/* original bts code
 		if (bAnyWar)
 		{
 			iGold *= 3;
 			iGold /= 2;
-		}
+		} */ // K-Mod. I don't think we need this anymore.
 
 		if (AI_avoidScience())
 		{
 			iGold *= 10;
 		}
 
-		//iGold += (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
-		iGold += AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 3); // K-Mod
+		//iGold += (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2)); // obsolete (K-Mod)
 
 		/* original bts code
 		CorporationTypes eActiveCorporation = NO_CORPORATION;
