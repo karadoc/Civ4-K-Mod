@@ -833,13 +833,13 @@ void CvCityAI::AI_chooseProduction()
 
 		clearOrderQueue();
 	}
-	
+
 	//if (GET_PLAYER(getOwner()).isAnarchy()) // original bts code
 	if (isDisorder()) // K-Mod
 	{
 		return;
 	}
-	
+
 	// only clear the dirty bit if we actually do a check, multiple items might be queued
 	AI_setChooseProductionDirty(false);
 
@@ -1035,8 +1035,12 @@ void CvCityAI::AI_chooseProduction()
 	int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : AI_buildingValue(eBestBuilding);
 	// for the purpose of adjusting production probabilities, scale the building value up for early eras
 	// (because early game buildings are relatively weaker)
-	iBestBuildingValue *= 2*GC.getNumEraInfos() - kPlayer.getCurrentEra();
-	iBestBuildingValue /= std::max(1, GC.getNumEraInfos());
+	if (GC.getNumEraInfos() > 1)
+	{
+		FAssert(kPlayer.getCurrentEra() < GC.getNumEraInfos());
+		iBestBuildingValue *= 2*(GC.getNumEraInfos()-1) - kPlayer.getCurrentEra();
+		iBestBuildingValue /= GC.getNumEraInfos()-1;
+	}
 	// also, reduce the value to encourage early expansion until we reach the recommend city target
 	{
 		int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
@@ -1883,8 +1887,8 @@ void CvCityAI::AI_chooseProduction()
 		int iSpreadUnitRoll = (100 - iBuildUnitProb) / 3;
 		iSpreadUnitRoll += bLandWar ? 0 : 10;
 		// K-Mod
-		iSpreadUnitRoll *= (120 + iBestBuildingValue);
-		iSpreadUnitRoll /= (60 + 3 * iBestBuildingValue);
+		iSpreadUnitRoll *= (200 + iBestBuildingValue);
+		iSpreadUnitRoll /= (100 + 3 * iBestBuildingValue);
 		// K-Mod end
 		
 		if (AI_bestSpreadUnit(true, true, iSpreadUnitRoll, &eBestSpreadUnit, &iBestSpreadUnitValue))
@@ -3037,8 +3041,8 @@ void CvCityAI::AI_chooseProduction()
 	if (iUnitSpending < iMaxUnitSpending + 5)
 	{
 		// K-Mod
-		iBuildUnitProb *= (150 + iBestBuildingValue);
-		iBuildUnitProb /= (60 + 3 * iBestBuildingValue);
+		iBuildUnitProb *= (250 + iBestBuildingValue);
+		iBuildUnitProb /= (100 + 3 * iBestBuildingValue);
 		// K-Mod end
 
 		if ((bLandWar) ||

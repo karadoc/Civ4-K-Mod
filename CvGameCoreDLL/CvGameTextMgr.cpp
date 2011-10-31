@@ -4820,10 +4820,26 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					szString.append(CvWString::format(L"\nBuild unit prob: %d%%", iBuildUnitProb));
 					BuildingTypes eBestBuilding = static_cast<CvCityAI*>(pCity)->AI_bestBuildingThreshold(0, 0, 0, true);
 					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : pCity->AI_buildingValue(eBestBuilding, 0, 0, true);
-					iBestBuildingValue *= 2*GC.getNumEraInfos() - kPlayer.getCurrentEra();
-					iBestBuildingValue /= std::max(1, GC.getNumEraInfos());
-					iBuildUnitProb *= (150 + iBestBuildingValue);
-					iBuildUnitProb /= (60 + 3 * iBestBuildingValue);
+
+					// Note. cf. adjustments made in AI_chooseProduction
+					if (GC.getNumEraInfos() > 1)
+					{
+						iBestBuildingValue *= 2*(GC.getNumEraInfos()-1) - kPlayer.getCurrentEra();
+						iBestBuildingValue /= GC.getNumEraInfos()-1;
+					}
+					{
+						int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+						int iDummy;
+						if (kPlayer.AI_getNumAreaCitySites(pPlot->getArea(), iDummy) > 0 && kPlayer.getNumCities() < iTargetCities)
+						{
+							iBestBuildingValue *= kPlayer.getNumCities() + iTargetCities;
+							iBestBuildingValue /= 2*iTargetCities;
+						}
+					}
+					//
+
+					iBuildUnitProb *= (250 + iBestBuildingValue);
+					iBuildUnitProb /= (100 + 3 * iBestBuildingValue);
 					szString.append(CvWString::format(L" (%d%%)", iBuildUnitProb));
 				}
 				// K-Mod end

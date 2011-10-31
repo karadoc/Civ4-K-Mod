@@ -552,7 +552,17 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 	int iUpgradeBudget = (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
 	iUpgradeBudget = std::min(iUpgradeBudget, iStartingGold - ((iTargetGold > iUpgradeBudget) ? (iTargetGold - iUpgradeBudget) : iStartingGold/2)); */
 	// K-Mod. Note: AI_getGoldToUpgradeAllUnits() is actually one of the components of AI_goldTarget()
-	int iUpgradeBudget = std::min(getGold(), AI_goldTarget(true));
+	int iUpgradeBudget = 0;
+	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
+	{
+		// when at war, upgrades get priority
+		iUpgradeBudget = std::min(getGold(), AI_goldTarget(true));
+	}
+	else
+	{
+		int iMaxBudget = AI_goldTarget(true);
+		iUpgradeBudget = std::min(iMaxBudget, getGold() * iMaxBudget / std::max(1, AI_goldTarget(false)));
+	}
 	// K-Mod end
 
 	// Always willing to upgrade 1 unit if we have the money
@@ -4598,7 +4608,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 	}
 	else
 	{
-		if (GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() < 0)
+		if (GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() < -10)
 			iUpgradeBudget *= 2; // cf. iTargetTurns in AI_doCommerce
 		else if (AI_isFinancialTrouble())
 		{
@@ -4673,10 +4683,6 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 
 		if (!isNoCorporations())
 		{
-			// recall: target turns for gold target = 4 * gamespeed.getResearchPercent()/100
-			// so if we want to get enough money to spread next turn, we need to inflate the target gold
-			int iImmediateMultiplier = 4 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
-
 			for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
 			{
 				if (getHasCorporationCount((CorporationTypes)iI) > 0)
@@ -4685,8 +4691,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 					if (iExecs > 0)
 					{
 						int iTempCost = GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost();
-						iTempCost *= iImmediateMultiplier * (iExecs + 1); // execs + 1 because actual spread cost can be higher than the base cost.
-						iTempCost /= 100;
+						iTempCost *= iExecs + 1; // execs + 1 because actual spread cost can be higher than the base cost.
 						iSpreadCost = std::max(iTempCost, GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost());
 					}
 				}
