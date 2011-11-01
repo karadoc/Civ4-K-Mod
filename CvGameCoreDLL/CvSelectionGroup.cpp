@@ -3644,7 +3644,8 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							//if (!isHuman() && getNumUnits() > 1)
 							if (!isHuman() && getNumUnits() > 1 && !(iFlags & MOVE_SINGLE_ATTACK)) // K-Mod
 							{
-								AI_queueGroupAttack(iX, iY);
+								//AI_queueGroupAttack(iX, iY);
+								AI_queueGroupAttack(pDestPlot->getX_INLINE(), pDestPlot->getY_INLINE()); // K-Mod
 							}
 
 							break;
