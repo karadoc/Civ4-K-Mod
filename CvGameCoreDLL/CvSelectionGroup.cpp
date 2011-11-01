@@ -4066,10 +4066,12 @@ bool CvSelectionGroup::groupAmphibMove(CvPlot* pPlot, int iFlags)
 
 	FAssert(getOwnerINLINE() != NO_PLAYER);
 
+	/* original bts code
 	if (groupDeclareWar(pPlot))
 	{
 		return true;
-	}
+	} */
+	// K-Mod. I've disabled this groupDeclareWar for a bunch of reasons. Suffice to say, it shouldn't be here.
 
 	if (isAmphibPlot(pPlot))
 	{

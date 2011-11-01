@@ -15204,10 +15204,19 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									iValue *= 1000;
 
 									// If city is minor civ, less interesting
-									if( GET_PLAYER(pLoopCity->getOwnerINLINE()).isMinorCiv() || GET_PLAYER(pLoopCity->getOwnerINLINE()).isBarbarian() )
+									if (GET_PLAYER(pLoopCity->getOwnerINLINE()).isMinorCiv() || GET_PLAYER(pLoopCity->getOwnerINLINE()).isBarbarian())
 									{
-										iValue /= 2;
+										//iValue /= 2;
+										iValue /= 3; // K-Mod
 									}
+									// K-Mod. A const-random component, so that the AI doesn't always go for the same city.
+									{
+										int iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE());
+										iHash *= 2654435761; // golden ratio of 2^32;
+										iValue *= 85 + iHash % 31;
+										iValue /= 100;
+									}
+									// K-Mod
 
 									// If stack has poor bombard, direct towards lower defense cities
 									//iPathTurns += std::min(12, getGroup()->getBombardTurns(pLoopCity)/4);
@@ -15677,7 +15686,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		// K-Mod
+		// K-Mod. (Note. we probably don't really want to declare war here, but that's just the way it works currently.)
 		if (AI_considerDOW(pBestPlot))
 		{
 			// after DOW, we might not be able to get to our target this turn... but try anyway.

@@ -11958,6 +11958,7 @@ void CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue)
 			gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true);
 			gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 			gDLL->getInterfaceIFace()->setDirty(CityScreen_DIRTY_BIT, true);
+			gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true); // K-Mod
 			gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
 		}
 	}
