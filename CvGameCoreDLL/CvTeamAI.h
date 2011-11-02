@@ -38,16 +38,6 @@ public:
 
 	void AI_makeAssignWorkDirty();
 
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						10/6/08				jdog5000	    */
-/* 																			    */
-/* 																			    */
-/********************************************************************************/
-	int AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves, bool bIncludeVassals = false) const;
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								    */
-/********************************************************************************/
-
 	void AI_updateAreaStragies(bool bTargets = true);
 	void AI_updateAreaTargets();
 

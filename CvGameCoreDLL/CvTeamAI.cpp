@@ -205,35 +205,6 @@ void CvTeamAI::AI_makeAssignWorkDirty()
 	}
 }
 
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						10/6/08				jdog5000	*/
-/* 																			*/
-/* 	General AI																*/
-/********************************************************************************/
-// Find plot strength of teammates and potentially vassals
-int CvTeamAI::AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves, bool bIncludeVassals) const
-{
-	int iI;
-	int iPlotStrength = 0;
-
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
-	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
-		{
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID() || (bIncludeVassals && GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isVassal(getID())) )
-			{
-				iPlotStrength += GET_PLAYER((PlayerTypes)iI).AI_getOurPlotStrength(pPlot,iRange,bDefensiveBonuses,bTestMoves);
-			}
-		}
-	}
-
-	return iPlotStrength;
-}
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								*/
-/********************************************************************************/
-
-
 void CvTeamAI::AI_updateAreaStragies(bool bTargets)
 {
 	CvArea* pLoopArea;
@@ -2657,9 +2628,17 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 					}
 				}
 
+				/*
 				int iOwnerPower = GET_PLAYER((PlayerTypes)iI).AI_getOurPlotStrength(pLoopCity->plot(), 2, true, false);
 				int iOurPower = AI_getOurPlotStrength(pLoopCity->plot(), 2, false, false, true);
-				int iOtherPower = GET_PLAYER((PlayerTypes)iI).AI_getEnemyPlotStrength(pLoopCity->plot(), 2, false, false) - iOurPower;
+				int iOtherPower = GET_PLAYER((PlayerTypes)iI).AI_getEnemyPlotStrength(pLoopCity->plot(), 2, false, false) - iOurPower; */
+				// K-Mod. Note. my new functions are not quite the same as the old.
+				// a) this will not count vassals in "our power". b) it will only count forces that can been seen by the player calling the function.
+				const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+				int iOwnerPower = kLoopPlayer.AI_localDefenceStrength(pLoopCity->plot(), kLoopPlayer.getTeam(), DOMAIN_LAND, 2);
+				int iOurPower = GET_PLAYER(getLeaderID()).AI_localAttackStrength(pLoopCity->plot(), getID());
+				int iOtherPower = kLoopPlayer.AI_localAttackStrength(pLoopCity->plot(), NO_TEAM) - iOurPower;
+				// K-Mod end
 
 				if( iOtherPower > iOwnerPower )
 				{

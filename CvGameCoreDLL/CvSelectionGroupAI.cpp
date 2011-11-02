@@ -580,19 +580,10 @@ int CvSelectionGroupAI::AI_compareStacks(const CvPlot* pPlot, bool bPotentialEne
 	}
 	FAssert(eOwner != NO_PLAYER);
 	
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       03/04/10                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-	int defenderSum = pPlot->AI_sumStrength(NO_PLAYER, getOwnerINLINE(), eDomainType, true, !bPotentialEnemy, bPotentialEnemy);
-*/
-	// Clearly meant to use eOwner here ...
-	int defenderSum = pPlot->AI_sumStrength(NO_PLAYER, eOwner, eDomainType, true, !bPotentialEnemy, bPotentialEnemy);
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+	// K-Mod. Note. This function currently does not support bPotentialEnemy == false.
+	FAssert(bPotentialEnemy);
+	int defenderSum = GET_PLAYER(eOwner).AI_localDefenceStrength(pPlot, NO_TEAM, eDomainType, 0);
+	// K-Mod end
 	compareRatio /= std::max(1, defenderSum);
 
 	return compareRatio;

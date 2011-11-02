@@ -12040,7 +12040,7 @@ int CvPlayerAI::AI_plotTargetMissionAIs(CvPlot* pPlot, MissionAITypes* aeMission
 // K-Mod
 
 // Total defensive strength of units that can move iRange steps to reach pDefencePlot
-int CvPlayerAI::AI_localDefenceStrength(CvPlot* pDefencePlot, TeamTypes eDefenceTeam, DomainTypes eDomainType, int iRange) const
+int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eDefenceTeam, DomainTypes eDomainType, int iRange, bool bCheckMoves) const
 {
 	int	iTotal = 0;
 
@@ -12059,10 +12059,24 @@ int CvPlayerAI::AI_localDefenceStrength(CvPlot* pDefencePlot, TeamTypes eDefence
 				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 				pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
 
-				if (pLoopUnit->getTeam() == eDefenceTeam || (eDefenceTeam == NO_TEAM && isPotentialEnemy(getTeam(), pLoopUnit->getTeam())))
+				if (pLoopUnit->getTeam() == eDefenceTeam
+					|| (eDefenceTeam != NO_TEAM && GET_TEAM(pLoopUnit->getTeam()).isVassal(eDefenceTeam))
+					|| (eDefenceTeam == NO_TEAM && isPotentialEnemy(getTeam(), pLoopUnit->getTeam())))
 				{
 					if (eDomainType == NO_DOMAIN || (pLoopUnit->getDomainType() == eDomainType))
 					{
+						if (bCheckMoves)
+						{
+							// unfortunately, we can't use the global pathfinder here
+							// - because the calling function might be waiting to use some pathfinding results
+							// So this check will have to be really rough. :(
+							int iMoves = pLoopUnit->movesLeft() / GC.getMOVE_DENOMINATOR();
+							iMoves += pLoopPlot->isValidRoute(pLoopUnit) ? 1 : 0;
+							int iDistance = std::max(std::abs(iDX), std::abs(iDY));
+							if (iDistance > iMoves)
+								continue; // can't make it. (maybe?)
+						}
+
 						iTotal += pLoopUnit->currEffectiveStr(pDefencePlot, NULL);
 					}
 				}
@@ -12074,7 +12088,7 @@ int CvPlayerAI::AI_localDefenceStrength(CvPlot* pDefencePlot, TeamTypes eDefence
 }
 
 // Total attack strength of units that can move iRange steps to reach pAttackPlot
-int CvPlayerAI::AI_localAttackStrength(CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType, int iRange) const
+int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType, int iRange, bool bUseTarget, bool bCheckCanAttack, bool bCheckMoves) const
 {
 	const int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // Note: currently this number is "10"
 
@@ -12099,11 +12113,30 @@ int CvPlayerAI::AI_localAttackStrength(CvPlot* pTargetPlot, TeamTypes eAttackTea
 				{
 					if (eDomainType == NO_DOMAIN || (pLoopUnit->getDomainType() == eDomainType))
 					{
-						iTotal += pLoopUnit->currEffectiveStr(pTargetPlot, pLoopUnit);
+						if (bCheckMoves)
+						{
+							// unfortunately, we can't use the global pathfinder here
+							// - because the calling function might be waiting to use some pathfinding results
+							// So this check will have to be really rough. :(
+							int iMoves = pLoopUnit->movesLeft() / GC.getMOVE_DENOMINATOR();
+							iMoves += pLoopPlot->isValidRoute(pLoopUnit) ? 1 : 0;
+							int iDistance = std::max(std::abs(iDX), std::abs(iDY));
+							if (iDistance > iMoves)
+								continue; // can't make it. (maybe?)
+						}
+						if (bCheckCanAttack)
+						{
+							if (pLoopUnit->isMadeAttack() && !pLoopUnit->isBlitz())
+							{
+								continue; // can't attack
+							}
+						}
+
+						iTotal += pLoopUnit->currEffectiveStr(bUseTarget ? pTargetPlot : NULL, bUseTarget ? pLoopUnit : NULL);
 
 						if (pLoopUnit->collateralDamage() > 0)
 						{
-							int iPossibleTargets = std::min(pTargetPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1, pLoopUnit->collateralDamageMaxUnits());
+							int iPossibleTargets = std::min(bUseTarget ? pTargetPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1 : INT_MAX, pLoopUnit->collateralDamageMaxUnits());
 
 							if (iPossibleTargets > 0)
 							{
@@ -19902,6 +19935,7 @@ int CvPlayerAI::AI_countDeadlockedBonuses(CvPlot* pPlot) const
     return iCount;
 }
 
+#if 0 // K-Mod disabled these functions.
 int CvPlayerAI::AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const
 {
 	PROFILE_FUNC();
@@ -20032,6 +20066,7 @@ int CvPlayerAI::AI_getEnemyPlotStrength(CvPlot* pPlot, int iRange, bool bDefensi
 	return iValue;
 	
 }
+#endif // K-Mod disabled these functions
 
 // K-Mod. This function use to be the bulk of AI_goldToUpgradeAllUnits()
 void CvPlayerAI::AI_updateGoldToUpgradeAllUnits()

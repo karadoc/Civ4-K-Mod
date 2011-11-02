@@ -8041,6 +8041,8 @@ void CvCityAI::AI_doDraft(bool bForce)
 {
 	PROFILE_FUNC();
 
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
 	FAssert(!isHuman());
 	if (isBarbarian())
 	{
@@ -8065,7 +8067,7 @@ void CvCityAI::AI_doDraft(bool bForce)
             bool bDanger = (!AI_isDefended() && AI_isDanger());
 
 			// Don't go broke from drafting
-			if( !bDanger && GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble() )
+			if( !bDanger && kOwner.AI_isFinancialTrouble() )
 			{
 				return;
 			}
@@ -8084,7 +8086,7 @@ void CvCityAI::AI_doDraft(bool bForce)
             {
                 bool bWait = true;
 
-				if( bWait && GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_TURTLE) )
+				if( bWait && kOwner.AI_isDoStrategy(AI_STRATEGY_TURTLE) )
 				{
 					// Full out defensive
 					/* original bts code
@@ -8106,10 +8108,16 @@ void CvCityAI::AI_doDraft(bool bForce)
 				if( bWait && bDanger )
 				{
 					// If city might be captured, don't hold back
+					/* BBAI code
 					int iOurDefense = GET_TEAM(getTeam()).AI_getOurPlotStrength(plot(),0,true,false,true);
 					int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(),2,false,false);
 
-					if( (iOurDefense == 0) || (3*iEnemyOffense > 2*iOurDefense) )
+					if( (iOurDefense == 0) || (3*iEnemyOffense > 2*iOurDefense) ) */
+					// K-Mod
+					int iOurDefense = kOwner.AI_localDefenceStrength(plot(), getTeam(), DOMAIN_LAND, 0);
+					int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2);
+					if (iOurDefense < iEnemyOffense)
+					// K-Mod end
 					{
 						bWait = false;
 					}
@@ -10949,13 +10957,12 @@ int CvCityAI::AI_cityValue() const
 
 bool CvCityAI::AI_doPanic()
 {
-	
 	bool bLandWar = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
 	
 	if (bLandWar)
 	{
-		int iOurDefense = GET_PLAYER(getOwnerINLINE()).AI_getOurPlotStrength(plot(), 0, true, false);
-		int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(), 2, false, false);
+		int iOurDefense = GET_PLAYER(getOwnerINLINE()).AI_localDefenceStrength(plot(), getTeam());
+		int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_localAttackStrength(plot(), NO_TEAM);
 		int iRatio = (100 * iEnemyOffense) / (std::max(1, iOurDefense));
 
 		if (iRatio > 100)

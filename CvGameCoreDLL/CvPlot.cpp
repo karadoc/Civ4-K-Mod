@@ -2652,6 +2652,7 @@ CvUnit* CvPlot::getBestDefender(PlayerTypes eOwner, PlayerTypes eAttackingPlayer
 }
 
 // returns a sum of the strength (adjusted by firepower) of all the units on a plot
+/* (disabled by K-Mod
 int CvPlot::AI_sumStrength(PlayerTypes eOwner, PlayerTypes eAttackingPlayer, DomainTypes eDomainType, bool bDefensiveBonuses, bool bTestAtWar, bool bTestPotentialEnemy) const
 {
 	CLLNode<IDInfo>* pUnitNode;
@@ -2707,7 +2708,7 @@ int CvPlot::AI_sumStrength(PlayerTypes eOwner, PlayerTypes eAttackingPlayer, Dom
 	}
 
 	return strSum;
-}
+} */
 
 
 CvUnit* CvPlot::getSelectedUnit() const
