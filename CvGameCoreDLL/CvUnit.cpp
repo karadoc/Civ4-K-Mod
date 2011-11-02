@@ -4554,10 +4554,10 @@ bool CvUnit::airBomb(int iX, int iY)
 
 	pPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 
-	if (!isEnemy(pPlot->getTeam()))
+	/* if (!isEnemy(pPlot->getTeam()))
 	{
 		getGroup()->groupDeclareWar(pPlot, true);
-	}
+	} */ // Disabled by K-Mod
 
 	if (!isEnemy(pPlot->getTeam()))
 	{
@@ -4712,10 +4712,10 @@ bool CvUnit::bombard()
 	FAssertMsg(pBombardCity != NULL, "BombardCity is not assigned a valid value");
 
 	CvPlot* pTargetPlot = pBombardCity->plot();
-	if (!isEnemy(pTargetPlot->getTeam()))
+	/* if (!isEnemy(pTargetPlot->getTeam()))
 	{
 		getGroup()->groupDeclareWar(pTargetPlot, true);
-	}
+	} */ // Disabled by K-Mod
 
 	if (!isEnemy(pTargetPlot->getTeam()))
 	{

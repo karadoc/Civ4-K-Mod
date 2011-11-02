@@ -109,7 +109,7 @@ public:
 
 	RouteTypes getBestBuildRoute(CvPlot* pPlot, BuildTypes* peBestBuild = NULL) const;	// Exposed to Python
 
-	bool groupDeclareWar(CvPlot* pPlot, bool bForce = false);
+	//bool groupDeclareWar(CvPlot* pPlot, bool bForce = false); // disabled by K-Mod
 	bool groupAttack(int iX, int iY, int iFlags, bool& bFailedAlreadyFighting);
 	void groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUnit = NULL, bool bEndMove = false);
 	bool groupPathTo(int iX, int iY, int iFlags);

@@ -3473,6 +3473,7 @@ RouteTypes CvSelectionGroup::getBestBuildRoute(CvPlot* pPlot, BuildTypes* peBest
 
 
 // Returns true if group was bumped...
+/* original bts code. disabled by K-Mod
 bool CvSelectionGroup::groupDeclareWar(CvPlot* pPlot, bool bForce)
 {
 	CvTeamAI& kTeam = GET_TEAM(getTeam());
@@ -3499,7 +3500,7 @@ bool CvSelectionGroup::groupDeclareWar(CvPlot* pPlot, bool bForce)
 	}
 
 	return (iNumUnits != getNumUnits());
-}
+} */
 
 
 // Returns true if attack was made...
@@ -3537,33 +3538,25 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 
 				if (pBestAttackUnit)
 				{
-					// if there are no defenders, do not attack
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Lead From Behind                                                                             */
-/************************************************************************************************/
-// From Lead From Behind by UncutDragon
-					// original
-					//CvUnit* pBestDefender = pDestPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), pBestAttackUnit, true);
-					//if (NULL == pBestDefender)
-					//{
-					//	return false;
-					//}
-					// modified
-
 					// K-Mod, bugfix. This needs to happen before hadDefender, since hasDefender tests for war..
 					// (note: this check is no longer going to be important at all once my new AI DOW code is complete.)
-					if (groupDeclareWar(pDestPlot))
+					/*if (groupDeclareWar(pDestPlot))
 					{
 						return true;
-					}
+					}*/
 					// K-Mod end
+
+					// if there are no defenders, do not attack
+					/* original
+					CvUnit* pBestDefender = pDestPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), pBestAttackUnit, true);
+					if (NULL == pBestDefender)
+					{
+						return false;
+					} */
+					// Lead From Behind by UncutDragon
 					if (!pDestPlot->hasDefender(false, NO_PLAYER, getOwnerINLINE(), pBestAttackUnit, true))
 						return false;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+					//
 
 					bool bNoBlitz = (!pBestAttackUnit->isBlitz() || !pBestAttackUnit->isMadeAttack());
 
@@ -3744,6 +3737,7 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 		}
 	}
 	
+	/* original bts code
 	bool bForce = false;
 	MissionAITypes eMissionAI = AI_getMissionAIType();
 	if (eMissionAI == MISSIONAI_BLOCKADE || eMissionAI == MISSIONAI_PILLAGE)
@@ -3754,7 +3748,7 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	if (groupDeclareWar(pPathPlot, bForce))
 	{
 		return false;
-	}
+	} */ // Disabled by K-Mod. AI war decisions have no business being here.
 
 	bool bEndMove = false;
 	if(pPathPlot == pDestPlot)
