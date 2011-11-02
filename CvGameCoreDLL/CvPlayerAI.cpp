@@ -12037,6 +12037,90 @@ int CvPlayerAI::AI_plotTargetMissionAIs(CvPlot* pPlot, MissionAITypes* aeMission
 	return iCount;
 }
 
+// K-Mod
+
+// Total defensive strength of units that can move iRange steps to reach pDefencePlot
+int CvPlayerAI::AI_localDefenceStrength(CvPlot* pDefencePlot, TeamTypes eDefenceTeam, DomainTypes eDomainType, int iRange) const
+{
+	int	iTotal = 0;
+
+	for (int iDX = -iRange; iDX <= iRange; iDX++)
+	{
+		for (int iDY = -iRange; iDY <= iRange; iDY++)
+		{
+			CvPlot* pLoopPlot = plotXY(pDefencePlot->getX_INLINE(), pDefencePlot->getY_INLINE(), iDX, iDY);
+			if (pLoopPlot == NULL || !pLoopPlot->isVisible(getTeam(), false))
+				continue;
+
+			CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
+
+			while (pUnitNode != NULL)
+			{
+				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+				pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+
+				if (pLoopUnit->getTeam() == eDefenceTeam || (eDefenceTeam == NO_TEAM && isPotentialEnemy(getTeam(), pLoopUnit->getTeam())))
+				{
+					if (eDomainType == NO_DOMAIN || (pLoopUnit->getDomainType() == eDomainType))
+					{
+						iTotal += pLoopUnit->currEffectiveStr(pDefencePlot, NULL);
+					}
+				}
+			}
+		}
+	}
+
+	return iTotal;
+}
+
+// Total attack strength of units that can move iRange steps to reach pAttackPlot
+int CvPlayerAI::AI_localAttackStrength(CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType, int iRange) const
+{
+	const int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // Note: currently this number is "10"
+
+	int	iTotal = 0;
+
+	for (int iDX = -iRange; iDX <= iRange; iDX++)
+	{
+		for (int iDY = -iRange; iDY <= iRange; iDY++)
+		{
+			CvPlot* pLoopPlot = plotXY(pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE(), iDX, iDY);
+			if (pLoopPlot == NULL || !pLoopPlot->isVisible(getTeam(), false))
+				continue;
+
+			CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
+
+			while (pUnitNode != NULL)
+			{
+				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+				pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+
+				if (pLoopUnit->getTeam() == eAttackTeam	|| (eAttackTeam == NO_TEAM && atWar(getTeam(), pLoopUnit->getTeam())))
+				{
+					if (eDomainType == NO_DOMAIN || (pLoopUnit->getDomainType() == eDomainType))
+					{
+						iTotal += pLoopUnit->currEffectiveStr(pTargetPlot, pLoopUnit);
+
+						if (pLoopUnit->collateralDamage() > 0)
+						{
+							int iPossibleTargets = std::min(pTargetPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1, pLoopUnit->collateralDamageMaxUnits());
+
+							if (iPossibleTargets > 0)
+							{
+								// collateral damage is not trivial to calculate. This estimate is pretty rough.
+								iTotal += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return iTotal;
+}
+// K-Mod end
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/03/10                                jdog5000      */
 /*                                                                                              */

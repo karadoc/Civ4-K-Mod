@@ -193,6 +193,7 @@ protected:
 /************************************************************************************************/
 	bool AI_rangeAttack(int iRange);
 	bool AI_leaveAttack(int iRange, int iThreshold, int iStrengthThreshold);
+	bool AI_defensiveCollateral(int iThreshold, int iSearchRange); // K-Mod
 	bool AI_blockade();
 	bool AI_pirateBlockade();
 	bool AI_seaBombardRange(int iMaxRange);

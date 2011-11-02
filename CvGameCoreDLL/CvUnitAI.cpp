@@ -15865,27 +15865,26 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 	FAssert(canMove());
 
 	iSearchRange = iRange;
-	
+
 	iBestValue = 0;
 	pBestPlot = NULL;
-	
-	
+
 	pCity = plot()->getPlotCity();
-	
+
 	if ((pCity != NULL) && (pCity->getOwnerINLINE() == getOwnerINLINE()))
 	{
 		int iOurStrength = GET_PLAYER(getOwnerINLINE()).AI_getOurPlotStrength(plot(), 0, false, false);
-    	int iEnemyStrength = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(), 2, false, false);
+		int iEnemyStrength = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(), 2, false, false);
 		if (iEnemyStrength > 0)
 		{
-    		if (((iOurStrength * 100) / iEnemyStrength) < iStrengthThreshold)
-    		{
-    			return false;    		    		
-    		}
-    		if (plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE()) <= getGroup()->getNumUnits())
-    		{
-    			return false;    		
-    		}
+			if (((iOurStrength * 100) / iEnemyStrength) < iStrengthThreshold)
+			{
+				return false;
+			}
+			if (plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE()) <= getGroup()->getNumUnits())
+			{
+				return false;
+			}
 		}
 	}
 
@@ -15943,8 +15942,83 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 	}
 
 	return false;
-	
 }
+
+// K-Mod. Defend nearest city against invading attack stacks.
+bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
+{
+	PROFILE_FUNC();
+	FAssert(collateralDamage() > 0);
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	CvPlot* pDefencePlot = plot()->isCity(false, getTeam()) ? plot() : NULL;
+
+	for (int iDX = -iSearchRange; iDX <= iSearchRange; iDX++)
+	{
+		for (int iDY = -iSearchRange; iDY <= iSearchRange; iDY++)
+		{
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+
+			if (pLoopPlot && pLoopPlot->isCity(false, getTeam()) && kOwner.AI_getAnyPlotDanger(pLoopPlot))
+			{
+				pDefencePlot = pLoopPlot;
+				break;
+			}
+		}
+	}
+
+	if (pDefencePlot == NULL)
+		return false;
+
+	int iEnemyAttack = kOwner.AI_localAttackStrength(pDefencePlot, NO_TEAM, getDomainType(), iSearchRange);
+	int iOurDefence = kOwner.AI_localDefenceStrength(pDefencePlot, getTeam(), getDomainType(), 0);
+	bool bDanger = iEnemyAttack > iOurDefence;
+
+	CvPlot* pBestPlot = NULL;
+
+	for (int iDX = -iSearchRange; iDX <= iSearchRange; iDX++)
+	{
+		for (int iDY = -iSearchRange; iDY <= iSearchRange; iDY++)
+		{
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+			if (pLoopPlot && AI_plotValid(pLoopPlot) && !atPlot(pLoopPlot))
+			{
+				int iEnemies = pLoopPlot->getNumVisibleEnemyDefenders(this);
+				int iPathTurns;
+				if (iEnemies > 0 && generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= 1)
+				{
+					bool bValid = false;
+					int iValue = getGroup()->AI_attackOdds(pLoopPlot, false);
+
+					if (iValue > 0 && iEnemies >= std::min(4, collateralDamageMaxUnits()))
+					{
+						int iOurAttack = kOwner.AI_localAttackStrength(pLoopPlot, getTeam(), getDomainType(), iSearchRange);
+						int iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM, getDomainType(), 0);
+
+						iValue += std::max(0, 100 * (iOurAttack - (bDanger ? 1 : 2) * iEnemyDefence) / std::max(1, iOurAttack));
+					}
+
+					if (iValue > iThreshold)
+					{
+						iThreshold = iValue;
+						pBestPlot = getPathEndTurnPlot();
+					}
+				}
+			}
+		} // dy
+	} // dx
+
+	if (pBestPlot != NULL)
+	{
+		FAssert(!atPlot(pBestPlot));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		return true;
+	}
+
+	return false;
+}
+// K-Moe end
 
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_blockade()
