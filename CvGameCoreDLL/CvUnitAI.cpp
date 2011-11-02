@@ -6428,7 +6428,7 @@ void CvUnitAI::AI_attackSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4  || iOurDefense == 0) //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if (AI_anyAttack(2, 50))
 			{
@@ -6676,7 +6676,7 @@ void CvUnitAI::AI_reserveSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4  || iOurDefense == 0)  //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if (AI_anyAttack(2, 60))
 			{
@@ -6920,7 +6920,7 @@ void CvUnitAI::AI_escortSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4  || iOurDefense == 0)
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if (AI_anyAttack(1, 60))
 			{
@@ -7132,7 +7132,7 @@ void CvUnitAI::AI_exploreSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 )
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if (!isHuman())
 			{
@@ -7317,9 +7317,9 @@ void CvUnitAI::AI_assaultSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/8 || iOurDefense == 0 )
+		if (iEnemyOffense > iOurDefense/4  || iOurDefense == 0) // was 1 vs 1/8
 		{
-			if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 ) //prioritize getting outta there
+			if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 			{
 				if( !bEmpty )
 				{
@@ -7977,7 +7977,7 @@ void CvUnitAI::AI_settlerSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 ) //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if( bEmpty )
 			{
@@ -8359,7 +8359,7 @@ void CvUnitAI::AI_missionarySeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 ) //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			// Retreat to primary area first
 			if (AI_retreatToCity(true))
@@ -8469,7 +8469,7 @@ void CvUnitAI::AI_spySeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 ) //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			// Retreat to primary area first
 			if (AI_retreatToCity(true))
@@ -8583,7 +8583,7 @@ void CvUnitAI::AI_carrierSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 ) //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if (AI_retreatToCity(true))
 			{
@@ -8711,7 +8711,7 @@ void CvUnitAI::AI_missileCarrierSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if( iEnemyOffense > iOurDefense/4 || iOurDefense == 0 ) //prioritize getting outta there
+		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
 		{
 			if (AI_shadow(UNITAI_ASSAULT_SEA, 1, 50, false, true, getMoves()))
 			{
