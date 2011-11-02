@@ -1584,8 +1584,10 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode();
 		int iDefenceMod = 0;
 		int iDefenceCount = 0;
-		int iAttackMod = 0; // defence bonus for our attacking units left behind. - not attack bonus
+		int iFromDefenceMod = 0; // defence bonus for our attacking units left behind
+		int iAttackWeight = 0;
 		int iAttackCount = 0;
+		int iEnemies = pToPlot->getNumVisibleEnemyDefenders(pSelectionGroup->getHeadUnit());
 
 		while (pUnitNode != NULL)
 		{
@@ -1612,22 +1614,22 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 				{
 					if (pLoopUnit->canAttack())
 					{
-						if (pToPlot->isVisibleEnemyDefender(pLoopUnit))
+						if (iEnemies > 0)
 						{
 							iAttackCount++;
-							iAttackMod += pLoopUnit->noDefensiveBonus() ? 0 : pFromPlot->defenseModifier(eTeam, false);
+							iFromDefenceMod += pLoopUnit->noDefensiveBonus() ? 0 : pFromPlot->defenseModifier(eTeam, false);
 
 							if (!pFromPlot->isCity())
 							{
-								iAttackMod -= PATH_CITY_WEIGHT;
-								// it's done this way around rather than adding when in a city so that the overall adjustment can't be negative.
+								iAttackWeight += PATH_CITY_WEIGHT;
+								// it's done this way around rather than subtracting when in a city so that the overall adjustment can't be negative.
 							}
 
 							if (pFromPlot->isRiverCrossing(directionXY(pFromPlot, pToPlot)))
 							{
 								if (!pLoopUnit->isRiver())
 								{
-									iAttackMod += PATH_RIVER_WEIGHT * GC.getRIVER_ATTACK_MODIFIER();
+									iAttackWeight -= PATH_RIVER_WEIGHT * GC.getRIVER_ATTACK_MODIFIER(); // Note, river modifier will be negative.
 									//iAttackMod -= (PATH_MOVEMENT_WEIGHT * iMovesLeft);
 								}
 							}
@@ -1637,12 +1639,25 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 			}
 		}
 		//
+		if (iAttackCount > 0)
+		{
+			// scale attack weights down if not all our units will need to fight.
+			iAttackWeight *= std::min(iAttackCount, iEnemies);
+			iAttackWeight /= iAttackCount;
+			iFromDefenceMod *= std::min(iAttackCount, iEnemies);
+			iFromDefenceMod /= iAttackCount;
+			iAttackCount = std::min(iAttackCount, iEnemies);
+		}
+		//
 		iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iDefenceCount*200 - iDefenceMod) / std::max(1, iDefenceCount));
-		iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iAttackCount*200 - iAttackMod) / std::max(1, iAttackCount));
+		iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iAttackCount*200 - iFromDefenceMod) / std::max(1, iAttackCount));
+		iWorstCost += std::max(0, iAttackWeight) / std::max(1, iAttackCount);
 		// if we're in enemy territory, consider the sum of our defensive bonuses as well as the average
 		if (pToPlot->isOwned() && atWar(pToPlot->getTeam(), eTeam))
 		{
 			iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iDefenceCount*200 - iDefenceMod)/5);
+			iWorstCost += PATH_DEFENSE_WEIGHT * std::max(0, (iAttackCount*200 - iFromDefenceMod)/5);
+			iWorstCost += std::max(0, iAttackWeight) / 5;
 		}
 
 		// additional cost for ending turn in or adjacent to enemy territory based on flags (based on BBAI)

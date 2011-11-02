@@ -1517,11 +1517,22 @@ void CvUnitAI::AI_settleMove()
 						CvPlot* pEndTurnPlot = getPathEndTurnPlot();
 						if (atPlot(pEndTurnPlot))
 						{
-							getGroup()->pushMission(MISSION_SKIP, 0, 0, 0, false, false, MISSIONAI_GROUP, pEndTurnPlot);
+							//getGroup()->pushMission(MISSION_SKIP, 0, 0, 0, false, false, MISSIONAI_GROUP, pEndTurnPlot);
+							pLoopSelectionGroup->mergeIntoGroup(getGroup());
+							FAssert(getGroup()->getNumUnits() > 1);
+							FAssert(getGroup()->getHeadUnitAI() == UNITAI_SETTLE);
 						}
 						else
 						{
-							getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_GROUP, pEndTurnPlot);
+							// if we were on our way to a site, keep the current mission plot.
+							if (getGroup()->AI_getMissionAIType() == MISSIONAI_FOUND && getGroup()->AI_getMissionAIPlot() != NULL)
+							{
+								getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_FOUND, getGroup()->AI_getMissionAIPlot());
+							}
+							else
+							{
+								getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_GROUP, 0, pLoopSelectionGroup->getHeadUnit());
+							}
 						}
 						return;
 					}
@@ -10861,6 +10872,7 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 	
 	if (pBestUnit != NULL)
 	{
+		/* original bts code
 		if (atPlot(pBestUnit->plot()))
 		{
 			joinGroup(pBestUnit->getGroup());
@@ -10870,7 +10882,18 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 		{
 			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 			return true;
+		} */
+		// K-Mod. If we reach the target this turn-slice, then group right away.
+		if (!atPlot(pBestUnit->plot()))
+		{
+			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 		}
+		if (atPlot(pBestUnit->plot()))
+		{
+			joinGroup(pBestUnit->getGroup());
+		}
+		return true;
+		// K-Mod end
 	}
 
 	return false;
@@ -10966,6 +10989,7 @@ bool CvUnitAI::AI_groupMergeRange(UnitAITypes eUnitAI, int iMaxRange, bool bBigg
 
 	if (pBestUnit != NULL)
 	{
+		/* original bts code
 		if (atPlot(pBestUnit->plot()))
 		{
 			pGroup->mergeIntoGroup(pBestUnit->getGroup()); 
@@ -10975,7 +10999,18 @@ bool CvUnitAI::AI_groupMergeRange(UnitAITypes eUnitAI, int iMaxRange, bool bBigg
 		{
 			pGroup->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 			return true;
+		} */
+		// K-Mod. If we reach the target this turn-slice, then group right away.
+		if (!atPlot(pBestUnit->plot()))
+		{
+			pGroup->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 		}
+		if (atPlot(pBestUnit->plot()))
+		{
+			pGroup->mergeIntoGroup(pBestUnit->getGroup());
+		}
+		return true;
+		// K-Mod end
 	}
 
 	return false;
