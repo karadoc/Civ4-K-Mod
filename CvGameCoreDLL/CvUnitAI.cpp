@@ -2429,7 +2429,8 @@ void CvUnitAI::AI_attackMove()
 			}
 		}
 
-		if ((kOwner.AI_getNumAIUnits(UNITAI_CITY_DEFENSE) > 0) || (GET_TEAM(getTeam()).getAtWarCount(true) > 0))
+		//if ((kOwner.AI_getNumAIUnits(UNITAI_CITY_DEFENSE) > 0) || (GET_TEAM(getTeam()).getAtWarCount(true) > 0))
+		if (!plot()->isCity() || plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE()) > 0) // K-Mod
 		{
 			// BBAI TODO: If we're fast, maybe shadow an attack city stack and pillage off of it
 
@@ -2950,6 +2951,16 @@ void CvUnitAI::AI_attackCityMove()
 				// If in danger, seek defensive ground
 				if( 4*iOurOffense < 3*iEnemyOffense )
 				{
+					// K-Mod
+					if (iAttackRatio/2 > iComparePostBombard && 2*iEnemyOffense/3 > kOwner.AI_localDefenceStrength(plot(), getTeam()))
+					{
+						// we don't have anywhere near enough attack power, and we are in serious danger.
+						// unfortunately, if we are "bReadyToAttack", we'll probably end up coming straight back here...
+						if (!bReadyToAttack && AI_retreatToCity())
+							return;
+					}
+					// K-Mod end
+
 					if( AI_choke(1, true) )
 					{
 						return;
@@ -3118,7 +3129,8 @@ void CvUnitAI::AI_attackCityMove()
 			
 			if( (iJoiners*5) > getGroup()->getNumUnits() )
 			{
-				getGroup()->pushMission(MISSION_SKIP);
+				//getGroup()->pushMission(MISSION_SKIP);
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GROUP); // K-Mod (just for debug feedback)
 				return;
 			}
 		}
@@ -3249,43 +3261,7 @@ void CvUnitAI::AI_attackCityMove()
 				}
 			}
 
-			/* original BBAI code
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 5, pTargetCity))
-			{
-				return;
-			}
-
-			if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, 2, 2))
-			{
-				return;
-			}
-
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 8, pTargetCity))
-			{
-				return;
-			}
-
-			// Load stack if walking will take a long time
-			if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, 4, 3))
-			{
-				return;
-			}
-
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 12, pTargetCity))
-			{
-				return;
-			}
-
-			if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, 4, 7))
-			{
-				return;
-			}
-
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
-			{
-				return;
-			} */
-			// K-Mod. I reckon I can do the same thing, but in a simplier & faster way.
+			// K-Mod. (original bloated code deleted)
 			// Estimate the number of turns required.
 			int iPathTurns;
 			if (!generatePath(pTargetCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, true, &iPathTurns))
@@ -3293,31 +3269,34 @@ void CvUnitAI::AI_attackCityMove()
 				FAssertMsg(false, "failed to find path to target city.");
 				iPathTurns = 100;
 			}
-			// See if we can get there faster by boat..
-			if (iPathTurns > 5)// && !pTargetCity->isBarbarian())
+			if (!pTargetCity->isBarbarian() || iPathTurns < (bAnyWarPlan ? 7 : 12)) // don't bother with long-distance barb attacks
 			{
-				int iLoadTurns = std::min(4, iPathTurns/2 - 1);
-				int iTransportTurns = iPathTurns - iLoadTurns - 2;
-
-				if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, iLoadTurns, iTransportTurns))
-					return;
-			}
-			// We have to walk.
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
-			{
-				return;
-			}
-			// K-Mod end
-
-			if (bAnyWarPlan)
-			{
-				CvCity* pTargetCity = area()->getTargetCity(getOwnerINLINE());
-
-				if (pTargetCity != NULL)
+				// See if we can get there faster by boat..
+				if (iPathTurns > 5)// && !pTargetCity->isBarbarian())
 				{
-					if (AI_solveBlockageProblem(pTargetCity->plot(), (GET_TEAM(getTeam()).getAtWarCount(true) == 0)))
-					{
+					int iLoadTurns = std::min(4, iPathTurns/2 - 1);
+					int iTransportTurns = iPathTurns - iLoadTurns - 2;
+
+					if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, iLoadTurns, iTransportTurns))
 						return;
+				}
+				// We have to walk.
+				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
+				{
+					return;
+				}
+				// K-Mod end
+
+				if (bAnyWarPlan)
+				{
+					CvCity* pTargetCity = area()->getTargetCity(getOwnerINLINE());
+
+					if (pTargetCity != NULL)
+					{
+						if (AI_solveBlockageProblem(pTargetCity->plot(), (GET_TEAM(getTeam()).getAtWarCount(true) == 0)))
+						{
+							return;
+						}
 					}
 				}
 			}
@@ -3478,7 +3457,7 @@ void CvUnitAI::AI_collateralMove()
 	PROFILE_FUNC();
 
 	// K-Mod!
-	if (AI_defensiveCollateral(50, 2))
+	if (AI_defensiveCollateral(55, 2))
 		return;
 	// K-Mod end
 	
@@ -7867,10 +7846,11 @@ void CvUnitAI::AI_assaultSeaMove()
 	if ((bFull || bReinforce) && !bAttack)
 	{
 		// Group with nearby transports with units on board
-		if (AI_group(UNITAI_ASSAULT_SEA, -1, /*iMaxOwnUnitAI*/ -1, -1, true, false, false, 2, false, true, false, MISSIONAI_ASSAULT))
+		/* original code
+		if (AI_group(UNITAI_ASSAULT_SEA, -1, -1, -1, true, false, false, 2, false, true, false, MISSIONAI_ASSAULT))
 		{
 			return;
-		}
+		} */ // disabled by K-Mod. This is redundant.
 
 		if (AI_group(UNITAI_ASSAULT_SEA, -1, -1, -1, true, false, false, 10, false, true, false, MISSIONAI_ASSAULT))
 		{
@@ -10788,7 +10768,8 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 		CvPlot* pPlot = pLoopUnit->plot();
 		if (AI_plotValid(pPlot))
 		{
-			if (iMaxPath > 0 || pPlot == plot())
+			//if (iMaxPath > 0 || pPlot == plot())
+			if ((iMaxPath > 0 || pPlot == plot()) && (getDomainType() != DOMAIN_LAND || canMoveAllTerrain() || pPlot->area() == area())) // K-Mod
 			{
 				if (!isEnemy(pPlot->getTeam()))
 				{
@@ -10840,13 +10821,14 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 																	iValue /= pLoopGroup->getNumUnits();
 																	*/
 																	// K-Mod
-																	int iCost = 100 * iPathTurns * iPathTurns + 1;
+																	int iCost = 100 * (iPathTurns * iPathTurns + 1);
 																	iCost *= 4 + pLoopGroup->getCargo();
-																	iCost /= pLoopGroup->getNumUnits();
-																	int iSizeMod = 10*std::max(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
+																	iCost /= 2 + pLoopGroup->getNumUnits();
+																	/*int iSizeMod = 10*std::max(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
 																	iSizeMod /= std::min(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
 																	iCost *= iSizeMod * iSizeMod;
-																	iCost /= 10000;
+																	iCost /= 1000; */
+																	// K-Mod end
 
 																	if (iCost < iBestValue)
 																	{
@@ -10886,6 +10868,8 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 		// K-Mod. If we reach the target this turn-slice, then group right away.
 		if (!atPlot(pBestUnit->plot()))
 		{
+			//if (getGroup()->getNumUnits() > 1)
+			//	joinGroup(NULL); // the other units won't be joining anyway. Might as well leave them behind.
 			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 		}
 		if (atPlot(pBestUnit->plot()))
@@ -16063,7 +16047,7 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 						int iOurAttack = kOwner.AI_localAttackStrength(pLoopPlot, getTeam(), getDomainType(), iSearchRange, true, true);
 						int iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM, getDomainType(), 0);
 
-						iValue += std::max(0, 100 * (3 * iOurAttack - (bDanger ? 2 : 7) * iEnemyDefence) / std::max(1, 3 * iOurAttack));
+						iValue += std::max(0, (2 * iOurAttack - (bDanger ? 1 : 3) * iEnemyDefence) / std::max(1, 2 * iOurAttack));
 					}
 
 					if (iValue > iThreshold)
@@ -24096,9 +24080,16 @@ int CvUnitAI::AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold)
 }
 
 
-int CvUnitAI::AI_stackOfDoomExtra()
+int CvUnitAI::AI_stackOfDoomExtra() const
 {
-	return ((AI_getBirthmark() % (1 + GET_PLAYER(getOwnerINLINE()).getCurrentEra())) + 4);
+	//return ((AI_getBirthmark() % (1 + GET_PLAYER(getOwnerINLINE()).getCurrentEra())) + 4);
+	// K-Mod
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+	int iMilitaryFlavour = GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getFlavorValue(0);
+	int iEra = kOwner.getCurrentEra();
+	// 4 base. then rand between 0 and ... (1 or 2 + iEra + flavour * era ratio)
+	return AI_getBirthmark() % ((kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH) ? 2 : 1) + iEra + (iEra+1)*iMilitaryFlavour/std::max(1, GC.getNumEraInfos())) + 4;
+	// K-Mod end
 }
 
 // This function has been significantly modified for K-Mod

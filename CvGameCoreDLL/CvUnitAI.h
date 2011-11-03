@@ -312,7 +312,7 @@ protected:
 
 	int AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold);
 
-	int AI_stackOfDoomExtra();
+	int AI_stackOfDoomExtra() const;
 
 	//bool AI_stackAttackCity(int iRange, int iPowerThreshold, bool bFollow = true);
 	bool AI_stackAttackCity(int iPowerThreshold); // K-Mod. used for adjacent cities only.

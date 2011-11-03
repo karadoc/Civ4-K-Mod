@@ -1380,6 +1380,8 @@ void CvPlayerAI::AI_unitUpdate()
 	//CLinkList<int> finalGroupCycle;
 	//int iValue;
 
+	FAssert(m_groupCycle.getLength() == m_selectionGroups.getCount());
+
 	if (!hasBusyUnit())
 	{
 		pCurrUnitNode = headGroupCycleNode();
@@ -1492,7 +1494,6 @@ void CvPlayerAI::AI_unitUpdate()
 				CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
 				if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
 				{
-					FAssert(pLoopSelectionGroup && pLoopSelectionGroup->getNumUnits() > 0);
 					break;
 				}
 			}
