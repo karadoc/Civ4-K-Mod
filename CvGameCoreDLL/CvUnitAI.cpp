@@ -11730,8 +11730,12 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 					{
 						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 						{
-							// BBAI TODO: Multiple defenders for higher value resources?
-							if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_GUARD_BONUS, getGroup()) == 0)
+							//if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_GUARD_BONUS, getGroup()) == 0)
+							// K-Mod
+							iValue *= 2;
+							iValue /= 2 + GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_GUARD_BONUS, getGroup());
+							if (iValue > iMinValue)
+							// K-Mod end
 							{
 								if (generatePath(pLoopPlot, 0, true, &iPathTurns))
 								{

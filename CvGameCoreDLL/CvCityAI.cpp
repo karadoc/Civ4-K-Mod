@@ -11991,37 +11991,40 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 /************************************************************************************************/
 	PROFILE_FUNC();
 	int iValue = 0;
-	bool bCrushStrategy = GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_CRUSH);
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
+	bool bCrushStrategy = kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH);
 
 	for (int iI = 0; iI < MAX_PLAYERS; iI++)
 	{
-		if ((iI != getOwner()) && GET_PLAYER((PlayerTypes)iI).isAlive())
+		const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI); // K-Mod
+		//if ((iI != getOwner()) && GET_PLAYER((PlayerTypes)iI).isAlive())
+		if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() != getTeam()) // K-Mod
 		{
 			int iTempValue = AI_playerCloseness((PlayerTypes)iI, DEFAULT_PLAYER_CLOSENESS);
 			if (iTempValue > 0)
 			{
-				if ((bCrushStrategy) && (GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER((PlayerTypes)iI).getTeam()) != NO_WARPLAN))
+				if (bCrushStrategy && GET_TEAM(getTeam()).AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
 				{
 					iTempValue *= 400;						
 				}
-				else if (atWar(getTeam(), GET_PLAYER((PlayerTypes)iI).getTeam()))
+				else if (atWar(getTeam(), kLoopPlayer.getTeam()))
 				{
 					iTempValue *= 300;
 				}
 				// Beef up border security before starting war, but not too much
-				else if ( GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER((PlayerTypes)iI).getTeam()) != NO_WARPLAN )
+				else if ( GET_TEAM(getTeam()).AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN )
 				{
 					iTempValue *= 180;
 				}
 				// Extra trust of/for Vassals, regardless of relations
-				else if ( GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isVassal(getTeam()) ||
-							GET_TEAM(getTeam()).isVassal(GET_PLAYER((PlayerTypes)iI).getTeam()))
+				else if ( GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()) ||
+							GET_TEAM(getTeam()).isVassal(kLoopPlayer.getTeam()))
 				{
 					iTempValue *= 30;
 				}
 				else
 				{
-					switch (GET_PLAYER(getOwnerINLINE()).AI_getAttitude((PlayerTypes)iI))
+					switch (kOwner.AI_getAttitude((PlayerTypes)iI))
 					{
 					case ATTITUDE_FURIOUS:
 						iTempValue *= 180;
@@ -12048,32 +12051,23 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 						break;
 					}
 
-					// Beef up border security next to powerful rival
-					if( GET_PLAYER((PlayerTypes)iI).getPower() > GET_PLAYER(getOwnerINLINE()).getPower() )
-					{
-						iTempValue *= std::min( 400, (100 * GET_PLAYER((PlayerTypes)iI).getPower())/std::max(1, GET_PLAYER(getOwnerINLINE()).getPower()) );
-						iTempValue /= 100;
-					}
-
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       01/04/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* orginal bts code
-					if (bCrushStrategy)
-					{
-						iValue /= 2;
-					}
-*/
 					if (bCrushStrategy)
 					{
 						iTempValue /= 2;
 					}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 				}
+
+				// Beef up border security next to powerful rival. (K-Mod moved this from the block above)
+				if( kLoopPlayer.getPower() > kOwner.getPower() )
+				{
+					//iTempValue *= std::min( 400, (100 * GET_PLAYER((PlayerTypes)iI).getPower())/std::max(1, GET_PLAYER(getOwnerINLINE()).getPower()) );
+					// K-Mod. Use exclude population power.
+					int iLoopPower = kLoopPlayer.getPower() - getPopulationPower(kLoopPlayer.getTotalPopulation());
+					int iOurPower = kOwner.getPower() - getPopulationPower(kOwner.getTotalPopulation());
+					iTempValue *= range(100 * iLoopPower/std::max(1, iOurPower), 100, 400); // K-Mod
+					iTempValue /= 100;
+				}
+
 				iTempValue /= 100;
 				iValue += iTempValue;
 			}
@@ -12082,13 +12076,13 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 	
 	if (isCoastal(GC.getMIN_WATER_SIZE_FOR_OCEAN()))
 	{
-		int iCurrentEra = GET_PLAYER(getOwnerINLINE()).getCurrentEra();
+		int iCurrentEra = kOwner.getCurrentEra();
 		iValue += std::max(0, ((10 * iCurrentEra) / 3) - 6); //there are better ways to do this
 	}
 	
 	iValue += getNumActiveWorldWonders() * 5;
 
-	if (GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
+	if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
 	{
 		iValue += 5;
 		iValue += getCommerceRateModifier(COMMERCE_CULTURE) / 20;
@@ -12102,7 +12096,7 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 		}
 	}
 	
-	iValue += 2 * GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 3, false);
+	iValue += 2 * kOwner.AI_getPlotDanger(plot(), 3, false);
 	
 	return iValue;
 /************************************************************************************************/

@@ -14358,11 +14358,6 @@ void CvPlayerAI::AI_doCommerce()
 
 	if (isCommerceFlexible(COMMERCE_ESPIONAGE))
 	{
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						9/6/08				jdog5000	    */
-/* 																			    */
-/* 	Espionage AI															    */
-/********************************************************************************/
 		/* original BTS code
 		if (getCommercePercent(COMMERCE_ESPIONAGE) > 0)
 		{
@@ -14374,24 +14369,15 @@ void CvPlayerAI::AI_doCommerce()
 			}
 
 			bReset = true;
-		}
-		*/
-		
-		// Reset espionage spending always
-		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
-		{
-			setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, 0);
-		}
-
+		} */
+		//
 		if (getCommercePercent(COMMERCE_ESPIONAGE) > 0)
 		{
 			setCommercePercent(COMMERCE_ESPIONAGE, 0);
 
 			bReset = true;
 		}
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								    */
-/********************************************************************************/
+		//
 	}
 
 	if (bReset)
@@ -14535,7 +14521,7 @@ void CvPlayerAI::AI_doCommerce()
 		}
 		*/
 
-		// K-Mod, partially based on the changes made by BETTER_BTS_AI_MOD
+	// K-Mod, partially based on the changes made by BETTER_BTS_AI_MOD
 	if (isCommerceFlexible(COMMERCE_ESPIONAGE))
 	{
 		int iEspionageTargetRate = 0;
@@ -14805,6 +14791,7 @@ void CvPlayerAI::AI_doCommerce()
 			//while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < 20)
 			// K-Mod
 			int iCap = (bCheapTechSteal? 60 :20);
+			iCap += AI_avoidScience() ? 40 : 0;
 
 			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
 			{
@@ -14830,6 +14817,22 @@ void CvPlayerAI::AI_doCommerce()
 			}
 		}
 	}
+	// K-Mod. prevent the AI from stockpiling excessive amounts of gold while in avoidScience.
+	if (AI_avoidScience())
+	{
+		while (getCommercePercent(COMMERCE_GOLD) > 0 && getGold() + std::min(0, calculateGoldRate()) > iGoldTarget)
+		{
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) && isCommerceFlexible(COMMERCE_CULTURE))
+				changeCommercePercent(COMMERCE_CULTURE, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+			else if (isCommerceFlexible(COMMERCE_ESPIONAGE))
+				changeCommercePercent(COMMERCE_ESPIONAGE, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+			else if (isCommerceFlexible(COMMERCE_RESEARCH)) // better than nothing...
+				changeCommercePercent(COMMERCE_RESEARCH, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+			else
+				break;
+		}
+	}
+	// K-Mod end
 	
 	if (!bFirstTech && (getGold() < iGoldTarget) && (getCommercePercent(COMMERCE_RESEARCH) > 40))
 	{
@@ -20543,9 +20546,16 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 	
 	iCurrentEra = std::max(0, iCurrentEra - GC.getGame().getStartEra() / 2);
 	
+	/* original bts code
 	iDefenders = 1 + ((iCurrentEra + ((GC.getGameINLINE().getMaxCityElimination() > 0) ? 3 : 2)) * iAreaCities);
 	iDefenders /= 3;
-	iDefenders += pArea->getPopulationPerPlayer(getID()) / 7;
+	iDefenders += pArea->getPopulationPerPlayer(getID()) / 7; */
+	// K-Mod
+	iDefenders = 1 + iAreaCities + AI_totalAreaUnitAIs(pArea, UNITAI_SETTLE);
+	iDefenders += 3 * pArea->getPopulationPerPlayer(getID()) / 7;
+	iDefenders *= iCurrentEra + (GC.getGameINLINE().getMaxCityElimination() > 0 ? 3 : 2);
+	iDefenders /= 3;
+	// K-Mod end
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/01/10                                jdog5000      */
@@ -20665,8 +20675,6 @@ int CvPlayerAI::AI_getTotalFloatingDefenders(CvArea* pArea) const
 	iCount += std::max(0, (AI_totalAreaUnitAIs(pArea, UNITAI_CITY_DEFENSE) - (pArea->getCitiesPerPlayer(getID()) * 2)));
 	iCount += AI_totalAreaUnitAIs(pArea, UNITAI_CITY_COUNTER);
 	iCount += AI_totalAreaUnitAIs(pArea, UNITAI_CITY_SPECIAL);
-	// BBAI TODO: Defense air?  Is this outdated?
-	//iCount += AI_totalAreaUnitAIs(pArea, UNITAI_DEFENSE_AIR); // K-Mod commented this out.
 	return iCount;
 }
 
