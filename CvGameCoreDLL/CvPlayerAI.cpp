@@ -2598,6 +2598,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 	bFinancial = false;
 	bDefensive = false;
 	bSeafaring = false;
+	bExpansive = false;
 	bAllSeeing = bStartingLoc || kPlayer.isBarbarian();
 
 	if (!bStartingLoc)
@@ -2717,6 +2718,9 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 		}
 	}
 
+	if (GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getFlavorValue(FLAVOR_GROWTH) > 0)
+		bExpansive = true;
+
 	if (kPlayer.getAdvancedStartPoints() >= 0)
 	{
 		iGreed = 200; // overruling previous value;
@@ -2727,6 +2731,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 		// don't use personality based traits for human players.
 		bAmbitious = false;
 		bDefensive = false;
+		bExpansive = false;
 	}
 
     iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
@@ -3665,9 +3670,10 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 				iValue -= (4 - iDistance) * 2000;
 			} */
 			// K-Mod. (close cities and penalised in other ways)
-			if (iDistance > 5)
+			int iTargetRange = (kSet.bExpansive ? 6 : 5);
+			if (iDistance > iTargetRange)
 			{
-				iValue -= std::min(5, iDistance - 5) * 400; // with that max distance, we could fit a city in the middle!
+				iValue -= std::min(5, iDistance - iTargetRange) * 400; // with that max distance, we could fit a city in the middle!
 			}
 			// K-Mod end
 			iValue *= (8 + iNumCities * 4);
@@ -12071,7 +12077,7 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 							// unfortunately, we can't use the global pathfinder here
 							// - because the calling function might be waiting to use some pathfinding results
 							// So this check will have to be really rough. :(
-							int iMoves = pLoopUnit->movesLeft() / GC.getMOVE_DENOMINATOR();
+							int iMoves = pLoopUnit->baseMoves();
 							iMoves += pLoopPlot->isValidRoute(pLoopUnit) ? 1 : 0;
 							int iDistance = std::max(std::abs(iDX), std::abs(iDY));
 							if (iDistance > iMoves)
@@ -12089,7 +12095,7 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 }
 
 // Total attack strength of units that can move iRange steps to reach pAttackPlot
-int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType, int iRange, bool bUseTarget, bool bCheckCanAttack, bool bCheckMoves) const
+int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType, int iRange, bool bUseTarget, bool bCheckMoves, bool bCheckCanAttack) const
 {
 	const int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // Note: currently this number is "10"
 
@@ -12114,12 +12120,15 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 				{
 					if (eDomainType == NO_DOMAIN || (pLoopUnit->getDomainType() == eDomainType))
 					{
+						if (!pLoopUnit->canAttack()) // bCheckCanAttack means something else.
+							continue;
+
 						if (bCheckMoves)
 						{
 							// unfortunately, we can't use the global pathfinder here
 							// - because the calling function might be waiting to use some pathfinding results
 							// So this check will have to be really rough. :(
-							int iMoves = pLoopUnit->movesLeft() / GC.getMOVE_DENOMINATOR();
+							int iMoves = pLoopUnit->baseMoves();
 							iMoves += pLoopPlot->isValidRoute(pLoopUnit) ? 1 : 0;
 							int iDistance = std::max(std::abs(iDX), std::abs(iDY));
 							if (iDistance > iMoves)
@@ -12127,7 +12136,7 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 						}
 						if (bCheckCanAttack)
 						{
-							if (pLoopUnit->isMadeAttack() && !pLoopUnit->isBlitz())
+							if (!pLoopUnit->canMove() || (pLoopUnit->isMadeAttack() && !pLoopUnit->isBlitz()))
 							{
 								continue; // can't attack
 							}
@@ -13212,7 +13221,7 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 	int iSpreadPercent = (iBestCount * 100) / std::max(1, getNumCities());
 	int iPurityPercent = (iBestCount * 100) / std::max(1, countTotalHasReligion());
 	// K-Mod. Don't instantly convert to the first religion avaiable, unless it if your own religion.
-	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(1)
+	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(FLAVOR_RELIGION)
 		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
 	{
 		return NO_RELIGION;
@@ -13244,8 +13253,6 @@ int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 	if (getHasReligionCount(eReligion) == 0)
 		return 0;
 
-	//const FlavorTypes FLAVOR_RELIGION = (FlavorTypes)GC.getInfoTypeForString("FLAVOR_RELIGION");
-	const FlavorTypes FLAVOR_RELIGION = (FlavorTypes)1; // I don't know how to get this number from the xml. Sorry.
 	int iReligionFlavor = GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(FLAVOR_RELIGION);
 
 	int iLoop;
@@ -18808,14 +18815,6 @@ void CvPlayerAI::AI_forceUpdateStrategies()
 // K-mod. The body of this function use to be inside "AI_getStrategyHash"
 void CvPlayerAI::AI_updateStrategyHash()
 {
-    const FlavorTypes AI_FLAVOR_MILITARY = (FlavorTypes)0;
-	const FlavorTypes AI_FLAVOR_RELIGION = (FlavorTypes)1;
-    const FlavorTypes AI_FLAVOR_PRODUCTION = (FlavorTypes)2;
-    const FlavorTypes AI_FLAVOR_GOLD = (FlavorTypes)3;
-    const FlavorTypes AI_FLAVOR_SCIENCE = (FlavorTypes)4;
-    const FlavorTypes AI_FLAVOR_CULTURE = (FlavorTypes)5;
-    const FlavorTypes AI_FLAVOR_GROWTH = (FlavorTypes)6;
-
 	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod. (and replaced all through this function)
 
     UnitTypes eLoopUnit;
@@ -18824,7 +18823,7 @@ void CvPlayerAI::AI_updateStrategyHash()
     
     m_iStrategyHash = AI_DEFAULT_STRATEGY;
     
-	if (AI_getFlavorValue(AI_FLAVOR_PRODUCTION) >= 2) // 0, 2, 5 or 10 in default xml [augustus 5, frederick 10, huayna 2, jc 2, chinese leader 2, qin 5, ramsess 2, roosevelt 5, stalin 2]
+	if (AI_getFlavorValue(FLAVOR_PRODUCTION) >= 2) // 0, 2, 5 or 10 in default xml [augustus 5, frederick 10, huayna 2, jc 2, chinese leader 2, qin 5, ramsess 2, roosevelt 5, stalin 2]
 	{
 		m_iStrategyHash |= AI_STRATEGY_PRODUCTION;
 	}
@@ -19035,9 +19034,9 @@ void CvPlayerAI::AI_updateStrategyHash()
             {
                 int iMissionary = 0;
                 //Missionary
-                iMissionary += AI_getFlavorValue(AI_FLAVOR_GROWTH) * 2; // up to 10
-                iMissionary += AI_getFlavorValue(AI_FLAVOR_CULTURE) * 4; // up to 40
-                iMissionary += AI_getFlavorValue(AI_FLAVOR_RELIGION) * 6; // up to 60
+                iMissionary += AI_getFlavorValue(FLAVOR_GROWTH) * 2; // up to 10
+                iMissionary += AI_getFlavorValue(FLAVOR_CULTURE) * 4; // up to 40
+                iMissionary += AI_getFlavorValue(FLAVOR_RELIGION) * 6; // up to 60
                 
                 CivicTypes eCivic = (CivicTypes)GC.getLeaderHeadInfo(getPersonalityType()).getFavoriteCivic();
                 if ((eCivic != NO_CIVIC) && (GC.getCivicInfo(eCivic).isNoNonStateReligionSpread()))
@@ -19384,7 +19383,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	    iDagger += 12000 / std::max(100, (50 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand()));
 	    iDagger *= (AI_getStrategyRand(12) % 11);
 	    iDagger /= 10;
-	    iDagger += 5 * std::min(8, AI_getFlavorValue(AI_FLAVOR_MILITARY));
+	    iDagger += 5 * std::min(8, AI_getFlavorValue(FLAVOR_MILITARY));
 	    
         for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
         {
@@ -19526,7 +19525,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		// A leader dependant value. (MaxWarRand is roughly between 50 and 200. Gandi is 400.)
 		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
 	// On second thought, lets try this
-		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(AI_FLAVOR_MILITARY)/2);
+		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(FLAVOR_MILITARY)/2);
 		iCrushValue += std::min(0, kTeam.AI_getWarSuccessCapitulationRatio()/15);
 		// note: flavor military is between 0 and 10
 		// K-Mod end

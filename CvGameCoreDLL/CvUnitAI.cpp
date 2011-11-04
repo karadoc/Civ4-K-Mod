@@ -15923,7 +15923,7 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 		/*int iOurStrength = GET_PLAYER(getOwnerINLINE()).AI_getOurPlotStrength(plot(), 0, false, false);
 		int iEnemyStrength = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(), 2, false, false);*/
 		// K-Mod
-		int iOurStrength = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 0, false, true);
+		int iOurStrength = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 0, false, false, true);
 		int iEnemyStrength = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2);
 		// K-Mod end
 		if (iEnemyStrength > 0)
@@ -24085,7 +24085,7 @@ int CvUnitAI::AI_stackOfDoomExtra() const
 	//return ((AI_getBirthmark() % (1 + GET_PLAYER(getOwnerINLINE()).getCurrentEra())) + 4);
 	// K-Mod
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
-	int iMilitaryFlavour = GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getFlavorValue(0);
+	int iMilitaryFlavour = GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getFlavorValue(FLAVOR_MILITARY);
 	int iEra = kOwner.getCurrentEra();
 	// 4 base. then rand between 0 and ... (1 or 2 + iEra + flavour * era ratio)
 	return AI_getBirthmark() % ((kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH) ? 2 : 1) + iEra + (iEra+1)*iMilitaryFlavour/std::max(1, GC.getNumEraInfos())) + 4;

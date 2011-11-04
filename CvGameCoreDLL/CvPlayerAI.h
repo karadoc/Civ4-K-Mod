@@ -88,6 +88,7 @@ public:
 		bool bFinancial; // more value for rivers
 		bool bDefensive; // more value for settlings on hills
 		bool bSeafaring; // special affection for coast cities due to unique building or unit.
+		bool bExpansive; // willing to place cities further apart. (not based on the expansive trait)
 		bool bAllSeeing; // doesn't need vision of a plot to know what's there.
 	};
 	short AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const;
@@ -227,7 +228,7 @@ public:
 	int AI_wakePlotTargetMissionAIs(CvPlot* pPlot, MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup = NULL) const;
 // K-Mod
 	int AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eDefenceTeam, DomainTypes eDomainType = DOMAIN_LAND, int iRange = 0, bool bCheckMoves = false) const;
-	int AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType = DOMAIN_LAND, int iRange = 2, bool bUseTarget = true, bool bCheckCanAttack = false, bool bCheckMoves = false) const;
+	int AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType = DOMAIN_LAND, int iRange = 2, bool bUseTarget = true, bool bCheckMoves = false, bool bCheckCanAttack = false) const;
 	int AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const;
 // K-Mod end
 // BBAI

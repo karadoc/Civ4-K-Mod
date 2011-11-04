@@ -705,7 +705,16 @@ enum AdvisorTypes						// Exposed to Python
 
 enum FlavorTypes						// Exposed to Python
 {
-	NO_FLAVOR = -1
+	NO_FLAVOR = -1,
+	// K-Mod. These are the current flavors defined in GlobalTypes.xml
+    FLAVOR_MILITARY,
+	FLAVOR_RELIGION,
+    FLAVOR_PRODUCTION,
+    FLAVOR_GOLD,
+    FLAVOR_SCIENCE,
+    FLAVOR_CULTURE,
+    FLAVOR_GROWTH,
+	// K-Mod end
 };
 
 enum EmphasizeTypes					// Exposed to Python
