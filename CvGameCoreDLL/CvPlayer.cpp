@@ -22624,6 +22624,26 @@ void CvPlayer::updateTradeList(PlayerTypes eOtherPlayer, CLinkList<TradeData>& o
 	}
 }
 
+// K-Mod. Find each item from the offer list in the inventory list - mark it as m_bOffering == true.
+// (This is usually done somewhere in the game engine, or when the offer list is being generated or something.)
+void CvPlayer::markTradeOffers(CLinkList<TradeData>& ourInventory, const CLinkList<TradeData>& ourOffer) const
+{
+	for (CLLNode<TradeData>* pOfferNode = ourOffer.head(); pOfferNode != NULL; pOfferNode = ourOffer.next(pOfferNode))
+	{
+		for (CLLNode<TradeData>* pInvNode = ourInventory.head(); pInvNode != NULL; pInvNode = ourInventory.next(pInvNode))
+		{
+			if (pInvNode->m_data.m_eItemType == pOfferNode->m_data.m_eItemType &&
+				pInvNode->m_data.m_iData == pOfferNode->m_data.m_iData)
+			{
+				pInvNode->m_data.m_bOffering = pOfferNode->m_data.m_bOffering = true;
+				break;
+			}
+		}
+		FAssertMsg(pInvNode, "failed to find offered item in inventory");
+	}
+}
+// K-Mod end
+
 int CvPlayer::getIntroMusicScriptId(PlayerTypes eForPlayer) const
 {
 	CvPlayer& kForPlayer = GET_PLAYER(eForPlayer);

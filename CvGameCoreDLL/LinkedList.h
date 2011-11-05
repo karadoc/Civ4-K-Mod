@@ -46,6 +46,8 @@ public:
 	virtual ~CLinkList();
 
 	void clear();
+	void swap(CLinkList<tVARTYPE>& list); // K-Mod
+	void concatenate(CLinkList<tVARTYPE>& list); // K-Mod
 
 	void insertAtBeginning(const tVARTYPE& val);
 	void insertAtEnd(const tVARTYPE& val);
@@ -127,6 +129,43 @@ inline void CLinkList<tVARTYPE>::clear()
 	m_pTail = NULL;
 }
 
+// K-Mod. (I wish they had just used the STL...)
+// swap the contents of two lists
+template <class tVARTYPE>
+inline void CLinkList<tVARTYPE>::swap(CLinkList<tVARTYPE>& list)
+{
+	std::swap(m_pHead, list.m_pHead);
+	std::swap(m_pTail, list.m_pTail);
+	std::swap(m_iLength, list.m_iLength);
+}
+
+// move the contents from the argument list onto the end of this list
+template <class tVARTYPE>
+inline void CLinkList<tVARTYPE>::concatenate(CLinkList<tVARTYPE>& list)
+{
+	if (list.m_pHead == NULL)
+		return;
+
+	if (m_pTail)
+	{
+		m_pTail->m_pNext = list.m_pHead;
+		list.m_pHead->m_pPrev = m_pTail;
+	}
+	else
+	{
+		assert(m_pHead == NULL && m_iLength == 0);
+		m_pHead = list.m_pHead;
+	}
+	assert(list.m_pTail != NULL);
+	m_pTail = list.m_pTail;
+	m_iLength += list.m_iLength;
+
+	list.m_iLength = 0;
+	list.m_pHead = 0;
+	list.m_pTail = 0;
+}
+
+// K-Mod end
 
 //inserts at the tail of the list
 template <class tVARTYPE>
