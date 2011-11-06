@@ -173,6 +173,7 @@ public:
 	bool AI_goldDeal(const CLinkList<TradeData>* pList) const;
 	bool AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData>* pTheirList, const CLinkList<TradeData>* pOurList, int iChange = 1) const;
 	bool AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeData>* pTheirList, const CLinkList<TradeData>* pOurList, CLinkList<TradeData>* pTheirInventory, CLinkList<TradeData>* pOurInventory, CLinkList<TradeData>* pTheirCounter, CLinkList<TradeData>* pOurCounter) const;
+	int AI_tradeAcceptabilityThreshold(PlayerTypes eTrader) const; // K-Mod
 
 	DllExport int AI_maxGoldTrade(PlayerTypes ePlayer) const;
 

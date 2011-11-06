@@ -9177,7 +9177,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	
 	if (GET_PLAYER(ePlayer).isHuman())
 	{
-		// AI counting a human proposal
+		// AI counting a human proposal:
 		// no not compromise the AI's value, and don't even consider the human's value.
 		bDeal = iValueForUs >= iValueForThem;
 		FAssert(!isHuman());
@@ -9186,21 +9186,49 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	{
 		if (isHuman())
 		{
-			// human civ auto-negotiating an AI proposal before it is put to the player for confirmation
+			// Human civ auto-negotiating an AI proposal before it is put to the player for confirmation:
 			// let the AI show a little bit of leniency
 			// don't bother putting it to the player if it is really bad value
-			bDeal = 4*iValueForUs > iValueForThem && 6*iValueForThem > 5*iValueForUs;
+			bDeal = 4*iValueForUs >= iValueForThem
+				&& 100*iValueForThem >= GET_PLAYER(ePlayer).AI_tradeAcceptabilityThreshold(getID())*iValueForUs;
 		}
 		else
 		{
-			// negotiations between two AIs.
-			bDeal = 3*iValueForUs > 2*iValueForThem && 3*iValueForThem > 2*iValueForUs;
+			// Negotiations between two AIs:
+			bDeal = 100*iValueForUs >= AI_tradeAcceptabilityThreshold(ePlayer)*iValueForThem
+				&& 100*iValueForThem >= GET_PLAYER(ePlayer).AI_tradeAcceptabilityThreshold(getID())*iValueForUs;
+
 		}
 	}
 	return bDeal;
 	// K-Mod end
 }
 
+// K-Mod. Minimum percentage of trade value that this player will accept.
+// ie. Accept trades if 100 * value_for_us >= residual * value_for_them .
+int CvPlayerAI::AI_tradeAcceptabilityThreshold(PlayerTypes eTrader) const
+{
+	if (isHuman())
+		return 75;
+
+	int iDiscount = 25;
+	iDiscount += 10 * AI_getAttitudeWeight(eTrader) / 100;
+	// This puts us between 15 (furious) and 35 (friendly)
+	// in some later version, I might make this personality based.
+
+	// adjust for team rank.
+	int iRankDelta = GC.getGameINLINE().getTeamRank(GET_PLAYER(eTrader).getTeam()) - GC.getGameINLINE().getTeamRank(getTeam());
+	iDiscount += 5 * iRankDelta / std::max(6, GC.getGameINLINE().countCivTeamsAlive());
+
+	if (GET_PLAYER(eTrader).isHuman())
+	{
+		// note. humans get no discount for trades that they propose.
+		// The discount here only applies to deals that the AI offers to the human.
+		iDiscount /= 2;
+	}
+	return 100 - iDiscount;
+}
+// K-Mod end
 
 int CvPlayerAI::AI_maxGoldTrade(PlayerTypes ePlayer) const
 {
@@ -14373,11 +14401,15 @@ void CvPlayerAI::AI_doCommerce()
 				int iResearchTurnsLeft = getResearchTurnsLeft(eCurrentResearch, true);
 				
 				// if we can finish the current research without running out of gold, let us spend 2/3rds of our gold 
-				//if (getGold() >= iResearchTurnsLeft * iGoldRate)
-				if (getGold() >= iResearchTurnsLeft * -iGoldRate) // K-Mod
+				/* original bts code
+				if (getGold() >= iResearchTurnsLeft * iGoldRate)
 				{
 					iGoldTarget /= 3;
-				}
+				} */
+				// K-Mod
+				if (getGold() >= iResearchTurnsLeft * -iGoldRate)
+					iGoldTarget /= 4;
+				// K-Mod end
 			}
 		}
 	}
@@ -16159,7 +16191,8 @@ void CvPlayerAI::AI_doDiplo()
 
 												if (eBestReceiveTech != NO_TECH)
 												{
-													iBestValue = 0;
+													//iBestValue = 0;
+													iBestValue = INT_MAX; // K-Mod
 													eBestGiveTech = NO_TECH;
 
 													for (iJ = 0; iJ < GC.getNumTechInfos(); iJ++)
@@ -16168,9 +16201,15 @@ void CvPlayerAI::AI_doDiplo()
 
 														if (canTradeItem(((PlayerTypes)iI), item, true))
 														{
+															/* original bts code
 															iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "AI Tech Trading #2"));
 
-															if (iValue > iBestValue)
+															if (iValue > iBestValue) */
+															// K-Mod
+															iValue = std::abs(GET_TEAM(getTeam()).AI_techTradeVal(eBestReceiveTech, GET_PLAYER((PlayerTypes)iI).getTeam())
+																- GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).AI_techTradeVal((TechTypes)iJ, getTeam()));
+															if (iValue < iBestValue) // aim to trade values as close as possible
+															// K-Mod end
 															{
 																iBestValue = iValue;
 																eBestGiveTech = ((TechTypes)iJ);
@@ -16262,9 +16301,11 @@ void CvPlayerAI::AI_doDiplo()
 														theirList.insertAtEnd(item);
 													} */
 													// K-Mod
-													bool bDeal = GET_PLAYER((PlayerTypes)iI).isHuman()
+													/* bool bDeal = GET_PLAYER((PlayerTypes)iI).isHuman()
 														? 6*iOurValue > 5*iTheirValue && 3*iTheirValue > 2*iOurValue
-														: 3*iOurValue > 2*iTheirValue && 3*iTheirValue > 2*iOurValue;
+														: 3*iOurValue > 2*iTheirValue && 3*iTheirValue > 2*iOurValue; */
+													bool bDeal = 100*iOurValue >= AI_tradeAcceptabilityThreshold((PlayerTypes)iI)*iTheirValue
+														&& 100*iTheirValue >= GET_PLAYER((PlayerTypes)iI).AI_tradeAcceptabilityThreshold(getID())*iOurValue;
 													if (!bDeal)
 													{
 														PROFILE("AI_doDiplo self-counter-propose");
@@ -16280,7 +16321,8 @@ void CvPlayerAI::AI_doDiplo()
 														GET_PLAYER((PlayerTypes)iI).markTradeOffers(theirInventory, theirList);
 														GET_PLAYER((PlayerTypes)iI).updateTradeList(getID(), theirInventory, theirList, ourList);
 
-
+														// Note: AI_counterPropose tends to favour the caller, which in this case is the other player.
+														// ie. we asked for the trade, but they set the final terms. (unless the original deal is accepted)
 														if (GET_PLAYER((PlayerTypes)iI).AI_counterPropose(getID(), &ourList, &theirList, &ourInventory, &theirInventory, &ourCounter, &theirCounter))
 														{
 															ourList.concatenate(ourCounter);

@@ -324,7 +324,7 @@
 		<EspionageMissionInfo>
 			<Type>ESPIONAGEMISSION_STEAL_TREASURY</Type>
 			<Description>TXT_KEY_ESPIONAGE_STEAL_TREASURY</Description>
-			<iCost>300</iCost>
+			<iCost>400</iCost>
 			<bIsPassive>0</bIsPassive>
 			<bIsTwoPhases>0</bIsTwoPhases>
 			<bTargetsCity>1</bTargetsCity>
