@@ -16191,9 +16191,14 @@ void CvPlayerAI::AI_doDiplo()
 
 												if (eBestReceiveTech != NO_TECH)
 												{
+													// K-Mod
+													iOurValue = GET_TEAM(getTeam()).AI_techTradeVal(eBestReceiveTech, GET_PLAYER((PlayerTypes)iI).getTeam());
+													iTheirValue = 0;
+													int iBestDelta = iOurValue;
+													// K-Mod end
 													//iBestValue = 0;
-													iBestValue = INT_MAX; // K-Mod
 													eBestGiveTech = NO_TECH;
+
 
 													for (iJ = 0; iJ < GC.getNumTechInfos(); iJ++)
 													{
@@ -16204,19 +16209,25 @@ void CvPlayerAI::AI_doDiplo()
 															/* original bts code
 															iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "AI Tech Trading #2"));
 
-															if (iValue > iBestValue) */
-															// K-Mod
-															iValue = std::abs(GET_TEAM(getTeam()).AI_techTradeVal(eBestReceiveTech, GET_PLAYER((PlayerTypes)iI).getTeam())
-																- GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).AI_techTradeVal((TechTypes)iJ, getTeam()));
-															if (iValue < iBestValue) // aim to trade values as close as possible
-															// K-Mod end
+															if (iValue > iBestValue)
 															{
 																iBestValue = iValue;
 																eBestGiveTech = ((TechTypes)iJ);
+															} */
+															// K-Mod
+															iValue = GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).AI_techTradeVal((TechTypes)iJ, getTeam());
+															int iDelta = std::abs(iOurValue - (90 + GC.getGameINLINE().getSorenRandNum(21, "AI Tech Trading #2"))*iValue / 100);
+															if (iDelta < iBestDelta) // aim to trade values as close as possible
+															{
+																iBestDelta = iDelta;
+																iTheirValue = iValue;
+																eBestGiveTech = ((TechTypes)iJ);
 															}
+															// K-Mod end
 														}
 													}
 
+													/* original bts code. (moved)
 													iOurValue = GET_TEAM(getTeam()).AI_techTradeVal(eBestReceiveTech, GET_PLAYER((PlayerTypes)iI).getTeam());
 													if (eBestGiveTech != NO_TECH)
 													{
@@ -16225,7 +16236,7 @@ void CvPlayerAI::AI_doDiplo()
 													else
 													{
 														iTheirValue = 0;
-													}
+													}*/
 
 													/* original bts code
 													iReceiveGold = 0;
