@@ -4654,17 +4654,11 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 		iGold += (GC.getGameINLINE().getElapsedGameTurns() / 2);*/
 		// K-mod. Does slower research mean we need to keep more gold? Does slower building?
 		// Surely the raw turn count is the one that needs to be adjusted for speed!
-		int iEra = getCurrentEra();
 		int iStockPile = 3*std::min(8, getNumCities()) + std::min(120, getTotalPopulation())/3;
-		iStockPile += 10 + 5*AI_getFlavorValue(FLAVOR_GOLD);
-		if (GC.getNumEraInfos() > 1)
-		{
-			iStockPile *= GC.getNumEraInfos()-1 + 2*iEra;
-			iStockPile /= GC.getNumEraInfos()-1;
-			iStockPile *= 8 + AI_getFlavorValue(FLAVOR_GOLD);
-			iStockPile /= 8;
-			// note: currently the highest flavor_gold is 5.
-		}
+		iGold += 100*GC.getGameINLINE().getElapsedGameTurns() / (2*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent());
+		iStockPile *= 8 + AI_getFlavorValue(FLAVOR_GOLD);
+		iStockPile /= 8;
+		// note: currently the highest flavor_gold is 5.
 		iGold += iStockPile;
 		// K-Mod end
 
@@ -14401,6 +14395,10 @@ void CvPlayerAI::AI_doCommerce()
 	int iTargetTurns = 4 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
 	iTargetTurns /= 100;
 	iTargetTurns = std::max(3, iTargetTurns);
+	// K-Mod make it slightly faster on the way down
+	if (getGold() > iGoldTarget)
+		iTargetTurns = (2*iTargetTurns + 2)/3;
+	// K-Mod end
 
     if (isCommerceFlexible(COMMERCE_RESEARCH) && !AI_avoidScience())
 	{
