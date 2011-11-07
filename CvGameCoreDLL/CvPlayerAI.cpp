@@ -14395,9 +14395,9 @@ void CvPlayerAI::AI_doCommerce()
 	int iTargetTurns = 4 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
 	iTargetTurns /= 100;
 	iTargetTurns = std::max(3, iTargetTurns);
-	// K-Mod make it slightly faster on the way down
+	// K-Mod. make it faster on the way down
 	if (getGold() > iGoldTarget)
-		iTargetTurns = (2*iTargetTurns + 2)/3;
+		iTargetTurns = (iTargetTurns + 1)/2;
 	// K-Mod end
 
     if (isCommerceFlexible(COMMERCE_RESEARCH) && !AI_avoidScience())
@@ -14422,7 +14422,7 @@ void CvPlayerAI::AI_doCommerce()
 				} */
 				// K-Mod (what is the gold being stockpile for if not this?)
 				if (getGold() >= iResearchTurnsLeft * -iGoldRate)
-					iGoldTarget /= 6;
+					iGoldTarget /= 5;
 				// K-Mod end
 			}
 		}
@@ -16353,7 +16353,7 @@ void CvPlayerAI::AI_doDiplo()
 															ourList.concatenate(ourCounter);
 															theirList.concatenate(theirCounter);
 															bDeal = true;
-															if (gTeamLogLevel >= 2) logBBAI("    %S makes a deal with %S using AI_counterPropose", getName(0), GET_PLAYER((PlayerTypes)iI).getName(0));
+															if (gTeamLogLevel >= 2) logBBAI("    %S makes a deal with %S using AI_counterPropose. (%d : %d)", getName(0), GET_PLAYER((PlayerTypes)iI).getName(0), ourList.getLength(), theirList.getLength());
 														}
 													}
 													if (bDeal)
