@@ -16353,6 +16353,9 @@ void CvPlayerAI::AI_doDiplo()
 															ourList.concatenate(ourCounter);
 															theirList.concatenate(theirCounter);
 															bDeal = true;
+															// K-Mod note: the following log call will miss the second name if it is a non-standard name (for example, a human player name).
+															// This is a problem in the way the getName function is implimented. Unfortunately, the heart of the problem is in the signature of
+															// some of the dllexport functions - and so it can't easily be fixed.
 															if (gTeamLogLevel >= 2) logBBAI("    %S makes a deal with %S using AI_counterPropose. (%d : %d)", getName(0), GET_PLAYER((PlayerTypes)iI).getName(0), ourList.getLength(), theirList.getLength());
 														}
 													}

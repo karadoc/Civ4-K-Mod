@@ -1464,7 +1464,6 @@ void CvSelectionGroup::startMission()
 						if (pLoopUnit->espionage((EspionageMissionTypes)headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2))
 						{
 							bAction = true;
-							pLoopUnit->getGroup()->AI_setMissionAI(NO_MISSIONAI, 0, 0); // K-Mod: mission accomplished.
 						}
 						pUnitNode = NULL; // allow one unit at a time to do espionage
 						break;

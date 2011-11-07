@@ -751,8 +751,11 @@ void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bD
 {
 	PROFILE_FUNC(); // I'm just hoping that the python call doesn't hurt the respose times
 	// Only rapid-cycle when not doing auto-play.
+	// Also note, cycleSelectionGroups currently causes a crash if the game is not initialised.
+	// (and this function is indirectly called during the set of up a new game - so we currently need that init check.)
 	PlayerTypes eActive = getActivePlayer();
-	if (eActive != NO_PLAYER && GET_PLAYER(eActive).isHuman() &&
+	if (GC.getGameINLINE().isFinalInitialized() &&
+		eActive != NO_PLAYER && GET_PLAYER(eActive).isHuman() &&
 		getBugOptionBOOL("MainInterface__RapidUnitCycling", false, "RAPID_UNIT_CYCLING"))
 	{
 		if (!bDelayOnly)
