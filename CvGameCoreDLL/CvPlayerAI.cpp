@@ -2718,7 +2718,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 		}
 	}
 
-	if (GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getFlavorValue(FLAVOR_GROWTH) > 0)
+	if (kPlayer.AI_getFlavorValue(FLAVOR_GROWTH) > 0)
 		bExpansive = true;
 
 	if (kPlayer.getAdvancedStartPoints() >= 0)
@@ -4611,7 +4611,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 
 	if (!bAnyWar)
 	{
-		iUpgradeBudget /= AI_isFinancialTrouble() ? 10 : 3;
+		iUpgradeBudget /= AI_isFinancialTrouble() ? 10 : 4;
 	}
 	else
 	{
@@ -4642,6 +4642,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 /* UNOFFICIAL_PATCH                        END                                                  */
 /************************************************************************************************/
 	{
+		/* original bts code
 		int iMultiplier = 0;
 		iMultiplier += GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
 		iMultiplier += GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
@@ -4650,10 +4651,25 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 
 		iGold += ((getNumCities() * 3) + (getTotalPopulation() / 3));
 
-		iGold += (GC.getGameINLINE().getElapsedGameTurns() / 2);
+		iGold += (GC.getGameINLINE().getElapsedGameTurns() / 2);*/
+		// K-mod. Does slower research mean we need to keep more gold? Does slower building?
+		// Surely the raw turn count is the one that needs to be adjusted for speed!
+		int iEra = getCurrentEra();
+		int iStockPile = 3*std::min(8, getNumCities()) + std::min(120, getTotalPopulation())/3;
+		iStockPile += 10 + 5*AI_getFlavorValue(FLAVOR_GOLD);
+		if (GC.getNumEraInfos() > 1)
+		{
+			iStockPile *= GC.getNumEraInfos()-1 + 2*iEra;
+			iStockPile /= GC.getNumEraInfos()-1;
+			iStockPile *= 8 + AI_getFlavorValue(FLAVOR_GOLD);
+			iStockPile /= 8;
+			// note: currently the highest flavor_gold is 5.
+		}
+		iGold += iStockPile;
+		// K-Mod end
 
-		iGold *= iMultiplier;
-		iGold /= 100;
+		/*iGold *= iMultiplier;
+		iGold /= 100;*/
 
 		/* original bts code
 		if (bAnyWar)
@@ -4664,7 +4680,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 
 		if (AI_avoidScience())
 		{
-			iGold *= 10;
+			iGold *= 3; // was 10
 		}
 
 		//iGold += (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2)); // obsolete (K-Mod)
@@ -13287,7 +13303,7 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 	int iSpreadPercent = (iBestCount * 100) / std::max(1, getNumCities());
 	int iPurityPercent = (iBestCount * 100) / std::max(1, countTotalHasReligion());
 	// K-Mod. Don't instantly convert to the first religion avaiable, unless it if your own religion.
-	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(FLAVOR_RELIGION)
+	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - AI_getFlavorValue(FLAVOR_RELIGION)
 		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
 	{
 		return NO_RELIGION;
@@ -13319,7 +13335,7 @@ int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 	if (getHasReligionCount(eReligion) == 0)
 		return 0;
 
-	int iReligionFlavor = GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(FLAVOR_RELIGION);
+	int iReligionFlavor = AI_getFlavorValue(FLAVOR_RELIGION);
 
 	int iLoop;
 	for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
@@ -14406,9 +14422,9 @@ void CvPlayerAI::AI_doCommerce()
 				{
 					iGoldTarget /= 3;
 				} */
-				// K-Mod
+				// K-Mod (what is the gold being stockpile for if not this?)
 				if (getGold() >= iResearchTurnsLeft * -iGoldRate)
-					iGoldTarget /= 4;
+					iGoldTarget /= 6;
 				// K-Mod end
 			}
 		}
