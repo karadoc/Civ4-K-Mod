@@ -3272,7 +3272,8 @@ EraTypes CvGame::getCurrentEra() const
 	iEra = 0;
 	iCount = 0;
 
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	//for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (iI = 0; iI < MAX_CIV_PLAYERS; iI++) // K-Mod (dont' count the barbarians)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).isAlive())
 		{

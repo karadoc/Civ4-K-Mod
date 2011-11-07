@@ -708,9 +708,9 @@ bool CvDeal::startTrade(TradeData trade, PlayerTypes eFromPlayer, PlayerTypes eT
 		// K-Mod only adjust tech_from_any memory if this is a tech from a recent era
 		// and the team receiving the tech isn't already more than 2/3 of the way through.
 		// (This is to prevent the AI from being crippled by human players selling them lots of tech scraps.)
-		// Note: the current game era is the average of all the player eras - including barbarians, rounded down.
+		// Note: the current game era is the average of all the player eras, rounded down. (It no longer includes barbs.)
 		bool bSignificantTech =
-			std::max(1, GC.getTechInfo((TechTypes)trade.m_iData).getEra()) >= GC.getGame().getCurrentEra() &&
+			GC.getTechInfo((TechTypes)trade.m_iData).getEra() >= GC.getGame().getCurrentEra()-1 &&
 			GET_TEAM(GET_PLAYER(eToPlayer).getTeam()).getResearchLeft((TechTypes)trade.m_iData) > GET_TEAM(GET_PLAYER(eToPlayer).getTeam()).getResearchCost((TechTypes)trade.m_iData) / 3;
 		// K-Mod end
 		GET_TEAM(GET_PLAYER(eToPlayer).getTeam()).setHasTech(((TechTypes)trade.m_iData), true, eToPlayer, true, true);
