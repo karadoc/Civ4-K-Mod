@@ -1,5 +1,39 @@
-This is K-Mod version 1.06.
+This is K-Mod version 1.07.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.07 changelist
+
++ Increased the cost of steal treasury espionage missions.
+
++ Fixed a bug which caused Civ4 to crash if the player started a game, exited back to the main menu, and then started a new game with Rapid Unit Cycling enabled.
++ The average game era no longer counts the barbarian's era. (This affects culture pressure, AI unit build probabilities, UI sound effects, and a few other things. Hopefully it isn't a big deal.)
++ Fixed some minor problems with how attack penalties are counted in the pathfinding cost function.
++ Put a city-info dirty flag into setCommercePercent. Hopefully this will fix a bug which sometimes causes city happiness to not update on the main screen.
+
++ Some AI personalities will now choose their city sites slightly further apart.
++ Made some adjustments to the AI's gold target. It should now scale a bit better on different game speeds; and it now affected by the AI's personality.
++ The AI will no longer create huge amounts of useless gold when doing AI_avoidScience.
++ The AI will now try to spend their excess money slightly faster.
+
++ The AI is now capable of arranging tech trades that involve multiple techs - both AI-to-AI, and AI-to-human.
++ Tech trade deals offered to human players can now sometimes include a small discount. (ie. If you try to renegotiate a deal, you might not get as good a deal as was originally offered - so it might now be worth considering the deal the AI offers you rather than going straight to the renegotiate button!)
++ The AI's willingness to accept uneven trades now depends on their attitude towards the trade partner, and their relative ranks. eg. The AI will allow itself to offer slightly larger discounts to its friends, and to civs who are low on the scoreboard. (Note. this doesn't affect trades that the human proposes to the AI. It only affects deals that the AI proposes.)
+
++ Adjusted the way the AI calculates threat to its cities.
++ City attack groups will sometimes retreat if they are too weak to threaten their target city.
++ The AI will now be less willing to walk massive distances to attack barbarian cities.
++ The AI will now be willing to defend high-value bonuses with put multiple units rather than just one. (This still needs some work.)
++ Adjusted the way the AI chooses which city to attack.
++ Taught the AI some new techniques for using collateral damage defensively.
++ Rewrote most of the AI's plot strength evaluation routines so that they are more consistent with one another. The main effects of this is that the AI will now consider collateral attack power in some places where it didn't use it; and it will not count the strength of units that it cannot see in some places where it use to (ie. it will now cheat slightly less than in the original BtS code).
++ Some AI personalities will now use slightly larger attack stacks.
++ Increased the number of floating defenders the AI thinks are required for the later era.
+
++ Fixed a bug which sometimes caused the AI's to just attack with one unit rather than the entire group.
++ Fixed an original BtS bug which often caused units to forget their mission AI type. (This caused general confusion in the AI - I suspect this was the real root cause of the settler bug I fixed several versions ago.)
++ Disabled the original BtS "groupDeclareWar" checks. The AI now must choose to declare war before moving their units - just like a human player does. (This will stop the AI from accidentally declaring war when it happens to move an explorer towards potential enemy territory!)
 
 --
 
