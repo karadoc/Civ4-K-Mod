@@ -1,5 +1,17 @@
-This is K-Mod version 1.07.
+This is K-Mod version 1.07b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.07b changelist
+
++ Victory votes now require a minimum number of "full members" rather than just "voting members". This means that the Apostolic Palace victory vote is only valid if there are at least 3 full members.
+
++ Fixed a problem which caused the AI to place its early cities closer together than intended.
++ Civs with the "ambitious" personality trait are now less conserned about the geographical shape of their empire when founding cities.
++ Tweaked the settler unit AI so that it is less discourged by distance when choosing which site to go to.
++ Made several changes to the way the AI chooses target cities to attack. In particular, it will now prefer to attack cities that are close to the area target; it will prefer to attack cities that aren't on hills; and (hopefully) it will be a bit less predictable, but still smart in its city selection.
++ Removed an unintended factor of 3 in the population component of the floating defender formula.
 
 --
 
