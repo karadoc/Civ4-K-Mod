@@ -3668,22 +3668,28 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			else if (iDistance < 4)
 			{
 				iValue -= (4 - iDistance) * 2000;
-			} */
-			// K-Mod. (close cities and penalised in other ways)
-			int iTargetRange = (kSet.bExpansive ? 6 : 5);
-			if (iDistance > iTargetRange)
-			{
-				iValue -= std::min(5, iDistance - iTargetRange) * 400; // with that max distance, we could fit a city in the middle!
 			}
-			// K-Mod end
 			iValue *= (8 + iNumCities * 4);
 			iValue /= (2 + (iNumCities * 4) + iDistance);
+
 			if (pNearestCity->isCapital())
 			{
 				iValue *= 150;
 				iValue /= 100;
 			}
-			else if (getCapitalCity() != NULL)
+			else if (getCapitalCity() != NULL) */
+			// K-Mod.
+			// Close cities are penalised in other ways
+			int iTargetRange = (kSet.bExpansive ? 6 : 5);
+			if (iDistance > iTargetRange)
+			{
+				iValue -= std::min(5, iDistance - iTargetRange) * 400; // with that max distance, we could fit a city in the middle!
+			}
+			iValue *= 8 + 4*iNumCities;
+			iValue /= 2 + 4*iNumCities + std::max(iTargetRange, iDistance);
+
+			if (!pNearestCity->isCapital() && getCapitalCity() != NULL)
+			// K-Mod end
 			{
 				//Provide up to a 50% boost to value (80% for adv.start)
 				//for city sites which are relatively close to the core
@@ -3707,8 +3713,14 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 				int iDistanceToCapital = plotDistance(iCapitalX, iCapitalY, iX, iY);
 				
 				FAssert(iMaxDistanceFromCapital > 0);
+				/* original bts code
 				iValue *= 100 + (((bAdvancedStart ? 80 : 50) * std::max(0, (iMaxDistanceFromCapital - iDistance))) / iMaxDistanceFromCapital);
-				iValue /= 100;
+				iValue /= 100; */
+				// K-Mod. just a touch of flavour
+				int iShapeWeight = bAdvancedStart ? 80 : (kSet.bAmbitious ? 30 : 50);
+				iValue *= 100 + iShapeWeight * std::max(0, (iMaxDistanceFromCapital - iDistance)) / iMaxDistanceFromCapital;
+				iValue /= 100 + iShapeWeight;
+				// K-Mod end
 			}
 		}
 	}
@@ -3895,9 +3907,6 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 /*                                                                                              */
 /* War strategy AI                                                                              */
 /************************************************************************************************/
-	// Prefer lower defense
-	iValue += std::max( 0, (100 - pCity->getDefenseModifier(false))/30 );
-	
 	if (pCity->getDefenseDamage() > 0)
 	{
 		iValue += ((pCity->getDefenseDamage() / 30) + 1);

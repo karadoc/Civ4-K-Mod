@@ -1337,8 +1337,7 @@ void CvUnitAI::AI_settleMove()
 					return;					
 				}
 			}
-			// K-Mod. If we are already heading to this site, then keep going!
-			// This change fixes a bug which prevented settlers from targetting the same site two turns in a row!
+			// K-Mod. If we are already heading to this site, then keep going.
 			else
 			{
 				CvPlot* pMissionPlot = getGroup()->AI_getMissionAIPlot();
@@ -1430,26 +1429,19 @@ void CvUnitAI::AI_settleMove()
 		}
 	}
 	
+	/* original bts code
 	if ((iAreaBestFoundValue > 0) && plot()->isBestAdjacentFound(getOwnerINLINE()))
 	{
 		if (canFound(plot()))
 		{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gUnitLogLevel >= 2 )
 			{
 				logBBAI("    Settler founding in place due to best adjacent found");
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			getGroup()->pushMission(MISSION_FOUND);
 			return;
 		}
-	}
+	} */ // disabled by K-Mod. We go to a lot of trouble to pick good city sites. Don't let this mess it up for us!
 
 	/* original bts code
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE) && !GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) && !getGroup()->canDefend())
@@ -1462,16 +1454,7 @@ void CvUnitAI::AI_settleMove()
 
 	if (plot()->isCity() && (plot()->getOwnerINLINE() == getOwnerINLINE()))
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-		//if ((GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot()) > 0) 
-		if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot())) 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot())
 			&& (GC.getGameINLINE().getMaxCityElimination() > 0))
 		{
 			if (getGroup()->getNumUnits() < 3)
@@ -15224,11 +15207,30 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									{
 										iValue = GET_PLAYER(getOwnerINLINE()).AI_targetCityValue(pLoopCity, true, true);
 									}
+									// K-Mod adjust value based on defence
+									{
+										int iMod = pLoopCity->getDefenseModifier(false)/2
+											+ (pLoopCity->plot()->isHills() ? GC.getHILLS_EXTRA_DEFENSE() : 0);
+										iValue *= std::max(100, 160 - iMod);
+										iValue /= 100;
+									}
+									// K-Mod end
 
-									if( pLoopCity == pTargetCity )
+									if (pLoopCity == pTargetCity)
 									{
 										iValue *= 2;
 									}
+									// K-Mod. prefer cities which are close to the main target.
+									else if (pTargetCity != NULL)
+									{
+										int iStepsFromTarget = stepDistance(
+											pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE(),
+											pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE());
+
+										iValue *= 124 - 2*std::min(12, iStepsFromTarget);
+										iValue /= 100;
+									}
+									// K-Mod end
 									
 									if ((area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE))
 									{
@@ -15236,7 +15238,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										iValue /= 50;
 									}
 
-									// K-Mod
+									// K-Mod. boost value if we can see that the city is poorly defended.
 									if (pLoopCity->isVisible(getTeam(), false) && iPathTurns < 6)
 									{
 										FAssert(iEnemyDefence != -1);
@@ -15263,7 +15265,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									{
 										int iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE());
 										iHash *= 2654435761; // golden ratio of 2^32;
-										iValue *= 85 + iHash % 31;
+										iValue *= 80 + iHash % 41;
 										iValue /= 100;
 									}
 									// K-Mod
@@ -15272,7 +15274,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									//iPathTurns += std::min(12, getGroup()->getBombardTurns(pLoopCity)/4);
 									iPathTurns += std::min(6, getGroup()->getBombardTurns(pLoopCity)/3); // K-Mod. That's 18 turns!
 
-									iValue /= (4 + iPathTurns*iPathTurns);
+									iValue /= 8 + iPathTurns*iPathTurns; // was 4+
 
 									if (iValue > iBestValue)
 									{
@@ -17024,7 +17026,8 @@ bool CvUnitAI::AI_found()
 							{
 								iValue = pCitySitePlot->getFoundValue(getOwnerINLINE());
 								iValue *= 1000;
-								iValue /= (iPathTurns + 1);
+								//iValue /= (iPathTurns + 1);
+								iValue /= iPathTurns + (getGroup()->canDefend() ? 5 : 1); // K-Mod
 								if (iValue > iBestFoundValue)
 								{
 									iBestFoundValue = iValue;
