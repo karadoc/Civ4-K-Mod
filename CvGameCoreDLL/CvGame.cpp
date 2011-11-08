@@ -4232,10 +4232,14 @@ bool CvGame::canDoResolution(VoteSourceTypes eVoteSource, const VoteSelectionSub
 {
 	if (GC.getVoteInfo(kData.eVote).isVictory())
 	{
+		int iVotesRequired = getVoteRequired(kData.eVote, eVoteSource); // K-Mod - for efficiency
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 		{
 			CvTeam& kTeam = GET_TEAM((TeamTypes)iTeam);
 
+			if (kTeam.getVotes(kData.eVote, eVoteSource) >= iVotesRequired) // K-Mod. same, but faster.
+				return false;
+			/* original bts code
 			if (kTeam.isVotingMember(eVoteSource))
 			{
 				if (kTeam.getVotes(kData.eVote, eVoteSource) >= getVoteRequired(kData.eVote, eVoteSource))
@@ -4243,7 +4247,7 @@ bool CvGame::canDoResolution(VoteSourceTypes eVoteSource, const VoteSelectionSub
 					// Can't vote on a winner if one team already has all the votes necessary to win
 					return false;
 				}
-			}
+			} */
 		}
 	}
 
@@ -4294,7 +4298,11 @@ bool CvGame::isValidVoteSelection(VoteSourceTypes eVoteSource, const VoteSelecti
 	int iNumVoters = 0;
 	for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 	{
-		if (GET_TEAM((TeamTypes)iTeam).isVotingMember(eVoteSource))
+		//if (GET_TEAM((TeamTypes)iTeam).isVotingMember(eVoteSource))
+		// K-Mod. to prevent "AP cheese", only count full members for victory votes.
+		if (GET_TEAM((TeamTypes)iTeam).isFullMember(eVoteSource) ||
+			(!GC.getVoteInfo(kData.eVote).isVictory() && GET_TEAM((TeamTypes)iTeam).isVotingMember(eVoteSource)))
+		// K-Mod end
 		{
 			++iNumVoters;
 		}
