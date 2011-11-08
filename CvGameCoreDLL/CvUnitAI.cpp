@@ -11724,7 +11724,7 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 								{
 									iValue *= 1000;
 
-									iValue /= (iPathTurns + 1);
+									iValue /= iPathTurns + 4; // was +1
 
 									if (iValue > iBestValue)
 									{
@@ -11930,10 +11930,11 @@ bool CvUnitAI::AI_guardCitySite()
 		pLoopPlot = GET_PLAYER(getOwnerINLINE()).AI_getCitySite(iI);
 		if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_GUARD_CITY, getGroup()) == 0)
 		{
-			if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+			// K-Mod. I've switched the order of the following two if statements, for efficiency.
+			iValue = pLoopPlot->getFoundValue(getOwnerINLINE());
+			if (iValue > iBestValue)
 			{
-				iValue = pLoopPlot->getFoundValue(getOwnerINLINE());
-				if (iValue > iBestValue)
+				if (generatePath(pLoopPlot, 0, true, &iPathTurns))
 				{
 					iBestValue = iValue;
 					pBestPlot = getPathEndTurnPlot();

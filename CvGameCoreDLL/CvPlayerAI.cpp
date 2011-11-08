@@ -20707,7 +20707,7 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 	iDefenders += pArea->getPopulationPerPlayer(getID()) / 7; */
 	// K-Mod
 	iDefenders = 1 + iAreaCities + AI_totalAreaUnitAIs(pArea, UNITAI_SETTLE);
-	iDefenders += 3 * pArea->getPopulationPerPlayer(getID()) / 7;
+	iDefenders += pArea->getPopulationPerPlayer(getID()) / 7;
 	iDefenders *= iCurrentEra + (GC.getGameINLINE().getMaxCityElimination() > 0 ? 3 : 2);
 	iDefenders /= 3;
 	// K-Mod end
