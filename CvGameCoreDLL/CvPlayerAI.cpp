@@ -3686,7 +3686,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 				iValue -= std::min(5, iDistance - iTargetRange) * 400; // with that max distance, we could fit a city in the middle!
 			}
 			iValue *= 8 + 4*iNumCities;
-			iValue /= 2 + 4*iNumCities + std::max(iTargetRange, iDistance);
+			iValue /= 2 + 4*iNumCities + std::max(5, iDistance); // 5, not iTargetRange, because 5 is better.
 
 			if (!pNearestCity->isCapital() && getCapitalCity() != NULL)
 			// K-Mod end

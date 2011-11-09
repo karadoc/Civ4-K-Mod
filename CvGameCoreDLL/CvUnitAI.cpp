@@ -15210,7 +15210,8 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 									// K-Mod adjust value based on defence
 									{
-										int iMod = pLoopCity->getDefenseModifier(false)/2
+										int iMod =
+											pLoopCity->getDefenseModifier(false) / (bombardRate() > 0 ? 3 : 1)
 											+ (pLoopCity->plot()->isHills() ? GC.getHILLS_EXTRA_DEFENSE() : 0);
 										iValue *= std::max(100, 160 - iMod);
 										iValue /= 100;

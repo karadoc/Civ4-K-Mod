@@ -1054,9 +1054,9 @@ void CvCityAI::AI_chooseProduction()
 	// Check for military exemption for commerce cities and underdeveloped cities.
 	// Don't give exemptions to cities that don't have anything good to build anyway.
 	bool bUnitExempt = false;
-	if (iBestBuildingValue >= 50)
+	if (iBestBuildingValue >= 40)
 	{
-		if (iProductionRank > kPlayer.getNumCities()/2)
+		if (iProductionRank-1 > kPlayer.getNumCities()/2)
 		{
 			bool bBelowMedian = true;
 			for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
@@ -1068,7 +1068,7 @@ void CvCityAI::AI_chooseProduction()
 					bUnitExempt = true;
 					break;
 				}
-				if (iRank < kPlayer.getNumCities()/2)
+				if (iRank-1 < kPlayer.getNumCities()/2)
 					bBelowMedian = false;
 			}
 
