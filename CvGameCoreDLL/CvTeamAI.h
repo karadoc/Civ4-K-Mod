@@ -208,6 +208,16 @@ public:
 	virtual void read(FDataStreamBase* pStream);
 	virtual void write(FDataStreamBase* pStream);
 
+	// K-Mod. Strength Memory - a very basic and rough reminder-map of how strong the enemy presence is on each plot.
+	// Currently it is only used and set during pathfinding, with the MOVE_ATTACK_STACK flag.
+public:
+	int AI_getStrengthMemory(int x, int y) const;
+	void AI_setStrengthMemory(int x, int y, int value);
+protected:
+	std::vector<int> m_aiStrengthMemory;
+	void AI_updateStrengthMemory(); // exponentially dimishes memory, and clears obviously obsolete memory.
+	// K-Mod end
+
 protected:
 
 	static CvTeamAI* m_aTeams;

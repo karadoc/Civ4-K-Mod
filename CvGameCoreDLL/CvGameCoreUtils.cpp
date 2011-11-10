@@ -1538,21 +1538,34 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		return iWorstCost;
 
 	// the cost of battle...
-	if (iFlags & (MOVE_ATTACK_STACK | MOVE_THROUGH_ENEMY) && // otherwise, the path will be invalid anyway...
-		pToPlot->isVisible(eTeam, false) &&
-		pToPlot->isVisibleEnemyUnit(GET_TEAM(eTeam).getLeaderID()) &&
+	if (iFlags & MOVE_ATTACK_STACK &&
 		!pAStar->IsPathDest(finder, pToPlot->getX_INLINE(), pToPlot->getY_INLINE()))
 	{
-		iWorstCost += PATH_COMBAT_WEIGHT;
+		FAssert(pSelectionGroup->AI_isControlled()); // only the AI uses MOVE_ATTACK_STACK
 
-		if (iFlags & MOVE_ATTACK_STACK)
+		int iEnemyDefence = 0;
+
+		if (pToPlot->isVisible(eTeam, false))
 		{
-			FAssert(pSelectionGroup->AI_isControlled());
-			int iAttackPower = std::max(1, pSelectionGroup->AI_compareStacks(pToPlot, true, false, false));
+			if (pToPlot->isVisibleEnemyUnit(pSelectionGroup->getOwnerINLINE()))
+				iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType());
 
-			if (iAttackPower < 400)
+			GET_TEAM(eTeam).AI_setStrengthMemory(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), iEnemyDefence);
+		}
+		else
+		{
+			// plot not visible. use memory
+			iEnemyDefence = GET_TEAM(eTeam).AI_getStrengthMemory(pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
+		}
+
+		if (iEnemyDefence > 0)
+		{
+			iWorstCost += PATH_COMBAT_WEIGHT;
+			//int iAttackRatio = std::max(1, pSelectionGroup->AI_compareStacks(pToPlot, true, false, false));
+			int iAttackRatio = 100 * pSelectionGroup->AI_sumStrength(pToPlot) / iEnemyDefence;
+			if (iAttackRatio < 400)
 			{
-				iWorstCost += PATH_MOVEMENT_WEIGHT * GC.getMOVE_DENOMINATOR() * (400-iAttackPower)/std::min(150, iAttackPower);
+				iWorstCost += PATH_MOVEMENT_WEIGHT * GC.getMOVE_DENOMINATOR() * (400-iAttackRatio)/std::min(150, iAttackRatio);
 			}
 			// else, don't worry about it too much.
 		}

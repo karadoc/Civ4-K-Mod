@@ -95,11 +95,17 @@ void CvTeamAI::AI_init()
 
 	//--------------------------------
 	// Init other game data
+
+	// K-Mod
+	m_aiStrengthMemory.clear();
+	m_aiStrengthMemory.resize(GC.getMapINLINE().numPlotsINLINE(), 0);
+	// K-Mod end
 }
 
 
 void CvTeamAI::AI_uninit()
 {
+	m_aiStrengthMemory.clear(); // K-Mod
 }
 
 
@@ -3969,6 +3975,14 @@ void CvTeamAI::read(FDataStreamBase* pStream)
 
 	pStream->Read(MAX_TEAMS, (int*)m_aeWarPlan);
 	pStream->Read((int*)&m_eWorstEnemy);
+
+	// K-Mod
+	m_aiStrengthMemory.resize(GC.getMapINLINE().numPlotsINLINE(), 0);
+	if (uiFlag >= 1)
+	{
+		pStream->Read(GC.getMapINLINE().numPlotsINLINE(), &m_aiStrengthMemory[0]);
+	}
+	// K-Mod end
 }
 
 
@@ -3976,7 +3990,7 @@ void CvTeamAI::write(FDataStreamBase* pStream)
 {
 	CvTeam::write(pStream);
 
-	uint uiFlag=0;
+	uint uiFlag=1; //
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(MAX_TEAMS, m_aiWarPlanStateCounter);
@@ -3992,7 +4006,38 @@ void CvTeamAI::write(FDataStreamBase* pStream)
 
 	pStream->Write(MAX_TEAMS, (int*)m_aeWarPlan);
 	pStream->Write(m_eWorstEnemy);
+
+	// K-Mod
+	pStream->Write(GC.getMapINLINE().numPlotsINLINE(), &m_aiStrengthMemory[0]); // uiFlag >= 1
+	// K-Mod end
 }
+
+// K-Mod
+int CvTeamAI::AI_getStrengthMemory(int x, int y) const
+{
+	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
+	return m_aiStrengthMemory[GC.getMapINLINE().plotNumINLINE(x, y)];
+}
+
+void CvTeamAI::AI_setStrengthMemory(int x, int y, int value)
+{
+	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
+	m_aiStrengthMemory[GC.getMapINLINE().plotNumINLINE(x, y)] = value;
+}
+
+void CvTeamAI::AI_updateStrengthMemory()
+{
+	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
+	for (int i = 0; i < GC.getMapINLINE().numPlotsINLINE(); i++)
+	{
+		CvPlot* kLoopPlot = GC.getMapINLINE().plotByIndexINLINE(i);
+		if (kLoopPlot->isVisible(getID(), false) && !kLoopPlot->isVisibleEnemyUnit(getLeaderID()))
+			m_aiStrengthMemory[i] = 0;
+		else
+			m_aiStrengthMemory[i] = 92 * m_aiStrengthMemory[i] / 100; // reduce by 8%, rounding down. (arbitrary number)
+	}
+}
+// K-Mod end
 
 // Protected Functions...
 
