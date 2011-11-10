@@ -48,7 +48,7 @@ public:
 
 	void AI_doPeace();
 
-	void AI_updateFoundValues(bool bStartingLoc = false) const;
+	void AI_updateFoundValues(bool bStartingLoc = false);
 	void AI_updateAreaTargets();
 
 	int AI_movementPriority(CvSelectionGroup* pGroup) const;
@@ -386,7 +386,7 @@ public:
 
 	RouteTypes AI_bestAdvancedStartRoute(CvPlot* pPlot, int* piYieldValue = NULL) const;
 	UnitTypes AI_bestAdvancedStartUnitAI(CvPlot* pPlot, UnitAITypes eUnitAI) const;
-	CvPlot* AI_advancedStartFindCapitalPlot() const;
+	CvPlot* AI_advancedStartFindCapitalPlot();
 	
 	bool AI_advancedStartPlaceExploreUnits(bool bLand);
 	void AI_advancedStartRevealRadius(CvPlot* pPlot, int iRadius);
@@ -399,8 +399,8 @@ public:
 	
 	void AI_recalculateFoundValues(int iX, int iY, int iInnerRadius, int iOuterRadius) const;
 	
-	void AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites) const;
-	void AI_invalidateCitySites(int iMinFoundValueThreshold) const;
+	void AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites);
+	void AI_invalidateCitySites(int iMinFoundValueThreshold);
 	bool AI_isPlotCitySite(CvPlot* pPlot) const;
 	int AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const;
 	int AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeArea, int& iBestValue) const;
@@ -528,7 +528,7 @@ protected:
 	int** m_aaiContactTimer;
 	int** m_aaiMemoryCount;
 	
-	mutable std::vector<int> m_aiAICitySites;
+	std::vector<int> m_aiAICitySites;
 	
 	bool m_bWasFinancialTrouble;
 	int m_iTurnLastProductionDirty;

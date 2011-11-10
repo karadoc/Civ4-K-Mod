@@ -1063,7 +1063,8 @@ public:
 	virtual void AI_doTurnPost() = 0;
 	virtual void AI_doTurnUnitsPre() = 0;
 	virtual void AI_doTurnUnitsPost() = 0;
-	virtual void AI_updateFoundValues(bool bStartingLoc = false) const = 0;
+	//virtual void AI_updateFoundValues(bool bStartingLoc = false) const = 0;
+	virtual void AI_updateFoundValues(bool bStartingLoc = false) = 0; // K-Mod. (Can I fix the const-correctness without breaking compatibility? No problems so far...)
 	virtual void AI_unitUpdate() = 0;
 	virtual void AI_makeAssignWorkDirty() = 0;
 	virtual void AI_assignWorkingPlots() = 0;

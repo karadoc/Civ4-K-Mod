@@ -1054,7 +1054,7 @@ void CvPlayerAI::AI_doPeace()
 }
 
 
-void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc) const
+void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc)
 {
 	PROFILE_FUNC();
 
@@ -20981,7 +20981,7 @@ UnitTypes CvPlayerAI::AI_bestAdvancedStartUnitAI(CvPlot* pPlot, UnitAITypes eUni
 	return eBestUnit;
 }
 
-CvPlot* CvPlayerAI::AI_advancedStartFindCapitalPlot() const
+CvPlot* CvPlayerAI::AI_advancedStartFindCapitalPlot()
 {
 	CvPlot* pBestPlot = NULL;
 	int iBestValue = -1;
@@ -21975,7 +21975,7 @@ int CvPlayerAI::AI_getMinFoundValue() const
 	return iValue;
 }
 	
-void CvPlayerAI::AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites) const
+void CvPlayerAI::AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites)
 {
 	std::vector<int>::iterator it;
 	int iValue;
@@ -22022,7 +22022,7 @@ void CvPlayerAI::AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites) 
 	}
 }
 
-void CvPlayerAI::AI_invalidateCitySites(int iMinFoundValueThreshold) const
+void CvPlayerAI::AI_invalidateCitySites(int iMinFoundValueThreshold)
 {
 	/* original bts code
 	m_aiAICitySites.clear(); */
@@ -22047,7 +22047,7 @@ int CvPlayerAI::AI_getNumCitySites() const
 
 bool CvPlayerAI::AI_isPlotCitySite(CvPlot* pPlot) const
 {
-	std::vector<int>::iterator it;
+	std::vector<int>::const_iterator it;
 	int iPlotIndex = GC.getMapINLINE().plotNumINLINE(pPlot->getX_INLINE(), pPlot->getY_INLINE());
 	
 	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
@@ -22062,7 +22062,7 @@ bool CvPlayerAI::AI_isPlotCitySite(CvPlot* pPlot) const
 
 int CvPlayerAI::AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const
 {
-	std::vector<int>::iterator it;
+	std::vector<int>::const_iterator it;
 	int iCount = 0;
 	iBestValue = 0;
 	
@@ -22080,7 +22080,7 @@ int CvPlayerAI::AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const
 
 int CvPlayerAI::AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeArea, int& iBestValue) const
 {
-	std::vector<int>::iterator it;	
+	std::vector<int>::const_iterator it;
 	int iCount = 0;
 	iBestValue = 0;
 
