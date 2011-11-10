@@ -96,11 +96,17 @@ void CvTeamAI::AI_init()
 	//--------------------------------
 	// Init other game data
 
-	// K-Mod
+}
+
+// K-Mod
+void CvTeamAI::AI_initMemory()
+{
+	// Note. this needs to be done after the map is set. unfortunately, AI_init is called before that happens.
+	FAssert(GC.getMapINLINE().numPlotsINLINE() > 0);
 	m_aiStrengthMemory.clear();
 	m_aiStrengthMemory.resize(GC.getMapINLINE().numPlotsINLINE(), 0);
-	// K-Mod end
 }
+// K-Mod end
 
 
 void CvTeamAI::AI_uninit()
@@ -3978,6 +3984,7 @@ void CvTeamAI::read(FDataStreamBase* pStream)
 
 	// K-Mod
 	m_aiStrengthMemory.resize(GC.getMapINLINE().numPlotsINLINE(), 0);
+	FAssert(m_aiStrengthMemory.size() > 0);
 	if (uiFlag >= 1)
 	{
 		pStream->Read(GC.getMapINLINE().numPlotsINLINE(), &m_aiStrengthMemory[0]);
@@ -4008,6 +4015,8 @@ void CvTeamAI::write(FDataStreamBase* pStream)
 	pStream->Write(m_eWorstEnemy);
 
 	// K-Mod
+	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
+	FAssert(m_aiStrengthMemory.size() > 0);
 	pStream->Write(GC.getMapINLINE().numPlotsINLINE(), &m_aiStrengthMemory[0]); // uiFlag >= 1
 	// K-Mod end
 }

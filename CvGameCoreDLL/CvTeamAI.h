@@ -30,6 +30,7 @@ public:
 	static void freeStatics();
 
 	void AI_init();
+	void AI_initMemory(); // K-Mod. (needs game map to be initialized first)
 	void AI_uninit();
 	void AI_reset(bool bConstructor);
 

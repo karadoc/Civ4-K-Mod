@@ -691,8 +691,8 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			{
 				GET_TEAM((TeamTypes)iI).AI_setWarPlan(getID(), NO_WARPLAN, false);
 				GET_TEAM((TeamTypes)iI).AI_setWarPlan(eTeam, NO_WARPLAN, false);
+			}
 		}
-	}
 	}
 
 	AI_updateWorstEnemy();

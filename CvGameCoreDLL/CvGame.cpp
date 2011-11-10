@@ -4661,6 +4661,7 @@ void CvGame::setFinalInitialized(bool bNewValue)
 
 			for (iI = 0; iI < MAX_TEAMS; iI++)
 			{
+				GET_TEAM((TeamTypes)iI).AI_initMemory(); // K-Mod
 				if (GET_TEAM((TeamTypes)iI).isAlive())
 				{
 					GET_TEAM((TeamTypes)iI).AI_updateAreaStragies();
