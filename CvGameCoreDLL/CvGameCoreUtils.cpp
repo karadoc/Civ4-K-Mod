@@ -1547,8 +1547,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 		if (pToPlot->isVisible(eTeam, false))
 		{
-			if (pToPlot->isVisibleEnemyUnit(pSelectionGroup->getOwnerINLINE()))
-				iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType());
+			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType());
 
 			GET_TEAM(eTeam).AI_setStrengthMemory(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), iEnemyDefence);
 		}
@@ -1795,6 +1794,38 @@ static int pathValidInternal(FAStarNode* parent, FAStarNode* node, int data, CvS
 			}
 		}
 	}
+	// K-Mod. Note: it's currently difficult to extract the vision-cheating part of this AI,
+	// because the AI needs to cheat inside canMoveOrAttackInto for its other cheating parts to work...
+	//  .. anyway, here is the beginnings of what the code might look like without the cheats. (it's unfinished)
+#if 0
+	if (pFromPlot->isRevealed(pSelectionGroup->getHeadTeam(), false))
+	{
+		PROFILE("pathValid move through");
+		CvTeamAI& kTeam = GET_TEAM(pSelectionGroup->getHeadTeam());
+
+		if (pFromPlot->isVisible(pSelectionGroup->getHeadTeam(), false))
+		{
+			kTeam.AI_setStrengthMemory(pFromPlot, GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType()));
+		}
+
+		if (kTeam.AI_getStrengthMemory(pFromPlot) > 0 && iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK))
+		{
+			if (!pSelectionGroup->canMoveOrAttackInto(pFromPlot) ||
+				(iFlags & MOVE_ATTACK_STACK && pSelectionGroup->AI_sumStrength(pFromPlot) < kTeam.AI_getStrengthMemory(pFromPlot)))
+			{
+				return FALSE;
+			}
+		}
+		else
+		{
+			if (!pSelectionGroup->canMoveThrough(pFromPlot))
+			{
+				return FALSE;
+			}
+		}
+	}
+#endif
+	// K-Mod end
 
 	return TRUE;
 }
