@@ -1337,8 +1337,8 @@ void CvUnitAI::AI_settleMove()
 					return;					
 				}
 			}
-			// K-Mod. If we are already heading to this site, then keep going.
-			else
+			// K-Mod. If we are already heading to this site, then keep going. (disabled. This is no longer required - I hope.)
+			/*else
 			{
 				CvPlot* pMissionPlot = getGroup()->AI_getMissionAIPlot();
 				if (pMissionPlot == pCitySitePlot && getGroup()->AI_getMissionAIType() == MISSIONAI_FOUND)
@@ -1355,7 +1355,7 @@ void CvUnitAI::AI_settleMove()
 						return;
 					}
 				}
-			}
+			}*/
 			// K-Mod end
 			iAreaBestFoundValue = std::max(iAreaBestFoundValue, pCitySitePlot->getFoundValue(getOwnerINLINE()));
 
@@ -17025,18 +17025,18 @@ bool CvUnitAI::AI_found()
 		{
 			if (canFound(pCitySitePlot))
 			{
-				if (!(pCitySitePlot->isVisibleEnemyUnit(this)))
+				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pCitySitePlot, MISSIONAI_FOUND, getGroup()) == 0)
 				{
-					if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pCitySitePlot, MISSIONAI_FOUND, getGroup()) == 0)
+					if (getGroup()->canDefend() || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pCitySitePlot, MISSIONAI_GUARD_CITY) > 0)
 					{
-						if (getGroup()->canDefend() || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pCitySitePlot, MISSIONAI_GUARD_CITY) > 0)
+						if (generatePath(pCitySitePlot, MOVE_SAFE_TERRITORY, true, &iPathTurns))
 						{
-							if (generatePath(pCitySitePlot, MOVE_SAFE_TERRITORY, true, &iPathTurns))
+							if (!pCitySitePlot->isVisible(getTeam(), false) || !pCitySitePlot->isVisibleEnemyUnit(this) || (iPathTurns > 1 && getGroup()->canDefend())) // K-Mod
 							{
 								iValue = pCitySitePlot->getFoundValue(getOwnerINLINE());
 								iValue *= 1000;
 								//iValue /= (iPathTurns + 1);
-								iValue /= iPathTurns + (getGroup()->canDefend() ? 5 : 1); // K-Mod
+								iValue /= iPathTurns + (getGroup()->canDefend() ? 4 : 1); // K-Mod
 								if (iValue > iBestFoundValue)
 								{
 									iBestFoundValue = iValue;
@@ -17055,35 +17055,19 @@ bool CvUnitAI::AI_found()
 	{
 		if (atPlot(pBestFoundPlot))
 		{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gUnitLogLevel >= 2 )
 			{
-				logBBAI("    Settler founding at best found plot %d, %d", pBestFoundPlot->getX_INLINE(), pBestFoundPlot->getY_INLINE());
+				logBBAI("    Settler founding at site %d, %d", pBestFoundPlot->getX_INLINE(), pBestFoundPlot->getY_INLINE());
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			getGroup()->pushMission(MISSION_FOUND, -1, -1, 0, false, false, MISSIONAI_FOUND, pBestFoundPlot);
 			return true;
 		}
 		else
 		{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gUnitLogLevel >= 2 )
 			{
-				logBBAI("    Settler heading for best found plot %d, %d", pBestFoundPlot->getX_INLINE(), pBestFoundPlot->getY_INLINE());
+				logBBAI("    Settler heading for site %d, %d", pBestFoundPlot->getX_INLINE(), pBestFoundPlot->getY_INLINE());
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			FAssert(!atPlot(pBestPlot));
 			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_FOUND, pBestFoundPlot);
 			return true;
