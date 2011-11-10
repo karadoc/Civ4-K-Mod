@@ -202,16 +202,10 @@ protected:
 	bool AI_found();
 	//bool AI_foundRange(int iRange, bool bFollow = false); // disabled by K-Mod
 	bool AI_foundFollow(); // K-Mod
-	bool AI_assaultSeaTransport(bool bBarbarian = false);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/04/09                                jdog5000      */
-/*                                                                                              */
-/*                                                                                              */
-/************************************************************************************************/
-	bool AI_assaultSeaReinforce(bool bBarbarian = false);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	bool AI_assaultSeaTransport(bool bAttackBarbs = false, bool bLocal = false); // K-mod added bLocal
+	bool AI_assaultSeaReinforce(bool bAttackBarbs = false); // BBAI
+	bool AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFlags); // K-Mod
+
 	bool AI_settlerSeaTransport();
 	bool AI_settlerSeaFerry();
 	bool AI_specialSeaTransportMissionary();

@@ -3257,6 +3257,11 @@ void CvUnitAI::AI_attackCityMove()
 				// See if we can get there faster by boat..
 				if (iPathTurns > 5)// && !pTargetCity->isBarbarian())
 				{
+					// note: if the only land path to our target happens to go through a tough line of defence...
+					// we probably want to take the boat even if our iPathTurns is low.
+					// Here's one way to account for that:
+					// iPathTurns = std::max(iPathTurns, getPathLastNode()->m_iTotalCost / (2000*GC.getMOVE_DENOMINATOR()));
+					// Unfortunately, that "2000"... well I think you know what the problem is. So maybe next time.
 					int iLoadTurns = std::min(4, iPathTurns/2 - 1);
 					int iTransportTurns = iPathTurns - iLoadTurns - 2;
 
@@ -7353,7 +7358,8 @@ void CvUnitAI::AI_assaultSeaMove()
 	bool bIsCity = plot()->isCity(true);
 
 	// Cargo if already at war
-	int iTargetReinforcementSize = (bIsBarbarian ? AI_stackOfDoomExtra() : 2);
+	//int iTargetReinforcementSize = (bIsBarbarian ? AI_stackOfDoomExtra() : 2);
+	int iTargetReinforcementSize = (bIsBarbarian ? 2 : AI_stackOfDoomExtra()); // K-Mod. =\
 
 	// Cargo to launch a new invasion
 	int iTargetInvasionSize = 2*iTargetReinforcementSize;
@@ -7505,9 +7511,10 @@ void CvUnitAI::AI_assaultSeaMove()
 					return;
 				}
 
-				if( iCargo >= iTargetInvasionSize )
+				//if( iCargo >= iTargetInvasionSize )
+				// Disabled by K-Mod. (otherwise groups trying to take a short-cut by boat will get stuck.)
 				{
-					if (AI_assaultSeaTransport(false))
+					if (AI_assaultSeaTransport(false, true))
 					{
 						return;
 					}
@@ -17184,7 +17191,7 @@ bool CvUnitAI::AI_foundFollow()
 // K-Mod end
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_assaultSeaTransport(bool bBarbarian)
+bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 {
 	PROFILE_FUNC();
 
@@ -17225,7 +17232,8 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bBarbarian)
 		{
 			if (pLoopPlot->isOwned())
 			{
-				if (((bBarbarian || !pLoopPlot->isBarbarian())) || GET_PLAYER(getOwnerINLINE()).isMinorCiv())
+				//if (((bBarbarian || !pLoopPlot->isBarbarian())) || GET_PLAYER(getOwnerINLINE()).isMinorCiv())
+				if ((bAttackBarbs || !pLoopPlot->isBarbarian()) || GET_PLAYER(getOwnerINLINE()).isMinorCiv())
 				{
 					if (isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 					{
@@ -17334,29 +17342,35 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bBarbarian)
 										iValue += 15 * (pLoopPlot->defenseModifier(getTeam(), false));
 										iValue += 1000;
 										iValue += (GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pCity->plot()) * 200);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/26/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
+
+										// BBAI / K-Mod
 										// Continue attacking in area we have already captured cities
-										if( pCity->area()->getCitiesPerPlayer(getOwnerINLINE()) > 0 )
+										if (pCity->area()->getCitiesPerPlayer(getOwnerINLINE()) > 0)
 										{
-											if( pCity->AI_playerCloseness(getOwnerINLINE()) > 5 ) 
+											if (bLocal || pCity->AI_playerCloseness(getOwnerINLINE()) > 5)
 											{
 												iValue *= 3;
 												iValue /= 2;
 											}
 										}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
+										else if (bLocal)
+										{
+											iValue *= 2;
+											iValue /= 3;
+										}
+										// BBAI / K-Mod end
 
 										if (iPathTurns == 1)
 										{
 											iValue += GC.getGameINLINE().getSorenRandNum(50, "AI Assault");
 										}
 									}
+									// K-Mod note: I really want to use the pathfinder here
+									// to make sure we aren't landing a long way from any enemy cities.
+									// But unfortunately, the pathfinder is global.. so if I use it for our cargo,
+									// it will clear the cache for our transports and thus make this whole process much slower.
+									// The bad news is that because of this, the AI can get into a loop of contantly dropping
+									// off units which just walk back to the city to be dropped off again...
 
 									FAssert(iPathTurns > 0);
 
@@ -17453,75 +17467,9 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bBarbarian)
 		}
 	}
 
-	if ((pBestPlot != NULL) && (pBestAssaultPlot != NULL))
+	if (pBestPlot != NULL && pBestAssaultPlot != NULL)
 	{
-		FAssert(!(pBestPlot->isImpassable()));
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/11/10                                jdog5000      */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
-		// Cancel missions of all those coming to join departing transport
-		CvSelectionGroup* pLoopGroup = NULL;
-		int iLoop = 0;
-		CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
-
-		for(pLoopGroup = kPlayer.firstSelectionGroup(&iLoop); pLoopGroup != NULL; pLoopGroup = kPlayer.nextSelectionGroup(&iLoop))
-		{
-			if( pLoopGroup != getGroup() )
-			{
-				if( pLoopGroup->AI_getMissionAIType() == MISSIONAI_GROUP && pLoopGroup->getHeadUnitAI() == AI_getUnitAIType() )
-				{
-					CvUnit* pMissionUnit = pLoopGroup->AI_getMissionAIUnit();
-
-					if( pMissionUnit != NULL && pMissionUnit->getGroup() == getGroup() )
-					{
-						pLoopGroup->clearMissionQueue();
-					}
-				}
-			}
-		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-		if ((pBestPlot == pBestAssaultPlot) || (stepDistance(pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), pBestAssaultPlot->getX_INLINE(), pBestAssaultPlot->getY_INLINE()) == 1))
-		{
-			if (atPlot(pBestAssaultPlot))
-			{
-				getGroup()->unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
-				return true;
-			}
-			else
-			{
-				// K-Mod
-				if (AI_considerDOW(pBestAssaultPlot))
-				{
-					if (!generatePath(pBestAssaultPlot, 0, false))
-						return false;
-					pBestPlot = getPathEndTurnPlot();
-				}
-				// K-Mod end
-				//getGroup()->pushMission(MISSION_MOVE_TO, pBestAssaultPlot->getX_INLINE(), pBestAssaultPlot->getY_INLINE(), 0, false, false, MISSIONAI_ASSAULT, pBestAssaultPlot);
-				getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_ASSAULT, pBestAssaultPlot);
-				return true;
-			}
-		}
-		else
-		{
-			FAssert(!atPlot(pBestPlot));
-			// K-Mod
-			if (AI_considerDOW(pBestPlot))
-			{
-				if (!generatePath(pBestAssaultPlot, 0, false))
-					return false;
-				pBestPlot = getPathEndTurnPlot();
-			}
-			// K-Mod end
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_AVOID_ENEMY_WEIGHT_3, false, false, MISSIONAI_ASSAULT, pBestAssaultPlot);
-			return true;
-		}
+		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, MOVE_AVOID_ENEMY_WEIGHT_3);
 	}
 
 	return false;
@@ -17533,7 +17481,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bBarbarian)
 /* Naval AI, Efficiency                                                                         */
 /************************************************************************************************/
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_assaultSeaReinforce(bool bBarbarian)
+bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 {
 	PROFILE_FUNC();
 
@@ -17777,7 +17725,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bBarbarian)
 				{
 					iValue = 1;
 				}
-				else if( bBarbarian && (pLoopCity->area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > 0) )
+				else if( bAttackBarbs && (pLoopCity->area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > 0) )
 				{
 					iValue = 1;
 				}
@@ -17928,50 +17876,9 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bBarbarian)
 		}
 	}
 
-	if ((pBestPlot != NULL) && (pBestAssaultPlot != NULL))
+	if (pBestPlot != NULL && pBestAssaultPlot != NULL)
 	{
-		FAssert(!(pBestPlot->isImpassable()));
-
-		// Cancel missions of all those coming to join departing transport
-		CvSelectionGroup* pLoopGroup = NULL;
-		int iLoop = 0;
-		CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
-
-		for(pLoopGroup = kPlayer.firstSelectionGroup(&iLoop); pLoopGroup != NULL; pLoopGroup = kPlayer.nextSelectionGroup(&iLoop))
-		{
-			if( pLoopGroup != getGroup() )
-			{
-				if( pLoopGroup->AI_getMissionAIType() == MISSIONAI_GROUP && pLoopGroup->getHeadUnitAI() == AI_getUnitAIType() )
-				{
-					CvUnit* pMissionUnit = pLoopGroup->AI_getMissionAIUnit();
-
-					if( pMissionUnit != NULL && pMissionUnit->getGroup() == getGroup() )
-					{
-						pLoopGroup->clearMissionQueue();
-					}
-				}
-			}
-		}
-
-		if ((pBestPlot == pBestAssaultPlot) || (stepDistance(pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), pBestAssaultPlot->getX_INLINE(), pBestAssaultPlot->getY_INLINE()) == 1))
-		{
-			if (atPlot(pBestAssaultPlot))
-			{
-				getGroup()->unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
-				return true;
-			}
-			else
-			{
-				getGroup()->pushMission(MISSION_MOVE_TO, pBestAssaultPlot->getX_INLINE(), pBestAssaultPlot->getY_INLINE(), MOVE_AVOID_ENEMY_WEIGHT_3, false, false, MISSIONAI_ASSAULT, pBestAssaultPlot);
-				return true;
-			}
-		}
-		else
-		{
-			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_AVOID_ENEMY_WEIGHT_3, false, false, MISSIONAI_ASSAULT, pBestAssaultPlot);
-			return true;
-		}
+		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, MOVE_AVOID_ENEMY_WEIGHT_3);
 	}
 
 	return false;
@@ -17980,6 +17887,53 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bBarbarian)
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+// K-Mod. General function for moving assault groups - to reduce code duplication.
+bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFlags)
+{
+	FAssert(pEndTurnPlot && pTargetPlot);
+	FAssert(!pEndTurnPlot->isImpassable());
+
+	if (getGroup()->AI_getMissionAIType() != MISSIONAI_ASSAULT)
+	{
+		// Cancel missions of all those coming to join departing transport
+		int iLoop = 0;
+		CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
+
+		for (CvSelectionGroup* pLoopGroup = kOwner.firstSelectionGroup(&iLoop); pLoopGroup != NULL; pLoopGroup = kOwner.nextSelectionGroup(&iLoop))
+		{
+			if (pLoopGroup != getGroup())
+			{
+				if (pLoopGroup->AI_getMissionAIType() == MISSIONAI_GROUP && pLoopGroup->getHeadUnitAI() == AI_getUnitAIType())
+				{
+					CvUnit* pMissionUnit = pLoopGroup->AI_getMissionAIUnit();
+
+					if (pMissionUnit != NULL && pMissionUnit->getGroup() == getGroup())
+					{
+						pLoopGroup->clearMissionQueue();
+					}
+				}
+			}
+		}
+	}
+
+	if (atPlot(pTargetPlot))
+	{
+		getGroup()->unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+		return true;
+	}
+	else
+	{
+		if (AI_considerDOW(pEndTurnPlot))
+		{
+			if (!generatePath(pTargetPlot, 0, false))
+				return false;
+			pEndTurnPlot = getPathEndTurnPlot();
+		}
+		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_ASSAULT, pTargetPlot);
+		return true;
+	}
+}
+// K-Mod end
 
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_settlerSeaTransport()

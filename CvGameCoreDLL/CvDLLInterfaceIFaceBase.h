@@ -93,7 +93,8 @@ public:
 		else if (GC.getGameINLINE().getActivePlayer() == ePlayer)
 		{
 			// this means ePlayer is human, but currently using auto-play
-			addMessage(ePlayer, bForce, iLength, szString, pszSound, eType, NULL, NO_COLOR, -1, -1, false, false);
+			if (eType == MESSAGE_TYPE_MAJOR_EVENT || eType == MESSAGE_TYPE_CHAT)
+				addMessage(ePlayer, bForce, iLength, szString, pszSound, eType, NULL, NO_COLOR, -1, -1, false, false);
 		}
 	}
 	// K-Mod end
