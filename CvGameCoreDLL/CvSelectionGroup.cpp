@@ -1085,6 +1085,10 @@ void CvSelectionGroup::startMission()
 		switch (headMissionQueueNode()->m_data.eMissionType)
 		{
 		case MISSION_MOVE_TO:
+			// K-Mod. Prevent human players from accidentally attacking units that they can't see.
+			if (isHuman() && !GC.getMapINLINE().plotINLINE(headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2)->isVisible(getTeam(), false))
+				headMissionQueueNode()->m_data.iFlags |= MOVE_NO_ATTACK;
+			// K-Mod end
 		case MISSION_ROUTE_TO:
 		case MISSION_MOVE_TO_UNIT:
 			break;
@@ -1556,7 +1560,8 @@ void CvSelectionGroup::continueMission(int iSteps)
 	bDone = false;
 	bAction = false;
 
-	if (headMissionQueueNode()->m_data.iPushTurn == GC.getGameINLINE().getGameTurn() || (headMissionQueueNode()->m_data.iFlags & MOVE_THROUGH_ENEMY))
+	if (!(headMissionQueueNode()->m_data.iFlags & MOVE_NO_ATTACK) && // K-Mod
+		(headMissionQueueNode()->m_data.iPushTurn == GC.getGameINLINE().getGameTurn() || headMissionQueueNode()->m_data.iFlags & MOVE_THROUGH_ENEMY))
 	{
 		if (headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO)
 		{
