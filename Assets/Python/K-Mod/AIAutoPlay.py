@@ -30,7 +30,7 @@ class AIAutoPlay :
         self.refortify = False
         self.bSaveAllDeaths = True
 
-        self.DefaultTurnsToAuto = 10
+        self.DefaultTurnsToAuto = 1
         
         self.customEM = customEM
 
