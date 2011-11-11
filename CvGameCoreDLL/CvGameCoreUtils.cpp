@@ -1560,8 +1560,9 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		if (iEnemyDefence > 0)
 		{
 			iWorstCost += PATH_COMBAT_WEIGHT;
-			//int iAttackRatio = std::max(1, pSelectionGroup->AI_compareStacks(pToPlot, true, false, false));
-			int iAttackRatio = 100 * pSelectionGroup->AI_sumStrength(pToPlot) / iEnemyDefence;
+			int iAttackRatio = std::max(10, 100 * pSelectionGroup->AI_sumStrength(pToPlot) / iEnemyDefence);
+			// Note. I half intend to have pathValid return false whenever the above ratio is less than 100.
+			// I just haven't done that yet, mostly because I'm worried about performance.
 			if (iAttackRatio < 400)
 			{
 				iWorstCost += PATH_MOVEMENT_WEIGHT * GC.getMOVE_DENOMINATOR() * (400-iAttackRatio)/std::min(150, iAttackRatio);
