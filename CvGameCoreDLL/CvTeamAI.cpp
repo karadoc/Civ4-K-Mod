@@ -4546,6 +4546,10 @@ void CvTeamAI::AI_doWar()
 			if (AI_getWarPlan((TeamTypes)iI) != NO_WARPLAN)
 			{
 				int iTimeModifier = 100;
+
+				int iAbandonTimeModifier = 100;
+				iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+				iAbandonTimeModifier /= 150;
 				{
 					int iThreshold = (80*AI_maxWarNearbyPowerRatio())/100;
 
@@ -4560,6 +4564,8 @@ void CvTeamAI::AI_doWar()
 					{
 						iTimeModifier *= 5;
 						iTimeModifier /= 4;
+						iAbandonTimeModifier *= 5;
+						iAbandonTimeModifier /= 4;
 						// maybe in the future I'll count the number of local cities and the number of overseas cities
 						// and use it to make a more appropriate modifier... but not now.
 					}
@@ -4577,10 +4583,6 @@ void CvTeamAI::AI_doWar()
 
 					FAssert(iTimeModifier >= 0);
 				}
-
-				int iAbandonTimeModifier = 100;
-				iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
-				iAbandonTimeModifier /= 150;
 
 				bool bEnemyVictoryLevel4 = GET_TEAM((TeamTypes)iI).AI_isAnyMemberDoVictoryStrategyLevel4();
 
