@@ -2886,29 +2886,21 @@ void CvUnitAI::AI_attackCityMove()
 		}
 
 		int iComparePostBombard = 0;
-		// AI gets a 1-tile sneak peak to compensate for lack of memory
 		if( iStepDistToTarget <= 2 || pTargetCity->isVisible(getTeam(),false) )
 		{
+			// K-Mod note: AI_compareStacks will try to use the AI memory if it can't see.
 			iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true, true, true);
 
-			/* original BBAI code
-			int iDefenseModifier = pTargetCity->getDefenseModifier(true);
-			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
-			iDefenseModifier *= std::max(0, 20 - iBombardTurns);
-			iDefenseModifier /= 20;
-			iComparePostBombard *= 100 + std::max(0, iDefenseModifier);
-			iComparePostBombard /= 100; */
-			// K-Mod, appart from the fact that they got the defence reduction backwards; the defense modifier
-			// is counted in AI_compareStacks. So if we add it again, we'd be double counting.
-			// In fact, it's worse than that because it would compound.
+			// K-Mod
+			// The defense modifier is counted in AI_compareStacks. So if we add it again, we'd be double counting.
 			// I'm going to subtract defence, but unfortunately this will reduce based on the total rather than the base.
 			int iDefenseModifier = pTargetCity->getDefenseModifier(false);
 			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
 			int iReducedModifier = iDefenseModifier;
-			iReducedModifier *= std::min(20, std::max(0, iBombardTurns - 12) + iBombardTurns/2);
+			iReducedModifier *= std::min(20, iBombardTurns);
 			iReducedModifier /= 20;
-			iComparePostBombard *= 200 + iReducedModifier - iDefenseModifier;
-			iComparePostBombard /= 200;
+			iComparePostBombard *= 200;
+			iComparePostBombard /= std::max(1, 200 + iReducedModifier - iDefenseModifier); // def. mod. < 200. I promise.
 			// using 200 instead of 100 to offset the over-reduction from compounding.
 			// With this, bombarding a defence bonus of 100% with reduce effective defence by 50%
 		}
@@ -15260,6 +15252,15 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 											iValue /= 100;
 										}
 									}
+									/* reduce the value if we can see, or remember, that the city is well defended.
+									iEnemyDefence = GET_TEAM(getTeam()).AI_getStrengthMemory(pLoopCity->plot());
+									iEnemyDefence *= 200 - (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
+									iEnemyDefence /= 200;
+									if (100 * iEnemyDefence > 110 * iOurOffence)
+									{
+										iValue *= std::max(75, 110 * iOurOffence / iEnemyDence);
+										iValue /= 100;
+									} */  // not enabled, because I'm not sure I want to calculate iOurOffence so many times.
 									// K-Mod end
 
 									iValue *= 1000;
@@ -15553,6 +15554,13 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 	pBestPlot = NULL;
 	pBestPillagePlot = NULL;
 
+	// K-Mod
+	if (!isEnemy(pTargetCity->getTeam()) && !getGroup()->AI_isDeclareWar(pTargetCity->plot()))
+	{
+		return false;
+	}
+	// K-Mod end
+
 	for( int iI = 0; iI < NUM_CITY_PLOTS; iI++ )
 	{
 		pLoopPlot = pTargetCity->getCityIndexPlot(iI);
@@ -15609,16 +15617,27 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 
 	if ((pBestPlot != NULL) && (pBestPillagePlot != NULL))
 	{
+		/* original code
 		if (atPlot(pBestPillagePlot) && !isEnemy(pBestPillagePlot->getTeam()))
 		{
 			//getGroup()->groupDeclareWar(pBestPillagePlot, true);
 			// rather than declare war, just find something else to do, since we may already be deep in enemy territory
 			return false;
+		} */ // disabled by K-Mod. (also see new code at top.)
+		// K-Mod
+		FAssert(getGroup()->AI_isDeclareWar());
+		if (AI_considerDOW(pBestPlot))
+		{
+			if (!generatePath(pBestPillagePlot, 0, true, &iPathTurns))
+				return false;
+			pBestPlot = getPathEndTurnPlot();
 		}
+		// K-Mod end
 		
 		if (atPlot(pBestPillagePlot))
 		{
-			if (isEnemy(pBestPillagePlot->getTeam()))
+			//if (isEnemy(pBestPillagePlot->getTeam()))
+			FAssert(isEnemy(pBestPillagePlot->getTeam())); // K-Mod
 			{
 				getGroup()->pushMission(MISSION_PILLAGE, -1, -1, 0, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
 				return true;

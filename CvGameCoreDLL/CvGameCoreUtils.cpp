@@ -1542,14 +1542,15 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		!pAStar->IsPathDest(finder, pToPlot->getX_INLINE(), pToPlot->getY_INLINE()))
 	{
 		FAssert(pSelectionGroup->AI_isControlled()); // only the AI uses MOVE_ATTACK_STACK
+		FAssert(pSelectionGroup->getDomainType() == DOMAIN_LAND);
 
 		int iEnemyDefence = 0;
 
 		if (pToPlot->isVisible(eTeam, false))
 		{
-			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType());
-
-			GET_TEAM(eTeam).AI_setStrengthMemory(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), iEnemyDefence);
+			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM);
+			//GET_TEAM(eTeam).AI_setStrengthMemory(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), iEnemyDefence);
+			// memory is now set automatically inside AI_localDefenceStrength.
 		}
 		else
 		{

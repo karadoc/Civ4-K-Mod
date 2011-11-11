@@ -12146,6 +12146,7 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 
 			CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
 
+			int iPlotTotal = 0;
 			while (pUnitNode != NULL)
 			{
 				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
@@ -12169,10 +12170,16 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 								continue; // can't make it. (maybe?)
 						}
 
-						iTotal += pLoopUnit->currEffectiveStr(pDefencePlot, NULL);
+						iPlotTotal += pLoopUnit->currEffectiveStr(pDefencePlot, NULL);
 					}
 				}
 			}
+			if (eDefenceTeam == NO_TEAM && eDomainType == DOMAIN_LAND && !bCheckMoves)
+			{
+				// while since we're here, we might as well update our memory.
+				GET_TEAM(getTeam()).AI_setStrengthMemory(pLoopPlot, iPlotTotal);
+			}
+			iTotal += iPlotTotal;
 		}
 	}
 

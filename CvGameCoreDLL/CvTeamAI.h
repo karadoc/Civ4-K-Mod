@@ -213,9 +213,9 @@ public:
 	// Currently it is only used and set during pathfinding, with the MOVE_ATTACK_STACK flag.
 public:
 	int AI_getStrengthMemory(int x, int y) const;
-	inline int AI_getStrengthMemory(CvPlot* pPlot) { return AI_getStrengthMemory(pPlot->getX_INLINE(), pPlot->getY_INLINE()); }
+	inline int AI_getStrengthMemory(const CvPlot* pPlot) { return AI_getStrengthMemory(pPlot->getX_INLINE(), pPlot->getY_INLINE()); }
 	void AI_setStrengthMemory(int x, int y, int value);
-	inline void AI_setStrengthMemory(CvPlot* pPlot, int value) { AI_setStrengthMemory(pPlot->getX_INLINE(), pPlot->getY_INLINE(), value); }
+	inline void AI_setStrengthMemory(const CvPlot* pPlot, int value) { AI_setStrengthMemory(pPlot->getX_INLINE(), pPlot->getY_INLINE(), value); }
 protected:
 	std::vector<int> m_aiStrengthMemory;
 	void AI_updateStrengthMemory(); // exponentially dimishes memory, and clears obviously obsolete memory.

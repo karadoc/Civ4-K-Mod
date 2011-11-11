@@ -3674,6 +3674,7 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 
 		if ((pLoopUnit->canMove() && ((bCombat && (!(pLoopUnit->isNoCapture()) || !(pPlot->isEnemyCity(*pLoopUnit)))) ? pLoopUnit->canMoveOrAttackInto(pPlot) : pLoopUnit->canMoveInto(pPlot))) || (pLoopUnit == pCombatUnit))
 		{
+			FAssert(pLoopUnit->canEnterTerritory(pPlot->getTeam())); // K-Mod (trying to clean up some of the incidious mingling of AI and mechanics)
 			pLoopUnit->move(pPlot, true);
 		}
 		else
