@@ -1,5 +1,24 @@
-This is K-Mod version 1.07b.
+This is K-Mod version 1.08.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+
+v1.08 changelist
+
++ Gunships now start with the Amphibious promotion.
+
++ Units will no longer automatically attack if they are ordered to move into an unseen enemy unit in the fog of war.
++ Fixed a rare divide-by-zero crash.
++ Added a workaround for a rare bug which sometimes allows the AI to use enemy roads just before declaring war. (The root cause of the bug has not been fixed, but I don't think there are any more cases where it can actually happen.)
+
++ Added some basic AI memory so that it can remember to walk around well defended choke-points without having to cheat.
++ Fixed several problems in the sea assault AI, including a somewhat tragic original BtS bug which caused the AI to think 4 units was enough for an invasion force. (The AI may struggle to get enough units for a navel invasion now - but hopefully this will be much better in the long run.)
++ Made some adjustments to the settler AI. - Mostly to fix a problem which sometimes caused them to not settle in the best places first.
++ Fixed a K-Mod bug which caused some AIs to expand very slowly at the start of the game.
++ Fixed some silly mistakes in the AI's strength comparison calculation in AI_attackCityMove.
++ Tweaked the effect of the expansive flavour flag in the AI's city placement.
++ Increased the AI's warplan abandon time for overseas wars. (so that it is less likely to give up on its warplan if it isn't quite ready to attack.)
++ Adjusted the effect of city defensive in how the AI chooses which cities to attack.
 
 --
 
