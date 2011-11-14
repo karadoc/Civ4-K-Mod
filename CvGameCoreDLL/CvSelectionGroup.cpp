@@ -1176,77 +1176,50 @@ void CvSelectionGroup::startMission()
 			NotifyEntity( headMissionQueueNode()->m_data.eMissionType );
 		}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/30/10                                jdog5000      */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
-		if( headMissionQueueNode()->m_data.eMissionType == MISSION_PILLAGE )
+		// K-Mod. Let fast units carry out the pillage action first. (based on the idea from BBAI, which had a buggy implementation)
+		if (headMissionQueueNode()->m_data.eMissionType == MISSION_PILLAGE)
 		{
 			// Fast units pillage first
+			std::vector<std::pair<int, int> > unit_list;
 			pUnitNode = headUnitNode();
-			int iMaxMovesLeft = 0;
 
 			while (pUnitNode != NULL)
 			{
 				pLoopUnit = ::getUnit(pUnitNode->m_data);
 				pUnitNode = nextUnitNode(pUnitNode);
 
-				if( pLoopUnit->canMove() && pLoopUnit->canPillage(plot()) )
+				if (pLoopUnit->canMove() && pLoopUnit->canPillage(plot()))
 				{
-					int iMovesLeft = pLoopUnit->movesLeft();
-					if( pLoopUnit->bombardRate() > 0 )
-					{
-						iMovesLeft /= 2;
-					}
-					iMovesLeft *= pLoopUnit->currHitPoints();
-					iMovesLeft /= std::max(1, pLoopUnit->maxHitPoints());
+					int iPriority = 0;
+					if (pLoopUnit->bombardRate() > 0)
+						iPriority--;
+					if (pLoopUnit->isMadeAttack())
+						iPriority++;
 
-					iMaxMovesLeft = std::max( iMaxMovesLeft, iMovesLeft );
+					iPriority = (3 + iPriority)*pLoopUnit->movesLeft() / 3;
+					iPriority *= pLoopUnit->currHitPoints();
+					iPriority /= std::max(1, pLoopUnit->maxHitPoints());
+					unit_list.push_back(std::make_pair(iPriority, pLoopUnit->getID()));
 				}
 			}
+			std::sort(unit_list.begin(), unit_list.end());
 
-			bool bDidPillage = false;
-			while( iMaxMovesLeft > 0 && !bDidPillage )
+			CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
+			for (size_t i = 0; i < unit_list.size(); i++)
 			{
-				pUnitNode = headUnitNode();
-				int iNextMaxMovesLeft = 0;
+				pLoopUnit = kOwner.getUnit(unit_list[i].second);
 
-				while (pUnitNode != NULL)
+				if (pLoopUnit->pillage())
 				{
-					pLoopUnit = ::getUnit(pUnitNode->m_data);
-					pUnitNode = nextUnitNode(pUnitNode);
-
-					if( pLoopUnit->canMove() && pLoopUnit->canPillage(plot()) )
-					{
-						int iMovesLeft = pLoopUnit->movesLeft();
-						if( pLoopUnit->bombardRate() > 0 )
-						{
-							iMovesLeft /= 2;
-						}
-						iMovesLeft *= pLoopUnit->currHitPoints();
-						iMovesLeft /= std::max(1, pLoopUnit->maxHitPoints());
-
-						if( iMovesLeft >= iMaxMovesLeft )
-						{
-							if (pLoopUnit->pillage())
-							{
-								bAction = true;
-								if( isHuman() || canAllMove() )
-								{
-									bDidPillage = true;
-									break;
-								}
-							}
-						}
-
-						iNextMaxMovesLeft = std::max( iNextMaxMovesLeft, iMovesLeft );
-					}
+					bAction = true;
+					if (isHuman() || canAllMove())
+						break;
 				}
-
-				iMaxMovesLeft = iNextMaxMovesLeft;
+				if (pLoopUnit->isAttacking())
+					break; // Sea patrol intercept
 			}
 		}
+		// K-Mod end. (note: I'm not sure what the original bts code was. I deleted the BBAI code.)
 		else
 		{
 			pUnitNode = headUnitNode();
@@ -1494,9 +1467,6 @@ void CvSelectionGroup::startMission()
 			}
 		}
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	if ((getNumUnits() > 0) && (headMissionQueueNode() != NULL))
 	{
