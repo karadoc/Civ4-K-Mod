@@ -2073,10 +2073,12 @@ void CvCityAI::AI_chooseProduction()
 		if (iNumSpies < iNeededSpies)
 		{
 			int iOdds = (kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || GET_TEAM(getTeam()).getAnyWarPlanCount(true)) ?45 : 35;
-			iOdds *= (50 + iBestBuildingValue);
-			iOdds /= (20 + 2 * iBestBuildingValue);
+			iOdds *= 50 + iBestBuildingValue;
+			iOdds /= 20 + 2 * iBestBuildingValue;
 			iOdds *= iNeededSpies;
-			iOdds /= (4*iNumSpies+iNeededSpies);
+			iOdds /= 4*iNumSpies + iNeededSpies;
+			iOdds -= bUnitExempt ? 10 : 0; // not completely exempt, but at least reduced probability.
+			iOdds = std::max(0, iOdds);
 			if (AI_chooseUnit(UNITAI_SPY, iOdds))
 			{
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S chooses spy with %d/%d needed, at %d odds", getName().GetCString(), iNumSpies, iNeededSpies, iOdds);

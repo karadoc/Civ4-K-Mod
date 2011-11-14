@@ -6684,7 +6684,10 @@ bool CvUnit::espionage(EspionageMissionTypes eMission, int iData)
 					gDLL->getInterfaceIFace()->addHumanMessage(getOwnerINLINE(), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_POSITIVE_DINK", MESSAGE_TYPE_INFO, getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_WHITE"), pCapital->getX_INLINE(), pCapital->getY_INLINE(), true, true);
 				}
 			}
-
+			// K-Mod
+			if (getTeam() == GC.getGameINLINE().getActiveTeam())
+				gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true);
+			// K-Mod end
 			return true;
 		}
 	}
