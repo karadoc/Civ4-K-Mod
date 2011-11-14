@@ -18,7 +18,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Barbarian free wins left:[SPACE][COLOR_REVERT]</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Nombre de victoire garantie contre les barbares:[SPACE][COLOR_REVERT]</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Übrige sichere Siege gegen Barbaren:[SPACE][COLOR_REVERT]</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Vittorie barbariche garantite rimaste:[SPACE][COLOR_REVERT]</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Vittorie conto i barbari garantite rimaste:[SPACE][COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Número de victorias garantizadas contra los bárbaros:[SPACE][COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
@@ -90,7 +90,7 @@
 		<English>[NEWLINE]Unharmed:[SPACE]</English>
 		<French>[NEWLINE]Indemne:[SPACE]</French>
 		<German>[NEWLINE]Unversehrt:[SPACE]</German>
-		<Italian>[NEWLINE]Disarmato:[SPACE]</Italian>
+		<Italian>[NEWLINE]Illeso:[SPACE]</Italian>
 		<Spanish>[NEWLINE]Ileso:[SPACE]</Spanish>
 	</TEXT>
 	<TEXT>

@@ -48,8 +48,8 @@
 		<English>Shows the BUG Option Screen.</English>
 		<French>Shows the BUG Option Screen.</French>
 		<German>Ruft den Optionsbildschirm der BUG Mod auf</German>
-		<Italian>Shows the BUG Option Screen.</Italian>
-		<Spanish>Shows the BUG Option Screen.</Spanish>
+		<Italian>Mostra le opzioni del BUG Mod.</Italian>
+		<Spanish>Shows BUG Option Screen.</Spanish>
 	</TEXT>
 
 <!-- Tabs and Labels -->
@@ -160,7 +160,7 @@
 		<English>Tile Hover:</English>
 		<French>Tile Hover:</French>
 		<German>Geländefeld-Tooltip:</German>
-		<Italian>Tile Hover:</Italian>
+		<Italian>Casella Selezionata:</Italian>
 		<Spanish>Tile Hover:</Spanish>
 	</TEXT>
 	<TEXT>
@@ -318,7 +318,7 @@
 		<English>Production Queue:</English>
 		<French>Production Queue:</French>
 		<German>Produktionskette:</German>
-		<Italian>Production Queue:</Italian>
+		<Italian>Coda di Produzione:</Italian>
 		<Spanish>Production Queue:</Spanish>
 	</TEXT>
 	<TEXT>
@@ -614,7 +614,7 @@
 		<English>Subversion (SVN):</English>
 		<French>Subversion (SVN):</French>
 		<German>Subversion (SVN):</German>
-		<Italian>Subversion (SVN):</Italian>
+		<Italian>Sottoversione (SVN):</Italian>
 		<Spanish>Subversion (SVN):</Spanish>
 	</TEXT>
 	<TEXT>

@@ -57,7 +57,7 @@
 		<English>Numbers|Smilies|Both</English>
 		<French>Numbers|Smileys|Both</French>
 		<German>Zahlen|Smilies|Beides</German>
-		<Italian>Numbers|Icone|Both</Italian>
+		<Italian>Numeri|Icone|Entrambi</Italian>
 		<Spanish>Numbers|Smilies|Both</Spanish>
 	</TEXT>
 	<TEXT>
@@ -65,7 +65,7 @@
 		<English>Select how to display AI attitudes on the GLANCE tab: numbers, smilies, or both.</English>
 		<French>Sélectionnez le mode d'afficher des attitudes d'AI sur l'onglet GLANCE: nombres, des smileys, ou les deux.</French>
 		<German>Bestimmt, wie im Kurzüberblick die Einstellung anderer Zivilisationen gegenüber der eigenen dargestellt werden</German>
-		<Italian>Selezionare la modalità di visualizzazione atteggiamenti AI sulla scheda GLANCE: i numeri, faccine, o entrambi.</Italian>
+		<Italian>Selezionare la modalità di visualizzazione atteggiamenti AI sulla scheda OCCHIATA: i numeri, icone, o entrambi.</Italian>
 		<Spanish>Select how to display AI attitudes on the GLANCE tab: numbers, smilies, or both.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -159,7 +159,7 @@
 		<English>Show Era</English>
 		<French>Show Era</French>
 		<German>Epoche anzeigen</German>
-		<Italian>Show Era</Italian>
+		<Italian>Mostra Era</Italian>
 		<Spanish>Show Era</Spanish>
 	</TEXT>
 	<TEXT>
@@ -167,7 +167,7 @@
 		<English>When selected, shows the technology's associated era.</English>
 		<French>When selected, shows the technology's associated era.</French>
 		<German>Zeigt jeweils die Epoche an, zu der eine Technologie gehört</German>
-		<Italian>When selected, shows the technology's associated era.</Italian>
+		<Italian>Quando selezionato, Mostra l'era associata alla tecnologia.</Italian>
 		<Spanish>When selected, shows the technology's associated era.</Spanish>
 	</TEXT>
 
@@ -194,7 +194,7 @@
 		<English>Show Religions</English>
 		<French>Show Religions</French>
 		<German>Anzeige</German>
-		<Italian>Show Religions</Italian>
+		<Italian>Mostra Religioni</Italian>
 		<Spanish>Show Religions</Spanish>
 	</TEXT>
 	<TEXT>
@@ -202,7 +202,7 @@
 		<English>All|Founded|Player's</English>
 		<French>All|Founded|Player's</French>
 		<German>Alle|Gegründete|Eigene</German>
-		<Italian>All|Founded|Player's</Italian>
+		<Italian>Tutte|Fondate|del Giocatore</Italian>
 		<Spanish>All|Founded|Player's</Spanish>
 	</TEXT>
 	<TEXT>
@@ -210,7 +210,7 @@
 		<English>Select which religions should be shown in the top area of the Religion Advisor.</English>
 		<French>Select which religions should be shown in the top area of the Religion Advisor.</French>
 		<German>Bestimmt, welche Religionen in der oberen Hälfte des  Religionsberaters angezeigt werden sollen</German>
-		<Italian>Select which religions should be shown in the top area of the Religion Advisor.</Italian>
+		<Italian>Seleziona quali religioni devono essere mostrate nell'area superiore del Consigliere Religioso.</Italian>
 		<Spanish>Select which religions should be shown in the top area of the Religion Advisor.</Spanish>
 	</TEXT>
 
@@ -304,7 +304,7 @@
 		<English>Use Player Color</English>
 		<French>Use Player Color</French>
 		<German>Spielerfarben</German>
-		<Italian>Use Player Color</Italian>
+		<Italian>Usa Colore del Giocatore</Italian>
 		<Spanish>Use Player Color</Spanish>
 	</TEXT>
 	<TEXT>
@@ -312,7 +312,7 @@
 		<English>When checked, displays wonders on the BUG version of the Wonders tab using the owning player's color.</English>
 		<French>When checked, displays wonders on the BUG version of the Wonders tab using the owning player's color.</French>
 		<German>Färbt die Wundernamen auf der von BUG veränderten Wunder-Seite in der Farbe des jeweiligen Spielers ein</German>
-		<Italian>When checked, displays wonders on the BUG version of the Wonders tab using the owning player's color.</Italian>
+		<Italian>Quando selezionato, mostra le meraviglie nella versione BUG della tabella meraviglie usando il colore del giocatore che le possiede.</Italian>
 		<Spanish>When checked, displays wonders on the BUG version of the Wonders tab using the owning player's color.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -336,7 +336,7 @@
 		<English>Non-Zero Stats Only</English>
 		<French>Non-Zero Stats Only</French>
 		<German>Non-Zero Stats Only</German>
-		<Italian>Non-Zero Stats Only</Italian>
+		<Italian>Solo statistiche maggiori di zero</Italian>
 		<Spanish>Non-Zero Stats Only</Spanish>
 	</TEXT>
 	<TEXT>
@@ -344,7 +344,7 @@
 		<English>When checked, only non-zero entries are displayed in the Stats tab.</English>
 		<French>When checked, only non-zero entries are displayed in the Stats tab.</French>
 		<German>When checked, only non-zero entries are displayed in the Stats tab.</German>
-		<Italian>When checked, only non-zero entries are displayed in the Stats tab.</Italian>
+		<Italian>Quando è selezionato, solo le statistiche maggiori di zero sono mostrate nella tabella Statistiche.</Italian>
 		<Spanish>When checked, only non-zero entries are displayed in the Stats tab.</Spanish>
 	</TEXT>
 <!-- Sevopedia -->

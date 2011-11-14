@@ -20,7 +20,7 @@
 	<English>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</English>
 	<French>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</French>
 	<German>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</German>
-	<Italian>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</Italian>
+	<Italian>Un acquedotto o un ospedale aumentano la salute della città, ma il trasporto pubblico o il centro riciclaggio ne riducono l'inquinamento...</Italian>
 	<Spanish>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</Spanish>
 </TEXT>
 <TEXT>
@@ -28,7 +28,7 @@
 	<English>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</English>
 	<French>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</French>
 	<German>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</German>
-	<Italian>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Italian>
+	<Italian>L'influenza culturale di ogni città si estende oltre i suoi bordi. Se sei pressato culturalmente da un'altra civiltà prendi in considerazione di aumentare l'output culturale delle città vicine e non solo di quella pressata.</Italian>
 	<Spanish>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Spanish>
 </TEXT>
 <TEXT>
@@ -36,7 +36,7 @@
 	<English>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</English>
 	<French>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</French>
 	<German>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</German>
-	<Italian>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</Italian>
+	<Italian>Foreste e giungle aiutano a contrastare l'inquinamento causato dalla tua civilità. Se non hai necessità di abbatterle, considera di mantenerle per ridurre gli effetti del riscaldamento globale.</Italian>
 	<Spanish>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</Spanish>
 </TEXT>
 <TEXT>
@@ -44,7 +44,7 @@
 	<English>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</English>
 	<French>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</French>
 	<German>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</German>
-	<Italian>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</Italian>
+	<Italian>Se una civiltà rivale punta a dominare il mondo - attenzione! Potrebbe decidere di attacacrti anche se appare amichevole.</Italian>
 	<Spanish>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</Spanish>
 </TEXT>
 <TEXT>
@@ -52,7 +52,7 @@
 	<English>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</English>
 	<French>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</French>
 	<German>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</German>
-	<Italian>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</Italian>
+	<Italian>Fabbriche e Linee di produzione causano ulteriore inquinamento con carbone e petrolio. Se non usi combustibili fossili, considera di rimuoverne l'accesso per aumentare la salute di cittadini.</Italian>
 	<Spanish>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</Spanish>
 </TEXT>
 <TEXT>
@@ -60,7 +60,7 @@
 	<English>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</English>
 	<French>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</French>
 	<German>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</German>
-	<Italian>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</Italian>
+	<Italian>Le unità con la promozione "Leadership" (Grande Generale richiesto) riducono maggiormente le probabilità di rivolta di una città.</Italian>
 	<Spanish>Units with the "leadership" warlord promotion will greatly reduce the chance of cultural revolts in their city.</Spanish>
 </TEXT>
 <TEXT>
@@ -68,7 +68,7 @@
 	<English>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</English>
 	<French>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</French>
 	<German>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</German>
-	<Italian>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</Italian>
+	<Italian>Quando un Grande Generale decide di unirsi ad un unità come Grande Condottiero, distribuisce in immediato aumento di esperienza con tutte le unità sulla stessa casella. Maggiore lo stack, maggiore l'esperienza.</Italian>
 	<Spanish>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</Spanish>
 </TEXT>
 <!-- replacement text for the inaccurate barbarian tip (changed english only)-->

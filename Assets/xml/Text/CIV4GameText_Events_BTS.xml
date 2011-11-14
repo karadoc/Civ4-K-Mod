@@ -3769,8 +3769,8 @@
 		<Tag>TXT_KEY_EVENT_THE_VANDALS_HELP_1</Tag>
 		<English>[ICON_BULLET]A dangerous number of barbarian [COLOR_UNIT_TEXT]Swordsman[COLOR_REVERT] units have spawned near our border.</English>
 		<French>[ICON_BULLET]Un nombre important de [COLOR_UNIT_TEXT]Spadassins[COLOR_REVERT] barbares est apparu de notre fronti&#232;re.</French>
-		<German>[ICON_BULLET]Eine gef&#228;hrliche Anzahl von barbarischen [COLOR_UNIT_TEXT]]Schwertk&#228;mpfern[COLOR_REVERT] ist an unserer Grenze aufgetaucht.</German>
-		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]]Spadaccini[COLOR_REVERT] barbari.</Italian>
+		<German>[ICON_BULLET]Eine gef&#228;hrliche Anzahl von barbarischen [COLOR_UNIT_TEXT]Schwertk&#228;mpfern[COLOR_REVERT] ist an unserer Grenze aufgetaucht.</German>
+		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]Spadaccini[COLOR_REVERT] barbari.</Italian>
 		<Spanish>[ICON_BULLET]Un peligroso n&#250;mero de unidades b&#225;rbaras de [COLOR_UNIT_TEXT]Soldados con espada[COLOR_REVERT] ha aparecido cerca de nuestra frontera.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -3786,7 +3786,7 @@
 		<English>[ICON_BULLET]A dangerous number of barbarian [COLOR_UNIT_TEXT]Axeman[COLOR_REVERT] units have spawned near our border.</English>
 		<French>[ICON_BULLET]Un nombre important de [COLOR_UNIT_TEXT]Soldats avec Hache[COLOR_REVERT] barbares est apparu de notre fronti&#232;re.</French>
 		<German>[ICON_BULLET]Eine gef&#228;hrliche Anzahl von barbarischen [COLOR_UNIT_TEXT]Axtk&#228;mpfern[COLOR_REVERT] ist an unserer Grenze aufgetaucht.</German>
-		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]]Guerrieri con ascia[COLOR_REVERT] barbari.</Italian>
+		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]Guerrieri con ascia[COLOR_REVERT] barbari.</Italian>
 		<Spanish>[ICON_BULLET]Un peligroso n&#250;mero de unidades b&#225;rbaras de [COLOR_UNIT_TEXT]Soldados con hacha[COLOR_REVERT] ha aparecido cerca de nuestra frontera.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -3802,7 +3802,7 @@
 		<English>[ICON_BULLET]A dangerous number of barbarian [COLOR_UNIT_TEXT]Spearman[COLOR_REVERT] units have spawned near our border.</English>
 		<French>[ICON_BULLET]Un nombre important de [COLOR_UNIT_TEXT]Lanciers[COLOR_REVERT] barbares est apparu de notre fronti&#232;re.</French>
 		<German>[ICON_BULLET]Eine gef&#228;hrliche Anzahl von barbarischen [COLOR_UNIT_TEXT]Speerk&#228;mpfern[COLOR_REVERT] ist an unserer Grenze aufgetaucht.</German>
-		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]]Lancieri[COLOR_REVERT] barbari.</Italian>
+		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]Lancieri[COLOR_REVERT] barbari.</Italian>
 		<Spanish>[ICON_BULLET]Un peligroso n&#250;mero de unidades b&#225;rbaras de [COLOR_UNIT_TEXT]Lanceros[COLOR_REVERT] ha aparecido cerca de nuestra frontera.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -3818,7 +3818,7 @@
 		<English>[ICON_BULLET]A dangerous number of barbarian [COLOR_UNIT_TEXT]Archer[COLOR_REVERT] units have spawned near our border.</English>
 		<French>[ICON_BULLET]Un nombre important d'[COLOR_UNIT_TEXT]Archers[COLOR_REVERT] barbares est apparu de notre fronti&#232;re.</French>
 		<German>[ICON_BULLET]Eine gef&#228;hrliche Anzahl von barbarischen [COLOR_UNIT_TEXT]Bogensch&#252;tzen[COLOR_REVERT] ist an unserer Grenze aufgetaucht.</German>
-		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]]Arcieri[COLOR_REVERT] barbari.</Italian>
+		<Italian>[ICON_BULLET]Ai nostri confini c'&#232; un pericoloso numero di [COLOR_UNIT_TEXT]Arcieri[COLOR_REVERT] barbari.</Italian>
 		<Spanish>[ICON_BULLET]Un peligroso n&#250;mero de unidades b&#225;rbaras de [COLOR_UNIT_TEXT]Arqueros[COLOR_REVERT] ha aparecido cerca de nuestra frontera.</Spanish>
 	</TEXT>
 	<TEXT>

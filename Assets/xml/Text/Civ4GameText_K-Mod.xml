@@ -70,7 +70,7 @@
 			<Plural>0</Plural>
 		</German>
 		<Italian>
-			<Text>Legion:Legioni</Text>
+			<Text>Legione:Legioni</Text>
 			<Gender>Female</Gender>
 			<Plural>0:1</Plural>
 		</Italian>
@@ -85,7 +85,7 @@
 		<English>Economics Advisor</English>
 		<French>Conseiller &#233;conomie</French>
 		<German>Wirtschaftsberater</German>
-		<Italian>economia consulente</Italian>
+		<Italian>Consigliere Economico</Italian>
 		<Spanish>Consejero de Economía</Spanish>
 	</TEXT>
 	<TEXT>
@@ -93,7 +93,7 @@
 		<English>Environment</English>
 		<French>Environnement</French>
 		<German>Umwelt</German>
-		<Italian>Ambiente</Italian>
+		<Italian>Ecologico</Italian>
 		<Spanish>Entorno</Spanish>
 	</TEXT>
 	<TEXT>
@@ -109,7 +109,7 @@
 		<English>Total accumulated pollution above the sustainability threshold.</English>
 		<French>Total accumulated pollution above the sustainability threshold.</French>
 		<German>Total accumulated pollution above the sustainability threshold.</German>
-		<Italian>Total accumulated pollution above the sustainability threshold.</Italian>
+		<Italian>Inquinamento accumulato totale prima di oltrepassare il limite di sostenibilità.</Italian>
 		<Spanish>Total accumulated pollution above the sustainability threshold.</Spanish>		
 	</TEXT>
 	<TEXT>
@@ -117,7 +117,7 @@
 		<English>[ICON_UNHAPPY] due to global warming.</English>
 		<French>[ICON_UNHAPPY] due to global warming.</French>
 		<German>[ICON_UNHAPPY] due to global warming.</German>
-		<Italian>[ICON_UNHAPPY] due to global warming.</Italian>
+		<Italian>[ICON_UNHAPPY] a causa del riscaldamento globale.</Italian>
 		<Spanish>[ICON_UNHAPPY] due to global warming.</Spanish>		
 	</TEXT>
 	<TEXT>
@@ -125,7 +125,7 @@
 		<English>The maximum rate of pollution that can be safely absorbed by the environment.</English>
 		<French>The maximum rate of pollution that can be safely absorbed by the environment.</French>
 		<German>The maximum rate of pollution that can be safely absorbed by the environment.</German>
-		<Italian>The maximum rate of pollution that can be safely absorbed by the environment.</Italian>
+		<Italian>Il massimo livello di inquinamento che può essere assorbito dall'ambiente senza problemi.</Italian>
 		<Spanish>The maximum rate of pollution that can be safely absorbed by the environment.</Spanish>		
 	</TEXT>
 	<TEXT>
@@ -133,7 +133,7 @@
 		<English>Our pollution rate relative to the global average.</English>
 		<French>Our pollution rate relative to the global average.</French>
 		<German>Our pollution rate relative to the global average.</German>
-		<Italian>Our pollution rate relative to the global average.</Italian>
+		<Italian>Il nostro livello di inquinamento relativo alla media globale.</Italian>
 		<Spanish>Our pollution rate relative to the global average.</Spanish>		
 	</TEXT>	
 
@@ -142,7 +142,7 @@
 		<English>Effective pollution reductions:</English>
 		<French>Effective pollution reductions:</French>
 		<German>Effective pollution reductions:</German>
-		<Italian>Effective pollution reductions:</Italian>
+		<Italian>Riduzioni effettive inquinamento:</Italian>
 		<Spanish>Effective pollution reductions:</Spanish>
 	</TEXT>
 	<TEXT>
@@ -158,7 +158,7 @@
 		<English>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] from Population</English>
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (population)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Bev&#246;lkerung</German>
-		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dal popolazione</Italian>
+		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dalla popolazione</Italian>
 		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde poblaci&#243;n</Spanish>
 	</TEXT>
 	<TEXT>
@@ -166,7 +166,7 @@
 		<English>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] from Buildings</English>
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (b&#226;timents)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Geb&#228;ude</German>
-		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dal gli edifici</Italian>
+		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dagli edifici</Italian>
 		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde edificios</Spanish>
 	</TEXT>
 	<TEXT>
@@ -174,7 +174,7 @@
 		<English>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] from Bonuses</English>
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (bonus)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Boni</German>
-		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dal i bonus</Italian>
+		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dai bonus</Italian>
 		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde bonificaciones</Spanish>
 	</TEXT>
 	<TEXT>
@@ -182,7 +182,7 @@
 		<English>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] from Power</English>
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (&#233;lectricit&#233;)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Energie</German>
-		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dal l'energia</Italian>
+		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dall'energia</Italian>
 		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde energ&#237;a</Spanish>
 	</TEXT>
 	<TEXT>
@@ -217,7 +217,7 @@
 		<English>Worldwide pollution has reached the sustainability threshold.</English>
 		<French>Worldwide pollution has reached the sustainability threshold.</French>
 		<German>Worldwide pollution has reached the sustainability threshold.</German>
-		<Italian>Worldwide pollution has reached the sustainability threshold.</Italian>
+		<Italian>L'inquinamento mondiale ha raggiunto il limite di sostenibilità.</Italian>
 		<Spanish>Worldwide pollution has reached the sustainability threshold.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -225,7 +225,7 @@
 		<English>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</English>
 		<French>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</French>
 		<German>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</German>
-		<Italian>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</Italian>
+		<Italian>I nostri scenziati hanno teorizzato che se l'inquinamento mondiale continua a crescere, dovremmo fronteggiare cambiamenti climatici irreversibili. Consulta il Consigliere Finanziario per maggiori informazioni.</Italian>
 		<Spanish>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -243,7 +243,7 @@
 		<English>Volcanic ash has improved the soil fertility.</English>
 		<French>Les cendres volcaniques am&#233;lior&#233; la fertilit&#233; du sol.</French>
 		<German>Vulkanische Asche verbessert die Bodenfruchtbarkeit.</German>
-		<Italian>Ceneri vulcaniche migliorato la fertilità del suolo.</Italian>
+		<Italian>Le ceneri vulcaniche hanno migliorato la fertilità del suolo.</Italian>
 		<Spanish>La ceniza volcánica mejorar la fertilidad del suelo.</Spanish>
 	</TEXT>	
 	<!-- replacement volcano text (unfinished)-->
@@ -286,7 +286,7 @@
 		<English>Rising Seas</English>
 		<French>Mers Er Hausse</French>
 		<German>Steigende Meere</German>
-		<Italian>Mari Aumentanti</Italian>
+		<Italian>Innalzamento del livello del mare </Italian>
 		<Spanish>Mares De Levantamiento</Spanish>
 	</TEXT>
 	<TEXT>
@@ -294,7 +294,7 @@
 		<English>Global warming can raise sea level.</English>
 		<French>Le rechauffement global peut soulever le niveau de la mer.</French>
 		<German>Die globale Erwarmung kann Meeresspiegel anheben.</German>
-		<Italian>Il riscaldamento globale puo sollevare il livello del mare.</Italian>
+		<Italian>Il riscaldamento globale può innalzare il livello del mare.</Italian>
 		<Spanish>El calentamiento del planeta puede levantar nivel del mar.</Spanish>
 	</TEXT>
 	[end of unused tags] -->

@@ -44,7 +44,7 @@
 		<English>[COLOR_NEGATIVE_TEXT]You are the worst enemy of %s1.[COLOR_REVERT]</English>
 		<French>[COLOR_NEGATIVE_TEXT]You are the worst enemy of %s1.[COLOR_REVERT]</French>
 		<German>[COLOR_NEGATIVE_TEXT]Ihr seid der Erzfeind von %s1.[COLOR_REVERT]</German>
-		<Italian>[COLOR_NEGATIVE_TEXT]You are the worst enemy of %s1.[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_NEGATIVE_TEXT]Sei il peggior nemico di %s1.[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_NEGATIVE_TEXT]You are the worst enemy of %s1.[COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
@@ -52,7 +52,7 @@
 		<English>[COLOR_YIELD_FOOD]%s2 is the worst enemy of %s1.[COLOR_REVERT]</English>
 		<French>[COLOR_YIELD_FOOD]%s2 is the worst enemy of %s1.[COLOR_REVERT]</French>
 		<German>[COLOR_YIELD_FOOD]%s2 ist der Erzfeind von %s1.[COLOR_REVERT]</German>
-		<Italian>[COLOR_YIELD_FOOD]%s2 is the worst enemy of %s1.[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_YIELD_FOOD]%s2 è il peggior nemico di %s1.[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_YIELD_FOOD]%s2 is the worst enemy of %s1.[COLOR_REVERT]</Spanish>
 	</TEXT>
 	
@@ -61,7 +61,7 @@
 		<English>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was you).[COLOR_REVERT]</English>
 		<French>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was you).[COLOR_REVERT]</French>
 		<German>[COLOR_YIELD_FOOD]%s2 ist der neue Erzfeind von %s1 (statt Euch).[COLOR_REVERT]</German>
-		<Italian>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was you).[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_YIELD_FOOD]%s2 è il nuovo peggior nemico di %s1 (eri tu).[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was you).[COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
@@ -69,7 +69,7 @@
 		<English>[COLOR_NEGATIVE_TEXT]You are the new worst enemy of %s1 (was %s2).[COLOR_REVERT]</English>
 		<French>[COLOR_NEGATIVE_TEXT]You are the new worst enemy of %s1 (was %s2).[COLOR_REVERT]</French>
 		<German>[COLOR_NEGATIVE_TEXT]Ihr seid der neue Erzfeind von %s1 (statt %s2).[COLOR_REVERT]</German>
-		<Italian>[COLOR_NEGATIVE_TEXT]You are the new worst enemy of %s1 (was %s2).[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_NEGATIVE_TEXT]Sei il nuovo peggior nemico di %s1 (era %s2).[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_NEGATIVE_TEXT]You are the new worst enemy of %s1 (was %s2).[COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
@@ -77,7 +77,7 @@
 		<English>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was %s3).[COLOR_REVERT]</English>
 		<French>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was %s3).[COLOR_REVERT]</French>
 		<German>[COLOR_YIELD_FOOD]%s2 ist der neue Erzfeind von %s1 (statt %s3).[COLOR_REVERT]</German>
-		<Italian>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was %s3).[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_YIELD_FOOD]%s2 è il nuovo peggior nemico di %s1 (era %s3).[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_YIELD_FOOD]%s2 is the new worst enemy of %s1 (was %s3).[COLOR_REVERT]</Spanish>
 	</TEXT>
 	
@@ -86,7 +86,7 @@
 		<English>[COLOR_POSITIVE_TEXT]%s2 is no longer the worst enemy of %s1.[COLOR_REVERT]</English>
 		<French>[COLOR_POSITIVE_TEXT]%s2 is no longer the worst enemy of %s1.[COLOR_REVERT]</French>
 		<German>[COLOR_POSITIVE_TEXT]%s2 ist nicht mehr der Erzfeind von %s1.[COLOR_REVERT]</German>
-		<Italian>[COLOR_POSITIVE_TEXT]%s2 is no longer the worst enemy of %s1.[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_POSITIVE_TEXT]%s2 non è più il peggior nemico di %s1.[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_POSITIVE_TEXT]%s2 is no longer the worst enemy of %s1.[COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
@@ -94,7 +94,7 @@
 		<English>[COLOR_POSITIVE_TEXT]You are no longer the worst enemy of %s1.[COLOR_REVERT]</English>
 		<French>[COLOR_POSITIVE_TEXT]You are no longer the worst enemy of %s1.[COLOR_REVERT]</French>
 		<German>[COLOR_POSITIVE_TEXT]Ihr seid nicht mehr der Erzfeind von %s1.[COLOR_REVERT]</German>
-		<Italian>[COLOR_POSITIVE_TEXT]You are no longer the worst enemy of %s1.[COLOR_REVERT]</Italian>
+		<Italian>[COLOR_POSITIVE_TEXT]Non sei più il peggior nemico di %s1.[COLOR_REVERT]</Italian>
 		<Spanish>[COLOR_POSITIVE_TEXT]You are no longer the worst enemy of %s1.[COLOR_REVERT]</Spanish>
 	</TEXT>
 	

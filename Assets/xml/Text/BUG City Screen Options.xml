@@ -51,7 +51,7 @@
 		<English>Count Tiles</English>
 		<French>Count Tiles</French>
 		<German>Ertragsberechnung</German>
-		<Italian>Count Tiles</Italian>
+		<Italian>Conta caselle</Italian>
 		<Spanish>Count Tiles</Spanish>
 	</TEXT>
 	<TEXT>
@@ -59,7 +59,7 @@
 		<English>Select which tiles to count in Raw Yields when Civ is started.</English>
 		<French>Select which tiles to count in Raw Yields when Civ is started.</French>
 		<German>Bestimmt, welche Geländefelder in die Berechnung der Roherträge einfließen sollen, wenn das Spiel gestartet wird</German>
-		<Italian>Select which tiles to count in Raw Yields when Civ is started.</Italian>
+		<Italian>Seleziona quali caselle contare nei Prodotti Grazzi quando Civ è avviato.</Italian>
 		<Spanish>Select which tiles to count in Raw Yields when Civ is started.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -67,7 +67,7 @@
 		<English>Worked|City|Owned</English>
 		<French>Worked|City|Owned</French>
 		<German>Bearbeitet|Stadt|Besitz</German>
-		<Italian>Worked|City|Owned</Italian>
+		<Italian>Lavorate|Città|Possedute</Italian>
 		<Spanish>Worked|City|Owned</Spanish>
 	</TEXT>
 	<TEXT>
@@ -83,7 +83,7 @@
 		<English>When checked, displays the food difference generated per turn (plus or minus) and the number of turns until starvation when the food supply is shrinking.</English>
 		<French>When checked, displays the food difference generated per turn (plus or minus) and the number of turns until starvation when the food supply is shrinking.</French>
 		<German>Zeigt die (positive oder negative) Abweichung der erwirtschafteten Nahrungserträge pro Runde an und außerdem die Anzahl der Runden, bis eine Hungersnot ausbricht und der Nahrungsvorrat zu schrumpfen beginnt</German>
-		<Italian>Quando è selezionato, visualizza la differenza del cibo generato ogni turno (positiva o negativa); quando le risorse alimentari sono in riduzione, visualizza anche il numero di turni fino alla carestia.</Italian>
+		<Italian>Quando è selezionato, visualizza la differenza del cibo generato ogni turno (positiva o negativa); quando le risorse alimentari sono in riduzione, visualizza anche il numero di turni prima della carestia.</Italian>
 		<Spanish>When checked, displays the food difference generated per turn (plus or minus) and the number of turns until starvation when the food supply is shrinking.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -187,7 +187,7 @@
 		<English>Only Present Religions</English>
 		<French>Only Present Religions</French>
 		<German>Nur vorhandene Religionen</German>
-		<Italian>Only Present Religions</Italian>
+		<Italian>Solo Religioni Presenti</Italian>
 		<Spanish>Only Present Religions</Spanish>
 	</TEXT>
 	<TEXT>
@@ -195,7 +195,7 @@
 		<English>When checked, displays only the religions that are present in the city and allows for more than seven religions.</English>
 		<French>When checked, displays only the religions that are present in the city and allows for more than seven religions.</French>
 		<German>Zeigt nur die in einer Stadt vorhandenen Religionen an und erlaubt die Darstellung von mehr als sieben Religionen</German>
-		<Italian>When checked, displays only the religions that are present in the city and allows for more than seven religions.</Italian>
+		<Italian>Quando è selezionato, mostra solo le religioni presenti nella città e consente di visualizzare oltre sette religioni.</Italian>
 		<Spanish>When checked, displays only the religions that are present in the city and allows for more than seven religions.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -203,7 +203,7 @@
 		<English>Only Present Corporations</English>
 		<French>Only Present Corporations</French>
 		<German>Nur vorhandene Kapitalgesellschaften</German>
-		<Italian>Only Present Corporations</Italian>
+		<Italian>Solo Corporazioni Presenti</Italian>
 		<Spanish>Only Present Corporations</Spanish>
 	</TEXT>
 	<TEXT>
@@ -211,7 +211,7 @@
 		<English>When checked, displays only the corporations that are present in the city and allows for more than seven corporations.</English>
 		<French>When checked, displays only the corporations that are present in the city and allows for more than seven corporations.</French>
 		<German>Zeigt nur die in einer Stadt vorhandenen Kapitalgesellschaften an und erlaubt die Darstellung von mehr als sieben Kapitalgesellschaften</German>
-		<Italian>When checked, displays only the corporations that are present in the city and allows for more than seven corporations.</Italian>
+		<Italian>Quando è selezionato, mostra solo le religioni presenti nella città e consente di visualizzare oltre sette corporazioni.</Italian>
 		<Spanish>When checked, displays only the corporations that are present in the city and allows for more than seven corporations.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -244,7 +244,7 @@
 		<English>Color Started Items</English>
 		<French>Color Started Items</French>
 		<German>Baufortschritt einfärben</German>
-		<Italian>Color Started Items</Italian>
+		<Italian>Colora Elementi Iniziati</Italian>
 		<Spanish>Color Started Items</Spanish>
 	</TEXT>
 	<TEXT>
@@ -252,7 +252,7 @@
 		<English>When checked, displays the remaining turns in cyan for items that have been started.</English>
 		<French>When checked, displays the remaining turns in cyan for items that have been started.</French>
 		<German>Färbt die bis zur Fertigstellung eines Projekts verbleibenden Runden Blau ein</German>
-		<Italian>When checked, displays the remaining turns in cyan for items that have been started.</Italian>
+		<Italian>Quando è selezionato, Mostra in cyan i turni rimanenti per gli elementi già iniziati.</Italian>
 		<Spanish>When checked, displays the remaining turns in cyan for items that have been started.</Spanish>
 	</TEXT>
 	
@@ -358,7 +358,7 @@
 		<English>Train Civilian Units Forever</English>
 		<French>Train Civilian Units Forever</French>
 		<German>Unendliche Einheitenproduktion (zivil)</German>
-		<Italian>Train Civilian Units Forever</Italian>
+		<Italian>Addestra Unità Civili per Sempre</Italian>
 		<Spanish>Train Civilian Units Forever</Spanish>
 	</TEXT>
 	<TEXT>
@@ -366,7 +366,7 @@
 		<English>When checked, selecting a civilian unit in the Choose Production popup sets the city to train that unit repeatedly.</English>
 		<French>When checked, selecting a civilian unit in the Choose Production popup sets the city to train that unit repeatedly.</French>
 		<German>Lässt eine Stadt wiederholt eine zivile Einheit produzieren, die im Stadt-Baumenü ausgewählt wurde</German>
-		<Italian>When checked, selecting a civilian unit in the Choose Production popup sets the city to train that unit repeatedly.</Italian>
+		<Italian>Quando è selezionato, selezionando un'unità civile nel popup Scegli Produzione ordina alla città di produrre quell'unità ripetutamente.</Italian>
 		<Spanish>When checked, selecting a civilian unit in the Choose Production popup sets the city to train that unit repeatedly.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -374,7 +374,7 @@
 		<English>Train Military Units Forever</English>
 		<French>Train Military Units Forever</French>
 		<German>Unendliche Einheitenproduktion (militärisch)</German>
-		<Italian>Train Military Units Forever</Italian>
+		<Italian>Addestra Unità Militari per Sempre</Italian>
 		<Spanish>Train Military Units Forever</Spanish>
 	</TEXT>
 	<TEXT>
@@ -382,7 +382,7 @@
 		<English>When checked, selecting a military unit in the Choose Production popup sets the city to train that unit repeatedly.</English>
 		<French>When checked, selecting a military unit in the Choose Production popup sets the city to train that unit repeatedly.</French>
 		<German>Lässt eine Stadt wiederholt eine militärische Einheit produzieren, die im Stadt-Baumenü ausgewählt wurde</German>
-		<Italian>When checked, selecting a military unit in the Choose Production popup sets the city to train that unit repeatedly.</Italian>
+		<Italian>Quando è selezionato, selezionando un'unità miltare nel popup Scegli Produzione ordina alla città di produrre quell'unità ripetutamente.</Italian>
 		<Spanish>When checked, selecting a military unit in the Choose Production popup sets the city to train that unit repeatedly.</Spanish>
 	</TEXT>
 </Civ4GameText>

@@ -25,7 +25,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Switch Page[COLOR_REVERT][NEWLINE]Select any page in the list to switch to it</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Switch Page[COLOR_REVERT][NEWLINE]Select any page in the list to switch to it</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Seite wählen[COLOR_REVERT][NEWLINE]Direkt zur gewählten Seite der Liste</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Switch Page[COLOR_REVERT][NEWLINE]Select any page in the list to switch to it</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Cambia Pagina[COLOR_REVERT][NEWLINE]Seleziona qualsiasi pagina nella lista con cui cambiarla</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Switch Page[COLOR_REVERT][NEWLINE]Select any page in the list to switch to it</Spanish>
 	</TEXT>
 	<TEXT>
@@ -33,7 +33,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Previous Page[COLOR_REVERT][NEWLINE]Switch to the previous page in the list</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Previous Page[COLOR_REVERT][NEWLINE]Switch to the previous page in the list</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Vorherige Seite[COLOR_REVERT][NEWLINE]Zur vorherigen Seite der Liste</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Previous Page[COLOR_REVERT][NEWLINE]Switch to the previous page in the list</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Pagina precedenta[COLOR_REVERT][NEWLINE]Cambia con la pagina precedente della lista</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Previous Page[COLOR_REVERT][NEWLINE]Switch to the previous page in the list</Spanish>
 	</TEXT>
 	<TEXT>
@@ -41,7 +41,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Next Page[COLOR_REVERT][NEWLINE]Switch to the next page in the list</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Next Page[COLOR_REVERT][NEWLINE]Switch to the next page in the list</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Nächste Seite[COLOR_REVERT][NEWLINE]Zur nächsten Seite der Liste</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Next Page[COLOR_REVERT][NEWLINE]Switch to the next page in the list</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Pagina successiva[COLOR_REVERT][NEWLINE]Cambia con la pagina successiva della lista</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Next Page[COLOR_REVERT][NEWLINE]Switch to the next page in the list</Spanish>
 	</TEXT>
 	
@@ -50,7 +50,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Enter Edit Mode[COLOR_REVERT][NEWLINE]Show the editing controls to be able to add/remove/reorder pages and columns or change whether or not the specialist buttons are displayed</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Enter Edit Mode[COLOR_REVERT][NEWLINE]Show the editing controls to be able to add/remove/reorder pages and columns or change whether or not the specialist buttons are displayed</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Bearbeitungsmodus[COLOR_REVERT][NEWLINE]Ruft die Bearbeitungswerkzeuge zum Hinzufügen/Entfernen/Organisieren von Seiten und Spalten und zum An-/Abschalten der Spezialistenschaltfläche auf</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Enter Edit Mode[COLOR_REVERT][NEWLINE]Show the editing controls to be able to add/remove/reorder pages and columns or change whether or not the specialist buttons are displayed</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Entra in modalità Modifica[COLOR_REVERT][NEWLINE]Mostra i controlli per aggiungere/rimuovere/riordinare le pagine e le colonne o cambiare quali pulsanti o no degli specialisti devono essere mostrati</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Enter Edit Mode[COLOR_REVERT][NEWLINE]Show the editing controls to be able to add/remove/reorder pages and columns or change whether or not the specialist buttons are displayed</Spanish>
 	</TEXT>
 	<TEXT>
@@ -58,7 +58,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Exit Edit Mode[COLOR_REVERT][NEWLINE]Hide the editing controls to be able to see the list of cities. Don't forget to save your changes before exiting the game</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Exit Edit Mode[COLOR_REVERT][NEWLINE]Hide the editing controls to be able to see the list of cities. Don't forget to save your changes before exiting the game</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Bearbeitungsmodus beenden[COLOR_REVERT][NEWLINE]Versteckt die Bearbeitungswerkzeuge und ruft wieder die Stadtliste auf (Veränderungen sollten vor Beenden des Spiels gespeichert werden)</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Exit Edit Mode[COLOR_REVERT][NEWLINE]Hide the editing controls to be able to see the list of cities. Don't forget to save your changes before exiting the game</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Esci dalla modalità Modifica[COLOR_REVERT][NEWLINE]Nascondi i controlli di modifica per vedere la lista delle città. Non dimenticare di salvare i tuoi cambiamanti prima di uscire dalla partita</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Exit Edit Mode[COLOR_REVERT][NEWLINE]Hide the editing controls to be able to see the list of cities. Don't forget to save your changes before exiting the game</Spanish>
 	</TEXT>
 	<TEXT>
@@ -66,7 +66,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Save[COLOR_REVERT][NEWLINE]Save any changes you have made to disk (CustDomAdv.txt)</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Save[COLOR_REVERT][NEWLINE]Save any changes you have made to disk (CustDomAdv.txt)</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Speichern[COLOR_REVERT][NEWLINE]Speichert die Einstellungen in der Datei CustDomAdv.txt</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Save[COLOR_REVERT][NEWLINE]Save any changes you have made to disk (CustDomAdv.txt)</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Salva[COLOR_REVERT][NEWLINE]Salva ogni modifica fatta sul disco (CustDomAdv.txt)</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Save[COLOR_REVERT][NEWLINE]Save any changes you have made to disk (CustDomAdv.txt)</Spanish>
 	</TEXT>
 	<TEXT>
@@ -74,7 +74,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Reload[COLOR_REVERT][NEWLINE]Load the pages from disk to revert any chanes you have made</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Reload[COLOR_REVERT][NEWLINE]Load the pages from disk to revert any chanes you have made</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Neu laden[COLOR_REVERT][NEWLINE]Lädt die gespeicherten Einstellungen und macht die vorgenommenen Veränderungen rückgängig</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Reload[COLOR_REVERT][NEWLINE]Load the pages from disk to revert any chanes you have made</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Ricarica[COLOR_REVERT][NEWLINE]Carica le pagine dal disco per annullare ogni modifica fatta</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Reload[COLOR_REVERT][NEWLINE]Load the pages from disk to revert any chanes you have made</Spanish>
 	</TEXT>
 	
@@ -83,7 +83,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Rename Page[COLOR_REVERT][NEWLINE]Enter a new name for the current page</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Rename Page[COLOR_REVERT][NEWLINE]Enter a new name for the current page</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Seite umbenennen[COLOR_REVERT][NEWLINE]Eingabe eines neuen Namens für die aktuell gewählte Seite</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Rename Page[COLOR_REVERT][NEWLINE]Enter a new name for the current page</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Rinomina Pagina[COLOR_REVERT][NEWLINE]Immetti un nuovo nome per la pagina corrente</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Rename Page[COLOR_REVERT][NEWLINE]Enter a new name for the current page</Spanish>
 	</TEXT>
 	<TEXT>
@@ -91,7 +91,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Add Page[COLOR_REVERT][NEWLINE]Insert a new page in the list after the current page</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Add Page[COLOR_REVERT][NEWLINE]Insert a new page in the list after the current page</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Seite hinzufügen[COLOR_REVERT][NEWLINE]Fügt der Liste nach der aktuell gewählten Seite eine neue Seite hinzu</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Add Page[COLOR_REVERT][NEWLINE]Insert a new page in the list after the current page</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Aggiungi Pagina[COLOR_REVERT][NEWLINE]Inserisci una nuova pagina nella lista dopo la corrente</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Add Page[COLOR_REVERT][NEWLINE]Insert a new page in the list after the current page</Spanish>
 	</TEXT>
 	<TEXT>
@@ -99,7 +99,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Remove Page[COLOR_REVERT][NEWLINE]Remove the current page from the list</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Remove Page[COLOR_REVERT][NEWLINE]Remove the current page from the list</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Seite entfernen[COLOR_REVERT][NEWLINE]Entfernt die aktuell gewählte Seite aus der Liste</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Remove Page[COLOR_REVERT][NEWLINE]Remove the current page from the list</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Rimuovi Pagina[COLOR_REVERT][NEWLINE]Reimuovi la pagina corrente dalla lista</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Remove Page[COLOR_REVERT][NEWLINE]Remove the current page from the list</Spanish>
 	</TEXT>
 	<TEXT>
@@ -107,7 +107,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Move Page Up[COLOR_REVERT][NEWLINE]Move the current page up in the list</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Move Page Up[COLOR_REVERT][NEWLINE]Move the current page up in the list</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Seite nach oben verschieben[COLOR_REVERT][NEWLINE]Verschiebt die aktuell gewählte Seite in der Liste nach oben</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Move Page Up[COLOR_REVERT][NEWLINE]Move the current page up in the list</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Sposta Pagina in alto[COLOR_REVERT][NEWLINE]Sposta la pagina corrente in alto nella lista</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Move Page Up[COLOR_REVERT][NEWLINE]Move the current page up in the list</Spanish>
 	</TEXT>
 	<TEXT>
@@ -115,7 +115,7 @@
 		<English>[COLOR_HIGHLIGHT_TEXT]Move Page Down[COLOR_REVERT][NEWLINE]Move the current page down in the list</English>
 		<French>[COLOR_HIGHLIGHT_TEXT]Move Page Down[COLOR_REVERT][NEWLINE]Move the current page down in the list</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Seite nach unten verschieben[COLOR_REVERT][NEWLINE]Verschiebt die aktuell gewählte Seite in der Liste nach unten</German>
-		<Italian>[COLOR_HIGHLIGHT_TEXT]Move Page Down[COLOR_REVERT][NEWLINE]Move the current page down in the list</Italian>
+		<Italian>[COLOR_HIGHLIGHT_TEXT]Sposta Pagina in basso[COLOR_REVERT][NEWLINE]Sposta la pagina corrente in basso nella lista</Italian>
 		<Spanish>[COLOR_HIGHLIGHT_TEXT]Move Page Down[COLOR_REVERT][NEWLINE]Move the current page down in the list</Spanish>
 	</TEXT>
 	

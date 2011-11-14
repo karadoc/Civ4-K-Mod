@@ -98,7 +98,7 @@
 		<English>Vassal</English>
 		<French>Vassal</French>
 		<German>Vasall</German>
-		<Italian>Vassallaggio</Italian>
+		<Italian>Vassallo</Italian>
 		<Spanish>Vassal</Spanish>
 	</TEXT>
 	<TEXT>
@@ -165,7 +165,7 @@
 		<English>Resources</English>
 		<French>Resources</French>
 		<German>Ressourcen</German>
-		<Italian>Resources</Italian>
+		<Italian>Risorse</Italian>
 		<Spanish>Resources</Spanish>
 	</TEXT>
 	<TEXT>
@@ -181,7 +181,7 @@
 		<English>Maps</English>
 		<French>Cartes</French>
 		<German>Karten</German>
-		<Italian>Cartas</Italian>
+		<Italian>Mappa</Italian>
 		<Spanish>Cartas</Spanish>
 	</TEXT>
 	<TEXT>
@@ -189,7 +189,7 @@
 		<English>When checked, displays an alert when a civilization is willing to trade their map.</English>
 		<French>When checked, displays an alert when a civilization is willing to trade their map.</French>
 		<German>Lässt eine Warnung erscheinen, wenn eine Zivilisation ihre Karte handeln möchte</German>
-		<Italian>Quando è selezionato, viene visualizzato un avviso quando una Civiltà è disponibile a commerciare Cartas.</Italian>
+		<Italian>Quando è selezionato, viene visualizzato un avviso quando una Civiltà è disponibile a commerciare la Mappa.</Italian>
 		<Spanish>When checked, displays an alert when a civilization is willing to trade their map.</Spanish>
 	</TEXT>
 

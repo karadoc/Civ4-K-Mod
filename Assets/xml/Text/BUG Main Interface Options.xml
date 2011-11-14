@@ -27,7 +27,7 @@
 		<English>Options Button</English>
 		<French>Options Button</French>
 		<German>Optionsschaltfläche</German>
-		<Italian>Options Button</Italian>
+		<Italian>Dottone Opzioni</Italian>
 		<Spanish>Options Button</Spanish>
 	</TEXT>
 	<TEXT>
@@ -35,7 +35,7 @@
 		<English>When checked, shows the BUG Option Screen button.</English>
 		<French>When checked, shows the BUG Option Screen button.</French>
 		<German>Zeigt die Schaltfläche zum Aufruf des Optionensbildschirms der BUG Mod an</German>
-		<Italian>When checked, shows the BUG Option Screen button.</Italian>
+		<Italian>Quando è selezionato, mostra il bottone della schermata opzioni del BUG.</Italian>
 		<Spanish>When checked, shows the BUG Option Screen button.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -246,7 +246,7 @@
 		<English>Build/Action Icon Size</English>
 		<French>Build/Action Icon Size</French>
 		<German>Größe der Bau-/Befehlssymbole</German>
-		<Italian>Build/Action Icon Size</Italian>
+		<Italian>Dimensione Icona Costruisci/Azione</Italian>
 		<Spanish>Build/Action Icon Size</Spanish>
 	</TEXT>
 	<TEXT>
@@ -254,7 +254,7 @@
 		<English>Determines the size of the build and action buttons in the bottom center of the screen.</English>
 		<French>Determines the size of the build and action buttons in the bottom center of the screen.</French>
 		<German>Bestimmt die Größe der Bau- und Befehlssymbole im Menü am unteren Bildschirmrand</German>
-		<Italian>Determines the size of the build and action buttons in the bottom center of the screen.</Italian>
+		<Italian>Determina la dimensione delle icone per i tasti di costruzione e azione nella parte bassa e centrale dello schermo.</Italian>
 		<Spanish>Determines the size of the build and action buttons in the bottom center of the screen.</Spanish>
 	</TEXT>
 	<TEXT>
@@ -262,7 +262,7 @@
 		<English>Small|Medium|Large</English>
 		<French>Small|Medium|Large</French>
 		<German>Klein|Mittel|Groß</German>
-		<Italian>Small|Medium|Large</Italian>
+		<Italian>Piccola|Media|Larga</Italian>
 		<Spanish>Small|Medium|Large</Spanish>
 	</TEXT>
 	<TEXT>
@@ -270,7 +270,7 @@
 		<English>Rapid Unit Cycling</English>
 		<French>Rapid Unit Cycling</French>
 		<German>Rapid Unit Cycling</German>
-		<Italian>Rapid Unit Cycling</Italian>
+		<Italian>Cicla rapidamente tra le unità</Italian>
 		<Spanish>Rapid Unit Cycling</Spanish>
 	</TEXT>
 	<TEXT>
@@ -278,7 +278,7 @@
 		<English>When checked, automatic unit selection happens instantly rather than with a delay.</English>
 		<French>When checked, automatic unit selection happens instantly rather than with a delay.</French>
 		<German>When checked, automatic unit selection happens instantly rather than with a delay.</German>
-		<Italian>When checked, automatic unit selection happens instantly rather than with a delay.</Italian>
+		<Italian>Quando è selezionato, la selezione automatica tra le unità è istantanea anzichè con ritardo.</Italian>
 		<Spanish>When checked, automatic unit selection happens instantly rather than with a delay.</Spanish>
 	</TEXT>
 </Civ4GameText>
