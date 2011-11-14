@@ -1222,6 +1222,7 @@ void CvSelectionGroup::startMission()
 		// K-Mod end. (note: I'm not sure what the original bts code was. I deleted the BBAI code.)
 		else
 		{
+			std::vector<CvUnit*> units_left_behind; // K-Mod
 			pUnitNode = headUnitNode();
 
 			while (pUnitNode != NULL)
@@ -1276,6 +1277,10 @@ void CvSelectionGroup::startMission()
 						{
 							bAction = true;
 						}
+						// K-Mod
+						else
+							units_left_behind.push_back(pLoopUnit);
+						// K-Mod end
 						break;
 
 					case MISSION_AIRBOMB:
@@ -1465,8 +1470,19 @@ void CvSelectionGroup::startMission()
 					}
 				}
 			}
-		}
-	}
+			// K-Mod
+			if (!units_left_behind.empty())
+			{
+				units_left_behind[0]->joinGroup(NULL, true);
+				CvSelectionGroup* pNewGroup = units_left_behind[0]->getGroup();
+				for (size_t i = 1; i < units_left_behind.size(); i++)
+				{
+					units_left_behind[i]->joinGroup(pNewGroup, true);
+				}
+			}
+			// K-Mod end
+		} // end if (mission != pillage)
+	} // end if (can start mission)
 
 	if ((getNumUnits() > 0) && (headMissionQueueNode() != NULL))
 	{

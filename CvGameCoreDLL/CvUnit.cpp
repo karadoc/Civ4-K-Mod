@@ -4438,7 +4438,8 @@ bool CvUnit::paradrop(int iX, int iY)
 	changeMoves(GC.getMOVE_DENOMINATOR() / 2);
 	setMadeAttack(true);
 
-	setXY(pPlot->getX_INLINE(), pPlot->getY_INLINE());
+	//setXY(pPlot->getX_INLINE(), pPlot->getY_INLINE());
+	setXY(pPlot->getX_INLINE(), pPlot->getY_INLINE(), true); // K-Mod
 
 	//check if intercepted
 	if(interceptTest(pPlot))
