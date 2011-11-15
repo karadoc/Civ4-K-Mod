@@ -6947,13 +6947,17 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	int iBonusFoodDeficit = 0;
 	int iFeatureFoodSurplus = 0;
 	int iHillFoodDeficit = 0;
-	int iFoodTotal = GC.getYieldInfo(YIELD_FOOD).getMinCity();
-	int iProductionTotal = GC.getYieldInfo(YIELD_PRODUCTION).getMinCity();
+	//int iFoodTotal = GC.getYieldInfo(YIELD_FOOD).getMinCity();
+	//int iProductionTotal = GC.getYieldInfo(YIELD_PRODUCTION).getMinCity();
+	// K-Mod. include corp. yield. (we should also include building yield - but that isn't so easy.)
+	int iFoodTotal = GC.getYieldInfo(YIELD_FOOD).getMinCity() + getCorporationYield(YIELD_FOOD);
+	int iProductionTotal = GC.getYieldInfo(YIELD_PRODUCTION).getMinCity() + getCorporationYield(YIELD_PRODUCTION);
+	// K-Mod end
 	iFoodMultiplier = 100;
 	iCommerceMultiplier = 100;
 	iProductionMultiplier = 100;
 	
-	int iWorkedFood = 0;
+	//int iWorkedFood = 0;
 	int iWorkableFood = 0;
 	int iWorkableFoodPlotCount = 0;
 	
@@ -7061,11 +7065,11 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 					}
 				}
 				
+				/* original code
 				if (pLoopPlot->isBeingWorked())
 				{
 					iWorkedFood += aiFinalYields[YIELD_FOOD];					
 				}
-				/* original code
 				else
 				{
 					if (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
