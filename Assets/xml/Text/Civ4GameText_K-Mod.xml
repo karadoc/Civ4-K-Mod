@@ -110,7 +110,7 @@
 		<French>Total accumulated pollution above the sustainability threshold.</French>
 		<German>Total accumulated pollution above the sustainability threshold.</German>
 		<Italian>Inquinamento accumulato totale prima di oltrepassare il limite di sostenibilità.</Italian>
-		<Spanish>Total accumulated pollution above the sustainability threshold.</Spanish>		
+		<Spanish>Total accumulated pollution above the sustainability threshold.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_GW_UNHAPPY_HELP</Tag>
@@ -118,7 +118,7 @@
 		<French>[ICON_UNHAPPY] due to global warming.</French>
 		<German>[ICON_UNHAPPY] due to global warming.</German>
 		<Italian>[ICON_UNHAPPY] a causa del riscaldamento globale.</Italian>
-		<Spanish>[ICON_UNHAPPY] due to global warming.</Spanish>		
+		<Spanish>[ICON_UNHAPPY] due to global warming.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_SUSTAINABILITY_THRESHOLD_HELP</Tag>
@@ -126,7 +126,7 @@
 		<French>The maximum rate of pollution that can be safely absorbed by the environment.</French>
 		<German>The maximum rate of pollution that can be safely absorbed by the environment.</German>
 		<Italian>Il massimo livello di inquinamento che può essere assorbito dall'ambiente senza problemi.</Italian>
-		<Spanish>The maximum rate of pollution that can be safely absorbed by the environment.</Spanish>		
+		<Spanish>The maximum rate of pollution that can be safely absorbed by the environment.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_GW_RELATIVE_CONTRIBUTION_HELP</Tag>
@@ -134,8 +134,16 @@
 		<French>Our pollution rate relative to the global average.</French>
 		<German>Our pollution rate relative to the global average.</German>
 		<Italian>Il nostro livello di inquinamento relativo alla media globale.</Italian>
-		<Spanish>Our pollution rate relative to the global average.</Spanish>		
-	</TEXT>	
+		<Spanish>Our pollution rate relative to the global average.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_GW_SEVERITY_RATING</Tag>
+		<English>Global warming severity rating</English>
+		<French>Évaluation globale sévérité du réchauffement</French>
+		<German>Schweregrad der globalen Erwärmung</German>
+		<Italian>Riscaldamento globale livello di gravità</Italian>
+		<Spanish>El calentamiento global clasificación de gravedad</Spanish>
+	</TEXT>
 
 	<TEXT>
 		<Tag>TXT_KEY_POLLUTION_OFFSETS_HELP</Tag>
