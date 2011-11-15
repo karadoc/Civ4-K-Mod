@@ -6987,7 +6987,8 @@ void CvUnitAI::AI_escortSeaMove()
 		return;
 	}
 	
-	if (AI_group(UNITAI_MISSILE_CARRIER_SEA, 1, 1, true))
+	//if (AI_group(UNITAI_MISSILE_CARRIER_SEA, 1, 1, true))
+	if (AI_group(UNITAI_MISSILE_CARRIER_SEA, 1, 1, -1, true)) // K-Mod. (presumably this is what they meant)
 	{
 		return;
 	}
@@ -10716,6 +10717,140 @@ bool CvUnitAI::AI_shadow(UnitAITypes eUnitAI, int iMax, int iMaxRatio, bool bWit
 
 	return false;
 }
+
+// K-Mod. One group function to rule them all.
+bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, bool bStackOfDoom, int iMaxPath, bool bMergeGroups, bool bSafeOnly, bool bIgnoreFaster, bool bIgnoreOwnUnitType, bool bBiggerOnly, int iMinUnitAI, bool bWithCargoOnly, MissionAITypes eIgnoreMissionAIType)
+{
+	PROFILE_FUNC();
+
+	FAssert(!isCargo());
+
+	if (getDomainType() == DOMAIN_LAND && !canMoveAllTerrain())
+	{
+		if (area()->getNumAIUnits(getOwnerINLINE(), eUnitAI) == 0)
+		{
+			return false;
+		}
+	}
+
+	if (!AI_canGroupWithAIType(eUnitAI))
+	{
+		return false;
+	}
+
+	int iOurImpassableCount = 0;
+	CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pImpassUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = getGroup()->nextUnitNode(pUnitNode);
+
+		iOurImpassableCount = std::max(iOurImpassableCount, GET_PLAYER(getOwnerINLINE()).AI_unitImpassableCount(pImpassUnit->getUnitType()));
+	}
+
+	CvUnit* pBestUnit = NULL;
+	int iBestValue = MAX_INT;
+
+	int iLoop;
+	CvSelectionGroup* pLoopGroup = NULL;
+	for (pLoopGroup = GET_PLAYER(getOwnerINLINE()).firstSelectionGroup(&iLoop); pLoopGroup != NULL; pLoopGroup = GET_PLAYER(getOwnerINLINE()).nextSelectionGroup(&iLoop))
+	{
+		CvUnit* pLoopUnit = pLoopGroup->getHeadUnit();
+		if (pLoopUnit == NULL)
+			continue;
+
+		CvPlot* pPlot = pLoopUnit->plot();
+		if (AI_plotValid(pPlot))
+		{
+			if (iMaxPath != 0 || pPlot == plot())
+			{
+				if (getDomainType() != DOMAIN_LAND || canMoveAllTerrain() || area() == pPlot->area())
+				{
+					if (AI_allowGroup(pLoopUnit, eUnitAI))
+					{
+						// K-Mod. I've restructed this wad of conditions so that it is easier for me to read.
+						// ((removed ((heaps) of parentheses) (etc)).)
+						// also, I've rearranged the order to be slightly faster for failed checks.
+						// Note: the iMaxGroups & OwnUnitAI check is apparently off-by-one. This is for backwards compatibility for the original code.
+						if (true
+							&& (!bSafeOnly || !isEnemy(pPlot->getTeam()))
+							&& (!bWithCargoOnly || pLoopUnit->getGroup()->hasCargo())
+							&& (!bBiggerOnly || !bMergeGroups || pLoopGroup->getNumUnits() >= getGroup()->getNumUnits())
+							&& (!bIgnoreFaster || pLoopGroup->baseMoves() <= baseMoves())
+							&& (!bIgnoreOwnUnitType || pLoopUnit->getUnitType() != getUnitType())
+							&& (eIgnoreMissionAIType == NO_MISSIONAI || eIgnoreMissionAIType != pLoopUnit->getGroup()->AI_getMissionAIType())
+							&& (iMinUnitAI == -1 || pLoopGroup->countNumUnitAIType(eUnitAI) >= iMinUnitAI)
+							&& (iMaxOwnUnitAI == -1 || (bMergeGroups ? std::max(0, getGroup()->countNumUnitAIType(eUnitAI) - 1) : 0) + pLoopGroup->countNumUnitAIType(AI_getUnitAIType()) <= iMaxOwnUnitAI + (bStackOfDoom ? AI_stackOfDoomExtra() : 0))
+							&& (iMaxGroup == -1 || (bMergeGroups ? getGroup()->getNumUnits() - 1 : 0) + pLoopGroup->getNumUnits() + GET_PLAYER(getOwnerINLINE()).AI_unitTargetMissionAIs(pLoopUnit, MISSIONAI_GROUP, getGroup()) <= iMaxGroup + (bStackOfDoom ? AI_stackOfDoomExtra() : 0))
+							)
+						{
+							FAssert(!pPlot->isVisibleEnemyUnit(this))
+							if (iOurImpassableCount > 0 || AI_getUnitAIType() == UNITAI_ASSAULT_SEA)
+							{
+								int iTheirImpassableCount = 0;
+								pUnitNode = pLoopGroup->headUnitNode();
+								while (pUnitNode != NULL)
+								{
+									CvUnit* pImpassUnit = ::getUnit(pUnitNode->m_data);
+									pUnitNode = pLoopGroup->nextUnitNode(pUnitNode);
+
+									iTheirImpassableCount = std::max(iTheirImpassableCount, GET_PLAYER(getOwnerINLINE()).AI_unitImpassableCount(pImpassUnit->getUnitType()));
+								}
+
+								if( iOurImpassableCount != iTheirImpassableCount )
+								{
+									continue;
+								}
+							}
+
+							int iPathTurns;
+							if (generatePath(pPlot, 0, true, &iPathTurns))
+							{
+								if (iMaxPath < 0 || iPathTurns <= iMaxPath)
+								{
+									int iCost = 100 * (iPathTurns * iPathTurns + 1);
+									iCost *= 4 + pLoopGroup->getCargo();
+									iCost /= 2 + pLoopGroup->getNumUnits();
+									/*int iSizeMod = 10*std::max(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
+									iSizeMod /= std::min(getGroup()->getNumUnits(), pLoopGroup->getNumUnits());
+									iCost *= iSizeMod * iSizeMod;
+									iCost /= 1000; */
+
+									if (iCost < iBestValue)
+									{
+										iBestValue = iCost;
+										pBestUnit = pLoopUnit;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	if (pBestUnit != NULL)
+	{
+		if (!atPlot(pBestUnit->plot()))
+		{
+			if (!bMergeGroups)
+				joinGroup(NULL); // might as well leave our current group behind, since they won't be merging anyway.
+			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
+		}
+		if (atPlot(pBestUnit->plot()))
+		{
+			if (bMergeGroups)
+				getGroup()->mergeIntoGroup(pBestUnit->getGroup());
+			else
+				joinGroup(pBestUnit->getGroup());
+		}
+		return true;
+	}
+
+	return false;
+}
+// K-Mod end
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      02/22/10                                jdog5000      */
