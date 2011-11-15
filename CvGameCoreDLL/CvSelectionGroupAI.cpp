@@ -57,6 +57,7 @@ void CvSelectionGroupAI::AI_reset()
 	m_iGroupAttackY = -1;
 }
 
+#define NO_SEPARATE_SKIP // K-Mod
 
 void CvSelectionGroupAI::AI_separate()
 {
@@ -71,10 +72,12 @@ void CvSelectionGroupAI::AI_separate()
 		pEntityNode = nextUnitNode(pEntityNode);
 
 		pLoopUnit->joinGroup(NULL);
+#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 		if (pLoopUnit->plot()->getTeam() == getTeam())
 		{
 			pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
 		}
+#endif
 	}
 }
 
@@ -97,10 +100,12 @@ void CvSelectionGroupAI::AI_separateNonAI(UnitAITypes eUnitAI)
 		if (pLoopUnit->AI_getUnitAIType() != eUnitAI)
 		{
 			pLoopUnit->joinGroup(NULL);
+#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
 			}
+#endif
 		}
 	}
 }
@@ -120,10 +125,12 @@ void CvSelectionGroupAI::AI_separateAI(UnitAITypes eUnitAI)
 		{
 			pLoopUnit->joinGroup(NULL);
 			// Was potential crash in use of plot() if group emptied
+#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
 			}
+#endif
 		}
 	}
 }
@@ -143,10 +150,12 @@ void CvSelectionGroupAI::AI_separateImpassable()
 		if( (kPlayer.AI_unitImpassableCount(pLoopUnit->getUnitType()) > 0) )
 		{
 			pLoopUnit->joinGroup(NULL);
+#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
 			}
+#endif
 		}
 	}
 }
@@ -165,10 +174,12 @@ void CvSelectionGroupAI::AI_separateEmptyTransports()
 		if ((pLoopUnit->AI_getUnitAIType() == UNITAI_ASSAULT_SEA) && (pLoopUnit->getCargo() == 0))
 		{
 			pLoopUnit->joinGroup(NULL);
+#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 			if (pLoopUnit->plot()->getTeam() == getTeam())
 			{
 				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
 			}
+#endif
 		}
 	}
 }

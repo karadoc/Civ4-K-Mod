@@ -2139,8 +2139,10 @@ void CvUnitAI::AI_attackMove()
 
 					// Since ATTACK can try to joing ATTACK_CITY again, need these units to
 					// take a break to let ATTACK_CITY group move and avoid hang
+#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 					getGroup()->pushMission(MISSION_SKIP);
 					return;
+#endif
 				}
 			}
 		}
@@ -7371,8 +7373,10 @@ void CvUnitAI::AI_assaultSeaMove()
 		if( bIsCity && (plot()->getOwnerINLINE() == getOwnerINLINE()) )
 		{		
 			getGroup()->unloadAll();
+			/* original code
 			getGroup()->pushMission(MISSION_SKIP);
-			return;
+			return; */
+			iCargo = 0; // K-Mod. I see no need to skip.
 		}
 		else
 		{
@@ -7487,17 +7491,20 @@ void CvUnitAI::AI_assaultSeaMove()
 				}
 			}
 
-			if ((iCargo >= iTargetReinforcementSize))
+			if (iCargo >= iTargetReinforcementSize)
 			{
 				getGroup()->AI_separateEmptyTransports();
 
 				if( !(getGroup()->hasCargo()) )
 				{
 					// this unit was empty group leader
-					getGroup()->pushMission(MISSION_SKIP);
-					return;
+					//getGroup()->pushMission(MISSION_SKIP);
+					//return;
+					iCargo = 0; // K-Mod. (and I've made a second if iCargo > thing)
 				}
-
+			}
+			if (iCargo >= iTargetReinforcementSize)
+			{
 				// Send ready transports
 				if (AI_assaultSeaReinforce(false))
 				{
@@ -7533,6 +7540,7 @@ void CvUnitAI::AI_assaultSeaMove()
 			}
 		}
 
+		/* original bbai code
 		if( !bAttack && !bReinforce && (plot()->getTeam() == getTeam()) )
 		{
 			if( iEscorts > 3 && iEscorts > (2*getGroup()->countNumUnitAIType(UNITAI_ASSAULT_SEA)) )
@@ -7547,7 +7555,33 @@ void CvUnitAI::AI_assaultSeaMove()
 					getGroup()->AI_separateAI(UNITAI_ESCORT_SEA);
 				}
 			}
+		} */
+		// K-Mod, same purpose, different implementation.
+		// keep ungrouping escort units until we don't have too many.
+		if (!bAttack && !bReinforce && plot()->getTeam() == getTeam())
+		{
+			int iAssaultUnits = getGroup()->countNumUnitAIType(UNITAI_ASSAULT_SEA);
+			CLLNode<IDInfo>* pEntityNode = getGroup()->headUnitNode();
+			while (iEscorts > 3 && iEscorts > 2*iAssaultUnits && iEscorts > 2*iCargo && pEntityNode != NULL)
+			{
+				CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
+				pEntityNode = getGroup()->nextUnitNode(pEntityNode);
+				// (maybe we should adjust this to ungroup "escorts" last?)
+				switch (pLoopUnit->AI_getUnitAIType())
+				{
+				case UNITAI_ATTACK_SEA:
+				case UNITAI_RESERVE_SEA:
+				case UNITAI_ESCORT_SEA:
+					pLoopUnit->joinGroup(NULL);
+					iEscorts--;
+					break;
+				default:
+					break;
+				}
+			}
+			FAssert(!(iEscorts > 3 && iEscorts > 2*iAssaultUnits && iEscorts > 2*iCargo));
 		}
+		// K-Mod end
 
 		MissionAITypes eMissionAIType = MISSIONAI_GROUP;
 		if( kOwner.AI_unitTargetMissionAIs(this, &eMissionAIType, 1, getGroup(), 1) > 0 )
@@ -7586,6 +7620,7 @@ void CvUnitAI::AI_assaultSeaMove()
 					return;
 				}
 			}
+			/* original code
 			else if (plot()->getTeam() == getTeam() && getGroup()->getNumUnits() > 1)
 			{
 				CvCity* pCity = plot()->getPlotCity();
@@ -7597,7 +7632,7 @@ void CvUnitAI::AI_assaultSeaMove()
 						getGroup()->AI_makeForceSeparate();
 					}
 				}
-			}
+			} */ // moved by K-Mod
 		}
 	}
 	
@@ -7612,7 +7647,7 @@ void CvUnitAI::AI_assaultSeaMove()
 		{
 			bReinforce = true;
 		}
-		
+
 		CvPlot* pAdjacentPlot = NULL;
 		for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 		{
@@ -7654,20 +7689,6 @@ void CvUnitAI::AI_assaultSeaMove()
 								getGroup()->AI_separateAI(UNITAI_ATTACK_SEA);
 								getGroup()->AI_separateAI(UNITAI_RESERVE_SEA);
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       05/11/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-					if (pOldGroup == getGroup() && getUnitType() == UNITAI_ASSAULT_SEA)
-					{
-						if (AI_retreatToCity(true))
-						{
-							bMissionPushed = true;
-						}
-					}
-*/
 								// Fixed bug in next line with checking unit type instead of unit AI
 								if (pOldGroup == getGroup() && AI_getUnitAIType() == UNITAI_ASSAULT_SEA)
 								{
@@ -7680,10 +7701,6 @@ void CvUnitAI::AI_assaultSeaMove()
 										}
 									}
 								}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-
 
 								if (bMissionPushed)
 								{
@@ -7695,7 +7712,7 @@ void CvUnitAI::AI_assaultSeaMove()
 				}
 			}
 		}
-		
+
 		if(iCargo > 0)
 		{
 			MissionAITypes eMissionAIType = MISSIONAI_GROUP;
@@ -7764,10 +7781,14 @@ void CvUnitAI::AI_assaultSeaMove()
 			if( !(getGroup()->hasCargo()) )
 			{
 				// this unit was empty group leader
-				getGroup()->pushMission(MISSION_SKIP);
-				return;
+				//getGroup()->pushMission(MISSION_SKIP);
+				//return;
+				bAttack = bReinforce = false; // K-Mod
+				iCargo = 0;
 			}
-
+		}
+		if (bAttack || bReinforce) // K-Mod
+		{
 			FAssert(getGroup()->hasCargo());
 
 			//BBAI TODO: Check that group has escorts, otherwise usually wait
@@ -7893,14 +7914,25 @@ void CvUnitAI::AI_assaultSeaMove()
 		}
 	}
 
-	if (bIsCity && bLandWar && getGroup()->hasCargo())
+	//if (bIsCity && bLandWar && getGroup()->hasCargo())
+	if (bIsCity)
 	{
-		// Enemy units in this player's territory
-		if( kOwner.AI_countNumAreaHostileUnits(area(),true,false,false,false) > (getGroup()->getCargo()/2))
+		FAssert(iCargo == getGroup()->getCargo());
+		if (bLandWar && iCargo > 0)
 		{
-			getGroup()->unloadAll();
+			// Enemy units in this player's territory
+			if (kOwner.AI_countNumAreaHostileUnits(area(),true,false,false,false) > iCargo/2)
+			{
+				getGroup()->unloadAll();
+				getGroup()->pushMission(MISSION_SKIP);
+				return;
+			}
+		}
+		// K-Mod. (moved from way higher up)
+		if (iCargo == 0 && plot()->getTeam() == getTeam() && getGroup()->getNumUnits() > 1)
+		{
+			getGroup()->AI_separate();
 			getGroup()->pushMission(MISSION_SKIP);
-			return;
 		}
 	}
 	
