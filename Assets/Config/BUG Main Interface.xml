@@ -84,7 +84,21 @@
 			<option id="StackMovementPoints" key="Stack Movement Points" 
 					type="boolean" default="False" 
 					get="isShowStackMovementPoints" dirtyBit="InfoPane"/>
-			
+
+			<!-- Stack Promotions -->
+			<option id="StackPromotions" key="Stack Promotions"
+					type="boolean" default="False"
+					get="isShowStackPromotions" dirtyBit="InfoPane"/>
+			<option id="StackPromotionCounts" key="Stack Promotion Counts"
+					type="boolean" default="False"
+					get="isShowStackPromotionCounts" dirtyBit="InfoPane"/>
+			<option id="StackPromotionColor" key="Stack Promotion Color"
+					type="color" default="COLOR_GREEN"
+					get="getStackPromotionColor" dirtyBit="InfoPane"/>
+			<option id="StackPromotionColorAll" key="Stack Promotion Color All"
+					type="color" default="COLOR_MAGENTA"
+					get="getStackPromotionColorAll" dirtyBit="InfoPane"/>
+
 			<!-- Build/Action Icon Size by EmperorFool -->
 			<list   id="BuildIconSize" key="Build Icon Size" 
 					type="int" default="1" listType="string" 
@@ -94,7 +108,7 @@
 				<choice id="Medium" get="isBuildIconSizeMedium"/>
 				<choice id="Large" get="isBuildIconSizeLarge"/>
 			</list>
-			
+
 			<!-- Rapid unit cycling, by karadoc -->
 			<option id="RapidUnitCycling" key="Rapid Unit Cycling"
 					type="boolean" default="False"/>

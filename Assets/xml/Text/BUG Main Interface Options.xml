@@ -242,6 +242,71 @@
 	</TEXT>
 	
 	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONS_TEXT</Tag>
+		<English>Stack Promotions</English>
+		<French>Stack Promotions</French>
+		<German>Einheitenverband-Beförderungen</German>
+		<Italian>Stack Promotions</Italian>
+		<Spanish>Stack Promotions</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONS_HOVER</Tag>
+		<English>When checked, shows the promotions possessed by at least one unit in the stack.</English>
+		<French>When checked, shows the promotions possessed by at least one unit in the stack.</French>
+		<German>Zeigt die Beförderungen an, über die mindestens eine Einheit in einem Einheitenverband verfügt</German>
+		<Italian>When checked, shows the promotions possessed by at least one unit in the stack.</Italian>
+		<Spanish>When checked, shows the promotions possessed by at least one unit in the stack.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONCOUNTS_TEXT</Tag>
+		<English>Counts</English>
+		<French>Counts</French>
+		<German>Anzahl anzeigen</German>
+		<Italian>Counts</Italian>
+		<Spanish>Counts</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONCOUNTS_HOVER</Tag>
+		<English>When checked, shows the number of units in a stack that possess each promotion if more than one.</English>
+		<French>When checked, shows the number of units in a stack that possess each promotion if more than one.</French>
+		<German>Zeigt die Anzahl der Einheiten in einem Einheitenverband an, die über eine bestimmte Beförderung verfügen, falls dies bei mehr als einer der Fall ist</German>
+		<Italian>When checked, shows the number of units in a stack that possess each promotion if more than one.</Italian>
+		<Spanish>When checked, shows the number of units in a stack that possess each promotion if more than one.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONCOLOR_TEXT</Tag>
+		<English>Some</English>
+		<French>Some</French>
+		<German>Manche</German>
+		<Italian>Some</Italian>
+		<Spanish>Some</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONCOLOR_HOVER</Tag>
+		<English>When checked, shows the number of units in a stack that possess each promotion if more than one.</English>
+		<French>When checked, shows the number of units in a stack that possess each promotion if more than one.</French>
+		<German>Zeigt die Anzahl der Einheiten in einem Einheitenverband an, die über eine bestimmte Beförderung verfügen, falls dies bei mehr als einer der Fall ist</German>
+		<Italian>When checked, shows the number of units in a stack that possess each promotion if more than one.</Italian>
+		<Spanish>When checked, shows the number of units in a stack that possess each promotion if more than one.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONCOLORALL_TEXT</Tag>
+		<English>All</English>
+		<French>All</French>
+		<German>Alle</German>
+		<Italian>All</Italian>
+		<Spanish>All</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__STACKPROMOTIONCOLORALL_HOVER</Tag>
+		<English>When checked, shows the number of units in a stack that possess each promotion if more than one.</English>
+		<French>When checked, shows the number of units in a stack that possess each promotion if more than one.</French>
+		<German>Zeigt die Anzahl der Einheiten in einem Einheitenverband an, die über eine bestimmte Beförderung verfügen, falls dies bei mehr als einer der Fall ist</German>
+		<Italian>When checked, shows the number of units in a stack that possess each promotion if more than one.</Italian>
+		<Spanish>When checked, shows the number of units in a stack that possess each promotion if more than one.</Spanish>
+	</TEXT>
+	
+	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__BUILDICONSIZE_TEXT</Tag>
 		<English>Build/Action Icon Size</English>
 		<French>Build/Action Icon Size</French>
