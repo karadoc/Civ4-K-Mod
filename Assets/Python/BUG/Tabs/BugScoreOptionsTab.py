@@ -32,13 +32,13 @@ class BugScoreOptionsTab(BugOptionsTab.BugOptionsTab):
 		
 		self.addLabel(screen, right, "Scores_New_Columns", "Additional Columns:")
 		col1L, col1R, col2, col3 = self.addMultiColumnLayout(screen, right, 4, "Scores_Power_Column")
-		#self.addCheckboxTextDropdown(screen, col1L, col1R, "Scores__Power", "Scores__PowerFormula", "LAYOUT_LEFT")
-		#self.addIntDropdown(screen, col1L, col1R, "Scores__PowerDecimals", True, "LAYOUT_LEFT")
-		#self.addColorDropdown(screen, col1L, col1R, "Scores__PowerColor", True, "LAYOUT_LEFT")
-		#self.addFloatDropdown(screen, col1L, col1R, "Scores__PowerHighRatio", True, "LAYOUT_LEFT")
-		#self.addColorDropdown(screen, col1L, col1R, "Scores__PowerHighColor", True, "LAYOUT_LEFT")
-		#self.addFloatDropdown(screen, col1L, col1R, "Scores__PowerLowRatio", True, "LAYOUT_LEFT")
-		#self.addColorDropdown(screen, col1L, col1R, "Scores__PowerLowColor", True, "LAYOUT_LEFT")
+		self.addCheckboxTextDropdown(screen, col1L, col1R, "Scores__Power", "Scores__PowerFormula", "LAYOUT_LEFT")
+		self.addIntDropdown(screen, col1L, col1R, "Scores__PowerDecimals", True, "LAYOUT_LEFT")
+		self.addColorDropdown(screen, col1L, col1R, "Scores__PowerColor", True, "LAYOUT_LEFT")
+		self.addFloatDropdown(screen, col1L, col1R, "Scores__PowerHighRatio", True, "LAYOUT_LEFT")
+		self.addColorDropdown(screen, col1L, col1R, "Scores__PowerHighColor", True, "LAYOUT_LEFT")
+		self.addFloatDropdown(screen, col1L, col1R, "Scores__PowerLowRatio", True, "LAYOUT_LEFT")
+		self.addColorDropdown(screen, col1L, col1R, "Scores__PowerLowColor", True, "LAYOUT_LEFT")
 		
 		self.addSpacer(screen, col2, "Scores_New_Columns", 3)
 		
@@ -47,7 +47,7 @@ class BugScoreOptionsTab(BugOptionsTab.BugOptionsTab):
 		self.addLabel(screen, col3, "Scores_Icons", "Icons:")
 		self.addCheckbox(screen, col3, "Scores__Attitude")
 		self.addCheckbox(screen, col3, "Scores__WorstEnemy")
-		#self.addCheckbox(screen, col3, "Scores__WHEOOH")
+		#self.addCheckbox(screen, col3, "Scores__WHEOOH") # disabled by K-Mod
 		self.addCheckbox(screen, col3, "Scores__Cities")
 		
 		screen.attachHSeparator(column, column + "Sep")

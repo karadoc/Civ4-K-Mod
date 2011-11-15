@@ -5007,7 +5007,7 @@ class CvMainInterface:
 															if (fPowerRatio > 0):
 																fPowerRatio = 1.0 / fPowerRatio
 															else:
-																fPowerRatio = 99.0
+																fPowerRatio = 999.0
 														cPower = gc.getGame().getSymbolID(FontSymbols.STRENGTH_CHAR)
 														szTempBuffer = BugUtil.formatFloat(fPowerRatio, ScoreOpt.getPowerDecimals()) + u"%c" % (cPower)
 														if (iHighPowerColor >= 0 and fPowerRatio >= ScoreOpt.getHighPowerRatio()):
@@ -5046,7 +5046,7 @@ class CvMainInterface:
 															scores.setWorstEnemy()
 # BUG - Worst Enemy - end
 # BUG - WHEOOH - start
-												if (ScoreOpt.isShowWHEOOH()):
+												if (ScoreOpt.isShowWHEOOH() and False): # disabled by K-Mod
 													if (PlayerUtil.isWHEOOH(ePlayer, PlayerUtil.getActivePlayerID())):
 														szTempBuffer = u"%c" %(CyGame().getSymbolID(FontSymbols.OCCUPATION_CHAR))
 														szBuffer = szBuffer + szTempBuffer
@@ -5055,10 +5055,13 @@ class CvMainInterface:
 # BUG - WHEOOH - end
 # BUG - Num Cities - start
 												if (ScoreOpt.isShowCountCities()):
-													if (PlayerUtil.canSeeCityList(ePlayer)):
-														szTempBuffer = u"%d" % PlayerUtil.getNumCities(ePlayer)
-													else:
-														szTempBuffer = BugUtil.colorText(u"%d" % PlayerUtil.getNumRevealedCities(ePlayer), "COLOR_CYAN")
+													# if (PlayerUtil.canSeeCityList(ePlayer)):
+														# szTempBuffer = u"%d" % PlayerUtil.getNumCities(ePlayer)
+													# else:
+														# szTempBuffer = BugUtil.colorText(u"%d" % PlayerUtil.getNumRevealedCities(ePlayer), "COLOR_CYAN")
+													# K-Mod. count revealed cities only.
+													szTempBuffer = u"%d" % PlayerUtil.getNumRevealedCities(ePlayer)
+													# K-Mod end
 													szBuffer = szBuffer + " " + szTempBuffer
 													if (bAlignIcons):
 														scores.setNumCities(szTempBuffer)

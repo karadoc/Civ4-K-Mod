@@ -500,6 +500,10 @@ def canSeeCityList(playerOrID):
 	is not a vassal of a rival. They must be able to contact (trade with)
 	<player>, and OCC must be disabled. You can always see a teammate's cities.
 	"""
+	# In K-Mod, the city list is only visible when at war. - Also, human players will only show their city list if they are willing to talk!
+	# Rather than risk getting this wrong..
+	return False
+	# done. (old code follows, but does nothing.)
 	if GameUtil.isOCC():
 		return False
 	askedPlayer, askedTeam = getPlayerAndTeam(playerOrID)
@@ -519,8 +523,6 @@ def getNumCities(playerOrID):
 def getNumRevealedCities(playerOrID):
 	"""
 	Returns the number of cities owned by <player> that are revealed to the active player.
-	
-	The capital city is always counted since you can assume it exists.
 	"""
 	player = getPlayer(playerOrID)
 	eActiveTeam = getActiveTeamID()
@@ -528,8 +530,8 @@ def getNumRevealedCities(playerOrID):
 	for city in playerCities(player):
 		if city.isRevealed(eActiveTeam, False):
 			count += 1
-	if not player.getCapitalCity().isRevealed(eActiveTeam, False):
-		count += 1
+	# if not player.getCapitalCity().isRevealed(eActiveTeam, False):
+		# count += 1
 	return count
 
 def playerCities(playerOrID, testFunc=None):
