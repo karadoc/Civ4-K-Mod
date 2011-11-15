@@ -1622,11 +1622,12 @@ void CvUnitAI::AI_workerMove()
 		}
 	}
 	
-	CvPlot* pBestBonusPlot = NULL;
+	/*CvPlot* pBestBonusPlot = NULL;
 	BuildTypes eBestBonusBuild = NO_BUILD;
 	int iBestBonusValue = 0; 
 
-    if (AI_improveBonus(25, &pBestBonusPlot, &eBestBonusBuild, &iBestBonusValue))
+    if (AI_improveBonus(25, &pBestBonusPlot, &eBestBonusBuild, &iBestBonusValue)) */
+	if (AI_improveBonus()) // K-Mod
 	{
 		return;
 	}
@@ -1738,13 +1739,13 @@ void CvUnitAI::AI_workerMove()
 
 	if ((pCity == NULL) || (pCity->AI_getWorkersNeeded() == 0) || ((pCity->AI_getWorkersHave() > (pCity->AI_getWorkersNeeded() + 1))))
 	{
-		if ((pBestBonusPlot != NULL) && (iBestBonusValue >= 15))
+		/* if ((pBestBonusPlot != NULL) && (iBestBonusValue >= 15))
 		{
 			if (AI_improvePlot(pBestBonusPlot, eBestBonusBuild))
 			{
 				return;
 			}
-		}
+		} */ // disabled by K-Mod. (this did nothing - ever - because of a bug.)
 
 //		if (pCity == NULL)
 //		{
@@ -1759,13 +1760,13 @@ void CvUnitAI::AI_workerMove()
 		bNextCity = true;
 	}
 
-	if (pBestBonusPlot != NULL)
+	/* if (pBestBonusPlot != NULL)
 	{
 		if (AI_improvePlot(pBestBonusPlot, eBestBonusBuild))
 		{
 			return;
 		}
-	}
+	} */ // K-Mod
 		
 	if (pCity != NULL)
 	{
@@ -6060,7 +6061,7 @@ void CvUnitAI::AI_workerSeaMove()
 		}
 	}
 
-	if (AI_improveBonus(20))
+	/* if (AI_improveBonus(20))
 	{
 		return;
 	}
@@ -6068,7 +6069,7 @@ void CvUnitAI::AI_workerSeaMove()
 	if (AI_improveBonus(10))
 	{
 		return;
-	}
+	} */ // disabled by K-Mod. .. obviously redundant.
 
 	if (AI_improveBonus())
 	{
@@ -9683,7 +9684,7 @@ void CvUnitAI::AI_networkAutomated()
 		}
 	}
 
-	if (AI_improveBonus(20))
+	/* if (AI_improveBonus(20))
 	{
 		return;
 	}
@@ -9691,7 +9692,11 @@ void CvUnitAI::AI_networkAutomated()
 	if (AI_improveBonus(10))
 	{
 		return;
-	}
+	} */
+	// K-Mod
+	if (AI_improveBonus())
+		return;
+	// K-Mod end. (I don't think AI_connectBonus() is useful either, but I haven't looked closely enough to remove it.)
 
 	if (AI_connectBonus())
 	{
@@ -9703,10 +9708,10 @@ void CvUnitAI::AI_networkAutomated()
 		return;
 	}
 
-	if (AI_improveBonus())
+	/* if (AI_improveBonus())
 	{
 		return;
-	}
+	} */ // disabled by K-Mod
 
 	if (AI_routeTerritory(true))
 	{
@@ -19543,7 +19548,8 @@ bool CvUnitAI::AI_fortTerritory(bool bCanal, bool bAirbase)
 }
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_improveBonus(int iMinValue, CvPlot** ppBestPlot, BuildTypes* peBestBuild, int* piBestValue)
+//bool CvUnitAI::AI_improveBonus(int iMinValue, CvPlot** ppBestPlot, BuildTypes* peBestBuild, int* piBestValue)
+bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyway.)
 {
 	PROFILE_FUNC();
 
@@ -19612,10 +19618,16 @@ bool CvUnitAI::AI_improveBonus(int iMinValue, CvPlot** ppBestPlot, BuildTypes* p
                         {
                             bDoImprove = true;
                         }
-                        else if (!GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
+                        /* else if (!GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
                         {
                         	bDoImprove = true;
-                        }
+                        } */
+						// K-Mod. Let "best build" handle improvement replacements near cities.
+						else if (pLoopPlot->getWorkingCity() == NULL && !GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
+						{
+							bDoImprove = true;
+						}
+						// K-Mod end
 
                         iBestTempBuildValue = MAX_INT;
                         eBestTempBuild = NO_BUILD;
@@ -19744,6 +19756,7 @@ bool CvUnitAI::AI_improveBonus(int iMinValue, CvPlot** ppBestPlot, BuildTypes* p
 		}
 	}
 
+	/* original bts code
 	if ((iBestValue < iMinValue) && (NULL != ppBestPlot))
 	{
 		FAssert(NULL != peBestBuild);
@@ -19752,7 +19765,7 @@ bool CvUnitAI::AI_improveBonus(int iMinValue, CvPlot** ppBestPlot, BuildTypes* p
 		*ppBestPlot = pBestPlot;
 		*peBestBuild = eBestBuild;
 		*piBestValue = iBestResourceValue;
-	}
+	} */ // disabled by K-Mod. This is clearly wrong. But even if it was fixed it isn't useful anyway, so I'm removing it.
 
 	if (pBestPlot != NULL)
 	{

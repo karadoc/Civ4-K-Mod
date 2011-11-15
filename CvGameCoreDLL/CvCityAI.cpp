@@ -7224,9 +7224,9 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	}
 
 	// K-mod
-	if (kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0)
+	if (kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 || kPlayer.AI_getFlavorValue(FLAVOR_MILITARY) >= 10)
 	{
-		iProductionMultiplier += 10 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION);
+		iProductionMultiplier += 10 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) + kPlayer.AI_getFlavorValue(FLAVOR_MILITARY);
 	}
 	// K-Mod end
 
