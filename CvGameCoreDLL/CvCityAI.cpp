@@ -7215,12 +7215,20 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	{
 	    iProductionMultiplier += (80 - 8 * iProductionTotal);
 	}
-	int iProductionTarget = 1 + (std::min(getPopulation(), (iTargetSize * 3) / 5));
-	
+	//int iProductionTarget = 1 + (std::min(getPopulation(), (iTargetSize * 3) / 5));
+	int iProductionTarget = 1 + std::max(getPopulation(), iTargetSize * 3 / 5); // K-Mod
+
 	if (iProductionTotal < iProductionTarget)
 	{
 	    iProductionMultiplier += 8 * (iProductionTarget - iProductionTotal);
 	}
+
+	// K-mod
+	if (kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0)
+	{
+		iProductionMultiplier += 10 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION);
+	}
+	// K-Mod end
 
 	if ((iBonusFoodSurplus + iFeatureFoodSurplus > 5) && ((iBonusFoodDeficit + iHillFoodDeficit) > 5))
 	{
@@ -7839,10 +7847,10 @@ void CvCityAI::AI_updateBestBuild()
 
 				//AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, iHappyAdjust, iHealthAdjust, iDesiredFoodChange);
 				AI_bestPlotBuild(pLoopPlot, &(m_aiBestBuildValue[iI]), &(m_aeBestBuild[iI]), iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, bChop, 0, 0, iDesiredFoodChange);
-				int iWorkerCount = GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD); // K-Mod, originally this was all workers at the city.
-				m_aiBestBuildValue[iI] *= 4;
-				m_aiBestBuildValue[iI] += 4 + iWorkerCount; // was 3 (and 4)
-				m_aiBestBuildValue[iI] /= (5 + iWorkerCount);
+				//int iWorkerCount = GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD); // K-Mod, originally this was all workers at the city.
+				/* m_aiBestBuildValue[iI] *= 4;
+				m_aiBestBuildValue[iI] += 3 + iWorkerCount; // (round up)
+				m_aiBestBuildValue[iI] /= (4 + iWorkerCount); */ // disabled by K-Mod. I don't think this really helps us.
 
 				if (m_aiBestBuildValue[iI] > 0)
 				{
@@ -7906,7 +7914,7 @@ void CvCityAI::AI_updateBestBuild()
 				// K-Mod end
 
 				// K-Mod
-				if( iWorkerCount > 0 )
+				//if (iWorkerCount > 0)
 				{
 					CvUnit* pLoopUnit;
 					CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
