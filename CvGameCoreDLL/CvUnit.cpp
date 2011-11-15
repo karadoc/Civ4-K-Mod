@@ -4515,13 +4515,15 @@ bool CvUnit::canAirBombAt(const CvPlot* pPlot, int iX, int iY) const
 
 	if (pCity != NULL)
 	{
-		if (!(pCity->isBombardable(this)))
+		//if (!(pCity->isBombardable(this)))
+		if (!pCity->isBombardable(this) || !pCity->isRevealed(getTeam(), false)) // K-Mod
 		{
 			return false;
 		}
 	}
 	else
 	{
+		/* original bts code
 		if (pTargetPlot->getImprovementType() == NO_IMPROVEMENT)
 		{
 			return false;
@@ -4535,7 +4537,20 @@ bool CvUnit::canAirBombAt(const CvPlot* pPlot, int iX, int iY) const
 		if (GC.getImprovementInfo(pTargetPlot->getImprovementType()).getAirBombDefense() == -1)
 		{
 			return false;
-		}
+		} */
+		// K-Mod. Don't allow the player to bomb improvements that they don't know exist.
+		ImprovementTypes eActualImprovement = pTargetPlot->getImprovementType();
+		ImprovementTypes eRevealedImprovement = pTargetPlot->getRevealedImprovementType(getTeam(), false);
+
+		if (eActualImprovement == NO_IMPROVEMENT || eRevealedImprovement == NO_IMPROVEMENT)
+			return false;
+
+		if (GC.getImprovementInfo(eActualImprovement).isPermanent() || GC.getImprovementInfo(eRevealedImprovement).isPermanent())
+			return false;
+
+		if (GC.getImprovementInfo(eActualImprovement).getAirBombDefense() == -1 || GC.getImprovementInfo(eRevealedImprovement).getAirBombDefense() == -1)
+			return false;
+		// K-Mod end
 	}
 
 	return true;
