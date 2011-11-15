@@ -10507,6 +10507,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 {
 	PROFILE_FUNC();
 
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
+
 	BuildTypes eBestBuild;
 
 	bool bEmphasizeIrrigation = false;
@@ -10717,7 +10719,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					{
 						if (GC.getBuildInfo(eBuild).isFeatureRemove(pPlot->getFeatureType()))
 						{
-							if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild))
+							if (kOwner.canBuild(pPlot, eBuild))
 							{
 								int iValue = iClearValue_wYield;
 								CvCity* pCity;
@@ -10752,7 +10754,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	}
 	// K-Mod end
 	if (bChop && (eBonus == NO_BONUS) && (pPlot->getFeatureType() != NO_FEATURE) &&
-		(pPlot->getImprovementType() == NO_IMPROVEMENT) && !(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS)))
+		(pPlot->getImprovementType() == NO_IMPROVEMENT) && !(kOwner.isOption(PLAYEROPTION_LEAVE_FORESTS)))
 	{
 		for (int iI = 0; iI < GC.getNumBuildInfos(); iI++)
 		{
@@ -10761,7 +10763,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 			{
 				if (GC.getBuildInfo(eBuild).isFeatureRemove(pPlot->getFeatureType()))
 				{
-					if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild))
+					if (kOwner.canBuild(pPlot, eBuild))
 					{
 						CvCity* pCity;
 						int iValue = (pPlot->getFeatureProduction(eBuild, getTeam(), &pCity)) * 10;
@@ -10779,11 +10781,18 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 							if (iValue > 0)
 							{
-								if (GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_DAGGER))
+								if (kOwner.AI_isDoStrategy(AI_STRATEGY_DAGGER))
 								{
 									iValue += 20;
 									iValue *= 2;
 								}
+								// K-Mod, flavour production, military, and growth.
+								if (kOwner.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 || kOwner.AI_getFlavorValue(FLAVOR_MILITARY) + kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 2)
+								{
+									iValue *= 110 + 3 * kOwner.AI_getFlavorValue(FLAVOR_PRODUCTION) + 2 * kOwner.AI_getFlavorValue(FLAVOR_MILITARY) + 2 * kOwner.AI_getFlavorValue(FLAVOR_GROWTH);
+									iValue /= 100;
+								}
+								// K-Mod end
 								iValue *= 500;
 								iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));
 
@@ -10836,7 +10845,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					BuildTypes eBuild = ((BuildTypes)iJ);
 					if (GC.getBuildInfo(eBuild).getRoute() == eRoute)
 					{
-						if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild, false))
+						if (kOwner.canBuild(pPlot, eBuild, false))
 						{
 							//the value multiplier is based on the default time...
 							int iValue = iTempValue * 5 * 300;
