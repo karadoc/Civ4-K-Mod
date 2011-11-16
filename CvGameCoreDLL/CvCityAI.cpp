@@ -7919,12 +7919,24 @@ void CvCityAI::AI_updateBestBuild()
 						iProductionMultiplier -= 8 * iDelta;
 					}
 					// Happiness modifers.. maybe I'll do this later, after testing etc.
+
+					// since best-build has changed, cancel all current build missions on this plot
+					CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
+					int iLoop;
+					for(CvSelectionGroup* pLoopSelectionGroup = kOwner.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = kOwner.nextSelectionGroup(&iLoop))
+					{
+						if (pLoopSelectionGroup->AI_getMissionAIPlot() == pLoopPlot && pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_BUILD)
+						{
+							FAssert(pLoopSelectionGroup->getHeadUnitAI() == UNITAI_WORKER);
+							pLoopSelectionGroup->clearMissionQueue();
+						}
+					}
 				}
 				// K-Mod end
 
 				// K-Mod
 				//if (iWorkerCount > 0)
-				{
+				/*{
 					CvUnit* pLoopUnit;
 					CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
 
@@ -7933,13 +7945,13 @@ void CvCityAI::AI_updateBestBuild()
 						pLoopUnit = ::getUnit(pUnitNode->m_data);
 						pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
 
-						if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE() && pLoopUnit->getBuildType() != NO_BUILD && pLoopUnit->getBuildType() != m_aeBestBuild[iI])
+						if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE() && pLoopUnit->getGroup()->AI_isControlled() &&
+							pLoopUnit->getBuildType() != NO_BUILD && pLoopUnit->getBuildType() != m_aeBestBuild[iI])
 						{
-							FAssert(pLoopUnit->getGroup() != NULL);
 							pLoopUnit->getGroup()->clearMissionQueue();
 						}
 					}
-				}
+				}*/
 				// K-Mod end
 			}
 		}
