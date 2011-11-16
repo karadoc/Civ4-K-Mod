@@ -7230,7 +7230,8 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	// K-mod
 	if (kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 || kPlayer.AI_getFlavorValue(FLAVOR_MILITARY) >= 10)
 	{
-		iProductionMultiplier += 10 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) + kPlayer.AI_getFlavorValue(FLAVOR_MILITARY);
+		iProductionMultiplier *= 110 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) + kPlayer.AI_getFlavorValue(FLAVOR_MILITARY);
+		iProductionMultiplier /= 100;
 	}
 	// K-Mod end
 
@@ -7260,7 +7261,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		// K-Mod, just a bit steeper
 		iCommerceMultiplier += (50 * (iRatio - 40)) / 60;
 	}
-	
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      05/06/09                                jdog5000      */
 /*                                                                                              */
@@ -7305,7 +7306,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 
 	iProductionMultiplier *= iProductionAdvantage;
 	iProductionMultiplier /= 100;
-	
+
 	iCommerceMultiplier *= 100;
 	iCommerceMultiplier /= iProductionAdvantage;
 
@@ -7322,11 +7323,15 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	iFoodMultiplier *= iGreatPeopleAdvantage;
 	iFoodMultiplier /= 100;
 
-	// if leader flavor likes production, increase production, reduce commerce
 	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_PRODUCTION))
 	{
-		iProductionMultiplier += 10;
-		iCommerceMultiplier -= 10;
+		/*iProductionMultiplier += 10;
+		iCommerceMultiplier -= 10; */
+		// K-Mod. Strategy_production is now more rare and specific than before
+		// so when the AI wants to use it, I think we can afford to emphasise a bit more strongly...
+		iProductionMultiplier += 25;
+		iCommerceMultiplier -= 20;
+		// K-Mod end
 	}
 
 	if (iFoodMultiplier < 100)
@@ -9965,7 +9970,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	int iFoodGrowthValue = 0;
 	int iFoodGPPValue = 0;
 
-	if (!bIgnoreFood && iFoodYield != 0)
+	if (!bIgnoreFood && iFoodYield > 0)
 	{
 		// tiny food factor, to ensure that even when we don't want to grow, 
 		// we still prefer more food if everything else is equal

@@ -4665,8 +4665,11 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 		// Surely the raw turn count is the one that needs to be adjusted for speed!
 		int iStockPile = 3*std::min(8, getNumCities()) + std::min(120, getTotalPopulation())/3;
 		iGold += 100*GC.getGameINLINE().getElapsedGameTurns() / (2*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent());
-		iStockPile *= 8 + AI_getFlavorValue(FLAVOR_GOLD);
-		iStockPile /= 8;
+		if (AI_getFlavorValue(FLAVOR_GOLD) > 0)
+		{
+			iStockPile *= 10 + AI_getFlavorValue(FLAVOR_GOLD);
+			iStockPile /= 8;
+		}
 		// note: currently the highest flavor_gold is 5.
 		iGold += iStockPile;
 		// K-Mod end
@@ -18305,40 +18308,21 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 		if( bNearAllTechs )
 		{
 			bool bOtherLaunched = false;
-			if( GET_TEAM(getTeam()).getVictoryCountdown(eSpace) >= 0 )
+			// K-Mod. (just tidying up a bit.)
+			int iOurCountdown = GET_TEAM(getTeam()).getVictoryCountdown(eSpace);
+			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++)
 			{
-				for( int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++ )
-				{
-					if( iTeam != getTeam() )
-					{
-						if( GET_TEAM((TeamTypes)iTeam).getVictoryCountdown(eSpace) >= 0 )
-						{
-							if( GET_TEAM((TeamTypes)iTeam).getVictoryCountdown(eSpace) < GET_TEAM(getTeam()).getVictoryCountdown(eSpace) )
-							{
-								bOtherLaunched = true;
-								break;
-							}
+				if (iTeam == getTeam())
+					continue;
 
-							if( GET_TEAM((TeamTypes)iTeam).getVictoryCountdown(eSpace) == GET_TEAM(getTeam()).getVictoryCountdown(eSpace) && (iTeam < getTeam()) )
-							{
-								bOtherLaunched = true;
-								break;
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				for( int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++ )
+				if (GET_TEAM((TeamTypes)iTeam).getVictoryCountdown(eSpace) >= 0 &&
+					(iOurCountdown < 0 || GET_TEAM((TeamTypes)iTeam).getVictoryCountdown(eSpace) <= iOurCountdown))
 				{
-					if( GET_TEAM((TeamTypes)iTeam).getVictoryCountdown(eSpace) >= 0 )
-					{
-						bOtherLaunched = true;
-						break;
-					}
+					bOtherLaunched = true;
+					break;
 				}
 			}
+			// K-Mod end
 
 			if( !bOtherLaunched )
 			{
@@ -18980,6 +18964,26 @@ void CvPlayerAI::AI_forceUpdateStrategies()
 // K-mod. The body of this function use to be inside "AI_getStrategyHash"
 void CvPlayerAI::AI_updateStrategyHash()
 {
+
+// K-Mod. Macros to help log changes in the AI strategy.
+#define log_strat(s) \
+	if (gPlayerLogLevel >= 2) \
+	{ \
+		if ((m_iStrategyHash & s) != (iLastStrategyHash & s)) \
+		{ \
+			logBBAI( "    Player %d (%S) %s strategy "#s" on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & s ? "starts" : "stops", GC.getGameINLINE().getGameTurn()); \
+		} \
+	}
+#define log_strat2(s, x) \
+	if (gPlayerLogLevel >= 2) \
+	{ \
+		if ((m_iStrategyHash & s) != (iLastStrategyHash & s)) \
+		{ \
+			logBBAI( "    Player %d (%S) %s strategy "#s" on turn %d with "#x" %d", getID(), getCivilizationDescription(0), m_iStrategyHash & s ? "starts" : "stops", GC.getGameINLINE().getGameTurn(), x); \
+		} \
+	}
+//
+
 	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod. (and replaced all through this function)
 
     UnitTypes eLoopUnit;
@@ -18988,10 +18992,11 @@ void CvPlayerAI::AI_updateStrategyHash()
     
     m_iStrategyHash = AI_DEFAULT_STRATEGY;
     
+	/* original bts code
 	if (AI_getFlavorValue(FLAVOR_PRODUCTION) >= 2) // 0, 2, 5 or 10 in default xml [augustus 5, frederick 10, huayna 2, jc 2, chinese leader 2, qin 5, ramsess 2, roosevelt 5, stalin 2]
 	{
 		m_iStrategyHash |= AI_STRATEGY_PRODUCTION;
-	}
+	} */ // K-Mod. This strategy is now set later on, with new conditions.
 	
 	if (getCapitalCity() == NULL)
     {
@@ -19177,18 +19182,8 @@ void CvPlayerAI::AI_updateStrategyHash()
 		}
 	}
 
-	if( gPlayerLogLevel >= 2 )
-	{
-		if( (m_iStrategyHash & AI_STRATEGY_LAND_BLITZ) && !(iLastStrategyHash & AI_STRATEGY_LAND_BLITZ) )
-		{
-			logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_LAND_BLITZ on turn %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn());
-		}
-
-		if( (m_iStrategyHash & AI_STRATEGY_AIR_BLITZ) && !(iLastStrategyHash & AI_STRATEGY_AIR_BLITZ) )
-		{
-			logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_AIR_BLITZ on turn %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn());
-		}
-	}
+	log_strat(AI_STRATEGY_LAND_BLITZ)
+	log_strat(AI_STRATEGY_AIR_BLITZ)
     
 	//missionary
 	{
@@ -19248,33 +19243,12 @@ void CvPlayerAI::AI_updateStrategyHash()
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 	{
 		int iTempValue = 0;
-		/* original BBAI code
-		if (getCommercePercent(COMMERCE_ESPIONAGE) == 0)
-		{
-			iTempValue += 4;
-		}
-
-		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0)
-		{
-			if( GET_TEAM(getTeam()).getBestKnownTechScorePercent() < 85 )
-			{
-				iTempValue += 5;
-			}
-			else
-			{
-				iTempValue += 3;
-			}
-		}
-		
-		iTempValue += (100 - AI_getEspionageWeight()) / 10;
-		
-		iTempValue += AI_getStrategyRand(10) % 12; */
 		// K-Mod
 		// Apparently BBAI wanted to use "big espionage" to save points when our espionage is weak.
 		// I've got other plans.
 		iTempValue += AI_commerceWeight(COMMERCE_ESPIONAGE) / 8;
-		// note, although AI_commerceWeight is doubled for Big Espionage, this value here is unaffected
-		// because the strategy hash has been cleared.
+		// Note: although AI_commerceWeight is doubled for Big Espionage,
+		// the value here is unaffected because the strategy hash has been cleared.
 		iTempValue += kTeam.getBestKnownTechScorePercent() < 85 ? 3 : 0;
 		iTempValue += kTeam.getAnyWarPlanCount(true) > kTeam.getAtWarCount(true) ? 2 : 0; // build up espionage before the start of a war
 		if (iWarSuccessRatio < 0)
@@ -19300,14 +19274,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		if (getCommercePercent(COMMERCE_ESPIONAGE) > 20)
 			m_iStrategyHash |= AI_STRATEGY_ESPIONAGE_ECONOMY;
 	}
-	if( gPlayerLogLevel >= 2 )
-	{
-		if ((m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY) != (iLastStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY))
-		{
-			logBBAI( "    Player %d (%S) %s strategy AI_STRATEGY_ESPIONAGE_ECONOMY on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & AI_STRATEGY_ESPIONAGE_ECONOMY ? "starts" : "stops", GC.getGameINLINE().getGameTurn());
-		}
-	}
-
+	log_strat(AI_STRATEGY_ESPIONAGE_ECONOMY)
 
 	// Turtle strategy
 	if( kTeam.getAtWarCount(true) > 0 && getNumCities() > 0 )
@@ -19333,20 +19300,8 @@ void CvPlayerAI::AI_updateStrategyHash()
 			}
 		}
 	}
+	log_strat(AI_STRATEGY_TURTLE)
 
-	if( gPlayerLogLevel >= 2 )
-	{
-		if( (m_iStrategyHash & AI_STRATEGY_TURTLE) && !(iLastStrategyHash & AI_STRATEGY_TURTLE) )
-		{
-			logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_TURTLE on turn %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn());
-		}
-
-		if( !(m_iStrategyHash & AI_STRATEGY_TURTLE) && (iLastStrategyHash & AI_STRATEGY_TURTLE) )
-		{
-			logBBAI( "    Player %d (%S) stops strategy AI_STRATEGY_TURTLE on turn %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn());
-		}
-	}
-	
 	int iCurrentEra = getCurrentEra();
 	int iParanoia = 0;
 	int iCloseTargets = 0;
@@ -19495,29 +19450,8 @@ void CvPlayerAI::AI_updateStrategyHash()
 			m_iStrategyHash |= AI_STRATEGY_ALERT2;
 		}
 	}
-
-	if( gPlayerLogLevel >= 2 )
-	{
-		if( (m_iStrategyHash & AI_STRATEGY_ALERT1) && !(iLastStrategyHash & AI_STRATEGY_ALERT1) )
-		{
-			logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_ALERT1 on turn %d with iParanoia %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iParanoia);
-		}
-
-		if( !(m_iStrategyHash & AI_STRATEGY_ALERT1) && (iLastStrategyHash & AI_STRATEGY_ALERT1) )
-		{
-			logBBAI( "    Player %d (%S) stops strategy AI_STRATEGY_ALERT1 on turn %d with iParanoia %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iParanoia);
-		}
-
-		if( (m_iStrategyHash & AI_STRATEGY_ALERT2) && !(iLastStrategyHash & AI_STRATEGY_ALERT2) )
-		{
-			logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_ALERT2 on turn %d with iParanoia %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iParanoia);
-		}
-
-		if( !(m_iStrategyHash & AI_STRATEGY_ALERT2) && (iLastStrategyHash & AI_STRATEGY_ALERT2) )
-		{
-			logBBAI( "    Player %d (%S) stops strategy AI_STRATEGY_ALERT2 on turn %d with iParanoia %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iParanoia);
-		}
-	}
+	log_strat2(AI_STRATEGY_ALERT1, iParanoia)
+	log_strat2(AI_STRATEGY_ALERT2, iParanoia)
 
 	// Economic focus (K-Mod) - This strategy is a gambit. The goal is to tech faster by neglecting military.
 	if (kTeam.getAnyWarPlanCount(true) == 0)
@@ -19530,13 +19464,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		if (iFocus >= 12)
 			m_iStrategyHash |= AI_STRATEGY_ECONOMY_FOCUS;
 	}
-	if( gPlayerLogLevel >= 2 )
-	{
-		if ((m_iStrategyHash & AI_STRATEGY_ECONOMY_FOCUS) != (iLastStrategyHash & AI_STRATEGY_ECONOMY_FOCUS))
-		{
-			logBBAI( "    Player %d (%S) %s strategy AI_STRATEGY_ECONOMY_FOCUS on turn %d", getID(), getCivilizationDescription(0), m_iStrategyHash & AI_STRATEGY_ECONOMY_FOCUS ? "starts" : "stops", GC.getGameINLINE().getGameTurn());
-		}
-	}
+	log_strat(AI_STRATEGY_ECONOMY_FOCUS)
 
 	// BBAI TODO: Integrate Dagger with new conquest victory strategy, have Dagger focus on early rushes
     //dagger
@@ -19665,18 +19593,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 			}
 		}
 
-		if( gPlayerLogLevel >= 2 )
-		{
-			if( (m_iStrategyHash & AI_STRATEGY_DAGGER) && !(iLastStrategyHash & AI_STRATEGY_DAGGER) )
-			{
-				logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_DAGGER on turn %d with iDagger %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iDagger);
-			}
-
-			if( !(m_iStrategyHash & AI_STRATEGY_DAGGER) && (iLastStrategyHash & AI_STRATEGY_DAGGER) )
-			{
-				logBBAI( "    Player %d (%S) stops strategy AI_STRATEGY_DAGGER on turn %d with iDagger %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iDagger);
-			}
-		}
+		log_strat2(AI_STRATEGY_DAGGER, iDagger)
 	}
 	
 	if (!(m_iStrategyHash & AI_STRATEGY_ALERT2) && !(m_iStrategyHash & AI_STRATEGY_TURTLE))
@@ -19710,18 +19627,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 
 		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       02/14/10                        denev & jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-			if ((GET_TEAM((TeamTypes)iI).isAlive()) && (iI != getID()))
-*/
 			if ((GET_TEAM((TeamTypes)iI).isAlive()) && (iI != getTeam()))
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 			{
 				if (kTeam.AI_getWarPlan((TeamTypes)iI) != NO_WARPLAN)
 				{
@@ -19750,22 +19656,9 @@ void CvPlayerAI::AI_updateStrategyHash()
 					
 					if ((kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE) && (kTeam.AI_getWarPlanStateCounter((TeamTypes)iI) < 20))
 					{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       02/14/10                             jdog5000         */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-						for (iJ = 0; iJ < MAX_TEAMS; iJ++)
-						{
-							if ((iJ != iI) && iJ != getID())
-*/
 						for (int iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
 						{
 							if ((iJ != iI) && iJ != getTeam() && GET_TEAM((TeamTypes)iJ).isAlive())
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 							{
 								if ((atWar((TeamTypes)iI, (TeamTypes)iJ)) && !GET_TEAM((TeamTypes)iI).isAVassal())
 								{
@@ -19783,20 +19676,49 @@ void CvPlayerAI::AI_updateStrategyHash()
 			m_iStrategyHash |= AI_STRATEGY_CRUSH;
 		}
 
-		if( gPlayerLogLevel >= 2 )
-		{
-			if( (m_iStrategyHash & AI_STRATEGY_CRUSH) && !(iLastStrategyHash & AI_STRATEGY_CRUSH) )
-			{
-				logBBAI( "    Player %d (%S) starts strategy AI_STRATEGY_CRUSH on turn %d with iCrushValue %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iCrushValue);
-			}
+		log_strat2(AI_STRATEGY_CRUSH, iCrushValue)
+	}
 
-			if( !(m_iStrategyHash & AI_STRATEGY_CRUSH) && (iLastStrategyHash & AI_STRATEGY_CRUSH) )
+	// K-Mod
+	{//production
+		int iProductionValue = AI_getStrategyRand(2) % (5 + AI_getFlavorValue(FLAVOR_PRODUCTION)/2);
+		iProductionValue += (iLastStrategyHash & AI_STRATEGY_PRODUCTION) ? 1 : 0;
+		iProductionValue += AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 ? 1 : 0;
+		iProductionValue += (m_iStrategyHash & AI_STRATEGY_DAGGER) ? 1 : 0;
+		iProductionValue += (m_iStrategyHash & AI_STRATEGY_CRUSH) ? 1 : 0;
+		iProductionValue += AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_SPACE4) ? 3 : 0;
+		// warplans. (done manually rather than using getWarPlanCount, so that we only have to do the loop once.)
+		bool bAnyWarPlans = false;
+		bool bTotalWar = false;
+		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+		{
+			const CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
+			if (kLoopTeam.isAlive() && !kLoopTeam.isMinorCiv())
 			{
-				logBBAI( "    Player %d (%S) stops strategy AI_STRATEGY_CRUSH on turn %d with iCrushValue %d", getID(), getCivilizationDescription(0), GC.getGameINLINE().getGameTurn(), iCrushValue);
+				switch (kTeam.AI_getWarPlan((TeamTypes)iI))
+				{
+				case NO_WARPLAN:
+					break;
+				case WARPLAN_PREPARING_TOTAL:
+				case WARPLAN_TOTAL:
+					bTotalWar = true;
+				default:
+					bAnyWarPlans = true;
+					break;
+				}
 			}
 		}
+		iProductionValue += bAnyWarPlans ? 1 : 0;
+		iProductionValue += bTotalWar ? 3 : 0;
+
+		if (iProductionValue >= 10)
+		{
+			m_iStrategyHash |= AI_STRATEGY_PRODUCTION;
+		}
+		log_strat2(AI_STRATEGY_PRODUCTION, iProductionValue)
 	}
-	
+	// K-Mod end
+
 	{
 		int iOurVictoryCountdown = kTeam.AI_getLowestVictoryCountdown();
 
@@ -20013,6 +19935,8 @@ void CvPlayerAI::AI_updateStrategyHash()
 		m_iStrategyHash &= ~AI_STRATEGY_OWABWNW;
 		m_iStrategyHash &= ~AI_STRATEGY_FASTMOVERS;
 	}
+#undef log_strat
+#undef log_strat2
 }
 
 void CvPlayerAI::AI_nowHasTech(TechTypes eTech)

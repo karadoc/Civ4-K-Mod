@@ -2117,7 +2117,7 @@ void CvUnitAI::AI_attackMove()
 /************************************************************************************************/
 	bool bDanger = (kOwner.AI_getAnyPlotDanger(plot(), 3));
 
-	if( getGroup()->getNumUnits() > 2 )
+	/* if( getGroup()->getNumUnits() > 2 )
 	{
 		UnitAITypes eGroupAI = getGroup()->getHeadUnitAI();
 		if( eGroupAI == AI_getUnitAIType() )
@@ -2139,15 +2139,13 @@ void CvUnitAI::AI_attackMove()
 
 					// Since ATTACK can try to joing ATTACK_CITY again, need these units to
 					// take a break to let ATTACK_CITY group move and avoid hang
-#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
 					getGroup()->pushMission(MISSION_SKIP);
 					return;
-#endif
 				}
 			}
 		}
-	}
-
+	} */ // disabled by K-Mod. We'll split the group up later if we need to.
+	FAssert(getGroup()->countNumUnitAIType(UNITAI_ATTACK_CITY) == 0); // K-Mod. (I'm pretty sure this can't happen.)
 
 	// Attack choking units
 	if( plot()->isCity() && plot()->getOwnerINLINE() == getOwnerINLINE() && bDanger )
@@ -2165,18 +2163,27 @@ void CvUnitAI::AI_attackMove()
 			}
 		}
 
+		/* bbai code
 		if( iOurDefense > 2*iEnemyOffense )
 		{
 			if (AI_anyAttack(2, 55))
 			{
 				return;
 			}
-		}
+		} */
+		// K-Mod
+		if (AI_anyAttack(1, 60, 2))
+			return;
+		if (iOurDefense > iEnemyOffense && AI_anyAttack(2, 50))
+			return;
+		// K-Mod end
 
-		if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, false))
+		//if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, false))
+		/*if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 1))
 		{
 			return;
-		}
+		} */ // I fixed this, but I don't think it's really a helpful thing to do anyway.
+		// Perhaps I should put in something like AI_defensiveCollateral. That function is pretty good...
 
 		if( iOurDefense > 2*iEnemyOffense )
 		{
@@ -2196,14 +2203,14 @@ void CvUnitAI::AI_attackMove()
 			return;
 		}
 
-		if( !(plot()->isOwned()) )
+		/* if( !(plot()->isOwned()) )
 		{
 			// Group with settler after naval drop
 			if( AI_groupMergeRange(UNITAI_SETTLE, 2, true, false, false) )
 			{
 				return;
 			}
-		}
+		} */ // disabled by K-Mod. This is redundant.
 
 		if( !(plot()->isOwned()) || (plot()->getOwnerINLINE() == getOwnerINLINE()) )
 		{
@@ -2222,18 +2229,25 @@ void CvUnitAI::AI_attackMove()
 			return;
 		}
 		
+		/* original bts code (with omniGroup subbed in.)
 		if (!bDanger)
 		{
-			if (AI_group(UNITAI_SETTLE, 1, -1, -1, false, false, false, 3, true))
+			//if (AI_group(UNITAI_SETTLE, 1, -1, -1, false, false, false, 3, true))
+			if (AI_omniGroup(UNITAI_SETTLE, 1, -1, false, 3, true, false))
 			{
 				return;
 			}
 
-			if (AI_group(UNITAI_SETTLE, 2, -1, -1, false, false, false, 3, true))
+			//if (AI_group(UNITAI_SETTLE, 2, -1, -1, false, false, false, 3, true))
+			if (AI_omniGroup(UNITAI_SETTLE, 2, -1, false, 3, false, false))
 			{
 				return;
 			}
-		}
+		} */
+		// K-Mod
+		if (AI_omniGroup(UNITAI_SETTLE, 2, -1, false, 3, false, false, false, false, false))
+			return;
+		// K-Mod end
 
 		if (AI_guardCityAirlift())
 		{
@@ -2297,7 +2311,7 @@ void CvUnitAI::AI_attackMove()
 				return;
 			}
 		}
-		
+
 		if (!bDanger)
 		{
 			if (plot()->getOwnerINLINE() == getOwnerINLINE())
@@ -2345,7 +2359,8 @@ void CvUnitAI::AI_attackMove()
 		{
 			if( plot()->isOwned() && GET_TEAM(getTeam()).isAtWar(plot()->getTeam()) )
 			{
-				if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, true))
+				//if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, true))
+				if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 1, true, false, true, false, false))
 				{
 					return;
 				}
@@ -2429,12 +2444,14 @@ void CvUnitAI::AI_attackMove()
 				}
 			}
 
-			if (AI_group(UNITAI_ATTACK_CITY, /*iMaxGroup*/ 1, /*iMaxOwnUnitAI*/ 1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 5))
+			//if (AI_group(UNITAI_ATTACK_CITY, 1, 1, -1, bIgnoreFaster, true, true, 5))
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, 1, 1, true, 5, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, false))
 			{
 				return;
 			}
 
-			if (AI_group(UNITAI_ATTACK, /*iMaxGroup*/ 1, /*iMaxOwnUnitAI*/ 1, -1, true, true, false, /*iMaxPath*/ 4))
+			//if (AI_group(UNITAI_ATTACK, 1, 1, -1, true, true, false, 4))
+			if (AI_omniGroup(UNITAI_ATTACK, 2, -1, false, 4, true, true, true, true, false))
 			{
 				return;
 			}
@@ -2448,7 +2465,8 @@ void CvUnitAI::AI_attackMove()
 			//	}
 			//}
 
-			if (AI_group(UNITAI_ATTACK, /*iMaxGroup*/ 1, /*iMaxOwnUnitAI*/ 1, -1, true, false, false, /*iMaxPath*/ 1))
+			//if (AI_group(UNITAI_ATTACK, 1, 1, -1, true, false, false, 1))
+			if (AI_omniGroup(UNITAI_ATTACK, 1, 1, false, 1, true, true, false, false, false))
 			{
 				return;
 			}
@@ -2568,6 +2586,18 @@ void CvUnitAI::AI_attackMove()
 				return;
 			}
 		}
+		// K-Mod
+		else if (plot()->getTeam() == getTeam())
+		{
+			CvSelectionGroup *pSplitGroup, *pRemainderGroup = NULL;
+			pSplitGroup = getGroup()->splitGroup(2, 0, &pRemainderGroup);
+			if (pSplitGroup)
+				pSplitGroup->pushMission(MISSION_SKIP);
+			if (pRemainderGroup)
+				pRemainderGroup->pushMission(MISSION_SKIP);
+			return;
+		}
+		// K-Mod end
 
 		if (AI_retreatToCity())
 		{
@@ -3309,14 +3339,16 @@ void CvUnitAI::AI_attackCityMove()
 		{
 			// BBAI Notes: Add this stack lead by bombard unit to stack probably not lead by a bombard unit
 			// BBAI TODO: Some sense of minimum stack size?  Can have big stack moving 10 turns to merge with tiny stacks
-			if (AI_group(UNITAI_ATTACK_CITY, -1, -1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 10, /*bAllowRegrouping*/ true))
+			//if (AI_group(UNITAI_ATTACK_CITY, -1, -1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 10, /*bAllowRegrouping*/ true))
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, 10, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, true, true))
 			{
 				return;
 			}
 		}
 		else
 		{
-			if (AI_group(UNITAI_ATTACK_CITY, AI_stackOfDoomExtra() * 2, -1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 10, /*bAllowRegrouping*/ false))
+			//if (AI_group(UNITAI_ATTACK_CITY, AI_stackOfDoomExtra() * 2, -1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 10, /*bAllowRegrouping*/ false))
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, AI_stackOfDoomExtra() * 2, -1, true, 10, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, true))
 			{
 				return;
 			}
@@ -7857,7 +7889,8 @@ void CvUnitAI::AI_assaultSeaMove()
 			return;
 		} */ // disabled by K-Mod. This is redundant.
 
-		if (AI_group(UNITAI_ASSAULT_SEA, -1, -1, -1, true, false, false, 10, false, true, false, MISSIONAI_ASSAULT))
+		//if (AI_group(UNITAI_ASSAULT_SEA, -1, -1, -1, true, false, false, 10, false, true, false, MISSIONAI_ASSAULT))
+		if (AI_omniGroup(UNITAI_ASSAULT_SEA, -1, -1, false, 10, true, true, true, false, false, -1, true, MISSIONAI_ASSAULT))
 		{
 			return;
 		}
@@ -7934,6 +7967,7 @@ void CvUnitAI::AI_assaultSeaMove()
 		{
 			getGroup()->AI_separate();
 			getGroup()->pushMission(MISSION_SKIP);
+			return;
 		}
 	}
 	
