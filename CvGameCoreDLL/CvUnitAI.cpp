@@ -2952,7 +2952,7 @@ void CvUnitAI::AI_attackCityMove()
 				int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(pTargetCity->plot(),2,false,false); */
 				// K-Mod. NOTE: this stuff needs some work anyway. The AI needs to learn when to give up and go home.
 				FAssert(getDomainType() == DOMAIN_LAND);
-				int iOurOffense = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 1);
+				int iOurOffense = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 1, false);
 				int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2, false);
 				// K-Mod end
 
@@ -2987,7 +2987,7 @@ void CvUnitAI::AI_attackCityMove()
 						// K-Mod - only move into attack position if we have a chance.
 						// without this check, the AI can get stuck alternating between this, and pillage.
 						// I've tried to roughly take into account how much our ratio would improve by removing a river penalty.
-						if (canBombard(plot()) || (100 + (plot()->isRiverCrossing(directionXY(plot(), pTargetCity->plot()))?GC.getRIVER_ATTACK_MODIFIER()/2 : 0)) * iComparePostBombard >= 100 * iAttackRatio)
+						if (canBombard(plot()) || 150 * iComparePostBombard >= (150 + (plot()->isRiverCrossing(directionXY(plot(), pTargetCity->plot()))?GC.getRIVER_ATTACK_MODIFIER() : 0)) * iAttackRatio)
 						{
 						// K-Mod end
 							// Move to good tile to attack from unless we're way more powerful
@@ -3007,15 +3007,15 @@ void CvUnitAI::AI_attackCityMove()
 					//stack attack
 					if (getGroup()->getNumUnits() > 1)
 					{ 
-						//if (AI_stackAttackCity(1, iAttackRatio, true))
-						if (AI_stackAttackCity(iAttackRatio)) // K-Mod
+						if (AI_stackAttackCity(iAttackRatio))
 						{
 							return;
 						}
 					}
 
 					// If not strong enough alone, merge if another stack is nearby
-					if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
+					//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
+					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, 2, true, false, bIgnoreFaster, false, false))
 					{
 						return;
 					}
@@ -15143,7 +15143,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									int iEnemyDefence = -1; // used later.
 									if (pLoopCity->isVisible(getTeam(), false))
 									{
-										iEnemyDefence = GET_PLAYER(getOwnerINLINE()).AI_localDefenceStrength(pLoopCity->plot(), NO_TEAM, DOMAIN_LAND, 2);
+										iEnemyDefence = GET_PLAYER(getOwnerINLINE()).AI_localDefenceStrength(pLoopCity->plot(), NO_TEAM, DOMAIN_LAND, iPathTurns > 1 ? 2 : 0);
 
 										if (iPathTurns > 2)
 										{

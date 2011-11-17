@@ -9696,7 +9696,7 @@ void CvCityAI::AI_juggleCitizens()
 		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
 		{
 			// check to see if we're trying to remove the same job we most recently assigned
-			if (iWorkedPlotValue < iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
+			if (iWorkedPlotValue <= iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
 			{
 				// ... that suggests we should break now to avoid getting into an endless loop.
 
@@ -9708,7 +9708,7 @@ void CvCityAI::AI_juggleCitizens()
 				// That's usually a fair assumption, but it can sometimes cause loops.
 				// The upshot is that we should try to break on the high-food tile.
 				bDone = true;
-				int iCurrentFood = iWorkedPlotValue < iWorkedSpecValue
+				int iCurrentFood = iWorkedPlotValue <= iWorkedSpecValue
 					? getCityIndexPlot(iWorkedPlot)->getYield(YIELD_FOOD)
 					: GET_PLAYER(getOwnerINLINE()).specialistYield(eWorkedSpecialist, YIELD_FOOD);
 				int iNextFood = iUnworkedPlotValue > iUnworkedSpecValue
@@ -9717,18 +9717,6 @@ void CvCityAI::AI_juggleCitizens()
 				if (iCurrentFood >= iNextFood)
 					break; // ie. don't swap to the new job.
 				// otherwise, take the new job and then we're done. (bDone == true)
-			}
-
-			// remember which job we are assigning, to use in the above check on the next cycle.
-			if (iUnworkedPlotValue > iUnworkedSpecValue)
-			{
-				iLatestPlot = iUnworkedPlot;
-				eLatestSpecialist  = NO_SPECIALIST;
-			}
-			else
-			{
-				iLatestPlot = -1;
-				eLatestSpecialist = eUnworkedSpecialist;
 			}
 
 			// remove lowest value job
@@ -9744,15 +9732,22 @@ void CvCityAI::AI_juggleCitizens()
 			}
 
 			// assign highest value job
+			// remember which job we are assigning, to use in the above check on the next cycle.
 			if (iUnworkedPlotValue > iUnworkedSpecValue)
 			{
 				FAssert(iUnworkedPlot != -1);
 				setWorkingPlot(iUnworkedPlot, true);
+
+				iLatestPlot = iUnworkedPlot;
+				eLatestSpecialist  = NO_SPECIALIST;
 			}
 			else
 			{
 				FAssert(eUnworkedSpecialist != NO_SPECIALIST);
 				changeSpecialistCount(eUnworkedSpecialist, 1);
+
+				iLatestPlot = -1;
+				eLatestSpecialist = eUnworkedSpecialist;
 			}
 		}
 		else
@@ -10233,7 +10228,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 				} */ // Disabled by K-Mod. I don't see the point of this.
 				//Slavery Override
 				//if (bCanPopRush && (iHappinessLevel > 0))
-				if (bCanPopRush && getHurryAngerTimer() == 0 && iHappinessLevel >= (getPopulation()%2 == 0 ? 1 : 0)) // K-Mod
+				if (bCanPopRush && getHurryAngerTimer() <= std::max(6-getPopulation(), 0)
+					&& iHappinessLevel >= (getPopulation()%2 == 0 ? 1 : 0)) // K-Mod
 				{
 					//iSlaveryValue = 30 * 14 * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0));
 					// K-Mod. Rescaled values. "30" represents GC.getHurryInfo(eHurry).getProductionPerPopulation()
