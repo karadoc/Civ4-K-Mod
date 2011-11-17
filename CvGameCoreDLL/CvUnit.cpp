@@ -3761,7 +3761,7 @@ bool CvUnit::canSentry(const CvPlot* pPlot) const
 }
 
 
-int CvUnit::healRate(const CvPlot* pPlot) const
+int CvUnit::healRate(const CvPlot* pPlot, bool bLocation, bool bUnits) const
 {
 	PROFILE_FUNC();
 
@@ -3778,85 +3778,91 @@ int CvUnit::healRate(const CvPlot* pPlot) const
 
 	iTotalHeal = 0;
 
-	if (pPlot->isCity(true, getTeam()))
+	if (bLocation) // K-Mod
 	{
-		iTotalHeal += GC.getDefineINT("CITY_HEAL_RATE") + (GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()) ? getExtraFriendlyHeal() : getExtraNeutralHeal());
-		if (pCity && !pCity->isOccupation())
+		if (pPlot->isCity(true, getTeam()))
 		{
-			iTotalHeal += pCity->getHealRate();
-		}
-	}
-	else
-	{
-		if (!GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()))
-		{
-			if (isEnemy(pPlot->getTeam(), pPlot))
+			iTotalHeal += GC.getDefineINT("CITY_HEAL_RATE") + (GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()) ? getExtraFriendlyHeal() : getExtraNeutralHeal());
+			if (pCity && !pCity->isOccupation())
 			{
-				iTotalHeal += (GC.getDefineINT("ENEMY_HEAL_RATE") + getExtraEnemyHeal());
-			}
-			else
-			{
-				iTotalHeal += (GC.getDefineINT("NEUTRAL_HEAL_RATE") + getExtraNeutralHeal());
+				iTotalHeal += pCity->getHealRate();
 			}
 		}
 		else
 		{
-			iTotalHeal += (GC.getDefineINT("FRIENDLY_HEAL_RATE") + getExtraFriendlyHeal());
-		}
-	}
-
-	// XXX optimize this (save it?)
-	iBestHeal = 0;
-
-	pUnitNode = pPlot->headUnitNode();
-
-	while (pUnitNode != NULL)
-	{
-		pLoopUnit = ::getUnit(pUnitNode->m_data);
-		pUnitNode = pPlot->nextUnitNode(pUnitNode);
-
-		if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
-		{
-			iHeal = pLoopUnit->getSameTileHeal();
-
-			if (iHeal > iBestHeal)
+			if (!GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()))
 			{
-				iBestHeal = iHeal;
+				if (isEnemy(pPlot->getTeam(), pPlot))
+				{
+					iTotalHeal += (GC.getDefineINT("ENEMY_HEAL_RATE") + getExtraEnemyHeal());
+				}
+				else
+				{
+					iTotalHeal += (GC.getDefineINT("NEUTRAL_HEAL_RATE") + getExtraNeutralHeal());
+				}
+			}
+			else
+			{
+				iTotalHeal += (GC.getDefineINT("FRIENDLY_HEAL_RATE") + getExtraFriendlyHeal());
 			}
 		}
 	}
 
-	for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+	if (bUnits) // K-Mod
 	{
-		pLoopPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), ((DirectionTypes)iI));
+		// XXX optimize this (save it?)
+		iBestHeal = 0;
 
-		if (pLoopPlot != NULL)
+		pUnitNode = pPlot->headUnitNode();
+
+		while (pUnitNode != NULL)
 		{
-			if (pLoopPlot->area() == pPlot->area())
+			pLoopUnit = ::getUnit(pUnitNode->m_data);
+			pUnitNode = pPlot->nextUnitNode(pUnitNode);
+
+			if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
 			{
-				pUnitNode = pLoopPlot->headUnitNode();
+				iHeal = pLoopUnit->getSameTileHeal();
 
-				while (pUnitNode != NULL)
+				if (iHeal > iBestHeal)
 				{
-					pLoopUnit = ::getUnit(pUnitNode->m_data);
-					pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+					iBestHeal = iHeal;
+				}
+			}
+		}
 
-					if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
+		for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+		{
+			pLoopPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), ((DirectionTypes)iI));
+
+			if (pLoopPlot != NULL)
+			{
+				if (pLoopPlot->area() == pPlot->area())
+				{
+					pUnitNode = pLoopPlot->headUnitNode();
+
+					while (pUnitNode != NULL)
 					{
-						iHeal = pLoopUnit->getAdjacentTileHeal();
+						pLoopUnit = ::getUnit(pUnitNode->m_data);
+						pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
 
-						if (iHeal > iBestHeal)
+						if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
 						{
-							iBestHeal = iHeal;
+							iHeal = pLoopUnit->getAdjacentTileHeal();
+
+							if (iHeal > iBestHeal)
+							{
+								iBestHeal = iHeal;
+							}
 						}
 					}
 				}
 			}
 		}
-	}
 
-	iTotalHeal += iBestHeal;
-	// XXX
+		iTotalHeal += iBestHeal;
+		// XXX
+	}
 
 	return iTotalHeal;
 }

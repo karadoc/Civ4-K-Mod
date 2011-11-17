@@ -418,6 +418,8 @@ void CvTeam::addTeam(TeamTypes eTeam)
 
 	// K-Mod
 	FAssert(GC.getGameINLINE().isFinalInitialized());
+	//FAssert(GC.getMapINLINE().numPlotsINLINE() == GET_TEAM(eTeam).m_aiStrengthMemory.size()); // I'd assert this, but the array is protected.
+	// AI_initMemory use to be required here. It isn't required anymore, but we still need to clear the memory - and I'd rather play it safe...
 	GET_TEAM(eTeam).AI_initMemory();
 	// K-Mod end
 

@@ -111,7 +111,7 @@ void CvTeamAI::AI_initMemory()
 
 void CvTeamAI::AI_uninit()
 {
-	m_aiStrengthMemory.clear(); // K-Mod
+	//m_aiStrengthMemory.clear(); // K-Mod. Clearing the memory will cause problems if the game is still in progress.
 }
 
 
@@ -4014,8 +4014,9 @@ void CvTeamAI::write(FDataStreamBase* pStream)
 	pStream->Write(MAX_TEAMS, (int*)m_aeWarPlan);
 	pStream->Write(m_eWorstEnemy);
 
-	// K-Mod
+	// K-Mod.
 	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
+	m_aiStrengthMemory.resize(GC.getMapINLINE().numPlotsINLINE()); // the consequences of the assert failing are really bad.
 	FAssert(m_aiStrengthMemory.size() > 0);
 	pStream->Write(m_aiStrengthMemory.size(), &m_aiStrengthMemory[0]); // uiFlag >= 1
 	// K-Mod end
