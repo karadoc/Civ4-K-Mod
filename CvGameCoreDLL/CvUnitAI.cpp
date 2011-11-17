@@ -2922,7 +2922,7 @@ void CvUnitAI::AI_attackCityMove()
 		if( iStepDistToTarget <= 2 || pTargetCity->isVisible(getTeam(),false) )
 		{
 			// K-Mod note: AI_compareStacks will try to use the AI memory if it can't see.
-			iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true, true, true);
+			iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true);
 
 			// K-Mod
 			// The defense modifier is counted in AI_compareStacks. So if we add it again, we'd be double counting.
@@ -15084,6 +15084,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 	int iBestValue;
 	int iLoop;
 	int iI;
+	int iOurOffence = -1; // K-Mod. Will calculate this for the first city only.
 
 	iBestValue = 0;
 	pBestCity = NULL;
@@ -15113,9 +15114,9 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
 				{
 					// BBAI efficiency: check area for land units before generating path
-					if (AI_plotValid(pLoopCity->plot()) && (pLoopCity->area() == area()))
+					if (AI_plotValid(pLoopCity->plot()) && (pLoopCity->area() == area()) && pLoopCity->isRevealed(getTeam(), false)) // K-Mod added isRevealed check.
 					{
-						if(AI_potentialEnemy(GET_PLAYER((PlayerTypes)iI).getTeam(), pLoopCity->plot()))
+						if (AI_potentialEnemy(GET_PLAYER((PlayerTypes)iI).getTeam(), pLoopCity->plot()))
 						{
 							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
 							{
@@ -15140,6 +15141,13 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										}
 									}*/
 									// K-Mod
+									if (iOurOffence == -1)
+									{
+										// note: with bCheckCanAttack == false, AI_sumStrength should be roughly the same regardless of which city we are targetting.
+										// ... except if lots of our units have a hills-attack promotion or something like that.
+										iOurOffence = getGroup()->AI_sumStrength(pLoopCity->plot());
+									}
+									FAssert(iOurOffence > 0);
 									int iEnemyDefence = -1; // used later.
 									if (pLoopCity->isVisible(getTeam(), false))
 									{
@@ -15202,7 +15210,6 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									if (pLoopCity->isVisible(getTeam(), false) && iPathTurns < 6)
 									{
 										FAssert(iEnemyDefence != -1);
-										int iOurOffence = getGroup()->AI_sumStrength(pLoopCity->plot());
 										if (iOurOffence > iEnemyDefence)
 										{
 											// dont' boost it by too much, otherwise human players will exploit us. :(
@@ -15211,15 +15218,21 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 											iValue /= 100;
 										}
 									}
-									/* reduce the value if we can see, or remember, that the city is well defended.
+									// Reduce the value if we can see, or remember, that the city is well defended.
+									// Note. This adjustment can be more heavy handed because it is harder to feign strong defence than weak defence.
+									// However, I want to err on the side of _not_ being deterred by strong defences unless the defences.
 									iEnemyDefence = GET_TEAM(getTeam()).AI_getStrengthMemory(pLoopCity->plot());
-									iEnemyDefence *= 200 - (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
-									iEnemyDefence /= 200;
-									if (100 * iEnemyDefence > 110 * iOurOffence)
+									if (iEnemyDefence > iOurOffence)
 									{
-										iValue *= std::max(75, 110 * iOurOffence / iEnemyDence);
-										iValue /= 100;
-									} */  // not enabled, because I'm not sure I want to calculate iOurOffence so many times.
+										// a more sensitive adjustment than usual (w/ modifier on the denominator), so as not to be too deterred before bombarding.
+										iEnemyDefence *= 100;
+										iEnemyDefence /= 100 + (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
+										if (100 * iEnemyDefence > 125 * iOurOffence) // an uneven comparison, just in case we can get some air support or other help somehow.
+										{
+											iValue *= std::max(50, 125 * iOurOffence / iEnemyDefence);
+											iValue /= 100;
+										}
+									}
 									// K-Mod end
 
 									iValue *= 1000;
@@ -15232,7 +15245,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 									// K-Mod. A const-random component, so that the AI doesn't always go for the same city.
 									{
-										int iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE());
+										unsigned iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE());
 										iHash *= 2654435761; // golden ratio of 2^32;
 										iValue *= 80 + iHash % 41;
 										iValue /= 100;
@@ -15642,7 +15655,7 @@ bool CvUnitAI::AI_bombardCity()
 	int iBombardTurns = getGroup()->getBombardTurns(pBombardCity);
 	iBase = (iBase * (GC.getMAX_CITY_DEFENSE_DAMAGE()-pBombardCity->getDefenseDamage()) + iMin * pBombardCity->getDefenseDamage())/std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE());
 	int iThreshold = (iBase * (100 - iAttackOdds) + (1 + iBombardTurns/2) * iMin * iAttackOdds) / (100 + (iBombardTurns/2) * iAttackOdds);
-	int iComparison = getGroup()->AI_compareStacks(pBombardCity->plot(), true, true, true);
+	int iComparison = getGroup()->AI_compareStacks(pBombardCity->plot(), true);
 
 	if (iComparison > iThreshold)
 	{
@@ -24059,7 +24072,7 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 						//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, /*bAttack*/ true, /*bDeclareWar*/ true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
 						if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true, true))
 						{
-							if (iPowerThreshold <= 0 || getGroup()->AI_compareStacks(pLoopPlot, true, true, true) >= iPowerThreshold)
+							if (iPowerThreshold <= 0 || getGroup()->AI_compareStacks(pLoopPlot, true) >= iPowerThreshold)
 							{
 								pCityPlot = pLoopPlot;
 							}
@@ -24075,7 +24088,7 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 	{
 		if( gUnitLogLevel >= 1 && pCityPlot->getPlotCity() != NULL )
 		{
-			logBBAI("    Stack for player %d (%S) decides to attack city %S with stack ratio %d", getOwner(), GET_PLAYER(getOwner()).getCivilizationDescription(0), pCityPlot->getPlotCity()->getName(0).GetCString(), getGroup()->AI_compareStacks(pCityPlot, true, true, true) );
+			logBBAI("    Stack for player %d (%S) decides to attack city %S with stack ratio %d", getOwner(), GET_PLAYER(getOwner()).getCivilizationDescription(0), pCityPlot->getPlotCity()->getName(0).GetCString(), getGroup()->AI_compareStacks(pCityPlot, true) );
 			logBBAI("    City %S has defense modifier %d, %d with ignore building", pCityPlot->getPlotCity()->getName(0).GetCString(), pCityPlot->getPlotCity()->getDefenseModifier(false), pCityPlot->getPlotCity()->getDefenseModifier(true) );
 		}
 

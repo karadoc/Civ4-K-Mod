@@ -340,7 +340,7 @@ public:
 	inline int AI_getVictoryStrategyHash() const { return m_iVictoryStrategyHash; }
 	void AI_updateVictoryStrategyHash(); // K-Mod
 	void AI_initStrategyRand(); // K-Mod
-	int AI_getStrategyRand(int iShift) const;
+	unsigned AI_getStrategyRand(int iShift) const;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/		
@@ -479,7 +479,7 @@ protected:
 	// K-Mod. The original caching method was just begging for OOS bugs.
 	int m_iStrategyHash;
 	// BBAI variables (adjusted for K-Mod)
-	int m_iStrategyRand;
+	unsigned m_iStrategyRand;
 	int m_iVictoryStrategyHash;
 	// end BBAI
 

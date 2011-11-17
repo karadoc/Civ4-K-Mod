@@ -4115,7 +4115,7 @@ bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 			if( GC.getGameINLINE().isDebugMode() )
 			{
 				szTempBuffer.Format(L"\nStack Compare Value = %d",
-					gDLL->getInterfaceIFace()->getSelectionList()->AI_compareStacks(pPlot, true));
+					gDLL->getInterfaceIFace()->getSelectionList()->AI_compareStacks(pPlot));
 				szString.append(szTempBuffer);
 
 				if( pPlot->getPlotCity() != NULL )

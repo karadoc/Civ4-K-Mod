@@ -18924,7 +18924,7 @@ void CvPlayerAI::AI_initStrategyRand()
 	m_iStrategyRand = GC.getGameINLINE().getSorenRandNum((1<<(iBits+1))-1, "AI Strategy Rand");
 }
 
-int CvPlayerAI::AI_getStrategyRand(int iShift) const
+unsigned CvPlayerAI::AI_getStrategyRand(int iShift) const
 {
 	const unsigned iBits = 16; // cf bits in AI_initStrategyRand
 
