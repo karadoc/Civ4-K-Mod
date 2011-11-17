@@ -686,6 +686,11 @@ bool CvSelectionGroupAI::AI_isDeclareWar(const CvPlot* pPlot)
 	}
 	else
 	{
+		// K-Mod
+		if (AI_getMissionAIType() == MISSIONAI_EXPLORE)
+			return false;
+		// K-Mod end
+
 		bool bLimitedWar = false;
 		if (pPlot != NULL)
 		{
