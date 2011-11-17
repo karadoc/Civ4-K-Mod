@@ -1,5 +1,37 @@
-This is K-Mod version 1.08.
+This is K-Mod version 1.09.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.09 changelist
+
++ Fixed a critical bug which caused the game to behave unpredictably if any new civ teams are created mid-game (eg, liberated colony) - eg. the game may create extremely large save files. (This was a serious bug; and I'm sorry I didn't find it sooner.)
++ Fixed a BBAI bug which sometimes caused the game to hang when using sea-patrol.
++ Fixed a bug which allowed negative plot yield values to be evaluated by the AI. (This bug didn't affect K-Mod itself, but it could cause a crash in other mods using the K-Mod dll.)
++ Fixed another instance of the bug which allowed the AI can enter forbidden territory immediately before declaring war.
++ Fixed a problem which was causing random numbers based on AI_getStrategyRand to give answers outside of the expected range. (Fixing this problem will cause the AI to behave differently to before. It may require some more adjustments to rebalance it.)
++ Fixed a mistake in AI_attackCityMove which caused the AI to incorrectly estimate the penalty from crossing rivers.
+
++ Paradops can now be performed with multiple units simultaneously instead of just one unit at a time.
++ Players are no longer allowed to air-bomb improvements or cities that they don't know exist. (ie. the improvement has to appear on the map to be a valid target - but direct visibility is not required.)
+
++ Added the stack promotions option from the latest version of the BUG mod.
++ Enabled the power ratio scoreboard option from BUG.
++ The number of cities scoreboard option from BUG will now only show the number of cities that are currently revealed on your map. (ie. it does not count any cities that you haven't seen.)
++ Added new and improved Italian game-text translations, provided by Axios.
++ Added some more language localization to the economics adviser screen (but it still isn't finished).
++ City info on the main screen will now be updated after espionage missions. (So that, for example, production is shown to be zero after a successful sabotage production mission.)
+
++ Increased the target city productivity for the AI; especially for AIs whose personality favors productivity.
++ Added some flavour adjustments for the AI's evaluation of forest chopping.
++ Tweaked various AI flavour based effects.
++ The AI's choice of target city is now adjusted based on its memory of the city's garrison. (using the AI's new tactical memory.)
++ Made various changes to the naval assault AI.
++ Made various changes to the way the AI groups it units.
++ Reworked the effect of AI_STRATEGY_PRODUCTION. It is now only triggered in rare circumstance, and it has a greater effect on the AIs strategy.
++ Corporation yield is now taken into account when choosing plot improvements.
++ Tweaked some of the worker AI.
++ Reduced the probability of the AI building spies in low productivity cities.
++ The AI will now reconsider its current city production after a building is sabotaged.
 
 --
 
