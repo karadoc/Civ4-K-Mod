@@ -3987,7 +3987,7 @@ void CvTeamAI::read(FDataStreamBase* pStream)
 	FAssert(m_aiStrengthMemory.size() > 0);
 	if (uiFlag >= 1)
 	{
-		pStream->Read(GC.getMapINLINE().numPlotsINLINE(), &m_aiStrengthMemory[0]);
+		pStream->Read(m_aiStrengthMemory.size(), &m_aiStrengthMemory[0]);
 	}
 	// K-Mod end
 }
@@ -4017,7 +4017,7 @@ void CvTeamAI::write(FDataStreamBase* pStream)
 	// K-Mod
 	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
 	FAssert(m_aiStrengthMemory.size() > 0);
-	pStream->Write(GC.getMapINLINE().numPlotsINLINE(), &m_aiStrengthMemory[0]); // uiFlag >= 1
+	pStream->Write(m_aiStrengthMemory.size(), &m_aiStrengthMemory[0]); // uiFlag >= 1
 	// K-Mod end
 }
 

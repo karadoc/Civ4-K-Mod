@@ -18924,7 +18924,7 @@ void CvPlayerAI::AI_initStrategyRand()
 	m_iStrategyRand = GC.getGameINLINE().getSorenRandNum((1<<(iBits+1))-1, "AI Strategy Rand");
 }
 
-unsigned CvPlayerAI::AI_getStrategyRand(int iShift) const
+int CvPlayerAI::AI_getStrategyRand(int iShift) const
 {
 	const unsigned iBits = 16; // cf bits in AI_initStrategyRand
 
@@ -18934,8 +18934,10 @@ unsigned CvPlayerAI::AI_getStrategyRand(int iShift) const
 	iShift %= iBits;
 
 	FAssert(m_iStrategyRand > 0);
-
-	return (m_iStrategyRand << iShift) + (m_iStrategyRand >> (iBits - iShift));
+	unsigned x = 2654435761; // golden ratio of 2^32
+	x *= (m_iStrategyRand << iShift) + (m_iStrategyRand >> (iBits - iShift));
+	x >>= 1; // force positive;
+	return x;
 }
 // K-Mod end
 

@@ -340,7 +340,7 @@ public:
 	inline int AI_getVictoryStrategyHash() const { return m_iVictoryStrategyHash; }
 	void AI_updateVictoryStrategyHash(); // K-Mod
 	void AI_initStrategyRand(); // K-Mod
-	unsigned AI_getStrategyRand(int iShift) const;
+	int AI_getStrategyRand(int iShift) const;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/		

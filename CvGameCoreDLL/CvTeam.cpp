@@ -416,6 +416,11 @@ void CvTeam::addTeam(TeamTypes eTeam)
 	FAssert(eTeam != NO_TEAM);
 	FAssert(eTeam != getID());
 
+	// K-Mod
+	FAssert(GC.getGameINLINE().isFinalInitialized());
+	GET_TEAM(eTeam).AI_initMemory();
+	// K-Mod end
+
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).isAlive())
