@@ -69,6 +69,7 @@ public:
 	void write(FDataStreamBase* pStream);
 
 protected:
+	// K-Mod note: the game will crash if too much data is added here. See CvSelectionGroup.h.
 
 	int m_iMissionAIX;
 	int m_iMissionAIY;

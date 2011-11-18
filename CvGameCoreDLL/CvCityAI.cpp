@@ -7921,14 +7921,17 @@ void CvCityAI::AI_updateBestBuild()
 					// Happiness modifers.. maybe I'll do this later, after testing etc.
 
 					// since best-build has changed, cancel all current build missions on this plot
-					CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
-					int iLoop;
-					for(CvSelectionGroup* pLoopSelectionGroup = kOwner.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = kOwner.nextSelectionGroup(&iLoop))
+					if (eLastBestBuildType != NO_BUILD)
 					{
-						if (pLoopSelectionGroup->AI_getMissionAIPlot() == pLoopPlot && pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_BUILD)
+						CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
+						int iLoop;
+						for(CvSelectionGroup* pLoopSelectionGroup = kOwner.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = kOwner.nextSelectionGroup(&iLoop))
 						{
-							FAssert(pLoopSelectionGroup->getHeadUnitAI() == UNITAI_WORKER);
-							pLoopSelectionGroup->clearMissionQueue();
+							if (pLoopSelectionGroup->AI_getMissionAIPlot() == pLoopPlot && pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_BUILD)
+							{
+								FAssert(pLoopSelectionGroup->getHeadUnitAI() == UNITAI_WORKER || pLoopSelectionGroup->getHeadUnitAI() == UNITAI_WORKER_SEA);
+								pLoopSelectionGroup->clearMissionQueue();
+							}
 						}
 					}
 				}

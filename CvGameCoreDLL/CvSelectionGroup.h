@@ -244,6 +244,16 @@ public:
 protected:
 	// WARNING: adding to this class will cause the civ4 exe to crash
 
+	// K-Mod: I've done some basic tests of the above warning.
+	// I've found that it does indeed crash during startup if I add int[30]
+	// but it does not crash if I only add int[2]. (I haven't tested inbetween.)
+	// The game also crashes if I add int[30] to CvSelectionGroupAI.
+
+	// ... I see that BBAI ignored the warning. They added some stuff below.
+	// Removing the BBAI bools from below does not change the size 80. Neither does removing the BBAI virtual functions.
+	// but adding another int increases the size to 84. Which is a shame, because I really want to add one more int...
+	// Although a single int doesn't cause a startup crash, I'd rather not risk instability.
+
 	int m_iID;
 	int m_iMissionTimer;
 
