@@ -101,7 +101,7 @@
 					type="boolean" default="False" 
 					get="isShowPower" set="setShowPower" dirtyBit="Score"/>
 			<list   id="PowerFormula" key="Power Formula" 
-					type="int" default="1" listType="string" 
+					type="int" default="0" listType="string" 
 					get="getPowerFormula" set="setPowerFormula" dirtyBit="Score">
 				<choice id="ThemVersusYou" get="isPowerThemVersusYou"/>
 				<choice id="YouVersusThem" get="isPowerYouVersusThem"/>
@@ -117,14 +117,14 @@
 					values="1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0" format="%.1f" 
 					get="getHighPowerRatio" set="setHighPowerRatio" dirtyBit="Score"/>
 			<option id="PowerHighColor" key="Power High Color" 
-					type="color" default="COLOR_GREEN" 
+					type="color" default="COLOR_RED" 
 					get="getHighPowerColor" set="setHighPowerColor" dirtyBit="Score"/>
 			<list   id="PowerLowRatio" key="Power Low" 
 					type="float" default="0.8" listType="float" 
 					values="0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0" format="%.1f" 
 					get="getLowPowerRatio" set="setLowPowerRatio" dirtyBit="Score"/>
 			<option id="PowerLowColor" key="Power Low Color" 
-					type="color" default="COLOR_RED" 
+					type="color" default="COLOR_GREEN" 
 					get="getLowPowerColor" set="setLowPowerColor" dirtyBit="Score"/>
 		</section>
 	</options>

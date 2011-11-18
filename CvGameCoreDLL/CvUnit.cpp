@@ -9575,7 +9575,10 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 			{
 				if (getGroup()->getNumUnits() > 1)
 				{
-					getGroup()->setActivityType(ACTIVITY_AWAKE);
+					// K-Mod - to avoid AI deadlocks, where they just keep grouping and ungroup indefinitely...
+					if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
+					// K-Mod end
+						getGroup()->setActivityType(ACTIVITY_AWAKE);
 				}
 				else
 				{
