@@ -12702,7 +12702,6 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 					iTempValue /= 100;
 				}
 				// K-Mod (maybe I'll do some more tweaking later)
-				// (NOTE: "conscript_population_per_cost" is actually "production_per_conscript_population". The developers didn't know what "per" means.)
 				int iConscriptPop = std::max(1, GC.getUnitInfo(eConscript).getProductionCost() / GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST"));
 				iTempValue *= GC.getUnitInfo(eConscript).getProductionCost();
 				iTempValue /= iConscriptPop * GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST");

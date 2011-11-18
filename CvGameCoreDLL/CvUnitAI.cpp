@@ -10185,16 +10185,19 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
 		iValue += (iTemp / 8);
 	}
 
-	// BBAI / K-Mod
-    if (getDamage() > 0 || ((AI_getBirthmark() % 8 == 0) && (AI_getUnitAIType() == UNITAI_COUNTER || 
+/************************************************************************************************/
+/* BETTER_BTS_AI_MOD                      04/26/10                                jdog5000      */
+/*                                                                                              */
+/* Unit AI                                                                                      */
+/************************************************************************************************/
+    if ( getDamage() > 0 || ((AI_getBirthmark() % 8 == 0) && (AI_getUnitAIType() == UNITAI_COUNTER || 
 															AI_getUnitAIType() == UNITAI_PILLAGE ||
 															AI_getUnitAIType() == UNITAI_ATTACK_CITY ||
-															AI_getUnitAIType() == UNITAI_RESERVE ||
-															AI_getUnitAIType() == UNITAI_PIRATE_SEA ||
-															AI_getUnitAIType() == UNITAI_RESERVE_SEA ||
-															AI_getUnitAIType() == UNITAI_ASSAULT_SEA)) )
+															AI_getUnitAIType() == UNITAI_RESERVE )) )
     {
-	// BBAI / K-Mod
+/************************************************************************************************/
+/* BETTER_BTS_AI_MOD                       END                                                  */
+/************************************************************************************************/
         iTemp = GC.getPromotionInfo(ePromotion).getSameTileHealChange() + getSameTileHeal();
         iExtra = getSameTileHeal();
         
@@ -10203,7 +10206,7 @@ int CvUnitAI::AI_promotionValue(PromotionTypes ePromotion)
         
         if (iTemp > 0)
         {
-            if (healRate(plot(), false, true) < iTemp)
+            if (healRate(plot()) < iTemp)
             {
                 iValue += iTemp * ((getGroup()->getNumUnits() > 4) ? 4 : 2);
             }

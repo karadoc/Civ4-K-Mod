@@ -3761,7 +3761,7 @@ bool CvUnit::canSentry(const CvPlot* pPlot) const
 }
 
 
-int CvUnit::healRate(const CvPlot* pPlot, bool bLocation, bool bUnits) const
+int CvUnit::healRate(const CvPlot* pPlot) const
 {
 	PROFILE_FUNC();
 
@@ -3778,91 +3778,85 @@ int CvUnit::healRate(const CvPlot* pPlot, bool bLocation, bool bUnits) const
 
 	iTotalHeal = 0;
 
-	if (bLocation) // K-Mod
+	if (pPlot->isCity(true, getTeam()))
 	{
-		if (pPlot->isCity(true, getTeam()))
+		iTotalHeal += GC.getDefineINT("CITY_HEAL_RATE") + (GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()) ? getExtraFriendlyHeal() : getExtraNeutralHeal());
+		if (pCity && !pCity->isOccupation())
 		{
-			iTotalHeal += GC.getDefineINT("CITY_HEAL_RATE") + (GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()) ? getExtraFriendlyHeal() : getExtraNeutralHeal());
-			if (pCity && !pCity->isOccupation())
+			iTotalHeal += pCity->getHealRate();
+		}
+	}
+	else
+	{
+		if (!GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()))
+		{
+			if (isEnemy(pPlot->getTeam(), pPlot))
 			{
-				iTotalHeal += pCity->getHealRate();
+				iTotalHeal += (GC.getDefineINT("ENEMY_HEAL_RATE") + getExtraEnemyHeal());
+			}
+			else
+			{
+				iTotalHeal += (GC.getDefineINT("NEUTRAL_HEAL_RATE") + getExtraNeutralHeal());
 			}
 		}
 		else
 		{
-			if (!GET_TEAM(getTeam()).isFriendlyTerritory(pPlot->getTeam()))
+			iTotalHeal += (GC.getDefineINT("FRIENDLY_HEAL_RATE") + getExtraFriendlyHeal());
+		}
+	}
+
+	// XXX optimize this (save it?)
+	iBestHeal = 0;
+
+	pUnitNode = pPlot->headUnitNode();
+
+	while (pUnitNode != NULL)
+	{
+		pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = pPlot->nextUnitNode(pUnitNode);
+
+		if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
+		{
+			iHeal = pLoopUnit->getSameTileHeal();
+
+			if (iHeal > iBestHeal)
 			{
-				if (isEnemy(pPlot->getTeam(), pPlot))
-				{
-					iTotalHeal += (GC.getDefineINT("ENEMY_HEAL_RATE") + getExtraEnemyHeal());
-				}
-				else
-				{
-					iTotalHeal += (GC.getDefineINT("NEUTRAL_HEAL_RATE") + getExtraNeutralHeal());
-				}
-			}
-			else
-			{
-				iTotalHeal += (GC.getDefineINT("FRIENDLY_HEAL_RATE") + getExtraFriendlyHeal());
+				iBestHeal = iHeal;
 			}
 		}
 	}
 
-	if (bUnits) // K-Mod
+	for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 	{
-		// XXX optimize this (save it?)
-		iBestHeal = 0;
+		pLoopPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), ((DirectionTypes)iI));
 
-		pUnitNode = pPlot->headUnitNode();
-
-		while (pUnitNode != NULL)
+		if (pLoopPlot != NULL)
 		{
-			pLoopUnit = ::getUnit(pUnitNode->m_data);
-			pUnitNode = pPlot->nextUnitNode(pUnitNode);
-
-			if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
+			if (pLoopPlot->area() == pPlot->area())
 			{
-				iHeal = pLoopUnit->getSameTileHeal();
+				pUnitNode = pLoopPlot->headUnitNode();
 
-				if (iHeal > iBestHeal)
+				while (pUnitNode != NULL)
 				{
-					iBestHeal = iHeal;
-				}
-			}
-		}
+					pLoopUnit = ::getUnit(pUnitNode->m_data);
+					pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
 
-		for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-		{
-			pLoopPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), ((DirectionTypes)iI));
-
-			if (pLoopPlot != NULL)
-			{
-				if (pLoopPlot->area() == pPlot->area())
-				{
-					pUnitNode = pLoopPlot->headUnitNode();
-
-					while (pUnitNode != NULL)
+					if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
 					{
-						pLoopUnit = ::getUnit(pUnitNode->m_data);
-						pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+						iHeal = pLoopUnit->getAdjacentTileHeal();
 
-						if (pLoopUnit->getTeam() == getTeam()) // XXX what about alliances?
+						if (iHeal > iBestHeal)
 						{
-							iHeal = pLoopUnit->getAdjacentTileHeal();
-
-							if (iHeal > iBestHeal)
-							{
-								iBestHeal = iHeal;
-							}
+							iBestHeal = iHeal;
 						}
 					}
 				}
 			}
 		}
-
-		iTotalHeal += iBestHeal;
-		// XXX
 	}
+
+	iTotalHeal += iBestHeal;
+	// XXX
 
 	return iTotalHeal;
 }
@@ -9575,10 +9569,7 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 			{
 				if (getGroup()->getNumUnits() > 1)
 				{
-					// K-Mod - to avoid AI deadlocks, where they just keep grouping and ungroup indefinitely...
-					if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
-					// K-Mod end
-						getGroup()->setActivityType(ACTIVITY_AWAKE);
+					getGroup()->setActivityType(ACTIVITY_AWAKE);
 				}
 				else
 				{

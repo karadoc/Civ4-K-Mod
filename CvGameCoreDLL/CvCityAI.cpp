@@ -8087,15 +8087,15 @@ void CvCityAI::AI_doDraft(bool bForce)
 /*                                                                                              */
 /* City AI, War Strategy AI                                                                     */
 /************************************************************************************************/
-		// if (GC.getGameINLINE().AI_combatValue(getConscriptUnit()) > 33) // disabled by K-Mod
-		{
+	    if (GC.getGameINLINE().AI_combatValue(getConscriptUnit()) > 33)
+        {
 			if (bForce)
 			{
 				conscript();
 				return;
-			}
+        	}
 			bool bLandWar = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
-			bool bDanger = (!AI_isDefended() && AI_isDanger());
+            bool bDanger = (!AI_isDefended() && AI_isDanger());
 
 			// Don't go broke from drafting
 			if( !bDanger && kOwner.AI_isFinancialTrouble() )
@@ -8103,35 +8103,19 @@ void CvCityAI::AI_doDraft(bool bForce)
 				return;
 			}
 
-			// K-Mod. See if our drafted unit is particularly good value.
-			// (cf. my calculation in CvPlayerAI::AI_civicValue)
-			UnitTypes eConscriptUnit = getConscriptUnit();
-			int iConscriptPop = std::max(1, GC.getUnitInfo(eConscriptUnit).getProductionCost() / GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST"));
-
-			// call it "good value" if we get at least 1.4 times the normal hammers-per-conscript-pop.
-			// (with standard settings, this only happens for riflemen)
-			bool bGoodValue = 10 * GC.getUnitInfo(eConscriptUnit).getProductionCost() / (iConscriptPop * GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST")) >= 14;
-
-			// one more thing... it's not "good value" if we already have too many troops.
-			if (!bLandWar && bGoodValue)
-			{
-				bGoodValue = kOwner.AI_unitCostPerMil() <= 30 + kOwner.AI_getFlavorValue(FLAVOR_MILITARY);
-			}
-			// K-Mod end - although, I've put a bunch of 'bGoodValue' conditions in all through the rest of this function.
-
 			// Don't shrink cities too much
-			//int iConscriptPop = getConscriptPopulation();
-			if (!bGoodValue && !bDanger && (3 * (getPopulation() - iConscriptPop) < getHighestPopulation() * 2) )
-			{
+            int iConscriptPop = getConscriptPopulation();
+			if ( !bDanger && (3 * (getPopulation() - iConscriptPop) < getHighestPopulation() * 2) )
+            {
 				return;
-			}
+            }
 
 			// Large cities want a little spare happiness
-			int iHappyDiff = GC.getDefineINT("CONSCRIPT_POP_ANGER") - iConscriptPop + (bGoodValue ? 0 : getPopulation()/10);
+			int iHappyDiff = GC.getDefineINT("CONSCRIPT_POP_ANGER") - iConscriptPop + getPopulation()/10;
 
-			if ((bGoodValue || bLandWar) && angryPopulation(iHappyDiff) == 0)
-			{
-				bool bWait = true;
+            if (bLandWar && (0 == angryPopulation(iHappyDiff)))
+            {
+                bool bWait = true;
 
 				if( bWait && kOwner.AI_isDoStrategy(AI_STRATEGY_TURTLE) )
 				{
@@ -8151,7 +8135,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 					if (getConscriptAngerTimer() == 0 || AI_countWorkedPoorTiles() > 0)
 						bWait = false;
 				}
-
+				
 				if( bWait && bDanger )
 				{
 					// If city might be captured, don't hold back
@@ -8175,7 +8159,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 					// Non-critical, only burn population if population is not worth much
 					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorTiles() > 1))
 					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) // K-Mod
-						&& (bGoodValue || AI_countWorkedPoorTiles() > 0 || foodDifference()+getFood() < 0 || (foodDifference() < 0 && healthRate() <= -4)))
+						&& (AI_countWorkedPoorTiles() > 0 || foodDifference()+getFood() < 0 || (foodDifference() < 0 && healthRate() <= -4)))
 					{
 						//if( (getPopulation() >= std::max(5, getHighestPopulation() - 1)) )
 						// We're working poor tiles. What more do you want?
@@ -8187,18 +8171,18 @@ void CvCityAI::AI_doDraft(bool bForce)
 
 				if( !bWait && gCityLogLevel >= 2 )
 				{
-					logBBAI("      City %S (size %d, highest %d) chooses to conscript with danger: %d, land war: %d, poor tiles: %d%s", getName().GetCString(), getPopulation(), getHighestPopulation(), bDanger, bLandWar, AI_countWorkedPoorTiles(), bGoodValue ? ", good value" : "");
+					logBBAI("      City %S (size %d, highest %d) chooses to conscript with danger: %d, land war: %d, poor tiles: %d", getName().GetCString(), getPopulation(), getHighestPopulation(), bDanger, bLandWar, AI_countWorkedPoorTiles() );
 				}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-				if (!bWait)
-				{
-					conscript();
-				}
-			}
-		}
+                if (!bWait)
+                {
+                    conscript();
+                }
+            }
+        }
 	}
 }
 
