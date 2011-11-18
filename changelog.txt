@@ -33,6 +33,9 @@ v1.09 changelist
 + Reduced the probability of the AI building spies in low productivity cities.
 + The AI will now reconsider its current city production after a building is sabotaged.
 
+v1.09b
++ Fixed an AI deadlock bug.
+
 --
 
 v1.08 changelist

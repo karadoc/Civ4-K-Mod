@@ -146,8 +146,7 @@ public:
 	bool canHeal(const CvPlot* pPlot) const;																											// Exposed to Python
 	bool canSentry(const CvPlot* pPlot) const;																										// Exposed to Python
 
-	//int healRate(const CvPlot* pPlot) const;
-	int healRate(const CvPlot* pPlot, bool bLocation = true, bool bUnits = true) const; // K-Mod
+	int healRate(const CvPlot* pPlot) const;
 	int healTurns(const CvPlot* pPlot) const;
 	void doHeal();
 
