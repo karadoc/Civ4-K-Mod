@@ -35,6 +35,7 @@
 //	KOSHLING MOD - path validity cache, used only within a single
 //	call to GneratePath()
 const CvSelectionGroup* CvSelectionGroup::lastPathGeneratedFor = NULL; // K-Mod
+KmodPathFinder CvSelectionGroup::path_finder; // K-Mod
 int CvSelectionGroup::m_cachedPathValidityFromPlotX = -2;
 int CvSelectionGroup::m_cachedPathValidityFromPlotY;
 bool CvSelectionGroup::m_cachedPathValidityResult;
@@ -4373,7 +4374,11 @@ void CvSelectionGroup::setAutomateType(AutomateTypes eNewValue)
 
 FAStarNode* CvSelectionGroup::getPathLastNode() const
 {
+#ifdef KMOD_PATH_FINDER
+	return path_finder.GetEndNode();
+#else
 	return gDLL->getFAStarIFace()->GetLastNode(&GC.getPathFinder());
+#endif
 }
 
 
@@ -4456,11 +4461,9 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 /************************************************************************************************/
 
 	//gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), this);
-	// K-Mod. the pathfinder now uses CvPathData* instead of just CvSelectionGroup*.
-	// I'm really sorry about the const_cast. I can't fix the const-correctness of all the relevant functions,
-	// because some of them are dllexports. The original code essentially does the same thing anyway, with void* casts.
-	CvPathData path_data(const_cast<CvSelectionGroup*>(this), iMaxPath);
-	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), &path_data);
+	// K-Mod. the pathfinder now uses CvPathSettings* instead of just CvSelectionGroup*.
+	CvPathSettings path_settings(this, iFlags, -1); // change -1 to iMaxPath to enable
+	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), &path_settings);
 	// K-Mod end
 
 	//	KOSHLING MOD - the path finder in the core engine is somewhat inefficient and calls pathValid() multiple times for single
@@ -4476,7 +4479,12 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 		resetPath();
 	}
 
+#ifdef KMOD_PATH_FINDER
+	path_finder.SetSettings(path_settings);
+	bSuccess = path_finder.GeneratePath(pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
+#else
 	bSuccess = gDLL->getFAStarIFace()->GeneratePath(&GC.getPathFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), false, iFlags, bReuse);
+#endif
 
 	//	Invalidate the cache again so that callers from outside the DLL to path generation don't
 	//	invoke a stale cache
@@ -4494,7 +4502,7 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 			if (pNode != NULL)
 			{
 				*piPathTurns = pNode->m_iData2;
-				FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2); // K-Mod
+				//FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2); // K-Mod
 			}
 		}
 	}

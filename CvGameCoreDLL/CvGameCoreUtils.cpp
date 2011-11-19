@@ -1355,8 +1355,9 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 
 	//pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathData* pPathData = (CvPathData*)pointer;
-	pSelectionGroup = pPathData->pGroup;
+	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
+	pSelectionGroup = pPathSettings->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
 	// K-Mod end
 
 	if (pSelectionGroup->atPlot(pToPlot))
@@ -1394,7 +1395,7 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 			}
 		}	
 
-		if (!(gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_IGNORE_DANGER))
+		if (!(iFlags & MOVE_IGNORE_DANGER))
 		{
 			if (!(pSelectionGroup->canFight()) && !(pSelectionGroup->alwaysInvisible()))
 			{
@@ -1436,7 +1437,7 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 						{
 							if (pLoopUnit2->isGroupHead())
 							{
-								if (pLoopUnit2->getGroup()->canMoveOrAttackInto(pToPlot, (pSelectionGroup->AI_isDeclareWar(pToPlot) || (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_DECLARE_WAR))))
+								if (pLoopUnit2->getGroup()->canMoveOrAttackInto(pToPlot, (pSelectionGroup->AI_isDeclareWar(pToPlot) || (iFlags & MOVE_DECLARE_WAR))))
 								{
 									bValid = true;
 									break;
@@ -1456,7 +1457,7 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 		}
 		else
 		{
-			if (!(pSelectionGroup->canMoveOrAttackInto(pToPlot, (pSelectionGroup->AI_isDeclareWar(pToPlot) || (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_DECLARE_WAR)))))
+			if (!(pSelectionGroup->canMoveOrAttackInto(pToPlot, (pSelectionGroup->AI_isDeclareWar(pToPlot) || (iFlags & MOVE_DECLARE_WAR)))))
 			{
 				return FALSE;
 			}
@@ -1486,8 +1487,8 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 	//CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathData* pPathData = (CvPathData*)pointer;
-	CvSelectionGroup* pSelectionGroup = pPathData->pGroup;
+	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
+	CvSelectionGroup* pSelectionGroup = pPathSettings->pGroup;
 	// K-Mod end
 
 
@@ -1495,10 +1496,10 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	int iWorstMovesLeft = MAX_INT;
 	int iWorstMaxMoves = MAX_INT;
 
-	int iFlags = gDLL->getFAStarIFace()->GetInfo(finder);
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
 	TeamTypes eTeam = pSelectionGroup->getHeadTeam();
 
-	CvDLLFAStarIFaceBase* pAStar = gDLL->getFAStarIFace();
+	//CvDLLFAStarIFaceBase* pAStar = gDLL->getFAStarIFace();
 
 	{
 		CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode();
@@ -1547,8 +1548,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		return iWorstCost;
 
 	// the cost of battle...
-	if (iFlags & MOVE_ATTACK_STACK &&
-		!pAStar->IsPathDest(finder, pToPlot->getX_INLINE(), pToPlot->getY_INLINE()))
+	if (iFlags & MOVE_ATTACK_STACK)
 	{
 		FAssert(pSelectionGroup->AI_isControlled()); // only the AI uses MOVE_ATTACK_STACK
 		FAssert(pSelectionGroup->getDomainType() == DOMAIN_LAND);
@@ -1632,8 +1632,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 				// defence for units who stay behind after attacking an enemy.
 				//if (pSelectionGroup->AI_isControlled()) // let human players have this convenience...
-				if (pSelectionGroup->AI_isControlled() || // but only if we aren't trying to do a 1 step move.
-					stepDistance(pAStar->GetStartX(finder), pAStar->GetStartY(finder), pAStar->GetDestX(finder), pAStar->GetDestY(finder)) > 1)
+				if (pSelectionGroup->AI_isControlled() || parent->m_iKnownCost != 0) // but not for the first step.
 				{
 					if (pLoopUnit->canAttack())
 					{
@@ -1723,17 +1722,18 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	return iWorstCost;
 }
 
-static int pathValidInternal(FAStarNode* parent, FAStarNode* node, int data, CvSelectionGroup* pSelectionGroup, FAStar* finder)
+static int pathValidInternal(FAStarNode* parent, FAStarNode* node, int data, CvPathSettings* pPathSettings, FAStar* finder)
 {
 	CvPlot* pFromPlot = GC.getMapINLINE().plotSorenINLINE(parent->m_iX, parent->m_iY);
 	//CvPlot* pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
+	CvSelectionGroup* pSelectionGroup = pPathSettings->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
 
 	if (pSelectionGroup->atPlot(pFromPlot))
 	{
 		return TRUE;
 	}
 
-	int iFlags = gDLL->getFAStarIFace()->GetInfo(finder); // K-Mod. (and now used throughout this function)
 	if (iFlags & MOVE_SAFE_TERRITORY)
 	{
 		PROFILE("pathValid move save");
@@ -1862,9 +1862,9 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 
 	//pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathData* pPathData = (CvPathData*)pointer;
-	pSelectionGroup = pPathData->pGroup;
-	if (pPathData->iMaxPath > 0 && parent->m_iData2 > pPathData->iMaxPath)
+	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
+	pSelectionGroup = pPathSettings->pGroup;
+	if (pPathSettings->iMaxPath > 0 && parent->m_iData2 > pPathSettings->iMaxPath)
 		return FALSE;
 	// K-Mod end
 
@@ -1894,7 +1894,7 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 		return bResult;
 	}
 
-	bResult = pathValidInternal(parent, node, data, pSelectionGroup, finder);
+	bResult = pathValidInternal(parent, node, data, pPathSettings, finder);
 
 	pSelectionGroup->CachePathValidityResult( pFromPlot, bResult );
 
@@ -1904,18 +1904,13 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 
 int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)
 {
-	// K-Mod. I've moved the bulk of this function, so that I can have a new function that doesn't need FAStar* finder.
-	return pathAdd_bulk(parent, node, data, pointer, gDLL->getFAStarIFace()->GetInfo(finder));
-}
-
-int pathAdd_bulk(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, int flags)
-{
 	PROFILE_FUNC();
 
 	//CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathData* pPathData = (CvPathData*)pointer;
-	CvSelectionGroup* pSelectionGroup = pPathData->pGroup;
+	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
+	CvSelectionGroup* pSelectionGroup = pPathSettings->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
 	// K-Mod end
 	FAssert(pSelectionGroup->getNumUnits() > 0);
 
@@ -1924,8 +1919,7 @@ int pathAdd_bulk(FAStarNode* parent, FAStarNode* node, int data, const void* poi
 
 	if (data == ASNC_INITIALADD)
 	{
-		//bool bMaxMoves = (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_MAX_MOVES);
-		bool bMaxMoves = flags & MOVE_MAX_MOVES; // K-Mod
+		bool bMaxMoves = (iFlags & MOVE_MAX_MOVES);
 		if (bMaxMoves)
 		{
 			iMoves = 0;

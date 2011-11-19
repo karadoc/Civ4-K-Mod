@@ -2111,8 +2111,8 @@ void CvGame::startFlyoutMenu(const CvPlot* pPlot, std::vector<CvFlyoutMenuData>&
 	{
 		//gDLL->getFAStarIFace()->SetData(&GC.getInterfacePathFinder(), gDLL->getInterfaceIFace()->getSelectionList());
 		// K-Mod
-		CvPathData path_data(gDLL->getInterfaceIFace()->getSelectionList());
-		gDLL->getFAStarIFace()->SetData(&GC.getInterfacePathFinder(), &path_data);
+		CvPathSettings path_settings(gDLL->getInterfaceIFace()->getSelectionList(), MOVE_DECLARE_WAR);
+		gDLL->getFAStarIFace()->SetData(&GC.getInterfacePathFinder(), &path_settings);
 		// K-Mod end
 		if ((pHeadSelectedUnit->getDomainType() == DOMAIN_AIR) || gDLL->getFAStarIFace()->GeneratePath(&GC.getInterfacePathFinder(), pHeadSelectedUnit->getX(), pHeadSelectedUnit->getY(), pPlot->getX(), pPlot->getY(), false, MOVE_DECLARE_WAR, true))
 		{

@@ -7,6 +7,7 @@
 
 //#include "CvStructs.h"
 #include "LinkedList.h"
+#include "KmodPathFinder.h"
 
 class CvPlot;
 class CvArea;
@@ -14,7 +15,6 @@ class FAStarNode;
 
 class CvSelectionGroup
 {
-
 public:
 
 	CvSelectionGroup();
@@ -293,6 +293,7 @@ public:
 	//	single threaded nature of the application and the fact that cache validity is only
 	//	required across a single path generation call, which cannot interleave
 	static const CvSelectionGroup* lastPathGeneratedFor; // K-Mod
+	static KmodPathFinder path_finder; // K-Mod! I'd rather this not be static, but I can't do that here.
 	static int m_cachedPathValidityFromPlotX;
 	static int m_cachedPathValidityFromPlotY;
 	static bool m_cachedPathValidityResult;
