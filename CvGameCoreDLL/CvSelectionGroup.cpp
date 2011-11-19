@@ -2949,7 +2949,7 @@ bool CvSelectionGroup::isHasPathToAreaPlayerCity( PlayerTypes ePlayer, int iFlag
 	{
 		if( pLoopCity->area() == area() )
 		{
-			if( generatePath(plot(), pLoopCity->plot(), iFlags, true, &iPathTurns) )
+			if( generatePath(plot(), pLoopCity->plot(), iFlags, true, &iPathTurns, iMaxPathTurns) )
 			{
 				if( (iMaxPathTurns < 0) || (iPathTurns <= iMaxPathTurns) )
 				{
@@ -4434,7 +4434,7 @@ CvPlot* CvSelectionGroup::getPathEndTurnPlot() const
 }
 
 
-bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToPlot, int iFlags, bool bReuse, int* piPathTurns) const
+bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToPlot, int iFlags, bool bReuse, int* piPathTurns, int iMaxPath) const
 {
 	//	Path generation reuse is only ok for a given stack, not between stacks
 	//	so we reset whether to allow path reuse globally for each stack
@@ -4455,7 +4455,13 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 /* Afforess	                     END                                                            */
 /************************************************************************************************/
 
-	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), this);
+	//gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), this);
+	// K-Mod. the pathfinder now uses CvPathData* instead of just CvSelectionGroup*.
+	// I'm really sorry about the const_cast. I can't fix the const-correctness of all the relevant functions,
+	// because some of them are dllexports. The original code essentially does the same thing anyway, with void* casts.
+	CvPathData path_data(const_cast<CvSelectionGroup*>(this), iMaxPath);
+	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), &path_data);
+	// K-Mod end
 
 	//	KOSHLING MOD - the path finder in the core engine is somewhat inefficient and calls pathValid() multiple times for single
 	//	plots, so we can cache the results.  Reset the cache prior to each path generation
@@ -4488,6 +4494,7 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 			if (pNode != NULL)
 			{
 				*piPathTurns = pNode->m_iData2;
+				FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2); // K-Mod
 			}
 		}
 	}

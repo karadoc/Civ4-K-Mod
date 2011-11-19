@@ -1353,7 +1353,11 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 	pToPlot = GC.getMapINLINE().plotSorenINLINE(iToX, iToY);
 	FAssert(pToPlot != NULL);
 
-	pSelectionGroup = ((CvSelectionGroup *)pointer);
+	//pSelectionGroup = ((CvSelectionGroup *)pointer);
+	// K-Mod
+	CvPathData* pPathData = (CvPathData*)pointer;
+	pSelectionGroup = pPathData->pGroup;
+	// K-Mod end
 
 	if (pSelectionGroup->atPlot(pToPlot))
 	{
@@ -1480,7 +1484,12 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	FAssert(pFromPlot != NULL);
 	FAssert(pToPlot != NULL);
 
-	CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
+	//CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
+	// K-Mod
+	CvPathData* pPathData = (CvPathData*)pointer;
+	CvSelectionGroup* pSelectionGroup = pPathData->pGroup;
+	// K-Mod end
+
 
 	int iWorstCost = 0;
 	int iWorstMovesLeft = MAX_INT;
@@ -1851,7 +1860,13 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 	pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
 	FAssert(pToPlot != NULL);
 
-	pSelectionGroup = ((CvSelectionGroup *)pointer);
+	//pSelectionGroup = ((CvSelectionGroup *)pointer);
+	// K-Mod
+	CvPathData* pPathData = (CvPathData*)pointer;
+	pSelectionGroup = pPathData->pGroup;
+	if (pPathData->iMaxPath > 0 && parent->m_iData2 > pPathData->iMaxPath)
+		return FALSE;
+	// K-Mod end
 
 	// XXX might want to take this out...
 	if (pSelectionGroup->getDomainType() == DOMAIN_SEA)
@@ -1889,9 +1904,19 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 
 int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)
 {
+	// K-Mod. I've moved the bulk of this function, so that I can have a new function that doesn't need FAStar* finder.
+	return pathAdd_bulk(parent, node, data, pointer, gDLL->getFAStarIFace()->GetInfo(finder));
+}
+
+int pathAdd_bulk(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, int flags)
+{
 	PROFILE_FUNC();
 
-	CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
+	//CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
+	// K-Mod
+	CvPathData* pPathData = (CvPathData*)pointer;
+	CvSelectionGroup* pSelectionGroup = pPathData->pGroup;
+	// K-Mod end
 	FAssert(pSelectionGroup->getNumUnits() > 0);
 
 	int iTurns = 1;
@@ -1899,7 +1924,8 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 
 	if (data == ASNC_INITIALADD)
 	{
-		bool bMaxMoves = (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_MAX_MOVES);
+		//bool bMaxMoves = (gDLL->getFAStarIFace()->GetInfo(finder) & MOVE_MAX_MOVES);
+		bool bMaxMoves = flags & MOVE_MAX_MOVES; // K-Mod
 		if (bMaxMoves)
 		{
 			iMoves = 0;

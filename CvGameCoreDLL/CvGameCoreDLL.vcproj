@@ -492,6 +492,10 @@
 				RelativePath=".\FDialogTemplate.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\KmodPathFinder.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -888,6 +892,10 @@
 			</File>
 			<File
 				RelativePath=".\interfaceDirtyBits.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\KmodPathFinder.h"
 				>
 			</File>
 			<File

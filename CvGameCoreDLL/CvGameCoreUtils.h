@@ -326,6 +326,19 @@ bool PUF_isFiniteRangeAndNotJustProduced(const CvUnit* pUnit, int iData1, int iD
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+// K-Mod
+// I want some additional data for the pathfinder, so rather than using CvSelectionGroup* as the miscellaneous void* data,
+// I'm going to use the following struct:
+struct CvPathData
+{
+	CvPathData(CvSelectionGroup* pGroup, int iMaxPath = -1) : pGroup(pGroup), iMaxPath(iMaxPath) { }
+
+	CvSelectionGroup* pGroup;
+	int iMaxPath;
+	// I may choose to add more data in the future.
+};
+// Note. this data cannot be added directly to CvSelectionGroup, because that causes the game to crash.
+// K-Mod end
 
 // FAStarFunc...
 int potentialIrrigation(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder);
@@ -336,6 +349,7 @@ int pathHeuristic(int iFromX, int iFromY, int iToX, int iToY);
 int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder);
 int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder);
 int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder);
+int pathAdd_bulk(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, int flags); // K-Mod
 int stepDestValid(int iToX, int iToY, const void* pointer, FAStar* finder);
 int stepHeuristic(int iFromX, int iFromY, int iToX, int iToY);
 int stepValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder);

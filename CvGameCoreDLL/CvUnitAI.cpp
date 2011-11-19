@@ -1494,7 +1494,7 @@ void CvUnitAI::AI_settleMove()
 				{
 					int iPathTurns = MAX_INT;
 
-					generatePath(pLoopSelectionGroup->plot(), 0, true, &iPathTurns);
+					generatePath(pLoopSelectionGroup->plot(), 0, true, &iPathTurns, 2);
 					if (iPathTurns <= 2)
 					{
 						CvPlot* pEndTurnPlot = getPathEndTurnPlot();
@@ -10695,7 +10695,7 @@ bool CvUnitAI::AI_shadow(UnitAITypes eUnitAI, int iMax, int iMaxRatio, bool bWit
 									{
 										if (!(pLoopUnit->plot()->isVisibleEnemyUnit(this)))
 										{
-											if (generatePath(pLoopUnit->plot(), 0, true, &iPathTurns))
+											if (generatePath(pLoopUnit->plot(), 0, true, &iPathTurns, iMaxPath))
 											{
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      12/08/08                                jdog5000      */
@@ -10834,7 +10834,7 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 							}
 
 							int iPathTurns;
-							if (generatePath(pPlot, 0, true, &iPathTurns))
+							if (generatePath(pPlot, 0, true, &iPathTurns, iMaxPath))
 							{
 								if (iMaxPath < 0 || iPathTurns <= iMaxPath)
 								{
@@ -11018,7 +11018,7 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 														CvPlot* pUnitTargetPlot = pLoopUnit->getGroup()->AI_getMissionAIPlot();
 														if ((pUnitTargetPlot == NULL) || (pUnitTargetPlot->getTeam() == getTeam()) || (!pUnitTargetPlot->isOwned() || !isPotentialEnemy(pUnitTargetPlot->getTeam(), pUnitTargetPlot)))
 														{
-															if (generatePath(pLoopUnit->plot(), iFlags, true, &iPathTurns))
+															if (generatePath(pLoopUnit->plot(), iFlags, true, &iPathTurns, iMaxPath))
 															{
 																if (iPathTurns <= iMaxPath || (iMaxPath == 0 && plot() == pLoopUnit->plot()))
 																{
@@ -11081,7 +11081,7 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 										{
 											if( pAdjacentPlot->isWater() )
 											{
-												if( pBestUnit->generatePath(pAdjacentPlot, 0, true, &iPathTurns) )
+												if( pBestUnit->generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxTransportPath) )
 												{
 													if (pBestUnit->getPathLastNode()->m_iData1 == 0)
 													{
@@ -11253,7 +11253,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 						{
 							int iPathTurns;
 							//if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
-							if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns)) // K-Mod
+							if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns, 10)) // K-Mod
 							{
 								if (iPathTurns <= 10)
 								{
@@ -11480,7 +11480,7 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 					{
 						if ((GC.getGame().getGameTurn() - pLoopCity->getGameTurnAcquired() < 10) || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GUARD_CITY, getGroup()) < 2)
 						{
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns, iMaxPath))
 							{
 								if (iPathTurns <= iMaxPath)
 								{
@@ -14270,7 +14270,7 @@ bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
 							if ((iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold)) && (iValue*50 > iBestValue))
 							{
 								int iPathTurns;
-								if( generatePath(pLoopPlot, 0, true, &iPathTurns) )
+								if( generatePath(pLoopPlot, 0, true, &iPathTurns, iMaxPathTurns) )
 								{
 									// BBAI TODO: Other units targeting this already (if path turns > 1 or 0)?
 									if( iPathTurns <= iMaxPathTurns )
@@ -14423,7 +14423,7 @@ bool CvUnitAI::AI_defend()
 					{
 						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 						{
-							if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, &iPathTurns))
+							if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, &iPathTurns, 1))
 							{
 								if (iPathTurns <= 1)
 								{
@@ -14504,7 +14504,7 @@ bool CvUnitAI::AI_safety()
 					{
 						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 						{
-							if (generatePath(pLoopPlot, ((iPass > 0) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns))
+							if (generatePath(pLoopPlot, ((iPass > 0) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, 1))
 							{
 								if (iPathTurns <= 1)
 								{
@@ -14640,7 +14640,7 @@ bool CvUnitAI::AI_hide()
 					{
 						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 						{
-							if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+							if (generatePath(pLoopPlot, 0, true, &iPathTurns, 1))
 							{
 								if (iPathTurns <= 1)
 								{
@@ -14758,7 +14758,7 @@ bool CvUnitAI::AI_goody(int iRange)
 					{
 						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 						{
-							if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, &iPathTurns))
+							if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, &iPathTurns, iRange))
 							{
 								if (iPathTurns <= iRange)
 								{
@@ -14975,7 +14975,7 @@ bool CvUnitAI::AI_exploreRange(int iRange)
 							{
 								PROFILE("AI_exploreRange 4");
 
-								if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
+								if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns, iRange))
 								{
 									if (iPathTurns <= iRange)
 									{
@@ -15115,7 +15115,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 					{
 						if (AI_potentialEnemy(GET_PLAYER((PlayerTypes)iI).getTeam(), pLoopCity->plot()))
 						{
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
+							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns, iMaxPathTurns))
 							{
 								if( iPathTurns <= iMaxPathTurns )
 								{
@@ -15308,7 +15308,7 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 					{
 						if (!(pAdjacentPlot->isVisibleEnemyUnit(this))) // K-Mod TODO: consider fighting for the best plot.
 						{
-							if (generatePath(pAdjacentPlot, iFlags, true, &iPathTurns))
+							if (generatePath(pAdjacentPlot, iFlags, true, &iPathTurns, iMaxPathTurns))
 							{
 								if( iPathTurns <= iMaxPathTurns )
 								{
@@ -15355,7 +15355,7 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 		{
 			pBestPlot =  pTargetCity->plot();
 			// K-mod. As far as I know, nothing actually uses this flag here.. but that doesn't mean we should let the code be wrong.
-			if (!generatePath(pBestPlot, iFlags, true, &iPathTurns) || iPathTurns > iMaxPathTurns)
+			if (!generatePath(pBestPlot, iFlags, true, &iPathTurns, iMaxPathTurns) || iPathTurns > iMaxPathTurns)
 				return false;
 			pEndTurnPlot = getPathEndTurnPlot();
 			// K-mod end
@@ -15546,7 +15546,7 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
                         {
                             if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_PILLAGE, getGroup()) == 0)
                             {
-                                if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+                                if (generatePath(pLoopPlot, 0, true, &iPathTurns, iMaxPathTurns))
                                 {
                                     if (getPathLastNode()->m_iData1 == 0)
                                     {
@@ -15711,7 +15711,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 					{
 						if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 						{
-							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
+							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && (iPathTurns <= iRange))))
 							{
 								iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
 
@@ -15808,7 +15808,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iMinStack, bool 
 							if (pLoopPlot->getNumVisibleEnemyDefenders(this) >= iMinStack)
 							{
 								//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
-								if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true) && (bFollow ? true : generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))) // K-Mod
+								if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true) && (bFollow ? true : generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && (iPathTurns <= iRange))) // K-Mod
 								{
 	 
 									iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
@@ -15962,7 +15962,7 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 /*                                                                                              */
 /* Bugfix                                                                                       */
 /************************************************************************************************/
-							if (!atPlot(pLoopPlot) && (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange)))
+							if (!atPlot(pLoopPlot) && (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && (iPathTurns <= iRange)))
 							{
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -16040,7 +16040,7 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 			{
 				int iEnemies = pLoopPlot->getNumVisibleEnemyDefenders(this);
 				int iPathTurns;
-				if (iEnemies > 0 && generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= 1)
+				if (iEnemies > 0 && generatePath(pLoopPlot, 0, true, &iPathTurns, 1) && iPathTurns <= 1)
 				{
 					bool bValid = false;
 					int iValue = getGroup()->AI_attackOdds(pLoopPlot, false);
@@ -16508,7 +16508,7 @@ bool CvUnitAI::AI_seaBombardRange(int iMaxRange)
 				if (pBombardCity != NULL && isEnemy(pBombardCity->getTeam(), pLoopPlot) && pBombardCity->getDefenseDamage() < GC.getMAX_CITY_DEFENSE_DAMAGE())
 				{
 					int iPathTurns;
-					if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+					if (generatePath(pLoopPlot, 0, true, &iPathTurns, 1 + iMaxRange/maxMoves()))
 					{
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						6/24/08				jdog5000	*/
@@ -16576,7 +16576,7 @@ bool CvUnitAI::AI_seaBombardRange(int iMaxRange)
 						if (pBombardCity != NULL && isEnemy(pBombardCity->getTeam(), pLoopPlot) && pBombardCity->getTotalDefense(false) > 0)
 						{
 							int iPathTurns;
-							if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+							if (generatePath(pLoopPlot, 0, true, &iPathTurns, 1 + iMaxRange/maxMoves()))
 							{	
 								// Loop construction doesn't guarantee we can get there anytime soon, could be on other side of narrow continent
 								if( iPathTurns <= 1 + iMaxRange/maxMoves() )
@@ -16867,7 +16867,7 @@ bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold)
                                 {
                                     if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_PILLAGE, getGroup()) == 0)
                                     {
-                                        if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+                                        if (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange))
                                         {
                                             if (getPathLastNode()->m_iData1 == 0)
                                             {
@@ -17523,7 +17523,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 								if( iOurFightersHere > 2 )
 								{
 									iPathTurns;
-									if (generatePath(pLoopPlot, MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
+									if (generatePath(pLoopPlot, MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns, 2))
 									{
 										if( iPathTurns <= 2 )
 										{
@@ -20409,7 +20409,7 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), ((iPass > 1) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns))
+							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), ((iPass > 1) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, (iPass == 2) ? 1 : iMaxPath))
 							{
 								if (iPathTurns <= ((iPass == 2) ? 1 : iMaxPath))
 								{
@@ -22783,7 +22783,7 @@ bool CvUnitAI::AI_reconSpy(int iRange)
 				if (iValue > 0)
 				{
 					int iPathTurns;
-					if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+					if (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange))
 					{
 						if (iPathTurns <= iRange)
 						{
@@ -23066,7 +23066,7 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 					if (AI_plotValid(pLoopPlot))
 					{
 						int iPathTurns;
-						if (generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= iMaxPath)
+						if (generatePath(pLoopPlot, 0, true, &iPathTurns, iMaxPath) && iPathTurns <= iMaxPath)
 						{
 							int iValue = AI_getEspionageTargetValue(pLoopPlot);
 
@@ -23142,7 +23142,7 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 					if (GET_TEAM(getTeam()).isAtWar(pLoopPlot->getTeam()))
 					{
 						int iPathTurns;
-						if (generatePath(pLoopPlot, 0, true, &iPathTurns) && iPathTurns <= iRange)
+						if (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && iPathTurns <= iRange)
 						{
 							int iValue = AI_getEspionageTargetValue(pLoopPlot);
 							//iValue *= GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN ? 3: 1;
@@ -24134,7 +24134,7 @@ bool CvUnitAI::AI_moveIntoCity(int iRange)
 				{
 					if (pLoopPlot->isCity() || (pLoopPlot->isCity(true)))
 					{
-                        if (canMoveInto(pLoopPlot, false) && (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= 1)))
+                        if (canMoveInto(pLoopPlot, false) && (generatePath(pLoopPlot, 0, true, &iPathTurns, 1) && (iPathTurns <= 1)))
                         {
                             iValue = 1;
                             if (pLoopPlot->getPlotCity() != NULL)
