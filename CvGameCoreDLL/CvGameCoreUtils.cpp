@@ -1343,7 +1343,7 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 
 	CLLNode<IDInfo>* pUnitNode1;
 	CLLNode<IDInfo>* pUnitNode2;
-	CvSelectionGroup* pSelectionGroup;
+	//CvSelectionGroup* pSelectionGroup;
 	CvUnit* pLoopUnit1;
 	CvUnit* pLoopUnit2;
 	CvPlot* pToPlot;
@@ -1355,9 +1355,8 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 
 	//pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
-	pSelectionGroup = pPathSettings->pGroup;
-	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
+	CvSelectionGroup* pSelectionGroup = finder ? (CvSelectionGroup*)pointer : ((CvPathSettings*)pointer)->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : ((CvPathSettings*)pointer)->iFlags;
 	// K-Mod end
 
 	if (pSelectionGroup->atPlot(pToPlot))
@@ -1487,8 +1486,8 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 	//CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
-	CvSelectionGroup* pSelectionGroup = pPathSettings->pGroup;
+	CvSelectionGroup* pSelectionGroup = finder ? (CvSelectionGroup*)pointer : ((CvPathSettings*)pointer)->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : ((CvPathSettings*)pointer)->iFlags;
 	// K-Mod end
 
 
@@ -1496,7 +1495,6 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	int iWorstMovesLeft = MAX_INT;
 	int iWorstMaxMoves = MAX_INT;
 
-	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
 	TeamTypes eTeam = pSelectionGroup->getHeadTeam();
 
 	//CvDLLFAStarIFaceBase* pAStar = gDLL->getFAStarIFace();
@@ -1722,12 +1720,36 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	return iWorstCost;
 }
 
-static int pathValidInternal(FAStarNode* parent, FAStarNode* node, int data, CvPathSettings* pPathSettings, FAStar* finder)
+int pathValid_join(FAStarNode* parent, FAStarNode* node, CvSelectionGroup* pSelectionGroup, int iFlags)
+{
+	CvPlot* pFromPlot = GC.getMapINLINE().plotSorenINLINE(parent->m_iX, parent->m_iY);
+	CvPlot* pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
+
+	FAssert(pFromPlot != NULL);
+	FAssert(pToPlot != NULL);
+
+	if (pSelectionGroup->getDomainType() == DOMAIN_SEA)
+	{
+		PROFILE("pathValid domain sea");
+
+		if (pFromPlot->isWater() && pToPlot->isWater())
+		{
+			if (!(GC.getMapINLINE().plotINLINE(pFromPlot->getX_INLINE(), pToPlot->getY_INLINE())->isWater()) && !(GC.getMapINLINE().plotINLINE(pToPlot->getX_INLINE(), pFromPlot->getY_INLINE())->isWater()))
+			{
+				if( !(pSelectionGroup->canMoveAllTerrain()) )
+				{
+					return FALSE;
+				}
+			}
+		}
+	}
+	return TRUE;
+}
+
+int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int iFlags)
 {
 	CvPlot* pFromPlot = GC.getMapINLINE().plotSorenINLINE(parent->m_iX, parent->m_iY);
 	//CvPlot* pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
-	CvSelectionGroup* pSelectionGroup = pPathSettings->pGroup;
-	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
 
 	if (pSelectionGroup->atPlot(pFromPlot))
 	{
@@ -1736,7 +1758,7 @@ static int pathValidInternal(FAStarNode* parent, FAStarNode* node, int data, CvP
 
 	if (iFlags & MOVE_SAFE_TERRITORY)
 	{
-		PROFILE("pathValid move save");
+		PROFILE("pathValid move safe");
 
 		if (pFromPlot->isOwned())
 		{
@@ -1846,7 +1868,7 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 {
 	PROFILE_FUNC();
 
-	CvSelectionGroup* pSelectionGroup;
+	//CvSelectionGroup* pSelectionGroup;
 	CvPlot* pFromPlot;
 	CvPlot* pToPlot;
 
@@ -1862,28 +1884,12 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 
 	//pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
-	pSelectionGroup = pPathSettings->pGroup;
-	if (pPathSettings->iMaxPath > 0 && parent->m_iData2 > pPathSettings->iMaxPath)
-		return FALSE;
+	CvSelectionGroup* pSelectionGroup = finder ? (CvSelectionGroup*)pointer : ((CvPathSettings*)pointer)->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : ((CvPathSettings*)pointer)->iFlags;
 	// K-Mod end
 
-	// XXX might want to take this out...
-	if (pSelectionGroup->getDomainType() == DOMAIN_SEA)
-	{
-		PROFILE("pathValid domain sea");
-
-		if (pFromPlot->isWater() && pToPlot->isWater())
-		{
-			if (!(GC.getMapINLINE().plotINLINE(pFromPlot->getX_INLINE(), pToPlot->getY_INLINE())->isWater()) && !(GC.getMapINLINE().plotINLINE(pToPlot->getX_INLINE(), pFromPlot->getY_INLINE())->isWater()))
-			{
-				if( !(pSelectionGroup->canMoveAllTerrain()) )
-				{
-					return FALSE;
-				}
-			}
-		}
-	}
+	if (!pathValid_join(parent, node, pSelectionGroup, iFlags))
+		return FALSE;
 
 	//	KOSHLING MOD - none of the rest of the calculation depends on pToPlot, 
 	//	so we can cache the results from one request for each parent/pFromPlot.
@@ -1894,7 +1900,8 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 		return bResult;
 	}
 
-	bResult = pathValidInternal(parent, node, data, pPathSettings, finder);
+	//bResult = pathValidInternal(parent, node, data, pPathSettings, finder);
+	bResult = pathValid_source(parent, pSelectionGroup, iFlags);
 
 	pSelectionGroup->CachePathValidityResult( pFromPlot, bResult );
 
@@ -1908,9 +1915,8 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 
 	//CvSelectionGroup* pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
-	CvPathSettings* pPathSettings = (CvPathSettings*)pointer;
-	CvSelectionGroup* pSelectionGroup = pPathSettings->pGroup;
-	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : pPathSettings->iFlags;
+	CvSelectionGroup* pSelectionGroup = finder ? (CvSelectionGroup*)pointer : ((CvPathSettings*)pointer)->pGroup;
+	int iFlags = finder ? gDLL->getFAStarIFace()->GetInfo(finder) : ((CvPathSettings*)pointer)->iFlags;
 	// K-Mod end
 	FAssert(pSelectionGroup->getNumUnits() > 0);
 

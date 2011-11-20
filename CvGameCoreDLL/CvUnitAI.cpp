@@ -14490,7 +14490,7 @@ bool CvUnitAI::AI_safety()
 	iBestValue = 0;
 	pBestPlot = NULL;
 
-	for (iPass = 0; iPass < 2; iPass++)
+	for (iPass = 0; iPass < 2; iPass++) // K-Mod todo. remove this nonsense
 	{
 		for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 		{

@@ -2109,11 +2109,7 @@ void CvGame::startFlyoutMenu(const CvPlot* pPlot, std::vector<CvFlyoutMenuData>&
 	CvUnit* pHeadSelectedUnit = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
 	if (pHeadSelectedUnit != NULL && !pHeadSelectedUnit->atPlot(pPlot))
 	{
-		//gDLL->getFAStarIFace()->SetData(&GC.getInterfacePathFinder(), gDLL->getInterfaceIFace()->getSelectionList());
-		// K-Mod
-		CvPathSettings path_settings(gDLL->getInterfaceIFace()->getSelectionList(), MOVE_DECLARE_WAR);
-		gDLL->getFAStarIFace()->SetData(&GC.getInterfacePathFinder(), &path_settings);
-		// K-Mod end
+		gDLL->getFAStarIFace()->SetData(&GC.getInterfacePathFinder(), gDLL->getInterfaceIFace()->getSelectionList());
 		if ((pHeadSelectedUnit->getDomainType() == DOMAIN_AIR) || gDLL->getFAStarIFace()->GeneratePath(&GC.getInterfacePathFinder(), pHeadSelectedUnit->getX(), pHeadSelectedUnit->getY(), pPlot->getX(), pPlot->getY(), false, MOVE_DECLARE_WAR, true))
 		{
 			if (pHeadSelectedUnit->getDomainType() == DOMAIN_AIR)

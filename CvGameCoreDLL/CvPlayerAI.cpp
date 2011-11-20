@@ -12266,6 +12266,8 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 /************************************************************************************************/
 
 // K-Mod. I've changed this function to calculation the attack power of our groups, rather than just the number of units.
+// NOTE: This function currently loops over a bunch of groups, and uses generate path for each of them.
+// This will be _slow_, because the path data is cleared for each new group.
 
 //int CvPlayerAI::AI_cityTargetUnitsByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
 int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
@@ -12289,7 +12291,7 @@ int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSk
 
 				if (iDistance <= 1)
 				{
-					if( pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pMissionPlot, 0, true, &iPathTurns) )
+					if( pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pMissionPlot, 0, true, &iPathTurns, iMaxPathTurns) )
 					{
 						if( !(pLoopSelectionGroup->canAllMove()) )
 						{

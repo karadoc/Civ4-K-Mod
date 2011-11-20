@@ -4460,11 +4460,7 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 /* Afforess	                     END                                                            */
 /************************************************************************************************/
 
-	//gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), this);
-	// K-Mod. the pathfinder now uses CvPathSettings* instead of just CvSelectionGroup*.
-	CvPathSettings path_settings(this, iFlags, -1); // change -1 to iMaxPath to enable
-	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), &path_settings);
-	// K-Mod end
+	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), this);
 
 	//	KOSHLING MOD - the path finder in the core engine is somewhat inefficient and calls pathValid() multiple times for single
 	//	plots, so we can cache the results.  Reset the cache prior to each path generation
@@ -4480,9 +4476,10 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 	}
 
 #ifdef KMOD_PATH_FINDER
-	path_finder.SetSettings(path_settings);
+	path_finder.SetSettings(this, iFlags, iMaxPath);
 	bSuccess = path_finder.GeneratePath(pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
 #else
+	iMaxPath = -1; // max path doesn't work with the standard pathfinder.
 	bSuccess = gDLL->getFAStarIFace()->GeneratePath(&GC.getPathFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), false, iFlags, bReuse);
 #endif
 
@@ -4502,7 +4499,7 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 			if (pNode != NULL)
 			{
 				*piPathTurns = pNode->m_iData2;
-				//FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2); // K-Mod
+				FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2); // K-Mod
 			}
 		}
 	}
