@@ -22,58 +22,50 @@ bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 	if (!pathDestValid(x2, y2, &settings, 0))
 		return false;
 
-	bool bRecalcHeuristics = false;
 	if (x1 != start_x || y1 != start_y)
 	{
-		// it may be possible to salvage some of the old data.
-		// if the moves recorded on the node match the group,
+		// Note: it may be possible to salvage some of the old data to get more speed.
+		// eg. If the moves recorded on the node match the group,
 		// just delete everything that isn't a direct descendant of the new start.
-		// and then subtract the start cost & moves off all the remaining nodes
+		// and then subtract the start cost & moves off all the remaining nodes.
 		Reset(); // but this is easier.
 	}
+	bool bRecalcHeuristics = false;
+
 	if (dest_x != x2 || dest_y != y2)
 		bRecalcHeuristics = true;
-
-	// note: even if we have the same starting position, the data might be invalid if our group's moves have changed.
-	// .. I might fix that problem later.
 
 	start_x = x1;
 	start_y = y1;
 	dest_x = x2;
 	dest_y = y2;
 
+	int iPlotNum = GC.getMapINLINE().plotNumINLINE(x1, y1);
+	FAssert(iPlotNum >= 0 && iPlotNum < GC.getMapINLINE().numPlotsINLINE());
+
+	NodeMap_t::iterator it = node_map.find(iPlotNum);
+	if (it != node_map.end())
 	{
-		int iPlotNum = GC.getMapINLINE().plotNumINLINE(x1, y1);
-		FAssert(iPlotNum >= 0 && iPlotNum < GC.getMapINLINE().numPlotsINLINE());
-		NodeMap_t::iterator it = node_map.find(iPlotNum);
-		if (it == node_map.end())
+		int iMoves = (settings.iFlags & MOVE_MAX_MOVES) ? settings.pGroup->maxMoves() : settings.pGroup->movesLeft();
+		if (iMoves != it->second->m_iData1)
 		{
-			// add initial node.
-			boost::shared_ptr<FAStarNode> start_node(new FAStarNode);
-			start_node->m_iX = x1;
-			start_node->m_iY = y1;
-			pathAdd(0, start_node.get(), ASNC_INITIALADD, &settings, 0);
-			start_node->m_iKnownCost = 0;
-
-			open_list.push_back(start_node);
-			node_map[iPlotNum] = start_node;
-
-			bRecalcHeuristics = true;
+			Reset();
+			it = node_map.end();
 		}
+		// Note: This condition isn't actually enough to catch all signifiant changes.
+		// We really need to check max moves /and/ moves left /and/ base moves.
+		// but I don't feel like doing all that at the moment.
 	}
 
-	if (bRecalcHeuristics)
+	if (node_map.empty())
 	{
-		// recalculate heuristic cost for all open nodes.
-		for (OpenList_t::iterator i = open_list.begin(); i != open_list.end(); ++i)
-		{
-			int h = pathHeuristic((*i)->m_iX, (*i)->m_iY, dest_x, dest_y);
-			(*i)->m_iHeuristicCost = h;
-			(*i)->m_iTotalCost = h + (*i)->m_iKnownCost;
-		}
+		FAssert(it == node_map.end());
+		AddStartNode();
+		bRecalcHeuristics = true;
 	}
-
+	//else (not else. maybe start == dest)
 	{
+		// check if the end plot is already mapped.
 		int iEndPlot = GC.getMapINLINE().plotNumINLINE(x2, y2);
 		FAssert(iEndPlot >= 0 && iEndPlot < GC.getMapINLINE().numPlotsINLINE());
 
@@ -82,6 +74,9 @@ bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 		if (end_it != node_map.end())
 			end_node = end_it->second;
 	}
+
+	if (bRecalcHeuristics)
+		RecalculateHeuristics();
 
 	while (ProcessNode())
 	{
@@ -109,6 +104,30 @@ void KmodPathFinder::Reset()
 	open_list.clear();
 	// start & dest don't matter.
 	// settings is set separately.
+}
+
+void KmodPathFinder::AddStartNode()
+{
+	// add initial node.
+	boost::shared_ptr<FAStarNode> start_node(new FAStarNode);
+	start_node->m_iX = start_x;
+	start_node->m_iY = start_y;
+	pathAdd(0, start_node.get(), ASNC_INITIALADD, &settings, 0);
+	start_node->m_iKnownCost = 0;
+
+	node_map[GC.getMapINLINE().plotNumINLINE(start_x, start_y)] = start_node;
+	open_list.push_back(start_node);
+}
+
+void KmodPathFinder::RecalculateHeuristics()
+{
+	// recalculate heuristic cost for all open nodes.
+	for (OpenList_t::iterator i = open_list.begin(); i != open_list.end(); ++i)
+	{
+		int h = pathHeuristic((*i)->m_iX, (*i)->m_iY, dest_x, dest_y);
+		(*i)->m_iHeuristicCost = h;
+		(*i)->m_iTotalCost = h + (*i)->m_iKnownCost;
+	}
 }
 
 bool KmodPathFinder::ProcessNode()
@@ -154,7 +173,6 @@ bool KmodPathFinder::ProcessNode()
 
 		int iPlotNum = GC.getMapINLINE().plotNumINLINE(x, y);
 		FAssert(iPlotNum >= 0 && iPlotNum < GC.getMapINLINE().numPlotsINLINE());
-		bool bDestination = iPlotNum == GC.getMapINLINE().plotNumINLINE(dest_x, dest_y);
 
 		NodeMap_t::iterator it = node_map.find(iPlotNum);
 		bool bNewNode = it == node_map.end();
@@ -178,7 +196,7 @@ bool KmodPathFinder::ProcessNode()
 			}
 			else
 			{
-				// can't get here.
+				// can't get to the plot from here.
 				child_node.reset();
 			}
 		}
@@ -194,7 +212,7 @@ bool KmodPathFinder::ProcessNode()
 		FAssert(child_node->m_iX == x && child_node->m_iY == y);
 		FAssert(node_map[iPlotNum] == child_node);
 
-		if (bDestination)
+		if (iPlotNum == GC.getMapINLINE().plotNumINLINE(dest_x, dest_y))
 			end_node = child_node;
 
 		if (parent_node->m_iKnownCost < child_node->m_iKnownCost)
@@ -230,6 +248,8 @@ bool KmodPathFinder::ProcessNode()
 						}
 					}
 					FAssert(x_parent->m_iNumChildren == temp -1);
+					// recalculate movement points
+					pathAdd(parent_node.get(), child_node.get(), ASNC_PARENTADD_UP, &settings, 0);
 				}
 
 				// add child to the list of the new parent
@@ -257,11 +277,33 @@ void KmodPathFinder::ForwardPropagate(FAStarNode* head, int cost_delta)
 	// change the known cost of all children by cost_delta, recursively
 	for (int i = 0; i < head->m_iNumChildren; i++)
 	{
-		head->m_apChildren[i]->m_iKnownCost += cost_delta;
-		head->m_apChildren[i]->m_iTotalCost += cost_delta;
 		FAssert(head->m_apChildren[i]->m_pParent == head);
+
+		// recalculate movement points.
+		int iOldMoves = head->m_apChildren[i]->m_iData1;
+		int iOldTurns = head->m_apChildren[i]->m_iData2;
+		int iNewDelta = cost_delta;
+		pathAdd(head, head->m_apChildren[i], ASNC_PARENTADD_UP, &settings, 0);
+
+		// if the moves don't match, we may need to recalculate the path cost.
+		//if (iOldMoves != head->m_apChildren[i]->m_iData1)
+		if ((iOldMoves == 0) != (head->m_apChildren[i]->m_iData1 == 0)) // we might save a little bit by doing it like this.
+		{
+			// This is a special case, since pathCost is different at the end of a turn.
+			int iPathCost = pathCost(head, head->m_apChildren[i], 666, &settings, 0);
+			iNewDelta = head->m_iKnownCost + iPathCost - head->m_apChildren[i]->m_iKnownCost;
+			FAssert(iNewDelta <= 0);
+			// Strictly, we should recalculate for any difference in moves at all,
+			// but that would slow things down a bit, and I don't intend to make
+			// pathCost depend the magnitude of remaining moves anyway.
+		}
+
+		head->m_apChildren[i]->m_iKnownCost += iNewDelta;
+		head->m_apChildren[i]->m_iTotalCost += iNewDelta;
+
 		FAssert(head->m_apChildren[i]->m_iKnownCost > head->m_iKnownCost);
 
-		ForwardPropagate(head->m_apChildren[i], cost_delta);
+		if (iNewDelta != 0 || iOldMoves != head->m_apChildren[i]->m_iData1 || iOldTurns != head->m_apChildren[i]->m_iData2)
+			ForwardPropagate(head->m_apChildren[i], iNewDelta);
 	}
 }

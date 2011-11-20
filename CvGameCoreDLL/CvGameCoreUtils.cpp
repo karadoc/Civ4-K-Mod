@@ -1748,6 +1748,7 @@ int pathValid_join(FAStarNode* parent, FAStarNode* node, CvSelectionGroup* pSele
 
 int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int iFlags)
 {
+	PROFILE_FUNC();
 	CvPlot* pFromPlot = GC.getMapINLINE().plotSorenINLINE(parent->m_iX, parent->m_iY);
 	//CvPlot* pToPlot = GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
 
@@ -1926,23 +1927,9 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 	if (data == ASNC_INITIALADD)
 	{
 		bool bMaxMoves = (iFlags & MOVE_MAX_MOVES);
-		if (bMaxMoves)
-		{
-			iMoves = 0;
-		}
-
-		for (CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode(); pUnitNode != NULL; pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
-		{
-			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-			if (bMaxMoves)
-			{
-				iMoves = std::max(iMoves, pLoopUnit->maxMoves());
-			}
-			else
-			{
-				iMoves = std::min(iMoves, pLoopUnit->movesLeft());
-			}
-		}
+		// K-Mod. I've moved the code from here into separate functions.
+		iMoves = bMaxMoves ? pSelectionGroup->maxMoves() : pSelectionGroup->movesLeft();
+		// K-Mod end
 	}
 	else
 	{

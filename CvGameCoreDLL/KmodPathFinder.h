@@ -28,6 +28,8 @@ public:
 	void Reset();
 
 protected:
+	void AddStartNode();
+	void RecalculateHeuristics();
 	bool ProcessNode();
 	void ForwardPropagate(FAStarNode* head, int cost_delta);
 	typedef stdext::hash_map<int, boost::shared_ptr<FAStarNode> > NodeMap_t;

@@ -2490,6 +2490,32 @@ int CvSelectionGroup::baseMoves()
 	return iBestValue;
 }
 
+// K-Mod
+int CvSelectionGroup::maxMoves() const
+{
+	int iMoves = 0;
+
+	for (CLLNode<IDInfo>* pUnitNode = headUnitNode(); pUnitNode != NULL; pUnitNode = nextUnitNode(pUnitNode))
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		iMoves = std::max(iMoves, pLoopUnit->maxMoves());
+	}
+	return iMoves;
+}
+
+int CvSelectionGroup::movesLeft() const
+{
+	int iMoves = INT_MAX;
+
+	for (CLLNode<IDInfo>* pUnitNode = headUnitNode(); pUnitNode != NULL; pUnitNode = nextUnitNode(pUnitNode))
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		iMoves = std::min(iMoves, pLoopUnit->movesLeft());
+	}
+	return iMoves;
+}
+// K-Mod end
+
 
 bool CvSelectionGroup::isWaiting() const
 {
@@ -4476,8 +4502,21 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 	}
 
 #ifdef KMOD_PATH_FINDER
+	/*if (!bReuse)
+		path_finder.Reset();*/
 	path_finder.SetSettings(this, iFlags, iMaxPath);
 	bSuccess = path_finder.GeneratePath(pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
+	/* test.
+	if (bSuccess != gDLL->getFAStarIFace()->GeneratePath(&GC.getPathFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), false, iFlags, bReuse))
+	{
+		pNode = gDLL->getFAStarIFace()->GetLastNode(&GC.getPathFinder());
+		if (bSuccess || iMaxPath < 0 || !pNode || pNode->m_iData2 <= iMaxPath)
+		{
+			//::MessageBoxA(NULL,"pathfind mismatch","CvGameCore",MB_OK);
+			FAssert(false);
+		}
+	}
+	*/
 #else
 	iMaxPath = -1; // max path doesn't work with the standard pathfinder.
 	bSuccess = gDLL->getFAStarIFace()->GeneratePath(&GC.getPathFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), false, iFlags, bReuse);
@@ -4539,7 +4578,12 @@ void CvSelectionGroup::CachePathValidityResult(CvPlot* pFromPlot, bool cachedRes
 void CvSelectionGroup::resetPath() const
 {
 	lastPathGeneratedFor = NULL; // K-Mod
+#ifdef KMOD_PATH_FINDER
+	//path_finder.Reset();
+	//gDLL->getFAStarIFace()->ForceReset(&GC.getPathFinder()); // for side-by-side testing.
+#else
 	gDLL->getFAStarIFace()->ForceReset(&GC.getPathFinder());
+#endif
 }
 
 

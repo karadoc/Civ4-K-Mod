@@ -56,6 +56,8 @@ public:
 	DllExport bool isBusy();
 	bool isCargoBusy();
 	int baseMoves();																																										// Exposed to Python 
+	int maxMoves() const; // K-Mod
+	int movesLeft() const; // K-Mod
 	bool isWaiting() const;																																							// Exposed to Python
 	bool isFull();																																											// Exposed to Python
 	bool hasCargo();																																										// Exposed to Python
