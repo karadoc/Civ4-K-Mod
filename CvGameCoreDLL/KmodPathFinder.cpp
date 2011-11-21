@@ -94,6 +94,22 @@ void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 	if (settings.pGroup != new_settings.pGroup || settings.iFlags != new_settings.iFlags)
 	{
 		Reset();
+		// calculate the new minimum step cost. TODO. (the values here are correct only for the current xml settings.)
+		if (!new_settings.pGroup)
+		{
+			step_cost = 1;
+		}
+		else
+		{
+			if (new_settings.pGroup->getDomainType() == DOMAIN_SEA)
+			{
+				step_cost = GC.getMOVE_DENOMINATOR(); // maybe divide by 2, just in case someone adds a double-moves promotion?
+			}
+			else
+			{
+				step_cost = std::min(20, new_settings.pGroup->baseMoves() * 6); // railroad. (should get the 20 and 6 from the xml)
+			}
+		}
 	}
 	settings = new_settings;
 }
@@ -124,7 +140,7 @@ void KmodPathFinder::RecalculateHeuristics()
 	// recalculate heuristic cost for all open nodes.
 	for (OpenList_t::iterator i = open_list.begin(); i != open_list.end(); ++i)
 	{
-		int h = pathHeuristic((*i)->m_iX, (*i)->m_iY, dest_x, dest_y);
+		int h = pathHeuristic_enhanced((*i)->m_iX, (*i)->m_iY, dest_x, dest_y, step_cost);
 		(*i)->m_iHeuristicCost = h;
 		(*i)->m_iTotalCost = h + (*i)->m_iKnownCost;
 	}
@@ -187,7 +203,7 @@ bool KmodPathFinder::ProcessNode()
 			pathAdd(parent_node.get(), child_node.get(), ASNC_NEWADD, &settings, 0);
 
 			child_node->m_iKnownCost = MAX_INT;
-			child_node->m_iHeuristicCost = pathHeuristic(x, y, dest_x, dest_y);
+			child_node->m_iHeuristicCost = pathHeuristic_enhanced(x, y, dest_x, dest_y, step_cost);
 			if (pathValid_join(parent_node.get(), child_node.get(), settings.pGroup , settings.iFlags))
 			{
 				node_map[iPlotNum] = child_node;

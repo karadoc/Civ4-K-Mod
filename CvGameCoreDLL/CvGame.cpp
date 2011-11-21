@@ -5943,6 +5943,8 @@ void CvGame::doTurn()
 
 	doUpdateCacheOnTurn();
 
+	CvSelectionGroup::path_finder.Reset(); // K-Mod. (this is the only manual reset we need. - I hope.)
+
 	updateScore();
 
 	doDeals();

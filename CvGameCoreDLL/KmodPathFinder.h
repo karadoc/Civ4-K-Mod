@@ -45,6 +45,7 @@ protected:
 
 	int dest_x, dest_y;
 	int start_x, start_y;
+	int step_cost;
 	boost::shared_ptr<FAStarNode> end_node;
 	CvPathSettings settings;
 };

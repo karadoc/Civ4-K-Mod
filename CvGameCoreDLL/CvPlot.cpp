@@ -2828,7 +2828,7 @@ int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 	// K-Mod. Why let the AI cheat this?
 	if (!isRevealed(pUnit->getTeam(), false))
 	{
-		return pUnit->maxMoves();
+		return GC.getMOVE_DENOMINATOR();
 	}
 	// K-Mod end
 

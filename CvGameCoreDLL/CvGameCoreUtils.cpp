@@ -1472,6 +1472,12 @@ int pathHeuristic(int iFromX, int iFromY, int iToX, int iToY)
 	return (stepDistance(iFromX, iFromY, iToX, iToY) * PATH_MOVEMENT_WEIGHT);
 }
 
+// K-Mod. We can get a lot more value from our heuristic with just a little bit more information.
+int pathHeuristic_enhanced(int iFromX, int iFromY, int iToX, int iToY, int iStepCost)
+{
+	return stepDistance(iFromX, iFromY, iToX, iToY) * PATH_MOVEMENT_WEIGHT * iStepCost;
+}
+// K-Mod end
 
 // This function has been completely rewriten for K-Mod. (the rewrite includes some bug fixes as well as some new features)
 int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)

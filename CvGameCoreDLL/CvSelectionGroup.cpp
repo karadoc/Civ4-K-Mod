@@ -4579,7 +4579,7 @@ void CvSelectionGroup::resetPath() const
 {
 	lastPathGeneratedFor = NULL; // K-Mod
 #ifdef KMOD_PATH_FINDER
-	//path_finder.Reset();
+	//path_finder.Reset(); // note. the K-Mod finder doesn't need resetting in all the same places. So I'm not using this function.
 	//gDLL->getFAStarIFace()->ForceReset(&GC.getPathFinder()); // for side-by-side testing.
 #else
 	gDLL->getFAStarIFace()->ForceReset(&GC.getPathFinder());
