@@ -55,7 +55,7 @@ public:
 	bool isHuman();																																											// Exposed to Python
 	DllExport bool isBusy();
 	bool isCargoBusy();
-	int baseMoves();																																										// Exposed to Python 
+	int baseMoves() const;																																										// Exposed to Python 
 	int maxMoves() const; // K-Mod
 	int movesLeft() const; // K-Mod
 	bool isWaiting() const;																																							// Exposed to Python

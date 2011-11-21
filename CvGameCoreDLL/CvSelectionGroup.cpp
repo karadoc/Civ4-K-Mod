@@ -2463,7 +2463,7 @@ bool CvSelectionGroup::isCargoBusy()
 }
 
 
-int CvSelectionGroup::baseMoves()
+int CvSelectionGroup::baseMoves() const
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;

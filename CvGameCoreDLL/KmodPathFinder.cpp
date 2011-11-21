@@ -7,6 +7,34 @@
 #include <boost/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 
+CvPathSettings::CvPathSettings(const CvSelectionGroup* pGroup, int iFlags, int iMaxPath, int iHW)
+	: pGroup(const_cast<CvSelectionGroup*>(pGroup)), iFlags(iFlags), iMaxPath(iMaxPath)
+// I'm really sorry about the const_cast. I can't fix the const-correctness of all the relevant functions,
+// because some of them are dllexports. The original code essentially does the same thing anyway, with void* casts.
+{
+	if (iHW >= 0)
+		iHeuristicWeight = iHW;
+	else
+	{
+		// calculate the minimum step cost. TODO. (the values here are correct only for the current xml settings.)
+		if (!pGroup)
+		{
+			iHeuristicWeight = 1;
+		}
+		else
+		{
+			if (pGroup->getDomainType() == DOMAIN_SEA)
+			{
+				iHeuristicWeight = GC.getMOVE_DENOMINATOR(); // maybe divide by 2, just in case someone adds a double-moves promotion?
+			}
+			else
+			{
+				iHeuristicWeight = std::min(20, pGroup->baseMoves() * 6); // railroad. (should get the 20 and 6 from the xml)
+			}
+		}
+	}
+}
+
 bool KmodPathFinder::OpenList_sortPred::operator()(const boost::shared_ptr<FAStarNode> &left, const boost::shared_ptr<FAStarNode> &right)
 {
 	return left->m_iTotalCost < right->m_iTotalCost;
@@ -94,22 +122,6 @@ void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 	if (settings.pGroup != new_settings.pGroup || settings.iFlags != new_settings.iFlags)
 	{
 		Reset();
-		// calculate the new minimum step cost. TODO. (the values here are correct only for the current xml settings.)
-		if (!new_settings.pGroup)
-		{
-			step_cost = 1;
-		}
-		else
-		{
-			if (new_settings.pGroup->getDomainType() == DOMAIN_SEA)
-			{
-				step_cost = GC.getMOVE_DENOMINATOR(); // maybe divide by 2, just in case someone adds a double-moves promotion?
-			}
-			else
-			{
-				step_cost = std::min(20, new_settings.pGroup->baseMoves() * 6); // railroad. (should get the 20 and 6 from the xml)
-			}
-		}
 	}
 	settings = new_settings;
 }
@@ -140,7 +152,7 @@ void KmodPathFinder::RecalculateHeuristics()
 	// recalculate heuristic cost for all open nodes.
 	for (OpenList_t::iterator i = open_list.begin(); i != open_list.end(); ++i)
 	{
-		int h = pathHeuristic_enhanced((*i)->m_iX, (*i)->m_iY, dest_x, dest_y, step_cost);
+		int h = settings.iHeuristicWeight * pathHeuristic((*i)->m_iX, (*i)->m_iY, dest_x, dest_y);
 		(*i)->m_iHeuristicCost = h;
 		(*i)->m_iTotalCost = h + (*i)->m_iKnownCost;
 	}
@@ -203,7 +215,8 @@ bool KmodPathFinder::ProcessNode()
 			pathAdd(parent_node.get(), child_node.get(), ASNC_NEWADD, &settings, 0);
 
 			child_node->m_iKnownCost = MAX_INT;
-			child_node->m_iHeuristicCost = pathHeuristic_enhanced(x, y, dest_x, dest_y, step_cost);
+			child_node->m_iHeuristicCost = settings.iHeuristicWeight * pathHeuristic(x, y, dest_x, dest_y);
+			// total will be set when the parent is set.
 			if (pathValid_join(parent_node.get(), child_node.get(), settings.pGroup , settings.iFlags))
 			{
 				node_map[iPlotNum] = child_node;

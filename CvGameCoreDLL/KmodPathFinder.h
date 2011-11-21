@@ -6,14 +6,12 @@
 
 struct CvPathSettings
 {
-	CvPathSettings(const CvSelectionGroup* pGroup = 0, int iFlags = 0, int iMaxPath = -1)
-		: pGroup(const_cast<CvSelectionGroup*>(pGroup)), iFlags(iFlags), iMaxPath(iMaxPath) { }
-	// I'm really sorry about the const_cast. I can't fix the const-correctness of all the relevant functions,
-	// because some of them are dllexports. The original code essentially does the same thing anyway, with void* casts.
+	CvPathSettings(const CvSelectionGroup* pGroup = 0, int iFlags = 0, int iMaxPath = -1, int iHW = -1);
 
 	CvSelectionGroup* pGroup;
 	int iFlags;
 	int iMaxPath;
+	int iHeuristicWeight;
 };
 
 class FAStarNode;
@@ -45,7 +43,6 @@ protected:
 
 	int dest_x, dest_y;
 	int start_x, start_y;
-	int step_cost;
 	boost::shared_ptr<FAStarNode> end_node;
 	CvPathSettings settings;
 };
