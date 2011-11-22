@@ -606,11 +606,11 @@ int CvUnitAI::AI_groupFirstVal()
 	case UNITAI_ATTACK:
 		if (collateralDamage() > 0)
 		{
-			return 17;
+			return 15; // was 17
 		}
 		else if (withdrawalProbability() > 0)
 		{
-			return 15;
+			return 14; // was 15
 		}
 		else
 		{
@@ -629,11 +629,11 @@ int CvUnitAI::AI_groupFirstVal()
 		}
 		else if (withdrawalProbability() > 0)
 		{
-			return 16;
+			return 17; // was 16
 		}
 		else
 		{
-			return 14;
+			return 16; // was 14
 		}
 		break;
 
