@@ -117,6 +117,14 @@ bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 	return false;
 }
 
+bool KmodPathFinder::GeneratePath(const CvPlot* pToPlot)
+{
+	if (!settings.pGroup || !pToPlot)
+		return false;
+	return GeneratePath(settings.pGroup->plot()->getX_INLINE(), settings.pGroup->plot()->getY_INLINE(),
+		pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
+}
+
 void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 {
 	if (settings.pGroup != new_settings.pGroup || settings.iFlags != new_settings.iFlags)

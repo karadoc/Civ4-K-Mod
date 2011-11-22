@@ -14490,7 +14490,8 @@ bool CvUnitAI::AI_safety()
 	iBestValue = 0;
 	pBestPlot = NULL;
 
-	for (iPass = 0; iPass < 2; iPass++) // K-Mod todo. remove this nonsense
+	//for (iPass = 0; iPass < 2; iPass++)
+	iPass = 0; // K-Mod. That multiple pass thing is nothing more than a waste of time.
 	{
 		for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 		{
@@ -20383,7 +20384,13 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 		}
 	}
 
-	for (iPass = 0; iPass < 4; iPass++)
+	//for (iPass = 0; iPass < 4; iPass++)
+	// K-Mod. originally; pass 0 required the dest to have less plot danger unless the unit could fight; pass 1 was just an ordinary move; 
+	// pass 2 was a 1 turn move with "ignore plot danger" and pass 3 was the full iMaxPath with ignore plot danger.
+	// I've changed it so that if the unit can fight, the pass 0 just skipped (because it's the same as the pass 1)
+	// and pass 2 is always skipped because it's a useless test.
+	// -- and I've renumbered the passes.
+	for (iPass = (getGroup()->canDefend() ? 1 : 0) ; iPass < 3; iPass++)
 	{
 		for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 		{
@@ -20395,23 +20402,15 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 					{
 						if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
 						{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
 							// BBAI efficiency: check area for land units before generating path
 							if( !bAirlift && (getDomainType() == DOMAIN_LAND) && (pLoopCity->area() != area()) && !(getGroup()->canMoveAllTerrain()) )
 							{
 								continue;
 							}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), ((iPass > 1) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, (iPass == 2) ? 1 : iMaxPath))
+							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), (iPass >= 3 ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, iMaxPath))
 							{
-								if (iPathTurns <= ((iPass == 2) ? 1 : iMaxPath))
+								if (iPathTurns <= iMaxPath)
 								{
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
@@ -20449,22 +20448,12 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 										{
 											iBestValue = iValue;
 											pBestPlot = getPathEndTurnPlot();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/27/08                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-											// Not sure what can go wrong here, it seems somehow m_iData1 (moves) was set to 0
-											// for first node in path so m_iData2 (turns) incremented
-											if( atPlot(pBestPlot) )
+											if (atPlot(pBestPlot))
 											{
-												//FAssert(false);
+												FAssertMsg(false, "already at best retreat plot?");
 												pBestPlot = getGroup()->getPathFirstPlot();
 												FAssert(!atPlot(pBestPlot));
 											}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 										}
 									}
 								}
@@ -20509,7 +20498,7 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((iPass > 0) ? MOVE_IGNORE_DANGER : 0));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iPass >= 3 ? MOVE_IGNORE_DANGER : 0);
 		return true;
 	}
 

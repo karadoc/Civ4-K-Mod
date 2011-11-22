@@ -12266,8 +12266,7 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 /************************************************************************************************/
 
 // K-Mod. I've changed this function to calculation the attack power of our groups, rather than just the number of units.
-// NOTE: This function currently loops over a bunch of groups, and uses generate path for each of them.
-// This will be _slow_, because the path data is cleared for each new group.
+// I've also changed it to use a separate instance of the path finder, so that it doesn't clear the reset the existing path data.
 
 //int CvPlayerAI::AI_cityTargetUnitsByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
 int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const
@@ -12276,9 +12275,10 @@ int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSk
 
 	//int iCount = 0;
 	int iTotalStrength = 0;
+	KmodPathFinder temp_finder;
 
 	int iLoop;
-	int iPathTurns;
+	//int iPathTurns;
 	for(CvSelectionGroup* pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 	{
 		if (pLoopSelectionGroup != pSkipSelectionGroup && pLoopSelectionGroup->plot() != NULL && pLoopSelectionGroup->getNumUnits() > 0)
@@ -12291,6 +12291,7 @@ int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSk
 
 				if (iDistance <= 1)
 				{
+					/* original bbai code
 					if( pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pMissionPlot, 0, true, &iPathTurns, iMaxPathTurns) )
 					{
 						if( !(pLoopSelectionGroup->canAllMove()) )
@@ -12300,9 +12301,13 @@ int CvPlayerAI::AI_cityTargetStrengthByPath(CvCity* pCity, CvSelectionGroup* pSk
 
 						if( iPathTurns <= iMaxPathTurns )
 						{
-							//iCount += pLoopSelectionGroup->getNumUnits();
-							iTotalStrength += pLoopSelectionGroup->AI_sumStrength(pCity->plot(), DOMAIN_LAND);
+							iCount += pLoopSelectionGroup->getNumUnits();
 						}
+					} */
+					temp_finder.SetSettings(CvPathSettings(pLoopSelectionGroup, 0, iMaxPathTurns, GC.getMOVE_DENOMINATOR()));
+					if (temp_finder.GeneratePath(pMissionPlot))
+					{
+						iTotalStrength += pLoopSelectionGroup->AI_sumStrength(pCity->plot(), DOMAIN_LAND);
 					}
 				}
 			}
