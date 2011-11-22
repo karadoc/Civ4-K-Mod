@@ -11303,252 +11303,133 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 }
 
 // Returns true if a mission was pushed...
+// K-Mod. This function was so full of useless cruft and duplicated code and double-counting mistakes...
+// I've deleted the bulk of the old code, and rewritten it to be much much simplier - and also better.
 bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 {
 	PROFILE_FUNC();
 
-	CLLNode<IDInfo>* pUnitNode;
-	CvCity* pCity;
-	CvCity* pLoopCity;
-	CvUnit* pLoopUnit;
-	CvPlot* pPlot;
-	CvPlot* pBestPlot;
-	CvPlot* pBestGuardPlot;
-	bool bDefend;
-	int iExtra;
-	int iCount;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iLoop;
-
 	FAssert(getDomainType() == DOMAIN_LAND);
 	FAssert(canDefend());
 
-	pPlot = plot();
-	pCity = pPlot->getPlotCity();
+	CvPlot* pEndTurnPlot = NULL;
+	CvPlot* pBestGuardPlot = NULL;
 
-	if ((pCity != NULL) && (pCity->getOwnerINLINE() == getOwnerINLINE())) // XXX check for other team?
+
+	CvPlot* pPlot = plot();
+	CvCity* pCity = pPlot->getPlotCity();
+
+	if (pCity != NULL && pCity->getOwnerINLINE() == getOwnerINLINE())
 	{
-		if (bLeave && !(pCity->AI_isDanger()))
+		int iExtra; // additional defenders needed.
+		if (bLeave && !pCity->AI_isDanger())
 		{
-			iExtra = 1;
+			iExtra = -1;
 		}
 		else
 		{
-			iExtra = (bSearch ? 0 : -GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pPlot, 2));
+			iExtra = bSearch ? 0 : GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pPlot, 2);
 		}
 
-		bDefend = false;
-
-		if (pPlot->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE()) == 1) // XXX check for other team's units?
+		if (pPlot->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE(), NO_TEAM, AI_isCityAIType() ? PUF_isCityAIType : 0)
+					< pCity->AI_neededDefenders() + 1 + iExtra) // +1 because this unit is being counted as a defender.
 		{
-			bDefend = true;
-		}
-		else if (!(pCity->AI_isDefended(((AI_isCityAIType()) ? -1 : 0) + iExtra))) // XXX check for other team's units?
-		{
-			if (AI_isCityAIType())
-			{
-				bDefend = true;
-			}
-			else
-			{
-				iCount = 0;
-
-				pUnitNode = pPlot->headUnitNode();
-
-				while (pUnitNode != NULL)
-				{
-					pLoopUnit = ::getUnit(pUnitNode->m_data);
-					pUnitNode = pPlot->nextUnitNode(pUnitNode);
-
-					if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE())
-					{
-						if (pLoopUnit->isGroupHead())
-						{
-							if (!(pLoopUnit->isCargo()))
-							{
-								if (pLoopUnit->canDefend())
-								{
-									if (!(pLoopUnit->AI_isCityAIType()))
-									{
-										if (!(pLoopUnit->isHurt()))
-										{
-											if (pLoopUnit->isWaiting())
-											{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/24/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI				                                                                         */
-/************************************************************************************************/
-												//FAssert(pLoopUnit != this);
-												if( pLoopUnit != this )
-												{
-													iCount++;
-												}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-											}
-										}
-									}
-									else
-									{
-										if (pLoopUnit->getGroup()->getMissionType(0) != MISSION_SKIP)
-										{
-											iCount++;											
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				if (!(pCity->AI_isDefended(iCount + iExtra))) // XXX check for other team's units?
-				{
-					bDefend = true;
-				}
-			}
-		}
-
-		if (bDefend)
-		{			
-			CvSelectionGroup* pOldGroup = getGroup();
-			CvUnit* pEjectedUnit = getGroup()->AI_ejectBestDefender(pPlot);
-			
-			if (pEjectedUnit != NULL)
-			{
-				if (pPlot->plotCount(PUF_isCityAIType, -1, -1, getOwnerINLINE()) == 0)
-				{
-					if (pEjectedUnit->cityDefenseModifier() > 0)
-					{
-						pEjectedUnit->AI_setUnitAIType(UNITAI_CITY_DEFENSE);
-					}
-				}
-				pEjectedUnit->getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
-				if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			else
-			{
-				//This unit is not suited for defense, skip the mission
-				//to protect this city to encourage others to defend instead.
-				getGroup()->pushMission(MISSION_SKIP);
-				/* original bts code (commented by K-Mod. Why the hell was this here?)
-				if (!isHurt())
-				{
-					finishMoves();
-				}*/
-			}
-			return true;
+			// don't bother searching. We're staying here.
+			bSearch = false;
+			pEndTurnPlot = plot();
+			pBestGuardPlot = plot();
 		}
 	}
 
 	if (bSearch)
 	{
-		iBestValue = MAX_INT;
-		pBestPlot = NULL;
-		pBestGuardPlot = NULL;
+		int iBestValue = 0;
 
-		for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
+		int iLoop;
+		for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 		{
 			if (AI_plotValid(pLoopCity->plot()))
 			{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
 				// BBAI efficiency: check area for land units
 				if( (getDomainType() == DOMAIN_LAND) && (pLoopCity->area() != area()) && !(getGroup()->canMoveAllTerrain()) )
-				{
 					continue;
-				}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-				if (!(pLoopCity->AI_isDefended((!AI_isCityAIType()) ? pLoopCity->plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE(), NO_TEAM, PUF_isNotCityAIType) : 0)))	// XXX check for other team's units?
+
+				//if (!pLoopCity->AI_isDefended((!AI_isCityAIType() ? pLoopCity->plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE(), NO_TEAM, PUF_isNotCityAIType) : 0)))
+				// K-Mod
+				int iDefendersNeeded = pLoopCity->AI_neededDefenders();
+				int iDefendersHave = pLoopCity->plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE(), NO_TEAM, AI_isCityAIType() ? PUF_isCityAIType : 0);
+				if (iDefendersHave < iDefendersNeeded)
+				// K-Mod end
 				{
 					if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
 					{
 						if ((GC.getGame().getGameTurn() - pLoopCity->getGameTurnAcquired() < 10) || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GUARD_CITY, getGroup()) < 2)
 						{
+							int iPathTurns;
 							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns, iMaxPath))
 							{
 								if (iPathTurns <= iMaxPath)
 								{
-									iValue = iPathTurns;
-
-									if (iValue < iBestValue)
+									int iValue = 1000 * (1 + iDefendersNeeded - iDefendersHave);
+									iValue /= 1 + iPathTurns + iDefendersHave;
+									if (iValue > iBestValue)
 									{
 										iBestValue = iValue;
-										pBestPlot = getPathEndTurnPlot();
+										pEndTurnPlot = getPathEndTurnPlot();
 										pBestGuardPlot = pLoopCity->plot();
-										FAssert(!atPlot(pBestPlot));
+										FAssert(!atPlot(pEndTurnPlot));
+										if (iMaxPath == 1 || iBestValue >= 500)
+											break; // we found a good city. No need to waste any more time looking.
 									}
 								}
 							}
 						}
 					}
 				}
-
-				if (pBestPlot != NULL)
-				{
-					break;
-				}
 			}
 		}
+	}
+	if (pEndTurnPlot != NULL && pBestGuardPlot != NULL)
+	{
+		CvSelectionGroup* pOldGroup = getGroup();
+		CvUnit* pEjectedUnit = getGroup()->AI_ejectBestDefender(pPlot);
 
-		if ((pBestPlot != NULL) && (pBestGuardPlot != NULL))
+		if (pEjectedUnit != NULL)
 		{
-			FAssert(!atPlot(pBestPlot));
-			// split up group if we are going to defend, so rest of group has opportunity to do something else
-//			if (getGroup()->getNumUnits() > 1)
-//			{
-//				getGroup()->AI_separate();	// will change group
-//			}
-//
-//			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot);
-//			return true;
-
-			CvSelectionGroup* pOldGroup = getGroup();
-			CvUnit* pEjectedUnit = getGroup()->AI_ejectBestDefender(pPlot);
-			
-			if (pEjectedUnit != NULL)
+			if (atPlot(pBestGuardPlot))
 			{
-				//pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, NULL);
-				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot); // K-Mod
-				if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				pEjectedUnit->getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, 0);
 			}
 			else
 			{
-				//This unit is not suited for defense, skip the mission
-				//to protect this city to encourage others to defend instead.
-				if (atPlot(pBestGuardPlot))
-				{
-					getGroup()->pushMission(MISSION_SKIP);
-				}
-				else
-				{
-					//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, NULL);
-					getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE()); // K-Mod. (this is what "skip the mission" means)
-				}
-				return true;				
+				FAssert(!atPlot(pEndTurnPlot));
+				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot);
 			}
+
+			if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			//This unit is not suited for defense, skip the mission
+			//to protect this city to encourage others to defend instead.
+			if (atPlot(pBestGuardPlot))
+			{
+				getGroup()->pushMission(MISSION_SKIP);
+			}
+			else
+			{
+				FAssert(!atPlot(pEndTurnPlot));
+				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, NULL);
+				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE()); // K-Mod. (this is what "skip the mission" means)
+			}
+			return true;
 		}
 	}
 
