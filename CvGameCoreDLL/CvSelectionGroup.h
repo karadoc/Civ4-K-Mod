@@ -69,7 +69,7 @@ public:
 	bool canEnterArea(TeamTypes eTeam, const CvArea* pArea, bool bIgnoreRightOfPassage = false) const;									// Exposed to Python
 	DllExport bool canMoveInto(CvPlot* pPlot, bool bAttack = false);																		// Exposed to Python
 	DllExport bool canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar = false);												// Exposed to Python
-	bool canMoveThrough(CvPlot* pPlot);																																	// Exposed to Python
+	bool canMoveThrough(CvPlot* pPlot, bool bDeclareWar = false) const; // Exposed to Python, K-Mod added bDeclareWar
 	bool canFight();																																										// Exposed to Python 
 	bool canDefend();																																										// Exposed to Python
 	bool canBombard(const CvPlot* pPlot);

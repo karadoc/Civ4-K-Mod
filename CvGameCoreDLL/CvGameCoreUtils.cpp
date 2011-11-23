@@ -1814,14 +1814,16 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 		//if (iFlags & MOVE_THROUGH_ENEMY)
 		if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK)) // K-Mod
 		{
-			if (!(pSelectionGroup->canMoveOrAttackInto(pFromPlot)))
+			//if (!(pSelectionGroup->canMoveOrAttackInto(pFromPlot)))
+			if (!pSelectionGroup->canMoveOrAttackInto(pFromPlot, iFlags & MOVE_DECLARE_WAR)) // K-Mod
 			{
 				return FALSE;
 			}
 		}
 		else
 		{
-			if (!(pSelectionGroup->canMoveThrough(pFromPlot)))
+			//if (!(pSelectionGroup->canMoveThrough(pFromPlot)))
+			if (!pSelectionGroup->canMoveThrough(pFromPlot, iFlags & MOVE_DECLARE_WAR)) // K-Mod
 			{
 				return FALSE;
 			}

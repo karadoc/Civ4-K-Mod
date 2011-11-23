@@ -2664,6 +2664,7 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 					if (pPlot->isVisibleEnemyUnit(this) != bAttack)
 					{
 						//FAssertMsg(isHuman() || (!bDeclareWar || (pPlot->isVisibleOtherUnit(getOwnerINLINE()) != bAttack)), "hopefully not an issue, but tracking how often this is the case when we dont want to really declare war");
+						// K-Mod note: I don't really understand the condition here. It seems... strange.
 						if (!bDeclareWar || (pPlot->isVisibleOtherUnit(getOwnerINLINE()) != bAttack && !(bAttack && pPlot->getPlotCity() && !isNoCapture())))
 						{
 							return false;
@@ -2753,6 +2754,7 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 				return false;
 			}
 
+			/* original bts code
 			if (isHuman())
 			{
 				if (!bDeclareWar)
@@ -2773,7 +2775,21 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 				{
 					return false;
 				}
+			} */
+			// K-Mod. Rather than allowing the AI to move in forbidden territory when it is planning war.
+			// I'm going to disallow it from doing so when _not_ planning war.
+			if (!bDeclareWar)
+			{
+				return false;
 			}
+			else if (!isHuman())
+			{
+				if (!GET_TEAM(getTeam()).AI_isSneakAttackReady(ePlotTeam) || !getGroup()->AI_isDeclareWar(pPlot))
+				{
+					return false;
+				}
+			}
+			// K-Mod end
 		}
 	}
 
@@ -2804,9 +2820,9 @@ bool CvUnit::canMoveOrAttackInto(const CvPlot* pPlot, bool bDeclareWar) const
 }
 
 
-bool CvUnit::canMoveThrough(const CvPlot* pPlot) const
+bool CvUnit::canMoveThrough(const CvPlot* pPlot, bool bDeclareWar) const
 {
-	return canMoveInto(pPlot, false, false, true);
+	return canMoveInto(pPlot, false, bDeclareWar, true);
 }
 
 

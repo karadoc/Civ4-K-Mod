@@ -2795,7 +2795,7 @@ bool CvSelectionGroup::canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar)
 }
 
 
-bool CvSelectionGroup::canMoveThrough(CvPlot* pPlot)
+bool CvSelectionGroup::canMoveThrough(CvPlot* pPlot, bool bDeclareWar) const
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
@@ -2809,7 +2809,7 @@ bool CvSelectionGroup::canMoveThrough(CvPlot* pPlot)
 			pLoopUnit = ::getUnit(pUnitNode->m_data);
 			pUnitNode = nextUnitNode(pUnitNode);
 
-			if (!(pLoopUnit->canMoveThrough(pPlot)))
+			if (!pLoopUnit->canMoveThrough(pPlot, bDeclareWar))
 			{
 				return false;
 			}

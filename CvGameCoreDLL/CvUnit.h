@@ -105,7 +105,7 @@ public:
 	TeamTypes getDeclareWarMove(const CvPlot* pPlot) const;															// Exposed to Python
 	bool canMoveInto(const CvPlot* pPlot, bool bAttack = false, bool bDeclareWar = false, bool bIgnoreLoad = false) const;	// Exposed to Python
 	bool canMoveOrAttackInto(const CvPlot* pPlot, bool bDeclareWar = false) const;								// Exposed to Python
-	bool canMoveThrough(const CvPlot* pPlot) const;																								// Exposed to Python
+	bool canMoveThrough(const CvPlot* pPlot, bool bDeclareWar = false) const; // Exposed to Python, K-Mod added bDeclareWar
 	void attack(CvPlot* pPlot, bool bQuick);
 	void attackForDamage(CvUnit *pDefender, int attackerDamageChange, int defenderDamageChange);
 	void fightInterceptor(const CvPlot* pPlot, bool bQuick);

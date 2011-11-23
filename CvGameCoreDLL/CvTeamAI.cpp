@@ -3888,6 +3888,17 @@ bool CvTeamAI::AI_isSneakAttackReady(TeamTypes eIndex) const
 	return (AI_isChosenWar(eIndex) && !(AI_isSneakAttackPreparing(eIndex)));
 }
 
+// K-Mod
+bool CvTeamAI::AI_isSneakAttackReady() const
+{
+	for (int i = 0; i < MAX_CIV_TEAMS; i++)
+	{
+		if (AI_isSneakAttackReady((TeamTypes)i))
+			return true;
+	}
+	return false;
+}
+// K-Mod end
 
 void CvTeamAI::AI_setWarPlan(TeamTypes eIndex, WarPlanTypes eNewValue, bool bWar)
 {

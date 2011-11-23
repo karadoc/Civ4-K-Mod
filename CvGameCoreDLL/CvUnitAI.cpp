@@ -457,9 +457,9 @@ bool CvUnitAI::AI_follow(bool bFirst)
 		}
 	} */
 	// K-Mod, I've changed attack-follow code so that it will only attack with a single unit, not the whole group.
-	if (bFirst && AI_cityAttack(1, 70, true))
+	if (bFirst && AI_cityAttack(1, 70, 0, true))
 		return true;
-	if (bFirst && AI_anyAttack(1, 70, 2, true, true))
+	if (bFirst && AI_anyAttack(1, 70, 0, 2, true, true))
 		return true;
 	//
 
@@ -2172,14 +2172,14 @@ void CvUnitAI::AI_attackMove()
 			}
 		} */
 		// K-Mod
-		if (AI_anyAttack(1, 60, 2))
+		if (AI_anyAttack(1, 60, 0, 2))
 			return;
 		if (iOurDefense > iEnemyOffense && AI_anyAttack(2, 50))
 			return;
 		// K-Mod end
 
 		//if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, false))
-		/*if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 1))
+		/*if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 0, 1))
 		{
 			return;
 		} */ // I fixed this, but I don't think it's really a helpful thing to do anyway.
@@ -2233,19 +2233,19 @@ void CvUnitAI::AI_attackMove()
 		if (!bDanger)
 		{
 			//if (AI_group(UNITAI_SETTLE, 1, -1, -1, false, false, false, 3, true))
-			if (AI_omniGroup(UNITAI_SETTLE, 1, -1, false, 3, true, false))
+			if (AI_omniGroup(UNITAI_SETTLE, 1, -1, false, 0, 3, true, false))
 			{
 				return;
 			}
 
 			//if (AI_group(UNITAI_SETTLE, 2, -1, -1, false, false, false, 3, true))
-			if (AI_omniGroup(UNITAI_SETTLE, 2, -1, false, 3, false, false))
+			if (AI_omniGroup(UNITAI_SETTLE, 2, -1, false, 0, 3, false, false))
 			{
 				return;
 			}
 		} */
 		// K-Mod
-		if (AI_omniGroup(UNITAI_SETTLE, 2, -1, false, 3, false, false, false, false, false))
+		if (AI_omniGroup(UNITAI_SETTLE, 2, -1, false, 0, 3, false, false, false, false, false))
 			return;
 		// K-Mod end
 
@@ -2297,7 +2297,7 @@ void CvUnitAI::AI_attackMove()
 
 			if (collateralDamage() > 0)
 			{
-				if (AI_anyAttack(1, 45, 3))
+				if (AI_anyAttack(1, 45, 0, 3))
 				{
 					return;
 				}
@@ -2360,7 +2360,7 @@ void CvUnitAI::AI_attackMove()
 			if( plot()->isOwned() && GET_TEAM(getTeam()).isAtWar(plot()->getTeam()) )
 			{
 				//if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, true))
-				if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 1, true, false, true, false, false))
+				if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 0, 1, true, false, true, false, false))
 				{
 					return;
 				}
@@ -2445,13 +2445,13 @@ void CvUnitAI::AI_attackMove()
 			}
 
 			//if (AI_group(UNITAI_ATTACK_CITY, 1, 1, -1, bIgnoreFaster, true, true, 5))
-			if (AI_omniGroup(UNITAI_ATTACK_CITY, 1, 1, true, 5, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, false))
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, 1, 1, true, 0, 5, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, false))
 			{
 				return;
 			}
 
 			//if (AI_group(UNITAI_ATTACK, 1, 1, -1, true, true, false, 4))
-			if (AI_omniGroup(UNITAI_ATTACK, 2, -1, false, 4, true, true, true, true, false))
+			if (AI_omniGroup(UNITAI_ATTACK, 2, -1, false, 0, 4, true, true, true, true, false))
 			{
 				return;
 			}
@@ -2466,7 +2466,7 @@ void CvUnitAI::AI_attackMove()
 			//}
 
 			//if (AI_group(UNITAI_ATTACK, 1, 1, -1, true, false, false, 1))
-			if (AI_omniGroup(UNITAI_ATTACK, 1, 1, false, 1, true, true, false, false, false))
+			if (AI_omniGroup(UNITAI_ATTACK, 1, 1, false, 0, 1, true, true, false, false, false))
 			{
 				return;
 			}
@@ -2697,7 +2697,7 @@ void CvUnitAI::AI_paratrooperMove()
 
 	if (collateralDamage() > 0)
 	{
-		if (AI_anyAttack(1, 45, 3))
+		if (AI_anyAttack(1, 45, 0, 3))
 		{
 			return;
 		}
@@ -2841,7 +2841,7 @@ void CvUnitAI::AI_attackCityMove()
 		bLandWar = (area()->getNumCities() - area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > 0);
 		bReadyToAttack = (getGroup()->getNumUnits() >= 3);
 	}
-	
+
 	if( bReadyToAttack )
 	{
 		// Check that stack has units which can capture cities
@@ -2869,8 +2869,11 @@ void CvUnitAI::AI_attackCityMove()
 		}
 	}
 
+	// K-Mod. Try to be consistent in our usage of move flags, so that we don't cause unnecessary pathfinder resets.
+	int iMoveFlags = MOVE_AVOID_ENEMY_WEIGHT_2 | (bReadyToAttack ? MOVE_ATTACK_STACK | MOVE_DECLARE_WAR : 0);
+	// K-Mod end
 
-	if (AI_guardCity(false, false))
+	if (AI_guardCity(false, false, MAX_INT, iMoveFlags))
 	{
 		if( bReadyToAttack && (eAreaAIType != AREAAI_DEFENSIVE))
 		{
@@ -2882,7 +2885,8 @@ void CvUnitAI::AI_attackCityMove()
 		return;
 	}
 
-	if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 0, true, true, bIgnoreFaster))
+	//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 0, true, true, bIgnoreFaster))
+	if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 0, true, false, bIgnoreFaster))
 	{
 		return;
 	}
@@ -2890,11 +2894,11 @@ void CvUnitAI::AI_attackCityMove()
 	CvCity* pTargetCity = NULL;
 	if( isBarbarian() )
 	{
-		pTargetCity = AI_pickTargetCity(0, 12);
+		pTargetCity = AI_pickTargetCity(iMoveFlags, 12);
 	}
 	else
 	{
-		pTargetCity = AI_pickTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, bHuntBarbs);
+		pTargetCity = AI_pickTargetCity(iMoveFlags, MAX_INT, bHuntBarbs);
 	}
 
 	if( pTargetCity != NULL )
@@ -2942,7 +2946,8 @@ void CvUnitAI::AI_attackCityMove()
 		{
 			if( iComparePostBombard < iAttackRatio )
 			{
-				if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
+				//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
+				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster))
 				{
 					return;
 				}
@@ -2991,7 +2996,7 @@ void CvUnitAI::AI_attackCityMove()
 						{
 						// K-Mod end
 							// Move to good tile to attack from unless we're way more powerful
-							if( AI_goToTargetCity(MOVE_ATTACK_STACK,1,pTargetCity) )
+							if( AI_goToTargetCity(iMoveFlags,1,pTargetCity) )
 							{
 								return;
 							}
@@ -3015,14 +3020,14 @@ void CvUnitAI::AI_attackCityMove()
 
 					// If not strong enough alone, merge if another stack is nearby
 					//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
-					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, 2, true, false, bIgnoreFaster, false, false))
+					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster, false, false))
 					{
 						return;
 					}
 					
 					if( getGroup()->getNumUnits() == 1 )
 					{
-						if( AI_cityAttack(1, 50) )
+						if( AI_cityAttack(1, 50, iMoveFlags, false) )
 						{
 							return;
 						}
@@ -3033,12 +3038,12 @@ void CvUnitAI::AI_attackCityMove()
 			if( iComparePostBombard < iAttackRatio )
 			{
 				// If not strong enough, pillage around target city without exposing ourselves
-				if( AI_pillageRange(0) )
+				if( AI_pillageRange(0, 0, iMoveFlags) )
 				{
 					return;
 				}
 				
-				if( AI_anyAttack(1, 60, 0, false) )
+				if( AI_anyAttack(1, 60, iMoveFlags, 0, false, false) )
 				{
 					return;
 				}
@@ -3049,12 +3054,12 @@ void CvUnitAI::AI_attackCityMove()
 				}
 
 				// Pillage around enemy city
-				if( AI_pillageAroundCity(pTargetCity, 11, 3) )
+				if( AI_pillageAroundCity(pTargetCity, 11, iMoveFlags, 3) )
 				{
 					return;
 				}
 
-				if( AI_pillageAroundCity(pTargetCity, 0, 5) )
+				if( AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 5) )
 				{
 					return;
 				}
@@ -3066,7 +3071,7 @@ void CvUnitAI::AI_attackCityMove()
 			}
 			else
 			{
-				if( AI_goToTargetCity(MOVE_ATTACK_STACK,4,pTargetCity) )
+				if( AI_goToTargetCity(iMoveFlags,4,pTargetCity) )
 				{
 					return;
 				}
@@ -3074,7 +3079,8 @@ void CvUnitAI::AI_attackCityMove()
 		}
 	}
 
-	if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
+	//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
+	if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster))
 	{
 		return;
 	}
@@ -3087,33 +3093,33 @@ void CvUnitAI::AI_attackCityMove()
 	// BBAI TODO: Stack v stack combat ... definitely want to do in own territory, but what about enemy territory?
 	if (collateralDamage() > 0 && plot()->getOwnerINLINE() == getOwnerINLINE())
 	{
-		if (AI_anyAttack(1, 45, 3, false))
+		if (AI_anyAttack(1, 45, iMoveFlags, 3, false, false))
 		{
 			return;
 		}
 
 		if( !bReadyToAttack )
 		{
-			if (AI_anyAttack(1, 25, 5, false))
+			if (AI_anyAttack(1, 25, iMoveFlags, 5, false))
 			{
 				return;
 			}
 		}
 	}
 
-	if (AI_anyAttack(1, 60, 0, false))
+	if (AI_anyAttack(1, 60, iMoveFlags, 0, false))
 	{
 		return;
 	}
 
 	if (bAtWar && (getGroup()->getNumUnits() <= 2))
 	{
-		if (AI_pillageRange(3, 11))
+		if (AI_pillageRange(3, 11, iMoveFlags))
 		{
 			return;
 		}
 
-		if (AI_pillageRange(1))
+		if (AI_pillageRange(1, 0, iMoveFlags))
 		{
 			return;
 		}
@@ -3123,7 +3129,7 @@ void CvUnitAI::AI_attackCityMove()
 	{
 		if (!bLandWar)
 		{
-			if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, 4))
+			if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, iMoveFlags, 4))
 			{
 				return;
 			}
@@ -3147,7 +3153,7 @@ void CvUnitAI::AI_attackCityMove()
 			if( !isBarbarian() && (eAreaAIType == AREAAI_DEFENSIVE) )
 			{
 				// Use smaller attack city stacks on defense
-				if (AI_guardCity(false, true, 3))
+				if (AI_guardCity(false, true, 3, iMoveFlags))
 				{
 					return;
 				}
@@ -3156,7 +3162,7 @@ void CvUnitAI::AI_attackCityMove()
 			if( bTurtle )
 			{
 				//if (AI_guardCity(false, true, 7))
-				if (AI_guardCity(false, true, 6))
+				if (AI_guardCity(false, true, 6, iMoveFlags))
 				{
 					return;
 				}
@@ -3205,7 +3211,7 @@ void CvUnitAI::AI_attackCityMove()
 
 	if (!bReadyToAttack && !noDefensiveBonus())
 	{
-		if (AI_guardCity(false, false))
+		if (AI_guardCity(false, false, MAX_INT, iMoveFlags))
 		{
 			return;
 		}
@@ -3217,17 +3223,17 @@ void CvUnitAI::AI_attackCityMove()
 	{
 		if( isBarbarian() )
 		{
-			if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, 12))
+			if (AI_goToTargetCity(iMoveFlags, 12))
 			{
 				return;
 			}
 
-			if (AI_pillageRange(3, 11))
+			if (AI_pillageRange(3, 11, iMoveFlags))
 			{
 				return;
 			}
 
-			if (AI_pillageRange(1))
+			if (AI_pillageRange(1, 0, iMoveFlags))
 			{
 				return;
 			}
@@ -3272,7 +3278,7 @@ void CvUnitAI::AI_attackCityMove()
 			// K-Mod. (original bloated code deleted)
 			// Estimate the number of turns required.
 			int iPathTurns;
-			if (!generatePath(pTargetCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, true, &iPathTurns))
+			if (!generatePath(pTargetCity->plot(), iMoveFlags, true, &iPathTurns))
 			{
 				FAssertMsg(false, "failed to find path to target city.");
 				iPathTurns = 100;
@@ -3290,11 +3296,11 @@ void CvUnitAI::AI_attackCityMove()
 					int iLoadTurns = std::min(4, iPathTurns/2 - 1);
 					int iTransportTurns = iPathTurns - iLoadTurns - 2;
 
-					if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, iLoadTurns, iTransportTurns))
+					if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, iMoveFlags, iLoadTurns, iTransportTurns))
 						return;
 				}
 				// We have to walk.
-				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK, MAX_INT, pTargetCity))
+				if (AI_goToTargetCity(iMoveFlags, MAX_INT, pTargetCity))
 				{
 					return;
 				}
@@ -3340,7 +3346,7 @@ void CvUnitAI::AI_attackCityMove()
 			// BBAI Notes: Add this stack lead by bombard unit to stack probably not lead by a bombard unit
 			// BBAI TODO: Some sense of minimum stack size?  Can have big stack moving 10 turns to merge with tiny stacks
 			//if (AI_group(UNITAI_ATTACK_CITY, -1, -1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 10, /*bAllowRegrouping*/ true))
-			if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, 10, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, true, true))
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 10, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, true, true))
 			{
 				return;
 			}
@@ -3348,7 +3354,7 @@ void CvUnitAI::AI_attackCityMove()
 		else
 		{
 			//if (AI_group(UNITAI_ATTACK_CITY, AI_stackOfDoomExtra() * 2, -1, -1, bIgnoreFaster, true, true, /*iMaxPath*/ 10, /*bAllowRegrouping*/ false))
-			if (AI_omniGroup(UNITAI_ATTACK_CITY, AI_stackOfDoomExtra() * 2, -1, true, 10, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, true))
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, AI_stackOfDoomExtra() * 2, -1, true, iMoveFlags, 10, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, true))
 			{
 				return;
 			}
@@ -3367,7 +3373,7 @@ void CvUnitAI::AI_attackCityMove()
 
 			if( pTargetCity == NULL )
 			{
-				if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, 4))
+				if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, iMoveFlags, 4))
 				{
 					return;
 				}
@@ -3496,22 +3502,22 @@ void CvUnitAI::AI_collateralMove()
 		return;
 	}
 
-	if (AI_anyAttack(1, 45, 3))
+	if (AI_anyAttack(1, 45, 0, 3))
 	{
 		return;
 	}
 
-	if (AI_anyAttack(1, 55, 2))
+	if (AI_anyAttack(1, 55, 0, 2))
 	{
 		return;
 	}
 
-	if (AI_anyAttack(1, 35, 3))
+	if (AI_anyAttack(1, 35, 0, 3))
 	{
 		return;
 	}
 
-	if (AI_anyAttack(1, 30, 4))
+	if (AI_anyAttack(1, 30, 0, 4))
 	{
 		return;
 	}
@@ -3562,7 +3568,7 @@ void CvUnitAI::AI_collateralMove()
 			int iMinOdds = 80 / (3 + iTally);
 			iMinOdds *= 100;
 			iMinOdds /= iDangerModifier;
-			if (AI_anyAttack(1, iMinOdds, std::min(2*collateralDamageMaxUnits(), collateralDamageMaxUnits() + iTally - 1)))
+			if (AI_anyAttack(1, iMinOdds, 0, std::min(2*collateralDamageMaxUnits(), collateralDamageMaxUnits() + iTally - 1)))
 			{
 				return;
 			}
@@ -3585,7 +3591,7 @@ void CvUnitAI::AI_collateralMove()
 		}
 	}
 
-	if (AI_anyAttack(2, 55, 3))
+	if (AI_anyAttack(2, 55, 0, 3))
 	{
 		return;
 	}
@@ -7890,7 +7896,7 @@ void CvUnitAI::AI_assaultSeaMove()
 		} */ // disabled by K-Mod. This is redundant.
 
 		//if (AI_group(UNITAI_ASSAULT_SEA, -1, -1, -1, true, false, false, 10, false, true, false, MISSIONAI_ASSAULT))
-		if (AI_omniGroup(UNITAI_ASSAULT_SEA, -1, -1, false, 10, true, true, true, false, false, -1, true, MISSIONAI_ASSAULT))
+		if (AI_omniGroup(UNITAI_ASSAULT_SEA, -1, -1, false, 0, 10, true, true, true, false, false, -1, true, MISSIONAI_ASSAULT))
 		{
 			return;
 		}
@@ -10750,7 +10756,7 @@ bool CvUnitAI::AI_shadow(UnitAITypes eUnitAI, int iMax, int iMaxRatio, bool bWit
 }
 
 // K-Mod. One group function to rule them all.
-bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, bool bStackOfDoom, int iMaxPath, bool bMergeGroups, bool bSafeOnly, bool bIgnoreFaster, bool bIgnoreOwnUnitType, bool bBiggerOnly, int iMinUnitAI, bool bWithCargoOnly, MissionAITypes eIgnoreMissionAIType)
+bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, bool bStackOfDoom, int iFlags, int iMaxPath, bool bMergeGroups, bool bSafeOnly, bool bIgnoreFaster, bool bIgnoreOwnUnitType, bool bBiggerOnly, int iMinUnitAI, bool bWithCargoOnly, MissionAITypes eIgnoreMissionAIType)
 {
 	PROFILE_FUNC();
 
@@ -10833,8 +10839,8 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 								}
 							}
 
-							int iPathTurns;
-							if (generatePath(pPlot, 0, true, &iPathTurns, iMaxPath))
+							int iPathTurns = 0;
+							if (atPlot(pPlot) || generatePath(pPlot, iFlags, true, &iPathTurns, iMaxPath))
 							{
 								if (iMaxPath < 0 || iPathTurns <= iMaxPath)
 								{
@@ -10866,7 +10872,7 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 		{
 			if (!bMergeGroups)
 				joinGroup(NULL); // might as well leave our current group behind, since they won't be merging anyway.
-			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), 0, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
+			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), iFlags, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 		}
 		if (atPlot(pBestUnit->plot()))
 		{
@@ -10906,7 +10912,7 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 		}
 	}
 
-	return AI_omniGroup(eUnitAI, iMaxGroup, iMaxOwnUnitAI, bStackOfDoom, iMaxPath, true, true, bIgnoreFaster, bIgnoreOwnUnitType, false, iMinUnitAI, bWithCargoOnly, eIgnoreMissionAIType);
+	return AI_omniGroup(eUnitAI, iMaxGroup, iMaxOwnUnitAI, bStackOfDoom, 0, iMaxPath, true, true, bIgnoreFaster, bIgnoreOwnUnitType, false, iMinUnitAI, bWithCargoOnly, eIgnoreMissionAIType);
 }
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -10935,7 +10941,7 @@ bool CvUnitAI::AI_groupMergeRange(UnitAITypes eUnitAI, int iMaxRange, bool bBigg
 	while (AI_searchRange(iMaxPath) < iMaxRange)
 		iMaxPath++;
 
-	return AI_omniGroup(eUnitAI, -1, -1, false, iMaxPath, true, false, bIgnoreFaster, false, bBiggerOnly);
+	return AI_omniGroup(eUnitAI, -1, -1, false, 0, iMaxPath, true, false, bIgnoreFaster, false, bBiggerOnly);
 }
 
 /************************************************************************************************/
@@ -10972,7 +10978,7 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 		{
 			return false;
 		}
-	}	
+	}
 
 	iBestValue = MAX_INT;
 	pBestUnit = NULL;
@@ -11018,9 +11024,10 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 														CvPlot* pUnitTargetPlot = pLoopUnit->getGroup()->AI_getMissionAIPlot();
 														if ((pUnitTargetPlot == NULL) || (pUnitTargetPlot->getTeam() == getTeam()) || (!pUnitTargetPlot->isOwned() || !isPotentialEnemy(pUnitTargetPlot->getTeam(), pUnitTargetPlot)))
 														{
-															if (generatePath(pLoopUnit->plot(), iFlags, true, &iPathTurns, iMaxPath))
+															iPathTurns = 0;
+															if (atPlot(pLoopUnit->plot()) || generatePath(pLoopUnit->plot(), iFlags, true, &iPathTurns, iMaxPath))
 															{
-																if (iPathTurns <= iMaxPath || (iMaxPath == 0 && plot() == pLoopUnit->plot()))
+																if (iPathTurns <= iMaxPath)
 																{
 																	// prefer a transport that can hold as much of our group as possible 
 																	iValue = (std::max(0, iCurrentGroupSize - iCargoSpaceAvailable) * 5) + iPathTurns;
@@ -11054,6 +11061,10 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 		int iPathTurns;
 		int iRange = iMaxTransportPath * pBestUnit->baseMoves();
 		CvPlot* pAdjacentPlot = NULL;
+		// K-Mod. use a separate pathfinder for the transports, so that we don't reset our current path data.
+		KmodPathFinder temp_finder;
+		temp_finder.SetSettings(CvPathSettings(pBestUnit->getGroup(), 0, iMaxTransportPath, GC.getMOVE_DENOMINATOR()));
+		//
 
 		for( int iDX = -iRange; (iDX <= iRange && !bFoundEnemyPlotInRange); iDX++ )
 		{
@@ -11081,12 +11092,14 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 										{
 											if( pAdjacentPlot->isWater() )
 											{
-												if( pBestUnit->generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxTransportPath) )
+												//if( pBestUnit->generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxTransportPath) )
+												if (temp_finder.GeneratePath(pAdjacentPlot))
 												{
-													if (pBestUnit->getPathLastNode()->m_iData1 == 0)
+													/* if (pBestUnit->getPathLastNode()->m_iData1 == 0)
 													{
 														iPathTurns++;
-													}
+													}*/
+													iPathTurns = temp_finder.GetEndNode()->m_iData2 + (temp_finder.GetEndNode()->m_iData1 == 0 ? 1 : 0); // K-Mod
 
 													if( iPathTurns <= iMaxTransportPath )
 													{
@@ -11305,7 +11318,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 // Returns true if a mission was pushed...
 // K-Mod. This function was so full of useless cruft and duplicated code and double-counting mistakes...
 // I've deleted the bulk of the old code, and rewritten it to be much much simplier - and also better.
-bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
+bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath, int iFlags)
 {
 	PROFILE_FUNC();
 
@@ -11366,7 +11379,7 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 						if ((GC.getGame().getGameTurn() - pLoopCity->getGameTurnAcquired() < 10) || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GUARD_CITY, getGroup()) < 2)
 						{
 							int iPathTurns;
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns, iMaxPath))
+							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns, iMaxPath))
 							{
 								if (iPathTurns <= iMaxPath)
 								{
@@ -11403,7 +11416,7 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 			else
 			{
 				FAssert(!atPlot(pEndTurnPlot));
-				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot);
+				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot);
 			}
 
 			if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
@@ -11426,8 +11439,8 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath)
 			else
 			{
 				FAssert(!atPlot(pEndTurnPlot));
-				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_GUARD_CITY, NULL);
-				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE()); // K-Mod. (this is what "skip the mission" means)
+				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_GUARD_CITY, NULL);
+				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags); // K-Mod. (this is what "skip the mission" means)
 			}
 			return true;
 		}
@@ -12240,7 +12253,7 @@ bool CvUnitAI::AI_chokeDefend()
 
 					if (iPlotDanger <= 4)
 					{
-						if (AI_anyAttack(1, 65, std::max(0, (iPlotDanger - 1))))
+						if (AI_anyAttack(1, 65, 0, std::max(0, (iPlotDanger - 1))))
 						{
 							return true;
 						}
@@ -14945,13 +14958,8 @@ bool CvUnitAI::AI_exploreRange(int iRange)
 	return false;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/29/10                                jdog5000      */
-/*                                                                                              */
-/* War tactics AI, Efficiency                                                                   */
-/************************************************************************************************/
 // Returns target city
-CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBarbs )
+CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBarbs)
 {
 	PROFILE_FUNC();
 
@@ -15390,7 +15398,7 @@ bool CvUnitAI::AI_goToTargetBarbCity(int iMaxPathTurns)
 	return false;
 }*/
 
-bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshold, int iMaxPathTurns )
+bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshold, int iFlags, int iMaxPathTurns)
 {
 	PROFILE_FUNC();
 
@@ -15428,7 +15436,7 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
                         {
                             if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_PILLAGE, getGroup()) == 0)
                             {
-                                if (generatePath(pLoopPlot, 0, true, &iPathTurns, iMaxPathTurns))
+                                if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iMaxPathTurns))
                                 {
                                     if (getPathLastNode()->m_iData1 == 0)
                                     {
@@ -15479,7 +15487,7 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 		FAssert(getGroup()->AI_isDeclareWar());
 		if (AI_considerDOW(pBestPlot))
 		{
-			if (!generatePath(pBestPillagePlot, 0, true, &iPathTurns))
+			if (!generatePath(pBestPillagePlot, iFlags, true, &iPathTurns))
 				return false;
 			pBestPlot = getPathEndTurnPlot();
 		}
@@ -15497,7 +15505,7 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
 			return true;
 		}
 	}
@@ -15546,13 +15554,9 @@ bool CvUnitAI::AI_bombardCity()
 	getGroup()->pushMission(MISSION_BOMBARD, -1, -1, 0, false, false, MISSIONAI_ASSAULT, pBombardCity->plot()); // K-Mod
 	return true;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
+bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bFollow)
 {
 	PROFILE_FUNC();
 
@@ -15593,7 +15597,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 					{
 						if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 						{
-							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && (iPathTurns <= iRange))))
+							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange) && (iPathTurns <= iRange))))
 							{
 								iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
 
@@ -15621,14 +15625,14 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 		if (AI_considerDOW(pBestPlot))
 		{
 			// after DOW, we might not be able to get to our target this turn... but try anyway.
-			if (!generatePath(pBestPlot, 0, false))
+			if (!generatePath(pBestPlot, iFlags, false))
 				return false;
 			if (bFollow && pBestPlot != getPathEndTurnPlot())
 				return false;
 			pBestPlot = getPathEndTurnPlot();
 		}
 		// K-Mod end
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK : 0));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags | (bFollow ? MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK : 0));
 		return true;
 	}
 
@@ -15641,7 +15645,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, bool bFollow)
 /* War tactics AI, Efficiency                                                                   */
 /************************************************************************************************/
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iMinStack, bool bAllowCities, bool bFollow)
+bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMinStack, bool bAllowCities, bool bFollow)
 {
 	PROFILE_FUNC();
 
@@ -15690,7 +15694,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iMinStack, bool 
 							if (pLoopPlot->getNumVisibleEnemyDefenders(this) >= iMinStack)
 							{
 								//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
-								if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true) && (bFollow ? true : generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && (iPathTurns <= iRange))) // K-Mod
+								if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true) && (bFollow ? true : generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange) && (iPathTurns <= iRange))) // K-Mod
 								{
 	 
 									iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
@@ -15717,7 +15721,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iMinStack, bool 
 	{
 		FAssert(!atPlot(pBestPlot));
 		// K-Mod note: no AI_considerDOW here.
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((bFollow) ? MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK : 0));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags | (bFollow ? MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK : 0));
 		return true;
 	}
 
@@ -16565,7 +16569,7 @@ bool CvUnitAI::AI_seaBombardRange(int iMaxRange)
 
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_pillage(int iBonusValueThreshold)
+bool CvUnitAI::AI_pillage(int iBonusValueThreshold, int iFlags)
 {
 	PROFILE_FUNC();
 
@@ -16617,7 +16621,7 @@ bool CvUnitAI::AI_pillage(int iBonusValueThreshold)
 
 								if( iValue > iBestValue )
 								{
-									if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+									if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
 									{
 										iValue /= (iPathTurns + 1);
 
@@ -16660,7 +16664,7 @@ bool CvUnitAI::AI_pillage(int iBonusValueThreshold)
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
 			return true;
 		}
 	}
@@ -16708,7 +16712,7 @@ bool CvUnitAI::AI_canPillage(CvPlot& kPlot) const
 
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold)
+bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold, int iFlags)
 {
 	PROFILE_FUNC();
 
@@ -16749,7 +16753,7 @@ bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold)
                                 {
                                     if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_PILLAGE, getGroup()) == 0)
                                     {
-                                        if (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange))
+                                        if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange))
                                         {
                                             if (getPathLastNode()->m_iData1 == 0)
                                             {
@@ -16809,7 +16813,7 @@ bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold)
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_PILLAGE, pBestPillagePlot);
 			return true;
 		}
 	}
@@ -17072,6 +17076,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 		}
 	}
 
+	int iFlags = MOVE_AVOID_ENEMY_WEIGHT_3 | MOVE_DECLARE_WAR; // K-Mod
 	int iCargo = getGroup()->getCargo();
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
@@ -17133,18 +17138,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 							if (bCanCargoAllUnload)
 							{
 								int iPathTurns;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/17/09                                jdog5000      */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
-/* original bts code
-								if (generatePath(pLoopPlot, 0, true, &iPathTurns))
-*/
-								if (generatePath(pLoopPlot, MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+								if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
 								{
 									int iValue = 1;
 
@@ -17323,7 +17317,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 
 	if (pBestPlot != NULL && pBestAssaultPlot != NULL)
 	{
-		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, MOVE_AVOID_ENEMY_WEIGHT_3);
+		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, iFlags);
 	}
 
 	return false;
@@ -17373,6 +17367,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 	CvArea* pWaterArea = plot()->waterArea();
 	bool bCity = plot()->isCity(true,getTeam());
 	bool bCanMoveAllTerrain = getGroup()->canMoveAllTerrain();
+	int iFlags = MOVE_AVOID_ENEMY_WEIGHT_3 | MOVE_DECLARE_WAR; // K-Mod
 
 	int iTargetCities;
 	int iOurFightersHere;
@@ -17405,7 +17400,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 								if( iOurFightersHere > 2 )
 								{
 									iPathTurns;
-									if (generatePath(pLoopPlot, MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns, 2))
+									if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, 2))
 									{
 										if( iPathTurns <= 2 )
 										{
@@ -17464,12 +17459,12 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 										if( iAssaultsHere > 2 )
 										{
 											iPathTurns;
-											if (generatePath(pLoopPlot, MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
+											if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
 											{
 												CvPlot* pEndTurnPlot = getPathEndTurnPlot();
 											
 												int iOtherPathTurns = MAX_INT;
-												if (pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pLoopPlot, MOVE_AVOID_ENEMY_WEIGHT_3, true, &iOtherPathTurns))
+												if (pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pLoopPlot, iFlags, true, &iOtherPathTurns))
 												{
 													// We need to get there the turn after they do, +1 required whether
 													// they move first or we do
@@ -17598,7 +17593,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 						if( iOurPower < (3*iEnemyPower) )
 						{
 							iPathTurns;
-							if (generatePath(pLoopCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
+							if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
 							{
 								iValue *= 10*pLoopCity->AI_cityThreat();
 						
@@ -17688,7 +17683,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 											if( iOurPower < (2*iEnemyPower) )
 											{
 												int iPathTurns;
-												if (generatePath(pLoopCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
+												if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
 												{
 													iValue *= pLoopCity->AI_cityThreat();
 											
@@ -17732,7 +17727,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 
 	if (pBestPlot != NULL && pBestAssaultPlot != NULL)
 	{
-		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, MOVE_AVOID_ENEMY_WEIGHT_3);
+		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, iFlags);
 	}
 
 	return false;
@@ -17779,7 +17774,7 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 	{
 		if (AI_considerDOW(pEndTurnPlot))
 		{
-			if (!generatePath(pTargetPlot, 0, false))
+			if (!generatePath(pTargetPlot, iFlags, false))
 				return false;
 			pEndTurnPlot = getPathEndTurnPlot();
 		}
@@ -20586,7 +20581,7 @@ bool CvUnitAI::AI_pickup(UnitAITypes eUnitAI, bool bCountProduction, int iMaxPat
 							{
 								if( !(pLoopCity->AI_isDanger()) )
 								{
-									if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
+									if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), MOVE_AVOID_ENEMY_WEIGHT_3, true, &iPathTurns))
 									{
 										if( AI_getUnitAIType() == UNITAI_ASSAULT_SEA )
 										{
@@ -24449,7 +24444,7 @@ bool CvUnitAI::AI_solveBlockageProblem(CvPlot* pDestPlot, bool bDeclareWar)
 										}
 										kTeam.AI_setWarPlan(pPlot->getTeam(), eWarPlan, true);
 										//return (AI_targetCity());
-										return AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_ATTACK_STACK); // K-Mod / BBAI
+										return AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2 | MOVE_DECLARE_WAR); // K-Mod / BBAI
 									}
 								}
 							}

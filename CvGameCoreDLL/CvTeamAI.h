@@ -192,6 +192,7 @@ public:
 	bool AI_isChosenWar(TeamTypes eIndex) const;
 	bool AI_isSneakAttackPreparing(TeamTypes eIndex) const;
 	bool AI_isSneakAttackReady(TeamTypes eIndex) const;
+	bool AI_isSneakAttackReady() const; // K-Mod (any team)
 	void AI_setWarPlan(TeamTypes eIndex, WarPlanTypes eNewValue, bool bWar = true);
 
 	int AI_teamCloseness(TeamTypes eIndex, int iMaxDistance = -1) const;

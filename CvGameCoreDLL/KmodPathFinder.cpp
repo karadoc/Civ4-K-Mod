@@ -127,9 +127,23 @@ bool KmodPathFinder::GeneratePath(const CvPlot* pToPlot)
 
 void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 {
-	if (settings.pGroup != new_settings.pGroup || settings.iFlags != new_settings.iFlags)
+	// some flags are not relevant to pathfinder. We should try to strip those out to avoid unnecessary resets.
+	int relevant_flags = ~(MOVE_DIRECT_ATTACK | MOVE_SINGLE_ATTACK | MOVE_NO_ATTACK); // any bar these
+
+	if (settings.pGroup != new_settings.pGroup)
 	{
 		Reset();
+	}
+	else if ((settings.iFlags & relevant_flags) != (new_settings.iFlags & relevant_flags))
+	{
+		// there's one more chance to avoid a reset..
+		// If the war flag is the only difference, and we aren't sneak attack ready anyway - then there is effectively no difference.
+		relevant_flags &= ~MOVE_DECLARE_WAR;
+		if ((settings.iFlags & relevant_flags) != (new_settings.iFlags & relevant_flags)
+			|| GET_TEAM(settings.pGroup->getHeadTeam()).AI_isSneakAttackReady())
+		{
+			Reset();
+		}
 	}
 	settings = new_settings;
 }
