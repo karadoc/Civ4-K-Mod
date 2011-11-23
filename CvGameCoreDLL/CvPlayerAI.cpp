@@ -18346,24 +18346,43 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 			return 3;
 		} */
 		// K-Mod. I don't think that's a good way to do it.
-		// I think it would be best to compare our # of parts built to that of our best known rival - but this will do for now.
-		int iPartsBuilt = 0;
-		int iPartsNeeded = 0;
-		bool bCanBuild = false;
+		// instead, compare our spaceship progress to that of our rivals.
+		int iOurProgress = 0;
 		for (int i = 0; i < GC.getNumProjectInfos(); i++)
 		{
 			if (GC.getProjectInfo((ProjectTypes)i).isSpaceship())
 			{
-				iPartsNeeded++;
+				int iBuilt = GET_TEAM(getTeam()).getProjectCount((ProjectTypes)i);
 
-				if (GET_TEAM(getTeam()).getProjectCount((ProjectTypes)i) > 0)
-					iPartsBuilt++;
-
-				if (canCreate((ProjectTypes)i))
-					bCanBuild = true;
+				if (iBuilt > 0 || GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getProjectInfo((ProjectTypes)i).getTechPrereq())))
+					iOurProgress += 2 + iBuilt;
 			}
 		}
-		if (80 * iPartsBuilt / iPartsNeeded + (bCanBuild ? 0 : 20) >= 90 - AI_getStrategyRand(3) % 100) // note, correlated with number used lower down.
+		int iKnownTeams = 0;
+		int iSpaceTeams = 0; // teams ahead of us in the space race
+		for (int iTeam; iTeam < MAX_CIV_TEAMS; iTeam++)
+		{
+			const CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
+			if (iTeam != getTeam() && kLoopTeam.isAlive() && kLoopTeam.isHasMet(getTeam()))
+			{
+				int iProgress = 0;
+				for (int i = 0; i < GC.getNumProjectInfos(); i++)
+				{
+					if (GC.getProjectInfo((ProjectTypes)i).isSpaceship())
+					{
+						int iBuilt = kLoopTeam.getProjectCount((ProjectTypes)i);
+
+						if (iBuilt > 0 || kLoopTeam.isHasTech((TechTypes)(GC.getProjectInfo((ProjectTypes)i).getTechPrereq())))
+							iProgress += 2 + iBuilt;
+					}
+				}
+				iKnownTeams++;
+				if (iProgress > iOurProgress)
+					iSpaceTeams++;
+			}
+		}
+		if (200 * iSpaceTeams / (1+iKnownTeams)
+			<= GC.getLeaderHeadInfo(getPersonalityType()).getSpaceVictoryWeight() + AI_getStrategyRand(3) % 100) // note, correlated with number used lower down.
 			return 3;
 		// K-Mod end
 	}
