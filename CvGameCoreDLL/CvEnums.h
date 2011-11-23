@@ -1479,6 +1479,7 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_CARRIER,
 	MISSIONAI_PICKUP,
 	// K-Mod. missions that I might want to add next time I break save compatibility...
+	// (note. MISSIONAI_GUARD_TRADE_NET is not being used.)
 	/*
 	MISSIONAI_CHOKE,
 	MISSIONAI_HEAL,
@@ -1488,6 +1489,7 @@ enum MissionAITypes		// Exposed to Python
 	? MISSIONAI_LAND_ASSAULT,
 	? MISSIONAI_SEA_ASSAULT,
 	MISSIONAI_COUNTER_ATTACK,
+	MISSIONAI_UPGRADE,
 	*/
 };
 

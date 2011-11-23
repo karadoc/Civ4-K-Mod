@@ -4578,7 +4578,16 @@ void CvUnitAI::AI_exploreMove()
 		{
 			if (GET_PLAYER(getOwnerINLINE()).calculateUnitCost() > 0)
 			{
-				scrap();
+				// K-Mod. Maybe we can still use this unit.
+				if (GET_PLAYER(getOwnerINLINE()).AI_unitValue(getUnitType(), UNITAI_ATTACK, area()) > 0)
+				{
+					AI_setUnitAIType(UNITAI_ATTACK);
+				}
+				else
+				// K-Mod end
+				{
+					scrap();
+				}
 				return;
 			}
 		}

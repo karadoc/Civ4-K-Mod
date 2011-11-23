@@ -18340,10 +18340,32 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 			return 3;
 		}
 
+		/* original bbai code
 		if( GET_TEAM(getTeam()).getBestKnownTechScorePercent() > (m_iVictoryStrategyHash & AI_VICTORY_SPACE3 ? 80 : 85) )
 		{
 			return 3;
+		} */
+		// K-Mod. I don't think that's a good way to do it.
+		// I think it would be best to compare our # of parts built to that of our best known rival - but this will do for now.
+		int iPartsBuilt = 0;
+		int iPartsNeeded = 0;
+		bool bCanBuild = false;
+		for (int i = 0; i < GC.getNumProjectInfos(); i++)
+		{
+			if (GC.getProjectInfo((ProjectTypes)i).isSpaceship())
+			{
+				iPartsNeeded++;
+
+				if (GET_TEAM(getTeam()).getProjectCount((ProjectTypes)i) > 0)
+					iPartsBuilt++;
+
+				if (canCreate((ProjectTypes)i))
+					bCanBuild = true;
+			}
 		}
+		if (80 * iPartsBuilt / iPartsNeeded + (bCanBuild ? 0 : 20) >= 90 - AI_getStrategyRand(3) % 100) // note, correlated with number used lower down.
+			return 3;
+		// K-Mod end
 	}
 
 	if( isHuman() && !(GC.getGameINLINE().isDebugMode()) )
