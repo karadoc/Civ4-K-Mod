@@ -11245,19 +11245,22 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 				{
 					const CvUnitInfo& kUnit = GC.getUnitInfo(eBestUnit);
 
-					BuildingTypes eExperienceBuilding = AI_bestBuildingThreshold(BUILDINGFOCUS_EXPERIENCE);
-
-					if (eExperienceBuilding != NO_BUILDING)
+					if (kUnit.getUnitCombatType() != NO_UNITCOMBAT)
 					{
-						const CvBuildingInfo& kBuilding = GC.getBuildingInfo(eExperienceBuilding);
-						if (kBuilding.getFreeExperience() > 0 ||
-							kBuilding.getUnitCombatFreeExperience(kUnit.getUnitCombatType()) > 0 ||
-							kBuilding.getDomainFreeExperience(kUnit.getDomainType()) > 0)
+						BuildingTypes eExperienceBuilding = AI_bestBuildingThreshold(BUILDINGFOCUS_EXPERIENCE);
+
+						if (eExperienceBuilding != NO_BUILDING)
 						{
-							// This building helps the unit we want
-							// ...so do the building first.
-							pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
-							return;
+							const CvBuildingInfo& kBuilding = GC.getBuildingInfo(eExperienceBuilding);
+							if (kBuilding.getFreeExperience() > 0 ||
+								kBuilding.getUnitCombatFreeExperience(kUnit.getUnitCombatType()) > 0 ||
+								kBuilding.getDomainFreeExperience(kUnit.getDomainType()) > 0)
+							{
+								// This building helps the unit we want
+								// ...so do the building first.
+								pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+								return;
+							}
 						}
 					}
 					// otherwise, we're ready to build the unit
