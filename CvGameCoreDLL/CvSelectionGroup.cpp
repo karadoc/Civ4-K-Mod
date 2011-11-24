@@ -3743,14 +3743,16 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	}
 	else
 	{
-		if (!generatePath(plot(), pDestPlot, iFlags))
+		// K-Mod. I've added & ~MOVE_DECLARE_WAR so that if we need to declare war at this point, and haven't yet done so,
+		// the move will fail here rather than splitting the group inside groupMove
+		if (!generatePath(plot(), pDestPlot, iFlags & ~MOVE_DECLARE_WAR))
 		{
 			return false;
 		}
 
 		pPathPlot = getPathFirstPlot();
 
-		if (groupAmphibMove(pPathPlot, iFlags))
+		if (groupAmphibMove(pPathPlot, iFlags & ~MOVE_DECLARE_WAR))
 		{
 			return false;
 		}

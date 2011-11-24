@@ -1236,6 +1236,34 @@ bool CvUnitAI::AI_considerDOW(CvPlot* pPlot)
 	}
 	return false;
 }
+
+// AI_considerPathDOW checks each plot on the path until the end of the turn.
+// Sometimes the end plot is in friendly territory, but we need to declare war to actually get there.
+// This situation is very rare, but unfortunately we have to check for it every time
+// - because otherwise, when it happens, the AI will just get stuck.
+bool CvUnitAI::AI_considerPathDOW(CvPlot* pPlot, int iFlags)
+{
+	PROFILE_FUNC();
+
+	if (!generatePath(pPlot, iFlags, true))
+	{
+		FAssertMsg(false, "AI_considerPathDOW didn't find a path.");
+		return false;
+	}
+
+	bool bDOW = false;
+	FAStarNode* pNode = getPathLastNode();
+	while (!bDOW && pNode)
+	{
+		if (pNode->m_iData2 <= 1) // only consider DOW for moves in this turn.
+		{
+			bDOW = AI_considerDOW(GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY));
+		}
+		pNode = pNode->m_pParent;
+	}
+
+	return bDOW;
+}
 // K-Mod end
 
 void CvUnitAI::AI_animalMove()
@@ -15269,7 +15297,7 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 			{
 				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags);
 				// K-Mod
-				if (AI_considerDOW(pEndTurnPlot))
+				if (AI_considerPathDOW(pEndTurnPlot, iFlags))
 				{
 					// regenerate the path, just incase we want to take a different route after the DOW
 					// (but don't bother recalculating the best destination)
@@ -15279,7 +15307,7 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 						return false;
 					pEndTurnPlot = getPathEndTurnPlot();
 				}
-				// I'm going to  use MISSIONAI_ASSAULT signal to our spies and other units that we're attacking this city.
+				// I'm going to use MISSIONAI_ASSAULT signal to our spies and other units that we're attacking this city.
 				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_ASSAULT, pTargetCity->plot());
 				// K-Mod end
 				return true;
@@ -15496,7 +15524,7 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 		} */ // disabled by K-Mod. (also see new code at top.)
 		// K-Mod
 		FAssert(getGroup()->AI_isDeclareWar());
-		if (AI_considerDOW(pBestPlot))
+		if (AI_considerPathDOW(pBestPlot, iFlags))
 		{
 			if (!generatePath(pBestPillagePlot, iFlags, true, &iPathTurns))
 				return false;
@@ -15633,7 +15661,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bF
 	{
 		FAssert(!atPlot(pBestPlot));
 		// K-Mod. (Note. we probably don't really want to declare war here, but that's just the way it works currently.)
-		if (AI_considerDOW(pBestPlot))
+		if (AI_considerPathDOW(pBestPlot, iFlags))
 		{
 			// after DOW, we might not be able to get to our target this turn... but try anyway.
 			if (!generatePath(pBestPlot, iFlags, false))
@@ -16065,7 +16093,7 @@ bool CvUnitAI::AI_blockade()
 		if (atPlot(pBestBlockadePlot) && !isEnemy(pBestBlockadePlot->getTeam(), pBestBlockadePlot))
 		{
 			//getGroup()->groupDeclareWar(pBestBlockadePlot, true);
-			AI_considerDOW(pBestBlockadePlot); // K-Mod
+			AI_considerPathDOW(pBestBlockadePlot, 0); // K-Mod
 		}
 		
 		if (atPlot(pBestBlockadePlot))
@@ -17783,7 +17811,7 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 	}
 	else
 	{
-		if (AI_considerDOW(pEndTurnPlot))
+		if (AI_considerPathDOW(pEndTurnPlot, iFlags))
 		{
 			if (!generatePath(pTargetPlot, iFlags, false))
 				return false;

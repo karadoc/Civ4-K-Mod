@@ -67,6 +67,7 @@ protected:
 	int m_iAutomatedAbortTurn;
 
 	bool AI_considerDOW(CvPlot* pPlot); // K-Mod
+	bool AI_considerPathDOW(CvPlot* pPlot, int iFlags); // K-Mod
 
 	void AI_animalMove();
 	void AI_settleMove();
