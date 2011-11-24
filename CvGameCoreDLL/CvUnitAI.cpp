@@ -14972,20 +14972,11 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 {
 	PROFILE_FUNC();
 
-	CvCity* pTargetCity;
-	CvCity* pLoopCity;
-	CvCity* pBestCity;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iLoop;
-	int iI;
-	int iOurOffence = -1; // K-Mod. Will calculate this for the first city only.
+	CvCity* pBestCity = NULL;
+	int iBestValue = 0;
+	int iOurOffence = -1; // K-Mod. We calculate this for the first city only.
 
-	iBestValue = 0;
-	pBestCity = NULL;
-
-	pTargetCity = area()->getTargetCity(getOwnerINLINE());
+	CvCity* pTargetCity = area()->getTargetCity(getOwnerINLINE());
 
 	// Don't always go after area target ... don't know how far away it is
 	/*
@@ -15001,20 +14992,21 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 	}
 	*/
 
-	if (pBestCity == NULL)
+	for (int iI = 0; iI < (bHuntBarbs ? MAX_PLAYERS : MAX_CIV_PLAYERS); iI++)
 	{
-		for (iI = 0; iI < (bHuntBarbs ? MAX_PLAYERS : MAX_CIV_PLAYERS); iI++)
+		if (GET_PLAYER((PlayerTypes)iI).isAlive() && ::isPotentialEnemy(getTeam(), GET_PLAYER((PlayerTypes)iI).getTeam()))
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive() && ::isPotentialEnemy(getTeam(), GET_PLAYER((PlayerTypes)iI).getTeam()))
+			int iLoop;
+			for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
 			{
-				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+				if (AI_plotValid(pLoopCity->plot()) && (pLoopCity->area() == area()))
 				{
-					// BBAI efficiency: check area for land units before generating path
-					if (AI_plotValid(pLoopCity->plot()) && (pLoopCity->area() == area()) && pLoopCity->isRevealed(getTeam(), false)) // K-Mod added isRevealed check.
+					if (AI_potentialEnemy(GET_PLAYER((PlayerTypes)iI).getTeam(), pLoopCity->plot()))
 					{
-						if (AI_potentialEnemy(GET_PLAYER((PlayerTypes)iI).getTeam(), pLoopCity->plot()))
+						if (pLoopCity->isRevealed(getTeam(), false)) // K-Mod
 						{
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns, iMaxPathTurns))
+							int iPathTurns;
+							if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns, iMaxPathTurns))
 							{
 								if( iPathTurns <= iMaxPathTurns )
 								{
@@ -15061,7 +15053,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 									// K-Mod end
 
-									iValue = 0;
+									int iValue = 0;
 									if (AI_getUnitAIType() == UNITAI_ATTACK_CITY) //lemming?
 									{
 										iValue = GET_PLAYER(getOwnerINLINE()).AI_targetCityValue(pLoopCity, false, false);
@@ -15095,7 +15087,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										iValue /= 100;
 									}
 									// K-Mod end
-									
+
 									if ((area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE))
 									{
 										iValue *= 50 + pLoopCity->calculateCulturePercent(getOwnerINLINE());
@@ -15161,7 +15153,17 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 								}
 							}
+						} // end if revealed.
+						// K-Mod. If no city in the area is revealed,
+						// then assume the AI is able to deduce the position of the closest city.
+						else if (iBestValue == 0 && !pLoopCity->isBarbarian() && (!pBestCity ||
+							stepDistance(getX_INLINE(), getY_INLINE(), pBestCity->getX_INLINE(), pBestCity->getY_INLINE()) >
+							stepDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())))
+						{
+							if (generatePath(pLoopCity->plot(), iFlags, true, 0, iMaxPathTurns))
+								pBestCity = pLoopCity;
 						}
+						// K-Mod end
 					}
 				}
 			}
@@ -22652,6 +22654,10 @@ bool CvUnitAI::AI_reconSpy(int iRange)
 						}
 					}
 				}
+				// K-Mod
+				if (isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
+					iValue *= 2;
+				// K-Mod end
 
 
 				if (iValue > 0)
