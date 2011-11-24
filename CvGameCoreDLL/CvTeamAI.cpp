@@ -519,7 +519,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 		*/
 		// K-Mod. I'm not sure how best to do this yet. Let me just try a rough idea for now.
 		// I'm using AI_countMilitaryWeight; but what I really want is "border terriory which needs defending"
-		int iOurRelativeStrength = 100 * countPowerByArea(pArea) / (AI_countMilitaryWeight(pArea) + 10);
+		int iOurRelativeStrength = 100 * countPowerByArea(pArea) / (AI_countMilitaryWeight(pArea) + 20);
 		iOurRelativeStrength *= 100 + (bDeclaredTargets ? 30 : 0) + (bPreparingTotal ? -20 : 0) + iWarSuccessRatio/2;
 		iOurRelativeStrength /= 100;
 		int iEnemyRelativeStrength = 0;
@@ -531,7 +531,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 			if (iJ != getID() && kLoopTeam.isAlive() && AI_getWarPlan((TeamTypes)iJ) != NO_WARPLAN)
 			{
 				int iPower = 100 * kLoopTeam.countPowerByArea(pArea);
-				int iCommitment = 10 + kLoopTeam.AI_countMilitaryWeight(pArea) * ((isAtWar((TeamTypes)iJ) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true)) / 2;
+				int iCommitment = (bPreparingTotal ? 30 : 20) + kLoopTeam.AI_countMilitaryWeight(pArea) * ((isAtWar((TeamTypes)iJ) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true)) / 2;
 				iPower /= iCommitment;
 				iEnemyRelativeStrength += iPower;
 				if (kLoopTeam.countNumCitiesByArea(pArea) > 0)

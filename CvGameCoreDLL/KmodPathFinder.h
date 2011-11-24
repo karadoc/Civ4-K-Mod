@@ -19,6 +19,8 @@ class FAStarNode;
 class KmodPathFinder
 {
 public:
+	static void InitHeuristicWeights();
+
 	bool GeneratePath(int x1, int y1, int x2, int y2);
 	bool GeneratePath(const CvPlot* pToPlot); // just a wrapper for convenience
 	FAStarNode* GetEndNode() { FAssert(end_node); return end_node.get(); }
@@ -46,4 +48,7 @@ protected:
 	int start_x, start_y;
 	boost::shared_ptr<FAStarNode> end_node;
 	CvPathSettings settings;
+
+	static int admissible_scaled_weight;
+	static int admissible_base_weight;
 };

@@ -7,31 +7,32 @@
 #include <boost/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 
+int KmodPathFinder::admissible_scaled_weight = 1;
+int KmodPathFinder::admissible_base_weight = 1;
+
 CvPathSettings::CvPathSettings(const CvSelectionGroup* pGroup, int iFlags, int iMaxPath, int iHW)
 	: pGroup(const_cast<CvSelectionGroup*>(pGroup)), iFlags(iFlags), iMaxPath(iMaxPath)
 // I'm really sorry about the const_cast. I can't fix the const-correctness of all the relevant functions,
 // because some of them are dllexports. The original code essentially does the same thing anyway, with void* casts.
 {
-	if (iHW >= 0)
-		iHeuristicWeight = iHW;
-	else
+	// empty. (there use to be something here, but we don't need it anymore.)
+}
+
+void KmodPathFinder::InitHeuristicWeights()
+{
+	admissible_base_weight = GC.getMOVE_DENOMINATOR()/2;
+	admissible_scaled_weight = GC.getMOVE_DENOMINATOR()/2;
+	for (int r = 0; r < GC.getNumRouteInfos(); r++)
 	{
-		// calculate the minimum step cost. TODO. (the values here are correct only for the current xml settings.)
-		if (!pGroup)
+		const CvRouteInfo& kInfo = GC.getRouteInfo((RouteTypes)r);
+		int iCost = kInfo.getMovementCost();
+		for (int t = 0; t < GC.getNumTechInfos(); t++)
 		{
-			iHeuristicWeight = 1;
+			if (kInfo.getTechMovementChange(t) < 0)
+				iCost += kInfo.getTechMovementChange(t);
 		}
-		else
-		{
-			if (pGroup->getDomainType() == DOMAIN_SEA)
-			{
-				iHeuristicWeight = GC.getMOVE_DENOMINATOR(); // maybe divide by 2, just in case someone adds a double-moves promotion?
-			}
-			else
-			{
-				iHeuristicWeight = std::min(20, pGroup->baseMoves() * 6); // railroad. (should get the 20 and 6 from the xml)
-			}
-		}
+		admissible_base_weight = std::min(admissible_base_weight, iCost);
+		admissible_scaled_weight = std::min(admissible_scaled_weight, kInfo.getFlatMovementCost());
 	}
 }
 
@@ -146,6 +147,26 @@ void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 		}
 	}
 	settings = new_settings;
+
+	if (settings.iHeuristicWeight < 0)
+	{
+		if (!settings.pGroup)
+		{
+			settings.iHeuristicWeight = 1;
+		}
+		else
+		{
+			if (settings.pGroup->getDomainType() == DOMAIN_SEA)
+			{
+				// this assume there are no sea-roads, or promotions to reduce sea movement cost.
+				settings.iHeuristicWeight = GC.getMOVE_DENOMINATOR();
+			}
+			else
+			{
+				settings.iHeuristicWeight = std::min(admissible_base_weight, settings.pGroup->baseMoves() * admissible_scaled_weight);
+			}
+		}
+	}
 }
 
 void KmodPathFinder::Reset()
