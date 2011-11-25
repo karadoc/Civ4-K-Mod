@@ -2202,7 +2202,7 @@ void CvUnitAI::AI_attackMove()
 		// K-Mod
 		if (AI_anyAttack(1, 60, 0, 2))
 			return;
-		if (iOurDefense > iEnemyOffense && AI_anyAttack(2, 50))
+		if (iOurDefense > iEnemyOffense && AI_anyAttack(2, 51))
 			return;
 		// K-Mod end
 
@@ -2929,49 +2929,46 @@ void CvUnitAI::AI_attackCityMove()
 		pTargetCity = AI_pickTargetCity(iMoveFlags, MAX_INT, bHuntBarbs);
 	}
 
-	if( pTargetCity != NULL )
+	if (pTargetCity != NULL)
 	{
 		int iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
-		int iAttackRatio = GC.getBBAI_ATTACK_CITY_STACK_RATIO();
-		int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
-		// K-Mod - I'm going to scale the attack ratio based on our war strategy
+		if (iStepDistToTarget <= 2)
 		{
-			int iAdjustment = 5;
-			iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
-			iAdjustment += GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? -10 : 0;
-			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 0);
-			iAttackRatio += iAdjustment;
-			iAttackRatioSkipBombard += iAdjustment;
-		}
-		// K-Mod end
+			int iAttackRatio = GC.getBBAI_ATTACK_CITY_STACK_RATIO();
+			int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
+			// K-Mod - I'm going to scale the attack ratio based on our war strategy
+			{
+				int iAdjustment = 5;
+				iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
+				iAdjustment += GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? -10 : 0;
+				iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 0);
+				iAttackRatio += iAdjustment;
+				iAttackRatioSkipBombard += iAdjustment;
+			}
+			// K-Mod end
 
-		if( isBarbarian() )
-		{
-			iAttackRatio = 80;
-		}
+			if( isBarbarian() )
+			{
+				iAttackRatio = 80;
+			}
 
-		int iComparePostBombard = 0;
-		if( iStepDistToTarget <= 2 || pTargetCity->isVisible(getTeam(),false) )
-		{
+			int iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true);
 			// K-Mod note: AI_compareStacks will try to use the AI memory if it can't see.
-			iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true);
+			{
+				// K-Mod
+				// The defense modifier is counted in AI_compareStacks. So if we add it again, we'd be double counting.
+				// I'm going to subtract defence, but unfortunately this will reduce based on the total rather than the base.
+				int iDefenseModifier = pTargetCity->getDefenseModifier(false);
+				int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
+				int iReducedModifier = iDefenseModifier;
+				iReducedModifier *= std::min(20, iBombardTurns);
+				iReducedModifier /= 20;
+				iComparePostBombard *= 200;
+				iComparePostBombard /= std::max(1, 200 + iReducedModifier - iDefenseModifier); // def. mod. < 200. I promise.
+				// using 200 instead of 100 to offset the over-reduction from compounding.
+				// With this, bombarding a defence bonus of 100% with reduce effective defence by 50%
+			}
 
-			// K-Mod
-			// The defense modifier is counted in AI_compareStacks. So if we add it again, we'd be double counting.
-			// I'm going to subtract defence, but unfortunately this will reduce based on the total rather than the base.
-			int iDefenseModifier = pTargetCity->getDefenseModifier(false);
-			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
-			int iReducedModifier = iDefenseModifier;
-			iReducedModifier *= std::min(20, iBombardTurns);
-			iReducedModifier /= 20;
-			iComparePostBombard *= 200;
-			iComparePostBombard /= std::max(1, 200 + iReducedModifier - iDefenseModifier); // def. mod. < 200. I promise.
-			// using 200 instead of 100 to offset the over-reduction from compounding.
-			// With this, bombarding a defence bonus of 100% with reduce effective defence by 50%
-		}
-
-		if( iStepDistToTarget <= 2 )
-		{
 			if( iComparePostBombard < iAttackRatio )
 			{
 				//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
@@ -3118,7 +3115,7 @@ void CvUnitAI::AI_attackCityMove()
 		return;
 	}
 
-	// BBAI TODO: Stack v stack combat ... definitely want to do in own territory, but what about enemy territory?
+	/* original bts code
 	if (collateralDamage() > 0 && plot()->getOwnerINLINE() == getOwnerINLINE())
 	{
 		if (AI_anyAttack(1, 45, iMoveFlags, 3, false, false))
@@ -3133,7 +3130,21 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 		}
+	} */
+	// K-Mod. Let have some slightly smarter stack vs. stack AI.
+	// it would be nice to have some personality effection here...
+	// eg. protective leaders have a lower risk threshold.   -- Maybe later.
+	if (bAtWar) // recall that "bAtWar" just means we are in enemy territory.
+	{
+		if (AI_stackVsStack(1, 160, 100, iMoveFlags))
+			return;
 	}
+	else
+	{
+		if (AI_stackVsStack(4, 130, 60, iMoveFlags))
+			return;
+	}
+	// K-Mod end
 
 	if (AI_anyAttack(1, 60, iMoveFlags, 0, false))
 	{
@@ -15851,12 +15862,12 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 		/*int iOurStrength = GET_PLAYER(getOwnerINLINE()).AI_getOurPlotStrength(plot(), 0, false, false);
 		int iEnemyStrength = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(), 2, false, false);*/
 		// K-Mod
-		int iOurStrength = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 0, false, false, true);
+		int iOurDefence = kOwner.AI_localDefenceStrength(plot(), getTeam());
 		int iEnemyStrength = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2);
 		// K-Mod end
 		if (iEnemyStrength > 0)
 		{
-			if (((iOurStrength * 100) / iEnemyStrength) < iStrengthThreshold)
+			if (((iOurDefence * 100) / iEnemyStrength) < iStrengthThreshold)
 			{
 				return false;
 			}
@@ -15981,6 +15992,63 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 					if (iValue > iThreshold)
 					{
 						iThreshold = iValue;
+						pBestPlot = getPathEndTurnPlot();
+					}
+				}
+			}
+		} // dy
+	} // dx
+
+	if (pBestPlot != NULL)
+	{
+		FAssert(!atPlot(pBestPlot));
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		return true;
+	}
+
+	return false;
+}
+
+// iAttackThreshold is the minimum ratio for our attack / their defence.
+// iDefenceThreshold is the minimum ratio for their attack / our defence.
+bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRiskThreshold, int iFlags)
+{
+	PROFILE_FUNC();
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	//int iOurDefence = kOwner.AI_localDefenceStrength(plot(), getTeam());
+	int iOurDefence = getGroup()->AI_sumStrength(0); // not counting defensive bonuses
+
+	CvPlot* pBestPlot = NULL;
+	int iBestValue = 0;
+
+	for (int iDX = -iSearchRange; iDX <= iSearchRange; iDX++)
+	{
+		for (int iDY = -iSearchRange; iDY <= iSearchRange; iDY++)
+		{
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+			if (pLoopPlot && AI_plotValid(pLoopPlot) && !atPlot(pLoopPlot))
+			{
+				int iEnemies = pLoopPlot->getNumVisibleEnemyDefenders(this);
+				int iPathTurns;
+				if (iEnemies > 0 && generatePath(pLoopPlot, iFlags, true, &iPathTurns, 1) && iPathTurns <= 1)
+				{
+					int iEnemyAttack = kOwner.AI_localAttackStrength(pLoopPlot, NO_TEAM, getDomainType(), 0, false);
+
+					int iRiskRatio = 100 * iEnemyAttack / std::max(1, iOurDefence);
+					if (iRiskRatio < iRiskThreshold)
+						continue;
+
+					int iAttackRatio = getGroup()->AI_compareStacks(pLoopPlot, true);
+					if (iAttackRatio < iAttackThreshold)
+						continue;
+
+					int iValue = iAttackRatio * iRiskRatio;
+
+					if (iValue > iBestValue)
+					{
+						iBestValue = iValue;
 						pBestPlot = getPathEndTurnPlot();
 					}
 				}
