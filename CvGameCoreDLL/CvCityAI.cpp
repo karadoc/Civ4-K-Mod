@@ -921,7 +921,7 @@ void CvCityAI::AI_chooseProduction()
 
 	/* original bts code
 	int iUnitCostPercentage = (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts()); */
-	int iUnitSpending = kPlayer.AI_unitCostPerMil() / 3; // K-Mod
+	int iUnitSpending = kPlayer.AI_unitCostPerMil(); // K-Mod. (note, this is around 3x bigger than the original formula)
 	int iWaterPercent = AI_calculateWaterWorldPercent();
 	
 	int iBuildUnitProb = AI_buildUnitProb();
@@ -2203,9 +2203,9 @@ void CvCityAI::AI_chooseProduction()
 			return;
 		}
 	}
-	
-	//int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
-	int iMaxUnitSpending = (bAggressiveAI ? 8 : 4) + iBuildUnitProb / 3; // K-Mod. (unit spending is not what it use to be)
+
+	/* original bts / bbai code
+	int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
 
 	if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
 	{
@@ -2263,12 +2263,13 @@ void CvCityAI::AI_chooseProduction()
 			default:
 				FAssert(false);
 		}
-	}
+	} */
+	int iMaxUnitSpending = kPlayer.AI_maxUnitCostPerMil(area(), iBuildUnitProb); // K-Mod
 
 	int iCarriers = kPlayer.AI_totalUnitAIs(UNITAI_CARRIER_SEA);
 	
 	// Revamped logic for production for invasions
-    if (iUnitSpending < (iMaxUnitSpending + 10))
+	if (iUnitSpending < iMaxUnitSpending + 25) // was + 10 (new unit spending metric)
 	{
 		bool bBuildAssault = bAssault;
 		CvArea* pAssaultWaterArea = NULL;
@@ -2516,7 +2517,7 @@ void CvCityAI::AI_chooseProduction()
     UnitTypes eBestAttackAircraft = NO_UNIT;
     UnitTypes eBestMissile = NO_UNIT;
     
-	if (iUnitSpending < (iMaxUnitSpending + 4) && (!bImportantCity || bDefenseWar) )
+	if (iUnitSpending < (iMaxUnitSpending + 12) && (!bImportantCity || bDefenseWar) ) // K-Mod. was +4, now +12 for the new unit spending metric
 	{
 		if( bLandWar || bAssault || (iFreeAirExperience > 0) || (GC.getGame().getSorenRandNum(3, "AI train air") == 0) )
 		{
@@ -2874,7 +2875,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	if (iUnitSpending < iMaxUnitSpending + 4 && !bFinancialTrouble)
+	if (iUnitSpending < iMaxUnitSpending + 12 && !bFinancialTrouble) // was +4 (new metric)
 	{
 		if ((iAircraftHave * 2 >= iAircraftNeed) && (iAircraftHave < iAircraftNeed))
 		{
@@ -3040,7 +3041,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	bChooseUnit = false;
-	if (iUnitSpending < iMaxUnitSpending + 5)
+	if (iUnitSpending < iMaxUnitSpending + 15) // was +5 (new metric)
 	{
 		// K-Mod
 		iBuildUnitProb *= (250 + iBestBuildingValue);
@@ -8099,9 +8100,11 @@ void CvCityAI::AI_doDraft(bool bForce)
 			}
 			bool bLandWar = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
 			bool bDanger = (!AI_isDefended() && AI_isDanger());
+			int iUnitCostPerMil = kOwner.AI_unitCostPerMil(); // K-Mod
 
 			// Don't go broke from drafting
-			if( !bDanger && kOwner.AI_isFinancialTrouble() )
+			//if( !bDanger && kOwner.AI_isFinancialTrouble() )
+			if (!bDanger && iUnitCostPerMil > kOwner.AI_maxUnitCostPerMil(area(), AI_buildUnitProb())) // K-Mod
 			{
 				return;
 			}
@@ -8118,7 +8121,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 			// one more thing... it's not "good value" if we already have too many troops.
 			if (!bLandWar && bGoodValue)
 			{
-				bGoodValue = kOwner.AI_unitCostPerMil() <= 30 + kOwner.AI_getFlavorValue(FLAVOR_MILITARY);
+				bGoodValue = iUnitCostPerMil <= kOwner.AI_maxUnitCostPerMil(area(), AI_buildUnitProb()/2) + kOwner.AI_getFlavorValue(FLAVOR_MILITARY);
 			}
 			// K-Mod end - although, I've put a bunch of 'bGoodValue' conditions in all through the rest of this function.
 
@@ -10537,8 +10540,6 @@ int CvCityAI::AI_buildUnitProb()
 	return std::min(100, iProb); // experimental (K-Mod)
 }
 
-
-// Improved worker AI provided by Blake - thank you!
 void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peBestBuild, int iFoodPriority, int iProductionPriority, int iCommercePriority, bool bChop, int iHappyAdjust, int iHealthAdjust, int iFoodChange)
 {
 	PROFILE_FUNC();

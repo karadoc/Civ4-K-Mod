@@ -4796,8 +4796,8 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				int iUnitCostPercentage = (iUnitCost * 100) / std::max(1, iTotalCosts);
 				szString.append(CvWString::format(L"\nUnit cost percentage: %d (%d / %d)", iUnitCostPercentage, iUnitCost, iTotalCosts)); */
 				// K-Mod
-				int iUnitCostPerMil = kPlayer.AI_unitCostPerMil();
-				szString.append(CvWString::format(L"\nUnit Cost: %d (old: %d%%)", iUnitCostPerMil/3, (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts())));
+				int iBuildUnitProb = static_cast<CvCityAI*>(pCity)->AI_buildUnitProb();
+				szString.append(CvWString::format(L"\nUnit Cost: %d (max: %d)", kPlayer.AI_unitCostPerMil(), kPlayer.AI_maxUnitCostPerMil(pCity->area(), iBuildUnitProb)));
 				// K-Mod end
 
 				szString.append(CvWString::format(L"\nUpgrade all units: %d gold", kPlayer.AI_getGoldToUpgradeAllUnits()));
@@ -4817,7 +4817,6 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					szString.append(CvWString::format(L"\nAverage citizen value: %d", iValue));
 
 					//
-					int iBuildUnitProb = static_cast<CvCityAI*>(pCity)->AI_buildUnitProb();
 					szString.append(CvWString::format(L"\nBuild unit prob: %d%%", iBuildUnitProb));
 					BuildingTypes eBestBuilding = static_cast<CvCityAI*>(pCity)->AI_bestBuildingThreshold(0, 0, 0, true);
 					int iBestBuildingValue = (eBestBuilding == NO_BUILDING) ? 0 : pCity->AI_buildingValue(eBestBuilding, 0, 0, true);

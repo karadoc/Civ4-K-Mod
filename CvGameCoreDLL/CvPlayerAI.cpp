@@ -552,6 +552,7 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 	int iUpgradeBudget = (AI_getGoldToUpgradeAllUnits() / (bAnyWar ? 1 : 2));
 	iUpgradeBudget = std::min(iUpgradeBudget, iStartingGold - ((iTargetGold > iUpgradeBudget) ? (iTargetGold - iUpgradeBudget) : iStartingGold/2)); */
 	// K-Mod. Note: AI_getGoldToUpgradeAllUnits() is actually one of the components of AI_goldTarget()
+	int iCostPerMil = AI_unitCostPerMil(); // used for scrap decisions.
 	int iUpgradeBudget = 0;
 	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
 	{
@@ -656,28 +657,38 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 							iCityExp += pPlotCity->getUnitCombatFreeExperience(pLoopUnit->getUnitCombatType());
 							if (iCityExp > 0)
 							{
-								if ((iExp == 0) || (iExp < (iCityExp + 1) / 2))
+								/*if ((iExp == 0) || (iExp < (iCityExp + 1) / 2))
 								{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency    (and fixed by K-Mod. -- jdog5000, you forgot the "not")               */
-/************************************************************************************************/
+									/* original bts code
 									if ((pLoopUnit->getDomainType() != DOMAIN_LAND) || pLoopUnit->plot()->plotCount(PUF_isMilitaryHappiness, -1, -1, getID()) > 1)
 									{
-										//if ((calculateUnitCost() > 0) && (AI_getPlotDanger( pLoopUnit->plot(), 2, false) == 0))
-										if (calculateUnitCost() > 0 && !AI_getAnyPlotDanger( pLoopUnit->plot(), 2, false))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/	
+										if ((calculateUnitCost() > 0) && (AI_getPlotDanger( pLoopUnit->plot(), 2, false) == 0))
 										{										
-											//pLoopUnit->kill(false); // original code
-											pLoopUnit->scrap(); // K-Mod
+											pLoopUnit->kill(false);
 											bKilled = true;
 											pLastUpgradePlot = NULL;
 										}
 									}
+								} */
+								// K-Mod
+								if (iExp < iCityExp)
+								{
+									int iDefenders = pLoopUnit->plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getID(), NO_TEAM, PUF_isCityAIType);
+									if (iDefenders > pPlotCity->AI_minDefenders() && !AI_getAnyPlotDanger(pLoopUnit->plot(), 2, false))
+									{
+										if (iCostPerMil > AI_maxUnitCostPerMil(pLoopUnit->area()) + 2*iExp + 4*std::max(0, pPlotCity->AI_neededDefenders() - iDefenders))
+										{
+											if (gUnitLogLevel > 2)
+												logBBAI("    %S scraps %S, with %d exp, and %d / %d spending.", getCivilizationDescription(0), pLoopUnit->getName(0).GetCString(), iExp, iCostPerMil, AI_maxUnitCostPerMil(pLoopUnit->area()));
+											pLoopUnit->scrap();
+											pLoopUnit->doDelayedDeath(); // I could have just done kill(), but who know what extra work scrap() wants to do for us?
+											bKilled = true;
+											pLastUpgradePlot = NULL;
+											iCostPerMil = AI_unitCostPerMil(); // recalculate
+										}
+									}
 								}
+								// K-Mod end
 							}
 						}
 					}
@@ -11550,6 +11561,88 @@ int CvPlayerAI::AI_unitCostPerMil() const
 	iFunds += getGoldPerTurn() - calculateInflatedCosts();
 	iFunds += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
 	return std::max(0, calculateUnitCost()-getNumCities()/2) * 1000 / std::max(1, iFunds); // # cities is there to offset early-game distortion.
+}
+
+// This function gives an approximate / recommended maximum on our unit spending. Note though that it isn't a hard cap.
+// we might go as high has 20 point above the "maximum"; and of course, the maximum might later go down.
+// So this should only be used as a guide.
+int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
+{
+	if (isBarbarian())
+		return 500;
+
+	if (GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE))
+		return 20; // ??
+
+	if (iBuildProb < 0)
+		iBuildProb = GC.getLeaderHeadInfo(getPersonalityType()).getBuildUnitProb() + 6; // a rough estimate.
+
+	bool bTotalWar = GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true);
+	bool bAggressiveAI = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
+
+	int iMaxUnitSpending = (bAggressiveAI ? 24 : 12) + iBuildProb;
+
+	if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4))
+	{
+		iMaxUnitSpending += 20;
+	}
+	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION3))
+	{
+		iMaxUnitSpending += 10;
+	}
+	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1))
+	{
+		iMaxUnitSpending += 5;
+	}
+
+	if (AI_isDoStrategy(AI_STRATEGY_FINAL_WAR))
+	{
+		iMaxUnitSpending += 200;
+	}
+	else
+	{
+		iMaxUnitSpending += bTotalWar ? 10 + iBuildProb / 2 : 0;
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 10 + AI_getFlavorValue(FLAVOR_MILITARY) : 0;
+		if (pArea)
+		{
+			switch (pArea->getAreaAIType(getTeam()))
+			{
+			case AREAAI_OFFENSIVE:
+				iMaxUnitSpending += 20;
+				break;
+
+			case AREAAI_DEFENSIVE:
+				iMaxUnitSpending += 35;
+				break;
+
+			case AREAAI_MASSING:
+				iMaxUnitSpending += 40;
+				break;
+
+			case AREAAI_ASSAULT:
+				iMaxUnitSpending += 25;
+				break;
+
+			case AREAAI_ASSAULT_MASSING:
+				iMaxUnitSpending += 40;
+				break;
+
+			case AREAAI_ASSAULT_ASSIST:
+				iMaxUnitSpending += 15;
+				break;
+
+			case AREAAI_NEUTRAL:
+				break;
+			default:
+				FAssert(false);
+			}
+		}
+		else
+		{
+			iMaxUnitSpending += GET_TEAM(getTeam()).getAnyWarPlanCount(true) ? 25 : 0;
+		}
+	}
+	return iMaxUnitSpending;
 }
 // K-Mod end
 
