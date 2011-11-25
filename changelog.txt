@@ -1,5 +1,22 @@
-This is K-Mod version 1.09.
+This is K-Mod version 1.10.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.10 changelist
+
++ Wrote a new pathfinding engine. The new system produces the same results as the original system, but it is slightly more flexible and can be used much more efficiently. With the new pathfinding engine, and related changes, the game now runs significantly faster. (Note: for efficiency reasons, the new pathfinder currently assumes that there can be no roads on the ocean. If this is used in a mod that does have ocean roads, the pathfinder may produce non-optimal results.)
++ Changed the structure of the pathValid function, and the groupPathTo to help prevent future bugs. (This completely removes the possibility of the AI entering forbidden territory - which was the target of a few previous bug fixes.)
++ Fixed a rare bug which could potentially cause the auto-production governor to crash the game.
+
++ Added new AI function, AI_stackVsStack, which is used in AI_attackCityMove - this allows the AI to use its attack stacks to wipe out enemy attack stacks.
++ Taught the AI to conscript more freely when it is good value. (With standard settings, this will only happen for riflemen.)
++ Fixed a problem in AI_promotionValue which was preventing the AI from choosing healing promotions as often as intended.
++ Rewrote CvUnitAI::AI_guardCity. The rewrite fixes a double-counting problem which caused units to oscillate in and out of cities; removes some duplicated code; and gives higher priority to cities which need more defenders.
++ Adjusted AI_groupFirstVal values so that ATTACK_CITY always scores higher than ATTACK. (Previously, the overlap sometimes caused the AI to become confused about how it should group its units.)
++ Tweaked recon spy plot value so that it favours enemy territory.
++ Tweaked the conditions for the AI SPACE3 strategy.
++ Added the possibility of the AI converting their UNITAI_EXPLORE units to UNITAI_ATTACK, rather than just deleting them.
++ If the AI has not seen any target cities, it will magically know the location of the closest city in the area. This is so that they city attack stacks don't stay idle when no cities have been seen. (Think of it like a human player inferring the position based on the shape of the border. - Note: in the original AI the AI cheated like this for all cities - not just the closest city, and not just in the local area.)
 
 --
 v1.09 changelist
@@ -32,6 +49,9 @@ v1.09 changelist
 + Tweaked some of the worker AI.
 + Reduced the probability of the AI building spies in low productivity cities.
 + The AI will now reconsider its current city production after a building is sabotaged.
+
+v1.09b
++ Fixed an AI deadlock bug.
 
 --
 
