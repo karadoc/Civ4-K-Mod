@@ -671,17 +671,17 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 									}
 								} */
 								// K-Mod
-								if (iExp < iCityExp)
+								if (iExp < iCityExp && GC.getGameINLINE().getGameTurn() - pLoopUnit->getGameTurnCreated() > 8)
 								{
 									int iDefenders = pLoopUnit->plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getID(), NO_TEAM, PUF_isCityAIType);
 									if (iDefenders > pPlotCity->AI_minDefenders() && !AI_getAnyPlotDanger(pLoopUnit->plot(), 2, false))
 									{
-										if (iCostPerMil > AI_maxUnitCostPerMil(pLoopUnit->area()) + 2*iExp + 4*std::max(0, pPlotCity->AI_neededDefenders() - iDefenders))
+										if (iCostPerMil > AI_maxUnitCostPerMil(pLoopUnit->area(), 100) + 2*iExp + 4*std::max(0, pPlotCity->AI_neededDefenders() - iDefenders))
 										{
 											if (gUnitLogLevel > 2)
-												logBBAI("    %S scraps %S, with %d exp, and %d / %d spending.", getCivilizationDescription(0), pLoopUnit->getName(0).GetCString(), iExp, iCostPerMil, AI_maxUnitCostPerMil(pLoopUnit->area()));
+												logBBAI("    %S scraps %S, with %d exp, and %d / %d spending.", getCivilizationDescription(0), pLoopUnit->getName(0).GetCString(), iExp, iCostPerMil, AI_maxUnitCostPerMil(pLoopUnit->area(), 100));
 											pLoopUnit->scrap();
-											pLoopUnit->doDelayedDeath(); // I could have just done kill(), but who know what extra work scrap() wants to do for us?
+											pLoopUnit->doDelayedDeath(); // I could have just done kill(), but who knows what extra work scrap() wants to do for us?
 											bKilled = true;
 											pLastUpgradePlot = NULL;
 											iCostPerMil = AI_unitCostPerMil(); // recalculate
@@ -11584,11 +11584,11 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4))
 	{
-		iMaxUnitSpending += 20;
+		iMaxUnitSpending += 25;
 	}
 	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION3))
 	{
-		iMaxUnitSpending += 10;
+		iMaxUnitSpending += 15;
 	}
 	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1))
 	{
@@ -11597,18 +11597,18 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 
 	if (AI_isDoStrategy(AI_STRATEGY_FINAL_WAR))
 	{
-		iMaxUnitSpending += 200;
+		iMaxUnitSpending += 300;
 	}
 	else
 	{
-		iMaxUnitSpending += bTotalWar ? 10 + iBuildProb / 2 : 0;
+		iMaxUnitSpending += bTotalWar ? 20 + iBuildProb / 2 : 0;
 		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 10 + AI_getFlavorValue(FLAVOR_MILITARY) : 0;
 		if (pArea)
 		{
 			switch (pArea->getAreaAIType(getTeam()))
 			{
 			case AREAAI_OFFENSIVE:
-				iMaxUnitSpending += 20;
+				iMaxUnitSpending += 25;
 				break;
 
 			case AREAAI_DEFENSIVE:
@@ -11616,7 +11616,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 				break;
 
 			case AREAAI_MASSING:
-				iMaxUnitSpending += 40;
+				iMaxUnitSpending += 45;
 				break;
 
 			case AREAAI_ASSAULT:
@@ -11624,11 +11624,11 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 				break;
 
 			case AREAAI_ASSAULT_MASSING:
-				iMaxUnitSpending += 40;
+				iMaxUnitSpending += 45;
 				break;
 
 			case AREAAI_ASSAULT_ASSIST:
-				iMaxUnitSpending += 15;
+				iMaxUnitSpending += 20;
 				break;
 
 			case AREAAI_NEUTRAL:
@@ -11639,7 +11639,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 		}
 		else
 		{
-			iMaxUnitSpending += GET_TEAM(getTeam()).getAnyWarPlanCount(true) ? 25 : 0;
+			iMaxUnitSpending += GET_TEAM(getTeam()).getAnyWarPlanCount(true) ? 35 : 0;
 		}
 	}
 	return iMaxUnitSpending;
@@ -14516,7 +14516,8 @@ void CvPlayerAI::AI_doCommerce()
 	iTargetTurns /= 100;
 	iTargetTurns = std::max(3, iTargetTurns);
 	// K-Mod. make it faster on the way down
-	if (getGold() > iGoldTarget)
+	bool bFinancialTrouble = AI_isFinancialTrouble();
+	if (!bFinancialTrouble && getGold() > iGoldTarget)
 		iTargetTurns = (iTargetTurns + 1)/2;
 	// K-Mod end
 
@@ -14977,7 +14978,7 @@ void CvPlayerAI::AI_doCommerce()
 
 		//if economy is weak, neglect espionage spending.
 		//instead invest hammers into espionage via spies/builds
-		if (AI_isFinancialTrouble() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || !bFirstTech) // K-Mod
+		if (bFinancialTrouble || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || !bFirstTech) // K-Mod
 		{
 			//can still get trickle espionage income
 			iEspionageTargetRate = 0;
@@ -18453,7 +18454,7 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 		}
 		int iKnownTeams = 0;
 		int iSpaceTeams = 0; // teams ahead of us in the space race
-		for (int iTeam; iTeam < MAX_CIV_TEAMS; iTeam++)
+		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; iTeam++)
 		{
 			const CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
 			if (iTeam != getTeam() && kLoopTeam.isAlive() && kLoopTeam.isHasMet(getTeam()))

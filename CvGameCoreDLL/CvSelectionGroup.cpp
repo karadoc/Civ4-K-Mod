@@ -1659,7 +1659,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 /* original bts code
 							if( (pTargetUnit->plot()->isWater() || pTargetUnit->plot()->isFriendlyCity(*getHeadUnit(), true)) && generatePath(plot(), pTargetUnit->plot(), 0, false, &iPathTurns) )
 */
-							if( (canMoveAllTerrain() || pTargetUnit->plot()->isWater() || pTargetUnit->plot()->isFriendlyCity(*getHeadUnit(), true)) && generatePath(plot(), pTargetUnit->plot(), 0, false, &iPathTurns) )
+							if( (canMoveAllTerrain() || pTargetUnit->plot()->isWater() || pTargetUnit->plot()->isFriendlyCity(*getHeadUnit(), true)) && generatePath(plot(), pTargetUnit->plot(), 0, true, &iPathTurns) )
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -1682,7 +1682,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 
 										if( pAdjacentPlot->isWater() || pAdjacentPlot->isFriendlyCity(*getHeadUnit(), true) )
 										{
-											if( generatePath(plot(), pAdjacentPlot, 0, true, &iPathTurns) )
+											if( generatePath(plot(), pAdjacentPlot, 0, true, &iPathTurns, iBestPathTurns) )
 											{
 												if( iPathTurns < iBestPathTurns )
 												{
@@ -3528,14 +3528,27 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 
 	CvPlot* pDestPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 
-	//if (iFlags & MOVE_THROUGH_ENEMY)
-	if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK)) // K-Mod
+	// K-Mod. Rather than clearing the existing path data; use a temporary pathfinder.
+	KmodPathFinder final_path;
+	final_path.SetSettings(this, iFlags & ~MOVE_DECLARE_WAR);
+
+	/* original bts code
+	if (iFlags & MOVE_THROUGH_ENEMY)
 	{
 		if (generatePath(plot(), pDestPlot, iFlags))
 		{
 			pDestPlot = getPathFirstPlot();
 		}
+	} */
+	// K-Mod
+	if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK))
+	{
+		if (final_path.GeneratePath(pDestPlot))
+		{
+			pDestPlot = final_path.GetPathFirstPlot();
+		}
 	}
+	// K-Mod end
 
 	FAssertMsg(pDestPlot != NULL, "DestPlot is not assigned a valid value");
 
@@ -3549,7 +3562,7 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 		if ((getDomainType() == DOMAIN_AIR) || (stepDistance(getX(), getY(), pDestPlot->getX_INLINE(), pDestPlot->getY_INLINE()) == 1))
 		{
 			//if ((iFlags & MOVE_DIRECT_ATTACK) || (getDomainType() == DOMAIN_AIR) || (iFlags & MOVE_THROUGH_ENEMY) || (generatePath(plot(), pDestPlot, iFlags) && (getPathFirstPlot() == pDestPlot)))
-			if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK | MOVE_DIRECT_ATTACK) || getDomainType() == DOMAIN_AIR || (generatePath(plot(), pDestPlot, iFlags) && getPathFirstPlot() == pDestPlot)) // K-Mod
+			if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK | MOVE_DIRECT_ATTACK) || getDomainType() == DOMAIN_AIR || (final_path.GeneratePath(pDestPlot) && final_path.GetPathFirstPlot() == pDestPlot)) // K-Mod
 			{
 				int iAttackOdds;
 				CvUnit* pBestAttackUnit = AI_getBestGroupAttacker(pDestPlot, true, iAttackOdds);
@@ -3743,16 +3756,27 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	}
 	else
 	{
-		// K-Mod. I've added & ~MOVE_DECLARE_WAR so that if we need to declare war at this point, and haven't yet done so,
-		// the move will fail here rather than splitting the group inside groupMove
+		/* original bts code
 		if (!generatePath(plot(), pDestPlot, iFlags & ~MOVE_DECLARE_WAR))
 		{
 			return false;
 		}
 
-		pPathPlot = getPathFirstPlot();
+		pPathPlot = getPathFirstPlot(); */
+		// K-Mod. I've added & ~MOVE_DECLARE_WAR so that if we need to declare war at this point, and haven't yet done so,
+		// the move will fail here rather than splitting the group inside groupMove.
+		// Also, I've change it to use a different pathfinder, to avoid clearing the path data - and to avoid OOS errors.
+		KmodPathFinder final_path;
+		final_path.SetSettings(this, iFlags & ~MOVE_DECLARE_WAR);
+		if (!final_path.GeneratePath(pDestPlot))
+		{
+			return false;
+		}
 
-		if (groupAmphibMove(pPathPlot, iFlags & ~MOVE_DECLARE_WAR))
+		pPathPlot = final_path.GetPathFirstPlot();
+		// K-Mod end
+
+		if (groupAmphibMove(pPathPlot, iFlags))
 		{
 			return false;
 		}

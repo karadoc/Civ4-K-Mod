@@ -283,7 +283,7 @@ bool CvSelectionGroupAI::AI_update()
 				break;
 			}
 
-			resetPath();
+			//resetPath(); // disabled by K-Mod (testing)
 
 			if (pHeadUnit->AI_update())
 			{

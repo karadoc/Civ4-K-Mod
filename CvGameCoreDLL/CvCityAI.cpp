@@ -2155,7 +2155,7 @@ void CvCityAI::AI_chooseProduction()
 
 	// K-Mod, short-circuit 2 - a strong chance to build some high value buildings.
 	{
-		int iOdds = std::max(0, (bLandWar ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25);
+		int iOdds = std::max(0, (bLandWar || (bAssault && pWaterArea) ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 2 (odds: %d)", getName().GetCString(), iOdds);
@@ -2264,7 +2264,7 @@ void CvCityAI::AI_chooseProduction()
 				FAssert(false);
 		}
 	} */
-	int iMaxUnitSpending = kPlayer.AI_maxUnitCostPerMil(area(), iBuildUnitProb); // K-Mod
+	int iMaxUnitSpending = kPlayer.AI_maxUnitCostPerMil(area(), iBuildUnitProb); // K-Mod. (note: this has a different scale to the original code).
 
 	int iCarriers = kPlayer.AI_totalUnitAIs(UNITAI_CARRIER_SEA);
 	
@@ -2339,7 +2339,7 @@ void CvCityAI::AI_chooseProduction()
 			//training so many ships on the assumption that those out at sea
 			//will return...
 
-			int iTransports = iLocalTransports + (bPrimaryArea ? iTransportsAtSea : iTransportsAtSea/4);
+			int iTransports = iLocalTransports + (bPrimaryArea ? iTransportsAtSea/2 : iTransportsAtSea/4);
 			int iTransportCapacity = iBestSeaAssaultCapacity*(iTransports);
 
 			if (NULL != pAssaultWaterArea)
@@ -2636,24 +2636,25 @@ void CvCityAI::AI_chooseProduction()
 
 	// Assault case now completely handled above
 	if (!bAssault && (!bImportantCity || bDefenseWar) && (iUnitSpending < iMaxUnitSpending))
-    {
-        if (!bFinancialTrouble && (bLandWar || (kPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER) && !bGetBetterUnits)))
-        {
-        	int iTrainInvaderChance = iBuildUnitProb + 10;
+	{
+		if (!bFinancialTrouble && (bLandWar || (kPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER) && !bGetBetterUnits)))
+		{
+			//int iTrainInvaderChance = iBuildUnitProb + 10;
+			int iTrainInvaderChance = iBuildUnitProb + (bTotalWar ? 16 : 8); // K-Mod
 
-        	if (bAggressiveAI)
-        	{
-        		iTrainInvaderChance += 15;
-        	}
+			if (bAggressiveAI)
+			{
+				iTrainInvaderChance += 15;
+			}
 
 			if( bGetBetterUnits )
 			{
 				iTrainInvaderChance /= 2;
 			}
-        	else if ((pArea->getAreaAIType(getTeam()) == AREAAI_MASSING) || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_MASSING))
-        	{
-        		iTrainInvaderChance = (100 - ((100 - iTrainInvaderChance) / (bCrushStrategy ? 6 : 3)));
-        	}        	
+			else if ((pArea->getAreaAIType(getTeam()) == AREAAI_MASSING) || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_MASSING))
+			{
+				iTrainInvaderChance = (100 - ((100 - iTrainInvaderChance) / (bCrushStrategy ? 6 : 3)));
+			}        	
 
 			if (AI_chooseBuilding(BUILDINGFOCUS_EXPERIENCE, 20, 0, bDefenseWar ? 10 : 30))
 			{
@@ -2694,7 +2695,7 @@ void CvCityAI::AI_chooseProduction()
 			{
 				return;
 			}
-        }
+		}
 	}
 
 	if ((pWaterArea != NULL) && !bDefenseWar && !bAssault)
@@ -8104,7 +8105,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 
 			// Don't go broke from drafting
 			//if( !bDanger && kOwner.AI_isFinancialTrouble() )
-			if (!bDanger && iUnitCostPerMil > kOwner.AI_maxUnitCostPerMil(area(), AI_buildUnitProb())) // K-Mod
+			if (!bDanger && iUnitCostPerMil > kOwner.AI_maxUnitCostPerMil(area(), 50)) // K-Mod. (cf. conditions for scraping units in AI_doTurnUnitPost)
 			{
 				return;
 			}
@@ -8121,7 +8122,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 			// one more thing... it's not "good value" if we already have too many troops.
 			if (!bLandWar && bGoodValue)
 			{
-				bGoodValue = iUnitCostPerMil <= kOwner.AI_maxUnitCostPerMil(area(), AI_buildUnitProb()/2) + kOwner.AI_getFlavorValue(FLAVOR_MILITARY);
+				bGoodValue = iUnitCostPerMil <= kOwner.AI_maxUnitCostPerMil(area(), 20) + kOwner.AI_getFlavorValue(FLAVOR_MILITARY);
 			}
 			// K-Mod end - although, I've put a bunch of 'bGoodValue' conditions in all through the rest of this function.
 

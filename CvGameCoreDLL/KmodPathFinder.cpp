@@ -43,6 +43,7 @@ bool KmodPathFinder::OpenList_sortPred::operator()(const boost::shared_ptr<FASta
 
 bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 {
+	PROFILE_FUNC();
 	end_node.reset();
 
 	if (!settings.pGroup)
@@ -124,6 +125,25 @@ bool KmodPathFinder::GeneratePath(const CvPlot* pToPlot)
 		return false;
 	return GeneratePath(settings.pGroup->plot()->getX_INLINE(), settings.pGroup->plot()->getY_INLINE(),
 		pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
+}
+
+CvPlot* KmodPathFinder::GetPathFirstPlot() const
+{
+	FAssert(end_node);
+	if (!end_node)
+		return NULL;
+
+	FAStarNode* node = end_node.get();
+
+	if (!node->m_pParent)
+		return GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
+
+	while (node->m_pParent->m_pParent)
+	{
+		node = node->m_pParent;
+	}
+
+	return GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
 }
 
 void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
