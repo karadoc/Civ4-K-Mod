@@ -26,9 +26,10 @@
 #define PATH_CITY_WEIGHT        (200) // K-Mod
 //#define PATH_DEFENSE_WEIGHT   (10)
 #define PATH_DEFENSE_WEIGHT     (4) // K-Mod. ( * defence bonus)
-#define PATH_TERRITORY_WEIGHT   (3)
-#define PATH_STEP_WEIGHT        (2)
-#define PATH_STRAIGHT_WEIGHT    (1)
+#define PATH_TERRITORY_WEIGHT   (5) // was 3
+#define PATH_STEP_WEIGHT        (4) // was 2
+#define PATH_STRAIGHT_WEIGHT    (2) // was 1
+#define PATH_ASYMMETRY_WEIGHT   (1) // K-Mod
 
 // #define PATH_DAMAGE_WEIGHT      (500) // K-Mod (disabled because it isn't used)
 #define PATH_COMBAT_WEIGHT      (300) // K-Mod. penalty for having to fight along the way.
@@ -1538,6 +1539,31 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	{
 		if ((pFromPlot->getX_INLINE() != pToPlot->getX_INLINE()) && (pFromPlot->getY_INLINE() != pToPlot->getY_INLINE()))
 			iWorstCost += PATH_STRAIGHT_WEIGHT;
+	}
+
+	// symmetry breaking. This is meant to prevent two paths from having equal cost.
+	// (If two paths have equal cost, sometimes the interface shows one path and the units follow the other. This is bad.)
+	{
+		const int map_width = GC.getMapINLINE().getGridWidthINLINE();
+		const int map_height = GC.getMapINLINE().getGridHeightINLINE();
+
+#define WRAP_X(x) ((x) - ((x) > map_width/2 ? map_width : 0) + ((x) < -map_width/2 ? map_width : 0))
+#define WRAP_Y(y) ((y) - ((y) > map_height/2 ? map_height : 0) + ((y) < -map_height/2 ? map_height : 0))
+
+		int start_x = pSelectionGroup->getX();
+		int start_y = pSelectionGroup->getY();
+
+		int dx1 = WRAP_X(pFromPlot->getX_INLINE() - start_x);
+		int dy1 = WRAP_Y(pFromPlot->getY_INLINE() - start_y);
+		int dx2 = WRAP_X(pToPlot->getX_INLINE() - start_x);
+		int dy2 = WRAP_Y(pToPlot->getY_INLINE() - start_y);
+
+		// cross product. (greater than zero => sin(angle) > 0 => angle > 0)
+		if (dx1 * dy2 - dx2 * dy1 > 0)
+			iWorstCost += PATH_ASYMMETRY_WEIGHT;
+
+#undef WRAP_X
+#undef WRAP_Y
 	}
 
 	// lets try this without cheating, shall we?
