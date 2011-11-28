@@ -8370,6 +8370,8 @@ bool CvPlayerAI::AI_goldDeal(const CLinkList<TradeData>* pList) const
 /// considering proposals from the human player made in the diplomacy window as well as a couple other places.
 bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData>* pTheirList, const CLinkList<TradeData>* pOurList, int iChange) const
 {
+	const CvTeamAI& kOurTeam = GET_TEAM(getTeam()); // K-Mod
+
 	CLLNode<TradeData>* pNode;
 	int iThreshold;
 
@@ -8437,7 +8439,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 					{
 						if (iTeam != getTeam() && iTeam != GET_PLAYER(ePlayer).getTeam() && atWar(GET_PLAYER(ePlayer).getTeam(), (TeamTypes)iTeam) && !atWar(getTeam(), (TeamTypes)iTeam))
 						{
-							if (GET_TEAM(getTeam()).AI_declareWarTrade((TeamTypes)iTeam, GET_PLAYER(ePlayer).getTeam(), false) != NO_DENIAL)
+							if (kOurTeam.AI_declareWarTrade((TeamTypes)iTeam, GET_PLAYER(ePlayer).getTeam(), false) != NO_DENIAL)
 							{
 								return false;
 							}
@@ -8449,7 +8451,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 			{
 				bVassalTrade = true;
 
-				if( !(GET_TEAM(getTeam()).AI_acceptSurrender(GET_PLAYER(ePlayer).getTeam())) )
+				if( !(kOurTeam.AI_acceptSurrender(GET_PLAYER(ePlayer).getTeam())) )
 				{
 					return false;
 				}
@@ -8470,12 +8472,12 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 	// K-Mod
 	if (iChange < 0)
 	{
-		if (GET_TEAM(getTeam()).AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
+		// There are only a few cases where the AI will allow ongoing trade with its worst enemy...
+		if (kOurTeam.AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam() && !kOurTeam.isVassal(GET_PLAYER(ePlayer).getTeam()))
 		{
-			// There's one special case where the AI allow on going trade with it worst enemy...
-			if (pOurList->getLength() != 1 || pOurList->head()->m_data.m_eItemType != TRADE_GOLD_PER_TURN)
+			if (pOurList->getLength() > 1 || pOurList->head()->m_data.m_eItemType != TRADE_GOLD_PER_TURN)
 			{
-				// but this case isn't it.
+				// this trade isn't one of the special cases.
 				return false;
 			}
 		}
@@ -8489,7 +8491,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 	{
 		// K-Mod
 		// Don't give any gifts to civs that you are about to go to war with.
-		if (GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(ePlayer).getTeam()) != NO_WARPLAN)
+		if (kOurTeam.AI_getWarPlan(GET_PLAYER(ePlayer).getTeam()) != NO_WARPLAN)
 			return false;
 		//Don't cancel gift deals to vassals that you like, unless you need the gift back.
 		if (iChange < 0 && GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(getTeam()))
@@ -8511,13 +8513,13 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 		}
 		// K-Mod end
 
-		if (GET_TEAM(getTeam()).isVassal(GET_PLAYER(ePlayer).getTeam()) && CvDeal::isVassalTributeDeal(pOurList))
+		if (kOurTeam.isVassal(GET_PLAYER(ePlayer).getTeam()) && CvDeal::isVassalTributeDeal(pOurList))
 		{
 			if (AI_getAttitude(ePlayer, false) <= GC.getLeaderHeadInfo(getPersonalityType()).getVassalRefuseAttitudeThreshold()
-				&& GET_TEAM(getTeam()).getAtWarCount(true) == 0
+				&& kOurTeam.getAtWarCount(true) == 0
 				&& GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getDefensivePactCount() == 0)
 			{
-				iOurValue *= (GET_TEAM(getTeam()).getPower(false) + 10);
+				iOurValue *= (kOurTeam.getPower(false) + 10);
 				iOurValue /= (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getPower(false) + 10);
 			}
 			else
@@ -8529,7 +8531,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 		{
 			if (AI_getAttitude(ePlayer) < ATTITUDE_PLEASED)
 			{
-				if (GET_TEAM(getTeam()).getPower(false) > ((GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getPower(false) * 4) / 3))
+				if (kOurTeam.getPower(false) > ((GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getPower(false) * 4) / 3))
 				{
 					return false;
 				}
@@ -8541,7 +8543,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 			}
 		}
 
-		iThreshold = (GET_TEAM(getTeam()).AI_getHasMetCounter(GET_PLAYER(ePlayer).getTeam()) + 50);
+		iThreshold = (kOurTeam.AI_getHasMetCounter(GET_PLAYER(ePlayer).getTeam()) + 50);
 
 		iThreshold *= 2;
 
@@ -8559,7 +8561,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 /************************************************************************************************/
 
 		iThreshold *= (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getPower(false) + 100);
-		iThreshold /= (GET_TEAM(getTeam()).getPower(false) + 100);
+		iThreshold /= (kOurTeam.getPower(false) + 100);
 
 		iThreshold -= GET_PLAYER(ePlayer).AI_getPeacetimeGrantValue(getID());
 

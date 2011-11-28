@@ -1,4 +1,4 @@
-This is K-Mod version 1.10.
+This is K-Mod version 1.10b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -17,6 +17,13 @@ v1.10 changelist
 + Tweaked the conditions for the AI SPACE3 strategy.
 + Added the possibility of the AI converting their UNITAI_EXPLORE units to UNITAI_ATTACK, rather than just deleting them.
 + If the AI has not seen any target cities, it will magically know the location of the closest city in the area. This is so that they city attack stacks don't stay idle when no cities have been seen. (Think of it like a human player inferring the position based on the shape of the border. - Note: in the original AI the AI cheated like this for all cities - not just the closest city, and not just in the local area.)
+
+v1.10b
++ Fixed a problem from the original BtS code which caused the AI to delete units more often than it should. For example, it would delete all the defenders in a city, and it would delete units immediately after drafting them.
++ Fixed a late-game bug which could potentially cause a crash.
++ Added a special symmetry breaking compontent to the pathfinder. Hopefully this will prevent some problems which result from having two paths with equal cost. (eg. The interface showing one path, and then the units following a different path.)
++ Fixed a pathfinding problem which might have been able to cause OOS errors. (It's hard to say for sure if it was actually a problem or not.)
++ Fixed a problem which sometimes caused the AI to cancel deals with their master.
 
 --
 v1.09 changelist
