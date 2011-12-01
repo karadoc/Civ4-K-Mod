@@ -3131,7 +3131,7 @@ void CvUnitAI::AI_attackCityMove()
 			}
 		}
 	} */
-	// K-Mod. Let have some slightly smarter stack vs. stack AI.
+	// K-Mod. Lets have some slightly smarter stack vs. stack AI.
 	// it would be nice to have some personality effection here...
 	// eg. protective leaders have a lower risk threshold.   -- Maybe later.
 	if (bAtWar) // recall that "bAtWar" just means we are in enemy territory.
@@ -3177,15 +3177,31 @@ void CvUnitAI::AI_attackCityMove()
 		if( bReadyToAttack )
 		{
 			// Wait for units about to join our group
+			/* original BBAI code
 			MissionAITypes eMissionAIType = MISSIONAI_GROUP;
 			int iJoiners = kOwner.AI_unitTargetMissionAIs(this, &eMissionAIType, 1, getGroup(), 2);
-			
+
 			if( (iJoiners*5) > getGroup()->getNumUnits() )
 			{
-				//getGroup()->pushMission(MISSION_SKIP);
-				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GROUP); // K-Mod (just for debug feedback)
+				getGroup()->pushMission(MISSION_SKIP);
+				return;
+			}*/
+
+			// K-Mod. If the target city is close, be less likely to wait for backup.
+			int iPathTurns = 10;
+			int iMaxWaitTurns = 3;
+			if (pTargetCity && generatePath(pTargetCity->plot(), iMoveFlags, true, &iPathTurns, iPathTurns))
+				iMaxWaitTurns = (iPathTurns+1) / 3;
+
+			MissionAITypes eMissionAIType = MISSIONAI_GROUP;
+			int iJoiners = iMaxWaitTurns > 0 ? kOwner.AI_unitTargetMissionAIs(this, &eMissionAIType, 1, getGroup(), iMaxWaitTurns) : 0;
+
+			if (iJoiners*range(iPathTurns-1, 2, 5) > getGroup()->getNumUnits())
+			{
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GROUP); // (the mission is just for debug feedback)
 				return;
 			}
+			// K-Mod end
 		}
 		else
 		{
@@ -3200,8 +3216,7 @@ void CvUnitAI::AI_attackCityMove()
 
 			if( bTurtle )
 			{
-				//if (AI_guardCity(false, true, 7))
-				if (AI_guardCity(false, true, 6, iMoveFlags))
+				if (AI_guardCity(false, true, 7, iMoveFlags))
 				{
 					return;
 				}
@@ -16059,6 +16074,10 @@ bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRisk
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
+		if (gUnitLogLevel >= 2)
+		{
+			logBBAI("    Stack for player %d (%S) uses StackVsStack attack with value %d", getOwner(), GET_PLAYER(getOwner()).getCivilizationDescription(0), iBestValue);
+		}
 		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
 		return true;
 	}
