@@ -6152,18 +6152,20 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 
 int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnablesUnitWonder ) const
 {
-	bool bWarPlan = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
+	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod
+
+	bool bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
 	if( !bWarPlan )
 	{
 		// Aggressive players will stick with war techs
-		if (GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 400)
+		if (kTeam.AI_getTotalWarOddsTimes100() > 400)
 		{
 			bWarPlan = true;
 		}
 	}
 
 	bool bCapitalAlone = (GC.getGameINLINE().getElapsedGameTurns() > 0) ? AI_isCapitalAreaAlone() : false;
-	int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
+	int iHasMetCount = kTeam.getHasMetCivCount(true);
 	int iCoastalCities = countNumCoastalCities();
 	CvCity* pCapitalCity = getCapitalCity();
 
@@ -6193,7 +6195,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 				//if (kLoopUnit.getPrereqAndTech() == eTech)
 				// K-Mod.
-				if (kLoopUnit.getPrereqAndTech() == eTech || GET_TEAM(getTeam()).isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()))
+				if (kLoopUnit.getPrereqAndTech() == eTech || kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()) || canResearch((TechTypes)kLoopUnit.getPrereqAndTech()))
 				{
 					iMilitaryValue = 0;
 
@@ -6648,14 +6650,20 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					}
 					// K-Mod
 					// Decrease the value if we are missing other prereqs.
-					const CvTeam& kTeam = GET_TEAM(getTeam());
-					for (int iI = 0; iI < GC.getNUM_UNIT_AND_TECH_PREREQS(); iI++)
 					{
-						if (kLoopUnit.getPrereqAndTechs(iI) != eTech &&
-							!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+						int iMissingTechs = 0;
+						if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()))
+							iMissingTechs++;
+
+						for (int iI = 0; iI < GC.getNUM_UNIT_AND_TECH_PREREQS(); iI++)
 						{
-							iValue /= 2;
+							if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+							{
+								iMissingTechs++;
+							}
 						}
+						FAssert(iMissingTechs > 0);
+						iUnitValue /= std::max(1, iMissingTechs);
 					}
 
 					// Decrease the value if we don't have the resources
@@ -6701,12 +6709,12 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					}
 					if (bDefinitelyMissing)
 					{
-						iValue /= 3;
+						iUnitValue /= 3;
 					}
 					else if (bMaybeMissing)
 					{
-						iValue *= 2;
-						iValue /= 3;
+						iUnitValue *= 2;
+						iUnitValue /= 3;
 					}
 					// K-Mod end
 
