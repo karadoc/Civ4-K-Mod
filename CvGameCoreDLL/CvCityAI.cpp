@@ -8072,7 +8072,6 @@ void CvCityAI::AI_updateBestBuild()
 
 // Protected Functions...
 
-// Better drafting strategy by Blake - thank you!
 void CvCityAI::AI_doDraft(bool bForce)
 {
 	PROFILE_FUNC();
@@ -9967,12 +9966,13 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		iProductionTimes100 += bFoodIsProduction ? iFoodYieldTimes100 : 0;
 
 		iProductionValue += iProductionTimes100 * iBaseProductionValue / 100;
-		// BBAI adjustment
 		// If city has more than enough food, but very little production, add large value to production
 		// Particularly helps coastal cities with plains forests
-		if (iProductionTimes100 > 0)
+		// (based on BBAI code)
+		if (!bWorkerOptimization && iProductionTimes100 > 0 && !bFoodIsProduction && isProduction())
 		{
-			if (!bFoodIsProduction && isProduction())
+			if (!isHuman() || AI_isEmphasizeYield(YIELD_PRODUCTION)
+				|| (!bEmphasizeFood && !AI_isEmphasizeYield(YIELD_COMMERCE) && !AI_isEmphasizeGreatPeople()))
 			{
 				if (foodDifference(false) >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
 				{
@@ -10310,37 +10310,26 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	//unusually high transient production modifiers.
 	//Other yields don't have transient bonuses in quite the same way.
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       05/16/10                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
 	// Rounding can be a problem, particularly for small commerce amounts.  Added safe guards to make
 	// sure commerce is counted, even if just a tiny amount.
 	if (AI_isEmphasizeYield(YIELD_PRODUCTION))
 	{
-		iProductionValue *= 130;
+		iProductionValue *= 140; // was 130
 		iProductionValue /= 100;
 		
 		if (isFoodProduction())
 		{
-			iFoodValue *= 130;
+			iFoodValue *= 140; // was 130
 			iFoodValue /= 100;
-		}
-		
-		if (!AI_isEmphasizeYield(YIELD_COMMERCE) && iCommerceValue > 0)
-		{
-			iCommerceValue *= 60;
-			iCommerceValue /= 100;
-			iCommerceValue = std::max(1, iCommerceValue);
-		}
-		if (!AI_isEmphasizeYield(YIELD_FOOD) && iFoodValue > 0)
-		{
-			iFoodValue *= 75;
-			iFoodValue /= 100;
-			iFoodValue = std::max(1, iFoodValue);
 		}
 	}
+	else if (iProductionValue > 0 && AI_isEmphasizeYield(YIELD_COMMERCE))
+	{
+		iProductionValue *= 75;
+		iProductionValue /= 100;
+		iProductionValue = std::max(1,iProductionValue);
+	}
+
 	if (AI_isEmphasizeYield(YIELD_FOOD))
 	{
 		if (!isFoodProduction())
@@ -10351,26 +10340,23 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 			iSlaveryValue /= 100;
 		}
 	}
+	else if (iFoodValue > 0 && (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeYield(YIELD_COMMERCE)))
+	{
+		iFoodValue *= 75; // was 75 for production, and 80 for commerce. (now same for both.)
+		iFoodValue /= 100;
+		iFoodValue = std::max(1, iFoodValue);
+	}
+
 	if (AI_isEmphasizeYield(YIELD_COMMERCE))
 	{
-		iCommerceValue *= 130;
+		iCommerceValue *= 140; // was 130
 		iCommerceValue /= 100;
-		if (!AI_isEmphasizeYield(YIELD_PRODUCTION) && iProductionValue > 0)
-		{
-			iProductionValue *= 75;
-			iProductionValue /= 100;
-			iProductionValue = std::max(1,iProductionValue);
-		}
-		if (!AI_isEmphasizeYield(YIELD_FOOD) && iFoodValue > 0)
-		{
-			//Don't supress twice.
-			if (!AI_isEmphasizeYield(YIELD_PRODUCTION))
-			{
-				iFoodValue *= 80;
-				iFoodValue /= 100;
-				iFoodValue = std::max(1, iFoodValue);
-			}
-		}
+	}
+	else if (iCommerceValue > 0 && AI_isEmphasizeYield(YIELD_PRODUCTION))
+	{
+		iCommerceValue *= 75; // was 60
+		iCommerceValue /= 100;
+		iCommerceValue = std::max(1, iCommerceValue);
 	}
 		
 	if( iProductionValue > 0 )
@@ -10407,9 +10393,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		iFoodValue /= GET_PLAYER(getOwnerINLINE()).AI_averageYieldMultiplier(YIELD_FOOD);
 		iValue += std::max(1, iFoodValue);
 	}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 
 	return iValue;
 }

@@ -3617,9 +3617,10 @@ void CvCity::conscript()
 	{
 		if (GC.getGameINLINE().getActivePlayer() == getOwnerINLINE())
 		{
+			gDLL->getInterfaceIFace()->lookAt(plot()->getPoint(), CAMERALOOKAT_NORMAL); // K-Mod
 			gDLL->getInterfaceIFace()->selectUnit(pUnit, true, false, true);
 		}
-		if( gCityLogLevel >= 2 )
+		if (gCityLogLevel >= 2 && !isHuman())
 		{
 			logBBAI("      City %S does conscript of a %S at cost of %d pop, %d anger", getName().GetCString(), pUnit->getName().GetCString(), iPopChange, iAngerLength );
 		}
