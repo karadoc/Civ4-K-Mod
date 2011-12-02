@@ -14540,7 +14540,20 @@ int CvPlayer::getEspionageMissionBaseCost(EspionageMissionTypes eMission, Player
 			{
 				//iMissionCost = iBaseMissionCost + (kMission.getSwitchReligionCostFactor() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
 				// K-Mod
-				iMissionCost = iBaseMissionCost + (kMission.getSwitchReligionCostFactor() * GET_PLAYER(eTargetPlayer).getTotalPopulation() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;				
+				iMissionCost = iBaseMissionCost + (kMission.getSwitchReligionCostFactor() * GET_PLAYER(eTargetPlayer).getTotalPopulation() * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getAnarchyPercent()) / 10000;
+				ReligionTypes eCurrentReligion = GET_PLAYER(eTargetPlayer).getStateReligion();
+				// amplify the mission cost if we are trying to switch to a minority religion.
+				if (eCurrentReligion != NO_RELIGION)
+				{
+					// maybe getReligionPopulation would be slightly better, but it's a bit slower.
+					int iCurrent = GET_PLAYER(eTargetPlayer).getHasReligionCount(eCurrentReligion);
+					int iNew = GET_PLAYER(eTargetPlayer).getHasReligionCount(eReligion);
+					int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+					FAssert(iCurrent > 0 && iNew > 0);
+					iMissionCost *= std::max(iCurrent, iNew) + iTargetCities;
+					iMissionCost /= iNew + iTargetCities;
+				}
+				// K-Mod end
 			}
 		}
 	}

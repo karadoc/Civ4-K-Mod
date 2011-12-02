@@ -647,6 +647,11 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				iTempValue *= 100;
 				iTempValue /= (2*100*(iHighestRate+4))/(iCityRate+4) - 100;
 			}
+			// each successive great person costs more points. So the points are effectively worth less...
+			// (note: I haven't tried to match this value decrease with the actual cost increase,
+			// because the value of the great people changes as well.)
+			iTempValue *= 100;
+			iTempValue /= 90 + 5 * GET_PLAYER(getOwnerINLINE()).getGreatPeopleCreated();
 		}
 		
 		iTempValue *= getTotalGreatPeopleRateModifier();
