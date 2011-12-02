@@ -4361,9 +4361,10 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 	    {
             iCount += iBorderDanger;
 	    } */
-		// K-Mod. I don't want auto-workers on the frontline; and Cities can be attacked too!
-		// but on the other hand, I don't think two border tiles are really more dangerous than one border tile...
-		iCount++;
+		// K-Mod. I don't want auto-workers on the frontline. So unless the plot is defended, count border danger for humans too.
+		// but on the other hand, I don't think two border tiles are really more dangerous than one border tile.
+		if (!isHuman() || pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0)
+			iCount++;
 		// K-Mod end
 	}
 
@@ -6660,6 +6661,8 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
 							{
 								iMissingTechs++;
+								if (!canResearch((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+									iMissingTechs++;
 							}
 						}
 						FAssert(iMissingTechs > 0);
@@ -11603,6 +11606,13 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1))
 	{
 		iMaxUnitSpending += 5;
+	}
+
+	if (!bTotalWar)
+	{
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 10 + iBuildProb / 4 : 0;
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 10 + iBuildProb / 4 : 0;
+		// note. the boost from alert1 + alert2 matches the boost from total war. (see below).
 	}
 
 	if (AI_isDoStrategy(AI_STRATEGY_FINAL_WAR))

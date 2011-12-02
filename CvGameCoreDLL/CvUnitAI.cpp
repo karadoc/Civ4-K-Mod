@@ -3230,7 +3230,8 @@ void CvUnitAI::AI_attackCityMove()
 				
 				if( (iJoiners*5) > getGroup()->getNumUnits() )
 				{
-					getGroup()->pushMission(MISSION_SKIP);
+					//getGroup()->pushMission(MISSION_SKIP);
+					getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GROUP); // K-Mod (for debug feedback)
 					return;
 				}
 
