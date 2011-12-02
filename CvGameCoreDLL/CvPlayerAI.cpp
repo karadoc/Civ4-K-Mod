@@ -12297,9 +12297,10 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 					}
 				}
 			}
-			if (eDefenceTeam == NO_TEAM && eDomainType == DOMAIN_LAND && !bCheckMoves)
+			if (!isHuman() && eDefenceTeam == NO_TEAM && eDomainType == DOMAIN_LAND && !bCheckMoves)
 			{
 				// while since we're here, we might as well update our memory.
+				// (not for human players, otherwise the pathfinder might put us out of sync)
 				GET_TEAM(getTeam()).AI_setStrengthMemory(pLoopPlot, iPlotTotal);
 			}
 			iTotal += iPlotTotal;

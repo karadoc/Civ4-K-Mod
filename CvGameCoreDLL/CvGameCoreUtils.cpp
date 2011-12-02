@@ -1581,8 +1581,6 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		if (pToPlot->isVisible(eTeam, false))
 		{
 			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM);
-			//GET_TEAM(eTeam).AI_setStrengthMemory(pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), iEnemyDefence);
-			// memory is now set automatically inside AI_localDefenceStrength.
 		}
 		else
 		{
@@ -1864,15 +1862,20 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 		PROFILE("pathValid move through");
 		CvTeamAI& kTeam = GET_TEAM(pSelectionGroup->getHeadTeam());
 
+		int iEnemyDefence;
 		if (pFromPlot->isVisible(pSelectionGroup->getHeadTeam(), false))
 		{
-			kTeam.AI_setStrengthMemory(pFromPlot, GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType()));
+			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType());
+		}
+		else
+		{
+			iEnemyDefence = kTeam.AI_getStrengthMemory(pFromPlot);
 		}
 
 		if (kTeam.AI_getStrengthMemory(pFromPlot) > 0 && iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK))
 		{
 			if (!pSelectionGroup->canMoveOrAttackInto(pFromPlot) ||
-				(iFlags & MOVE_ATTACK_STACK && pSelectionGroup->AI_sumStrength(pFromPlot) < kTeam.AI_getStrengthMemory(pFromPlot)))
+				(iFlags & MOVE_ATTACK_STACK && pSelectionGroup->AI_sumStrength(pFromPlot) < iEnemyDefence))
 			{
 				return FALSE;
 			}

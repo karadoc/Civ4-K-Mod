@@ -4033,7 +4033,9 @@ void CvTeamAI::write(FDataStreamBase* pStream)
 	// K-Mod end
 }
 
-// K-Mod
+// K-Mod - AI tactical memory.
+// The AI uses this to remember how strong the enemy defence is at particular plots.
+// NOTE: AI_setStrengthMemory should not be used by human players - because it may cause OOS errors.
 int CvTeamAI::AI_getStrengthMemory(int x, int y) const
 {
 	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
