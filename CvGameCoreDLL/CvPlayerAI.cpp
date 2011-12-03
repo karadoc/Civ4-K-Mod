@@ -4130,7 +4130,8 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves)
 	TeamTypes eTeam = getTeam();
 	//bool bCheckBorder = (!isHuman() && !pPlot->isCity());
 	// K-Mod. I don't want auto-workers on the frontline. Cities need to be excluded for some legacy AI code.
-	bool bCheckBorder = !pPlot->isCity();
+	bool bCheckBorder = !pPlot->isCity() && (!isHuman() || pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0);
+	// K-Mod end
 
 	
 	if( bCheckBorder )
