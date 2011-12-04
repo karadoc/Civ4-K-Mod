@@ -4482,6 +4482,11 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 	//static const CvSelectionGroup* lastPathGeneratedFor = NULL;
 	// K-Mod, moved to class scope.
 
+	// K-Mod - if I can top the UI from messing with this pathfinder, I might be able to reduce OOS bugs.
+	// (note, the const-cast is just to get around the bad code from the original developers)
+	FAssert(const_cast<CvSelectionGroup*>(this)->AI_isControlled());
+	// K-Mod end
+
 	PROFILE("CvSelectionGroup::generatePath()")
 
 	FAStarNode* pNode;
