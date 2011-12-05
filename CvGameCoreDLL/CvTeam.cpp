@@ -416,13 +416,6 @@ void CvTeam::addTeam(TeamTypes eTeam)
 	FAssert(eTeam != NO_TEAM);
 	FAssert(eTeam != getID());
 
-	// K-Mod
-	FAssert(GC.getGameINLINE().isFinalInitialized());
-	//FAssert(GC.getMapINLINE().numPlotsINLINE() == GET_TEAM(eTeam).m_aiStrengthMemory.size()); // I'd assert this, but the array is protected.
-	// AI_initMemory use to be required here. It isn't required anymore, but we still need to clear the memory - and I'd rather play it safe...
-	GET_TEAM(eTeam).AI_initMemory();
-	// K-Mod end
-
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).isAlive())
@@ -442,49 +435,8 @@ void CvTeam::addTeam(TeamTypes eTeam)
 	GC.getGameINLINE().addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, getLeaderID(), szBuffer, -1, -1, (ColorTypes)GC.getInfoTypeForString("COLOR_HIGHLIGHT_TEXT"));
 
 
-	for (pLoopDeal = GC.getGameINLINE().firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = GC.getGameINLINE().nextDeal(&iLoop))
-	{
-		if (((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == getID()) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == eTeam)) ||
-			  ((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == eTeam) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == getID())))
-		{
-			bValid = true;
-
-			if (pLoopDeal->getFirstTrades() != NULL)
-			{
-				for (pNode = pLoopDeal->getFirstTrades()->head(); pNode; pNode = pLoopDeal->getFirstTrades()->next(pNode))
-				{
-					if ((pNode->m_data.m_eItemType == TRADE_OPEN_BORDERS) ||
-						  (pNode->m_data.m_eItemType == TRADE_DEFENSIVE_PACT) ||
-						  (pNode->m_data.m_eItemType == TRADE_PEACE_TREATY) ||
-						  (pNode->m_data.m_eItemType == TRADE_VASSAL) ||
-						  (pNode->m_data.m_eItemType == TRADE_SURRENDER))
-					{
-						bValid = false;
-					}
-				}
-			}
-
-			if (pLoopDeal->getSecondTrades() != NULL)
-			{
-				for (pNode = pLoopDeal->getSecondTrades()->head(); pNode; pNode = pLoopDeal->getSecondTrades()->next(pNode))
-				{
-					if ((pNode->m_data.m_eItemType == TRADE_OPEN_BORDERS) ||
-						  (pNode->m_data.m_eItemType == TRADE_DEFENSIVE_PACT) ||
-						  (pNode->m_data.m_eItemType == TRADE_PEACE_TREATY) ||
-						  (pNode->m_data.m_eItemType == TRADE_VASSAL) ||
-						  (pNode->m_data.m_eItemType == TRADE_SURRENDER))
-					{
-						bValid = false;
-					}
-				}
-			}
-
-			if (!bValid)
-			{
-				pLoopDeal->kill();
-			}
-		}
-	}
+	// K-Mod note: the cancel deals code use to be here. I've moved it lower down.
+	//
 
 	shareItems(eTeam);
 	GET_TEAM(eTeam).shareItems(getID());
@@ -649,6 +601,57 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			GET_PLAYER((PlayerTypes)iI).setTeam(getID());
 		}
 	}
+
+	// K-Mod. The following cancel deals code has been moved from higher up.
+	// I've done this so that when open-borders is canceled, it doesn't bump our new allies out of our borders.
+	for (pLoopDeal = GC.getGameINLINE().firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = GC.getGameINLINE().nextDeal(&iLoop))
+	{
+		/* original bts code
+		if (((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == getID()) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == eTeam)) ||
+			  ((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == eTeam) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == getID()))) */
+		// K-Mod. The player's teams have already been reassigned - so we don't check for eTeam anymore.
+		if (GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == getID() && GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == getID())
+		// K-Mod end
+		{
+			bValid = true;
+
+			if (pLoopDeal->getFirstTrades() != NULL)
+			{
+				for (pNode = pLoopDeal->getFirstTrades()->head(); pNode; pNode = pLoopDeal->getFirstTrades()->next(pNode))
+				{
+					if ((pNode->m_data.m_eItemType == TRADE_OPEN_BORDERS) ||
+						  (pNode->m_data.m_eItemType == TRADE_DEFENSIVE_PACT) ||
+						  (pNode->m_data.m_eItemType == TRADE_PEACE_TREATY) ||
+						  (pNode->m_data.m_eItemType == TRADE_VASSAL) ||
+						  (pNode->m_data.m_eItemType == TRADE_SURRENDER))
+					{
+						bValid = false;
+					}
+				}
+			}
+
+			if (pLoopDeal->getSecondTrades() != NULL)
+			{
+				for (pNode = pLoopDeal->getSecondTrades()->head(); pNode; pNode = pLoopDeal->getSecondTrades()->next(pNode))
+				{
+					if ((pNode->m_data.m_eItemType == TRADE_OPEN_BORDERS) ||
+						  (pNode->m_data.m_eItemType == TRADE_DEFENSIVE_PACT) ||
+						  (pNode->m_data.m_eItemType == TRADE_PEACE_TREATY) ||
+						  (pNode->m_data.m_eItemType == TRADE_VASSAL) ||
+						  (pNode->m_data.m_eItemType == TRADE_SURRENDER))
+					{
+						bValid = false;
+					}
+				}
+			}
+
+			if (!bValid)
+			{
+				pLoopDeal->kill();
+			}
+		}
+	}
+	// K-Mod end
 
 	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
