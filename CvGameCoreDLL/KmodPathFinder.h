@@ -26,7 +26,7 @@ public:
 	FAStarNode* GetEndNode() { FAssert(end_node); return end_node.get(); }
 	CvPlot* GetPathFirstPlot() const;
 	void SetSettings(const CvPathSettings& new_settings);
-	void SetSettings(const CvSelectionGroup* pGroup, int iFlags = 0, int iMaxPath = -1) { SetSettings(CvPathSettings(pGroup, iFlags, iMaxPath)); }
+	void SetSettings(const CvSelectionGroup* pGroup, int iFlags = 0, int iMaxPath = -1, int iHW=-1) { SetSettings(CvPathSettings(pGroup, iFlags, iMaxPath, iHW)); }
 	void Reset();
 
 protected:
