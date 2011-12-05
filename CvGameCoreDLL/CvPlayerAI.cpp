@@ -6310,7 +6310,8 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						// BBAI TODO: Boost value for maps where Barb ships are pestering us
 						if (iCoastalCities > 0)
 						{
-							iMilitaryValue += ((bWarPlan) ? 200 : 100);
+							//iMilitaryValue += ((bWarPlan) ? 200 : 100);
+							iMilitaryValue += (bWarPlan ? 2 : 1) * (100 + kLoopUnit.getCollateralDamage()/2);// K-Mod
 						}
 						iNavalValue += 100;
 						break;
@@ -6318,7 +6319,9 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					case UNITAI_RESERVE_SEA:
 						if (iCoastalCities > 0)
 						{
-							iMilitaryValue += ((bWarPlan) ? 100 : 50);
+							//iMilitaryValue += ((bWarPlan) ? 100 : 50);
+							iMilitaryValue += (bWarPlan ? 10 : 5) * (10 + kLoopUnit.getCollateralDamage()/20);// K-Mod
+							// K-Mod note: this naval value stuff seems a bit flakey...
 						}
 						iNavalValue += 100;
 						break;
@@ -6393,7 +6396,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 					case UNITAI_ATTACK_AIR:
 						//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
 						// K-Mod, I've decreased the value here but added something extra a bit lower down.
-						iMilitaryValue += ((bWarPlan) ? 1000 : 600);
+						iMilitaryValue += ((bWarPlan) ? 10 : 6) * (100 + kLoopUnit.getCollateralDamage()/2);
 						break;
 
 					case UNITAI_DEFENSE_AIR:
@@ -6414,7 +6417,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						break;
 
 					default:
-						FAssert(false);
+						FAssertMsg(false, "Missing UNITAI type in AI_techUnitValue");
 						break;
 					}
 
@@ -6433,19 +6436,28 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						}
 					}
 
-					if (kLoopUnit.getCollateralDamage() > 0)
+					if (kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) && kLoopUnit.getCollateralDamage() > 0)
 					{
+						// note: the following boost is for land units only.
+						// Sea and air units get their collateral bonus in the switch section above.
 						int iOldValue = getTypicalUnitValue(UNITAI_COLLATERAL);
 						if (iOldValue > 0)
 						{
-							int iNewValue = GC.getGameINLINE().AI_combatValue(eLoopUnit);
-							iMilitaryValue += 100 * iNewValue / iOldValue;
+							int iDelta = std::max(0, GC.getGameINLINE().AI_combatValue(eLoopUnit) - iOldValue);
+							iMilitaryValue += 150 * iDelta / iOldValue;
 							// this boost is a bit ad hoc. But so is the rest of the stuff in here!
 							// my goal with this component is to boost the value of canons.
+						}
+						else if (kLoopUnit.getDefaultUnitAIType() == getTypicalUnitValue(UNITAI_COLLATERAL))
+						{
+							// currently there are no units with this default AI; but anyway...
+							iMilitaryValue += 150;
 						}
 					}
 					// K-Mod end
 
+					/* original BBAI code (mostly). I've decided that most of this stuff is slightly bogus.
+					// So I've disabled it, and tried to reimplement the same concepts in a more flexible way. (further down)
 					if( AI_isDoStrategy(AI_STRATEGY_ALERT1) )
 					{
 						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
@@ -6487,7 +6499,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						{
 							iMilitaryValue += (500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
 						}
-					}
+					} */
 
 					if (kLoopUnit.getUnitAIType(UNITAI_ASSAULT_SEA) && iCoastalCities > 0)
 					{
@@ -6640,6 +6652,36 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							iMilitaryValue *= 3;
 							iMilitaryValue /= 2;
 						}
+
+						// This multiplier stuff is basically my version of the BBAI code I disabled further up.
+						int iMultiplier = 100;
+						if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
+						{
+							iMultiplier += 25;
+							if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3) || AI_isDoStrategy(AI_STRATEGY_ALERT2))
+							{
+								iMultiplier += 25;
+								if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
+								{
+									iMultiplier += 25;
+								}
+							}
+						}
+						if (AI_isDoStrategy(AI_STRATEGY_ALERT1 | AI_STRATEGY_TURTLE)
+							&& (kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE)
+							|| kLoopUnit.getUnitAIType(UNITAI_CITY_SPECIAL)
+							|| kLoopUnit.getUnitAIType(UNITAI_CITY_COUNTER)
+							|| kLoopUnit.getUnitAIType(UNITAI_COLLATERAL)))
+						{
+							iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 50 : 25;
+							if (iPathLength <= 1 && AI_isDoStrategy(AI_STRATEGY_TURTLE))
+							{
+								iMultiplier += 75;
+							}
+						}
+						iMilitaryValue *= iMultiplier;
+						iMilitaryValue /= 100;
+						// K-Mod end
 
 						iUnitValue += iMilitaryValue;
 					}
