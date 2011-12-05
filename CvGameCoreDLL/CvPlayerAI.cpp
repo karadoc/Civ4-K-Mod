@@ -16984,7 +16984,13 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(MAX_PLAYERS, m_aiPeacetimeGrantValue);
 	pStream->Read(MAX_PLAYERS, m_aiGoldTradedTo);
 	pStream->Read(MAX_PLAYERS, m_aiAttitudeExtra);
-
+	// K-Mod. Load the attitude cache. (originally, in BBAI and the CAR Mod, this was not saved.
+	// But there are rare situations in which it needs to be saved/read to avoid OOS errors.)
+	if (uiFlag >= 4)
+		pStream->Read(MAX_PLAYERS, m_aiAttitudeCache);
+	else
+		AI_invalidateAttitudeCache();
+	// K-Mod end
 	pStream->Read(MAX_PLAYERS, m_abFirstContact);
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
@@ -16995,8 +17001,6 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	{
 		pStream->Read(NUM_MEMORY_TYPES, m_aaiMemoryCount[i]);
 	}
-	
-	
 
 	pStream->Read(&m_bWasFinancialTrouble);
 	pStream->Read(&m_iTurnLastProductionDirty);
@@ -17017,19 +17021,6 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(GC.getNumUnitClassInfos(), m_aiUnitClassWeights);
 	pStream->Read(GC.getNumUnitCombatInfos(), m_aiUnitCombatWeights);
 	pStream->Read(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	AI_invalidateAttitudeCache();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 }
 
 
@@ -17045,7 +17036,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	uint uiFlag=0;
 */
 	// Flag for type of save
-	uint uiFlag=3;
+	uint uiFlag=4;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iPeaceWeight);
@@ -17083,7 +17074,9 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(MAX_PLAYERS, m_aiPeacetimeGrantValue);
 	pStream->Write(MAX_PLAYERS, m_aiGoldTradedTo);
 	pStream->Write(MAX_PLAYERS, m_aiAttitudeExtra);
-
+	// K-Mod. save the attitude cache. (to avoid OOS problems)
+	pStream->Write(MAX_PLAYERS, m_aiAttitudeCache); // uiFlag >= 4
+	// K-Mod end
 	pStream->Write(MAX_PLAYERS, m_abFirstContact);
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
