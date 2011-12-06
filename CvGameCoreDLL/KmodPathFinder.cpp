@@ -365,6 +365,7 @@ bool KmodPathFinder::ProcessNode()
 
 void KmodPathFinder::ForwardPropagate(FAStarNode* head, int cost_delta)
 {
+	PROFILE_FUNC();
 	FAssert(cost_delta < 0 || head->m_iNumChildren == 0);
 	// change the known cost of all children by cost_delta, recursively
 	for (int i = 0; i < head->m_iNumChildren; i++)
@@ -379,15 +380,13 @@ void KmodPathFinder::ForwardPropagate(FAStarNode* head, int cost_delta)
 
 		// if the moves don't match, we may need to recalculate the path cost.
 		//if (iOldMoves != head->m_apChildren[i]->m_iData1)
-		if ((iOldMoves == 0) != (head->m_apChildren[i]->m_iData1 == 0)) // we might save a little bit by doing it like this.
 		{
-			// This is a special case, since pathCost is different at the end of a turn.
+			// Strictly, the cost shouldn't depend on our path history, but it does - because I wanted to use
+			// the path history for path symmetry breaking.
+			// But anyway, according to the profiler, this is only going to cost us about a milisecond per turn.
 			int iPathCost = pathCost(head, head->m_apChildren[i], 666, &settings, 0);
 			iNewDelta = head->m_iKnownCost + iPathCost - head->m_apChildren[i]->m_iKnownCost;
 			FAssert(iNewDelta <= 0);
-			// Strictly, we should recalculate for any difference in moves at all,
-			// but that would slow things down a bit, and I don't intend to make
-			// pathCost depend the magnitude of remaining moves anyway.
 		}
 
 		head->m_apChildren[i]->m_iKnownCost += iNewDelta;
