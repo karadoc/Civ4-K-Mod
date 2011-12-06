@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- -->
-<!-- Better BTS AI variables to allow easy AI tweaking -->
-<!-- by jdog5000 -->
+<!-- Better BTS AI / K-Mod variables to allow easy AI tweaking -->
+<!-- by jdog5000 / karadoc -->
 <!-- -->
 <Civ4Defines xmlns="x-schema:CIV4GlobalDefinesSchema.xml">
 	<Define>
@@ -36,5 +36,10 @@
 		<!-- Minimum stack strength ratio for AI to skip bombarding city and just attack, higher is more conservative.  BBAI default: 150 -->
 		<DefineName>BBAI_SKIP_BOMBARD_MIN_STACK_RATIO</DefineName>
 		<iDefineIntVal>140</iDefineIntVal>
+	</Define>
+	<Define>
+		<!-- Minimum city site value that the AI will consider settling. default: 600. (K-Mod) -->
+		<DefineName>BBAI_MINIMUM_FOUND_VALUE</DefineName>
+		<iDefineIntVal>600</iDefineIntVal>
 	</Define>
 </Civ4Defines>

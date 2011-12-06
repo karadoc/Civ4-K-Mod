@@ -18994,7 +18994,7 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 
 	m_iVictoryStrategyHash = AI_DEFAULT_VICTORY_STRATEGY;
     //m_iVictoryStrategyHashCacheTurn = GC.getGameINLINE().getGameTurn();
-	
+
 	if (getCapitalCity() == NULL)
     {
         return;
@@ -22068,7 +22068,8 @@ void CvPlayerAI::AI_recalculateFoundValues(int iX, int iY, int iInnerRadius, int
 	
 int CvPlayerAI::AI_getMinFoundValue() const
 {
-	int iValue = 600;
+	//int iValue = 600;
+	int iValue = GC.getDefineINT("BBAI_MINIMUM_FOUND_VALUE"); // K-Mod
 	int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn());
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */
@@ -22082,7 +22083,7 @@ int CvPlayerAI::AI_getMinFoundValue() const
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                        END                                                  */
 /************************************************************************************************/
-	
+
 	iValue *= iNetCommerce;
 	iValue /= std::max(std::max(1, iNetCommerce / 4), iNetCommerce - iNetExpenses);
 	
