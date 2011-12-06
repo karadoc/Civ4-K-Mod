@@ -1543,6 +1543,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 	// symmetry breaking. This is meant to prevent two paths from having equal cost.
 	// (If two paths have equal cost, sometimes the interface shows one path and the units follow the other. This is bad.)
+	if (parent->m_pParent)
 	{
 		const int map_width = GC.getMapINLINE().getGridWidthINLINE();
 		const int map_height = GC.getMapINLINE().getGridHeightINLINE();
@@ -1550,8 +1551,8 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 #define WRAP_X(x) ((x) - ((x) > map_width/2 ? map_width : 0) + ((x) < -map_width/2 ? map_width : 0))
 #define WRAP_Y(y) ((y) - ((y) > map_height/2 ? map_height : 0) + ((y) < -map_height/2 ? map_height : 0))
 
-		int start_x = pSelectionGroup->getX();
-		int start_y = pSelectionGroup->getY();
+		int start_x = parent->m_pParent->m_iX;
+		int start_y = parent->m_pParent->m_iY;
 
 		int dx1 = WRAP_X(pFromPlot->getX_INLINE() - start_x);
 		int dy1 = WRAP_Y(pFromPlot->getY_INLINE() - start_y);
@@ -1559,8 +1560,20 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 		int dy2 = WRAP_Y(pToPlot->getY_INLINE() - start_y);
 
 		// cross product. (greater than zero => sin(angle) > 0 => angle > 0)
-		if (dx1 * dy2 - dx2 * dy1 > 0)
-			iWorstCost += PATH_ASYMMETRY_WEIGHT;
+		int cross = dx1 * dy2 - dx2 * dy1;
+		if (cross > 0)
+			iWorstCost += PATH_ASYMMETRY_WEIGHT; // turning left
+		else if (cross < 0)
+			iWorstCost -= PATH_ASYMMETRY_WEIGHT; // turning right
+
+		// woah - hang on. Does that say /minus/ asym weight?
+		// Doesn't this guy know that bad things happen if the total weight is negative?
+		// ...
+		// take a breath.
+#if PATH_STEP_WEIGHT < PATH_ASYMMETRY_WEIGHT
+#error "I'm sorry, but I must demand that step weight be greater than asym weight."
+#endif
+		// I think we're going to be ok.
 
 #undef WRAP_X
 #undef WRAP_Y
