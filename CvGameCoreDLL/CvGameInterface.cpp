@@ -481,7 +481,8 @@ void CvGame::updateTestEndTurn()
 			{
 				if (!(gDLL->getInterfaceIFace()->isForcePopup()))
 				{
-					gDLL->getInterfaceIFace()->setForcePopup(true);
+					if (!gDLL->shiftKey()) // K-Mod
+						gDLL->getInterfaceIFace()->setForcePopup(true);
 				}
 				else
 				{
@@ -739,6 +740,15 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 		FAssert(pNextSelectionGroup->getHeadUnit() != NULL); // K-Mod
 		gDLL->getInterfaceIFace()->selectUnit(pNextSelectionGroup->getHeadUnit(), bClear);
 	}
+	// K-Mod
+	else
+	{
+		gDLL->getInterfaceIFace()->clearSelectionList();
+		const_cast<CvGame*>(this)->updateTestEndTurn();
+		// again, I'm sorry about the const_cast. this function and updateTestEndTurn are both dllexport functions.
+		// so I can't change the constness of either of them to fix the problem.
+	}
+	// K-Mod end
 
 	if ((pCycleUnit != gDLL->getInterfaceIFace()->getHeadSelectedUnit()) || ((pCycleUnit != NULL) && pCycleUnit->getGroup()->readyToSelect()))
 	{
@@ -761,9 +771,6 @@ void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bD
 		if (!bDelayOnly)
 		{
 			cycleSelectionGroups(true);
-			CvUnit* pUnit = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
-			if (pUnit && !pUnit->getGroup()->readyToMove())
-				gDLL->getInterfaceIFace()->clearSelectionList();
 		}
 	}
 	else
