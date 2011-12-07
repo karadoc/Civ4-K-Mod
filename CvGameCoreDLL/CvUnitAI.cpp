@@ -2961,48 +2961,58 @@ void CvUnitAI::AI_attackCityMove()
 		pTargetCity = AI_pickTargetCity(iMoveFlags, MAX_INT, bHuntBarbs);
 	}
 
+	bool bTargetTooStrong = false; // K-Mod. This is used to prevent the AI from oscillating between moving to attack moving to pillage.
+	int iStepDistToTarget = MAX_INT;
+	// Note. I've rearranged some parts of the code below, sometimes without comment.
 	if (pTargetCity != NULL)
 	{
-		int iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
+		int iAttackRatio = GC.getBBAI_ATTACK_CITY_STACK_RATIO();
+		int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
+		// K-Mod - I'm going to scale the attack ratio based on our war strategy
+		if (isBarbarian())
+		{
+			iAttackRatio = 80;
+		}
+		else
+		{
+			int iAdjustment = 5;
+			iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
+			iAdjustment += GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? -10 : 0;
+			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 0);
+			iAttackRatio += iAdjustment;
+			iAttackRatioSkipBombard += iAdjustment;
+		}
+		// K-Mod end
+
+		int iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true);
+		// K-Mod note: AI_compareStacks will try to use the AI memory if it can't see.
+		{
+			// K-Mod
+			// The defense modifier is counted in AI_compareStacks. So if we add it again, we'd be double counting.
+			// I'm going to subtract defence, but unfortunately this will reduce based on the total rather than the base.
+			int iDefenseModifier = pTargetCity->getDefenseModifier(false);
+			int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
+			int iReducedModifier = iDefenseModifier;
+			iReducedModifier *= std::min(20, iBombardTurns);
+			iReducedModifier /= 20;
+			iComparePostBombard *= 200;
+			iComparePostBombard /= std::max(1, 200 + iReducedModifier - iDefenseModifier); // def. mod. < 200. I promise.
+			// using 200 instead of 100 to offset the over-reduction from compounding.
+			// With this, bombarding a defence bonus of 100% with reduce effective defence by 50%
+		}
+
+		bTargetTooStrong = iComparePostBombard < iAttackRatio;
+
+		iStepDistToTarget = stepDistance(pTargetCity->getX_INLINE(), pTargetCity->getY_INLINE(), getX_INLINE(), getY_INLINE());
 		if (iStepDistToTarget <= 2)
 		{
-			int iAttackRatio = GC.getBBAI_ATTACK_CITY_STACK_RATIO();
-			int iAttackRatioSkipBombard = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
-			// K-Mod - I'm going to scale the attack ratio based on our war strategy
-			{
-				int iAdjustment = 5;
-				iAdjustment += GET_TEAM(getTeam()).AI_getWarPlan(pTargetCity->getTeam()) == WARPLAN_LIMITED ? 10 : 0;			
-				iAdjustment += GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH)? -10 : 0;
-				iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/15, -10, 0);
-				iAttackRatio += iAdjustment;
-				iAttackRatioSkipBombard += iAdjustment;
-			}
-			// K-Mod end
-
-			if( isBarbarian() )
-			{
-				iAttackRatio = 80;
-			}
-
-			int iComparePostBombard = getGroup()->AI_compareStacks(pTargetCity->plot(), true);
-			// K-Mod note: AI_compareStacks will try to use the AI memory if it can't see.
+			if (bTargetTooStrong)
 			{
 				// K-Mod
-				// The defense modifier is counted in AI_compareStacks. So if we add it again, we'd be double counting.
-				// I'm going to subtract defence, but unfortunately this will reduce based on the total rather than the base.
-				int iDefenseModifier = pTargetCity->getDefenseModifier(false);
-				int iBombardTurns = getGroup()->getBombardTurns(pTargetCity);
-				int iReducedModifier = iDefenseModifier;
-				iReducedModifier *= std::min(20, iBombardTurns);
-				iReducedModifier /= 20;
-				iComparePostBombard *= 200;
-				iComparePostBombard /= std::max(1, 200 + iReducedModifier - iDefenseModifier); // def. mod. < 200. I promise.
-				// using 200 instead of 100 to offset the over-reduction from compounding.
-				// With this, bombarding a defence bonus of 100% with reduce effective defence by 50%
-			}
+				if (AI_stackVsStack(2, std::max(120, iAttackRatio), 80, iMoveFlags))
+					return;
+				// K-Mod end
 
-			if( iComparePostBombard < iAttackRatio )
-			{
 				//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
 				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster))
 				{
@@ -3092,6 +3102,7 @@ void CvUnitAI::AI_attackCityMove()
 				}
 			}
 
+			/* original bbai code. (this code is mostly duplicated, and because of where it is, it can cause AI confusion.)
 			if( iComparePostBombard < iAttackRatio )
 			{
 				// If not strong enough, pillage around target city without exposing ourselves
@@ -3116,7 +3127,7 @@ void CvUnitAI::AI_attackCityMove()
 					return;
 				}
 
-				if( AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 5) )
+				if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 4)) // was 5
 				{
 					return;
 				}
@@ -3132,9 +3143,30 @@ void CvUnitAI::AI_attackCityMove()
 				{
 					return;
 				}
-			}
+			} */
+			// K-Mod
+			if (iComparePostBombard >= iAttackRatio && AI_goToTargetCity(iMoveFlags, 4, pTargetCity))
+				return;
+			// K-Mod end
 		}
 	}
+
+	// K-Mod. Lets have some slightly smarter stack vs. stack AI.
+	// it would be nice to have some personality effection here...
+	// eg. protective leaders have a lower risk threshold.   -- Maybe later.
+	// Note. This stackVsStack stuff use to be a bit lower, after the group and the heal stuff.
+	if (bAtWar) // recall that "bAtWar" just means we are in enemy territory.
+	{
+		// note. if we are 2 steps from the target city, this check here is redundant. (see code above)
+		if (AI_stackVsStack(1, 160, 100, iMoveFlags))
+			return;
+	}
+	else
+	{
+		if (AI_stackVsStack(4, 130, 60, iMoveFlags))
+			return;
+	}
+	// K-Mod end
 
 	//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
 	if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster))
@@ -3163,27 +3195,59 @@ void CvUnitAI::AI_attackCityMove()
 			}
 		}
 	} */
-	// K-Mod. Lets have some slightly smarter stack vs. stack AI.
-	// it would be nice to have some personality effection here...
-	// eg. protective leaders have a lower risk threshold.   -- Maybe later.
-	if (bAtWar) // recall that "bAtWar" just means we are in enemy territory.
-	{
-		if (AI_stackVsStack(1, 160, 100, iMoveFlags))
-			return;
-	}
-	else
-	{
-		if (AI_stackVsStack(4, 130, 60, iMoveFlags))
-			return;
-	}
-	// K-Mod end
 
 	if (AI_anyAttack(1, 60, iMoveFlags, 0, false))
 	{
 		return;
 	}
 
-	if (bAtWar && (getGroup()->getNumUnits() <= 2))
+	// K-Mod - replacing some stuff I moved / removed from the BBAI code
+	if (pTargetCity && bTargetTooStrong)
+	{
+		// Pillage around enemy city
+		if (generatePath(pTargetCity->plot(), iMoveFlags, true, 0, 6))
+		{
+			// the above path check is just for efficiency.
+			// Otherwise we'd be checking every surrounding tile.
+			if (AI_pillageAroundCity(pTargetCity, 11, iMoveFlags, 3))
+				return;
+
+			if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 4))
+				return;
+		}
+
+		// choke the city.
+		if (iStepDistToTarget <= 2 && AI_choke(1))
+			return;
+	}
+
+	// one more thing. Sometimes a single step can cause the AI to change its target city;
+	// and when it changes the target - and so sometimes they can get stuck in a loop where
+	// they step towards their target, change their mind, step back to pillage something, ... repeat.
+	// Here I've made a kludge to break that cycle:
+	if (getGroup()->AI_getMissionAIType() == MISSIONAI_PILLAGE)
+	{
+		CvPlot* pMissionPlot = getGroup()->AI_getMissionAIPlot();
+		if (pMissionPlot && canPillage(pMissionPlot) && isEnemy(pMissionPlot->getTeam(), pMissionPlot))
+		{
+			if (atPlot(pMissionPlot))
+			{
+				getGroup()->pushMission(MISSION_PILLAGE, -1, -1, 0, false, false, MISSIONAI_PILLAGE, pMissionPlot);
+				return;
+			}
+			if (generatePath(pMissionPlot, iMoveFlags, true, 0, 6))
+			{
+				// the max path turns is arbitrary, but it should be at least as big as the pillage sections higher up.
+				CvPlot* pEndTurnPlot = getPathEndTurnPlot();
+				FAssert(!atPlot(pEndTurnPlot));
+				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iMoveFlags, false, false, MISSIONAI_PILLAGE, pMissionPlot);
+				return;
+			}
+		}
+	}
+	// K-Mod end
+
+	if (bAtWar && (bTargetTooStrong || getGroup()->getNumUnits() <= 2))
 	{
 		if (AI_pillageRange(3, 11, iMoveFlags))
 		{
@@ -3399,6 +3463,9 @@ void CvUnitAI::AI_attackCityMove()
 
 					if (pTargetCity != NULL)
 					{
+						// this is a last resort. I don't expect that we'll ever actually need it.
+						// (it's a pretty ugly function, so I /hope/ we don't need it.)
+						FAssertMsg(false, "AI_attackCityMove is resorting to AI_solveBlockageProblem");
 						if (AI_solveBlockageProblem(pTargetCity->plot(), (GET_TEAM(getTeam()).getAtWarCount(true) == 0)))
 						{
 							return;
@@ -16059,6 +16126,7 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 
 // iAttackThreshold is the minimum ratio for our attack / their defence.
 // iDefenceThreshold is the minimum ratio for their attack / our defence.
+// note: iSearchRange is /not/ the number of turns. It is the number of steps. Only 1-turn moves are considered here.
 bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRiskThreshold, int iFlags)
 {
 	PROFILE_FUNC();
@@ -16097,7 +16165,8 @@ bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRisk
 					if (iValue > iBestValue)
 					{
 						iBestValue = iValue;
-						pBestPlot = getPathEndTurnPlot();
+						pBestPlot = pLoopPlot;
+						FAssert(pBestPlot == getPathEndTurnPlot());
 					}
 				}
 			}
