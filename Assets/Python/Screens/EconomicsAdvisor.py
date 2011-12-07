@@ -688,11 +688,13 @@ class EconomicsAdvisor:
 			self.iActiveLeader = screen.getPullDownData(self.DEBUG_DROPDOWN_ID, iIndex)
 			self.drawContents()
 		elif (iNotifyCode == NotifyCode.NOTIFY_CLICKED):
-			# There are only a few clickable widgets in this screen, so lets just assume one of the change-tab buttons was pressed. (or exit)
-			iData1 = inputClass.getData1()
-			if (iData1 != self.iPage and iData1 >= 0 and iData1 < len(self.PAGE_NAME_LIST)):
-				self.iPage = iData1
-				self.drawContents()
+			# There are only a few clickable widgets in this screen, so lets just assume that if it was a "general" button,
+			# then it was one of the change-tab buttons. (or exit)
+			if (inputClass.getButtonType() == WidgetTypes.WIDGET_GENERAL):
+				iData1 = inputClass.getData1()
+				if (iData1 != self.iPage and iData1 >= 0 and iData1 < len(self.PAGE_NAME_LIST)):
+					self.iPage = iData1
+					self.drawContents()
 		return 0
 
 	def update(self, fDelta):
