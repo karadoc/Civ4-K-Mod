@@ -910,7 +910,7 @@ public:
 	virtual void LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) const = 0;
 	int LFBgetAttackerRank(const CvUnit* pDefender, int& iUnadjustedRank) const;
 	int LFBgetDefenderRank(const CvUnit* pAttacker) const;
-protected:
+//protected: // unprotected by K-Mod. (I want to use the LFB value for some AI stuff)
 	int LFBgetDefenderOdds(const CvUnit* pAttacker) const;
 	int LFBgetValueAdjustedOdds(int iOdds, bool bDefender) const;
 	int LFBgetRelativeValueRating() const;

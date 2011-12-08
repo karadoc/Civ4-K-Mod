@@ -410,26 +410,17 @@ CvUnit* CvSelectionGroupAI::AI_getBestGroupAttacker(const CvPlot* pPlot, bool bP
 {
 	PROFILE_FUNC();
 
-	CLLNode<IDInfo>* pUnitNode;
-	CvUnit* pLoopUnit;
-	CvUnit* pBestUnit;
-	int iPossibleTargets;
-	int iValue;
-	int iBestValue;
-	int iOdds;
-	int iBestOdds;
+	int iBestValue = 0;
+	int iBestOdds = 0;
+	CvUnit* pBestUnit = NULL;
 
-	iBestValue = 0;
-	iBestOdds = 0;
-	pBestUnit = NULL;
-
-	pUnitNode = headUnitNode();
+	CLLNode<IDInfo>* pUnitNode = headUnitNode();
 
 	bool bIsHuman = (pUnitNode != NULL) ? GET_PLAYER(::getUnit(pUnitNode->m_data)->getOwnerINLINE()).isHuman() : true;
 			
 	while (pUnitNode != NULL)
 	{
-		pLoopUnit = ::getUnit(pUnitNode->m_data);
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 		pUnitNode = nextUnitNode(pUnitNode);
 
 		if (!pLoopUnit->isDead())
@@ -463,18 +454,19 @@ CvUnit* CvSelectionGroupAI::AI_getBestGroupAttacker(const CvPlot* pPlot, bool bP
 						// From Lead From Behind by UncutDragon
 						if (GC.getLFBEnable() && GC.getLFBUseCombatOdds())
 						{
-							pLoopUnit->LFBgetBetterAttacker(&pBestUnit, pPlot, bPotentialEnemy, iBestOdds, iValue);
+							//pLoopUnit->LFBgetBetterAttacker(&pBestUnit, pPlot, bPotentialEnemy, iBestOdds, iValue);
+							pLoopUnit->LFBgetBetterAttacker(&pBestUnit, pPlot, bPotentialEnemy, iBestOdds, iBestValue); // K-Mod.
 						} 
 						else 
 						{
-							iOdds = pLoopUnit->AI_attackOdds(pPlot, bPotentialEnemy);
+							int iOdds = pLoopUnit->AI_attackOdds(pPlot, bPotentialEnemy);
 							
-							iValue = iOdds;
+							int iValue = iOdds;
 							FAssertMsg(iValue > 0, "iValue is expected to be greater than 0");
 	
 							if (pLoopUnit->collateralDamage() > 0)
 							{
-								iPossibleTargets = std::min((pPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1), pLoopUnit->collateralDamageMaxUnits());
+								int iPossibleTargets = std::min((pPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1), pLoopUnit->collateralDamageMaxUnits());
 	
 								if (iPossibleTargets > 0)
 								{

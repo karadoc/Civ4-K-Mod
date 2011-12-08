@@ -13507,13 +13507,14 @@ int CvUnit::LFBgetAttackerRank(const CvUnit* pDefender, int& iUnadjustedRank) co
 		// If attacker has a chance to withdraw, factor that in as well
 		if (withdrawalProbability() > 0)
 			iUnadjustedRank += ((iDefOdds * withdrawalProbability()) / 100);
-	} else {
+	}
+	else
+	{
 		// No defender ... just use strength, but try to make it a number out of 1000
 		iUnadjustedRank = currCombatStr(NULL, NULL) / 5;
 	}
-	int iRank = LFBgetValueAdjustedOdds(iUnadjustedRank, false);
 
-	return iRank;
+	return LFBgetValueAdjustedOdds(iUnadjustedRank, false);
 }
 
 // Get the (adjusted) odds of defender winning to use in deciding best defender

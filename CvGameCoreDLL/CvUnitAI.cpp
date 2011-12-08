@@ -7546,10 +7546,10 @@ void CvUnitAI::AI_assaultSeaMove()
 		{
 			return;
 		}
-		if (AI_anyAttack(1, 45))
+		/*if (AI_anyAttack(1, 45))
 		{
 			return;
-		}
+		}*/ // disabled by K-Mod. (redundant)
 	}
 
 	bool bReinforce = false;
@@ -14304,18 +14304,12 @@ bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
 {
 	PROFILE_FUNC();
 
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	int iValue;
-	int iBestValue;
-	int iI;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = NULL;
 
-	iBestValue = 0;
-	pBestPlot = NULL;
-
-	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
-		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
 		if (pLoopPlot->getOwnerINLINE() == getOwnerINLINE())
 		{
@@ -14330,9 +14324,12 @@ bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
 						{
 							// BBAI efficiency: Most of the time, path will exist and odds will be checked anyway.  When path doesn't exist, checking path
 							// takes longer.  Therefore, check odds first.
-							iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
+							//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
+							int iValue = AI_getWeightedOdds(pLoopPlot, false); // K-Mod
+							BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam()); // K-Mod
 
-							if ((iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold)) && (iValue*50 > iBestValue))
+							//if ((iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold)) && (iValue*50 > iBestValue))
+							if (iValue >= iOddsThreshold && (eBonus != NO_BONUS || iValue*50 > iBestValue)) // K-Mod
 							{
 								int iPathTurns;
 								if( generatePath(pLoopPlot, 0, true, &iPathTurns, iMaxPathTurns) )
@@ -14343,6 +14340,14 @@ bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
 										iValue *= 100;
 
 										iValue /= (2 + iPathTurns);
+
+										// K-Mod
+										if (eBonus != NO_BONUS)
+										{
+											iValue *= 10 + GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eBonus, 0);
+											iValue /= 10;
+										}
+										// K-Mod end
 									
 										if (iValue > iBestValue)
 										{
@@ -15733,33 +15738,18 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bF
 {
 	PROFILE_FUNC();
 
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	int iSearchRange;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iDX, iDY;
-
 	FAssert(canMove());
 
-	if (bFollow)
-	{
-		iSearchRange = 1;
-	}
-	else
-	{
-		iSearchRange = AI_searchRange(iRange);
-	}
+	int iSearchRange = bFollow ? 1 : AI_searchRange(iRange);
 
-	iBestValue = 0;
-	pBestPlot = NULL;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = NULL;
 
-	for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
+	for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 	{
-		for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
+		for (int iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
 		{
-			pLoopPlot	= plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
 			if (pLoopPlot != NULL)
 			{
@@ -15770,11 +15760,14 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bF
 					{
 						if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 						{
+							int iPathTurns;
 							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange) && (iPathTurns <= iRange))))
 							{
-								iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
+								//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
+								int iValue = AI_getWeightedOdds(pLoopPlot, true); // K-Mod
 
-								if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
+								//if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
+								if (iValue > iBestValue) // K-Mod
 								{
 									if (iValue > iBestValue)
 									{
@@ -15826,7 +15819,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 
 	int iSearchRange = bFollow ? 1 : AI_searchRange(iRange);
 
-	int iBestValue = 0;
+	//int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
 
 	for (int iDX = -iSearchRange; iDX <= iSearchRange; iDX++)
@@ -15849,15 +15842,8 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 								//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
 								if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true) && (bFollow ? true : generatePath(pLoopPlot, iFlags, true, 0, iRange))) // K-Mod
 								{
-									//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
-									// K-Mod
-									int iValue;
-									CvUnit* pAttacker = 0;
-									if (!pLoopPlot->hasDefender(false, NO_PLAYER, getOwnerINLINE(), NULL, true, false))
-										iValue = 100;
-									else
-										pAttacker = getGroup()->AI_getBestGroupAttacker(pLoopPlot, false, iValue);
-									// K-Mod end
+									/* original bts code
+									iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
 
 									if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
 									{
@@ -15867,7 +15853,15 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 											pBestPlot = ((bFollow) ? pLoopPlot : getPathEndTurnPlot());
 											FAssert(!atPlot(pBestPlot));
 										}
+									}*/
+									// K-Mod
+									int iOdds = AI_getWeightedOdds(pLoopPlot, false);
+									if (iOdds > iOddsThreshold)
+									{
+										iOddsThreshold = iOdds;
+										pBestPlot = bFollow ? pLoopPlot : getPathEndTurnPlot();
 									}
+									// K-Mod end
 								}
 							}
 						}
@@ -15948,24 +15942,16 @@ bool CvUnitAI::AI_rangeAttack(int iRange)
 
 bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThreshold)
 {
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	CvCity* pCity;
-	int iSearchRange;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iDX, iDY;
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
 
 	FAssert(canMove());
 
-	iSearchRange = iRange;
+	int iSearchRange = iRange;
 
-	iBestValue = 0;
-	pBestPlot = NULL;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = NULL;
 
-	pCity = plot()->getPlotCity();
+	CvCity* pCity = plot()->getPlotCity();
 
 	if ((pCity != NULL) && (pCity->getOwnerINLINE() == getOwnerINLINE()))
 	{
@@ -15988,11 +15974,11 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 		}
 	}
 
-	for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
+	for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 	{
-		for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
+		for (int iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
 		{
-			pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
 			if (pLoopPlot != NULL)
 			{
@@ -16003,20 +15989,13 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 					{
 						if (pLoopPlot->getNumVisibleEnemyDefenders(this) > 0)
 						{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/27/10                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-							if (!atPlot(pLoopPlot) && (generatePath(pLoopPlot, 0, true, &iPathTurns, iRange) && (iPathTurns <= iRange)))
+							if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, 0, iRange))
 							{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+								//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
+								int iValue = AI_getWeightedOdds(pLoopPlot, false); // K-Mod
 
-								iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
-
-								if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
+								//if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
+								if (iValue > iOddsThreshold) // K-mod
 								{
 									if (iValue > iBestValue)
 									{
@@ -16121,12 +16100,18 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 
 // iAttackThreshold is the minimum ratio for our attack / their defence.
 // iDefenceThreshold is the minimum ratio for their attack / our defence.
-// note: iSearchRange is /not/ the number of turns. It is the number of steps. Only 1-turn moves are considered here.
+// note: iSearchRange is /not/ the number of turns. It is the number of steps. iSearchRange < 1 means 'automatic'
+// Only 1-turn moves are considered here.
 bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRiskThreshold, int iFlags)
 {
 	PROFILE_FUNC();
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	if (iSearchRange < 1)
+	{
+		iSearchRange = AI_searchRange(1);
+	}
 
 	//int iOurDefence = kOwner.AI_localDefenceStrength(plot(), getTeam());
 	int iOurDefence = getGroup()->AI_sumStrength(0); // not counting defensive bonuses
@@ -24033,9 +24018,14 @@ bool CvUnitAI::AI_plotValid(CvPlot* pPlot)
 	return false;
 }
 
-
-int CvUnitAI::AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold, CvUnit* pAttacker) // K-Mod added pAttacker
+#if 0
+int CvUnitAI::AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold)
 {
+// K-Mod note: This functions is trash.
+// This is what makes the AI suicide huge stacks of units against a small group of powerful defenders.
+// Imagine 2 units with defence and drill promotions, standing in a hills-forest fort...
+
+// So... I intend to change the AI to never use this function.
 	PROFILE_FUNC();
 
 	CvCity* pCity;
@@ -24100,46 +24090,12 @@ int CvUnitAI::AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold, CvUnit* p
 	}
 	else
 	{
-		/* bbai code
 		iFinalOddsThreshold *= 6 + (iDefenders/((pCity != NULL) ? 1 : 2));
 		int iDivisor = 3;
 		iDivisor += GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pPlot, true);
 		iDivisor += ((stepDistance(getX_INLINE(), getY_INLINE(), pPlot->getX_INLINE(), pPlot->getY_INLINE()) > 1) ? getGroup()->getNumUnits() : 0);
 		iDivisor += (AI_isCityAIType() ? 2 : 0);
-		iFinalOddsThreshold /= iDivisor; */
-
-		// K-Mod
-		// holy smokes crapman. I wish I'd looked at this part of code sooner. It's complete trash!
-		// This is what makes the AI suicide huge stacks of units against a small group of powerful defenders.
-		// Imagine 2 units with defence and drill promotions, standing in a hills-forest fort...
-		// this code is a disaster.
-
-		// Since the original code is pretty stupid.. maybe I should let the barbarians use it.
-		if (isBarbarian())
-		{
-			iFinalOddsThreshold *= 6 + (iDefenders/((pCity != NULL) ? 1 : 2));
-			int iDivisor = 3;
-			iDivisor += GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pPlot, true);
-			iDivisor += ((stepDistance(getX_INLINE(), getY_INLINE(), pPlot->getX_INLINE(), pPlot->getY_INLINE()) > 1) ? getGroup()->getNumUnits() : 0);
-			iDivisor += (AI_isCityAIType() ? 2 : 0);
-			iFinalOddsThreshold /= iDivisor;
-		}
-		else
-		{
-			// I think the best thing to consider would be the relative production cost of the attacker vs that of the defender.
-			// but getting the best attacker / defender is somewhat expensive...  ...  too bad, I guess.
-			CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this);
-			if (pDefender)
-			{
-				pAttacker = pAttacker ? pAttacker : this;
-				if (pAttacker->getUnitInfo().getProductionCost() > 0 && pDefender->getUnitInfo().getProductionCost() > 0)
-				{
-					iFinalOddsThreshold *= 15 + pAttacker->getUnitInfo().getProductionCost();
-					iFinalOddsThreshold /= 15 + pDefender->getUnitInfo().getProductionCost();
-				}
-			}
-		}
-		// K-Mod end
+		iFinalOddsThreshold /= iDivisor;
 	}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -24147,6 +24103,71 @@ int CvUnitAI::AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold, CvUnit* p
 
 	return range(iFinalOddsThreshold, 1, 99);
 }
+#endif
+
+// K-Mod. A new odds-adjusting function to replace the seriously flawed CvUnitAI::AI_finalOddsThreshold function.
+// (note: I would like to put this in CvSelectionGroupAI ... but - well - I don't need to say it, right?
+int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
+{
+	int iOdds;
+	CvUnit* pAttacker = getGroup()->AI_getBestGroupAttacker(pPlot, bPotentialEnemy, iOdds);
+	FAssert(pAttacker);
+	CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), pAttacker, !bPotentialEnemy, bPotentialEnemy);
+
+	if (!pDefender)
+		return 100;
+
+	int iAdjustedOdds = iOdds;
+
+	// adjust the values based on the relative production cost of the units.
+	{
+		int iOurCost = pAttacker->getUnitInfo().getProductionCost();
+		int iTheirCost = pDefender->getUnitInfo().getProductionCost();
+		if (iOurCost > 0 && iTheirCost > 0 && iOurCost != iTheirCost)
+		{
+			//iAdjustedOdds += iOdds * (100 - iOdds) * 2 * iTheirCost / (iOurCost + iTheirCost) / 100;
+			//iAdjustedOdds -= iOdds * (100 - iOdds) * 2 * iOurCost / (iOurCost + iTheirCost) / 100;
+			int x = iOdds * (100 - iOdds) * 2 / (iOurCost + iTheirCost);
+			iAdjustedOdds += x * (iTheirCost - iOurCost) / 100;
+		}
+	}
+	// similarly, adjust based on the LFB value (slightly diluted)
+	{
+		int iDilution = GC.getLFBBasedOnHealer() + ROUND_DIVIDE(10 * GC.getLFBBasedOnExperience() * (GC.getGameINLINE().getCurrentEra() - GC.getGameINLINE().getStartEra() + 1), std::max(1, GC.getNumEraInfos() - GC.getGameINLINE().getStartEra()));
+		int iOurValue = pAttacker->LFBgetRelativeValueRating() + iDilution;
+		int iTheirValue = pDefender->LFBgetRelativeValueRating() + iDilution;
+
+		int x = iOdds * (100 - iOdds) * 2 / std::max(1, iOurValue + iTheirValue);
+		iAdjustedOdds += x * (iTheirValue - iOurValue) / 100;
+	}
+
+	// adjust down if the enemy is on a defensive tile - we'd prefer to attack them on open ground.
+	if (!pDefender->noDefensiveBonus())
+	{
+		iAdjustedOdds -= (100 - iOdds) * pPlot->defenseModifier(pDefender->getTeam(), false) / (getDomainType() == DOMAIN_SEA ? 100 : 250);
+	}
+
+	// adjust the odds up if the enemy is wounded. We want to attack them now before they heal.
+	iAdjustedOdds += iOdds * (100 - iOdds) * pDefender->currHitPoints() / (100 * pDefender->maxHitPoints());
+
+	// We're extra keen to take cites when we can...
+	if (pPlot->isCity() && pPlot->getNumVisiblePotentialEnemyDefenders(pAttacker) == 1)
+	{
+		iAdjustedOdds += (100 - iOdds) / 3;
+	}
+
+	// one more thing... unfortunately, the sea AI isn't evolved enough to do without something as painful as this...
+	if (getDomainType() == DOMAIN_SEA && !getGroup()->hasCargo())
+	{
+		// I'm sorry about this. I really am. I'll try to make it better one day...
+		int iDefenders = pPlot->getNumVisiblePotentialEnemyDefenders(pAttacker);
+		iAdjustedOdds *= 2 + getGroup()->getNumUnits();
+		iAdjustedOdds /= 3 + std::min(iDefenders/2, getGroup()->getNumUnits());
+	}
+
+	return range(iAdjustedOdds, 1, 99);
+}
+// K-Mod end
 
 
 int CvUnitAI::AI_stackOfDoomExtra() const
