@@ -945,7 +945,8 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 								BuildTypes eBuild = pCity->AI_getBestBuild(iI);
 								FAssertMsg(eBuild < GC.getNumBuildInfos(), "Invalid Build");
 
-								if (eBuild != NO_BUILD)
+								//if (eBuild != NO_BUILD)
+								if (eBuild != NO_BUILD && canBuild(pLoopPlot, eBuild)) // K-Mod
 								{
 									if (0 == iPass)
 									{
@@ -953,7 +954,7 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 										pBestPlot = pLoopPlot;
 										eBestBuild = eBuild;
 									}
-									else if (canBuild(pLoopPlot, eBuild))
+									else //if (canBuild(pLoopPlot, eBuild))
 									{
 										if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 										{

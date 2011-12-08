@@ -10858,7 +10858,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 					iTempValue *= 2;
 				}
 				//road up bonuses if sort of bored.
-				if ((eOldRoute == NO_ROUTE) && (eBonus != NO_BONUS))
+				//if ((eOldRoute == NO_ROUTE) && (eBonus != NO_BONUS))
+				if (!pPlot->isWater() && eOldRoute == NO_ROUTE && eBonus != NO_BONUS) // K-Mod
 				{
 					iTempValue += (pPlot->isConnectedToCapital() ? 10 : 30);
 				}

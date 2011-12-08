@@ -366,7 +366,15 @@ bool KmodPathFinder::ProcessNode()
 void KmodPathFinder::ForwardPropagate(FAStarNode* head, int cost_delta)
 {
 	PROFILE_FUNC();
-	FAssert(cost_delta < 0 || head->m_iNumChildren == 0);
+	//FAssert(cost_delta < 0 || head->m_iNumChildren == 0);
+	// Note: there are some legitimate cases in which the cost_delta can be positive.
+	// For example, suppose a shorter path is found to the parent plot, but the path involves
+	// resting on less attractive plots. And suppose the addition moves saved by the shorter path
+	// are then spent anyway to take the final step onto the destination...
+	// In that case, although the path the parent plot has been upgraded, the path to the destination
+	// is actually degraded (ie. it has a higher total cost). I can't think of a way to solve this problem.
+	// (but I don't think it is very important.)
+
 	// change the known cost of all children by cost_delta, recursively
 	for (int i = 0; i < head->m_iNumChildren; i++)
 	{
@@ -386,7 +394,7 @@ void KmodPathFinder::ForwardPropagate(FAStarNode* head, int cost_delta)
 			// But anyway, according to the profiler, this is only going to cost us about a milisecond per turn.
 			int iPathCost = pathCost(head, head->m_apChildren[i], 666, &settings, 0);
 			iNewDelta = head->m_iKnownCost + iPathCost - head->m_apChildren[i]->m_iKnownCost;
-			FAssert(iNewDelta <= 0);
+			//FAssert(iNewDelta <= 0);
 		}
 
 		head->m_apChildren[i]->m_iKnownCost += iNewDelta;
