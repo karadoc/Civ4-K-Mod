@@ -23001,10 +23001,18 @@ bool CvPlayerAI::AI_isPlotThreatened(CvPlot* pPlot, int iRange, bool bTestMoves)
 								int iPathTurns = 0;
 								if (bTestMoves)
 								{
+									/* original bts code
 									if (!pLoopUnit->getGroup()->generatePath(pLoopPlot, pPlot, MOVE_MAX_MOVES | MOVE_IGNORE_DANGER, false, &iPathTurns))
 									{
 										iPathTurns = MAX_INT;
-									}
+									}*/
+
+									// K-Mod. Use a temp pathfinder, so as not to interfere with the normal one.
+									KmodPathFinder temp_finder;
+									temp_finder.SetSettings(pLoopUnit->getGroup(), MOVE_MAX_MOVES | MOVE_IGNORE_DANGER, 1, GC.getMOVE_DENOMINATOR());
+									if (temp_finder.GeneratePath(pPlot))
+										iPathTurns = 1;
+									// K-Mod end
 								}
 
 								if (iPathTurns <= 1)

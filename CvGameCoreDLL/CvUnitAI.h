@@ -323,15 +323,7 @@ protected:
 	bool AI_artistCultureVictoryMove();
 
 	bool AI_poach();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/31/10                              jdog5000        */
-/*                                                                                              */
-/* War tactics AI                                                                               */
-/************************************************************************************************/
-	bool AI_choke(int iRange = 1, bool bDefensive = false);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	bool AI_choke(int iRange = 1, bool bDefensive = false, int iFlags = 0);
 
 	bool AI_solveBlockageProblem(CvPlot* pDestPlot, bool bDeclareWar);
 	

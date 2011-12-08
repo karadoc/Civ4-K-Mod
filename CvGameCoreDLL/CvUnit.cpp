@@ -13638,7 +13638,7 @@ int CvUnit::LFBgetRelativeValueRating() const
 	if (GC.getLFBBasedOnExperience() > 0)
 	{
 		//int iTier = 10;
-		int iTier = 1;
+		int iTier = getLevel();
 		//while (getExperience() >= iTier)
 		while (getExperience() >= iTier*iTier+1)
 		{
@@ -13646,7 +13646,8 @@ int CvUnit::LFBgetRelativeValueRating() const
 			//iTier *= 2;
 			iTier++;
 		}
-		iValueRating += std::max(getLevel(), iTier) * GC.getLFBBasedOnExperience();
+		//iValueRating += std::max(getLevel(), iTier) * GC.getLFBBasedOnExperience();
+		iValueRating += iTier * GC.getLFBBasedOnExperience();
 	}
 
 	// Check if unit is limited in how many can exist
