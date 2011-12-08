@@ -741,7 +741,7 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 		gDLL->getInterfaceIFace()->selectUnit(pNextSelectionGroup->getHeadUnit(), bClear);
 	}
 	// K-Mod
-	else
+	else if (pCycleUnit)
 	{
 		gDLL->getInterfaceIFace()->clearSelectionList();
 		const_cast<CvGame*>(this)->updateTestEndTurn();

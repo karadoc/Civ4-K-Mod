@@ -309,7 +309,7 @@ protected:
 	int AI_searchRange(int iRange);
 	bool AI_plotValid(CvPlot* pPlot);
 
-	int AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold);
+	int AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold, CvUnit* pAttacker = 0); // K-Mod added pAttacker.
 
 	int AI_stackOfDoomExtra() const;
 
