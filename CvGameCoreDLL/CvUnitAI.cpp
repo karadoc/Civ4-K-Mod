@@ -3049,8 +3049,11 @@ void CvUnitAI::AI_attackCityMove()
 					}
 					if (getGroup()->AI_getMissionAIType() == MISSIONAI_PILLAGE && plot()->defenseModifier(getTeam(), false) > 0)
 					{
-						if (AI_pillageRange(0, 0, iMoveFlags))
+						if (isEnemy(plot()->getTeam()) && canPillage(plot()))
+						{
+							getGroup()->pushMission(MISSION_PILLAGE, -1, -1, 0, false, false, MISSIONAI_PILLAGE, plot());
 							return;
+						}
 					}
 					// K-Mod end
 
@@ -3140,7 +3143,7 @@ void CvUnitAI::AI_attackCityMove()
 					return;
 				}
 
-				if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 4)) // was 5
+				if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 5))
 				{
 					return;
 				}
@@ -3215,17 +3218,17 @@ void CvUnitAI::AI_attackCityMove()
 	}
 
 	// K-Mod - replacing some stuff I moved / removed from the BBAI code
-	if (pTargetCity && bTargetTooStrong)
+	if (pTargetCity && bTargetTooStrong && iStepDistToTarget <= (bReadyToAttack ? 3 : 2))
 	{
 		// Pillage around enemy city
-		if (generatePath(pTargetCity->plot(), iMoveFlags, true, 0, 6))
+		if (generatePath(pTargetCity->plot(), iMoveFlags, true, 0, 5))
 		{
 			// the above path check is just for efficiency.
 			// Otherwise we'd be checking every surrounding tile.
-			if (AI_pillageAroundCity(pTargetCity, 11, iMoveFlags, 3))
+			if (AI_pillageAroundCity(pTargetCity, 11, iMoveFlags, 2)) // was 3 turns
 				return;
 
-			if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 4))
+			if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 4)) // was 5 turns
 				return;
 		}
 
@@ -3253,6 +3256,7 @@ void CvUnitAI::AI_attackCityMove()
 				// the max path turns is arbitrary, but it should be at least as big as the pillage sections higher up.
 				CvPlot* pEndTurnPlot = getPathEndTurnPlot();
 				FAssert(!atPlot(pEndTurnPlot));
+				// warning: this command may attack something. We haven't checked!
 				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iMoveFlags, false, false, MISSIONAI_PILLAGE, pMissionPlot);
 				return;
 			}
@@ -15633,7 +15637,8 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
 
 										iValue *= 1000 + 30*(pLoopPlot->defenseModifier(getTeam(),false));
 
-                                        iValue /= (iPathTurns + 1);
+                                        //iValue /= (iPathTurns + 1);
+										iValue /= std::max(1, iPathTurns); // K-Mod
 
 										// if not at war with this plot owner, then devalue plot if we already inside this owner's borders
 										// (because declaring war will pop us some unknown distance away)
@@ -23766,27 +23771,22 @@ bool CvUnitAI::AI_defendPlot(CvPlot* pPlot)
 
 int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 {
-	CvPlot* pAdjacentPlot;
-	ImprovementTypes eImprovement;
-	BonusTypes eNonObsoleteBonus;
-	int iValue;
-	int iTempValue;
-	int iBonusValue;
-	int iI;
-
 	FAssert(canPillage(pPlot) || canAirBombAt(plot(), pPlot->getX_INLINE(), pPlot->getY_INLINE()) || (getGroup()->getCargo() > 0));
 
 	if (!(pPlot->isOwned()))
 	{
 		return 0;
 	}
-	
-	iBonusValue = 0;
-	eNonObsoleteBonus = pPlot->getNonObsoleteBonusType(pPlot->getTeam(), true);
+
+	int iValue = 0;
+
+	int iBonusValue = 0;
+	// eNonObsoleteBonus = pPlot->getNonObsoleteBonusType(pPlot->getTeam(), true);
+	BonusTypes eNonObsoleteBonus = pPlot->isRevealed(getTeam(), false) ? pPlot->getNonObsoleteBonusType(pPlot->getTeam(), true) : NO_BONUS; // K-Mod
 	if (eNonObsoleteBonus != NO_BONUS)
 	{
 		//iBonusValue = (GET_PLAYER(pPlot->getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus));
-		iBonusValue = (GET_PLAYER(pPlot->getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 0)); // K-Mod
+		iBonusValue = GET_PLAYER(pPlot->getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 0); // K-Mod
 	}
 	
 	if (iBonusValueThreshold > 0)
@@ -23801,8 +23801,6 @@ int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 		}
 	}
 
-	iValue = 0;
-
 	if (getDomainType() != DOMAIN_AIR)
 	{
 		if (pPlot->isRoute())
@@ -23814,9 +23812,10 @@ int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 				iValue += iBonusValue; // K-Mod. (many more iBonusValues will be added again later anyway)
 			}
 
-			for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+			for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 			{
-				pAdjacentPlot = plotDirection(getX_INLINE(), getY_INLINE(), ((DirectionTypes)iI));
+				//pAdjacentPlot = plotDirection(getX_INLINE(), getY_INLINE(), ((DirectionTypes)iI));
+				CvPlot* pAdjacentPlot = plotDirection(pPlot->getX_INLINE(), pPlot->getY_INLINE(), (DirectionTypes)iI); // K-Mod, bugfix
 
 				if (pAdjacentPlot != NULL && pAdjacentPlot->getTeam() == pPlot->getTeam())
 				{
@@ -23837,14 +23836,15 @@ int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 		}
 	}
 
-	if (pPlot->getImprovementDuration() > ((pPlot->isWater()) ? 20 : 5))
+	/*if (pPlot->getImprovementDuration() > ((pPlot->isWater()) ? 20 : 5))
 	{
 		eImprovement = pPlot->getImprovementType();
 	}
 	else
 	{
 		eImprovement = pPlot->getRevealedImprovementType(getTeam(), false);
-	}
+	}*/
+	ImprovementTypes eImprovement = pPlot->getImprovementDuration() > 20 ? pPlot->getImprovementType() : pPlot->getRevealedImprovementType(getTeam(), false);
 
 	if (eImprovement != NO_IMPROVEMENT)
 	{
@@ -23864,7 +23864,7 @@ int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 		{
 			if (GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
 			{
-				iTempValue = iBonusValue * 4;
+				int iTempValue = iBonusValue * 4;
 
 				if (pPlot->isConnectedToCapital() && (pPlot->getPlotGroupConnectedBonus(pPlot->getOwnerINLINE(), eNonObsoleteBonus) == 1))
 				{
@@ -24155,7 +24155,7 @@ int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
 	}
 
 	// adjust the odds up if the enemy is wounded. We want to attack them now before they heal.
-	iAdjustedOdds += iOdds * (100 - iOdds) * pDefender->currHitPoints() / (100 * pDefender->maxHitPoints());
+	iAdjustedOdds += iOdds * (100 - iOdds) * pDefender->getDamage() / (100 * pDefender->maxHitPoints());
 
 	// We're extra keen to take cites when we can...
 	if (pPlot->isCity() && pPlot->getNumVisiblePotentialEnemyDefenders(pAttacker) == 1)
