@@ -1285,6 +1285,9 @@ bool CvUnitAI::AI_considerPathDOW(CvPlot* pPlot, int iFlags)
 {
 	PROFILE_FUNC();
 
+	if (!(iFlags & MOVE_DECLARE_WAR))
+		return false;
+
 	if (!generatePath(pPlot, iFlags, true))
 	{
 		FAssertMsg(false, "AI_considerPathDOW didn't find a path.");
@@ -16184,28 +16187,21 @@ bool CvUnitAI::AI_blockade()
 {
 	PROFILE_FUNC();
 
-	CvCity* pCity;
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	CvPlot* pBestBlockadePlot;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iI;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = NULL;
+	CvPlot* pBestBlockadePlot = NULL;
 
-	iBestValue = 0;
-	pBestPlot = NULL;
-	pBestBlockadePlot = NULL;
+	int iFlags = MOVE_DECLARE_WAR; // K-Mod
 
-	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
-		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
 		if (AI_plotValid(pLoopPlot))
 		{
 			if (potentialWarAction(pLoopPlot))
 			{
-				pCity = pLoopPlot->getWorkingCity();
+				CvCity* pCity = pLoopPlot->getWorkingCity();
 
 				if (pCity != NULL)
 				{
@@ -16219,9 +16215,10 @@ bool CvUnitAI::AI_blockade()
 							{
 								if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BLOCKADE, getGroup(), 2) == 0)
 								{
-									if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+									int iPathTurns;
+									if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
 									{
-										iValue = 1;
+										int iValue = 1;
 
 										iValue += std::min(pCity->getPopulation(), pCity->countNumWaterPlots());
 
@@ -16273,9 +16270,9 @@ bool CvUnitAI::AI_blockade()
 		if (atPlot(pBestBlockadePlot) && !isEnemy(pBestBlockadePlot->getTeam(), pBestBlockadePlot))
 		{
 			//getGroup()->groupDeclareWar(pBestBlockadePlot, true);
-			AI_considerPathDOW(pBestBlockadePlot, 0); // K-Mod
+			AI_considerPathDOW(pBestBlockadePlot, iFlags); // K-Mod
 		}
-		
+
 		if (atPlot(pBestBlockadePlot))
 		{
 			if (canBombard(plot()))
@@ -16291,7 +16288,7 @@ bool CvUnitAI::AI_blockade()
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_BLOCKADE, pBestBlockadePlot);
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_BLOCKADE, pBestBlockadePlot);
 			return true;
 		}
 	}
@@ -24116,9 +24113,11 @@ int CvUnitAI::AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold)
 // (note: I would like to put this in CvSelectionGroupAI ... but - well - I don't need to say it, right?
 int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
 {
+	PROFILE_FUNC();
 	int iOdds;
 	CvUnit* pAttacker = getGroup()->AI_getBestGroupAttacker(pPlot, bPotentialEnemy, iOdds);
-	FAssert(pAttacker);
+	if (!pAttacker)
+		return 0;
 	CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), pAttacker, !bPotentialEnemy, bPotentialEnemy);
 
 	if (!pDefender)
