@@ -11660,8 +11660,8 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 
 	if (!bTotalWar)
 	{
-		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 10 + iBuildProb / 4 : 0;
-		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 10 + iBuildProb / 4 : 0;
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 12 + iBuildProb / 4 : 0;
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 12 + iBuildProb / 4 : 0;
 		// note. the boost from alert1 + alert2 matches the boost from total war. (see below).
 	}
 
@@ -11671,7 +11671,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 	}
 	else
 	{
-		iMaxUnitSpending += bTotalWar ? 20 + iBuildProb / 2 : 0;
+		iMaxUnitSpending += bTotalWar ? 25 + iBuildProb / 2 : 0;
 		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 10 + AI_getFlavorValue(FLAVOR_MILITARY) : 0;
 		if (pArea)
 		{
@@ -11682,7 +11682,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 				break;
 
 			case AREAAI_DEFENSIVE:
-				iMaxUnitSpending += 35;
+				iMaxUnitSpending += 45;
 				break;
 
 			case AREAAI_MASSING:
@@ -20916,7 +20916,8 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 /************************************************************************************************/
 	{
 		iDefenders += 2 * iAreaCities;
-		if (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
+		//if (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
+		if (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE && AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)) // K-Mod
 		{
 			iDefenders *= 2; //go crazy
 		}

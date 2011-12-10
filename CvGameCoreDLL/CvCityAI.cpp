@@ -12031,6 +12031,22 @@ void CvCityAI::AI_cachePlayerCloseness(int iMaxDistance)
 	m_iCachePlayerClosenessDistance = iMaxDistance;
 }
 
+// K-Mod
+// return true if there is an adjacent plot not owned by us.
+bool CvCityAI::AI_isFrontlineCity() const
+{
+	for (int i = 0; i < NUM_DIRECTION_TYPES; i++)
+	{
+		CvPlot* pAdjacentPlot = plotDirection(getX_INLINE(), getY_INLINE(), (DirectionTypes)i);
+
+		if (pAdjacentPlot && !pAdjacentPlot->isWater() && pAdjacentPlot->getTeam() != getTeam())
+			return true;
+	}
+
+	return false;
+}
+// K-Mod end
+
 int CvCityAI::AI_cityThreat(bool bDangerPercent)
 {
 /************************************************************************************************/
@@ -12050,11 +12066,23 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 		if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() != getTeam()) // K-Mod
 		{
 			int iTempValue = AI_playerCloseness((PlayerTypes)iI, DEFAULT_PLAYER_CLOSENESS);
+
 			if (iTempValue > 0)
 			{
+				// K-Mod
+				for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+				{
+					CvPlot* pLoopPlot = getCityIndexPlot(iJ);
+					if (pLoopPlot && pLoopPlot->getOwnerINLINE() == iI)
+					{
+						iTempValue += (stepDistance(getX_INLINE(), getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= 1) ? 2 : 1;
+					}
+				}
+				// K-Mod end
+
 				if (bCrushStrategy && GET_TEAM(getTeam()).AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
 				{
-					iTempValue *= 400;						
+					iTempValue *= 400;
 				}
 				else if (atWar(getTeam(), kLoopPlayer.getTeam()))
 				{
@@ -12145,7 +12173,7 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 		}
 	}
 	
-	iValue += 2 * kOwner.AI_getPlotDanger(plot(), 3, false);
+	iValue += 3 * kOwner.AI_getPlotDanger(plot(), 3, false); // was 2 *
 	
 	return iValue;
 /************************************************************************************************/

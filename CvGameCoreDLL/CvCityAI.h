@@ -138,6 +138,7 @@ public:
 /************************************************************************************************/
 
 	int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance);
+	bool AI_isFrontlineCity() const; // K-Mod
 	int AI_cityThreat(bool bDangerPercent = false);
 
 	int AI_getWorkersHave();

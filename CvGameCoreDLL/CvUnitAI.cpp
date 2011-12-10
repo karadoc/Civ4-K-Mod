@@ -1152,7 +1152,8 @@ void CvUnitAI::AI_setUnitAIType(UnitAITypes eNewValue)
 
 int CvUnitAI::AI_sacrificeValue(const CvPlot* pPlot) const
 {
-    int iValue;
+    //int iValue;
+	long iValue; // K-Mod. (the int will overflow)
     int iCollateralDamageValue = 0;
     if (pPlot != NULL)
     {
@@ -1175,7 +1176,7 @@ int CvUnitAI::AI_sacrificeValue(const CvPlot* pPlot) const
 			iValue += 25000;
 		}
 		//iValue /= std::max(1, (1 + m_pUnitInfo->getProductionCost()));
-		iValue /= std::max(1, 1 + (m_pUnitInfo->getProductionCost() > 0 ? m_pUnitInfo->getProductionCost() : 500)); // K-Mod
+		iValue /= m_pUnitInfo->getProductionCost() > 0 ? m_pUnitInfo->getProductionCost() : 180; // K-Mod
 		iValue *= (maxHitPoints() - getDamage());
 		iValue /= 100;
 	} 
@@ -1199,10 +1200,12 @@ int CvUnitAI::AI_sacrificeValue(const CvPlot* pPlot) const
 		iValue *= (100 + iCollateralDamageValue);
 		iValue /= (100 + cityDefenseModifier());
 		iValue *= (100 + withdrawalProbability());
+		iValue /= 100; // K-Mod
 
 		// Experience and medics now better handled in LFB
 		if( !GC.getLFBEnable() )
 		{
+			iValue *= 10; // K-Mod
 			iValue /= (10 + getExperience()); // K-Mod - moved from out of the if.
 			iValue *= 10;
 			iValue /= (10 + getSameTileHeal() + getAdjacentTileHeal());
@@ -1225,7 +1228,7 @@ int CvUnitAI::AI_sacrificeValue(const CvPlot* pPlot) const
 		// K-Mod end
 
 		//iValue /= std::max(1, (1 + m_pUnitInfo->getProductionCost()));
-		iValue /= std::max(1, 1 + (m_pUnitInfo->getProductionCost() > 0 ? m_pUnitInfo->getProductionCost() : 500)); // K-Mod
+		iValue /= m_pUnitInfo->getProductionCost() > 0 ? m_pUnitInfo->getProductionCost() : 180; // K-Mod
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -1250,7 +1253,8 @@ int CvUnitAI::AI_sacrificeValue(const CvPlot* pPlot) const
 		// K-Mod end
 	}
 
-    return iValue;
+	//return iValue;
+	return std::min((long)MAX_INT, iValue); // K-Mod
 }
 
 // Protected Functions...
@@ -3237,6 +3241,11 @@ void CvUnitAI::AI_attackCityMove()
 
 		// choke the city.
 		if (iStepDistToTarget <= 2 && AI_choke(1, false, iMoveFlags))
+			return;
+
+		// if we're already standing right next to the city, then goToTargetCity can fail
+		// - and we might end up doing something stupid instead. So try again to choke.
+		if (iStepDistToTarget <= 1 && AI_choke(3, false, iMoveFlags))
 			return;
 	}
 
