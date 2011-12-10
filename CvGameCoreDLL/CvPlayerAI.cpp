@@ -384,8 +384,11 @@ void CvPlayerAI::updateCacheData()
 		if (!isHuman())
 		{
 			AI_updateStrategyHash();
-			AI_updateGoldToUpgradeAllUnits();
+			//AI_updateGoldToUpgradeAllUnits();
 		}
+		// note. total upgrade gold is currently used in AI_hurry, which is used by production-automated.
+		// Therefore, we need to get total upgrade gold for human players as well as AI players.
+		AI_updateGoldToUpgradeAllUnits();
 	}
 }
 // K-Mod end

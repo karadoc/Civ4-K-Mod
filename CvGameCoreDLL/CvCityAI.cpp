@@ -218,11 +218,11 @@ void CvCityAI::AI_doTurn()
 	{
 	    if (isProductionAutomated())
 	    {
-	        AI_doHurry();	        
+	        AI_doHurry();
 	    }
 		return;
 	}
-	
+
 	AI_doPanic();
 
 	AI_doDraft();
@@ -8766,12 +8766,8 @@ void CvCityAI::AI_doHurry(bool bForce)
 			if (AI_countGoodTiles((healthRate(0) == 0), false, 100) <= (getPopulation() - iHurryPopulation))
 			{
 */
-/***
-**** K-Mod, 9/sep/10, Karadoc
-**** The following check is redundant, so I'm commenting it out.
-***/
 				// Only consider population hurry if that's actually what the city can do!!!
-				//if( (iHurryPopulation > 0) && (getPopulation() > iHurryPopulation) )
+				if( (iHurryPopulation > 0) && (getPopulation() > iHurryPopulation) )
 				{
 					//BBAI TODO: could be (bEssential ? 100 : 80) instead
 					if (AI_countGoodTiles((healthRate(0) == 0), false, 100) <= (getPopulation() - iHurryPopulation))
