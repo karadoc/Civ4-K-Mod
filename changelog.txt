@@ -1,5 +1,55 @@
-This is K-Mod version 1.10b.
+This is K-Mod version 1.11.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.11 changelist
+
+Game mechanics
+
++ The cost of the switch religion espionage mission is now increased when trying to switch to a religion that is spread to fewer cities than the current religion.
+
+AI
+
++ Adjusted the way the AI evaluates city danger levels. It should now defend its borders slightly more strongly.
++ Slightly increased the AI's max unit spending for alert and total war.
++ Fixed an inconsistency in pathDestValid which under rare circumstances could cause the AI to lock up.
++ Reduced the AI's vision cheating in AI_pillageValue.
+
++ Rearranged and adjusted some parts of the attack-city AI to fix a few problems which would sometimes cause the AI's stacks to oscillate between moving to attack and moving to pillage.
++ Fixed an original BtS bug in AI_pillageValue. (it was under-valuing bonuses)
++ Made several changes to the pillaging AI.
++ Rewrote parts of CvUnitAI::AI_choke, to be smarter and more efficient.
++ Changed the way the AI evaluates ordinary attacks. (This is a significant change. There may be undiscovered negative side effects.)
++ Fixed a problem from the original BtS code which caused the game to sometimes think workboats should try to put roads on sea resource.
++ The value penalty for techs that obsolete buildings is now slightly higher, but reduced for science_flavor civs.
++ The AI's value for great people points from specialists now decreases based on how many great people their civ has created so far.
++ Rewrote sections of AI_techUnitValue. (The new code should give a more sensible value boost for different strategies; alert, turtle, conquest, etc.)
++ For unit tech value, prereqs which cannot yet be researched now count as 2 missing prereqs rather than just one.
++ Slightly increased the production emphasis for flavor_production.
++ Adjusted the conditions the AI uses to decide if its attack stack should wait for reinforcements before moving out. (They are now less likely to wait if the target city is close.)
++ The AI will no longer automatically cancel deals with their worst enemy if their worst enemy happens to be their master. (They will always be willing to trade with their master, so it makes to sense to cancel the deals.)
+
+
+UI
+
++ Fixed a bug which caused the AI (and automated cities) to sometimes rush-buy buildings under the wrong circumstances.
++ Fixed an original BtS problem which made it hard for the player to deselect a unit after all of their units had moved.
++ Fixed an original BtS bug which caused minimized popups to steal the focus if the player tried to queue multiple moves with their final unit.
++ Fixed a bug in the economics adviser screen which caused the +/- buttons for the research slider to open the environmental tab.
++ Improved the symmetry breaker in the pathfinder. (The symmetry breaker is a K-Mod feature which is meant to prevent the game from showing the wrong path to the player when issuing a move command.)
++ Disabled a couple of checks which prevented the player from selecting units which have recently moved in simultaneous turns mode. (I'm pretty sure the remaining stuff is still enough to 100% enforce the MIN_TIMER_UNIT_DOUBLE_MOVES rule; the checks that I removed were unnecessary and annoying. Please tell me if I'm wrong. ie. tell me if you are able to bypass the minimum double-moves time in simultaneous turns mode.)
++ For human players, "border danger" is no longer counted on plots that are defended. (This means that combat units ordered to move through enemy lands will not be interrupted unless they see an actual enemy; and that workers will not be interrupted just for working on the border if they are defended.)
++ The screen will now center on newly drafted units rather than just selecting them.
++ Increased the effect of the emphasis buttons in the city screen.
+
+Back-end
+
++ Added new xml value: BBAI_MINIMUM_FOUND_VALUE. (The purpose of this is to allow the AI to be adjusted to work more sensibly in other mods based on K-Mod.)
++ When forming a permanent alliance, deals are now canceled /after/ the team numbers have been reassigned. This should prevent the new allies from being bumped out each other's territory when their open borders deals are automatically canceled.
++ The attitude cache from the CAR mod (included in BBAI) is now saved in the savefiles - this is to avoid potential OOS problems when a player joins mid-game.
++ Removed a potential OOS problem caused by the new tactical AI memory.
++ Fixed a pathfinding efficiency problem in CvPlayerAI::AI_isPlotThreatened. (It wasn't using the advantages of the new pathfinder.)
+
 
 --
 v1.10 changelist
