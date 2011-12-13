@@ -4265,8 +4265,9 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 /************************************************************************************************/
 			}
 
-			if ((iFocusFlags & BUILDINGFOCUS_EXPERIENCE) || (iPass > 0))
+			if (iFocusFlags & BUILDINGFOCUS_EXPERIENCE || iPass > 0)
 			{
+				/* original bts code
 				iValue += (kBuilding.getFreeExperience() * ((iHasMetCount > 0) ? 12 : 6));
 
 				for (int iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
@@ -4293,9 +4294,46 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						iDomainExpValue = 6;
 					}
 					iValue += (kBuilding.getDomainFreeExperience(iI) * ((iHasMetCount > 0) ? iDomainExpValue : iDomainExpValue / 2));
+				} */
+				// K-Mod.
+				// note. currently this new code matches the old code exactly,
+				// except that the value is halved in cities that we don't expect to be building troops in.
+				int iWeight = 12;
+				iWeight /= iHasMetCount > 0 ? 1 : 2;
+				iWeight /= bWarPlan || bIsHighProductionCity ? 1 : 2;
+
+				iValue += kBuilding.getFreeExperience() * iWeight;
+
+				for (int iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
+				{
+					if (canTrain((UnitCombatTypes)iI))
+					{
+						iValue += kBuilding.getUnitCombatFreeExperience(iI) * iWeight / 2;
+					}
 				}
+
+				for (int iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
+				{
+					int iDomainExpValue = 0;
+					switch (iI)
+					{
+					case DOMAIN_LAND:
+						// full value
+						iValue += kBuilding.getDomainFreeExperience(iI) * iWeight;
+						break;
+					case DOMAIN_SEA:
+						// special case. Don't use 'iWeight', because for sea bIsHighProductionCity may be too strict.
+						iValue += kBuilding.getDomainFreeExperience(iI) * 7;
+						break;
+					default:
+						// half value.
+						iValue += kBuilding.getDomainFreeExperience(iI) * iWeight/2;
+						break;
+					}
+				}
+				// K-Mod end
 			}
-			
+
 			// since this duplicates BUILDINGFOCUS_EXPERIENCE checks, do not repeat on pass 1
 			if ((iFocusFlags & BUILDINGFOCUS_DOMAINSEA))
 			{
