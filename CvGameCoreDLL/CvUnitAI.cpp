@@ -1368,14 +1368,24 @@ void CvUnitAI::AI_settleMove()
 			return;
 		}
 	}
-	
+
+	/* original bts code
 	int iDanger = GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 3);
 	
 	if (iDanger > 0)
 	{
-		//if ((plot()->getOwnerINLINE() == getOwnerINLINE()) || (iDanger > 2))
-		if (plot()->getOwnerINLINE() == getOwnerINLINE() || iDanger > 2 || !getGroup()->canDefend()) // K-Mod
+		if ((plot()->getOwnerINLINE() == getOwnerINLINE()) || (iDanger > 2)) */
+	// K-Mod
+	if (kOwner.AI_getAnyPlotDanger(plot()))
+	{
+		//int iOurDefence = getGroup()->AI_sumStrength(0); // not counting defensive bonuses
+		//int iEnemyAttack = kOwner.AI_localAttackStrength(plot(), NO_TEAM, getDomainType(), 2, true);
+
+		if (!getGroup()->canDefend()
+			|| 100 * kOwner.AI_localAttackStrength(plot(), NO_TEAM) > 80 * getGroup()->AI_sumStrength(0))
+	// K-Mod end
 		{
+			// flee
 			joinGroup(NULL);
 			if (AI_retreatToCity())
 			{
@@ -14307,13 +14317,8 @@ bool CvUnitAI::AI_paradrop(int iRange)
 }
 
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
+bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns, int iFlags)
 {
 	PROFILE_FUNC();
 
@@ -14345,7 +14350,7 @@ bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
 							if (iValue >= iOddsThreshold && (eBonus != NO_BONUS || iValue*50 > iBestValue)) // K-Mod
 							{
 								int iPathTurns;
-								if( generatePath(pLoopPlot, 0, true, &iPathTurns, iMaxPathTurns) )
+								if( generatePath(pLoopPlot, iFlags, true, &iPathTurns, iMaxPathTurns) )
 								{
 									// BBAI TODO: Other units targeting this already (if path turns > 1 or 0)?
 									if( iPathTurns <= iMaxPathTurns )
@@ -14381,16 +14386,12 @@ bool CvUnitAI::AI_protect(int iOddsThreshold, int iMaxPathTurns)
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags);
 		return true;
 	}
 
 	return false;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_patrol()
@@ -15978,9 +15979,17 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 		// K-Mod end
 		if (iEnemyStrength > 0)
 		{
-			if (((iOurDefence * 100) / iEnemyStrength) < iStrengthThreshold)
+			if (iOurDefence * 100 / iEnemyStrength < iStrengthThreshold)
 			{
-				return false;
+				// K-Mod.
+				// We should only heed to the threshold if we either we have enough defence to hold the city,
+				// or we don't have enough attack force to wipe the enemy out.
+				// (otherwise, we are better off attacking than defending.)
+				if (iEnemyStrength < iOurDefence
+					|| kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 0, false, false, true)
+					 < kOwner.AI_localDefenceStrength(plot(), NO_TEAM, DOMAIN_LAND, 2, false))
+				// K-Mod end
+					return false;
 			}
 			if (plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE()) <= getGroup()->getNumUnits())
 			{
@@ -16114,6 +16123,82 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 
 	return false;
 }
+
+// K-Mod
+bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
+{
+	PROFILE_FUNC();
+	FAssert(collateralDamage() > 0);
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	CvPlot* pEndTurnPlot = NULL;
+	int iBestValue = 0;
+
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	{
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+
+		if (pLoopPlot->getTeam() == getTeam() && AI_plotValid(pLoopPlot))
+		{
+			if (pLoopPlot->isVisibleEnemyUnit(this))
+			{
+				int iPathTurns;
+				if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iMaxPathTurns))
+				{
+					int iOdds = AI_getWeightedOdds(pLoopPlot);
+					int iValue = iOdds;
+
+					if (iOdds > 0 && iOdds < 100)
+					{
+						int iOurAttack = kOwner.AI_localAttackStrength(pLoopPlot, getTeam(), getDomainType(), 2, true, true, true);
+						int iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM, getDomainType(), 0);
+
+						if (iOurAttack > iEnemyDefence && iOurAttack > 0)
+						{
+							int iBonus = 100 - iOdds;
+							iBonus -= iBonus * 200 / (200 + 100*(iOurAttack-iEnemyDefence)/iOurAttack);
+							FAssert(iBonus >= 0);
+							FAssert(iBonus <= 100 - iOdds);
+						}
+
+						iValue += std::max(0, std::min(iOdds, 100) * (2 * iOurAttack - 3 * iEnemyDefence) / std::max(1, 2 * iOurAttack)) / 100;
+					}
+
+					if (iValue >= iThreshold)
+					{
+						iValue *= 100;
+
+						if (pLoopPlot->getOwnerINLINE() != getOwnerINLINE())
+							iValue = 2*iValue/3;
+
+						if (iPathTurns > 1)
+							iValue /= iPathTurns + 1;
+
+						if (iOdds >= iThreshold)
+							iValue = 4*iValue/3;
+
+						if (iValue > iBestValue)
+						{
+							iBestValue = iValue;
+							pEndTurnPlot = getPathEndTurnPlot();
+						}
+					}
+				}
+			}
+		} // dy
+	} // dx
+
+	if (pEndTurnPlot != NULL)
+	{
+		FAssert(!atPlot(pEndTurnPlot));
+		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags);
+		return true;
+	}
+
+	return false;
+}
+// K-Mod end
 
 // iAttackThreshold is the minimum ratio for our attack / their defence.
 // iDefenceThreshold is the minimum ratio for their attack / our defence.
