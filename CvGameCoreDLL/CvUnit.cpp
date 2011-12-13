@@ -7473,7 +7473,7 @@ CvCity* CvUnit::getUpgradeCity(UnitTypes eUnit, bool bSearch, int* iSearchValue)
 					CvArea* pWaterArea = NULL;
 					if (!bCoastalOnly || ((pWaterArea = pLoopCity->waterArea()) != NULL && !pWaterArea->isLake()))
 					{
-						// can this city tran this unit?
+						// can this city train this unit?
 						if (pLoopCity->canTrain(eUnit, false, false, true))
 						{
 							// if we do not care about distance, then the first match will do

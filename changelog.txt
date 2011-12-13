@@ -10,6 +10,7 @@ Game mechanics
 
 AI
 
++ Fixed a bug which caused the AI (and automated cities) to sometimes rush-buy buildings under the wrong circumstances.
 + Adjusted the way the AI evaluates city danger levels. It should now defend its borders slightly more strongly.
 + Slightly increased the AI's max unit spending for alert and total war.
 + Fixed an inconsistency in pathDestValid which under rare circumstances could cause the AI to lock up.
@@ -32,7 +33,6 @@ AI
 
 UI
 
-+ Fixed a bug which caused the AI (and automated cities) to sometimes rush-buy buildings under the wrong circumstances.
 + Fixed an original BtS problem which made it hard for the player to deselect a unit after all of their units had moved.
 + Fixed an original BtS bug which caused minimized popups to steal the focus if the player tried to queue multiple moves with their final unit.
 + Fixed a bug in the economics adviser screen which caused the +/- buttons for the research slider to open the environmental tab.

@@ -10959,7 +10959,7 @@ int CvCity::getReligionGrip(ReligionTypes eReligion) const
 	{
 		iScore += GC.getDefineINT("RELIGION_INFLUENCE_POPULATION_WEIGHT") * getPopulation();
 
-		if (GET_PLAYER(getOwner()).getStateReligion() == eReligion)
+		if (GET_PLAYER(getOwnerINLINE()).getStateReligion() == eReligion)
 		{
 			iScore += GC.getDefineINT("RELIGION_INFLUENCE_STATE_RELIGION_WEIGHT");
 		}

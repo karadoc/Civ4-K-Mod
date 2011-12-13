@@ -4553,7 +4553,11 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 			if (pNode != NULL)
 			{
 				*piPathTurns = pNode->m_iData2;
-				FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2); // K-Mod
+#ifdef KMOD_PATH_FINDER
+				FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2);
+#else
+				bSuccess = iMaxPath <= 0 || iMaxPath >= pNode->m_iData2;
+#endif
 			}
 		}
 	}
