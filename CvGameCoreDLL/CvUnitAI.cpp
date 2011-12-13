@@ -13020,7 +13020,7 @@ bool CvUnitAI::AI_spreadCorporation()
 					for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 					{
 						if (AI_plotValid(pLoopCity->plot()) &&
-							pLoopCity->isRevealed(getTeam(), false) &&
+							kOwner.AI_deduceCitySite(pLoopCity) &&
 							pLoopCity->area() == area() &&
 							canSpreadCorporation(pLoopCity->plot(), eCorporation) &&
 							!pLoopCity->plot()->isVisibleEnemyUnit(this) &&
@@ -15185,7 +15185,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 				{
 					if (AI_potentialEnemy(GET_PLAYER((PlayerTypes)iI).getTeam(), pLoopCity->plot()))
 					{
-						if (pLoopCity->isRevealed(getTeam(), false)) // K-Mod
+						if (kOwner.AI_deduceCitySite(pLoopCity)) // K-Mod
 						{
 							int iPathTurns;
 							if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns, iMaxPathTurns))
@@ -15221,13 +15221,13 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									int iEnemyDefence = -1; // used later.
 									if (pLoopCity->isVisible(getTeam(), false))
 									{
-										iEnemyDefence = GET_PLAYER(getOwnerINLINE()).AI_localDefenceStrength(pLoopCity->plot(), NO_TEAM, DOMAIN_LAND, iPathTurns > 1 ? 2 : 0);
+										iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopCity->plot(), NO_TEAM, DOMAIN_LAND, true, iPathTurns > 1 ? 2 : 0);
 
 										if (iPathTurns > 2)
 										{
 											int iAttackRatio = ((GC.getMAX_CITY_DEFENSE_DAMAGE()-pLoopCity->getDefenseDamage()) * GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO() + pLoopCity->getDefenseDamage() * GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO()) / std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE());
 
-											if (100 * GET_PLAYER(getOwnerINLINE()).AI_cityTargetStrengthByPath(pLoopCity, getGroup(), iPathTurns) > iAttackRatio * iEnemyDefence)
+											if (100 * kOwner.AI_cityTargetStrengthByPath(pLoopCity, getGroup(), iPathTurns) > iAttackRatio * iEnemyDefence)
 											{
 												continue;
 											}
@@ -23144,7 +23144,7 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 			int iLoop;
 			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); NULL != pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 			{
-				if (pLoopCity == pSkipCity || !pLoopCity->isRevealed(getTeam(), false))
+				if (pLoopCity == pSkipCity || !kOwner.AI_deduceCitySite(pLoopCity))
 				{
 					continue;
 				}

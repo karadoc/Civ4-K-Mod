@@ -12301,9 +12301,13 @@ int CvPlayerAI::AI_plotTargetMissionAIs(CvPlot* pPlot, MissionAITypes* aeMission
 // K-Mod
 
 // Total defensive strength of units that can move iRange steps to reach pDefencePlot
-int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eDefenceTeam, DomainTypes eDomainType, int iRange, bool bCheckMoves) const
+int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eDefenceTeam, DomainTypes eDomainType, int iRange, bool bAtTarget, bool bCheckMoves) const
 {
+	PROFILE_FUNC();
+
 	int	iTotal = 0;
+
+	FAssert(bAtTarget || !bCheckMoves); // it doesn't make much sense to check moves if the defenders are meant to stay put.
 
 	for (int iDX = -iRange; iDX <= iRange; iDX++)
 	{
@@ -12339,11 +12343,11 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 								continue; // can't make it. (maybe?)
 						}
 
-						iPlotTotal += pLoopUnit->currEffectiveStr(pDefencePlot, NULL);
+						iPlotTotal += pLoopUnit->currEffectiveStr(bAtTarget ? pDefencePlot : pLoopPlot, NULL);
 					}
 				}
 			}
-			if (!isHuman() && eDefenceTeam == NO_TEAM && eDomainType == DOMAIN_LAND && !bCheckMoves)
+			if (eDefenceTeam == NO_TEAM && eDomainType == DOMAIN_LAND && !bCheckMoves && (!bAtTarget || pLoopPlot == pDefencePlot) && !isHuman())
 			{
 				// while since we're here, we might as well update our memory.
 				// (not for human players, otherwise the pathfinder might put us out of sync)
@@ -12359,6 +12363,8 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 // Total attack strength of units that can move iRange steps to reach pAttackPlot
 int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAttackTeam, DomainTypes eDomainType, int iRange, bool bUseTarget, bool bCheckMoves, bool bCheckCanAttack) const
 {
+	PROFILE_FUNC();
+
 	const int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // Note: currently this number is "10"
 
 	int	iTotal = 0;
@@ -22249,6 +22255,42 @@ CvPlot* CvPlayerAI::AI_getCitySite(int iIndex) const
 	FAssert(iIndex < (int)m_aiAICitySites.size());
 	return GC.getMapINLINE().plotByIndex(m_aiAICitySites[iIndex]);
 }
+
+// K-Mod
+// return true if is fair enough for the AI to know there is a city here
+bool CvPlayerAI::AI_deduceCitySite(CvCity* pCity) const
+{
+	if (pCity->isRevealed(getTeam(), false))
+		return true;
+
+	// The rule is this:
+	// if we can see more than n plots of the nth culture ring, we can deduce where the city is.
+
+	int iPoints = 0;
+	int iLevel = pCity->getCultureLevel();
+
+	for (int iDX = -iLevel; iDX <= iLevel; iDX++)
+	{
+		for (int iDY = -iLevel; iDY <= iLevel; iDY++)
+		{
+			int iDist = pCity->cultureDistance(iDX, iDY);
+			if (iDist > iLevel)
+				continue;
+
+			CvPlot* pLoopPlot = plotXY(pCity->getX_INLINE(), pCity->getY_INLINE(), iDX, iDY);
+
+			if (pLoopPlot && pLoopPlot->getRevealedOwner(getTeam(), false) == pCity->getOwnerINLINE())
+			{
+				iPoints += 1 + iLevel - iDist;
+
+				if (iPoints > iLevel)
+					return true;
+			}
+		}
+	}
+	return false;
+}
+// K-Mod end
 
 int CvPlayerAI::AI_bestAreaUnitAIValue(UnitAITypes eUnitAI, CvArea* pArea, UnitTypes* peBestUnitType) const
 {
