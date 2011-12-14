@@ -2612,7 +2612,8 @@ void CvUnitAI::AI_attackMove()
 			}
 		}
 
-		if (AI_protect(35, 5))
+		//if (AI_protect(35, 5))
+		if (AI_defendTeritory(45, 0, 5)) // K-Mod
 		{
 			return;
 		}
@@ -2818,7 +2819,7 @@ void CvUnitAI::AI_paratrooperMove()
 /* Unit AI                                                                                      */
 /************************************************************************************************/
 	//if (AI_protect(35))
-	if (AI_protect(35, 5))
+	if (AI_defendTeritory(50, 0, 5)) // K-Mod
 	{
 		return;
 	}
@@ -3803,16 +3804,8 @@ void CvUnitAI::AI_collateralMove()
 	}
 	// K-Mod end
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 	//if (AI_protect(50))
-	if (AI_protect(50, 8))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	if (AI_defendTeritory(60, 0, 8)) // K-Mod
 	{
 		return;
 	}
@@ -4120,16 +4113,8 @@ void CvUnitAI::AI_reserveMove()
 		}
 	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 	//if (AI_protect(45))
-	if (AI_protect(45, 8))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	if (AI_defendTeritory(45, 0, 8)) // K-Mod
 	{
 		return;
 	}
@@ -6150,7 +6135,7 @@ void CvUnitAI::AI_spyMove()
 
 	if( area()->getNumCities() > area()->getCitiesPerPlayer(getOwnerINLINE()) )
 	{
-		if (kOwner.AI_areaMissionAIs(area(), MISSIONAI_RECON_SPY) <= kOwner.AI_areaMissionAIs(area(), MISSIONAI_GUARD_SPY) &&
+		if (kOwner.AI_areaMissionAIs(area(), MISSIONAI_RECON_SPY) <= kOwner.AI_areaMissionAIs(area(), MISSIONAI_GUARD_SPY)+1 &&
 			(getGroup()->AI_getMissionAIType() == MISSIONAI_RECON_SPY
 			|| GC.getGame().getSorenRandNum(3, "AI Spy Choose Movement") > 0))
 		{
@@ -6161,7 +6146,7 @@ void CvUnitAI::AI_spyMove()
 		}
 		else
 		{
-			if (GC.getGame().getSorenRandNum(100, "AI Spy defense (vs recon)") >= iAttackChance)
+			if (GC.getGame().getSorenRandNum(100, "AI Spy defense (2)") >= iAttackChance)
 			{
 				if (AI_guardSpy(0))
 				{
@@ -6532,7 +6517,7 @@ void CvUnitAI::AI_pirateSeaMove()
 		}
 		
 		//if (AI_protect(30))
-		if (AI_protect(40, 3))
+		if (AI_defendTeritory(40, 0, 3)) // K-Mod
 		{
 			return;
 		}
@@ -6641,7 +6626,8 @@ void CvUnitAI::AI_attackSeaMove()
 				return;
 			}
 
-			if (AI_protect(35, 3))
+			//if (AI_protect(35, 3))
+			if (AI_defendTeritory(45, 0, 3)) // K-Mod
 			{
 				return;
 			}
@@ -6811,21 +6797,8 @@ void CvUnitAI::AI_attackSeaMove()
 		return;
 	}
 	
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
 	//if (AI_protect(35))
-	if (AI_protect(35, 3))
-	{
-		return;
-	}
-
-	if (AI_protect(35, 8))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	if (AI_defendTeritory(40, 0, 8)) // K-Mod
 	{
 		return;
 	}
@@ -6834,6 +6807,13 @@ void CvUnitAI::AI_attackSeaMove()
 	{
 		return;
 	}
+
+	// K-Mod
+	if (AI_guardBonus(10))
+	{
+		return;
+	}
+	// K-Mod end
 
 	if (AI_patrol())
 	{
@@ -6884,16 +6864,8 @@ void CvUnitAI::AI_reserveSeaMove()
 				return;
 			}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
 			//if (AI_protect(40))
-			if (AI_protect(40, 3))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+			if (AI_defendTeritory(40, 0, 3)) // K-Mod
 			{
 				return;
 			}
@@ -6918,7 +6890,8 @@ void CvUnitAI::AI_reserveSeaMove()
 /* 	BETTER_BTS_AI_MOD						END								*/
 /********************************************************************************/
 
-	if (AI_guardBonus(30))
+	//if (AI_guardBonus(30))
+	if (AI_guardBonus(15)) // K-Mod (note: this will defend seafood when we have exactly 1 of them)
 	{
 		return;
 	}
@@ -6938,26 +6911,13 @@ void CvUnitAI::AI_reserveSeaMove()
 		return;
 	}
 	
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
 	//if (AI_protect(40))
-	if (AI_protect(40, 5))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	if (AI_defendTeritory(40, 0, 5)) // K-Mod
 	{
 		return;
 	}
 	
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/03/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
-/* original bts code
+	/* original bts code
 	if (AI_shadow(UNITAI_SETTLER_SEA, 1, -1, true))
 	{
 		return;
@@ -6974,8 +6934,7 @@ void CvUnitAI::AI_reserveSeaMove()
 		{
 			return;
 		}
-	}
-*/
+	} */
 	// Shadow any nearby settler sea transport out at sea
 	if (AI_shadow(UNITAI_SETTLER_SEA, 2, -1, false, true, 5))
 	{
@@ -6994,27 +6953,17 @@ void CvUnitAI::AI_reserveSeaMove()
 			return;
 		}
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/	
 
 	if (AI_heal(50, 3))
 	{
 		return;
 	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/01/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
-	if (AI_protect(40))
+	//if (AI_protect(40))
+	if (AI_defendTeritory(40, 0, -1)) // K-Mod
 	{
 		return;
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	if (AI_anyAttack(3, 45))
 	{
@@ -7052,6 +7001,13 @@ void CvUnitAI::AI_reserveSeaMove()
 	{
 		return;
 	}
+
+	// K-Mod
+	if (AI_guardBonus(10))
+	{
+		return;
+	}
+	// K-Mod end
 
 	if (AI_patrol())
 	{
@@ -11739,7 +11695,8 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 
 				if (eNonObsoleteBonus != NO_BONUS)
 				{
-					iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus);
+					//iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus);
+					iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 0); // K-Mod
 
 					iValue += std::max(0, 200 * GC.getBonusInfo(eNonObsoleteBonus).getAIObjective());
 
@@ -16128,7 +16085,6 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 {
 	PROFILE_FUNC();
-	FAssert(collateralDamage() > 0);
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
@@ -16157,12 +16113,16 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 						if (iOurAttack > iEnemyDefence && iOurAttack > 0)
 						{
 							int iBonus = 100 - iOdds;
-							iBonus -= iBonus * 200 / (200 + 100*(iOurAttack-iEnemyDefence)/iOurAttack);
+							iBonus -= iBonus * 4*iBonus / (4*iBonus + 100*(iOurAttack-iEnemyDefence)/iOurAttack);
+							// That looks overly complex, doesn't it? I hope it works...
+							// take this example: iOdds = 40, iOurAttack = 2 * iEnemyDefence.
+							// 60 - 60 * 240 / (240 + 100) = 60 - 42 = 18
+							// seems fair to me.
 							FAssert(iBonus >= 0);
 							FAssert(iBonus <= 100 - iOdds);
-						}
 
-						iValue += std::max(0, std::min(iOdds, 100) * (2 * iOurAttack - 3 * iEnemyDefence) / std::max(1, 2 * iOurAttack)) / 100;
+							iValue += iBonus;
+						}
 					}
 
 					if (iValue >= iThreshold)
