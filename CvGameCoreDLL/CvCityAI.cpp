@@ -711,20 +711,36 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 
 	int iValue = 0;
 
-	int iFoodX, iProdX, iComX, iFoodChange;
-	AI_getYieldMultipliers(iFoodX, iProdX, iComX, iFoodChange);
+	// AI_getYieldMultipliers takes a little bit of time, so lets only do it if we need to.
+	bool bHasYield = false;
+	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	{
+		if (kPlayer.specialistYield(eSpecialist, (YieldTypes)iI) != 0)
+		{
+			bHasYield = true;
+			break;
+		}
+	}
 
-	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD) * iFoodX / 100;
-	iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION) * iProdX / 100;
-	iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE) * iComX / 100;
+	if (bHasYield)
+	{
+		int iFoodX, iProdX, iComX, iFoodChange;
+		AI_getYieldMultipliers(iFoodX, iProdX, iComX, iFoodChange);
+		iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD) * iFoodX / 100;
+		iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION) * iProdX / 100;
+		iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE) * iComX / 100;
+	}
 
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
 		int iTemp = iCommerceValue * kPlayer.specialistCommerce(eSpecialist, (CommerceTypes)iI);
-		iTemp *= getTotalCommerceRateModifier((CommerceTypes)iI);
-		iTemp *= kPlayer.AI_commerceWeight((CommerceTypes)iI, this);
-		iTemp /= 100;
-		iValue += iTemp;
+		if (iTemp != 0)
+		{
+			iTemp *= getTotalCommerceRateModifier((CommerceTypes)iI);
+			iTemp *= kPlayer.AI_commerceWeight((CommerceTypes)iI, this);
+			iTemp /= 100;
+			iValue += iTemp;
+		}
 	}
 	
 	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
@@ -751,6 +767,8 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 			iTempValue *= 100;
 			iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
 		} */
+		iTempValue *= kPlayer.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass());
+		iTempValue /= 10;
 		
 		iTempValue *= getTotalGreatPeopleRateModifier();
 		iTempValue /= 100;

@@ -418,7 +418,10 @@ void CvPlayerAI::AI_doTurnPre()
 /************************************************************************************************/
 
 	AI_updateBonusValue();
-	AI_updateGreatPersonWeights(); // K-Mod
+	// K-Mod. GP weights can take a little bit of time, so lets only do it once every 3 turns.
+	if (!isHuman() && (GC.getGameINLINE().getGameTurn() + AI_getStrategyRand(0))%3 == 0)
+		AI_updateGreatPersonWeights();
+	// K-Mod end
 	
 	AI_doEnemyUnitData();
 
@@ -1489,29 +1492,41 @@ void CvPlayerAI::AI_unitUpdate()
 			// K-Mod. It seems to me that all we're trying to do is run AI_update
 			// on the highest priority groups until one of them becomes busy.
 			// ... if only they had used the STL, this would be a lot easier.
-			std::vector<std::pair<int, int> > groupList;
-
-			pCurrUnitNode = headGroupCycleNode();
-			while (pCurrUnitNode != NULL)
+			bool bRepeat = false;
+			do
 			{
-				CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
-				FAssert(pLoopSelectionGroup != NULL);
+				std::vector<std::pair<int, int> > groupList;
 
-				int iPriority = AI_movementPriority(pLoopSelectionGroup);
-				groupList.push_back(std::make_pair(iPriority, pCurrUnitNode->m_data));
-
-				pCurrUnitNode = nextGroupCycleNode(pCurrUnitNode);
-			}
-
-			std::sort(groupList.begin(), groupList.end());
-			for (size_t i = 0; i < groupList.size(); i++)
-			{
-				CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
-				if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
+				pCurrUnitNode = headGroupCycleNode();
+				while (pCurrUnitNode != NULL)
 				{
-					break;
+					CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pCurrUnitNode->m_data);
+					FAssert(pLoopSelectionGroup != NULL);
+
+					int iPriority = AI_movementPriority(pLoopSelectionGroup);
+					groupList.push_back(std::make_pair(iPriority, pCurrUnitNode->m_data));
+
+					pCurrUnitNode = nextGroupCycleNode(pCurrUnitNode);
 				}
-			}
+				FAssert(groupList.size() == getNumSelectionGroups());
+
+				std::sort(groupList.begin(), groupList.end());
+				for (size_t i = 0; i < groupList.size(); i++)
+				{
+					CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
+					if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
+					{
+						break;
+					}
+				}
+
+				// one last trick that might save us a bit of time...
+				// if the number of selection groups has increased, then lets try to take care of the new groups right away.
+				// (there might be a faster way to look for the new groups, but I don't know it.)
+				bRepeat = getNumSelectionGroups() > (int)groupList.size();
+				// the repeat will do a stack of redundant checks,
+				// but I still expect it to be much faster than waiting for the next turnslice.
+			} while (bRepeat);
 			// K-Mod end
 		}
 	}
@@ -20193,7 +20208,6 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 
 	for (int i = 0; i < GC.getNumSpecialistInfos(); i++)
 	{
-		//const CvSpecialistInfo& kSpecInfo = GC.getSpecialistInfo((SpecialistTypes)i);
 		UnitClassTypes eGreatPersonClass = (UnitClassTypes)GC.getSpecialistInfo((SpecialistTypes)i).getGreatPeopleUnitClass();
 
 		if (eGreatPersonClass == NO_UNITCLASS)
