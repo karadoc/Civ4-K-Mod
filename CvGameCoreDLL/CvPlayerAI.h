@@ -135,6 +135,8 @@ public:
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
+	int AI_cultureVictoryTechValue(TechTypes eTech) const;
+	
 	void AI_chooseFreeTech();
 	void AI_chooseResearch();
 
@@ -345,8 +347,6 @@ public:
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/		
-	
-	int AI_cultureVictoryTechValue(TechTypes eTech) const;
 	
 	bool AI_isDoStrategy(int iStrategy) const;
 	//void AI_forceUpdateStrategies(); // obsolete function from Original BtS

@@ -495,20 +495,22 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 {
 	PROFILE_FUNC();
 
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
 	short aiYields[NUM_YIELD_TYPES];
 	int iValue;
-	int iNumCities = GET_PLAYER(getOwnerINLINE()).getNumCities();
+	int iNumCities = kOwner.getNumCities();
     
 	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
-		aiYields[iI] = GET_PLAYER(getOwnerINLINE()).specialistYield(eSpecialist, ((YieldTypes)iI));
+		aiYields[iI] = kOwner.specialistYield(eSpecialist, ((YieldTypes)iI));
 	}
 
 	short int aiCommerceYields[NUM_COMMERCE_TYPES];
 	
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
-		aiCommerceYields[iI] = GET_PLAYER(getOwnerINLINE()).specialistCommerce(eSpecialist, ((CommerceTypes)iI));
+		aiCommerceYields[iI] = kOwner.specialistCommerce(eSpecialist, ((CommerceTypes)iI));
 	}
 	
 	iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove) * 100;
@@ -556,7 +558,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			int iProgress = getGreatPeopleProgress();
 			if (iProgress > 0)
 			{
-				int iThreshold = GET_PLAYER(getOwnerINLINE()).greatPeopleThreshold();
+				int iThreshold = kOwner.greatPeopleThreshold();
 				//iTempValue += 100*(iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold);
 				// K-Mod. The original code overflows the int when iProgress is big.
 				int iCloseBonus = 100 * iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress / iThreshold;
@@ -581,7 +583,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				CvUnitInfo& kUnitInfo = GC.getUnitInfo(eGreatPeopleUnit);
 				if (kUnitInfo.getGreatWorkCulture() > 0)
 				{
-					iTempValue += 100 * iGreatPeopleRate * kUnitInfo.getGreatWorkCulture() * (std::max(2*iTotalEras/3, (int)GET_PLAYER(getOwnerINLINE()).getCurrentEra())) / ((GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 500 : 700);
+					iTempValue += 100 * iGreatPeopleRate * kUnitInfo.getGreatWorkCulture() * (std::max(2*iTotalEras/3, (int)kOwner.getCurrentEra())) / ((kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 500 : 700);
 				}
 			}
 		}
@@ -638,7 +640,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			int iCityRate = getGreatPeopleRate();
 			int iHighestRate = 0;
 			int iLoop;
-			for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
+			for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 			{
 				iHighestRate = std::max(iHighestRate, pLoopCity->getGreatPeopleRate());
 			}
@@ -651,12 +653,12 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			// (note: I haven't tried to match this value decrease with the actual cost increase,
 			// because the value of the great people changes as well.)
 			iTempValue *= 100;
-			iTempValue /= 90 + 5 * GET_PLAYER(getOwnerINLINE()).getGreatPeopleCreated();
+			iTempValue /= 90 + 5 * kOwner.getGreatPeopleCreated();
 		}
 		
 		iTempValue *= getTotalGreatPeopleRateModifier();
 		iTempValue /= 100;
-		//iTempValue /= GET_PLAYER(getOwnerINLINE()).AI_averageGreatPeopleMultiplier();
+		//iTempValue /= kOwner.AI_averageGreatPeopleMultiplier();
 		
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
@@ -701,9 +703,12 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 
 	int iValue = 0;
 
-	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD);
-	iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION);
-	iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE);
+	int iFoodX, iProdX, iComX, iFoodChange;
+	AI_getYieldMultipliers(iFoodX, iProdX, iComX, iFoodChange);
+
+	iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD) * iFoodX / 100;
+	iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION) * iProdX / 100;
+	iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE) * iComX / 100;
 
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
@@ -6994,9 +6999,10 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	int iHillFoodDeficit = 0;
 	//int iFoodTotal = GC.getYieldInfo(YIELD_FOOD).getMinCity();
 	//int iProductionTotal = GC.getYieldInfo(YIELD_PRODUCTION).getMinCity();
-	// K-Mod. include corp. yield. (we should also include building yield - but that isn't so easy.)
-	int iFoodTotal = GC.getYieldInfo(YIELD_FOOD).getMinCity() + getCorporationYield(YIELD_FOOD);
-	int iProductionTotal = GC.getYieldInfo(YIELD_PRODUCTION).getMinCity() + getCorporationYield(YIELD_PRODUCTION);
+	// K-Mod. rather than starting at zero, and adding up productino from the tiles we are working,
+	// I'm just going to use the actual value, which include yield from specialists, buildings, corporations etc.
+	int iFoodTotal = getBaseYieldRate(YIELD_FOOD);
+	int iProductionTotal = getBaseYieldRate(YIELD_PRODUCTION);
 	// K-Mod end
 	iFoodMultiplier = 100;
 	iCommerceMultiplier = 100;
@@ -7142,25 +7148,22 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
                     }
 				}*/
 				// K-Mod experimental changes.
-				if (pLoopPlot->isBeingWorked() || aiFinalYields[YIELD_FOOD] > GC.getFOOD_CONSUMPTION_PER_POPULATION())
+				if (!pLoopPlot->isBeingWorked() && aiFinalYields[YIELD_FOOD] > GC.getFOOD_CONSUMPTION_PER_POPULATION())
 				{
+					// note: worked plots are already counted.
 					iFoodTotal += aiFinalYields[YIELD_FOOD];
 				}
 				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
 					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 21))
 				{
 					iGoodTileCount++;
-					iProductionTotal += aiFinalYields[YIELD_PRODUCTION];
 					if (!pLoopPlot->isBeingWorked())
 					{
+						iProductionTotal += aiFinalYields[YIELD_PRODUCTION];
 						iWorkableFood += aiFinalYields[YIELD_FOOD];
 						iWorkableFoodPlotCount++;
 						// note. this can count plots that are low on food.
 					}
-				}
-				else if (pLoopPlot->isBeingWorked())
-				{
-					iProductionTotal += aiFinalYields[YIELD_PRODUCTION];
 				}
 				// K-Mod end
 
@@ -7219,12 +7222,12 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		iTargetSize += kPlayer.getCurrentEra() / 2;
 	} */
 
+	/* original bts code
 	if (iBonusFoodDiff < 2)
 	{
 		iFoodMultiplier += 10 * (2 - iBonusFoodDiff);
 	}
 	
-	/* original bts code
 	int iExtraFoodForGrowth = (std::max(0, iTargetSize - getPopulation()) + 3) / 4;
 	if (getPopulation() < iTargetSize)
 	{
@@ -7249,6 +7252,13 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 			iDesiredFoodChange = (iDesiredFoodChange + 3) / 2;
 		}
 	} */
+
+	// K-Mod. One of the adjustments from the original code, but with an extra condition:
+	if (iBonusFoodDiff < 2 && iDesiredFoodChange > 0)
+	{
+		iFoodMultiplier += 10 * (2 - iBonusFoodDiff);
+	}
+	// K-Mod end
 
 	if (iFoodDifference < 0)
 	{

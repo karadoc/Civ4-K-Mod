@@ -2561,18 +2561,19 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			// lower weight if we have spent less than a third of our total points
 			if (getCommercePercent(COMMERCE_ESPIONAGE) == 0) // ...only if we aren't explicitly trying to get espionage.
 			{
-				iWeight *= 100 - 240*std::max(iTotalUnspent - std::max(2*GET_TEAM(getTeam()).getEspionagePointsEver()/3, 8*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
+				iWeight *= 100 - 270*std::max(iTotalUnspent - std::max(2*GET_TEAM(getTeam()).getEspionagePointsEver()/3, 8*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
 				iWeight /= 100;
 			}
 			//
 			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
 			{
-				iWeight *= 2;
+				iWeight *= 3;
+				iWeight /= 2;
 			}
-			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 1;
+			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 2;
 
 			iWeight *= isHuman() ? 100 : AI_getEspionageWeight();
-			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 1;
+			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 2;
 			iWeight /= 100;
 
 			if (AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || (isHuman() && getCommercePercent(COMMERCE_ESPIONAGE) >= 60))
@@ -6785,6 +6786,92 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
+
+int CvPlayerAI::AI_cultureVictoryTechValue(TechTypes eTech) const
+{
+	if (eTech == NO_TECH)
+	{
+		return 0;
+	}
+
+	int iValue = 0;
+
+	if (GC.getTechInfo(eTech).isDefensivePactTrading())
+	{
+		iValue += 50;
+	}
+
+	if (GC.getTechInfo(eTech).isCommerceFlexible(COMMERCE_CULTURE))
+	{
+		iValue += 100;
+	}
+
+	//units
+	bool bAnyWarplan = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
+	int iBestUnitValue = 0;
+	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+	{
+		UnitTypes eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
+
+		if (eLoopUnit != NO_UNIT)
+		{
+			if (isTechRequiredForUnit((eTech), eLoopUnit))
+			{
+				int iTempValue = (GC.getUnitInfo(eLoopUnit).getCombat() * 100) / std::max(1, (GC.getGame().getBestLandUnitCombat()));
+				iTempValue *= bAnyWarplan ? 2 : 1;
+
+				iValue += iTempValue / 3;
+				iBestUnitValue = std::max(iBestUnitValue, iTempValue);
+			}
+		}
+	}
+	iValue += std::max(0, iBestUnitValue - 15);
+
+	//cultural things
+	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	{
+		BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
+
+		if (eLoopBuilding != NO_BUILDING)
+		{
+			if (isTechRequiredForBuilding((eTech), eLoopBuilding))
+			{
+				CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
+
+				if ((GC.getBuildingClassInfo((BuildingClassTypes)iI).getDefaultBuildingIndex()) != (GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)))
+				{
+					//UB
+					iValue += 100;
+				}
+
+/************************************************************************************************/
+/* UNOFFICIAL_PATCH                       05/25/10                          Fuyu & jdog5000     */
+/*                                                                                              */
+/* Bugfix                                                                                       */
+/************************************************************************************************/
+/* original bts code
+				iValue += (150 * kLoopBuilding.getCommerceChange(COMMERCE_CULTURE)) * 20;
+*/
+				iValue += (150 * (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) + kLoopBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE))) / 20;
+/************************************************************************************************/
+/* UNOFFICIAL_PATCH                        END                                                  */
+/************************************************************************************************/
+				iValue += kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) * 2;
+			}
+		}
+	}
+
+	//important civics
+	for (int iI = 0; iI < GC.getNumCivicInfos(); iI++)
+	{
+		if (GC.getCivicInfo((CivicTypes)iI).getTechPrereq() == eTech)
+		{
+			iValue += GC.getCivicInfo((CivicTypes)iI).getCommerceModifier(COMMERCE_CULTURE) * 2;
+		}
+	}
+
+	return iValue;
+}
 
 void CvPlayerAI::AI_chooseFreeTech()
 {
@@ -18082,94 +18169,6 @@ bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
 		return true;
 	}
 	return false;
-}
-
-int CvPlayerAI::AI_cultureVictoryTechValue(TechTypes eTech) const
-{
-	int iI;
-	
-	if (eTech == NO_TECH)
-	{
-		return 0;
-	}
-	
-	int iValue = 0;
-	
-	if (GC.getTechInfo(eTech).isDefensivePactTrading())
-	{
-		iValue += 50;
-	}
-	
-	if (GC.getTechInfo(eTech).isCommerceFlexible(COMMERCE_CULTURE))
-	{
-		iValue += 100;
-	}
-	
-	//units
-	bool bAnyWarplan = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
-	int iBestUnitValue = 0;
-	for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
-	{
-		UnitTypes eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
-
-		if (eLoopUnit != NO_UNIT)
-		{
-			if (isTechRequiredForUnit((eTech), eLoopUnit))
-			{
-				int iTempValue = (GC.getUnitInfo(eLoopUnit).getCombat() * 100) / std::max(1, (GC.getGame().getBestLandUnitCombat()));
-				iTempValue *= bAnyWarplan ? 2 : 1;
-				
-				iValue += iTempValue / 3;
-				iBestUnitValue = std::max(iBestUnitValue, iTempValue);
-			}
-		}
-	}
-	iValue += std::max(0, iBestUnitValue - 15);
-	
-	//cultural things
-	for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
-	{
-		BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
-
-		if (eLoopBuilding != NO_BUILDING)
-		{
-			if (isTechRequiredForBuilding((eTech), eLoopBuilding))
-			{
-				CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
-
-				if ((GC.getBuildingClassInfo((BuildingClassTypes)iI).getDefaultBuildingIndex()) != (GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)))
-				{
-					//UB
-					iValue += 100;
-				}
-
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       05/25/10                          Fuyu & jdog5000     */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-				iValue += (150 * kLoopBuilding.getCommerceChange(COMMERCE_CULTURE)) * 20;
-*/
-				iValue += (150 * (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) + kLoopBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE))) / 20;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-				iValue += kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) * 2;
-			}
-		}
-	}
-	
-	//important civics
-	for (iI = 0; iI < GC.getNumCivicInfos(); iI++)
-	{
-		if (GC.getCivicInfo((CivicTypes)iI).getTechPrereq() == eTech)
-		{
-			iValue += GC.getCivicInfo((CivicTypes)iI).getCommerceModifier(COMMERCE_CULTURE) * 2;
-		}
-	}
-	
-	return iValue;
 }
 
 /************************************************************************************************/

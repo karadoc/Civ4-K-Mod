@@ -12588,6 +12588,12 @@ void CvCity::doReligion()
 	}
 
 	// K-Mod
+	// gives some of the top religions a shot at spreading to the city.
+	int iChances = 2 + getPopulation() / 10 - getReligionCount();
+
+	if (iChances <= 0)
+		return;
+
 	std::vector<std::pair<int, ReligionTypes> > religion_grips;
 	ReligionTypes eWeakestReligion = NO_RELIGION; // weakest religion already in the city
 	int iWeakestGrip = INT_MAX;
@@ -12609,12 +12615,9 @@ void CvCity::doReligion()
 			}
 		}
 	}
-	// gives some of the top religions a shot at spreading to the city.
-	// note: currently, autospread of religion is limited to 2 + pop/10 different religions.
-	int iChances = std::min(2 + getPopulation() / 10 - getReligionCount(), (int)religion_grips.size());
 
-	if (iChances > 0)
-		std::partial_sort(religion_grips.begin(), religion_grips.begin()+iChances, religion_grips.end(), std::greater<std::pair<int, ReligionTypes> >());
+	iChances = std::min(iChances, (int)religion_grips.size());
+	std::partial_sort(religion_grips.begin(), religion_grips.begin()+iChances, religion_grips.end(), std::greater<std::pair<int, ReligionTypes> >());
 
 	for (int i = 0; i < iChances; i++)
 	{
