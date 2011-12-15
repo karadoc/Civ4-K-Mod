@@ -569,10 +569,11 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			}
 		}
 		
-		int iCurrentEra = GET_PLAYER(getOwnerINLINE()).getCurrentEra();
+		/*
+		int iCurrentEra = kOwner.getCurrentEra();
 		int iTotalEras = GC.getNumEraInfos();
 		
-		if (GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+		if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
 		{
 			int iUnitClass = GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass();
 			FAssert(iUnitClass != NO_UNITCLASS);
@@ -632,6 +633,13 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
             {
                 iTempValue += 100 * iGreatPeopleRate * iBestSpreadValue;
             }
+		} */
+
+		// K-Mod: I've replaced the above code with a new method for targeting particular great person types.
+		if (!isHuman())
+		{
+			iTempValue *= kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass());
+			iTempValue /= 100;
 		}
 
 		// Scale based on how often this city will actually get a great person.

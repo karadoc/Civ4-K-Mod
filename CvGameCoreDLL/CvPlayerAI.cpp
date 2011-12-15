@@ -418,6 +418,7 @@ void CvPlayerAI::AI_doTurnPre()
 /************************************************************************************************/
 
 	AI_updateBonusValue();
+	AI_updateGreatPersonWeights(); // K-Mod
 	
 	AI_doEnemyUnitData();
 
@@ -17116,6 +17117,21 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(GC.getNumBonusInfos(), m_aiBonusValue);
 	pStream->Read(GC.getNumUnitClassInfos(), m_aiUnitClassWeights);
 	pStream->Read(GC.getNumUnitCombatInfos(), m_aiUnitCombatWeights);
+	// K-Mod
+	m_GreatPersonWeights.clear();
+	if (uiFlag >= 5)
+	{
+		int iItems;
+		int iType, iWeight;
+		pStream->Read(&iItems);
+		for (int i = 0; i < iItems; i++)
+		{
+			pStream->Read(&iType);
+			pStream->Read(&iWeight);
+			m_GreatPersonWeights.insert(std::make_pair((UnitClassTypes)iType, iWeight));
+		}
+	}
+	// K-Mod end
 	pStream->Read(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
 }
 
@@ -17132,7 +17148,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	uint uiFlag=0;
 */
 	// Flag for type of save
-	uint uiFlag=4;
+	uint uiFlag=5;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iPeaceWeight);
@@ -17200,6 +17216,18 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(GC.getNumBonusInfos(), m_aiBonusValue);
 	pStream->Write(GC.getNumUnitClassInfos(), m_aiUnitClassWeights);
 	pStream->Write(GC.getNumUnitCombatInfos(), m_aiUnitCombatWeights);
+	// K-Mod. save great person weights. (uiFlag >= 5)
+	{
+		int iItems = m_GreatPersonWeights.size();
+		pStream->Write(iItems);
+		std::map<UnitClassTypes, int>::const_iterator it;
+		for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
+		{
+			pStream->Write((int)it->first);
+			pStream->Write(it->second);
+		}
+	}
+	// K-Mod end
 	pStream->Write(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
 }
 
@@ -20155,6 +20183,143 @@ void CvPlayerAI::AI_updateStrategyHash()
 #undef log_strat
 #undef log_strat2
 }
+
+// K-Mod
+void CvPlayerAI::AI_updateGreatPersonWeights()
+{
+	PROFILE_FUNC();
+
+	m_GreatPersonWeights.clear();
+
+	for (int i = 0; i < GC.getNumSpecialistInfos(); i++)
+	{
+		//const CvSpecialistInfo& kSpecInfo = GC.getSpecialistInfo((SpecialistTypes)i);
+		UnitClassTypes eGreatPersonClass = (UnitClassTypes)GC.getSpecialistInfo((SpecialistTypes)i).getGreatPeopleUnitClass();
+
+		if (eGreatPersonClass == NO_UNITCLASS)
+			continue;
+
+		FAssert(GC.getSpecialistInfo((SpecialistTypes)i).getGreatPeopleRateChange() > 0);
+
+		bool bValid = false;
+		int iLoop;
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			if (pLoopCity->isSpecialistValid((SpecialistTypes)i))
+			{
+				bValid = true;
+				break;
+			}
+		}
+
+		if (!bValid)
+			continue;
+
+		if (m_GreatPersonWeights.find(eGreatPersonClass) != m_GreatPersonWeights.end())
+			continue; // already evaluated
+
+		UnitTypes eGreatPerson = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eGreatPersonClass);
+		if (eGreatPerson == NO_UNIT)
+			continue;
+
+		// We've estabilish that we can use this specialist, and that they provide great-person points for a unit which
+		// we have not yet evaluated. So now we just have to evaluate the unit!
+		const CvUnitInfo& kInfo = GC.getUnitInfo(eGreatPerson);
+
+		if (kInfo.getUnitCombatType() != NO_UNITCOMBAT)
+			continue; // don't try to evaluate combat units.
+
+		int iValue = 0;
+		for (int j = 0; j < GC.getNumSpecialistInfos(); j++)
+		{
+			// value of joining a city as a super-specialist
+			if (kInfo.getGreatPeoples((SpecialistTypes)j))
+			{
+				for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+				{
+					// Note, specialistValue is roughly 400x the commerce it provides. So /= 4 to make it 100x.
+					int iTempValue = pLoopCity->AI_permanentSpecialistValue((SpecialistTypes)j)/4;
+					iValue = std::max(iValue, iTempValue);
+				}
+			}
+		}
+		// value of building something.
+		for (int j = 0; j < GC.getNumBuildingClassInfos(); j++)
+		{
+			BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(j);
+
+			if (eBuilding != NO_BUILDING)
+			{
+				if (kInfo.getForceBuildings(eBuilding) ||
+					(kInfo.getBuildings(eBuilding) && canConstruct(eBuilding, false, false, true)))
+				{
+					for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+					{
+						// cf. conditions used in CvUnit::canConstruct
+						if (pLoopCity->getNumRealBuilding(eBuilding) > 0 ||
+							(!kInfo.getForceBuildings(eBuilding) && !pLoopCity->canConstruct(eBuilding, false, false, true)))
+						{
+							continue;
+						}
+
+						// Note, building value is roughly 4x the value of the commerce it provides.
+						// so we * 25 to match the scale of specialist value.
+						int iTempValue = pLoopCity->AI_buildingValue(eBuilding) * 25;
+
+						// if the building is a world wonder, increase the value.
+						if (isWorldWonderClass((BuildingClassTypes)j))
+							iTempValue = 3*iTempValue/2;
+
+						iValue = std::max(iValue, iTempValue);
+					}
+				}
+			}
+		}
+		// don't bother trying to evaluate bulbing etc. That kind of value is too volatile anyway.
+
+		// store the value in the weights map - but remember, this isn't yet the actual weight.
+		FAssert(iValue >= 0);
+		m_GreatPersonWeights[eGreatPersonClass] = iValue;
+	}
+
+	// find the mean value.
+	int iSum = 0;
+
+	std::map<UnitClassTypes, int>::iterator it;
+	for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
+	{
+		iSum += it->second;
+	}
+	int iMean = iSum / std::max(1, (int)m_GreatPersonWeights.size());
+	iSum = 0;
+
+	// scale the values so that they are between 50 and 400, with the mean value translating to 100.
+	for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
+	{
+		int iValue = it->second;
+		iValue = 100 * iValue / std::max(1, iMean);
+		iValue = (30000 + 400 * iValue) / (600 + iValue);
+		it->second = iValue;
+		iSum += iValue;
+	}
+
+	// finally, normalise so that 100 is the average value.
+	//iMean = iSum / std::max(1, (int)m_GreatPersonWeights.size());
+	//for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
+	//{
+	//	it->second = 100 * it->second / std::max(1, iMean);
+	//}
+}
+
+int CvPlayerAI::AI_getGreatPersonWeight(UnitClassTypes eGreatPerson) const
+{
+	std::map<UnitClassTypes, int>::const_iterator it = m_GreatPersonWeights.find(eGreatPerson);
+	if (it == m_GreatPersonWeights.end())
+		return 100;
+	else
+		return it->second;
+}
+// K-Mod end
 
 void CvPlayerAI::AI_nowHasTech(TechTypes eTech)
 {

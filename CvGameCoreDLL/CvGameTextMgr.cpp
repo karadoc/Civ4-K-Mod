@@ -6450,18 +6450,20 @@ void CvGameTextMgr::parseSpecialistHelp(CvWStringBuffer &szHelpString, Specialis
 	int aiCommerces[NUM_COMMERCE_TYPES];
 	int iI;
 
+	const CvSpecialistInfo& kInfo = GC.getSpecialistInfo(eSpecialist); // K-Mod
+
 	if (eSpecialist != NO_SPECIALIST)
 	{
 		if (!bCivilopediaText)
 		{
-			szHelpString.append(GC.getSpecialistInfo(eSpecialist).getDescription());
+			szHelpString.append(kInfo.getDescription());
 		}
 
 		for (iI = 0; iI < NUM_YIELD_TYPES; ++iI)
 		{
 			if (GC.getGameINLINE().getActivePlayer() == NO_PLAYER)
 			{
-				aiYields[iI] = GC.getSpecialistInfo(eSpecialist).getYieldChange(iI);
+				aiYields[iI] = kInfo.getYieldChange(iI);
 			}
 			else
 			{
@@ -6475,7 +6477,7 @@ void CvGameTextMgr::parseSpecialistHelp(CvWStringBuffer &szHelpString, Specialis
 		{
 			if (GC.getGameINLINE().getActivePlayer() == NO_PLAYER)
 			{
-				aiCommerces[iI] = GC.getSpecialistInfo(eSpecialist).getCommerceChange(iI);
+				aiCommerces[iI] = kInfo.getCommerceChange(iI);
 			}
 			else
 			{
@@ -6485,22 +6487,30 @@ void CvGameTextMgr::parseSpecialistHelp(CvWStringBuffer &szHelpString, Specialis
 
 		setCommerceChangeHelp(szHelpString, L"", L"", L"", aiCommerces);
 
-		if (GC.getSpecialistInfo(eSpecialist).getExperience() > 0)
+		if (kInfo.getExperience() > 0)
 		{
 			szHelpString.append(NEWLINE);
-			szHelpString.append(gDLL->getText("TXT_KEY_SPECIALIST_EXPERIENCE", GC.getSpecialistInfo(eSpecialist).getExperience()));
+			szHelpString.append(gDLL->getText("TXT_KEY_SPECIALIST_EXPERIENCE", kInfo.getExperience()));
 		}
 
-		if (GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange() != 0)
+		if (kInfo.getGreatPeopleRateChange() != 0)
 		{
 			szHelpString.append(NEWLINE);
-			szHelpString.append(gDLL->getText("TXT_KEY_SPECIALIST_BIRTH_RATE", GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange()));
+			szHelpString.append(gDLL->getText("TXT_KEY_SPECIALIST_BIRTH_RATE", kInfo.getGreatPeopleRateChange()));
+
+			// K-Mod
+			if (!bCivilopediaText && gDLL->getChtLvl() > 0 && gDLL->ctrlKey())
+			{
+				szHelpString.append(NEWLINE);
+				szHelpString.append(CvWString::format(L"weight: %d", GET_PLAYER((pCity != NULL) ? pCity->getOwnerINLINE() : GC.getGameINLINE().getActivePlayer()).AI_getGreatPersonWeight((UnitClassTypes)kInfo.getGreatPeopleUnitClass())));
+			}
+			// K-Mod end
 		}
 
-		if (!CvWString(GC.getSpecialistInfo(eSpecialist).getHelp()).empty() && !bCivilopediaText)
+		if (!CvWString(kInfo.getHelp()).empty() && !bCivilopediaText)
 		{
 			szHelpString.append(NEWLINE);
-			szHelpString.append(GC.getSpecialistInfo(eSpecialist).getHelp());
+			szHelpString.append(kInfo.getHelp());
 		}
 	}
 }

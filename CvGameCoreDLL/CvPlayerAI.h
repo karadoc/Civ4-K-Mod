@@ -351,6 +351,9 @@ public:
 	bool AI_isDoStrategy(int iStrategy) const;
 	//void AI_forceUpdateStrategies(); // obsolete function from Original BtS
 
+	void AI_updateGreatPersonWeights(); // K-Mod
+	int AI_getGreatPersonWeight(UnitClassTypes eGreatPerson) const; // K-Mod
+
 	void AI_nowHasTech(TechTypes eTech);
 	
     int AI_countDeadlockedBonuses(CvPlot* pPlot) const;
@@ -510,7 +513,7 @@ protected:
 	int* m_aiBonusValue;
 	int* m_aiUnitClassWeights;
 	int* m_aiUnitCombatWeights;
-	//std::vector<int> m_aiGreatPersonWeights; // K-Mod... todo.
+	std::map<UnitClassTypes, int> m_GreatPersonWeights; // K-Mod
 
 	mutable int* m_aiCloseBordersAttitudeCache;
 
