@@ -12234,7 +12234,6 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
 	int iValue = 0;
 	int iMaintenance = 0;
-	int iTempValue;
 
 	int iBonuses = 0;
 	for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
@@ -12252,47 +12251,52 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 
 	for (int iI = (CommerceTypes)0; iI < NUM_COMMERCE_TYPES; ++iI)
 	{
-		iTempValue = 0;
-		iTempValue = kCorp.getCommerceProduced((CommerceTypes)iI) * iBonuses;
+		int iTempValue = kCorp.getCommerceProduced((CommerceTypes)iI) * iBonuses;
 
-		if (pCity == NULL)
-			iTempValue *= AI_averageCommerceMultiplier((CommerceTypes)iI);
-		else
-			iTempValue *= pCity->getTotalCommerceRateModifier((CommerceTypes)iI);
-		// I'd feel more comfortable if they named it "multiplier" when it included the base 100%.
-		iTempValue /= 100;
+		if (iTempValue != 0)
+		{
+			if (pCity == NULL)
+				iTempValue *= AI_averageCommerceMultiplier((CommerceTypes)iI);
+			else
+				iTempValue *= pCity->getTotalCommerceRateModifier((CommerceTypes)iI);
+			// I'd feel more comfortable if they named it "multiplier" when it included the base 100%.
+			iTempValue /= 100;
 
-		iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
-		iTempValue /= 100;
+			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
+			iTempValue /= 100;
 
-		iTempValue *= AI_commerceWeight((CommerceTypes)iI, pCity);
-		iTempValue /= 100;
+			iTempValue *= AI_commerceWeight((CommerceTypes)iI, pCity);
+			iTempValue /= 100;
 
-		iValue += iTempValue;
+			iValue += iTempValue;
+		}
 
 		iMaintenance += kCorp.getHeadquarterCommerce(iI);
 	}
 
 	for (int iI = 0; iI < NUM_YIELD_TYPES; ++iI)
 	{
-		iTempValue = kCorp.getYieldProduced((YieldTypes)iI) * iBonuses;
-		if (pCity == NULL)
-			iTempValue *= AI_averageYieldMultiplier((YieldTypes)iI);
-		else
-			iTempValue *= pCity->getBaseYieldRateModifier((YieldTypes)iI);
+		int iTempValue = kCorp.getYieldProduced((YieldTypes)iI) * iBonuses;
+		if (iTempValue != 0)
+		{
+			if (pCity == NULL)
+				iTempValue *= AI_averageYieldMultiplier((YieldTypes)iI);
+			else
+				iTempValue *= pCity->getBaseYieldRateModifier((YieldTypes)iI);
 
-		iTempValue /= 100;
-		iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
-		iTempValue /= 100;
+			iTempValue /= 100;
+			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
+			iTempValue /= 100;
 
-		iTempValue *= AI_yieldWeight((YieldTypes)iI);
-		iTempValue /= 100;
+			iTempValue *= AI_yieldWeight((YieldTypes)iI);
+			iTempValue /= 100;
 
-		iValue += iTempValue;
+			iValue += iTempValue;
+		}
 	}
 
 	// maintenance cost
-	iTempValue = kCorp.getMaintenance() * iBonuses;
+	int iTempValue = kCorp.getMaintenance() * iBonuses;
 	iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 	iTempValue /= 100;
 	iTempValue += iMaintenance;
@@ -12305,7 +12309,7 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	iValue -= iTempValue;
 
 	// bonus produced by the corp
-	if (NO_BONUS != kCorp.getBonusProduced())
+	if (kCorp.getBonusProduced() != NO_BONUS)
 	{
 		int iBonuses = getNumAvailableBonuses((BonusTypes)kCorp.getBonusProduced());
 		iValue += AI_baseBonusVal((BonusTypes)kCorp.getBonusProduced()) * 100 / (1 + 3 * iBonuses * iBonuses);
@@ -20244,9 +20248,9 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 			continue; // don't try to evaluate combat units.
 
 		int iValue = 0;
+		// value of joining a city as a super-specialist
 		for (int j = 0; j < GC.getNumSpecialistInfos(); j++)
 		{
-			// value of joining a city as a super-specialist
 			if (kInfo.getGreatPeoples((SpecialistTypes)j))
 			{
 				for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
@@ -20283,6 +20287,9 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 						// if the building is a world wonder, increase the value.
 						if (isWorldWonderClass((BuildingClassTypes)j))
 							iTempValue = 3*iTempValue/2;
+
+						// reduce the value if we already have great people of this type
+						iTempValue /= 1 + AI_totalUnitAIs((UnitAITypes)kInfo.getDefaultUnitAIType());
 
 						iValue = std::max(iValue, iTempValue);
 					}

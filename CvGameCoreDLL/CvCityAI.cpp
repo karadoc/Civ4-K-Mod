@@ -5405,7 +5405,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						iTempValue += GC.getReligionInfo((ReligionTypes)kBuilding.getGlobalReligionCommerce()).getGlobalReligionCommerce(iI) * iExpectedSpread * 4;
 					}
 
-					// K-Mod: I've moved the corporation stuff to be outside of this loop so that it isn't quadriple counted
+					// K-Mod: I've moved the corporation stuff that use to be here to outside this loop so that it isn't quadriple counted
 
 					if (kBuilding.isCommerceFlexible(iI))
 					{
@@ -5476,98 +5476,85 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					}
 				}
 
-				// corp evaluation moved here for K-Mod
-				CorporationTypes eCorporation = (CorporationTypes)kBuilding.getFoundsCorporation();
-				int iCorpValue = 0;
-				if (NO_CORPORATION != eCorporation)
+				// corp evaluation moved here, and rewriten for K-Mod
 				{
-					//iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
-					// K-Mod: consider the corporation for the whole civ, not just this city.
-					iCorpValue = kOwner.AI_corporationValue(eCorporation) * 2 * kOwner.getNumCities() / 3;
-					// Rescale from 100x commerce down to 4x commerce.
-					iCorpValue *= 4;
-					iCorpValue /= 100;
-						
-					for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
+					CorporationTypes eCorporation = (CorporationTypes)kBuilding.getFoundsCorporation();
+					int iCorpValue = 0;
+					int iExpectedSpread = kOwner.AI_isDoVictoryStrategyLevel4() ? 45 : 70 - (bWarPlan ? 10 : 0);
+					// note: expected spread starts as percent (for precision), but is later converted to # of cities.
+					if (kOwner.isNoCorporations())
+						iExpectedSpread = 0;
+					if (NO_CORPORATION != eCorporation && iExpectedSpread > 0)
 					{
-						if (iCorp != eCorporation)
+						//iCorpValue = kOwner.AI_corporationValue(eCorporation, this);
+						// K-Mod: consider the corporation for the whole civ, not just this city.
+						iCorpValue = kOwner.AI_corporationValue(eCorporation);
+
+						for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); iCorp++)
 						{
-							if (kOwner.hasHeadquarters((CorporationTypes)iCorp))
+							if (iCorp != eCorporation)
 							{
-								if (GC.getGame().isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
+								if (kOwner.hasHeadquarters((CorporationTypes)iCorp))
 								{
-									// K-Mod note: evaluation of the other corp for this particular city is ok.
-									iCorpValue /= 2; // expect to spread the corp to fewer cities.
-									if (kOwner.AI_corporationValue((CorporationTypes)iCorp, this) > iCorpValue)
+									if (GC.getGame().isCompetingCorporation(eCorporation, (CorporationTypes)iCorp))
 									{
-										iCorpValue = -1;
-										break;											
-									}
-									/* original bts code
-									else
-									{
-										if (!isHasCorporation((CorporationTypes)iCorp))
+										// This new corp is no good to us if our competing corp is already better.
+										// note: evaluation of the competing corp for this particular city is ok.
+										if (kOwner.AI_corporationValue((CorporationTypes)iCorp, this) > iCorpValue)
 										{
-											iCorpValue = -1;
+											iExpectedSpread = 0;
+											break;
 										}
-									}*/
-									// K-Mod. I commented that out because I don't understand its purpose. It seems to be saying
-									// "if the new corp is better, and this city does not have the old corp, value = -1."
-									// That makes no sense to me.
+										// expect to spread the corp to fewer cities.
+										iExpectedSpread /= 2;
+									}
 								}
 							}
 						}
+						// convert spread from percent to # of cities
+						iExpectedSpread = iExpectedSpread * iNumCities / 100;
+
+						// scale corp value by the expected spread
+						iCorpValue *= iExpectedSpread;
+
+						// Rescale from 100x commerce down to 4x commerce. (AI_corporationValue returns roughly 100x commerce)
+						iCorpValue *= 4;
+						iCorpValue /= 100;
 					}
-				}
-					
-				//if (iCorpValue >= 0)//Don't build if it'll hurt us.
-				// K-Mod. The HQ value is exactly what stops it from hurting us. The only question is how much we'll spread it.
-				{
+
 					if (kBuilding.getGlobalCorporationCommerce() != NO_CORPORATION)
 					{
-						/* original bts code
-						int iGoldValue = (GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())) * 2);
-							
-						iGoldValue += GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI);
-						if (iGoldValue > 0)
-						{
-							iGoldValue += 2 + (iNumCities / 4); 
-							iGoldValue += std::min(iGoldValue, getBuildingCommerce(COMMERCE_GOLD) / 2) / 2;							
-						}
-						iGoldValue *= 2;
-						iGoldValue *= getTotalCommerceRateModifier(COMMERCE_GOLD);
-						iGoldValue *= std::max(50, getTotalCommerceRateModifier(COMMERCE_GOLD) - 150);
-						iGoldValue /= 5000;
-						iCorpValue += iGoldValue; */
+						iExpectedSpread += GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce()));
 
-						// K-Mod. See what they did there? I don't. Here's my version.
-						for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+						if (iExpectedSpread > 0)
 						{
-							int iExpectedCities = iNumCities + GC.getGameINLINE().countCorporationLevels((CorporationTypes)(kBuilding.getGlobalCorporationCommerce()));
-							int iHqValue = 4 * GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * iExpectedCities;
-							iHqValue *= getTotalCommerceRateModifier((CommerceTypes)iI);
-							iHqValue *= kOwner.AI_commerceWeight((CommerceTypes)iI, this);
-							iHqValue /= 10000;
-							// use rank as a tie-breaker... with number of national wonders thrown in to,
-							// (I'm trying to boost the chance that the AI will put wallstreet with its corp HQs.)
-							if (iHqValue > 0)
+							for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 							{
-								iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI) - getNumNationalWonders()/2;
-								iHqValue /= 2*iNumCities;
+								int iHqValue = 4 * GC.getCorporationInfo((CorporationTypes)(kBuilding.getGlobalCorporationCommerce())).getHeadquarterCommerce(iI) * iExpectedSpread;
+								if (iHqValue != 0)
+								{
+									iHqValue *= getTotalCommerceRateModifier((CommerceTypes)iI);
+									iHqValue *= kOwner.AI_commerceWeight((CommerceTypes)iI, this);
+									iHqValue /= 10000;
+								}
+								// use rank as a tie-breaker... with number of national wonders thrown in to,
+								// (I'm trying to boost the chance that the AI will put wallstreet with its corp HQs.)
+								if (iHqValue > 0)
+								{
+									iHqValue *= 3*iNumCities - findCommerceRateRank((CommerceTypes)iI) - getNumNationalWonders()/2;
+									iHqValue /= 2*iNumCities;
+								}
+								iCorpValue += iHqValue;
 							}
-							iCorpValue += iHqValue;
 						}
 					}
-				}
 
-				if (iCorpValue > 0)
-				{
-					if (kOwner.isNoCorporations())
+					if (iCorpValue > 0)
 					{
-						iCorpValue /= 2;
+						iValue += iCorpValue;
 					}
-					iValue += iCorpValue;
 				}
+				// K-Mod end (corp)
 
 				for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 				{
