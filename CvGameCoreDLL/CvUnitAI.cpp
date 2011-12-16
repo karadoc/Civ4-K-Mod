@@ -17364,18 +17364,24 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 						if (iTargetCities > 0)
 						{
 							bool bCanCargoAllUnload = true;
-							int iVisibleEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
+							//int iEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
+							// K-Mod (a small step up from the original code, but still not good.)
+							int iEnemyDefenders = (pLoopPlot->isVisible(getTeam(), false) || !pLoopPlot->isCity())
+								? pLoopPlot->getNumVisibleEnemyDefenders(this)
+								: pLoopPlot->getPlotCity()->AI_neededDefenders();
+							// K-Mod end
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      11/30/08                                jdog5000      */
 /*                                                                                              */
 /* Naval AI                                                                                     */
 /************************************************************************************************/
-							if (iVisibleEnemyDefenders > 0 || pLoopPlot->isCity())
+							if (iEnemyDefenders > 0 || pLoopPlot->isCity())
 							{
 								for (uint i = 0; i < aGroupCargo.size(); ++i)
 								{
 									CvUnit* pAttacker = aGroupCargo[i];
-									if( iVisibleEnemyDefenders > 0 )
+									if( iEnemyDefenders > 0 )
 									{
 										CvUnit* pDefender = pLoopPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, true);
 										if (pDefender == NULL || !pAttacker->canAttack(*pDefender))
@@ -17515,40 +17521,26 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 
 									if (pLoopPlot->isCity())
 									{
-										if (iVisibleEnemyDefenders * 3 > iCargo)
+										if (iEnemyDefenders * 3 > iCargo)
 										{
 											iValue /= 10;
 										}
 										else
 										{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      11/30/08                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
-/*
-// original bts code
 											iValue *= iCargo;
-											iValue /= std::max(1, (iVisibleEnemyDefenders * 3));
-*/
-											// Assume non-visible city is properly defended
-											iValue *= iCargo;
-											iValue /= std::max(pLoopPlot->getPlotCity()->AI_neededDefenders(), (iVisibleEnemyDefenders * 3));
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
+											iValue /= std::max(1, (iEnemyDefenders * 3));
 										}
 									}
 									else
 									{
-										if (0 == iVisibleEnemyDefenders)
+										if (0 == iEnemyDefenders)
 										{
 											iValue *= 4;
 											iValue /= 3;
 										}
 										else
 										{
-											iValue /= iVisibleEnemyDefenders;
+											iValue /= iEnemyDefenders;
 										}
 									}
 
@@ -17743,8 +17735,8 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 												if( (iPathTurns >= iOtherPathTurns) && (iPathTurns < iOtherPathTurns + 5) )
 												{
 													bool bCanCargoAllUnload = true;
-													int iVisibleEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
-													if (iVisibleEnemyDefenders > 0 || pLoopPlot->isCity())
+													int iEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
+													if (iEnemyDefenders > 0 || pLoopPlot->isCity())
 													{
 														for (uint i = 0; i < aGroupCargo.size(); ++i)
 														{
@@ -18042,6 +18034,43 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 				return false;
 			pEndTurnPlot = getPathEndTurnPlot();
 		}
+		// Group all moveable land units together before landing,
+		// this will help the AI to think more clearly about attacking on the next turn.
+		if (pEndTurnPlot == pTargetPlot && !pTargetPlot->isWater() && !pTargetPlot->isCity())
+		{
+			CvSelectionGroup* pCargoGroup = NULL;
+			CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
+
+			while (pUnitNode != NULL)
+			{
+				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+				pUnitNode = getGroup()->nextUnitNode(pUnitNode);
+
+				std::vector<CvUnit*> cargo_units;
+				pLoopUnit->getCargoUnits(cargo_units);
+
+				for (size_t i = 0; i < cargo_units.size(); i++)
+				{
+					if (cargo_units[i]->getGroup() != pCargoGroup &&
+						cargo_units[i]->getDomainType() == DOMAIN_LAND && cargo_units[i]->canMove())
+					{
+						if (pCargoGroup)
+						{
+							cargo_units[i]->joinGroup(pCargoGroup);
+						}
+						else
+						{
+							if (!cargo_units[i]->getGroup()->canAllMove())
+							{
+								cargo_units[i]->joinGroup(NULL); // separate from units that can't move.
+							}
+							pCargoGroup = cargo_units[i]->getGroup();
+						}
+					}
+				}
+			}
+		}
+		//
 		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_ASSAULT, pTargetPlot);
 		return true;
 	}

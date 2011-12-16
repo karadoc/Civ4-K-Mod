@@ -4103,8 +4103,6 @@ bool CvSelectionGroup::groupAmphibMove(CvPlot* pPlot, int iFlags)
 		{
 			pUnitNode1 = headUnitNode();
 
-			// BBAI TODO: Bombard with warships if invading
-
 			while (pUnitNode1 != NULL)
 			{
 				pLoopUnit1 = ::getUnit(pUnitNode1->m_data);

@@ -9,6 +9,11 @@ K-Mod
 == Uninstallation instructions ==
 * Delete the K-Mod directory.
 
+== Donations ==
+If you like the work that I've done and feel compelled to send money to me, you may do so.
+Paypal: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=55FEBSZPPXJHQ
+Bitcoin: 15kzyE5fvQvicfg2rtXppqKYD63t4rFCSt
+
 == Introduction ==
 I originally intended for this mod to be extremely minimalistic, and for personal use only. My original intended changes were just to buff serfdom, protective, and aggressive, and to introduce some features to make automated workers a bit more friendly. The plan was that my mod would be basically the same as the unmodded game, but with a few of the obviously game elements improved. But as I read the game code to learn how to implement my changes, and as I browsed the change-lists of other mods (such as the PIG mod) to see what other minor changes I could make, I started to realise that unmodded BtS isn't anywhere near as planned and polished as I had thought. I use to think that all the mechanics and numbers were a result of careful calculations and thinking and testing, but I learnt that many of the features in the game are completely arbitrary and sometimes obviously unfinished. So the scope of my mod widened dramatically to include pretty much everything that I thought was not as it should be.
 

@@ -9687,7 +9687,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	CvPlot* pNewPlot;
 	CvPlot* pLoopPlot;
 	CLinkList<IDInfo> oldUnits;
-	ActivityTypes eOldActivityType;
+	//ActivityTypes eOldActivityType;
 	int iI;
 
 	// OOS!! Temporary for Out-of-Sync madness debugging...
@@ -9706,22 +9706,28 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	FAssert((iX == INVALID_PLOT_COORD) || (GC.getMapINLINE().plotINLINE(iX, iY)->getX_INLINE() == iX));
 	FAssert((iY == INVALID_PLOT_COORD) || (GC.getMapINLINE().plotINLINE(iX, iY)->getY_INLINE() == iY));
 
-	if (getGroup() != NULL)
+	/* if (getGroup() != NULL)
 	{
 		eOldActivityType = getGroup()->getActivityType();
 	}
 	else
 	{
 		eOldActivityType = NO_ACTIVITY;
-	}
+	} */
 
 	setBlockading(false);
 
+	/* original bts code
 	if (!bGroup || isCargo())
 	{
 		joinGroup(NULL, true);
 		bShow = false;
-	}
+	} */
+	// K-Mod. I've adjusted the code to allow cargo units to stay in their groups when possible.
+	bShow = bShow && bGroup && !isCargo();
+	if (!bGroup)
+		joinGroup(NULL, true);
+	// K-Mod end
 
 	pNewPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 
@@ -9935,13 +9941,14 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 		}
 
 		//update cargo mission animations
+		/* original bts code
 		if (isCargo())
 		{
 			if (eOldActivityType != ACTIVITY_MISSION)
 			{
 				getGroup()->setActivityType(eOldActivityType);
 			}
-		}
+		} */ // disabled by K-Mod (obsolete)
 
 		setFortifyTurns(0);
 
@@ -10063,6 +10070,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	{
 		if (hasCargo())
 		{
+			std::vector<std::pair<PlayerTypes, int> > cargo_groups; // K-Mod. (player, group) pair.
 			pUnitNode = pOldPlot->headUnitNode();
 
 			while (pUnitNode != NULL)
@@ -10073,8 +10081,41 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 				if (pLoopUnit->getTransportUnit() == this)
 				{
 					pLoopUnit->setXY(iX, iY, bGroup, false);
+					cargo_groups.push_back(std::make_pair(pLoopUnit->getOwnerINLINE(), pLoopUnit->getGroupID())); // K-Mod
 				}
 			}
+			// K-Mod
+			// If the group of the cargo units we just moved includes units that are not transported
+			// by this transport group, then we need to separate them.
+
+			// first remove duplicate group numbers
+			std::sort(cargo_groups.begin(), cargo_groups.end());
+			cargo_groups.erase(std::unique(cargo_groups.begin(), cargo_groups.end()), cargo_groups.end());
+
+			// now check the units in each group
+			for (size_t i = 0; i < cargo_groups.size(); i++)
+			{
+				CvSelectionGroup* pCargoGroup = GET_PLAYER(cargo_groups[i].first).getSelectionGroup(cargo_groups[i].second);
+				FAssert(pCargoGroup);
+				pUnitNode = pCargoGroup->headUnitNode();
+				ActivityTypes eOldActivityType = pCargoGroup->getActivityType();
+				while (pUnitNode)
+				{
+					pLoopUnit = ::getUnit(pUnitNode->m_data);
+					pUnitNode = pCargoGroup->nextUnitNode(pUnitNode);
+
+					if (pLoopUnit->getTransportUnit() == NULL ||
+						pLoopUnit->getTransportUnit()->getGroup() != getGroup())
+					{
+						pLoopUnit->joinGroup(NULL, true);
+						if (eOldActivityType != ACTIVITY_MISSION)
+						{
+							pLoopUnit->getGroup()->setActivityType(eOldActivityType);
+						}
+					}
+				}
+			}
+			// K-Mod end
 		}
 	}
 
