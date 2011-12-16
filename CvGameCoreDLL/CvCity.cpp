@@ -5001,7 +5001,7 @@ int CvCity::cultureGarrison(PlayerTypes ePlayer) const
 int CvCity::culturePressureFactor() const
 {
 	int iAnswer = 0;
-	const int iDivisor = 60;
+	const int iDivisor = 62;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
@@ -5029,7 +5029,7 @@ int CvCity::culturePressureFactor() const
 	iAnswer *= GC.getNumEraInfos();
 	iAnswer /= GET_PLAYER(getOwnerINLINE()).getCurrentEra() + GC.getNumEraInfos();
 
-	return std::min(500, 100 + iAnswer / iDivisor); // max of 500. Any more than that just distorts building values too much
+	return std::min(400, 100 + iAnswer / iDivisor); // capped to avoid overly distorting the value of buildings and great people points.
 }
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const
@@ -12589,7 +12589,7 @@ void CvCity::doReligion()
 
 	// K-Mod
 	// gives some of the top religions a shot at spreading to the city.
-	int iChances = 2 + getPopulation() / 10 - getReligionCount();
+	int iChances = 2 + getPopulation() / 12 - getReligionCount();
 
 	if (iChances <= 0)
 		return;

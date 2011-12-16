@@ -2430,30 +2430,37 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 				iWeight /= 50;
 			}
 			// Slider check works for detection of whether human player is going for cultural victory
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >= 90 )
+			// (all weights changed for K-Mod)
+			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 70)
 			{
 				int iCultureRateRank = pCity->findCommerceRateRank(COMMERCE_CULTURE);
 				int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
+				bool bC3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE); // K-Mod
 				
-				// if one of the currently best cities, then focus hard, *4 or more
+				// if one of the currently best cities, then focus hard
 				if (iCultureRateRank <= iCulturalVictoryNumCultureCities)
 				{
-					iWeight *= (3 + iCultureRateRank);
+					if (bC3)
+					{
+						// culture3
+						iWeight *= 4 + iCultureRateRank;
+					}
+					else
+					{
+						// culture2
+						iWeight *= 9 + iCultureRateRank;
+						iWeight /= 3;
+					}
 				}
 				// if one of the 3 close to the top, then still emphasize culture some, *2
 				else if (iCultureRateRank <= iCulturalVictoryNumCultureCities + 3)
 				{
-					iWeight *= 2;
+					iWeight *= bC3 ? 4 : 3;
 				}
-				else if (isHuman())
+				else
 				{
 					iWeight *= 2;
 				}
-
-			}
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 70)
-			{
-				iWeight *= 3;
 			}
 			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 50)
 			{
@@ -2480,25 +2487,15 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			// weight multiplier changed for K-Mod
 			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >=90 )
 			{
-				//iWeight *= 3;
-				//iWeight /= 4;
-				iWeight *= 3;
+				iWeight *= 4;
 			}
 			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 70 )
 			{
-				//iWeight *= 2;
-				//iWeight /= 3;
-				iWeight *= 2;
+				iWeight *= 3;
 			}
 			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 50 )
 			{
-				//iWeight /= 2;
-				iWeight *= 3;
-				iWeight /= 2;
-			}
-			else 
-			{
-				//iWeight /= 3;
+				iWeight *= 2;
 			}
 			// K-Mod
 			iWeight *= AI_averageCulturePressure();
@@ -20314,12 +20311,13 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 	int iMean = iSum / std::max(1, (int)m_GreatPersonWeights.size());
 	iSum = 0;
 
-	// scale the values so that they are between 50 and 400, with the mean value translating to 100.
+	// scale the values so that they are between 50 and 500, with the mean value translating to 100.
+	// (note: I don't expect it to get anywhere near the maximum. The maximum only occurs when the value is infinite!)
 	for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
 	{
 		int iValue = it->second;
 		iValue = 100 * iValue / std::max(1, iMean);
-		iValue = (30000 + 400 * iValue) / (600 + iValue);
+		iValue = (40000 + 500 * iValue) / (800 + iValue);
 		it->second = iValue;
 		iSum += iValue;
 	}
