@@ -2414,11 +2414,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		break;
 	case COMMERCE_CULTURE:
 		// COMMERCE_CULTURE AIWeightPercent is 25% in default xml
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Bugfix, Cultural Victory AI    (K-Mod edition)                                               */
-/************************************************************************************************/
+		// (significantly changed by bbai & K-Mod)
 		// Adjustments for human player going for cultural victory (who won't have AI strategy set) 
 		// so that governors do smart things
 		if (pCity != NULL)
@@ -2448,11 +2444,11 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 					else
 					{
 						// culture2
-						iWeight *= 9 + iCultureRateRank;
-						iWeight /= 3;
+						iWeight *= 7;
+						iWeight /= 2;
 					}
 				}
-				// if one of the 3 close to the top, then still emphasize culture some, *2
+				// if one of the 3 close to the top, then still emphasize culture some
 				else if (iCultureRateRank <= iCulturalVictoryNumCultureCities + 3)
 				{
 					iWeight *= bC3 ? 4 : 3;
@@ -2484,26 +2480,22 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		// pCity == NULL
 		else
 		{
-			// weight multiplier changed for K-Mod
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >=90 )
+			// weight multipliers changed for K-Mod
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >= 90)
 			{
 				iWeight *= 4;
 			}
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 70 )
+			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 70)
 			{
 				iWeight *= 3;
 			}
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 50 )
+			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 50)
 			{
 				iWeight *= 2;
 			}
-			// K-Mod
 			iWeight *= AI_averageCulturePressure();
 			iWeight /= 100;
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		// K-Mod
 		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
 		{
@@ -12446,8 +12438,13 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 							if (iDistance > iMoves)
 								continue; // can't make it. (maybe?)
 						}
-
-						iPlotTotal += pLoopUnit->currEffectiveStr(bAtTarget ? pDefencePlot : pLoopPlot, NULL);
+						int iUnitStr = pLoopUnit->currEffectiveStr(bAtTarget ? pDefencePlot : pLoopPlot, NULL);
+						// first strikes are not counted in currEffectiveStr.
+						// actually, the value of first strikes is non-trivial to calculate... but we should so /something/ to take them into account.
+						iUnitStr *= 100 + 4 * pLoopUnit->firstStrikes() + 2 * pLoopUnit->chanceFirstStrikes();
+						iUnitStr /= 100;
+						// note. Most other parts of the code use 5% per first strike, but I figure we should go lower because this unit may get clobbered by collateral damage before fighting.
+						iPlotTotal += iUnitStr;
 					}
 				}
 			}
@@ -12456,6 +12453,7 @@ int CvPlayerAI::AI_localDefenceStrength(const CvPlot* pDefencePlot, TeamTypes eD
 				// while since we're here, we might as well update our memory.
 				// (not for human players, otherwise the pathfinder might put us out of sync)
 				GET_TEAM(getTeam()).AI_setStrengthMemory(pLoopPlot, iPlotTotal);
+				FAssert(isTurnActive());
 			}
 			iTotal += iPlotTotal;
 		}
@@ -12514,8 +12512,11 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 							}
 						}
 
-						iTotal += pLoopUnit->currEffectiveStr(bUseTarget ? pTargetPlot : NULL, bUseTarget ? pLoopUnit : NULL);
-
+						int iUnitStr = pLoopUnit->currEffectiveStr(bUseTarget ? pTargetPlot : NULL, bUseTarget ? pLoopUnit : NULL);
+						// first strikes. (see comments in AI_localDefenceStrength... although, maybe 5% would be better here?)
+						iUnitStr *= 100 + 4 * pLoopUnit->firstStrikes() + 2 * pLoopUnit->chanceFirstStrikes();
+						iUnitStr /= 100;
+						//
 						if (pLoopUnit->collateralDamage() > 0)
 						{
 							int iPossibleTargets = std::min(bUseTarget ? pTargetPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1 : INT_MAX, pLoopUnit->collateralDamageMaxUnits());
@@ -12523,9 +12524,10 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 							if (iPossibleTargets > 0)
 							{
 								// collateral damage is not trivial to calculate. This estimate is pretty rough.
-								iTotal += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
+								iUnitStr += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
 							}
 						}
+						iTotal += iUnitStr;
 					}
 				}
 			}
