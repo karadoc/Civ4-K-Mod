@@ -2238,10 +2238,14 @@ void CvUnitAI::AI_attackMove()
 	if( plot()->isCity() && plot()->getOwnerINLINE() == getOwnerINLINE() && bDanger )
 	{
 		// K-Mod
-		int iOurDefense = kOwner.AI_localDefenceStrength(plot(), getTeam(), DOMAIN_LAND, 0);
-		int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2);
+		if (AI_anyAttack(1, 65, 0, 2))
+			return;
+
+		if (AI_leaveAttack(3, 50, 130))
+			return;
 		// K-Mod end
 
+		/* bbai code
 		if( iOurDefense < 3*iEnemyOffense )
 		{
 			if (AI_guardCity(true))
@@ -2250,27 +2254,19 @@ void CvUnitAI::AI_attackMove()
 			}
 		}
 
-		/* bbai code
 		if( iOurDefense > 2*iEnemyOffense )
 		{
 			if (AI_anyAttack(2, 55))
 			{
 				return;
 			}
-		} */
-		// K-Mod
-		if (AI_anyAttack(1, 60, 0, 2))
-			return;
-		if (iOurDefense > iEnemyOffense && AI_anyAttack(2, 51))
-			return;
-		// K-Mod end
+		}
 
 		//if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, false))
-		/*if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 0, 1))
+		if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 0, 1))
 		{
 			return;
-		} */ // I fixed this, but I don't think it's really a helpful thing to do anyway.
-		// Perhaps I should put in something like AI_defensiveCollateral. That function is pretty good...
+		} // K-Mod: I fixed this, but I don't think it's really a helpful thing to do anyway.
 
 		if( iOurDefense > 2*iEnemyOffense )
 		{
@@ -2278,7 +2274,8 @@ void CvUnitAI::AI_attackMove()
 			{
 				return;
 			}
-		}
+		}*/
+		// Perhaps I should put in something like AI_defensiveCollateral. That function is pretty good...
 	}
 
 	{
@@ -2372,6 +2369,12 @@ void CvUnitAI::AI_attackMove()
 		
 		if (bDanger)
 		{
+			// K-Mod
+			if (getGroup()->getNumUnits() > 1 && AI_stackVsStack(3, 110, 65, 0))
+				return;
+			// K-Mod end
+
+			/* original bts code
 			if (AI_cityAttack(1, 55))
 			{
 				return;
@@ -2380,7 +2383,7 @@ void CvUnitAI::AI_attackMove()
 			if (AI_anyAttack(1, 65))
 			{
 				return;
-			}
+			} */
 
 			if (collateralDamage() > 0)
 			{
@@ -2390,6 +2393,12 @@ void CvUnitAI::AI_attackMove()
 				}
 			}
 		}
+		// K-Mod (moved from below, and replacing the disabled stuff above)
+		if (AI_anyAttack(1, 70))
+		{
+			return;
+		}
+		// K-Mod end
 
 		if (!noDefensiveBonus())
 		{
@@ -2459,10 +2468,11 @@ void CvUnitAI::AI_attackMove()
 			return;
 		}
 
+		/* moved up
 		if (AI_anyAttack(1, 70))
 		{
 			return;
-		}
+		} */
 	}
 
 	{
@@ -2470,25 +2480,42 @@ void CvUnitAI::AI_attackMove()
 
 		if (bDanger)
 		{
-			if (AI_pillageRange(1, 20))
+			// K-Mod - slightly more reckless than last time
+			if (getGroup()->getNumUnits() > 1 && AI_stackVsStack(3, 90, 40, 0))
+				return;
+			// K-Mod end
+
+			if (AI_pillageRange(1, 10)) // was 20
 			{
 				return;
 			}
 
+			/* original bts code
 			if (AI_cityAttack(1, 35))
 			{
 				return;
-			}
+			}*/
 
+			// K-Mod
+			if (plot()->getTeam() == getTeam())
+			{
+				if (AI_defendTeritory(50, 0, 2))
+				{
+					return;
+				}
+			}
+			else
+			// K-Mod end
 			if (AI_anyAttack(1, 45))
 			{
 				return;
 			}
 
-			if (AI_pillageRange(3, 20))
+			if (AI_pillageRange(3, 10)) // was 20
 			{
 				return;
 			}
+
 
 			if( getGroup()->getNumUnits() < 4 )
 			{
@@ -2497,7 +2524,8 @@ void CvUnitAI::AI_attackMove()
 					return;
 				}
 			}
-		
+
+			/* original bts code
 			if (AI_cityAttack(4, 30))
 			{
 				return;
@@ -2506,7 +2534,11 @@ void CvUnitAI::AI_attackMove()
 			if (AI_anyAttack(2, 40))
 			{
 				return;
-			}
+			} */
+			// K-Mod
+			if (AI_anyAttack(3, 40))
+				return;
+			// K-Mod end
 		}
 
 		if (!isEnemy(plot()->getTeam()))
@@ -2613,7 +2645,7 @@ void CvUnitAI::AI_attackMove()
 		}
 
 		//if (AI_protect(35, 5))
-		if (AI_defendTeritory(45, 0, 5)) // K-Mod
+		if (AI_defendTeritory(45, 0, 7)) // K-Mod
 		{
 			return;
 		}

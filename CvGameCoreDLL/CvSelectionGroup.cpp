@@ -3019,6 +3019,8 @@ bool CvSelectionGroup::calculateIsStranded()
 {
 	PROFILE_FUNC();
 
+	FAssert(!isHuman()); // K-Mod
+
 	if( getNumUnits() <= 0 )
 	{
 		return false;

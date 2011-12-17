@@ -1268,7 +1268,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 						}
 					}
 
-					if( pHeadGroup->isStranded() )
+					if (!pHeadGroup->isHuman() && pHeadGroup->isStranded())
 					{
 						szString.append(CvWString::format(SETCOLR L"\n***STRANDED***" ENDCOLR, TEXT_COLOR("COLOR_RED")));
 					}

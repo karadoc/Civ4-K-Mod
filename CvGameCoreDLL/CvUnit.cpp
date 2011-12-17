@@ -11477,7 +11477,8 @@ void CvUnit::setTransportUnit(CvUnit* pTransportUnit)
 		{
 			m_transportUnit.reset();
 
-			getGroup()->setActivityType(ACTIVITY_AWAKE);
+			if (getGroup()->getActivityType() != ACTIVITY_MISSION) // K-Mod. (the unit might be trying to walk somewhere.)
+				getGroup()->setActivityType(ACTIVITY_AWAKE);
 		}
 
 #ifdef _DEBUG
