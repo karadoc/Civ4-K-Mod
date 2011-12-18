@@ -3490,7 +3490,7 @@ void CvUnitAI::AI_attackCityMove()
 						{
 							iNeedUpgradeCount++;
 
-							if( 8*iNeedUpgradeCount > getGroup()->getNumUnits() )
+							if( 5*iNeedUpgradeCount > getGroup()->getNumUnits() ) // was 8*
 							{
 								getGroup()->pushMission(MISSION_SKIP);
 								return;
