@@ -544,8 +544,26 @@ void CvUnitAI::AI_upgrade()
 
 		if (eBestUnit != NO_UNIT)
 		{
+			/* original bts code
 			upgrade(eBestUnit);
+			doDelayedDeath(); */
+
+			// K-Mod. Ungroup the unit, so that we don't cause the whole group to miss their turn.
+			CvUnit* pUpgradeUnit = upgrade(eBestUnit);
 			doDelayedDeath();
+
+			if (pUpgradeUnit != this)
+			{
+				CvSelectionGroup* pGroup = pUpgradeUnit->getGroup();
+				if (pGroup->getHeadUnit() != pUpgradeUnit)
+				{
+					pUpgradeUnit->joinGroup(NULL);
+					// indicate that the unit intends to rejoin the old group (although it might not actually do so...)
+					pUpgradeUnit->getGroup()->AI_setMissionAI(MISSIONAI_GROUP, 0, pGroup->getHeadUnit());
+				}
+			}
+			// K-Mod end
+
 			return;
 		}
 	}

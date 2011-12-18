@@ -702,15 +702,6 @@ void CvPlayerAI::AI_doTurnUnitsPost()
 				}
 				if (!bKilled)
 				{
-					// K-Mod. Ungroup the unit, so that we don't cause the whole group to miss their turn.
-					CvSelectionGroup* pGroup = pLoopUnit->getGroup();
-					if (pGroup->getHeadUnit() != pLoopUnit)
-					{
-						pLoopUnit->joinGroup(NULL);
-						// indicate that the unit intends to rejoin (although it might not actually do so...)
-						pLoopUnit->getGroup()->AI_setMissionAI(MISSIONAI_GROUP, 0, pGroup->getHeadUnit());
-					}
-					// K-Mod end
 					pLoopUnit->AI_upgrade(); // CAN DELETE UNIT!!!
 				}
 			}

@@ -266,7 +266,8 @@ public:
 	bool hasUpgrade(UnitTypes eUnit, bool bSearch = false) const;
 	CvCity* getUpgradeCity(bool bSearch = false) const;
 	CvCity* getUpgradeCity(UnitTypes eUnit, bool bSearch = false, int* iSearchValue = NULL) const;
-	void upgrade(UnitTypes eUnit);
+	//void upgrade(UnitTypes eUnit);
+	CvUnit* upgrade(UnitTypes eUnit); // K-Mod
 
 	HandicapTypes getHandicapType() const;																// Exposed to Python		
 	CivilizationTypes getCivilizationType() const;							// Exposed to Python								
