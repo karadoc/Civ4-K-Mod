@@ -1542,6 +1542,17 @@ void CvSelectionGroup::continueMission(int iSteps)
 				bDone = true;
 			}
 		}
+		// K-Mod. We need to do a similar check for MISSION_MOVE_TO_UNIT,
+		// because with the MOVE_ATTACK_STACK flag, MOVE_TO_UNIT might actually want to attack something!
+		// Note: the "else" is not just for efficiency. The code above may have actually killed "this" unit!
+		else if (headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO_UNIT && headMissionQueueNode()->m_data.iFlags & MOVE_ATTACK_STACK)
+		{
+			bool bDummy;
+			pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
+			if (pTargetUnit && groupAttack(pTargetUnit->getX_INLINE(), pTargetUnit->getY_INLINE(), headMissionQueueNode()->m_data.iFlags, bDummy))
+				bDone = true;
+		}
+		// K-Mod end
 	}
 
 	// extra crash protection, should never happen (but a previous bug in groupAttack was causing a NULL here)
@@ -3784,7 +3795,7 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	bool bEndMove = false;
 	if(pPathPlot == pDestPlot)
 		bEndMove = true;
-    
+
 	groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
 
 	return true;

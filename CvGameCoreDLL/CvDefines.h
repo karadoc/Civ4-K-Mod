@@ -53,19 +53,7 @@
 #define RANDPLOT_NOT_CITY											(0x00000040)
 
 #ifdef _USRDLL
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/03/09                                jdog5000      */
-/*                                                                                              */
-/*                                                                                              */
-/************************************************************************************************/
-/* original bts code
-#define MAX_CIV_PLAYERS												(18)
-*/
-// Change number of civs in game
-#define MAX_CIV_PLAYERS												(18)
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+#define MAX_CIV_PLAYERS												(18) // note: default is 18, some people like 48. They are not compatible
 #else
 #define MAX_CIV_PLAYERS												(CvGlobals::getInstance().getMaxCivPlayers())
 #endif

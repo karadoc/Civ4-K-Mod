@@ -1,4 +1,4 @@
-This is K-Mod version 1.12.
+This is K-Mod version 1.12b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -39,6 +39,10 @@ v1.12 changelist
 + Made some changes to corporation evaluation, both for accuracy and efficiency.
 
 + Added donation information to readme.txt.
+
+v1.12b
+
++ Fixed a rare bug which could cause the game to hang when the AI used MOVE_ATTACK_STACK with MISSION_MOVE_TO_UNIT.
 
 --
 v1.11 changelist
