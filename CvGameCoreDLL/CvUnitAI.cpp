@@ -1292,6 +1292,7 @@ bool CvUnitAI::AI_considerDOW(CvPlot* pPlot)
 			{
 				if (gUnitLogLevel > 0) logBBAI("    %S declares war on %S with AI_considerDOW (%S - %S).", kOurTeam.getName().GetCString(), GET_TEAM(ePlotTeam).getName().GetCString(), getName(0).GetCString(), GC.getUnitAIInfo(AI_getUnitAIType()).getDescription());
 				kOurTeam.declareWar(ePlotTeam, true, NO_WARPLAN);
+				CvSelectionGroupAI::path_finder.Reset();
 				return true;
 			}
 		}
