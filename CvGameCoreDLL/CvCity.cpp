@@ -5019,7 +5019,8 @@ int CvCity::culturePressureFactor() const
 					iForeignCulture = 100 * iForeignCulture / std::max(1, iForeignCulture + pLoopPlot->getCulture(getOwner()));
 					// lower the value if the foreign culture is not allowed take control of the plot
 					// lower the value if the foreign culture is not allowed to flip the city (with the default option for no conquest flipping)
-					iForeignCulture /= 1 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?1 :0) + (isEverOwned((PlayerTypes)iP)?1 : 0);
+					iForeignCulture *= 2;
+					iForeignCulture /= 2 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :0) + (isEverOwned((PlayerTypes)iP)?1 : 0);
 					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}
@@ -12682,6 +12683,7 @@ void CvCity::doReligion()
 						iWeakestGrip = iLoopGrip;
 						eWeakestReligion = eLoopReligion;
 					}
+					iChances--;
 				}
 			}
 		}

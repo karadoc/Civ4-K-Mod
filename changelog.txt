@@ -1,5 +1,44 @@
-This is K-Mod version 1.11.
+This is K-Mod version 1.12.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.12 changelist
+
++ Ballista elephants now get 1 first strike.
++ Increased the natural spread of religion, especially in very large cities and in cities with no (or few) religions. (This still needs some testing. It may be too strong.)
+
++ Cargo units will now stay grouped when their transports move, unless the transports themselves are separated.
++ Made several efficiency improvements. Most notably, CvPlayerAI::AI_unitUpdate will now make a second pass over all the groups if the number of groups changes - this sometimes saves us from having to wait for the next timeslice when a group is split.
+
++ Rewrote the way the AI hunts down stray units in its territory. (Replaced AI_Protect with a new function called AI_defendTerritory.)
++ Added new function, CvPlayerAI::AI_deduceCitySite. The purpose of this function is to decide if it is reasonable for the AI to know of the existence & location of a particular city based on how much of the cultural borders have been seen.
++ Added some functionality to AI_leaveAttack: the minimum defence threshold will now be ignored if the AI thinks offence will be the best defence.
++ Fixed a mistake in the original code for AI_guardBonus, which caused the AI to undervalue resources.
++ Fixed a bug in AI_cityAttack which caused the function to ignore the odds threshold.
++ Fixed a bug in AI_defensiveCollateral which basically disabled the value bonus which is meant to come when the invading stack is defeatable.
++ Changed the way AI_settleMove responds to danger - it will now compare the enemy's strength to the group's strength.
++ The AI will now ungroup units when it upgrades them, so that when the upgraded unit loses all its moves it doesn't prevent the whole group from moving.
++ Reduced the threshold that the AI's attackCity stacks use to decide if they should wait for units to be upgraded.
++ Made several changes to the behaviour of the AI's attack units.
++ The AI will now group all its cargo units before ordering an amphibious attack landing. (This prevents them from using the next turn just to reorganise their group.)
++ Fixed some minor mistakes in the BBAI navel assault code.
++ The AI's navy is now more likely to defend its sea resources.
++ The AI is now slightly more likely to spies for recon.
++ Reduced the AI value of XP buildings in low productivity cities.
++ Reduced some of the modifiers in AI_getWeightedOdds.
++ AI_localDefenceStrength and AI_localAttackStrength now take first strikes into account (with a very rough approximation).
++ Fixed a bug in AI_localDefenceStrength which could sometimes cause the AI's tactical memory to be set incorrectly.
+
++ Implemented a new AI system for evaluating different types of great people points. Disabled the old (basic) system. (This will help the AI to get corporations, as well as holy buildings, and so on.)
++ Added a new section in AI_techValue for corporations. (Previously, corporation value would only be counted if the tech founded the corporation directly. With the new code, the corporation will be evaluated if the tech enables the HQ building.)
++ CvCityAI::AI_permanentSpecialistValue now uses CvCityAI::AI_getYieldMultipliers to adjust yield values. (This still needs some testing.)
++ CvCityAI::AI_getYieldMultipliers (which tells the AI how much to value each kind of yield) now includes yields from buildings and specialists in its tally for total food and total production. (It now uses a different counting method. Hopefully it works correctly...)
++ Adjusted the way espionage is valued, so that it doesn't get overvalued when only a few civilizations are known.
++ Increased the AI's value for culture, especially when considering a cultural victory. (This may need further tweaking.)
++ Fixed a bug in the way corporation HQ buildings are evaluated. (Specifically, the value of the new corp and old competing corps were being compared with different scales.)
++ Made some changes to corporation evaluation, both for accuracy and efficiency.
+
++ Added donation information to readme.txt.
 
 --
 v1.11 changelist
