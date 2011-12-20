@@ -5497,8 +5497,8 @@ void CvUnitAI::AI_engineerMove()
 {
 	PROFILE_FUNC();
 
-	//if (AI_construct())
-	if (AI_construct(100)) // K-Mod. I'd cut this out completely, but something like this needs to come before switchHurry()
+	/* original bts code
+	if (AI_construct())
 	{
 		return;
 	}
@@ -5513,7 +5513,6 @@ void CvUnitAI::AI_engineerMove()
 		return;
 	}
 
-	/* original bts code
 	if (AI_discover(true, true))
 	{
 		return;
@@ -5634,20 +5633,22 @@ void CvUnitAI::AI_greatSpyMove()
 // I've made this general function to do those calculations for all types of great people.
 bool CvUnitAI::AI_greatPersonMove()
 {
-	CvCity* pLoopCity;
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+	bool bCanHurry = m_pUnitInfo->getBaseHurry() > 0 || m_pUnitInfo->getHurryMultiplier() > 0;
+
 	CvPlot* pBestPlot = NULL;
 	SpecialistTypes eBestSpecialist = NO_SPECIALIST;
 	BuildingTypes eBestBuilding = NO_BUILDING;
 	int iBestValue = 0;
+
 	int iLoop;
-
-	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
-
-	for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+	for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
 	{
-		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()))
+		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()) && !pLoopCity->plot()->isVisibleEnemyUnit(this))
 		{
-			if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)) && generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true))
+			int iPathTurns;
+			if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns) && !kPlayer.AI_getAnyPlotDanger(pLoopCity->plot(), 2))
 			{
 				// Join
 				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -5655,35 +5656,74 @@ bool CvUnitAI::AI_greatPersonMove()
 					SpecialistTypes eSpecialist = (SpecialistTypes)iI;
 					if (canJoin(pLoopCity->plot(), eSpecialist))
 					{
-						if ( !(kPlayer.AI_getAnyPlotDanger(pLoopCity->plot(), 2)) )
+						// Note, specialistValue is roughly 400x the commerce it provides. So /= 4 to make it 100x.
+						int iValue = pLoopCity->AI_permanentSpecialistValue(eSpecialist)/4;
+						if (iValue > iBestValue)
 						{
-							// Note, specialistValue is roughly 400x the commerce it provides. So /= 4 to make it 100x.
-							int iValue = pLoopCity->AI_permanentSpecialistValue(eSpecialist)/4;
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								pBestPlot = getPathEndTurnPlot();
-								eBestSpecialist = eSpecialist;
-								eBestBuilding = NO_BUILDING;
-							}
+							iBestValue = iValue;
+							pBestPlot = getPathEndTurnPlot();
+							eBestSpecialist = eSpecialist;
+							eBestBuilding = NO_BUILDING;
 						}
 					}
 				}
 				// Construct
-				//if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_CONSTRUCT, getGroup()) == 0)
+				for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 				{
-					for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
-					{
-						BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
+					BuildingTypes eBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI);
 
-						if (NO_BUILDING != eBuilding)
+					if (eBuilding != NO_BUILDING)
+					{
+						if ((m_pUnitInfo->getForceBuildings(eBuilding) || m_pUnitInfo->getBuildings(eBuilding)) &&
+							canConstruct(pLoopCity->plot(), eBuilding))
 						{
-							if ((m_pUnitInfo->getForceBuildings(eBuilding) || m_pUnitInfo->getBuildings(eBuilding)) &&
-								canConstruct(pLoopCity->plot(), eBuilding))
+							// Note, building value is roughly 4x the value of the commerce it provides.
+							// so we * 25 to match the scale of specialist value.
+							int iValue = pLoopCity->AI_buildingValue(eBuilding) * 25;
+
+							if (iValue > iBestValue)
 							{
-								// Note, building value is roughly 4x the value of the commerce it provides.
-								// so we * 25 to match the scale of specialist value.
-								int iValue = pLoopCity->AI_buildingValue(eBuilding) * 25;
+								iBestValue = iValue;
+								pBestPlot = getPathEndTurnPlot();
+								eBestBuilding = eBuilding;
+								eBestSpecialist = NO_SPECIALIST;
+							}
+						}
+						else if (bCanHurry && isWorldWonderClass((BuildingClassTypes)iI) && pLoopCity->canConstruct(eBuilding))
+						{
+							// maybe we can hurry a wonder...
+							int iCost = pLoopCity->getProductionNeeded(eBuilding);
+							int iHurryProduction = getMaxHurryProduction(pLoopCity);
+							int iProgress = pLoopCity->getBuildingProduction(eBuilding);
+
+							if (pLoopCity->getProductionBuilding() == eBuilding)
+							{
+								int iProductionModifier = pLoopCity->getProductionModifier(eBuilding);
+								// (note: currently, it is impossible for a building to be "food production")
+								iProgress += pLoopCity->getProductionDifference(iCost, iProgress, iProductionModifier, false, 0) * iPathTurns;
+							}
+
+							FAssert(iHurryProduction > 0);
+							int iFraction = 100 * std::min(iHurryProduction, iCost-iProgress) / std::min(iHurryProduction, iCost);
+
+							if (iFraction > 50) // arbitary, and somewhat unneccessary.
+							{
+								FAssert(iFraction <= 100);
+								int iValue = pLoopCity->AI_buildingValue(eBuilding) * 25 * iFraction / 100;
+
+								if (iProgress + iHurryProduction >= iCost)
+								{
+									// increase the value, because we would be preventing someone else from getting it.
+									iValue *= 4;
+									iValue /= 3;
+								}
+								else
+								{
+									// decrease the value, because we might still miss out!
+									// (todo: teach the AI to wait until the hurry will almost complete the wonder.)
+									iValue *= 3;
+									iValue /= 4;
+								}
 
 								if (iValue > iBestValue)
 								{
@@ -5796,7 +5836,7 @@ bool CvUnitAI::AI_greatPersonMove()
 			if (canDiscover(plot()))
 			{
                 getGroup()->pushMission(MISSION_DISCOVER);
-				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'discover' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), getName(0).GetCString(), iDiscoverValue, iChoice);
+				if (gUnitLogLevel > 2) logBBAI("    %S chooses 'discover' (%S) with their %S (value: %d, choice #%d)", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), GC.getTechInfo(getDiscoveryTech()).getDescription(), getName(0).GetCString(), iDiscoverValue, iChoice);
 				return true;
 			}
 			break;
@@ -5869,10 +5909,32 @@ bool CvUnitAI::AI_greatPersonMove()
 
 				if (eBestBuilding != NO_BUILDING)
 				{
-					if (gUnitLogLevel > 2) logBBAI("    %S %s 'build' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_CONSTRUCT?"continues" :"chooses", getName(0).GetCString(), iSlowValue, iChoice);
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'build' (%S) with their %S (value: %d, choice #%d)", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), getGroup()->AI_getMissionAIType() == MISSIONAI_CONSTRUCT?"continues" :"chooses", GC.getBuildingInfo(eBestBuilding).getDescription(), getName(0).GetCString(), iSlowValue, iChoice);
 					if (atPlot(pBestPlot))
 					{
-						getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
+						if (canConstruct(pBestPlot, eBestBuilding))
+						{
+							getGroup()->pushMission(MISSION_CONSTRUCT, eBestBuilding);
+						}
+						else
+						{
+							// switch and hurry.
+							CvCity* pCity = pBestPlot->getPlotCity();
+							FAssert(pCity);
+
+							if (pCity->getProductionBuilding() != eBestBuilding)
+								pCity->pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+
+							if (pCity->getProductionBuilding() == eBestBuilding && canHurry(plot()))
+							{
+								getGroup()->pushMission(MISSION_HURRY);
+							}
+							else
+							{
+								FAssertMsg(false, "great person cannot hurry what it intended to hurry.");
+								return false;
+							}
+						}
 						return true;
 					}
 					else
