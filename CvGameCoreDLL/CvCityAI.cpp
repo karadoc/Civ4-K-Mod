@@ -768,7 +768,7 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 			iTempValue /= (2*100*(iHighestRate+3))/(iCityRate+3) - 100;
 		} */
 		iTempValue *= kPlayer.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass());
-		iTempValue /= 10;
+		iTempValue /= 100;
 		
 		iTempValue *= getTotalGreatPeopleRateModifier();
 		iTempValue /= 100;

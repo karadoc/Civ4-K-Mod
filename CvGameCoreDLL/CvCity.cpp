@@ -12654,16 +12654,15 @@ void CvCity::doReligion()
 								{
 									//iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
 
-									// K-Mod. The original formula basically divided the spread by the percent of max distance.
+									// K-Mod. The original formula basically divided the spread by the percent of max distance. (RELIGION_SPREAD_DISTANCE_DIVISOR == 100)
 									// In my view, this produced too much spread at short distance, and too little at long.
-									// Note: in original bts, RELIGION_SPREAD_DISTANCE_DIVISOR == 100.
-									// RELIGION_SPREAD_BASE_DIVISOR and RELIGION_SPREAD_DISTANCE_FACTOR are new values, with defaults is 5 and 7 respectively.
 									int iDivisor = std::max(1, iDivisorBase);
 
 									iDivisor *= 100 + 100 * iDistanceFactor * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()) / GC.getMapINLINE().maxPlotDistance();
 									iDivisor /= 100;
 
-									// now iDivisor is in the range [1, 1+iDistanceFactor] * iDivisorBase. (ie. [5, 40].)
+									// now iDivisor is in the range [1, 1+iDistanceFactor] * iDivisorBase
+									// this is approximately in the range [4, 60], depending on what the xml value are. (the value currently being tested and tuned.)
 									iSpread /= iDivisor;
 									// K-Mod end
 
