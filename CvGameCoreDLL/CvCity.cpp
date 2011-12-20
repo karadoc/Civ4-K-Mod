@@ -12599,6 +12599,8 @@ void CvCity::doReligion()
 	ReligionTypes eWeakestReligion = NO_RELIGION; // weakest religion already in the city
 	int iWeakestGrip = INT_MAX;
 	int iRandomWeight = GC.getDefineINT("RELIGION_INFLUENCE_RANDOM_WEIGHT");
+	int iDivisorBase = GC.getDefineINT("RELIGION_SPREAD_DIVISOR_BASE");
+	int iDistanceFactor = GC.getDefineINT("RELIGION_SPREAD_DISTANCE_FACTOR");
 
 	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 	{
@@ -12650,7 +12652,20 @@ void CvCity::doReligion()
 
 								if (iSpread > 0)
 								{
-									iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
+									//iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
+
+									// K-Mod. The original formula basically divided the spread by the percent of max distance.
+									// In my view, this produced too much spread at short distance, and too little at long.
+									// Note: in original bts, RELIGION_SPREAD_DISTANCE_DIVISOR == 100.
+									// RELIGION_SPREAD_BASE_DIVISOR and RELIGION_SPREAD_DISTANCE_FACTOR are new values, with defaults is 5 and 7 respectively.
+									int iDivisor = std::max(1, iDivisorBase);
+
+									iDivisor *= 100 + 100 * iDistanceFactor * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()) / GC.getMapINLINE().maxPlotDistance();
+									iDivisor /= 100;
+
+									// now iDivisor is in the range [1, 1+iDistanceFactor] * iDivisorBase. (ie. [5, 40].)
+									iSpread /= iDivisor;
+									// K-Mod end
 
 									//iSpread /= (getReligionCount() + 1);
 

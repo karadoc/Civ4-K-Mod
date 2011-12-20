@@ -106,6 +106,14 @@
 		<iDefineIntVal>150</iDefineIntVal>
 	</Define>-->
 	<Define>
+		<DefineName>RELIGION_SPREAD_DIVISOR_BASE</DefineName>
+		<iDefineIntVal>5</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_SPREAD_DISTANCE_FACTOR</DefineName>
+		<iDefineIntVal>7</iDefineIntVal>
+	</Define>
+	<Define>
 		<DefineName>RELIGION_INFLUENCE_POPULATION_WEIGHT</DefineName>
 		<iDefineIntVal>2</iDefineIntVal>
 	</Define>
