@@ -5041,7 +5041,7 @@ void CvUnitAI::AI_artistMove()
 	PROFILE_FUNC();
 
 	// K-Mod (this is less than ideal. I'm sorry.)
-	if (AI_construct(100))
+	if (AI_construct(MAX_INT, MAX_INT, 100))
 	{
 		return;
 	}
@@ -5696,11 +5696,13 @@ bool CvUnitAI::AI_greatPersonMove()
 							int iHurryProduction = getMaxHurryProduction(pLoopCity);
 							int iProgress = pLoopCity->getBuildingProduction(eBuilding);
 
+							int iProductionRate = iCost > iHurryProduction + iProgress ? pLoopCity->getProductionDifference(iCost, iProgress, pLoopCity->getProductionModifier(eBuilding), false, 0) : 0;
+							// note: currently, it is impossible for a building to be "food production".
+							// also note that iProductionRate will return 0 if the city is in disorder. This may mess up our great person's decision - but it's a non-trivial problem to fix.
+
 							if (pLoopCity->getProductionBuilding() == eBuilding)
 							{
-								int iProductionModifier = pLoopCity->getProductionModifier(eBuilding);
-								// (note: currently, it is impossible for a building to be "food production")
-								iProgress += pLoopCity->getProductionDifference(iCost, iProgress, iProductionModifier, false, 0) * iPathTurns;
+								iProgress += iProductionRate * iPathTurns;
 							}
 
 							FAssert(iHurryProduction > 0);
@@ -5720,9 +5722,9 @@ bool CvUnitAI::AI_greatPersonMove()
 								else
 								{
 									// decrease the value, because we might still miss out!
-									// (todo: teach the AI to wait until the hurry will almost complete the wonder.)
-									iValue *= 3;
-									iValue /= 4;
+									FAssert(iProductionRate > 0 || pLoopCity->isDisorder());
+									iValue *= 12;
+									iValue /= 10 + std::min(30, pLoopCity->getProductionTurnsLeft(iCost, iProgress, iProductionRate, iProductionRate));
 								}
 
 								if (iValue > iBestValue)

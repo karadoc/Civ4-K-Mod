@@ -5238,7 +5238,16 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					//iTempValue *= 100 + kBuilding.getCommerceModifier(iI);
 					iTempValue *= getTotalCommerceRateModifier((CommerceTypes)iI) + kBuilding.getCommerceModifier(iI); // K-Mod. Note that getTotalCommerceRateModifier() includes the +100.
 					iTempValue /= 100;
-					
+
+					if (kBuilding.getCommerceChangeDoubleTime(iI) > 0)
+					{
+						if ((kBuilding.getCommerceChange(iI) > 0) || (kBuilding.getObsoleteSafeCommerceChange(iI) > 0))
+						{
+							//iTempValue += (1000 / kBuilding.getCommerceChangeDoubleTime(iI));
+							iTempValue += iTempValue * 250 / kBuilding.getCommerceChangeDoubleTime(iI); // K-Mod (still very rough...)
+						}
+					}
+
 					if ((CommerceTypes)iI == COMMERCE_CULTURE)
 					{
 					    if (bCulturalVictory1)
@@ -5256,57 +5265,41 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						// K-Mod end
 					}
 
-					// K-Mod. help get the ball rolling on espionage.
-					if (iI == COMMERCE_ESPIONAGE && iTempValue > 0 && !GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
-					{
-						// priority += 1% per 1% increase in total espionage, more for big espionage strategy
-						iPriorityFactor += std::min(100, (kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?150 : 100) * iTempValue/std::max(1, 4*kOwner.getCommerceRate(COMMERCE_ESPIONAGE)));
-					}
-					// K-Mod end
+					// K-mod. the getCommerceChangeDoubleTime bit use to be here. I moved it up to be before the culture value boost.
 
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/25/10                              jdog5000        */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-					if ((CommerceTypes)iI == COMMERCE_RESEARCH)
-					{
-					    if (bSpaceVictory1)
-					    {
-							iTempValue *= 3;
-							iTempValue /= 2;
-					    }
-					}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-					if (kBuilding.getCommerceChangeDoubleTime(iI) > 0)
-					{
-						if ((kBuilding.getCommerceChange(iI) > 0) || (kBuilding.getObsoleteSafeCommerceChange(iI) > 0))
-						{
-							iTempValue += (1000 / kBuilding.getCommerceChangeDoubleTime(iI));
-						}
-					}
-					
 					// add value for a commerce modifier
 					int iCommerceModifier = kBuilding.getCommerceModifier(iI);
 					int iBaseCommerceRate = getBaseCommerceRate((CommerceTypes) iI);
+					// K-Mod. inflate the base commerce rate, to account for the fact that commerce multipliers give us flexibility.
+					{
+						int x = std::max(5, kOwner.getCommercePercent((CommerceTypes)iI));
+						if (iI == COMMERCE_CULTURE)
+						{
+							x += x <= 45 && bCulturalVictory1 ? 10 : 0;
+							x += x <= 45 && bCulturalVictory2 ? 10 : 0;
+							x += x <= 45 && bCulturalVictory3 ? 10 : 0;
+						}
+						iBaseCommerceRate += getYieldRate(YIELD_COMMERCE) * x * (100 - x) / 10000;
+					}
+					// K-Mod end
 					int iCommerceMultiplierValue = iCommerceModifier * iBaseCommerceRate;
-					if (((CommerceTypes) iI) == COMMERCE_CULTURE && iCommerceModifier != 0)
+					if (iI == COMMERCE_CULTURE && iCommerceModifier != 0)
 					{
 						// K-Mod: bug fix, and improvement. (the old code was missing /= 100, and it was too conditional)
-						iCommerceMultiplierValue *= culturePressureFactor() + 100;
-						iCommerceMultiplierValue /= 200;
+						// (disabled indefinitely. culture pressure is counted in other ways; so I want to test without this boost.)
+						//iCommerceMultiplierValue *= culturePressureFactor() + 100;
+						//iCommerceMultiplierValue /= 200;
+						// K-Mod end
 
+						// K-Mod. the value of culture is now boosted primarily inside AI_commerceWeight
+						// so I've decreased the value boost in the following block.
 						if (bCulturalVictory1)
-						{							
+						{
 							// if this is one of our top culture cities, then we want to build this here first!
 							if (iCultureRank <= iCulturalVictoryNumCultureCities)
-							{					        
-								iCommerceMultiplierValue /= 8;					        
-								
+							{
+								iCommerceMultiplierValue /= 12; // was 8
+
 								// if we at culture level 3, then these need to get built asap
 								if (bCulturalVictory3)
 								{
@@ -5319,7 +5312,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 									FAssert(iHighestRate >= getCommerceRate(COMMERCE_CULTURE));
 
 									// its most important to build in the lowest rate city, but important everywhere
-									iCommerceMultiplierValue += (iHighestRate - getCommerceRate(COMMERCE_CULTURE)) * iCommerceModifier / 8;
+									iCommerceMultiplierValue += (iHighestRate - getCommerceRate(COMMERCE_CULTURE)) * iCommerceModifier / 12; // was 8
 								}
 							}
 							else
@@ -5359,7 +5352,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 								// if we have enough and our rank is close to the top, then possibly build here too
 								if (bHaveEnough && (iCultureRank - iCulturalVictoryNumCultureCities) <= 3)
 								{
-									iCommerceMultiplierValue /= 12;
+									iCommerceMultiplierValue /= 16; // was 12
 								}
 								// otherwise, we really do not want to build this here
 								else
@@ -5370,7 +5363,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						}
 						else
 						{
-							iCommerceMultiplierValue /= 15;
+							iCommerceMultiplierValue /= 20; // was 15
 
 							// increase priority if we need culture oppressed city
 							// K-Mod: moved this to outside of the current "if".
@@ -5380,9 +5373,23 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					}
 					else
 					{
- 						iCommerceMultiplierValue /= 15;
+						iCommerceMultiplierValue /= 20; // was 15
 					}
 					iTempValue += iCommerceMultiplierValue;
+
+					// K-Mod. help get the ball rolling on espionage.
+					if (iI == COMMERCE_ESPIONAGE && iTempValue > 0 && !GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+					{
+						// priority += 1% per 1% increase in total espionage, more for big espionage strategy
+						iPriorityFactor += std::min(100, (kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?150 : 100) * iTempValue/std::max(1, 4*kOwner.getCommerceRate(COMMERCE_ESPIONAGE)));
+					}
+
+					// ... and increase the priority of research buildings if aiming for a space victory.
+					if ((CommerceTypes)iI == COMMERCE_RESEARCH && bSpaceVictory1)
+					{
+						iPriorityFactor += std::min(25, iTempValue/2);
+					}
+					// K-Mod end
 
 					iTempValue += ((kBuilding.getGlobalCommerceModifier(iI) * iNumCities) / 4);
 					// iTempValue += ((kBuilding.getSpecialistExtraCommerce(iI) * kOwner.getTotalPopulation()) / 3); // moved up (K-Mod)
