@@ -5641,6 +5641,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	SpecialistTypes eBestSpecialist = NO_SPECIALIST;
 	BuildingTypes eBestBuilding = NO_BUILDING;
 	int iBestValue = 0;
+	int iBestPathTurns = MAX_INT; // just used as a tie-breaker.
 
 	int iLoop;
 	for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
@@ -5727,10 +5728,11 @@ bool CvUnitAI::AI_greatPersonMove()
 									iValue /= 10 + std::min(30, pLoopCity->getProductionTurnsLeft(iCost, iProgress, iProductionRate, iProductionRate));
 								}
 
-								if (iValue > iBestValue)
+								if (iValue > iBestValue || (iValue == iBestValue && iPathTurns < iBestPathTurns))
 								{
 									iBestValue = iValue;
 									pBestPlot = getPathEndTurnPlot();
+									iBestPathTurns = iPathTurns;
 									eBestBuilding = eBuilding;
 									eBestSpecialist = NO_SPECIALIST;
 								}
