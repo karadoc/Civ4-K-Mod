@@ -661,12 +661,16 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			// (note: I haven't tried to match this value decrease with the actual cost increase,
 			// because the value of the great people changes as well.)
 			iTempValue *= 100;
-			iTempValue /= 90 + 5 * kOwner.getGreatPeopleCreated();
+			iTempValue /= 90 + 10 * kOwner.getGreatPeopleCreated();
 		}
-		
+
 		iTempValue *= getTotalGreatPeopleRateModifier();
-		iTempValue /= 100;
 		//iTempValue /= kOwner.AI_averageGreatPeopleMultiplier();
+		// K-Mod note: ultimately, I don't think the value should be divided by the average multiplier.
+		// because more great people points is always better, regardless of what the average multiplier is.
+		// However, because of the flawed way that food is currently evaluated, I need to dilute the value of GPP
+		// so that specialists don't get value more highly than food tiles. (I hope to correct this, later.)
+		iTempValue /= (200 + kOwner.AI_averageGreatPeopleMultiplier())/3;
 		
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
