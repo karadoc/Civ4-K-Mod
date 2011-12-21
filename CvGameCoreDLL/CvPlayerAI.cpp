@@ -1172,6 +1172,12 @@ int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 	int iCurrCombat;
 	int iBestCombat;
 
+	// K-Mod. If the group is trying to do a stack attack, let it go first!
+	// (this is required for amphibious assults; during which a low priority group can be ordered to attack before its turn.)
+	if (pGroup->AI_isGroupAttack())
+		return -1;
+	// K-Mod end
+
 	pHeadUnit = pGroup->getHeadUnit();
 
 	if (pHeadUnit != NULL)
@@ -2560,7 +2566,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 				}
 			}
 			if (iTeamCount == 0)
-				return iWeight / 4; // can't put points on anyone - but accumulating "total points ever" is still better than nothing.
+				return iWeight / 10; // can't put points on anyone - but accumulating "total points ever" is still better than nothing.
 
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
 			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 16*GC.getGame().getGameTurn(), 5*iAllTeamTotalPoints);
@@ -12291,6 +12297,7 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	return iBonusValue; */
 
 	// K-Mod. Well that was a load of bullshit... lets try to do it better.
+	const CvTeamAI& kTeam = GET_TEAM(getTeam());
 	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
 	int iValue = 0;
 	int iMaintenance = 0;
@@ -12302,11 +12309,20 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 		if (NO_BONUS != eBonus)
 		{
 			if (pCity == NULL)
-				iBonuses += countOwnedBonuses(eBonus) + 1;
+				iBonuses += countOwnedBonuses(eBonus);
 			else
-				iBonuses += pCity->getNumBonuses(eBonus) + 1;
+				iBonuses += pCity->getNumBonuses(eBonus);
 			// maybe use getNumAvailableBonuses ?
+			if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechReveal()) && !kTeam.isForceRevealedBonus(eBonus))
+			{
+				iBonuses++; // expect that we'll get one of each unrevealed resource
+			}
 		}
+	}
+	if (!GC.getGameINLINE().isCorporationFounded(eCorporation))
+	{
+		// expect that we'll be able to trade for at least 1 of the bonuses.
+		iBonuses++;
 	}
 
 	for (int iI = (CommerceTypes)0; iI < NUM_COMMERCE_TYPES; ++iI)
@@ -12331,7 +12347,7 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 			iValue += iTempValue;
 		}
 
-		iMaintenance += kCorp.getHeadquarterCommerce(iI);
+		iMaintenance += 100 * kCorp.getHeadquarterCommerce(iI);
 	}
 
 	for (int iI = 0; iI < NUM_YIELD_TYPES; ++iI)
@@ -12361,7 +12377,8 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	iTempValue /= 100;
 	iTempValue += iMaintenance;
 	// Inflation, population, and maintenance modifiers... lets just approximate them like this:
-	iTempValue /= 2;
+	iTempValue *= 2;
+	iTempValue /= 3;
 
 	iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
 	iTempValue /= 100;
@@ -12373,7 +12390,7 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	{
 		int iBonuses = getNumAvailableBonuses((BonusTypes)kCorp.getBonusProduced());
 		// pretend we have 1 bonus if it is not yet revealed. (so that we don't overvalue the corp before the resource gets revealed)
-		iBonuses += !GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getBonusInfo((BonusTypes)kCorp.getBonusProduced()).getTechReveal()) ? 1 : 0;
+		iBonuses += !kTeam.isHasTech((TechTypes)GC.getBonusInfo((BonusTypes)kCorp.getBonusProduced()).getTechReveal()) ? 1 : 0;
 		iValue += AI_baseBonusVal((BonusTypes)kCorp.getBonusProduced()) * 100 / (1 + 3 * iBonuses * iBonuses);
 	}
 
@@ -12579,7 +12596,8 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 						}
 						if (bCheckCanAttack)
 						{
-							if (!pLoopUnit->canMove() || (pLoopUnit->isMadeAttack() && !pLoopUnit->isBlitz()))
+							if (!pLoopUnit->canMove() || (pLoopUnit->isMadeAttack() && !pLoopUnit->isBlitz())
+								|| (bUseTarget && pLoopUnit->combatLimit() < 100 && pLoopPlot->isWater() && !pTargetPlot->isWater()))
 							{
 								continue; // can't attack
 							}
@@ -12891,6 +12909,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 {
 	PROFILE_FUNC();
 
+	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod
+
 	bool bWarPlan;
 	int iConnectedForeignCities;
 	int iTotalReligonCount;
@@ -12930,7 +12950,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 	int iS = (isCivic(eCivic)?-1 :1);// K-Mod, sign for whether we should be considering gaining a bonus, or losing a bonus
 
-	bWarPlan = (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0);
+	bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
 	if( bWarPlan )
 	{
 		bWarPlan = false;
@@ -12940,15 +12960,15 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		{
 			if( GET_TEAM((TeamTypes)iTeam).isAlive() && !GET_TEAM((TeamTypes)iTeam).isMinorCiv() )
 			{
-				if( GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN )
+				if( kTeam.AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN )
 				{
-					if( GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) == WARPLAN_TOTAL || GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) == WARPLAN_PREPARING_TOTAL )
+					if( kTeam.AI_getWarPlan((TeamTypes)iTeam) == WARPLAN_TOTAL || kTeam.AI_getWarPlan((TeamTypes)iTeam) == WARPLAN_PREPARING_TOTAL )
 					{
 						bWarPlan = true;
 						break;
 					}
 
-					if( GET_TEAM(getTeam()).AI_isLandTarget((TeamTypes)iTeam) )
+					if( kTeam.AI_isLandTarget((TeamTypes)iTeam) )
 					{
 						bWarPlan = true;
 						break;
@@ -12968,7 +12988,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			}
 			else if( iEnemyWarSuccess > std::min(iCities, 2) * GC.getWAR_SUCCESS_CITY_CAPTURING() )
 			{
-				if( GET_TEAM(getTeam()).AI_getEnemyPowerPercent() > 120 )
+				if( kTeam.AI_getEnemyPowerPercent() > 120 )
 				{
 					bWarPlan = true;
 				}
@@ -12979,7 +12999,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	if( !bWarPlan )
 	{
 		// Aggressive players will stick with war civics
-		if( GET_TEAM(getTeam()).AI_getTotalWarOddsTimes100() > 200 )
+		if( kTeam.AI_getTotalWarOddsTimes100() > 200 )
 		{
 			bWarPlan = true;
 		}
@@ -13048,13 +13068,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			{
 				iTempValue = iCities + ((bWarPlan) ? 30 : 10);
 
-				iTempValue *= range(GET_TEAM(getTeam()).AI_getEnemyPowerPercent(), 50, 300);
+				iTempValue *= range(kTeam.AI_getEnemyPowerPercent(), 50, 300);
 				iTempValue /= 100;
 
 				iTempValue *= iCombatValue;
 				iTempValue /= 75;
 
-				int iWarSuccessRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
+				int iWarSuccessRatio = kTeam.AI_getWarSuccessCapitulationRatio();
 				if( iWarSuccessRatio < -25 )
 				{
 					iTempValue *= 75 + range(-iWarSuccessRatio, 25, 100);
@@ -13175,7 +13195,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				bPlayerHQ = true;
 				bTeamHQ = true;
 			}
-			else if (GET_TEAM(getTeam()).hasHeadquarters(eCorp))
+			else if (kTeam.hasHeadquarters(eCorp))
 			{
 				bTeamHQ = true;
 			}
@@ -13195,10 +13215,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				BonusTypes eBonus = (BonusTypes)GC.getCorporationInfo(eCorp).getPrereqBonus(i);
 				if (NO_BONUS != eBonus)
 				{
-					iBonuses += countOwnedBonuses(eBonus)+(bPlayerHQ ?1 :0);
+					iBonuses += countOwnedBonuses(eBonus);
 					// maybe use getNumAvailableBonuses ?
+					iBonuses +=	!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechReveal()) && !kTeam.isForceRevealedBonus(eBonus)
+						? 1 : 0; // expect that we'll get at least one of each unrevealed bonus.
 				}
 			}
+			iBonuses += bPlayerHQ ? 1 : 0;
 
 			for (iI = (CommerceTypes)0; iI < NUM_COMMERCE_TYPES; ++iI)
 			{
@@ -13250,8 +13273,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iTempValue /= 10000;
 			iTempValue += iMaintenance;
 			// Inflation, population, and maintenance modifiers... lets just approximate them like this:
-			iTempValue /= 2;
-
+			iTempValue *= 2;
+			iTempValue /= 3;
 
 			iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
 			iTempValue /= 100;

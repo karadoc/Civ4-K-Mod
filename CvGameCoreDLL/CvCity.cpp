@@ -12590,7 +12590,8 @@ void CvCity::doReligion()
 
 	// K-Mod
 	// gives some of the top religions a shot at spreading to the city.
-	int iChances = 2 + (getCultureLevel() >= 3 ? 1 : 0) + getPopulation() / 12 - getReligionCount();
+	int iChances = 2 + (getCultureLevel() >= 4 ? 1 : 0) + (getPopulation() + 7) / 15 - getReligionCount();
+	// (breakpoints at pop = 8, 23, 38, ...)
 
 	if (iChances <= 0)
 		return;

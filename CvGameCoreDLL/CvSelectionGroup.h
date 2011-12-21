@@ -145,6 +145,7 @@ public:
 
 	bool isForceUpdate();
 	void setForceUpdate(bool bNewValue);
+	void doForceUpdate(); // K-Mod
 
 	DllExport PlayerTypes getOwner() const;																															// Exposed to Python
 #ifdef _USRDLL

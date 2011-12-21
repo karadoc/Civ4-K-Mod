@@ -219,12 +219,7 @@ bool CvSelectionGroupAI::AI_update()
 
 	if (isForceUpdate())
 	{
-		clearMissionQueue(); // XXX ???
-		setActivityType(ACTIVITY_AWAKE);
-		setForceUpdate(false);
-
-		// if we are in the middle of attacking with a stack, cancel it
-		AI_cancelGroupAttack();
+		doForceUpdate(); // K-Mod (based on old code)
 	}
 
 	FAssert(!(GET_PLAYER(getOwnerINLINE()).isAutoMoves()));

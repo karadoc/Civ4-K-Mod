@@ -2630,11 +2630,7 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 	// made a previous attack or paradrop
 	if (bAttack)
 	{
-		//if (isMadeAttack() && !isBlitz() && (pPlot->getNumVisibleEnemyDefenders(this) > 0))
-		// K-Mod. We don't want to only count "visible" defenders...
-		if (isMadeAttack() && !isBlitz() &&
-			pPlot->plotCount(PUF_canDefendEnemy, getOwnerINLINE(), isAlwaysHostile(pPlot)) > 0)
-		// K-Mod end
+		if (isMadeAttack() && !isBlitz() && (pPlot->getNumVisibleEnemyDefenders(this) > 0))
 		{
 			return false;
 		}

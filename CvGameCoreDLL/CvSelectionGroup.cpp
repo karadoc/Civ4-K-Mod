@@ -237,10 +237,10 @@ void CvSelectionGroup::doTurn()
 
 		if (AI_isControlled())
 		{
-			//if ((getActivityType() != ACTIVITY_MISSION) || (!canFight() && (GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0)))
-			if ((getActivityType() != ACTIVITY_MISSION) || (!canFight() && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)))) //bbai
+			if ((getActivityType() != ACTIVITY_MISSION) || (!canFight() && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2))))
 			{
-				setForceUpdate(true);
+				//setForceUpdate(true);
+				doForceUpdate(); // K-Mod. (this prevents the forced update from interupting amphibious assaults.
 			}
 		}
 		else
@@ -1187,7 +1187,7 @@ void CvSelectionGroup::startMission()
 					unit_list.push_back(std::make_pair(iPriority, pLoopUnit->getID()));
 				}
 			}
-			std::sort(unit_list.begin(), unit_list.end());
+			std::sort(unit_list.begin(), unit_list.end(), std::greater<std::pair<int, int> >());
 
 			CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
 			for (size_t i = 0; i < unit_list.size(); i++)
@@ -1229,6 +1229,7 @@ void CvSelectionGroup::startMission()
 					case MISSION_SEAPATROL:
 					case MISSION_HEAL:
 					case MISSION_SENTRY:
+						pUnitNode = 0; // K-Mod. Nothing to do, so we might as well abort the unit loop.
 						break;
 
 					case MISSION_AIRLIFT:
@@ -1508,7 +1509,6 @@ void CvSelectionGroup::startMission()
 		}
 	}
 }
-
 
 void CvSelectionGroup::continueMission(int iSteps)
 {
@@ -4116,17 +4116,19 @@ bool CvSelectionGroup::groupAmphibMove(CvPlot* pPlot, int iFlags)
 		{
 			pUnitNode1 = headUnitNode();
 
+			// K-Mod: I've rearranged some stuff in the following section to fix a bug.
+			// originally, the cargo groups loop was done for each cargo-carrying unit - which is incorrect.
+			std::vector<CvSelectionGroup*> aCargoGroups;
 			while (pUnitNode1 != NULL)
 			{
 				pLoopUnit1 = ::getUnit(pUnitNode1->m_data);
 				pUnitNode1 = nextUnitNode(pUnitNode1);
 
-				if ((pLoopUnit1->getCargo() > 0) && (pLoopUnit1->domainCargo() == DOMAIN_LAND))
+				if (pLoopUnit1->getCargo() > 0 && pLoopUnit1->domainCargo() == DOMAIN_LAND)
 				{
 					std::vector<CvUnit*> aCargoUnits;
 					pLoopUnit1->getCargoUnits(aCargoUnits);
-					std::vector<CvSelectionGroup*> aCargoGroups;
-					for (uint i = 0; i < aCargoUnits.size(); ++i)
+					for (size_t i = 0; i < aCargoUnits.size(); ++i)
 					{
 						CvSelectionGroup* pGroup = aCargoUnits[i]->getGroup();
 						if (std::find(aCargoGroups.begin(), aCargoGroups.end(), pGroup) == aCargoGroups.end())
@@ -4134,19 +4136,19 @@ bool CvSelectionGroup::groupAmphibMove(CvPlot* pPlot, int iFlags)
 							aCargoGroups.push_back(aCargoUnits[i]->getGroup());
 						}
 					}
-
-					for (uint i = 0; i < aCargoGroups.size(); ++i)
-					{
-						CvSelectionGroup* pGroup = aCargoGroups[i];
-						if (pGroup->canAllMove())
-						{
-							FAssert(!pGroup->at(pPlot->getX_INLINE(), pPlot->getY_INLINE()));
-							pGroup->pushMission(MISSION_MOVE_TO, pPlot->getX_INLINE(), pPlot->getY_INLINE(), (MOVE_IGNORE_DANGER | iFlags));
-							bLanding = true;
-						}
-					}
 				}
 			}
+			for (size_t i = 0; i < aCargoGroups.size(); ++i)
+			{
+				CvSelectionGroup* pGroup = aCargoGroups[i];
+				if (pGroup->canAllMove())
+				{
+					FAssert(!pGroup->at(pPlot->getX_INLINE(), pPlot->getY_INLINE()));
+					pGroup->pushMission(MISSION_MOVE_TO, pPlot->getX_INLINE(), pPlot->getY_INLINE(), (MOVE_IGNORE_DANGER | iFlags));
+					bLanding = true;
+				}
+			}
+			// K-Mod end
 		}
 	}
 
@@ -4292,6 +4294,17 @@ void CvSelectionGroup::setForceUpdate(bool bNewValue)
 	m_bForceUpdate = bNewValue;
 }
 
+// K-Mod
+void CvSelectionGroup::doForceUpdate()
+{
+	clearMissionQueue();
+	setActivityType(ACTIVITY_AWAKE);
+	setForceUpdate(false);
+
+	// if we are in the middle of attacking with a stack, cancel it
+	AI_cancelGroupAttack();
+}
+// K-Mod end
 
 ActivityTypes CvSelectionGroup::getActivityType() const
 {

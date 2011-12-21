@@ -7578,7 +7578,7 @@ void CvUnitAI::AI_assaultSeaMove()
 	FAssert(AI_getUnitAIType() == UNITAI_ASSAULT_SEA);
 
 	bool bEmpty = !getGroup()->hasCargo();
-	bool bFull = (getGroup()->AI_isFull() && (getGroup()->getCargo() > 0));
+	bool bFull = getGroup()->getCargo() > 0 && getGroup()->AI_isFull();
 
 	if (plot()->isCity(true))
 	{
@@ -17485,7 +17485,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 							//int iEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
 							// K-Mod (a small step up from the original code, but still not good.)
 							int iEnemyDefenders = (pLoopPlot->isVisible(getTeam(), false) || !pLoopPlot->isCity())
-								? pLoopPlot->getNumVisibleEnemyDefenders(this)
+								? pLoopPlot->getNumVisiblePotentialEnemyDefenders(this)
 								: pLoopPlot->getPlotCity()->AI_neededDefenders();
 							// K-Mod end
 
@@ -18126,13 +18126,14 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 		{
 			if (pLoopGroup != getGroup())
 			{
-				if (pLoopGroup->AI_getMissionAIType() == MISSIONAI_GROUP && pLoopGroup->getHeadUnitAI() == AI_getUnitAIType())
+				if (pLoopGroup->AI_getMissionAIType() == MISSIONAI_GROUP)
 				{
 					CvUnit* pMissionUnit = pLoopGroup->AI_getMissionAIUnit();
 
-					if (pMissionUnit != NULL && pMissionUnit->getGroup() == getGroup())
+					if (pMissionUnit && pMissionUnit->getGroup() == getGroup() && !pLoopGroup->isFull())
 					{
 						pLoopGroup->clearMissionQueue();
+						pLoopGroup->AI_setMissionAI(NO_MISSIONAI, 0, 0);
 					}
 				}
 			}
