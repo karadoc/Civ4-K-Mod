@@ -2559,6 +2559,8 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 					}
 				}
 			}
+			if (iTeamCount == 0)
+				return iWeight / 4; // can't put points on anyone - but accumulating "total points ever" is still better than nothing.
 
 			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
 			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 16*GC.getGame().getGameTurn(), 5*iAllTeamTotalPoints);
@@ -20277,6 +20279,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 void CvPlayerAI::AI_updateGreatPersonWeights()
 {
 	PROFILE_FUNC();
+	int iLoop;
 
 	m_GreatPersonWeights.clear();
 
@@ -20289,11 +20292,19 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 
 		FAssert(GC.getSpecialistInfo((SpecialistTypes)i).getGreatPeopleRateChange() > 0);
 
-		bool bValid = false;
-		int iLoop;
-		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		if (m_GreatPersonWeights.find(eGreatPersonClass) != m_GreatPersonWeights.end())
+			continue; // already evaluated
+
+		UnitTypes eGreatPerson = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eGreatPersonClass);
+		if (eGreatPerson == NO_UNIT)
+			continue;
+
+		/* I've disabled the validity check, because 'invalid' specialists still affect the value of the things that enable them.
+		bool bValid = isSpecialistValid((SpecialistTypes)i) || i == GC.getDefineINT("DEFAULT_SPECIALIST");
+		int iLoop; // moved.
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity && !bValid; pLoopCity = nextCity(&iLoop))
 		{
-			if (pLoopCity->isSpecialistValid((SpecialistTypes)i))
+			if (pLoopCity->getMaxSpecialistCount((SpecialistTypes)i) > 0)
 			{
 				bValid = true;
 				break;
@@ -20301,14 +20312,7 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 		}
 
 		if (!bValid)
-			continue;
-
-		if (m_GreatPersonWeights.find(eGreatPersonClass) != m_GreatPersonWeights.end())
-			continue; // already evaluated
-
-		UnitTypes eGreatPerson = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eGreatPersonClass);
-		if (eGreatPerson == NO_UNIT)
-			continue;
+			continue; */
 
 		// We've estabilish that we can use this specialist, and that they provide great-person points for a unit which
 		// we have not yet evaluated. So now we just have to evaluate the unit!
@@ -20382,7 +20386,6 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 		iSum += it->second;
 	}
 	int iMean = iSum / std::max(1, (int)m_GreatPersonWeights.size());
-	iSum = 0;
 
 	// scale the values so that they are between 50 and 500, with the mean value translating to 100.
 	// (note: I don't expect it to get anywhere near the maximum. The maximum only occurs when the value is infinite!)
@@ -20392,15 +20395,7 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 		iValue = 100 * iValue / std::max(1, iMean);
 		iValue = (40000 + 500 * iValue) / (800 + iValue);
 		it->second = iValue;
-		iSum += iValue;
 	}
-
-	// finally, normalise so that 100 is the average value.
-	//iMean = iSum / std::max(1, (int)m_GreatPersonWeights.size());
-	//for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
-	//{
-	//	it->second = 100 * it->second / std::max(1, iMean);
-	//}
 }
 
 int CvPlayerAI::AI_getGreatPersonWeight(UnitClassTypes eGreatPerson) const

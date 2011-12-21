@@ -15319,13 +15319,13 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									{
 										iValue = kOwner.AI_targetCityValue(pLoopCity, true, true);
 									}
-									// K-Mod adjust value based on defence
+									// K-Mod adjust value based on defensive bonuses
 									{
 										int iMod =
-											pLoopCity->getDefenseModifier(false) / (bombardRate() > 0 ? 3 : 1)
+											std::min(8, getGroup()->getBombardTurns(pLoopCity)) * pLoopCity->getDefenseModifier(false) / 8
 											+ (pLoopCity->plot()->isHills() ? GC.getHILLS_EXTRA_DEFENSE() : 0);
-										iValue *= std::max(100, 160 - iMod);
-										iValue /= 100;
+										iValue *= std::max(25, 125 - iMod);
+										iValue /= 25; // the denominator is arbitrary, and unimportant.
 									}
 									// K-Mod end
 
@@ -15345,7 +15345,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 									// K-Mod end
 
-									if ((area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE))
+									if (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
 									{
 										iValue *= 50 + pLoopCity->calculateCulturePercent(getOwnerINLINE());
 										iValue /= 50;
@@ -15372,9 +15372,9 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										// a more sensitive adjustment than usual (w/ modifier on the denominator), so as not to be too deterred before bombarding.
 										iEnemyDefence *= 100;
 										iEnemyDefence /= 100 + (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
-										if (100 * iEnemyDefence > 125 * iOurOffence) // an uneven comparison, just in case we can get some air support or other help somehow.
+										if (100 * iEnemyDefence > 110 * iOurOffence) // an uneven comparison, just in case we can get some air support or other help somehow.
 										{
-											iValue *= std::max(50, 125 * iOurOffence / iEnemyDefence);
+											iValue *= std::max(33, 110 * iOurOffence / iEnemyDefence);
 											iValue /= 100;
 										}
 									}
@@ -15398,7 +15398,8 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 
 									// If stack has poor bombard, direct towards lower defense cities
 									//iPathTurns += std::min(12, getGroup()->getBombardTurns(pLoopCity)/4);
-									iPathTurns += std::min(6, getGroup()->getBombardTurns(pLoopCity)/3); // K-Mod. That's 18 turns!
+									//iPathTurns += bombardRate() > 0 ? std::min(5, getGroup()->getBombardTurns(pLoopCity)/3) : 0; // K-Mod
+									// (already taken into account.)
 
 									iValue /= 8 + iPathTurns*iPathTurns; // was 4+
 
