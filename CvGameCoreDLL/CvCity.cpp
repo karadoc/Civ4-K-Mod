@@ -12572,6 +12572,7 @@ void CvCity::doDecay()
 }
 
 
+// K-Mod. I've completely rewritten this function, and deleted the old code.
 void CvCity::doReligion()
 {
 	if (GC.getUSE_DO_RELIGION_CALLBACK()) // K-Mod. block unused python callbacks
@@ -12588,7 +12589,6 @@ void CvCity::doReligion()
 		}
 	}
 
-	// K-Mod
 	// gives some of the top religions a shot at spreading to the city.
 	int iChances = 2 + (getCultureLevel() >= 4 ? 1 : 0) + (getPopulation() + 7) / 15 - getReligionCount();
 	// (breakpoints at pop = 8, 23, 38, ...)
@@ -12607,16 +12607,29 @@ void CvCity::doReligion()
 	{
 		if (GC.getGame().isReligionFounded((ReligionTypes)iI))
 		{
-			int iGrip = getReligionGrip((ReligionTypes)iI);
-			iGrip += GC.getGameINLINE().getSorenRandNum(iRandomWeight/2, "Religion influence"); // only half the weight for self-spread
-
-			religion_grips.push_back(std::make_pair(iGrip, (ReligionTypes)iI));
-
-			if (isHasReligion((ReligionTypes)iI) && !isHolyCity((ReligionTypes)iI) && iGrip < iWeakestGrip)
+			if (isHasReligion((ReligionTypes)iI))
 			{
-				iWeakestGrip = iGrip;
-				eWeakestReligion = (ReligionTypes)iI;
+				// if we have this religion; check to see if it weakest one we have...
+				if (!isHolyCity((ReligionTypes)iI))
+				{
+					// ... only if it isn't the holy city.
+					int iGrip = getReligionGrip((ReligionTypes)iI);
+					if (iGrip < iWeakestGrip)
+					{
+						iWeakestGrip = iGrip;
+						eWeakestReligion = (ReligionTypes)iI;
+					}
+				}
 			}
+			else if (!GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread() || GET_PLAYER(getOwnerINLINE()).getStateReligion() == iI)
+			{
+				// if we don't have the religion, and the religion is allowed to spread here, add it to the list.
+				int iGrip = getReligionGrip((ReligionTypes)iI);
+				iGrip += GC.getGameINLINE().getSorenRandNum(iRandomWeight/2, "Religion influence"); // only half the weight for self-spread
+
+				religion_grips.push_back(std::make_pair(iGrip, (ReligionTypes)iI));
+			}
+
 		}
 	}
 
@@ -12632,124 +12645,76 @@ void CvCity::doReligion()
 		if (eWeakestReligion != NO_RELIGION && iWeakestGrip >= iLoopGrip)
 			break;
 
-		if (eLoopReligion != NO_RELIGION && !isHasReligion(eLoopReligion))
+		FAssert(eLoopReligion != NO_RELIGION);
+		FAssert(!isHasReligion(eLoopReligion));
+		FAssert(!GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread() || GET_PLAYER(getOwnerINLINE()).getStateReligion() == eLoopReligion);
+
+		int iRandThreshold = 0;
+
+		for (int iJ = 0; iJ < MAX_PLAYERS; iJ++)
 		{
-			if (eLoopReligion == GET_PLAYER(getOwnerINLINE()).getStateReligion() || !GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread())
+			if (GET_PLAYER((PlayerTypes)iJ).isAlive())
 			{
-				int iRandThreshold = 0;
-
-				for (int iJ = 0; iJ < MAX_PLAYERS; iJ++)
+				int iLoop;
+				for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iJ).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iJ).nextCity(&iLoop))
 				{
-					if (GET_PLAYER((PlayerTypes)iJ).isAlive())
+					if (pLoopCity->isConnectedTo(this))
 					{
-						int iLoop;
-						for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iJ).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iJ).nextCity(&iLoop))
+						int iSpread = pLoopCity->getReligionInfluence(eLoopReligion);
+
+						iSpread *= GC.getReligionInfo(eLoopReligion).getSpreadFactor();
+
+						if (iSpread > 0)
 						{
-							if (pLoopCity->isConnectedTo(this))
-							{
-								int iSpread = pLoopCity->getReligionInfluence(eLoopReligion);
+							//iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
 
-								iSpread *= GC.getReligionInfo(eLoopReligion).getSpreadFactor();
+							// K-Mod. The original formula basically divided the spread by the percent of max distance. (RELIGION_SPREAD_DISTANCE_DIVISOR == 100)
+							// In my view, this produced too much spread at short distance, and too little at long.
+							int iDivisor = std::max(1, iDivisorBase);
 
-								if (iSpread > 0)
-								{
-									//iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
+							iDivisor *= 100 + 100 * iDistanceFactor * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()) / GC.getMapINLINE().maxPlotDistance();
+							iDivisor /= 100;
 
-									// K-Mod. The original formula basically divided the spread by the percent of max distance. (RELIGION_SPREAD_DISTANCE_DIVISOR == 100)
-									// In my view, this produced too much spread at short distance, and too little at long.
-									int iDivisor = std::max(1, iDivisorBase);
+							// now iDivisor is in the range [1, 1+iDistanceFactor] * iDivisorBase
+							// this is approximately in the range [4, 60], depending on what the xml value are. (the value currently being tested and tuned.)
+							iSpread /= iDivisor;
+							// K-Mod end
 
-									iDivisor *= 100 + 100 * iDistanceFactor * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()) / GC.getMapINLINE().maxPlotDistance();
-									iDivisor /= 100;
+							//iSpread /= (getReligionCount() + 1);
 
-									// now iDivisor is in the range [1, 1+iDistanceFactor] * iDivisorBase
-									// this is approximately in the range [4, 60], depending on what the xml value are. (the value currently being tested and tuned.)
-									iSpread /= iDivisor;
-									// K-Mod end
-
-									//iSpread /= (getReligionCount() + 1);
-
-									iRandThreshold = std::max(iRandThreshold, iSpread);
-								}
-							}
+							iRandThreshold = std::max(iRandThreshold, iSpread);
 						}
 					}
-				}
-
-				// scale for game speed
-				iRandThreshold *= 100;
-				iRandThreshold /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
-
-				if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
-				{
-					setHasReligion(eLoopReligion, true, true, true);
-					if (iWeakestGrip < iLoopGrip)
-					{
-						FAssert(eWeakestReligion != NO_RELIGION);
-						// If the existing religion is weak compared to the new religion, the existing religion can get removed.
-						int iOdds = getReligionCount()*100*(iLoopGrip - iWeakestGrip) / std::max(1, iLoopGrip);
-						if (GC.getGameINLINE().getSorenRandNum(100, "Religion departure") < iOdds)
-						{
-							setHasReligion(eWeakestReligion, false, true, true);
-						}
-					}
-					else
-					{
-						iWeakestGrip = iLoopGrip;
-						eWeakestReligion = eLoopReligion;
-					}
-					iChances--;
 				}
 			}
+		}
+
+		// scale for game speed
+		iRandThreshold *= 100;
+		iRandThreshold /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+
+		if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
+		{
+			setHasReligion(eLoopReligion, true, true, true);
+			if (iWeakestGrip < iLoopGrip)
+			{
+				FAssert(eWeakestReligion != NO_RELIGION);
+				// If the existing religion is weak compared to the new religion, the existing religion can get removed.
+				int iOdds = getReligionCount()*100*(iLoopGrip - iWeakestGrip) / std::max(1, iLoopGrip);
+				if (GC.getGameINLINE().getSorenRandNum(100, "Religion departure") < iOdds)
+				{
+					setHasReligion(eWeakestReligion, false, true, true);
+					break; // end the loop
+				}
+			}
+			else
+			{
+				iWeakestGrip = iLoopGrip;
+				eWeakestReligion = eLoopReligion;
+			}
+			iChances--;
 		}
 	}
-	// K-Mod end
-
-	/* original bts code
-	if (getReligionCount() == 0)
-	{
-		for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
-		{
-			if (!isHasReligion((ReligionTypes)iI))
-			{
-				if ((iI == GET_PLAYER(getOwnerINLINE()).getStateReligion()) || !(GET_PLAYER(getOwnerINLINE()).isNoNonStateReligionSpread()))
-				{
-					iRandThreshold = 0;
-
-					for (iJ = 0; iJ < MAX_PLAYERS; iJ++)
-					{
-						if (GET_PLAYER((PlayerTypes)iJ).isAlive())
-						{
-							for (pLoopCity = GET_PLAYER((PlayerTypes)iJ).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iJ).nextCity(&iLoop))
-							{
-								if (pLoopCity->isConnectedTo(this))
-								{
-									iSpread = pLoopCity->getReligionInfluence((ReligionTypes)iI);
-
-									iSpread *= GC.getReligionInfo((ReligionTypes)iI).getSpreadFactor();
-
-									if (iSpread > 0)
-									{
-										iSpread /= std::max(1, (((GC.getDefineINT("RELIGION_SPREAD_DISTANCE_DIVISOR") * plotDistance(getX_INLINE(), getY_INLINE(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE())) / GC.getMapINLINE().maxPlotDistance()) - 5));
-
-										//iSpread /= (getReligionCount() + 1);
-
-										iRandThreshold = std::max(iRandThreshold, iSpread);
-									}
-								}
-							}
-						}
-					}
-
-					if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
-					{
-						setHasReligion(((ReligionTypes)iI), true, true, true);
-						break;
-					}
-				}
-			}
-		}
-	} */
 }
 
 
