@@ -198,9 +198,9 @@ void CvPlayerAI::AI_init()
 		//AI_setCivicTimer(((getMaxAnarchyTurns() == 0) ? (GC.getDefineINT("MIN_REVOLUTION_TURNS") * 2) : CIVIC_CHANGE_DELAY) / 2);
 		AI_setReligionTimer(1);
 		AI_setCivicTimer((getMaxAnarchyTurns() == 0) ? 1 : 2);
+		AI_initStrategyRand(); // K-Mod
+		updateCacheData(); // K-Mod
 	}
-	AI_initStrategyRand(); // K-Mod
-	updateCacheData(); // K-Mod
 }
 
 
@@ -303,7 +303,7 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 	//m_iStrategyHashCacheTurn = -1;
 
 // BBAI
-	m_iStrategyRand = -1; // was 0 (K-Mod)
+	m_iStrategyRand = UINT_MAX; // was 0 (K-Mod)
 	m_iVictoryStrategyHash = 0;
 	//m_iVictoryStrategyHashCacheTurn = -1;
 // BBAI end
@@ -19277,23 +19277,24 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 // K-Mod, based on BBAI
 void CvPlayerAI::AI_initStrategyRand()
 {
-	const unsigned iBits = 16;
+	const unsigned iBits = 24;
 	m_iStrategyRand = GC.getGameINLINE().getSorenRandNum((1<<(iBits+1))-1, "AI Strategy Rand");
 }
 
 int CvPlayerAI::AI_getStrategyRand(int iShift) const
 {
-	const unsigned iBits = 16; // cf bits in AI_initStrategyRand
+	const unsigned iBits = 24; // cf bits in AI_initStrategyRand
 
 	iShift += getCurrentEra();
 	while (iShift < 0)
 		iShift += iBits;
 	iShift %= iBits;
 
-	FAssert(m_iStrategyRand > 0);
+	FAssert(m_iStrategyRand != UINT_MAX);
 	unsigned x = 2654435761; // golden ratio of 2^32
 	x *= (m_iStrategyRand << iShift) + (m_iStrategyRand >> (iBits - iShift));
 	x >>= 1; // force positive;
+	FAssert(x <= INT_MAX);
 	return x;
 }
 // K-Mod end
@@ -20965,8 +20966,7 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	std::vector<std::pair<int, int> > unit_list; // { score, unitID }.
 	// note unitID is used rather than CvUnit* to ensure that the list gives the same order for players on different computers.
 
-	CvArea *pLoopArea = NULL;
-	for (pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
+	for (CvArea *pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
 		// Keep 1/2 of recommended floating defenders.
 		if (!pLoopArea || pLoopArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT
@@ -20980,10 +20980,10 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 		}
 	}
 	
-	CvUnit* pLoopUnit;
-	for(pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
+	for (CvUnit* pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 	{
 		bool bValid = false;
+		const CvPlot* pPlot = pLoopUnit->plot();
 
 		/* if (pLoopUnit->AI_getUnitAIType() == UNITAI_RESERVE
 			|| pLoopUnit->AI_isCityAIType() && (pLoopUnit->getExtraCityDefensePercent() <= 0)) */
@@ -21010,20 +21010,30 @@ void CvPlayerAI::AI_convertUnitAITypesForCrush()
 	
 		if (bValid)
 		{
-			if (pLoopUnit->plot()->isCity())
+			if (pPlot->isCity())
 			{
-				if (pLoopUnit->plot()->getPlotCity()->getOwner() == getID())
+				if (pPlot->getPlotCity()->getOwner() == getID())
 				{
-					if (pLoopUnit->plot()->getBestDefender(getID()) == pLoopUnit)
+					if (pPlot->getBestDefender(getID()) == pLoopUnit)
 					{
 						bValid = false;
 					}
 				}
-				if (pLoopUnit->AI_getUnitAIType() == UNITAI_CITY_DEFENSE && GET_TEAM(getTeam()).getAtWarCount(true) > 0)
+				/*if (pLoopUnit->AI_getUnitAIType() == UNITAI_CITY_DEFENSE && GET_TEAM(getTeam()).getAtWarCount(true) > 0)
 				{
 					int iCityDefenders = pLoopUnit->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getID());
 
 					if (iCityDefenders <= pLoopUnit->plot()->getPlotCity()->AI_minDefenders())
+						bValid = false;
+				}*/
+				if (pLoopUnit->getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY)
+				{
+					int iDefendersHere = pPlot->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_CITY, -1, getID());
+					int iDefendersWant = pLoopUnit->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE
+						? pPlot->getPlotCity()->AI_neededDefenders()
+						: pPlot->getPlotCity()->AI_minDefenders();
+
+					if (iDefendersHere <= iDefendersWant)
 						bValid = false;
 				}
 			}

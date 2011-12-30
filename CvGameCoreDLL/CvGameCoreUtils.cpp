@@ -1301,7 +1301,12 @@ bool PUF_isFiniteRangeAndNotJustProduced(const CvUnit* pUnit, int iData1, int iD
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
-
+// K-Mod
+bool PUF_isMissionAIType(const CvUnit* pUnit, int iData1, int iData2)
+{
+	return pUnit->getGroup()->AI_getMissionAIType() == iData1;
+}
+// K-Mod end
 
 int potentialIrrigation(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)
 {
