@@ -1,5 +1,34 @@
-This is K-Mod version 1.12b.
+This is K-Mod version 1.13.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.13 changelist
+
+Game mechanics
+
++ The Sistine Chapel's bonus culture on religious buildings is no longer doubled for 1000 year old buildings. (For example, previous a 1000 year old temple with the Sistine Chapel would give (1+3)*2 = 8 culture. Now it will only give 1*2+3 = 5 culture.)
++ Rewrote the formula for the natural spread of religion. (It now depends on two new xml values: RELIGION_SPREAD_DIVISOR_BASE and RELIGION_SPREAD_DISTANCE_FACTOR. Cities with well established culture and large population have a better chance of getting 2nd / 3rd religions spread to them.)
+
+AI
+
++ Corrected some problems with the strategy-rand initialization.
++ Tightened the rules for converting units for crush to reduce the chance of leaving a city undefended.
++ Fixed three bugs from the original BtS code which could sometimes cause the AI's amphibious group-attacks to be canceled prematurely.
++ Fixed a bbai bug which sometimes caused the AI to order amphibious attacks when it doesn't mean to.
++ Added a check in AI_localAttackStrength to not count amphibious siege attacks when bCheckCanAttack is set.
++ Tweaked the condition for canceling join missions when launching an assault group.
++ Reduced the overly-optimistic estimates for the number of bonuses available when evaluating corporations.
++ Fixed a factor of 100 mistake in the base-maintenance component of AI_corporationValue.
++ Increased the maintenance estimate for corporation value.
++ Fixed a bug which reversed the priority of units when deciding who should pillage first. (this affects human players as well)
++ Added and integrated new code hurrying wonders with great engineers. The new system will be more likely to hurry powerful wonders, and less likely to waste engineers on wonders that are almost finished.
++ AI_greatPersonMove now uses path turns as a tie-breaker for "slow" missions with equal value. (ie. build, join, and hurry.)
++ Fixed a factor of 10 mistake in the evaluation of great person points for permanent specialists.
++ Changed the way AI_pickTargetCity accounts for city defences. (This fixes a problem which caused groups with no bombard to almost always target cities with no defences.)
++ Changed the way commerce multipliers are evaluated in AI_buildingValue. (Previously they were worth 6.6 points per commerce. They are now worth 5 points per commerce, but the commerce is an inflated estimate.)
++ Diluted the effect of GPP multipliers, to prevent the AI from using specialists when it should be trying to grow.
++ Increased the devaluation rate of GPP wrt the number of great people created.
++ Reduced the value of espionage for teams that haven't met anyone.
 
 --
 v1.12 changelist
