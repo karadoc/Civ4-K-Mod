@@ -127,6 +127,12 @@ bool KmodPathFinder::GeneratePath(const CvPlot* pToPlot)
 		pToPlot->getX_INLINE(), pToPlot->getY_INLINE());
 }
 
+int KmodPathFinder::GetPathTurns() const
+{
+	FAssert(end_node);
+	return end_node->m_iData2;
+}
+
 CvPlot* KmodPathFinder::GetPathFirstPlot() const
 {
 	FAssert(end_node);

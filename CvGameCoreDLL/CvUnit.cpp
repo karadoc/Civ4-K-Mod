@@ -8935,11 +8935,9 @@ int CvUnit::experienceNeeded() const
 	if (GC.getUSE_GET_EXPERIENCE_NEEDED_CALLBACK()) // K-Mod. I've writen C to replace the python callback.
 	{
 		// Use python to determine pillage amounts...
-		int iExperienceNeeded;
 		long lExperienceNeeded;
 
 		lExperienceNeeded = 0;
-		iExperienceNeeded = 0;
 
 		CyArgsList argsList;
 		argsList.add(getLevel());	// pass in the units level
@@ -8947,17 +8945,20 @@ int CvUnit::experienceNeeded() const
 
 		gDLL->getPythonIFace()->callFunction(PYGameModule, "getExperienceNeeded", argsList.makeFunctionArgs(),&lExperienceNeeded);
 
-		iExperienceNeeded = (int)lExperienceNeeded;
+		//iExperienceNeeded = (int)lExperienceNeeded;
+		lExperienceNeeded = std::min((long)MAX_INT, lExperienceNeeded); // K-Mod
 
 		if (lExperienceNeeded >= 0) // K-Mod
-			return iExperienceNeeded;
+			return (int)lExperienceNeeded;
 	}
 	// K-Mod. C version of the original python code.
-	int iExperienceNeeded = iExperienceNeeded = getLevel() * getLevel() + 1;
+	// Note: python rounds towards negative infinity, but C++ rounds towards 0.
+	// So the code needs to be slightly different to achieve the same effect.
+	int iExperienceNeeded = getLevel() * getLevel() + 1;
 
 	int iModifier = GET_PLAYER(getOwnerINLINE()).getLevelExperienceModifier();
 	if (iModifier != 0)
-		iExperienceNeeded += (iExperienceNeeded * iModifier + 99) / 100;
+		iExperienceNeeded = (iExperienceNeeded * (100+iModifier) + 99) / 100;
 
 	return iExperienceNeeded;
 	// K-Mod end

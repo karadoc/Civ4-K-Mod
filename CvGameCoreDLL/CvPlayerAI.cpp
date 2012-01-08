@@ -6051,15 +6051,15 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 			CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
 			if (isTechRequiredForBuilding((eTech), eLoopBuilding))
 			{
-				int iBuildingValue = 0;
+				int iBuildingValue = AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 200 : 100; // was 0 (moved the 100 from later)
 				
 				if (kLoopBuilding.getSpecialBuildingType() != NO_BUILDING)
 				{
-					iBuildingValue += ((bCapitalAlone) ? 100 : 25);
+					iBuildingValue += ((bCapitalAlone) ? 50 : 25); // was 100 : 25
 				}
 				else
 				{
-					iBuildingValue += ((bCapitalAlone) ? 200 : 50);
+					iBuildingValue += ((bCapitalAlone) ? 100 : 50); // was 200 : 50
 				}
 
 				//the granary effect is SO powerful it deserves special code
@@ -6090,7 +6090,7 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 					iValue += iTempValue;
 				}
 
-				iBuildingValue += 100;
+				// iBuildingValue += 100; // moved to the top
 
                 if ((GC.getBuildingClassInfo((BuildingClassTypes)iJ).getDefaultBuildingIndex()) != (GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iJ)))
                 {
@@ -6108,11 +6108,17 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
                 
                 if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
                 {
-                    int iMultiplier = (isLimitedWonderClass((BuildingClassTypes)iJ) ? 1 : 3);
+                    /* original bts code
+					int iMultiplier = (isLimitedWonderClass((BuildingClassTypes)iJ) ? 1 : 3);
                     iBuildingValue += (150 * (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) + kLoopBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE))) * iMultiplier;
-                    iBuildingValue += kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) * 4 * iMultiplier ;
+                    iBuildingValue += kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) * 4 * iMultiplier ; */
+					// K-Mod (just tweaking some of the numbers)
+					int iWeight = isLimitedWonderClass((BuildingClassTypes)iJ) ? 50 : 250;
+                    iBuildingValue += iWeight * (kLoopBuilding.getCommerceChange(COMMERCE_CULTURE) + kLoopBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE));
+                    iBuildingValue += (350 + 3 * iWeight) * kLoopBuilding.getCommerceModifier(COMMERCE_CULTURE) / 100;
+					// K-Mod end
                 }
-				
+
 				if (bFinancialTrouble)
 				{
 					iBuildingValue += (-kLoopBuilding.getMaintenanceModifier()) * 15;
@@ -6144,7 +6150,7 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 				// don't adjust for negative modifiers to prevent ignoring assembly line, etc.
 				if ( AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3) && kLoopBuilding.getHealth() > 0)
 				{
-					iBuildingValue += kLoopBuilding.getHealth() * 150;
+					iBuildingValue += kLoopBuilding.getHealth() * 100; // was 150
 				}
 
 				if (kLoopBuilding.getPrereqAndTech() == eTech)

@@ -23,7 +23,8 @@ public:
 
 	bool GeneratePath(int x1, int y1, int x2, int y2);
 	bool GeneratePath(const CvPlot* pToPlot); // just a wrapper for convenience
-	FAStarNode* GetEndNode() { FAssert(end_node); return end_node.get(); }
+	FAStarNode* GetEndNode() const { FAssert(end_node); return end_node.get(); }
+	int GetPathTurns() const;
 	CvPlot* GetPathFirstPlot() const;
 	void SetSettings(const CvPathSettings& new_settings);
 	void SetSettings(const CvSelectionGroup* pGroup, int iFlags = 0, int iMaxPath = -1, int iHW=-1) { SetSettings(CvPathSettings(pGroup, iFlags, iMaxPath, iHW)); }

@@ -17815,7 +17815,8 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 		{
 			if (pLoopSelectionGroup != getGroup())
 			{				
-				if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT)
+				//if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT)
+				if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT && pLoopSelectionGroup->getHeadUnitAI() == UNITAI_ASSAULT_SEA) // K-Mod. (b/c assault is also used for ground units)
 				{
 					CvPlot* pLoopPlot = pLoopSelectionGroup->AI_getMissionAIPlot();
 
@@ -17840,11 +17841,17 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 												CvPlot* pEndTurnPlot = getPathEndTurnPlot();
 											
 												int iOtherPathTurns = MAX_INT;
-												if (pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pLoopPlot, iFlags, true, &iOtherPathTurns))
+												//if (pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pLoopPlot, iFlags, true, &iOtherPathTurns))
+												// K-Mod. Use a different pathfinder, so that we don't clear our path data.
+												KmodPathFinder loop_path;
+												loop_path.SetSettings(pLoopSelectionGroup, iFlags, iPathTurns);
+												if (loop_path.GeneratePath(pLoopPlot))
+												// K-Mod end
 												{
 													// We need to get there the turn after they do, +1 required whether
 													// they move first or we do
-													iOtherPathTurns += 1;
+													//iOtherPathTurns += 1;
+													iOtherPathTurns = loop_path.GetPathTurns() + 1;
 												}
 												else
 												{
