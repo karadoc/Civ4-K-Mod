@@ -3245,12 +3245,19 @@ void CvUnitAI::AI_attackCityMove()
 	if (bAtWar) // recall that "bAtWar" just means we are in enemy territory.
 	{
 		// note. if we are 2 steps from the target city, this check here is redundant. (see code above)
-		if (AI_stackVsStack(1, 160, 100, iMoveFlags))
+		if (AI_stackVsStack(1, 160, 95, iMoveFlags))
 			return;
 	}
 	else
 	{
-		if (AI_stackVsStack(4, 130, 60, iMoveFlags))
+		if (eAreaAIType == AREAAI_DEFENSIVE && plot()->getOwnerINLINE() == getOwnerINLINE())
+		{
+			if (AI_stackVsStack(4, 110, 55, iMoveFlags))
+				return;
+			if (AI_stackVsStack(4, 180, 30, iMoveFlags))
+				return;
+		}
+		else if (AI_stackVsStack(4, 130, 60, iMoveFlags))
 			return;
 	}
 	// K-Mod end
@@ -3394,22 +3401,26 @@ void CvUnitAI::AI_attackCityMove()
 		}
 		else
 		{
-			if( !isBarbarian() && (eAreaAIType == AREAAI_DEFENSIVE) )
-			{
-				// Use smaller attack city stacks on defense
-				if (AI_guardCity(false, true, 3, iMoveFlags))
-				{
-					return;
-				}
-			}
-
-			if( bTurtle )
+			if (bTurtle)
 			{
 				// K-Mod
 				if (AI_defendTeritory(51, iMoveFlags, 5))
 					return;
 				// K-Mod end
 				if (AI_guardCity(false, true, 7, iMoveFlags))
+				{
+					return;
+				}
+			}
+			else if (!isBarbarian() && eAreaAIType == AREAAI_DEFENSIVE)
+			{
+				// Use smaller attack city stacks on defense
+				// K-Mod
+				if (AI_defendTeritory(60, iMoveFlags, 3))
+					return;
+				// K-Mod end
+
+				if (AI_guardCity(false, true, 3, iMoveFlags))
 				{
 					return;
 				}
@@ -3580,7 +3591,7 @@ void CvUnitAI::AI_attackCityMove()
 			MissionAITypes eMissionAIType = MISSIONAI_GROUP;
 			int iJoiners = kOwner.AI_unitTargetMissionAIs(this, &eMissionAIType, 1, getGroup(), 2);
 			
-			if( (iJoiners*6) > getGroup()->getNumUnits() )
+			if (5*iJoiners > getGroup()->getNumUnits()) // was 6*
 			{
 				getGroup()->pushMission(MISSION_SKIP);
 				return;
