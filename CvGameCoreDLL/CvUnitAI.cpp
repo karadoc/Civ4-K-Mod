@@ -3405,6 +3405,10 @@ void CvUnitAI::AI_attackCityMove()
 
 			if( bTurtle )
 			{
+				// K-Mod
+				if (AI_defendTeritory(51, iMoveFlags, 5))
+					return;
+				// K-Mod end
 				if (AI_guardCity(false, true, 7, iMoveFlags))
 				{
 					return;
