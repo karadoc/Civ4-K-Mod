@@ -1,5 +1,20 @@
-This is K-Mod version 1.13.
+This is K-Mod version 1.14.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.14 changelist
+
++ Polished up the old BUG Military Advisor screen to better match the style of the other advisor screens, and re-enabled it in the BUG options.
++ Move commands are now automatically canceled when the move reveals an obstacle which will increase the moves required to reach the destination.
++ K-Mod will now automatically create its settings folder inside the user folder 'Documents\My Games\Beyond the Sword'. This allows settings to be saved even when Civ4 is installed in program files and run without admin rights.
+
+AI
+
++ Added some new defensive behaviour for the AI's city attack units and counter units.
++ The AI will now consider the possibility of using sea transports when choosing target cities on the local continent. (This should help on wiggly maps.)
++ Made some adjustments to AI_techBuildingValue, primarily to stop the AI from falling over themselves to get access to wonders for cultural victories.
++ Fixed a K-Mod bug which was weakening the XP discount of charismatic leaders.
++ Improved the efficiency of AI_assaultSeaReinforce by using a separate pathfinder when looking for a synchronised landing.
 
 --
 v1.13 changelist
