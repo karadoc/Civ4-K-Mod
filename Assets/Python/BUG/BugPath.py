@@ -72,6 +72,7 @@ import os.path
 import sys
 import BugConfigTracker
 import BugUtil
+import shutil
 
 
 ## Constants
@@ -294,7 +295,7 @@ def makeDir(name):
 			safeInfoPath("BugPath - creating '%s'", path)
 			os.makedirs(path)
 			return path
-		except IOError:
+		except OSError:
 			BugUtil.trace("Cannot create directory '%s' in '%s", name, getDataDir())
 	return path
 
@@ -490,7 +491,7 @@ def initRootFolder():
 		BugUtil.debug("BugPath - CvAltRoot module not present")
 	except AttributeError:
 		BugUtil.error("CvAltRoot.py module has no rootDir setting")
-	except IOError, (errno, strerror):
+	except OSError, (errno, strerror):
 		BugUtil.trace("Error accessing directory from CvAltRoot.py: [%d] %s", errno, strerror)
 	
 	# user dir
@@ -570,10 +571,36 @@ def initDataFolder():
 	if _dataFolderInitDone:
 		return
 	BugUtil.debug("BugPath - initializing data folder")
+
+	# K-Mod. If it doesn't already exist, create the folder in the user directory.
+	dir = join(getRootDir(), getModName(), SETTINGS_FOLDER)
+	if not isdir(dir):
+		# copy the default settings from the K-Mod folder.
+		default_dir = join(getModDir(), SETTINGS_FOLDER)
+		if isdir(default_dir):
+			try:
+				safeInfoPath("BugPath - copying settings to '%s'", dir)
+				# copytree is suppose to create the missing parent directores, but apparently it doesn't work. So I need to do this:
+				try:
+					os.makedirs(join(getRootDir(), getModName()))
+				except OSError:
+					pass
+				# sucks.
+				shutil.copytree(default_dir, dir)
+			except OSError:
+				BugUtil.trace("Failed to copy settings")
+	if not isdir(dir):
+		# Second attempt: create the directory manually
+		try:
+			safeInfoPath("BugPath - creating '%s'", dir)
+			os.makedirs(dir)
+		except OSError:
+			BugUtil.trace("Failed to create directory '%s'", dir)
+	# K-Mod end
 	
 	dataDirs = (
-		join(getUserDir(), getModName()),	# My Games\BUG Mod
 		join(getRootDir(), getModName()),	# My Games\BTS\BUG Mod
+		join(getUserDir(), getModName()),	# My Games\BUG Mod
 		join(getAppDir(), getModName()),	 # Civ4\BTS\BUG Mod
 		join(getModDir(), DATA_FOLDER),	  # Civ4\BTS\Mods\BUG Mod 3.6\Data
 		join(getModDir()),				   # Civ4\BTS\Mods\BUG Mod 3.6
