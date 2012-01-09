@@ -8,6 +8,10 @@ K-Mod
 
 == Uninstallation instructions ==
 * Delete the K-Mod directory.
+* K-Mod settings are stored in [Documents\My Games\Beyond the Sword\K-Mod]. If you don't want to keep your settings, delete that K-Mod directory as well.
+
+== Upgrade instructions ==
+Usually it is sufficient to simply unzip the new version of K-Mod into the same directory as the old version - but if you want to be super sure that it's going to work correctly, simply uninstall the old version first. Save games from previous version of K-Mod will still work with the new version unless explicitly specified in the changelog, so feel free to upgrade K-Mod mid-game.
 
 == Donations ==
 If you like the work that I've done and feel compelled to send money to me, you may do so.
@@ -23,7 +27,6 @@ Here I'll list a few significant features. See changelog.txt for a more complete
 
 == Built-in mods ==
  + Actual quotes
- + Better AI (heavily modified)
  + BUG (modified)
  + "unofficial patch" (well known bugfixes)
  

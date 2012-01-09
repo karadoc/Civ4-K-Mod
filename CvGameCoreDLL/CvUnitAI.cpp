@@ -2254,48 +2254,17 @@ void CvUnitAI::AI_attackMove()
 	FAssert(getGroup()->countNumUnitAIType(UNITAI_ATTACK_CITY) == 0); // K-Mod. (I'm pretty sure this can't happen.)
 
 	// Attack choking units
-	if( plot()->isCity() && plot()->getOwnerINLINE() == getOwnerINLINE() && bDanger )
+	// K-Mod (bbai code deleted)
+	if (plot()->isCity() && plot()->getTeam() == getTeam() && bDanger)
 	{
-		// K-Mod
 		if (AI_anyAttack(1, 65, 0, 2))
 			return;
 
-		if (AI_leaveAttack(3, 50, 130))
+		if (AI_leaveAttack(3, 50, 120))
 			return;
-		// K-Mod end
-
-		/* bbai code
-		if( iOurDefense < 3*iEnemyOffense )
-		{
-			if (AI_guardCity(true))
-			{
-				return;
-			}
-		}
-
-		if( iOurDefense > 2*iEnemyOffense )
-		{
-			if (AI_anyAttack(2, 55))
-			{
-				return;
-			}
-		}
-
-		//if (AI_groupMergeRange(UNITAI_ATTACK, 1, true, true, false))
-		if (AI_omniGroup(UNITAI_ATTACK, 3, -1, false, 0, 1))
-		{
-			return;
-		} // K-Mod: I fixed this, but I don't think it's really a helpful thing to do anyway.
-
-		if( iOurDefense > 2*iEnemyOffense )
-		{
-			if (AI_anyAttack(2, 30))
-			{
-				return;
-			}
-		}*/
 		// Perhaps I should put in something like AI_defensiveCollateral. That function is pretty good...
 	}
+	// K-Mod end
 
 	{
 		PROFILE("CvUnitAI::AI_attackMove() 1");
@@ -2615,7 +2584,7 @@ void CvUnitAI::AI_attackMove()
 			if (getGroup()->getNumUnits() > 1)
 			{
 				//if (AI_targetCity())
-				if (AI_goToTargetCity(MOVE_AVOID_ENEMY_WEIGHT_2, 12))
+				if (AI_goToTargetCity(0, 12))
 				{
 					return;
 				}
@@ -4258,7 +4227,17 @@ void CvUnitAI::AI_counterMove()
 		}
 	}
 
-	if (AI_guardCity(false, true, 1))
+	// K-Mod
+	bool bDanger = GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3);
+	if (plot()->isCity() && plot()->getTeam() == getTeam() && bDanger)
+	{
+		if (AI_leaveAttack(1, 60, 110))
+			return;
+	}
+	// K-Mod end
+
+	//if (AI_guardCity(false, true, 1))
+	if (AI_guardCity(false, true, 2)) // K-Mod
 	{
 		return;
 	}
@@ -4275,7 +4254,6 @@ void CvUnitAI::AI_counterMove()
 		}
 	}
 
-	bool bDanger = (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3));
 	AreaAITypes eAreaAIType = area()->getAreaAIType(getTeam());
 
 	if (plot()->getOwnerINLINE() == getOwnerINLINE())
@@ -4307,13 +4285,13 @@ void CvUnitAI::AI_counterMove()
 			}
 		}
 
-		if (!noDefensiveBonus())
+		/*if (!noDefensiveBonus())
 		{
 			if (AI_guardCity(false, false))
 			{
 				return;
 			}
-		}
+		} */ // disabled by K-Mod. This is redundant.
 	}
 
 	//join any city attacks in progress
@@ -4360,7 +4338,8 @@ void CvUnitAI::AI_counterMove()
 
 	// BBAI TODO: merge with nearby pillage
 	
-	if (AI_guardCity(false, true, 3))
+	//if (AI_guardCity(false, true, 3))
+	if (AI_guardCity(true, true, 5)) // K-Mod
 	{
 		return;
 	}
