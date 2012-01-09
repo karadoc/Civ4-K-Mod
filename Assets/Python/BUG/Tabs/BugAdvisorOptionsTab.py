@@ -40,8 +40,8 @@ class BugAdvisorOptionsTab(BugOptionsTab.BugOptionsTab):
 		#self.addCheckbox(screen, left, "MiscHover__TechTradeDenial")
 		#self.addCheckbox(screen, left, "MiscHover__BonusTradeDenial")
 
-		#self.addLabel(screen, left, "Military_Advisor", "Military [F5]:")
-		#self.addCheckbox(screen, left, "Advisors__BugMA")
+		self.addLabel(screen, left, "Military_Advisor", "Military [F5]:")
+		self.addCheckbox(screen, left, "Advisors__BugMA")
 
 
 		self.addLabel(screen, center, "Technology_Advisor", "Technology [F6]:")

@@ -778,7 +778,7 @@
 		<Tag>TXT_KEY_MILITARY_SITREP_WORST</Tag>
 		<English>Worst</English>
 		<French>Worst</French>
-		<German></German>
+		<German>Worst</German>
 		<Italian>Peggior</Italian>
 		<Spanish>Worst</Spanish>
 	</TEXT>
@@ -816,7 +816,7 @@
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_MILITARY_SITREP_WARS_OPTIONAL</Tag>
-		<English>Possible</English>
+		<English>Willing</English>
 		<French>Possible</French>
 		<German>Möglich</German>
 		<Italian>Potenziali</Italian>
@@ -871,12 +871,12 @@
 		<Spanish>Low</Spanish>
 	</TEXT>
 	<TEXT>
-		<Tag>TXT_KEY_MILITARY_THREAT_INDEX_GUARDED</Tag>
-		<English>Guarded</English>
-		<French>En garde</French>
-		<German>Erhöht</German>
-		<Italian>Prudenza</Italian>
-		<Spanish>Guarded</Spanish>
+		<Tag>TXT_KEY_MILITARY_THREAT_INDEX_MINOR</Tag>
+		<English>Minor</English>
+		<French>Mineure</French>
+		<German>Moll</German>
+		<Italian>Minore</Italian>
+		<Spanish>Menor</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_MILITARY_THREAT_INDEX_ELEVATED</Tag>
