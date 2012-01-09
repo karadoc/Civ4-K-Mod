@@ -130,7 +130,7 @@ bool KmodPathFinder::GeneratePath(const CvPlot* pToPlot)
 int KmodPathFinder::GetPathTurns() const
 {
 	FAssert(end_node);
-	return end_node->m_iData2;
+	return end_node ? end_node->m_iData2 : 0;
 }
 
 CvPlot* KmodPathFinder::GetPathFirstPlot() const

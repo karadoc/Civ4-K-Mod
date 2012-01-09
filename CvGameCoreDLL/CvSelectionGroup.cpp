@@ -3725,8 +3725,7 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 // Returns true if move was made...
 bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 {
-	CvPlot* pDestPlot;
-	CvPlot* pPathPlot;
+	KmodPathFinder final_path; // K-Mod
 
 	if (at(iX, iY))
 	{
@@ -3737,10 +3736,12 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	FAssert(getOwnerINLINE() != NO_PLAYER);
 	FAssert(headMissionQueueNode() != NULL);
 
-	pDestPlot = GC.getMapINLINE().plotINLINE(iX, iY);
+	CvPlot* pDestPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 	FAssertMsg(pDestPlot != NULL, "DestPlot is not assigned a valid value");
 
 	FAssertMsg(canAllMove(), "canAllMove is expected to be true");
+
+	CvPlot* pPathPlot;
 
 	if (getDomainType() == DOMAIN_AIR)
 	{
@@ -3763,7 +3764,6 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 		// K-Mod. I've added & ~MOVE_DECLARE_WAR so that if we need to declare war at this point, and haven't yet done so,
 		// the move will fail here rather than splitting the group inside groupMove.
 		// Also, I've change it to use a different pathfinder, to avoid clearing the path data - and to avoid OOS errors.
-		KmodPathFinder final_path;
 		final_path.SetSettings(this, iFlags & ~MOVE_DECLARE_WAR);
 		if (!final_path.GeneratePath(pDestPlot))
 		{
@@ -3797,6 +3797,20 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 		bEndMove = true;
 
 	groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
+
+	// K-Mod. If the step we just took will make us change our path to something longer, then cancel the move.
+	// This prevents units from wasting all their moves by trying to walk around enemy units.
+	if (isHuman() && !bEndMove)
+	{
+		FAssert(final_path.GetEndNode());
+		std::pair<int, int> old_moves = std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1);
+		if (!final_path.GeneratePath(pDestPlot)
+			|| std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1) > old_moves)
+		{
+			clearMissionQueue();
+		}
+	}
+	// K-Mod end
 
 	return true;
 }
