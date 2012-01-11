@@ -1773,8 +1773,6 @@ int pathValid_join(FAStarNode* parent, FAStarNode* node, CvSelectionGroup* pSele
 
 	if (pSelectionGroup->getDomainType() == DOMAIN_SEA)
 	{
-		PROFILE("pathValid domain sea");
-
 		if (pFromPlot->isWater() && pToPlot->isWater())
 		{
 			if (!(GC.getMapINLINE().plotINLINE(pFromPlot->getX_INLINE(), pToPlot->getY_INLINE())->isWater()) && !(GC.getMapINLINE().plotINLINE(pToPlot->getX_INLINE(), pFromPlot->getY_INLINE())->isWater()))
@@ -1802,8 +1800,6 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 
 	if (iFlags & MOVE_SAFE_TERRITORY)
 	{
-		PROFILE("pathValid move safe");
-
 		if (pFromPlot->isOwned())
 		{
 			if (pFromPlot->getTeam() != pSelectionGroup->getHeadTeam())
@@ -1820,8 +1816,6 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 
 	if (iFlags & MOVE_NO_ENEMY_TERRITORY)
 	{
-		PROFILE("pathValid no enemy");
-
 		if (pFromPlot->isOwned())
 		{
 			if (atWar(pFromPlot->getTeam(), pSelectionGroup->getHeadTeam()))
@@ -1835,7 +1829,6 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 
 	if (bAIControl)
 	{
-		PROFILE("pathValid danger & invisible");
 		if ((parent->m_iData2 > 1) || (parent->m_iData1 == 0))
 		{
 			if (!(iFlags & MOVE_IGNORE_DANGER))
@@ -1853,8 +1846,6 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 
 	if (bAIControl || pFromPlot->isRevealed(pSelectionGroup->getHeadTeam(), false))
 	{
-		PROFILE("pathValid move through");
-
 		//if (iFlags & MOVE_THROUGH_ENEMY)
 		if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK)) // K-Mod
 		{
@@ -2591,6 +2582,7 @@ void getMissionAIString(CvWString& szString, MissionAITypes eMissionAI)
 	case MISSIONAI_PICKUP: szString = L"MISSIONAI_PICKUP"; break;
 // K-Mod
 #define mission_string(x) case x: szString = L#x; break;
+	mission_string(MISSIONAI_SPREAD_CORPORATION)
 	mission_string(MISSIONAI_RECON_SPY)
 	mission_string(MISSIONAI_JOIN)
 	mission_string(MISSIONAI_TRADE)

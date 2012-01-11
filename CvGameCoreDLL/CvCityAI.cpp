@@ -11116,6 +11116,7 @@ bool CvCityAI::AI_doPanic()
 
 int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
 {
+	PROFILE_FUNC();
     CvPlot* pLoopPlot;
     BonusTypes eNonObsoleteBonus;
     int iValue;

@@ -3709,11 +3709,11 @@ void CvUnitAI::AI_collateralMove()
 	PROFILE_FUNC();
 
 	// K-Mod!
-	if (AI_defensiveCollateral(55, 2))
+	if (AI_defensiveCollateral(51, 3))
 		return;
 	// K-Mod end
 	
-	if (AI_leaveAttack(1, 20, 100))
+	if (AI_leaveAttack(1, 30, 100)) // was 20
 	{
 		return;
 	}
@@ -3733,10 +3733,10 @@ void CvUnitAI::AI_collateralMove()
 		return;
 	}
 
-	if (AI_anyAttack(1, 45, 0, 3))
+	/*if (AI_anyAttack(1, 45, 0, 3))
 	{
 		return;
-	}
+	}*/
 
 	if (AI_anyAttack(1, 55, 0, 2))
 	{
@@ -3800,13 +3800,13 @@ void CvUnitAI::AI_collateralMove()
 		return;
 	}
 
-	if (!noDefensiveBonus())
+	/*if (!noDefensiveBonus())
 	{
 		if (AI_guardCity(false, false))
 		{
 			return;
 		}
-	}
+	}*/ // redundant
 
 	if (AI_anyAttack(2, 55, 0, 3))
 	{
@@ -3840,12 +3840,12 @@ void CvUnitAI::AI_collateralMove()
 	// K-Mod end
 
 	//if (AI_protect(50))
-	if (AI_defendTeritory(60, 0, 8)) // K-Mod
+	if (AI_defendTeritory(50, 0, 6)) // K-Mod
 	{
 		return;
 	}
 
-	if (AI_guardCity(false, true, 3))
+	if (AI_guardCity(false, true, 8)) // was 3
 	{
 		return;
 	}
@@ -4086,7 +4086,7 @@ void CvUnitAI::AI_reserveMove()
 		return;
 	}
 
-	if (AI_guardCity(false, true, 1))
+	if (AI_guardCity(false, true, 2)) // was 1
 	{
 		return;
 	}
@@ -4114,7 +4114,7 @@ void CvUnitAI::AI_reserveMove()
 		return;
 	}
 
-	if (bDanger)
+	/*if (bDanger)
 	{
 		if (AI_cityAttack(1, 55))
 		{
@@ -4133,14 +4133,14 @@ void CvUnitAI::AI_reserveMove()
 		{
 			return;
 		}
-	}
+	}*/ // disabled by K-Mod. (redundant)
 	
 	if (bDanger)
 	{
-		if (AI_cityAttack(3, 45))
+		/*if (AI_cityAttack(3, 45))
 		{
 			return;
-		}
+		}*/
 
 		if (AI_anyAttack(3, 50))
 		{
@@ -4154,7 +4154,8 @@ void CvUnitAI::AI_reserveMove()
 		return;
 	}
 
-	if (AI_guardCity(false, true, 3))
+	//if (AI_guardCity(false, true, 3))
+	if (AI_guardCity(false, true)) // K-Mod
 	{
 		return;
 	}
@@ -11077,6 +11078,7 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 							&& (iMinUnitAI == -1 || pLoopGroup->countNumUnitAIType(eUnitAI) >= iMinUnitAI)
 							&& (iMaxOwnUnitAI == -1 || (bMergeGroups ? std::max(0, getGroup()->countNumUnitAIType(eUnitAI) - 1) : 0) + pLoopGroup->countNumUnitAIType(AI_getUnitAIType()) <= iMaxOwnUnitAI + (bStackOfDoom ? AI_stackOfDoomExtra() : 0))
 							&& (iMaxGroup == -1 || (bMergeGroups ? getGroup()->getNumUnits() - 1 : 0) + pLoopGroup->getNumUnits() + GET_PLAYER(getOwnerINLINE()).AI_unitTargetMissionAIs(pLoopUnit, MISSIONAI_GROUP, getGroup()) <= iMaxGroup + (bStackOfDoom ? AI_stackOfDoomExtra() : 0))
+							&& (pLoopGroup->AI_getMissionAIType() != MISSIONAI_GUARD_CITY || !pLoopGroup->plot()->isCity() || pLoopGroup->plot()->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_CITY, -1, getOwnerINLINE()) > pLoopGroup->plot()->getPlotCity()->AI_minDefenders())
 							)
 						{
 							FAssert(!pPlot->isVisibleEnemyUnit(this))
@@ -16119,18 +16121,34 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
-	CvPlot* pDefencePlot = plot()->isCity(false, getTeam()) ? plot() : NULL;
-
-	for (int iDX = -iSearchRange; iDX <= iSearchRange; iDX++)
+	CvPlot* pDefencePlot;
+	
+	if (plot()->isCity(false, getTeam()))
+		pDefencePlot = plot();
+	else
 	{
-		for (int iDY = -iSearchRange; iDY <= iSearchRange; iDY++)
+		int iClosest = MAX_INT;
+		for (int iDX = -iSearchRange; iDX <= iSearchRange; iDX++)
 		{
-			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
-
-			if (pLoopPlot && pLoopPlot->isCity(false, getTeam()) && kOwner.AI_getAnyPlotDanger(pLoopPlot))
+			for (int iDY = -iSearchRange; iDY <= iSearchRange; iDY++)
 			{
-				pDefencePlot = pLoopPlot;
-				break;
+				CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+
+				if (pLoopPlot && pLoopPlot->isCity(false, getTeam()))
+				{
+					if (kOwner.AI_getAnyPlotDanger(pLoopPlot))
+					{
+						pDefencePlot = pLoopPlot;
+						break;
+					}
+
+					int iDist = std::max(std::abs(iDX), std::abs(iDY));
+					if (iDist < iClosest)
+					{
+						iClosest = iDist;
+						pDefencePlot = pLoopPlot;
+					}
+				}
 			}
 		}
 	}
@@ -16153,7 +16171,7 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 			{
 				int iEnemies = pLoopPlot->getNumVisibleEnemyDefenders(this);
 				int iPathTurns;
-				if (iEnemies > 0 && generatePath(pLoopPlot, 0, true, &iPathTurns, 1) && iPathTurns <= 1)
+				if (iEnemies > 0 && generatePath(pLoopPlot, 0, true, &iPathTurns, 1))
 				{
 					bool bValid = false;
 					//int iValue = getGroup()->AI_attackOdds(pLoopPlot, false);
@@ -16164,8 +16182,13 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 						int iOurAttack = kOwner.AI_localAttackStrength(pLoopPlot, getTeam(), getDomainType(), iSearchRange, true, true, true);
 						int iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM, getDomainType(), 0);
 
-						iValue += std::max(0, 50 * (2 * iOurAttack - (bDanger ? 1 : 3) * iEnemyDefence) / std::max(1, 2 * iOurAttack));
-						// the "50" is just an arbitrary scale.
+						iValue += std::max(0, (bDanger ? 75 : 45) * (3 * iOurAttack - iEnemyDefence) / std::max(1, 3*iEnemyDefence));
+						// note: the scale is choosen to be around +50% when attack == defence, while in danger.
+						if (bDanger && std::max(std::abs(iDX), std::abs(iDY)) <= 1)
+						{
+							// enemy is ready to attack, and strong enough to win. We might as well hit them.
+							iValue += 20;
+						}
 					}
 
 					if (iValue >= iThreshold)

@@ -3800,7 +3800,7 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 
 	// K-Mod. If the step we just took will make us change our path to something longer, then cancel the move.
 	// This prevents units from wasting all their moves by trying to walk around enemy units.
-	if (isHuman() && !bEndMove)
+	if (!AI_isControlled() && !bEndMove)
 	{
 		FAssert(final_path.GetEndNode());
 		std::pair<int, int> old_moves = std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1);
