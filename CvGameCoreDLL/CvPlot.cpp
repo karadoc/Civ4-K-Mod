@@ -792,6 +792,8 @@ void CvPlot::updateCenterUnit()
 void CvPlot::verifyUnitValidPlot()
 {
 	PROFILE_FUNC();
+
+	std::vector<std::pair<PlayerTypes, int> > bumped_groups; // K-Mod
 	
 	std::vector<CvUnit*> aUnits;
 	CLLNode<IDInfo>* pUnitNode = headUnitNode();
@@ -821,10 +823,14 @@ void CvPlot::verifyUnitValidPlot()
 					{
 						if (!isValidDomainForLocation(*pLoopUnit) || !(pLoopUnit->canEnterArea(getTeam(), area())))
 						{
-							if (!pLoopUnit->jumpToNearestValidPlot())
+							if (!pLoopUnit->jumpToNearestValidPlot(true))
 							{
 								bErased = true;
 							}
+							// K-Mod
+							else
+								bumped_groups.push_back(std::make_pair(pLoopUnit->getOwnerINLINE(), pLoopUnit->getGroupID()));
+							// K-Mod end
 						}
 					}
 				}
@@ -861,10 +867,14 @@ void CvPlot::verifyUnitValidPlot()
 							{
 								if (!(pLoopUnit->isInvisible(getTeam(), false)))
 								{
-									if (!pLoopUnit->jumpToNearestValidPlot())
+									if (!pLoopUnit->jumpToNearestValidPlot(true))
 									{
 										bErased = true;
 									}
+									// K-Mod
+									else
+										bumped_groups.push_back(std::make_pair(pLoopUnit->getOwnerINLINE(), pLoopUnit->getGroupID()));
+									// K-Mod end
 								}
 							}
 						}
@@ -882,6 +892,21 @@ void CvPlot::verifyUnitValidPlot()
 			}
 		}
 	}
+
+	// K-Mod
+	// first remove duplicate group numbers
+	std::sort(bumped_groups.begin(), bumped_groups.end());
+	bumped_groups.erase(std::unique(bumped_groups.begin(), bumped_groups.end()), bumped_groups.end());
+	// now divide the broken groups
+	for (size_t i = 0; i < bumped_groups.size(); i++)
+	{
+		CvSelectionGroup* pLoopGroup = GET_PLAYER(bumped_groups[i].first).getSelectionGroup(bumped_groups[i].second);
+		if (pLoopGroup)
+		{
+			pLoopGroup->regroupSeparatedUnits();
+		}
+	}
+	// K-Mod end
 }
 
 /*
@@ -918,7 +943,7 @@ void CvPlot::forceBumpUnits()
 				{
 					if (!(pLoopUnit->isCombat()))
 					{
-						if (!pLoopUnit->jumpToNearestValidPlot(true))
+						if (!pLoopUnit->jumpToNearestValidPlot(true, true))
 						{
 							bErased = true;
 						}

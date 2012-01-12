@@ -3007,8 +3007,8 @@ void CvUnit::move(CvPlot* pPlot, bool bShow)
 }
 
 // false if unit is killed
-// K-Mod, 2/jan/11, karadoc - added 'bForceMove' argument to following function
-bool CvUnit::jumpToNearestValidPlot(bool bForceMove)
+// K-Mod, added bForceMove and bGroup
+bool CvUnit::jumpToNearestValidPlot(bool bGroup, bool bForceMove)
 {
 	CvCity* pNearestCity;
 	CvPlot* pLoopPlot;
@@ -3082,7 +3082,7 @@ bool CvUnit::jumpToNearestValidPlot(bool bForceMove)
 	bool bValid = true;
 	if (pBestPlot != NULL)
 	{
-		setXY(pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		setXY(pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), bGroup);
 	}
 	else
 	{

@@ -4989,6 +4989,39 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 	return pSplitGroup;
 }
 
+// K-Mod
+// If the group has units of different plots, this function will create one new group for each of those plots
+void CvSelectionGroup::regroupSeparatedUnits()
+{
+	const CvUnit* pHeadUnit = getHeadUnit();
+	std::vector<CvSelectionGroup*> new_groups;
+
+	CLLNode<IDInfo>* pUnitNode = headUnitNode();
+	FAssert(pHeadUnit || !pUnitNode);
+	while (pUnitNode)
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (pLoopUnit->plot() != pHeadUnit->plot())
+		{
+			bool bFoundGroup = false;
+			for (size_t i = 0; !bFoundGroup && i < new_groups.size(); i++)
+			{
+				if (pLoopUnit->plot() == new_groups[i]->plot())
+				{
+					pLoopUnit->joinGroup(new_groups[i], true);
+					bFoundGroup = true;
+				}
+			}
+			if (!bFoundGroup)
+			{
+				pLoopUnit->joinGroup(0, true);
+				new_groups.push_back(pLoopUnit->getGroup());
+			}
+		}
+	}
+}
+// K-Mod end
 
 //------------------------------------------------------------------------------------------------
 // FUNCTION:    CvSelectionGroup::getUnitIndex

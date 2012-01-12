@@ -174,6 +174,7 @@ public:
 	void removeUnit(CvUnit* pUnit);
 	void mergeIntoGroup(CvSelectionGroup* pSelectionGroup);
 	CvSelectionGroup* splitGroup(int iSplitSize, CvUnit* pNewHeadUnit = NULL, CvSelectionGroup** ppOtherGroup = NULL);
+	void regroupSeparatedUnits(); // K-Mod
 
 	DllExport CLLNode<IDInfo>* deleteUnitNode(CLLNode<IDInfo>* pNode);
 	DllExport CLLNode<IDInfo>* nextUnitNode(CLLNode<IDInfo>* pNode) const;
