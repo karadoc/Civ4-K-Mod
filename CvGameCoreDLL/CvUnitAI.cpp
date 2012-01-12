@@ -3070,16 +3070,14 @@ void CvUnitAI::AI_attackCityMove()
 				/* BBAI
 				int iOurOffense = GET_TEAM(getTeam()).AI_getOurPlotStrength(plot(),1,false,false,true);
 				int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(pTargetCity->plot(),2,false,false); */
-				// K-Mod. NOTE: this stuff needs some work anyway. The AI needs to learn when to give up and go home.
+				// K-Mod
 				FAssert(getDomainType() == DOMAIN_LAND);
 				int iOurOffense = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 1, false);
 				int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2, false);
-				// K-Mod end
 
 				// If in danger, seek defensive ground
-				if( 4*iOurOffense < 3*iEnemyOffense )
+				if (4*iOurOffense < 3*iEnemyOffense)
 				{
-					// K-Mod
 					if (iAttackRatio/2 > iComparePostBombard && 4*iEnemyOffense/5 > kOwner.AI_localDefenceStrength(plot(), getTeam()))
 					{
 						// we don't have anywhere near enough attack power, and we are in serious danger.
@@ -3095,13 +3093,13 @@ void CvUnitAI::AI_attackCityMove()
 							return;
 						}
 					}
-					// K-Mod end
 
-					if( AI_choke(1, true, iMoveFlags) )
+					if (AI_choke(2, true, iMoveFlags))
 					{
 						return;
 					}
 				}
+				// K-Mod end
 			}
 
 			if (iStepDistToTarget == 1)
@@ -24794,7 +24792,7 @@ bool CvUnitAI::AI_poach()
 	return false;
 }
 
-// edited by bbai and K-Mod. (I've undone a lot of the bbai code, because it was wrong.)
+// K-Mod. I've rewriten most of this function.
 bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 {
 	PROFILE_FUNC();
@@ -24822,55 +24820,49 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 		for (int iY = -iRange; iY <= iRange; iY++)
 		{
 			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iX, iY);
-			if (pLoopPlot != NULL)
+			if (pLoopPlot && isEnemy(pLoopPlot->getTeam()) && !pLoopPlot->isVisibleEnemyUnit(this))
 			{
-				if (isEnemy(pLoopPlot->getTeam()) && !(pLoopPlot->isVisibleEnemyUnit(this)))
+				int iPathTurns;
+				if (pLoopPlot->getWorkingCity() && generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange))
 				{
-					CvCity* pWorkingCity = pLoopPlot->getWorkingCity();
-					if ((pWorkingCity != NULL) && (pWorkingCity->getTeam() == pLoopPlot->getTeam()))
+					FAssert(pLoopPlot->getWorkingCity()->getTeam() == pLoopPlot->getTeam());
+					//int iValue = (bDefensive ? pLoopPlot->defenseModifier(getTeam(), false) : -15);
+					int iValue = bDefensive ? pLoopPlot->defenseModifier(getTeam(), false) - 15 : 0; // K-Mod
+					if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 					{
-						//int iValue = (bDefensive ? pLoopPlot->defenseModifier(getTeam(), false) : -15);
-						int iValue = bDefensive ? pLoopPlot->defenseModifier(getTeam(), false) - 15 : 0; // K-Mod
-						if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
-						{
-							iValue = GET_PLAYER(pLoopPlot->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(), 0);
-						}
-						
-						iValue += pLoopPlot->getYield(YIELD_PRODUCTION) * 9; // was 10
-						iValue += pLoopPlot->getYield(YIELD_FOOD) * 12; // was 10
-						iValue += pLoopPlot->getYield(YIELD_COMMERCE) * 5;
+						iValue = GET_PLAYER(pLoopPlot->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(), 0);
+					}
+					
+					iValue += pLoopPlot->getYield(YIELD_PRODUCTION) * 9; // was 10
+					iValue += pLoopPlot->getYield(YIELD_FOOD) * 12; // was 10
+					iValue += pLoopPlot->getYield(YIELD_COMMERCE) * 5;
 
-						// K-Mod
-						if (atPlot(pLoopPlot) && canPillage(pLoopPlot))
+					if (atPlot(pLoopPlot) && canPillage(pLoopPlot))
+					{
+						iValue += AI_pillageValue(pLoopPlot, 0) / (bDefensive ? 2 : 1);
+					}
+
+					if (iValue > 0)
+					{
+						iValue *= (bDefensive ? 25 : 50) + iPercentDefensive * pLoopPlot->defenseModifier(getTeam(), false) / 100;
+
+						if (bDefensive)
 						{
-							iValue += AI_pillageValue(pLoopPlot, 0) / (bDefensive ? 2 : 1);
-						}
-						// K-Mod end
-						
-						/*if (bNoDefensiveBonus)
-						{
-							iValue *= std::max(0, ((baseCombatStr() * 120) - GC.getGame().getBestLandUnitCombat()));
+							// for defensive, we care a lot about path turns
+							iValue *= 10;
+							iValue /= std::max(1, iPathTurns);
 						}
 						else
 						{
-							iValue *= pLoopPlot->defenseModifier(getTeam(), false);
-						}*/
-						iValue *= (bDefensive ? 25 : 50) + iPercentDefensive * pLoopPlot->defenseModifier(getTeam(), false) / 100;
-						
-						if (iValue > 0)
-						{
-							if (!bDefensive)
-							{
-								iValue *= 10;
-								iValue /= std::max(1, (pLoopPlot->getNumDefenders(getOwnerINLINE()) + ((pLoopPlot == plot()) ? 0 : getGroup()->getNumUnits())));
-							}
+							// otherwise we just want to block as many tiles as possible
+							iValue *= 10;
+							iValue /= std::max(1, pLoopPlot->getNumDefenders(getOwnerINLINE()) + (pLoopPlot == plot() ? 0 : getGroup()->getNumUnits()));
+						}
 
-							//if (generatePath(pLoopPlot))
-							if (generatePath(pLoopPlot, iFlags, true, 0, iRange)) // K-Mod
-							{
-								pBestPlot = getPathEndTurnPlot();
-								iBestValue = iValue;
-							}
+						if (iValue > iBestValue)
+						{
+							pBestPlot = getPathEndTurnPlot();
+							iBestValue = iValue;
 						}
 					}
 				}
