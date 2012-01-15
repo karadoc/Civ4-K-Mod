@@ -16119,7 +16119,7 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
-	CvPlot* pDefencePlot;
+	CvPlot* pDefencePlot = 0;
 	
 	if (plot()->isCity(false, getTeam()))
 		pDefencePlot = plot();
@@ -24434,7 +24434,7 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 					if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 					{
 						//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, /*bAttack*/ true, /*bDeclareWar*/ true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
-						if (!atPlot(pLoopPlot) && canMoveInto(pLoopPlot, true, true))
+						if (!atPlot(pLoopPlot) && getGroup()->canMoveOrAttackInto(pLoopPlot, true))
 						{
 							if (iPowerThreshold <= 0 || getGroup()->AI_compareStacks(pLoopPlot, true) >= iPowerThreshold)
 							{
