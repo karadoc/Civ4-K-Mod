@@ -11273,7 +11273,8 @@ void CvPlayer::setAutoMoves(bool bNewValue)
 			{
 				if (getID() == GC.getGameINLINE().getActivePlayer())
 				{
-					GC.getGameINLINE().cycleSelectionGroups_delayed(1, false, true);
+					gDLL->getInterfaceIFace()->setCycleSelectionCounter(1);
+					//GC.getGameINLINE().cycleSelectionGroups_delayed(1, false, true); // this is a subtle case. I think it's best to just use the normal delay
 				}
 			}
 		}
