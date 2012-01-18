@@ -579,6 +579,20 @@ int CvSelectionGroupAI::AI_compareStacks(const CvPlot* pPlot, bool bCheckCanAtta
 	// K-Mod end
 	compareRatio /= std::max(1, defenderSum);
 
+	// K-Mod. If there are more defenders than we have attacks, but yet the ratio is still greater than 100,
+	// then inflate the ratio futher to account for the fact that we are going to do significantly more damage to them than they to us.
+	// The purpose of this is to give the AI extra encouragement to attack when its units are better than the defender's units.
+	/* if (compareRatio > 100)
+	{
+		FAssert(getHeadUnit() && getNumUnits() > 0);
+		int iDefenders = pPlot->getNumVisibleEnemyDefenders(getHeadUnit());
+		if (iDefenders > getNumUnits())
+		{
+			compareRatio += (compareRatio - 100) * (iDefenders - getNumUnits()) / getNumUnits();
+		}
+	} */ // (currently disabled)
+	// K-Mod end
+
 	return compareRatio;
 }
 
