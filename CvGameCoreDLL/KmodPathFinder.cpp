@@ -371,7 +371,6 @@ bool KmodPathFinder::ProcessNode()
 
 void KmodPathFinder::ForwardPropagate(FAStarNode* head, int cost_delta)
 {
-	PROFILE_FUNC();
 	//FAssert(cost_delta < 0 || head->m_iNumChildren == 0);
 	// Note: there are some legitimate cases in which the cost_delta can be positive.
 	// For example, suppose a shorter path is found to the parent plot, but the path involves
