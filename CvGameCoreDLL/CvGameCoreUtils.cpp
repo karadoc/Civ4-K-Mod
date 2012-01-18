@@ -907,6 +907,21 @@ int getCombatOdds(CvUnit* pAttacker, CvUnit* pDefender)
 	return iOdds;
 }
 
+// K-Mod
+int estimateCollateralWeight(const CvPlot* pPlot, TeamTypes eDefenceTeam)
+{
+	int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // note: the default xml value is "10"
+
+	// Collateral damage does not depend on any kind of strength bonus - so when a unit takes collateral damage, their bonuses are effectively wasted.
+	// Therefore, I'm going to inflate the value of collateral damage based on a rough estimate of the defenders bonuses might be.
+	if (pPlot)
+		iBaseCollateral *= (pPlot->isCity() ? 130 : 110) + pPlot->defenseModifier(eDefenceTeam, false);
+	else
+		iBaseCollateral *= 110;
+	return iBaseCollateral; // note, a factor of 100 is included in the result.
+}
+// K-Mod end
+
 int getEspionageModifier(TeamTypes eOurTeam, TeamTypes eTargetTeam)
 {
 	FAssert(eOurTeam != eTargetTeam);

@@ -12563,7 +12563,9 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 {
 	PROFILE_FUNC();
 
-	const int iBaseCollateral = GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE"); // Note: currently this number is "10"
+	int iBaseCollateral = bUseTarget
+		? estimateCollateralWeight(pTargetPlot, pTargetPlot->getTeam() == getTeam() ? NO_TEAM : pTargetPlot->getTeam())
+		: estimateCollateralWeight(0, NO_TEAM);
 
 	int	iTotal = 0;
 
@@ -12620,8 +12622,9 @@ int CvPlayerAI::AI_localAttackStrength(const CvPlot* pTargetPlot, TeamTypes eAtt
 
 							if (iPossibleTargets > 0)
 							{
-								// collateral damage is not trivial to calculate. This estimate is pretty rough.
-								iUnitStr += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
+								// collateral damage is not trivial to calculate. This estimate is pretty rough. (cf with calculation in AI_sumStrength)
+								// (Note: collateralDamage() and iBaseCollateral both include factors of 100.)
+								iUnitStr += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 10000;
 							}
 						}
 						iTotal += iUnitStr;

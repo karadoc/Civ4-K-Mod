@@ -266,6 +266,7 @@ bool isLimitedProject(ProjectTypes eProject);													// Exposed to Python
 
 __int64 getBinomialCoefficient(int iN, int iK);
 int getCombatOdds(CvUnit* pAttacker, CvUnit* pDefender);							// Exposed to Python
+int estimateCollateralWeight(const CvPlot* pPlot, TeamTypes eDefenceTeam); // K-Mod
 
 int getEspionageModifier(TeamTypes eOurTeam, TeamTypes eTargetTeam);							// Exposed to Python
 

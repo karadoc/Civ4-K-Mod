@@ -592,8 +592,9 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 
 	pUnitNode = headUnitNode();
 
-	int iBaseCollateral = bCountCollateral ? GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE") : 0;
-	// K-Mod note: the default for this number is "10".
+	int iBaseCollateral = bCountCollateral
+		? iBaseCollateral = estimateCollateralWeight(pAttackedPlot, pAttackedPlot->getTeam() == getTeam() ? NO_TEAM : pAttackedPlot->getTeam())
+		: 0;
 
 	while (pUnitNode != NULL)
 	{
@@ -623,10 +624,9 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 			if (eDomainType == NO_DOMAIN || pLoopUnit->getDomainType() == eDomainType)
 			{
 				strSum += pLoopUnit->currEffectiveStr(pAttackedPlot, pLoopUnit);
-				// K-Mod estimate the attack power of collateral units
+				// K-Mod estimate the attack power of collateral units. (cf with calculation in AI_localAttackStrength)
 				if (bCountCollateral && pLoopUnit->collateralDamage() > 0)
 				{
-					FAssert(pAttackedPlot);
 					int iPossibleTargets = pLoopUnit->collateralDamageMaxUnits();
 					// If !bCheckCanAttack, then lets not assume pAttackPlot won't get more units on it.
 					if (bCheckCanAttack && pAttackedPlot->isVisible(getTeam(), false))
@@ -635,7 +635,8 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 					if (iPossibleTargets > 0)
 					{
 						// collateral damage is not trivial to calculate. This estimate is pretty rough.
-						strSum += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 100;
+						// (Note: collateralDamage() and iBaseCollateral both include factors of 100.)
+						strSum += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 10000;
 					}
 				}
 				// K-Mod end
