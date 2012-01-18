@@ -5018,9 +5018,9 @@ int CvCity::culturePressureFactor() const
 					// scale it by how it compares to our culture
 					iForeignCulture = 100 * iForeignCulture / std::max(1, iForeignCulture + pLoopPlot->getCulture(getOwner()));
 					// lower the value if the foreign culture is not allowed take control of the plot
-					// lower the value if the foreign culture is not allowed to flip the city (with the default option for no conquest flipping)
+					// lower the value if the foreign culture is not allowed to flip the city
 					iForeignCulture *= 2;
-					iForeignCulture /= 2 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :0) + (isEverOwned((PlayerTypes)iP)?1 : 0);
+					iForeignCulture /= 2 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :0) + (canCultureFlip((PlayerTypes)iP)?1 : 0);
 					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}
@@ -9320,6 +9320,17 @@ PlayerTypes CvCity::findHighestCulture() const
 	return eBestPlayer;
 }
 
+// K-Mod. The following function defines whether or not the city is allowed to flip to the given player
+bool CvCity::canCultureFlip(PlayerTypes eToPlayer) const
+{
+	if (isBarbarian())
+		return true;
+
+	return !GC.getGameINLINE().isOption(GAMEOPTION_NO_CITY_FLIPPING) &&
+		(GC.getGameINLINE().isOption(GAMEOPTION_FLIPPING_AFTER_CONQUEST) || getPreviousOwner() == NO_PLAYER || GET_PLAYER(getPreviousOwner()).getTeam() != GET_PLAYER(eToPlayer).getTeam()) &&
+		getNumRevolts(eToPlayer) >= GC.getDefineINT("NUM_WARNING_REVOLTS");
+}
+// K-Mod end
 
 int CvCity::calculateCulturePercent(PlayerTypes eIndex) const
 {

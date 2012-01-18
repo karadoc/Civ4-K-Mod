@@ -8746,7 +8746,7 @@ void CvPlot::doCulture()
 							}
 
 							//if (pCity->isBarbarian() || (!(GC.getGameINLINE().isOption(GAMEOPTION_NO_CITY_FLIPPING)) && (GC.getGameINLINE().isOption(GAMEOPTION_FLIPPING_AFTER_CONQUEST) || !(pCity->isEverOwned(eCulturalOwner))) && (pCity->getNumRevolts(eCulturalOwner) >= GC.getDefineINT("NUM_WARNING_REVOLTS"))))
-							if (pCity->isBarbarian() || (!GC.getGameINLINE().isOption(GAMEOPTION_NO_CITY_FLIPPING) && (GC.getGameINLINE().isOption(GAMEOPTION_FLIPPING_AFTER_CONQUEST) || pCity->getPreviousOwner() != eCulturalOwner) && pCity->getNumRevolts(eCulturalOwner) >= GC.getDefineINT("NUM_WARNING_REVOLTS"))) // K-Mod
+							if (pCity->canCultureFlip(eCulturalOwner)) // K-Mod
 							{
 								if (GC.getGameINLINE().isOption(GAMEOPTION_ONE_CITY_CHALLENGE) && GET_PLAYER(eCulturalOwner).isHuman())
 								{
@@ -8763,7 +8763,7 @@ void CvPlot::doCulture()
 								pCity->changeNumRevolts(eCulturalOwner, 1);
 /*
 ** K-Mod, 11/jan/11, karadoc
-** Change number of revolt turns not depend on iCityStrength, because iCityStrength can be huge.
+** Changed number of revolt turns to not depend on iCityStrength, because iCityStrength can be huge.
 */
 								/* original bts code
 								pCity->changeOccupationTimer(GC.getDefineINT("BASE_REVOLT_OCCUPATION_TURNS") + ((iCityStrength * GC.getDefineINT("REVOLT_OCCUPATION_TURNS_PERCENT")) / 100));*/

@@ -733,6 +733,7 @@ public:
 	int getCultureTimes100(PlayerTypes eIndex) const;													// Exposed to Python
 	int countTotalCultureTimes100() const;																							// Exposed to Python
 	PlayerTypes findHighestCulture() const;																			// Exposed to Python
+	bool canCultureFlip(PlayerTypes eToPlayer) const; // K-Mod
 	int calculateCulturePercent(PlayerTypes eIndex) const;											// Exposed to Python
 	int calculateTeamCulturePercent(TeamTypes eIndex) const;										// Exposed to Python
 	void setCulture(PlayerTypes eIndex, int iNewValue, bool bPlots, bool bUpdatePlotGroups);			// Exposed to Python
