@@ -405,7 +405,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 
 	// int iOffensiveThreshold = (bPreparingTotal ? 25 : 20); // K-Mod, I don't use this.
 	int iAreaCities = countNumCitiesByArea(pArea);
-	int iWarSuccessRatio = AI_getWarSuccessCapitulationRatio(); // K-Mod
+	int iWarSuccessRating = AI_getWarSuccessRating(); // K-Mod
 
 	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 	{
@@ -456,7 +456,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 			int iPower = countPowerByArea(pArea);
 			int iEnemyPower = countEnemyPowerByArea(pArea);
 			
-			iPower *= 100 + iWarSuccessRatio + (bChosenTargets ? 100 : 50);
+			iPower *= 100 + iWarSuccessRating + (bChosenTargets ? 100 : 50);
 			iEnemyPower *= 100;
 			// it would be nice to put some personality modifiers into this. But this is a Team function. :(
 			if (iPower < iEnemyPower)
@@ -520,7 +520,7 @@ AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal
 		// K-Mod. I'm not sure how best to do this yet. Let me just try a rough idea for now.
 		// I'm using AI_countMilitaryWeight; but what I really want is "border terriory which needs defending"
 		int iOurRelativeStrength = 100 * countPowerByArea(pArea) / (AI_countMilitaryWeight(pArea) + 20);
-		iOurRelativeStrength *= 100 + (bDeclaredTargets ? 30 : 0) + (bPreparingTotal ? -20 : 0) + iWarSuccessRatio/2;
+		iOurRelativeStrength *= 100 + (bDeclaredTargets ? 30 : 0) + (bPreparingTotal ? -20 : 0) + iWarSuccessRating/2;
 		iOurRelativeStrength /= 100;
 		int iEnemyRelativeStrength = 0;
 		bool bEnemyCities = false;
@@ -2343,43 +2343,14 @@ bool CvTeamAI::AI_isAnyMemberDoVictoryStrategyLevel3() const
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/20/10                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-/// \brief Compute how close our wars are to capitulation.
-///
-/// At -99, this means we're losing on net enough to capitulate.  At +99, we're winning enough
-/// to perhaps have another player capitulate to us.
-int CvTeamAI::AI_getWarSuccessCapitulationRatio() const
+
+// K-Mod. return a rating of our war success between -99 and 99.
+// -99 means we losing and have very little hope of surviving. 99 means we are soundly defeating our enemies. Zero is neutral (eg. no wars being fought).
+int CvTeamAI::AI_getWarSuccessRating() const
 {
-	/* original BBAI code
-	int iSumWarSuccess = 0;
+	PROFILE_FUNC();
+	// (Based on my code for Force Peace diplomacy voting.)
 
-	for( int iI = 0; iI < MAX_CIV_TEAMS; iI++ )
-	{
-		if( iI != getID() )
-		{
-			if( GET_TEAM((TeamTypes)iI).isAlive() && isAtWar((TeamTypes)iI) )
-			{
-				iSumWarSuccess += AI_getWarSuccess((TeamTypes)iI);
-				iSumWarSuccess -= GET_TEAM((TeamTypes)iI).AI_getWarSuccess(getID());
-			}
-		}
-	}
-
-	int iDivisor = std::max(25, std::min(getNumCities(), 4) * GC.getWAR_SUCCESS_CITY_CAPTURING());
-
-	iSumWarSuccess = range((100*iSumWarSuccess)/iDivisor, -99, 99);
-
-	return iSumWarSuccess; */
-
-	// K-Mod
-	// I swear, more often than not the AI at minus 99 would be the one demanding cities for peace.
-	// The original version of this function was so completely off the mark that I pretty much anything
-	// would be an improvement. So let me have a shot at it, without trying to be too fancy.
-	// Based on my code for Force Peace diplomacy voting.
 	int iMilitaryUnits = 0;
 	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 	{
@@ -2410,9 +2381,14 @@ int CvTeamAI::AI_getWarSuccessCapitulationRatio() const
 	}
 	iScore = range((100*iScore)/std::max(1, iThisTeamPower*iSuccessScale*5), -99, 99);
 	return iScore;
-// K-Mod end
 }
+// K-Mod end
 
+/************************************************************************************************/
+/* BETTER_BTS_AI_MOD                      03/20/10                                jdog5000      */
+/*                                                                                              */
+/* War Strategy AI                                                                              */
+/************************************************************************************************/
 /// \brief Compute power of enemies as percentage of our power.
 ///
 ///
@@ -2525,7 +2501,7 @@ bool CvTeamAI::AI_refusePeace(TeamTypes ePeaceTeam) const
 	if (!isHuman() &&
 		AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4) &&
 		(AI_isChosenWar(ePeaceTeam) || getAtWarCount(true, true) == 1) &&
-		AI_getWarSuccessCapitulationRatio() > 0)
+		AI_getWarSuccessRating() > 0)
 	{
 		return true;
 	}
@@ -2732,8 +2708,8 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 		return true;
 	}
 
-	int iOurWarSuccessRatio = AI_getWarSuccessCapitulationRatio();
-	if( iOurWarSuccessRatio < -30 )
+	int iOurWarSuccessRating = AI_getWarSuccessRating();
+	if( iOurWarSuccessRating < -30 )
 	{
 		// We're doing badly overall, need to be done with this war and gain an ally
 		return true;
@@ -2757,7 +2733,7 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 		}
 	}
 
-	if( iWarCount > 0 && iOurWarSuccessRatio < 50 )
+	if( iWarCount > 0 && iOurWarSuccessRating < 50 )
 	{
 		// Accept if we have other wars to fight
 		return true;

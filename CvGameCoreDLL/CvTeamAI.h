@@ -99,24 +99,14 @@ public:
 	int AI_surrenderTradeVal(TeamTypes eTeam) const;
 	DenialTypes AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier = 100) const;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/20/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
+	// bbai
 	int AI_countMembersWithStrategy(int iStrategy) const; // K-Mod
 	bool AI_isAnyMemberDoVictoryStrategy( int iVictoryStrategy ) const;
 	bool AI_isAnyMemberDoVictoryStrategyLevel4() const;
 	bool AI_isAnyMemberDoVictoryStrategyLevel3() const;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/14/10                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-	int AI_getWarSuccessCapitulationRatio() const;
+
+	int AI_getWarSuccessRating() const; // K-Mod
+
 	int AI_getEnemyPowerPercent( bool bConsiderOthers = false ) const;
 	int AI_getAirPower() const; // K-Mod
 	int AI_getRivalAirPower( ) const;
@@ -127,9 +117,7 @@ public:
 	void AI_getWarRands( int &iMaxWarRand, int &iLimitedWarRand, int &iDogpileWarRand ) const;
 	void AI_getWarThresholds( int &iMaxWarThreshold, int &iLimitedWarThreshold, int &iDogpileWarThreshold ) const;
 	int AI_getTotalWarOddsTimes100( ) const;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	// bbai end
 
 	int AI_makePeaceTradeVal(TeamTypes ePeaceTeam, TeamTypes eTeam) const;
 	DenialTypes AI_makePeaceTrade(TeamTypes ePeaceTeam, TeamTypes eTeam) const;

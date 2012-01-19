@@ -1748,18 +1748,18 @@ void CvPlayerAI::AI_doCentralizedProduction()
 
 	if( bAtWar )
 	{
-		int iWarCapRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
-		if( iWarCapRatio < -90 )
+		int iWarSuccessRating = GET_TEAM(getTeam()).AI_getWarSuccessRating();
+		if( iWarSuccessRating < -90 )
 		{
 			iMaxNumWonderCities = 0;
 		}
 		else 
 		{
-			if( iWarCapRatio < 30 )
+			if( iWarSuccessRating < 30 )
 			{
 				iMaxNumWonderCities -= 1;
 			}
-			if( iWarCapRatio < -50 )
+			if( iWarSuccessRating < -50 )
 			{
 				iMaxNumWonderCities /= 2;
 			}
@@ -4654,7 +4654,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 	}
 	else
 	{
-		if (GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() < -10)
+		if (GET_TEAM(getTeam()).AI_getWarSuccessRating() < -10)
 			iUpgradeBudget *= 2; // cf. iTargetTurns in AI_doCommerce
 		else if (AI_isFinancialTrouble())
 		{
@@ -13088,10 +13088,10 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				iTempValue *= iCombatValue;
 				iTempValue /= 75;
 
-				int iWarSuccessRatio = kTeam.AI_getWarSuccessCapitulationRatio();
-				if( iWarSuccessRatio < -25 )
+				int iWarSuccessRating = kTeam.AI_getWarSuccessRating();
+				if( iWarSuccessRating < -25 )
 				{
-					iTempValue *= 75 + range(-iWarSuccessRatio, 25, 100);
+					iTempValue *= 75 + range(-iWarSuccessRating, 25, 100);
 					iTempValue /= 100;
 				}
 				// K-Mod (maybe I'll do some more tweaking later)
@@ -14765,7 +14765,7 @@ void CvPlayerAI::AI_doMilitary()
 		}
 	} */
 	// K-Mod. (a bit slower, but better - I think.)
-	if (!isAnarchy() && AI_isFinancialTrouble() && GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() > -50)
+	if (!isAnarchy() && AI_isFinancialTrouble() && GET_TEAM(getTeam()).AI_getWarSuccessRating() > -50)
 	{
 		while (AI_unitCostPerMil() > AI_maxUnitCostPerMil() || calculateGoldRate() < 0)
 		{
@@ -18317,11 +18317,6 @@ bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
 
 	if (pBestUnit != NULL)
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/12/10                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 		if( gPlayerLogLevel >= 2 )
 		{
 			CvWString szString;
@@ -18329,9 +18324,6 @@ bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
 
 			logBBAI("    Player %d (%S) disbanding %S with UNITAI %S to save cash", getID(), getCivilizationDescription(0), pBestUnit->getName().GetCString(), szString.GetCString());
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		pBestUnit->kill(false);
 		return true;
 	}
@@ -18556,8 +18548,8 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 				iDemoninator += AI_cultureVictoryTechValue(getCurrentResearch()) > 100 ? 80 : 0;
 				iDemoninator += AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS)? 80 : 0;
 				iDemoninator += GET_TEAM(getTeam()).getAnyWarPlanCount(true)>0 ? 30 : 0;
-				int iWarRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
-				iDemoninator += iWarRatio < 0 ? -2*iWarRatio : 0;
+				int iWarSuccessRating = GET_TEAM(getTeam()).AI_getWarSuccessRating();
+				iDemoninator += iWarSuccessRating < 0 ? -2*iWarSuccessRating : 0;
 				// and a little bit of personal variation.
 				iDemoninator += 50 - GC.getLeaderHeadInfo(getPersonalityType()).getCultureVictoryWeight();
 
@@ -19407,7 +19399,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 	int iAverageEnemyUnit = 0;
 	int iTypicalAttack = getTypicalUnitValue(UNITAI_ATTACK);
 	int iTypicalDefence = getTypicalUnitValue(UNITAI_CITY_DEFENSE);
-	int iWarSuccessRatio = kTeam.AI_getWarSuccessCapitulationRatio();
+	int iWarSuccessRating = kTeam.AI_getWarSuccessRating();
 	// K-Mod end
 
 	for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
@@ -19636,8 +19628,8 @@ void CvPlayerAI::AI_updateStrategyHash()
 		// the value here is unaffected because the strategy hash has been cleared.
 		iTempValue += kTeam.getBestKnownTechScorePercent() < 85 ? 3 : 0;
 		iTempValue += kTeam.getAnyWarPlanCount(true) > kTeam.getAtWarCount(true) ? 2 : 0; // build up espionage before the start of a war
-		if (iWarSuccessRatio < 0)
-			iTempValue += iWarSuccessRatio/15 - 1;
+		if (iWarSuccessRating < 0)
+			iTempValue += iWarSuccessRating/15 - 1;
 		iTempValue += AI_getStrategyRand(10) % 8;
 		// K-Mod end
 
@@ -19677,7 +19669,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		}
 
 		// Are we losing badly or recently attacked?
-		if( iWarSuccessRatio < -50 || iMaxWarCounter < 10 )
+		if( iWarSuccessRating < -50 || iMaxWarCounter < 10 )
 		{
 			if( kTeam.AI_getEnemyPowerPercent(true) > std::max(150, GC.getDefineINT("BBAI_TURTLE_ENEMY_POWER_RATIO")) )
 			{
@@ -19993,7 +19985,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
 	// On second thought, lets try this
 		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(FLAVOR_MILITARY)/2);
-		iCrushValue += std::min(0, kTeam.AI_getWarSuccessCapitulationRatio()/15);
+		iCrushValue += std::min(0, kTeam.AI_getWarSuccessRating()/15);
 		// note: flavor military is between 0 and 10
 		// K-Mod end
 		if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3))

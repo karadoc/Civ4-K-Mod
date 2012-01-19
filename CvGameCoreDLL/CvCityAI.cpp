@@ -936,7 +936,7 @@ void CvCityAI::AI_chooseProduction()
 	int iCultureRateRank = findCommerceRateRank(COMMERCE_CULTURE);
     int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
 
-	int iWarSuccessRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
+	int iWarSuccessRating = GET_TEAM(getTeam()).AI_getWarSuccessRating();
 	int iEnemyPowerPerc = GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true);
 	/* int iWarTroubleThreshold = 0;
 
@@ -1470,7 +1470,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	if( !(bDefenseWar && iWarSuccessRatio < -50) && !bDanger )
+	if( !(bDefenseWar && iWarSuccessRating < -50) && !bDanger )
 	{
 		if ((iExistingWorkers == 0))
 		{
@@ -1563,7 +1563,7 @@ void CvCityAI::AI_chooseProduction()
     
     if (bMaybeWaterArea)
 	{
-		if( !(bLandWar && iWarSuccessRatio < -30) && !bDanger && !bFinancialTrouble )
+		if( !(bLandWar && iWarSuccessRating < -30) && !bDanger && !bFinancialTrouble )
 		{
 			if (kPlayer.AI_getNumTrainAIUnits(UNITAI_ATTACK_SEA) + kPlayer.AI_getNumTrainAIUnits(UNITAI_PIRATE_SEA) + kPlayer.AI_getNumTrainAIUnits(UNITAI_RESERVE_SEA) < std::min(3,kPlayer.getNumCities()))
 			{
@@ -1691,7 +1691,7 @@ void CvCityAI::AI_chooseProduction()
 	//if( bLandWar && (iWarSuccessRatio < -30 || iEnemyPowerPerc > 150) )
 	// K-Mod. I've changed the condition on this; but to be honest, I'm thinking it should just be completely removed.
 	// The noraml unit selection function should know what kind of units we should be building...
-	if (bLandWar && iWarSuccessRatio < -10 && iEnemyPowerPerc - iWarSuccessRatio > 150)
+	if (bLandWar && iWarSuccessRating < -10 && iEnemyPowerPerc - iWarSuccessRating > 150)
 	{
 		UnitTypeWeightArray defensiveTypes;
 		defensiveTypes.push_back(std::make_pair(UNITAI_COUNTER, 100));
@@ -1706,13 +1706,13 @@ void CvCityAI::AI_chooseProduction()
 		}
 
 		int iOdds = iBuildUnitProb;
-		if( iWarSuccessRatio < -50 )
+		if( iWarSuccessRating < -50 )
 		{
-			iOdds += abs(iWarSuccessRatio/3);
+			iOdds += abs(iWarSuccessRating/3);
 		}
 		// K-Mod
-		iOdds *= (-iWarSuccessRatio+20 + iBestBuildingValue);
-		iOdds /= (-iWarSuccessRatio + 2 * iBestBuildingValue);
+		iOdds *= (-iWarSuccessRating+20 + iBestBuildingValue);
+		iOdds /= (-iWarSuccessRating + 2 * iBestBuildingValue);
 		// K-Mod end
 		if( bDanger )
 		{
@@ -1726,7 +1726,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	if( !(bDefenseWar && iWarSuccessRatio < -50) )
+	if( !(bDefenseWar && iWarSuccessRating < -50) )
 	{
 /***
 **** K-Mod, 10/sep/10, Karadoc
@@ -1758,7 +1758,7 @@ void CvCityAI::AI_chooseProduction()
 ***/
     if (!bDanger && iExistingWorkers == 0 && (isCapital() || (iNeededWorkers > 0) || (iNeededSeaWorkers > iExistingSeaWorkers)))
     {
-		if( !(bDefenseWar && iWarSuccessRatio < -30) && !(kPlayer.AI_isDoStrategy(AI_STRATEGY_TURTLE)) )
+		if( !(bDefenseWar && iWarSuccessRating < -30) && !(kPlayer.AI_isDoStrategy(AI_STRATEGY_TURTLE)) )
 		{
 			if ((AI_countNumBonuses(NO_BONUS, /*bIncludeOurs*/ true, /*bIncludeNeutral*/ true, -1, /*bLand*/ true, /*bWater*/ false) > 0) || 
 				(isCapital() && (getPopulation() > 3) && iNumCitiesInArea > 1))
@@ -1782,7 +1782,7 @@ void CvCityAI::AI_chooseProduction()
 		}
     }
 
-	if( !(bDefenseWar && iWarSuccessRatio < -30) )
+	if( !(bDefenseWar && iWarSuccessRating < -30) )
 	{
 		if (!bWaterDanger && iNeededSeaWorkers > iExistingSeaWorkers)
 		{
@@ -1875,7 +1875,7 @@ void CvCityAI::AI_chooseProduction()
 	if (!bDanger && (!hasActiveWorldWonder()) && (kPlayer.getNumCities() <= 3))
 	{
 		// For small civ at war, don't build wonders unless winning
-		if( !bLandWar || (iWarSuccessRatio > 30) )
+		if( !bLandWar || (iWarSuccessRating > 30) )
 		{
 			int iWonderTime = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
 			iWonderTime /= 5;
@@ -1892,7 +1892,7 @@ void CvCityAI::AI_chooseProduction()
 	{
 		// BBAI TODO:  This check should be done by player, not by city and optimize placement
 		// If losing badly in war, don't build big things
-		if( !bLandWar || (iWarSuccessRatio > -30) )
+		if( !bLandWar || (iWarSuccessRating > -30) )
 		{
 			if( kPlayer.getCapitalCity() == NULL || area()->getPopulationPerPlayer(getOwnerINLINE()) > kPlayer.getCapitalCity()->area()->getPopulationPerPlayer(getOwnerINLINE()) )
 			{
@@ -1915,7 +1915,7 @@ void CvCityAI::AI_chooseProduction()
 
 	if( bLandWar )
 	{
-		iSpreadUnitThreshold += 800 - 10*iWarSuccessRatio;
+		iSpreadUnitThreshold += 800 - 10*iWarSuccessRating;
 	}
 	iSpreadUnitThreshold += 300*plot()->plotCount(PUF_isUnitAIType, UNITAI_MISSIONARY, -1, getOwnerINLINE());
 
@@ -1945,7 +1945,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	if( !(bLandWar && iWarSuccessRatio < 30) )
+	if( !(bLandWar && iWarSuccessRating < 30) )
 	{
 		if (!bDanger && (iProductionRank <= ((kPlayer.getNumCities() / 5) + 1)))
 		{
@@ -1982,7 +1982,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	if( !(bDefenseWar && iWarSuccessRatio < -50) )
+	if( !(bDefenseWar && iWarSuccessRating < -50) )
 	{
 		if ((iAreaBestFoundValue > iMinFoundValue) || (iWaterAreaBestFoundValue > iMinFoundValue))
 		{
@@ -2127,7 +2127,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 		// K-Mod end
 
-		if( bDefenseWar || (bLandWar && (iWarSuccessRatio < -30)) )
+		if( bDefenseWar || (bLandWar && (iWarSuccessRating < -30)) )
 		{
 			UnitTypeWeightArray panicDefenderTypes;
 			panicDefenderTypes.push_back(std::make_pair(UNITAI_RESERVE, 100));
@@ -2135,7 +2135,7 @@ void CvCityAI::AI_chooseProduction()
 			panicDefenderTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 100));
 			panicDefenderTypes.push_back(std::make_pair(UNITAI_ATTACK, 100));
 
-        	if (AI_chooseLeastRepresentedUnit(panicDefenderTypes, (bGetBetterUnits ? 40 : 60) - iWarSuccessRatio/3))
+        	if (AI_chooseLeastRepresentedUnit(panicDefenderTypes, (bGetBetterUnits ? 40 : 60) - iWarSuccessRating/3))
         	{
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose panic defender", getName().GetCString());
         		return;
@@ -2154,7 +2154,7 @@ void CvCityAI::AI_chooseProduction()
 	if (!bDanger && (!hasActiveWorldWonder() || (kPlayer.getNumCities() > 3)))
 	{
 		// For civ at war, don't build wonders if losing
-		if (!bTotalWar && (!bLandWar || iWarSuccessRatio > -30))
+		if (!bTotalWar && (!bLandWar || iWarSuccessRating > -30))
 		{	
 			int iWonderTime = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
 			iWonderTime /= 5;
@@ -2204,7 +2204,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	// note: this is the only worker test that allows us to reach the full number of needed workers.
-	if (!(bLandWar && iWarSuccessRatio < -30) && !bDanger)
+	if (!(bLandWar && iWarSuccessRating < -30) && !bDanger)
 	{
 		if (iExistingWorkers < iNeededWorkers)
 		{
@@ -3310,7 +3310,7 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 			if (bLandWar && !bDefense && GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true))
 			{
 				// if we're winning, then focus on capturing cities.
-				int iSuccessRatio = GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio();
+				int iSuccessRatio = GET_TEAM(getTeam()).AI_getWarSuccessRating();
 				if (iSuccessRatio > 0)
 				{
 					aiUnitAIVal[UNITAI_ATTACK] += iSuccessRatio * iMilitaryWeight / 1200;
