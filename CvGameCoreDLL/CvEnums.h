@@ -1478,20 +1478,17 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_ASSAULT, // K-Mod note: this is now used for land forces targeting a city as well as sea forces.
 	MISSIONAI_CARRIER,
 	MISSIONAI_PICKUP,
-	// K-Mod. missions that I might want to add next time I break save compatibility...
-	// (note. MISSIONAI_GUARD_TRADE_NET is not being used.)
-	/*
+	// K-Mod
 	MISSIONAI_CHOKE,
 	MISSIONAI_HEAL,
 	MISSIONAI_RETREAT,
 	MISSIONAI_PATROL,
 	MISSIONAI_DEFEND,
-	MISSIONAI_GOLDEN_AGE, // ie. waiting for more golden age units.
-	? MISSIONAI_LAND_ASSAULT,
-	? MISSIONAI_SEA_ASSAULT,
 	MISSIONAI_COUNTER_ATTACK,
 	MISSIONAI_UPGRADE,
-	*/
+	// MISSIONAI_GOLDEN_AGE, // ie. waiting for more golden age units.
+	// note: MISSIONAI_GUARD_TRADE_NET is currently not being used:
+	// K-Mod end
 };
 
 // any additions need to be reflected in GlobalTypes.xml

@@ -2602,6 +2602,13 @@ void getMissionAIString(CvWString& szString, MissionAITypes eMissionAI)
 	mission_string(MISSIONAI_JOIN)
 	mission_string(MISSIONAI_TRADE)
 	mission_string(MISSIONAI_INFILTRATE)
+	mission_string(MISSIONAI_CHOKE)
+	mission_string(MISSIONAI_HEAL)
+	mission_string(MISSIONAI_RETREAT)
+	mission_string(MISSIONAI_PATROL)
+	mission_string(MISSIONAI_DEFEND)
+	mission_string(MISSIONAI_COUNTER_ATTACK)
+	mission_string(MISSIONAI_UPGRADE)
 #undef mission_string
 // K-Mod end
 

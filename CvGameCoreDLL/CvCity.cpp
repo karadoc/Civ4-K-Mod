@@ -5020,7 +5020,7 @@ int CvCity::culturePressureFactor() const
 					// lower the value if the foreign culture is not allowed take control of the plot
 					// lower the value if the foreign culture is not allowed to flip the city
 					iForeignCulture *= 2;
-					iForeignCulture /= 2 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :0) + (canCultureFlip((PlayerTypes)iP)?1 : 0);
+					iForeignCulture /= 2 + ((!pLoopPlot->isWithinCultureRange((PlayerTypes)iP) || GET_TEAM(kPlayer.getTeam()).isVassal(getTeam()))?2 :0) + (!canCultureFlip((PlayerTypes)iP)?1 : 0);
 					iAnswer += iForeignCulture * iForeignCulture;
 				}
 			}

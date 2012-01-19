@@ -12566,7 +12566,7 @@ bool CvUnitAI::AI_heal(int iDamagePercent, int iMaxPath)
             {
                 if (!(isAlwaysHeal()))
                 {
-                    getGroup()->pushMission(MISSION_HEAL);
+                    getGroup()->pushMission(MISSION_HEAL, -1, -1, 0, false, false, MISSIONAI_HEAL);
                     return true;
                 }
             }
@@ -12632,7 +12632,7 @@ bool CvUnitAI::AI_heal(int iDamagePercent, int iMaxPath)
 		{
 			CvUnit* pUnitToHeal = aeDamagedUnits[iI];
 			pUnitToHeal->joinGroup(NULL);
-			pUnitToHeal->getGroup()->pushMission(MISSION_HEAL);
+			pUnitToHeal->getGroup()->pushMission(MISSION_HEAL, -1, -1, 0, false, false, MISSIONAI_HEAL);
 
 			// note, removing the head unit from a group will force the group to be completely split if non-human
 			if (pUnitToHeal == this)
@@ -12654,7 +12654,7 @@ bool CvUnitAI::AI_heal(int iDamagePercent, int iMaxPath)
 		}
 		else if (healRate(plot()) > 10)
 	    {
-            pGroup->pushMission(MISSION_HEAL);
+            pGroup->pushMission(MISSION_HEAL, -1, -1, 0, false, false, MISSIONAI_HEAL);
             return true;
 	    }
 	}
@@ -14527,7 +14527,7 @@ bool CvUnitAI::AI_patrol()
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_PATROL);
 		return true;
 	}
 
@@ -14609,7 +14609,7 @@ bool CvUnitAI::AI_defend()
 /************************************************************************************************/
 
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_DEFEND);
 		return true;
 	}
 
@@ -16117,7 +16117,7 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 	{
 		FAssert(!atPlot(pBestPlot));
 		// K-Mod note: no AI_considerDOW here.
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0);
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_COUNTER_ATTACK);
 		return true;
 	}
 
@@ -16268,7 +16268,8 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 
 					if (iValue >= iThreshold)
 					{
-						iValue *= 100;
+						BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam());
+						iValue *= 100 + (eBonus != NO_BONUS ? 3*kOwner.AI_bonusVal(eBonus, 0)/2 : 0) + (pLoopPlot->getWorkingCity() ? 20 : 0);
 
 						if (pLoopPlot->getOwnerINLINE() != getOwnerINLINE())
 							iValue = 2*iValue/3;
@@ -16293,7 +16294,7 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 	if (pEndTurnPlot != NULL)
 	{
 		FAssert(!atPlot(pEndTurnPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags);
+		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_DEFEND);
 		return true;
 	}
 
@@ -16363,7 +16364,7 @@ bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRisk
 		{
 			logBBAI("    Stack for player %d (%S) uses StackVsStack attack with value %d", getOwner(), GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), iBestValue);
 		}
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_COUNTER_ATTACK, pBestPlot);
 		return true;
 	}
 
@@ -20646,7 +20647,7 @@ bool CvUnitAI::AI_travelToUpgradeCity()
 			if (NULL != pThisTurnPlotForAirlift && (!bCanPathToUpgradeCity || iClosestCityPathTurns < iUpgradeCityPathTurns))
 			{
 				FAssert(!atPlot(pThisTurnPlotForAirlift));
-				getGroup()->pushMission(MISSION_MOVE_TO, pThisTurnPlotForAirlift->getX_INLINE(), pThisTurnPlotForAirlift->getY_INLINE());
+				getGroup()->pushMission(MISSION_MOVE_TO, pThisTurnPlotForAirlift->getX_INLINE(), pThisTurnPlotForAirlift->getY_INLINE(), 0, false, false, MISSIONAI_UPGRADE);
 				return true;
 			}
 		}
@@ -20655,7 +20656,7 @@ bool CvUnitAI::AI_travelToUpgradeCity()
 		if (NULL != pThisTurnPlot)
 		{
 			FAssert(!atPlot(pThisTurnPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pThisTurnPlot->getX_INLINE(), pThisTurnPlot->getY_INLINE());
+			getGroup()->pushMission(MISSION_MOVE_TO, pThisTurnPlot->getX_INLINE(), pThisTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_UPGRADE);
 			return true;
 		}
 	}
@@ -20816,7 +20817,7 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iPass >= 3 ? MOVE_IGNORE_DANGER : 0);
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iPass >= 3 ? MOVE_IGNORE_DANGER : 0, false, false, MISSIONAI_RETREAT);
 		return true;
 	}
 
@@ -20824,7 +20825,7 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 	{
 		if (pCity->getTeam() == getTeam())
 		{
-			getGroup()->pushMission(MISSION_SKIP);
+			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_RETREAT);
 			return true;
 		}
 	}
@@ -24884,6 +24885,8 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 	}
 	if (pBestPlot != NULL)
 	{
+		FAssert(pBestPlot->getWorkingCity());
+		CvPlot* pChokedCityPlot = pBestPlot->getWorkingCity()->plot();
 		if (atPlot(pBestPlot))
 		{
 			/* original BBAI code
@@ -24891,15 +24894,15 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 			getGroup()->pushMission(MISSION_SKIP); */
 			// K-Mod
 			if (canPillage(plot()))
-				getGroup()->pushMission(MISSION_PILLAGE);
+				getGroup()->pushMission(MISSION_PILLAGE, -1, -1, iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
 			else
-				getGroup()->pushMission(MISSION_SKIP);
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
 			// K-Mod end
 			return true;
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX(), pBestPlot->getY());
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX(), pBestPlot->getY(), iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
 			return true;
 		}
 	}
