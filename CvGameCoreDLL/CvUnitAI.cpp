@@ -11481,16 +11481,35 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 	CvCity* pPlotCity = plot()->getPlotCity();
 	if ((pPlotCity != NULL) && (pPlotCity->getOwnerINLINE() == getOwnerINLINE()))
 	{
+		/* original bts code
 		int iCityDefenderCount = pPlotCity->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE());
 		if ((iCityDefenderCount - 1) < pPlotCity->AI_minDefenders())
 		{
-			//if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
-			if (iCityDefenderCount <= 1 || GC.getGame().getSorenRandNum(area()->getNumAIUnits(getOwnerINLINE(), UNITAI_CITY_DEFENSE) + 5, "AI shuffle defender") > 1) // K-mod
+			if ((iCityDefenderCount <= 2) || (GC.getGame().getSorenRandNum(5, "AI shuffle defender") != 0))
+			{
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
+				return true;
+			}
+		}*/
+
+		// K-mod
+		// Note. For this check, we only count UNITAI_CITY_DEFENSE. But in the bSearch case, we count all guard_city units.
+		int iDefendersHave = plot()->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_CITY, -1, getOwnerINLINE(), NO_TEAM, AI_getUnitAIType() == UNITAI_CITY_DEFENSE ? PUF_isUnitAIType : 0, UNITAI_CITY_DEFENSE);
+
+		if (getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY)
+			iDefendersHave--;
+
+		FAssert(AI_getUnitAIType() == UNITAI_CITY_DEFENSE); // This doesn't really matter, but if other units are going to start using this function, I'll want to make some adjustments.
+
+		if (iDefendersHave < pPlotCity->AI_minDefenders())
+		{
+			if (iDefendersHave <= 1 || GC.getGame().getSorenRandNum(area()->getNumAIUnits(getOwnerINLINE(), UNITAI_CITY_DEFENSE) + 5, "AI shuffle defender") > 1)
 			{
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, NULL);
 				return true;
 			}
 		}
+		// K-Mod end
 	}
 
 	if (bSearch)
@@ -11507,25 +11526,14 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 		{
 			if (AI_plotValid(pLoopCity->plot()))
 			{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-				// BBAI efficiency: check area for land units
-				if( (getDomainType() == DOMAIN_LAND) && (pLoopCity->area() != area()) && !(getGroup()->canMoveAllTerrain()) )
-				{
-					continue;
-				}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-				int iDefendersHave = pLoopCity->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE());
-				int iDefendersNeed = pLoopCity->AI_minDefenders();
-				// K-Mod. don't count ourself
-				if (pPlotCity == pLoopCity && (AI_getUnitAIType() == UNITAI_CITY_DEFENSE || getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY))
+				//int iDefendersHave = pLoopCity->plot()->plotCount(PUF_isUnitAIType, UNITAI_CITY_DEFENSE, -1, getOwnerINLINE());
+				// K-Mod
+				int iDefendersHave = pLoopCity->plot()->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_CITY, -1, getOwnerINLINE());
+				if (pPlotCity == pLoopCity && getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY)
 					iDefendersHave--;
 				// K-Mod end
+				int iDefendersNeed = pLoopCity->AI_minDefenders();
+
 				if (iDefendersHave < iDefendersNeed)
 				{
 					if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
@@ -11535,31 +11543,33 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 						{
 							int iPathTurns;
 							//if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
-							if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns, 10)) // K-Mod
+							if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns, 10)) // K-Mod. (also deleted "if (iPathTurns < 10)")
 							{
-								if (iPathTurns <= 10)
+								/* original bts code
+								int iValue = (iDefendersNeed - iDefendersHave) * 20;
+								iValue += 2 * std::min(15, iCurrentTurn - pLoopCity->getGameTurnAcquired());
+								if (pLoopCity->isOccupation())
 								{
-									int iValue = (iDefendersNeed - iDefendersHave) * 20;
-									iValue += iDefendersHave <= 0 ? 20 : 0; // K-Mod
-									/* original bts code
-									iValue += 2 * std::min(15, iCurrentTurn - pLoopCity->getGameTurnAcquired());
-									if (pLoopCity->isOccupation())
-									{
-										iValue += 5;
-									} */
-									// K-Mod
-									iValue += 3 * pLoopCity->getCultureLevel();
-									iValue += pLoopCity->getPopulation() / 2;
-									iValue += pLoopCity->isOccupation() ? 10 : 0;
-									// K-Mod end
-									iValue -= iPathTurns;
+									iValue += 5;
+								}
 
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										pBestPlot = getPathEndTurnPlot();
-										pBestGuardPlot = pLoopCity->plot();
-									}
+								iValue -= iPathTurns;
+								*/
+								// K-Mod
+								int iValue = (iDefendersNeed - iDefendersHave) * 10;
+								iValue += iDefendersHave <= 0 ? 10 : 0;
+
+								iValue += 2 * pLoopCity->getCultureLevel();
+								iValue += pLoopCity->getPopulation() / 3;
+								iValue += pLoopCity->isOccupation() ? 8 : 0;
+								iValue -= iPathTurns;
+								// K-Mod end
+
+								if (iValue > iBestValue)
+								{
+									iBestValue = iValue;
+									pBestPlot = getPathEndTurnPlot();
+									pBestGuardPlot = pLoopCity->plot();
 								}
 							}
 						}
