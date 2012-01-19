@@ -3071,7 +3071,7 @@ void CvUnitAI::AI_attackCityMove()
 				// K-Mod end
 
 				//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
-				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster))
+				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 3, true, false, bIgnoreFaster, false, false))
 				{
 					return;
 				}
@@ -3145,13 +3145,6 @@ void CvUnitAI::AI_attackCityMove()
 					{
 						return;
 					}
-				}
-
-				// If not strong enough alone, merge if another stack is nearby
-				//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
-				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 2, true, false, bIgnoreFaster, false, false))
-				{
-					return;
 				}
 				// K-Mod end
 			}
@@ -24857,7 +24850,8 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 		iPercentDefensive = 100 * iDefCount / getGroup()->getNumUnits();
 	}
 
-	CvPlot* pBestPlot = NULL;
+	CvPlot* pBestPlot = 0;
+	CvPlot* pEndTurnPlot = 0;
 	int iBestValue = 0;
 	for (int iX = -iRange; iX <= iRange; iX++)
 	{
@@ -24905,7 +24899,8 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 
 						if (iValue > iBestValue)
 						{
-							pBestPlot = getPathEndTurnPlot();
+							pBestPlot = pLoopPlot;
+							pEndTurnPlot = getPathEndTurnPlot();
 							iBestValue = iValue;
 						}
 					}
@@ -24913,26 +24908,23 @@ bool CvUnitAI::AI_choke(int iRange, bool bDefensive, int iFlags)
 			}
 		}
 	}
-	if (pBestPlot != NULL)
+	if (pBestPlot)
 	{
 		FAssert(pBestPlot->getWorkingCity());
 		CvPlot* pChokedCityPlot = pBestPlot->getWorkingCity()->plot();
 		if (atPlot(pBestPlot))
 		{
-			/* original BBAI code
-			if(canPillage(plot())) getGroup()->pushMission(MISSION_PILLAGE);
-			getGroup()->pushMission(MISSION_SKIP); */
-			// K-Mod
+			FAssert(atPlot(pEndTurnPlot));
 			if (canPillage(plot()))
 				getGroup()->pushMission(MISSION_PILLAGE, -1, -1, iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
 			else
 				getGroup()->pushMission(MISSION_SKIP, -1, -1, iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
-			// K-Mod end
 			return true;
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX(), pBestPlot->getY(), iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
+			FAssert(!atPlot(pEndTurnPlot));
+			getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX(), pEndTurnPlot->getY(), iFlags, false, false, MISSIONAI_CHOKE, pChokedCityPlot);
 			return true;
 		}
 	}

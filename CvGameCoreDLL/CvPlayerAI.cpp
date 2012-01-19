@@ -14793,10 +14793,15 @@ void CvPlayerAI::AI_doMilitary()
 				CvUnit* pDisbandUnit = getUnit(unit_values[iDisbandCount].second);
 				FAssert(pDisbandUnit);
 				if (gUnitLogLevel > 2)
-					logBBAI("    %S scraps %S, at (%d, %d), with value %d, due to financial trouble.", getCivilizationDescription(0), pLoopUnit->getName(0).GetCString(), pDisbandUnit->getX_INLINE(), pDisbandUnit->getY_INLINE(), unit_values[iDisbandCount].first);
+				{
+					CvWString aiTypeString;
+					getUnitAIString(aiTypeString, pDisbandUnit->AI_getUnitAIType());
+					logBBAI("    %S scraps '%S' %S, at (%d, %d), with value %d, due to financial trouble.", getCivilizationDescription(0), aiTypeString.GetCString(), pDisbandUnit->getName(0).GetCString(), pDisbandUnit->getX_INLINE(), pDisbandUnit->getY_INLINE(), unit_values[iDisbandCount].first);
+				}
 
 				pDisbandUnit->scrap();
 				pDisbandUnit->doDelayedDeath();
+				iDisbandCount++;
 
 				iCost = AI_unitCostPerMil();
 			} while (iCost > 0 && (iCost > iMaxCost || calculateGoldRate() < 0) && AI_isFinancialTrouble());
