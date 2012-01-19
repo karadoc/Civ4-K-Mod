@@ -15352,33 +15352,39 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									iValue /= 50;
 								}
 
-								// boost value if we can see that the city is poorly defended.
+								// boost value if we can see that the city is poorly defended, or if our existing armies need help there
 								if (pLoopCity->isVisible(getTeam(), false) && iPathTurns < 6)
 								{
 									FAssert(iEnemyDefence != -1);
-									if (iTotalOffence > iEnemyDefence)
+									if (iOffenceEnRoute > iEnemyDefence/3 && iOffenceEnRoute < iEnemyDefence)
+									{
+										iValue *= 100 + (9 * iTotalOffence > 10 * iEnemyDefence ? 30 : 15);
+										iValue /= 100;
+									}
+									else if (iOurOffence > iEnemyDefence)
 									{
 										// dont' boost it by too much, otherwise human players will exploit us. :(
 										int iCap = 100 + 100 * (6 - iPathTurns) / 5;
-										iValue *= std::min(iCap, 100 * iTotalOffence / std::max(1, iEnemyDefence));
+										iValue *= std::min(iCap, 100 * iOurOffence / std::max(1, iEnemyDefence));
 										iValue /= 100;
 									}
 								}
 								// Reduce the value if we can see, or remember, that the city is well defended.
 								// Note. This adjustment can be more heavy handed because it is harder to feign strong defence than weak defence.
-								// However, I want to err on the side of _not_ being deterred by strong defences unless the defences.
 								iEnemyDefence = GET_TEAM(getTeam()).AI_getStrengthMemory(pLoopCity->plot());
 								if (iEnemyDefence > iTotalOffence)
 								{
 									// a more sensitive adjustment than usual (w/ modifier on the denominator), so as not to be too deterred before bombarding.
-									iEnemyDefence *= 100;
-									iEnemyDefence /= 100 + (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
+									iEnemyDefence *= 130;
+									iEnemyDefence /= 130 + (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
 									WarPlanTypes eWarPlan = GET_TEAM(kOwner.getTeam()).AI_getWarPlan(pLoopCity->getTeam());
 									bool bCherryPick = eWarPlan == WARPLAN_LIMITED || eWarPlan == WARPLAN_PREPARING_LIMITED || eWarPlan == WARPLAN_DOGPILE;
 									int iBase = bCherryPick ? 100 : 110;
 									if (100 * iEnemyDefence > iBase * iTotalOffence) // an uneven comparison, just in case we can get some air support or other help somehow.
 									{
-										iValue *= std::max(bCherryPick ? 20 : 33, iBase * iTotalOffence / iEnemyDefence);
+										iValue *= bCherryPick
+											? std::max(20, (3 * iBase * iTotalOffence - iEnemyDefence) / (2*iEnemyDefence))
+											: std::max(33, iBase * iTotalOffence / iEnemyDefence);
 										iValue /= 100;
 									}
 								}
