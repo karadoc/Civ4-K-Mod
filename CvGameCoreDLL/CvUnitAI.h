@@ -132,6 +132,7 @@ protected:
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 	bool AI_guardCityBestDefender();
+	bool AI_guardCityOnlyDefender(); // K-Mod
 	bool AI_guardCityMinDefender(bool bSearch = true);
 	bool AI_guardCity(bool bLeave = false, bool bSearch = false, int iMaxPath = MAX_INT, int iFlags = 0);
 	bool AI_guardCityAirlift();

@@ -11796,12 +11796,16 @@ int CvPlayerAI::AI_unitCostPerMil() const
 	// If iUnitCostPercentage is calculated as above, decreasing maintenance will actually decrease the max units.
 	// If a builds a courthouse or switches to state property, it would then think it needs to get rid of units!
 	// It makes no sense, and civs with a surplus of cash still won't want to build units. So lets try it another way...
+	int iUnitCost = calculateUnitCost();
+	if (iUnitCost <= getNumCities()/2) // cf with the final line
+		return 0;
+
 	int iTotalRaw = calculateTotalYield(YIELD_COMMERCE);
 
 	int iFunds = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
 	iFunds += getGoldPerTurn() - calculateInflatedCosts();
 	iFunds += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
-	return std::max(0, calculateUnitCost()-getNumCities()/2) * 1000 / std::max(1, iFunds); // # cities is there to offset early-game distortion.
+	return std::max(0, iUnitCost-getNumCities()/2) * 1000 / std::max(1, iFunds); // # cities is there to offset early-game distortion.
 }
 
 // This function gives an approximate / recommended maximum on our unit spending. Note though that it isn't a hard cap.
@@ -14749,6 +14753,7 @@ void CvPlayerAI::AI_doCounter()
 
 void CvPlayerAI::AI_doMilitary()
 {
+	/* original bts code
 	if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) == 0)
 	{
 		while (AI_isFinancialTrouble() && (calculateUnitCost() > 0))
@@ -14758,9 +14763,19 @@ void CvPlayerAI::AI_doMilitary()
 				break;
 			}
 		}
+	} */
+	// K-Mod. (a bit slower, but better - I think.)
+	if (!isAnarchy() && AI_isFinancialTrouble() && GET_TEAM(getTeam()).AI_getWarSuccessCapitulationRatio() > -50)
+	{
+		while (AI_unitCostPerMil() > AI_maxUnitCostPerMil() || calculateGoldRate() < 0)
+		{
+			if (!AI_disbandUnit(5, false) || !AI_isFinancialTrouble())
+			{
+				break;
+			}
+		}
 	}
-	
-	
+	// K-Mod end
 
 	AI_setAttackOddsChange(GC.getLeaderHeadInfo(getPersonalityType()).getBaseAttackOddsChange() +
 		GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getAttackOddsChangeRand(), "AI Attack Odds Change #1") +

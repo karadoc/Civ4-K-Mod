@@ -4032,23 +4032,19 @@ void CvUnitAI::AI_pillageMove()
 void CvUnitAI::AI_reserveMove()
 {
 	PROFILE_FUNC();
-	
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-	//bool bDanger = (GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 3) > 0);
+
+	// K-Mod
+	if (AI_guardCityOnlyDefender())
+		return;
+	// K-Mod end
+
 	bool bDanger = (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3));
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	if (bDanger && AI_leaveAttack(2, 55, 130))
 	{
 		return;
 	}
-	
+
 	if (plot()->getOwnerINLINE() == getOwnerINLINE())
 	{
 		if (AI_load(UNITAI_SETTLER_SEA, MISSIONAI_LOAD_SETTLER, UNITAI_SETTLE, -1, -1, 1, -1, MOVE_SAFE_TERRITORY))
@@ -4069,12 +4065,12 @@ void CvUnitAI::AI_reserveMove()
 			return;
 		}
 	}
-	
+
 	if (AI_guardCity(true))
 	{
 		return;
 	}
-	
+
 	if (!noDefensiveBonus())
 	{
 		if (AI_guardFort(false))
@@ -4082,7 +4078,7 @@ void CvUnitAI::AI_reserveMove()
 			return;
 		}
 	}
-		
+
 	if (AI_guardCityAirlift())
 	{
 		return;
@@ -4092,19 +4088,19 @@ void CvUnitAI::AI_reserveMove()
 	{
 		return;
 	}
-	
+
 	if (AI_guardCitySite())
 	{
 		return;
 	}
-	
+
 	if (!noDefensiveBonus())
 	{
 		if (AI_guardFort(true))
 		{
 			return;
 		}
-		
+
 		if (AI_guardBonus(15))
 		{
 			return;
@@ -11460,10 +11456,28 @@ bool CvUnitAI::AI_guardCityBestDefender()
 	return false;
 }
 
+// K-Mod
+bool CvUnitAI::AI_guardCityOnlyDefender()
+{
+	FAssert(getGroup()->getNumUnits() == 1);
+
+	CvCity* pPlotCity = plot()->getPlotCity();
+	if (pPlotCity && pPlotCity->getOwnerINLINE() == getOwnerINLINE())
+	{
+		if (plot()->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_CITY, -1, getOwnerINLINE()) <= (getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY ? 1 : 0))
+		{
+			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, noDefensiveBonus() ? NO_MISSIONAI : MISSIONAI_GUARD_CITY, 0);
+			return true;
+		}
+	}
+	return false;
+}
+// K-Mod end
+
 bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 {
 	PROFILE_FUNC();
-	
+
 	CvCity* pPlotCity = plot()->getPlotCity();
 	if ((pPlotCity != NULL) && (pPlotCity->getOwnerINLINE() == getOwnerINLINE()))
 	{
@@ -11478,7 +11492,7 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 			}
 		}
 	}
-	
+
 	if (bSearch)
 	{
 		int iBestValue = 0;
