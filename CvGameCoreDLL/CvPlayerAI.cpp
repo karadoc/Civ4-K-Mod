@@ -14764,15 +14764,42 @@ void CvPlayerAI::AI_doMilitary()
 			}
 		}
 	} */
-	// K-Mod. (a bit slower, but better - I think.)
-	if (!isAnarchy() && AI_isFinancialTrouble() && GET_TEAM(getTeam()).AI_getWarSuccessRating() > -50)
+	// K-Mod
+	PROFILE_FUNC();
+
+	if (!isAnarchy() && AI_isFinancialTrouble() && GET_TEAM(getTeam()).AI_getWarSuccessRating() > -30)
 	{
-		while (AI_unitCostPerMil() > AI_maxUnitCostPerMil() || calculateGoldRate() < 0)
+		int iCost = AI_unitCostPerMil();
+		const int iMaxCost = AI_maxUnitCostPerMil();
+
+		if (iCost > 0 && (iCost > iMaxCost || calculateGoldRate() < 0))
 		{
-			if (!AI_disbandUnit(5, false) || !AI_isFinancialTrouble())
+			std::vector<std::pair<int, int> > unit_values; // <value, id>
+			int iLoop;
+			for (CvUnit* pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 			{
-				break;
+				int iValue = AI_disbandValue(pLoopUnit);
+				if (iValue < MAX_INT)
+					unit_values.push_back(std::make_pair(iValue, pLoopUnit->getID()));
 			}
+			std::sort(unit_values.begin(), unit_values.end());
+
+			size_t iDisbandCount = 0;
+			do
+			{
+				if (unit_values.size() <= iDisbandCount)
+					break;
+
+				CvUnit* pDisbandUnit = getUnit(unit_values[iDisbandCount].second);
+				FAssert(pDisbandUnit);
+				if (gUnitLogLevel > 2)
+					logBBAI("    %S scraps %S, at (%d, %d), with value %d, due to financial trouble.", getCivilizationDescription(0), pLoopUnit->getName(0).GetCString(), pDisbandUnit->getX_INLINE(), pDisbandUnit->getY_INLINE(), unit_values[iDisbandCount].first);
+
+				pDisbandUnit->scrap();
+				pDisbandUnit->doDelayedDeath();
+
+				iCost = AI_unitCostPerMil();
+			} while (iCost > 0 && (iCost > iMaxCost || calculateGoldRate() < 0) && AI_isFinancialTrouble());
 		}
 	}
 	// K-Mod end
@@ -18100,235 +18127,9 @@ void CvPlayerAI::AI_doCheckFinancialTrouble()
 	}
 }
 
-bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
-{
-	CvUnit* pLoopUnit;
-	CvUnit* pBestUnit;
-	int iValue;
-	int iBestValue;
-	int iLoop;
+// bool CvPlayerAI::AI_disbandUnit(int iExpThreshold, bool bObsolete)
+// K-Mod, deleted this function.
 
-	iBestValue = MAX_INT;
-	pBestUnit = NULL;
-
-	for(pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
-	{
-		if (!(pLoopUnit->hasCargo()))
-		{
-			if (!(pLoopUnit->isGoldenAge()))
-			{
-				if (pLoopUnit->getUnitInfo().getProductionCost() > 0)
-				{
-					if ((iExpThreshold == -1) || (pLoopUnit->canFight() && pLoopUnit->getExperience() <= iExpThreshold))
-					{
-						if (!(pLoopUnit->isMilitaryHappiness()) || !(pLoopUnit->plot()->isCity()) || (pLoopUnit->plot()->plotCount(PUF_isMilitaryHappiness, -1, -1, getID()) > 2))
-						{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/12/10                                jdog5000      */
-/*                                                                                              */
-/* Gold AI                                                                                      */
-/************************************************************************************************/
-							iValue = (10000 + GC.getGameINLINE().getSorenRandNum(1000, "Disband Unit"));
-
-							iValue *= 100 + (pLoopUnit->getUnitInfo().getProductionCost() * 3);
-							iValue /= 100;
-
-							iValue *= 100 + (pLoopUnit->getExperience() * 10);
-							iValue /= 100;
-							
-							iValue *= 100 + (pLoopUnit->getLevel() * 25);
-							iValue /= 100;
-
-							if (pLoopUnit->plot()->getTeam() == pLoopUnit->getTeam())
-							{
-								iValue *= 3;
-
-								if (pLoopUnit->canDefend() && pLoopUnit->plot()->isCity())
-								{
-									iValue *= 2;
-								}
-							}
-
-							// Multiplying by higher number means unit has higher priority, less likely to be disbanded
-							switch (pLoopUnit->AI_getUnitAIType())
-							{
-							case UNITAI_UNKNOWN:
-							case UNITAI_ANIMAL:
-								break;
-
-							case UNITAI_SETTLE:
-								iValue *= 20;
-								break;
-
-							case UNITAI_WORKER:
-								/* original bts code
-								if ((GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated()) > 10)
-								{
-									if (pLoopUnit->plot()->isCity())
-									{
-										if (pLoopUnit->plot()->getPlotCity()->AI_getWorkersNeeded() == 0)
-										{
-											iValue *= 10;
-										}
-									}
-								} */
-								// K-Mod. The original code seems to be backwards...
-								if (GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated() <= 10 ||
-									!pLoopUnit->plot()->isCity() ||
-									pLoopUnit->plot()->getPlotCity()->AI_getWorkersNeeded() > 0)
-								{
-									iValue *= 10;
-								}
-								// K-Mod end
-								break;
-
-							case UNITAI_ATTACK:
-							case UNITAI_ATTACK_CITY:
-							case UNITAI_COLLATERAL:
-							case UNITAI_PILLAGE:
-							case UNITAI_RESERVE:
-							case UNITAI_COUNTER:
-								iValue *= 2;
-								break;
-
-							case UNITAI_CITY_DEFENSE:
-							case UNITAI_CITY_COUNTER:
-							case UNITAI_CITY_SPECIAL:
-							case UNITAI_PARADROP:
-								iValue *= 6;
-								break;
-
-							case UNITAI_EXPLORE:
-								if ((GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated()) < 10 
-									|| pLoopUnit->plot()->getTeam() != getTeam())
-								{
-									iValue *= 15;
-								}
-								else
-								{
-									iValue *= 2;
-								}
-								break;
-
-							case UNITAI_MISSIONARY:
-								if ((GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated()) < 10 
-									|| pLoopUnit->plot()->getTeam() != getTeam())
-								{
-									iValue *= 8;
-								}
-								break;
-
-							case UNITAI_PROPHET:
-							case UNITAI_ARTIST:
-							case UNITAI_SCIENTIST:
-							case UNITAI_GENERAL:
-							case UNITAI_MERCHANT:
-							case UNITAI_ENGINEER:
-							case UNITAI_GREAT_SPY: // K-Mod
-								iValue *= 20;
-								break;
-
-							case UNITAI_SPY:
-								iValue *= 12;
-								break;
-
-							case UNITAI_ICBM:
-								iValue *= 4;
-								break;
-
-							case UNITAI_WORKER_SEA:
-								iValue *= 18;
-								break;
-
-							case UNITAI_ATTACK_SEA:
-							case UNITAI_RESERVE_SEA:
-							case UNITAI_ESCORT_SEA:
-								break;
-
-							case UNITAI_EXPLORE_SEA:
-								if ((GC.getGame().getGameTurn() - pLoopUnit->getGameTurnCreated()) < 10 
-									|| pLoopUnit->plot()->getTeam() != getTeam())
-								{
-									iValue *= 12;
-								}
-								break;
-
-							case UNITAI_SETTLER_SEA:
-								iValue *= 6;
-
-							case UNITAI_MISSIONARY_SEA:
-							case UNITAI_SPY_SEA:
-								iValue *= 4;
-
-							case UNITAI_ASSAULT_SEA:
-							case UNITAI_CARRIER_SEA:
-							case UNITAI_MISSILE_CARRIER_SEA:
-								if( GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 )
-								{
-									iValue *= 5;
-								}
-								else
-								{
-									iValue *= 2;
-								}
-								break;
-
-							case UNITAI_PIRATE_SEA:
-							case UNITAI_ATTACK_AIR:
-								break;
-
-							case UNITAI_DEFENSE_AIR:
-							case UNITAI_CARRIER_AIR:
-							case UNITAI_MISSILE_AIR:
-								if( GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0 )
-								{
-									iValue *= 5;
-								}
-								else
-								{
-									iValue *= 3;
-								}
-								break;
-
-							default:
-								FAssert(false);
-								break;
-							}
-
-							if (pLoopUnit->getUnitInfo().getExtraCost() > 0)
-							{
-								iValue /= (pLoopUnit->getUnitInfo().getExtraCost() + 1);
-							}
-
-							if (iValue < iBestValue)
-							{
-								iBestValue = iValue;
-								pBestUnit = pLoopUnit;
-							}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (pBestUnit != NULL)
-	{
-		if( gPlayerLogLevel >= 2 )
-		{
-			CvWString szString;
-			getUnitAIString(szString, pBestUnit->AI_getUnitAIType());
-
-			logBBAI("    Player %d (%S) disbanding %S with UNITAI %S to save cash", getID(), getCivilizationDescription(0), pBestUnit->getName().GetCString(), szString.GetCString());
-		}
-		pBestUnit->kill(false);
-		return true;
-	}
-	return false;
-}
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/25/10                                jdog5000      */
@@ -22730,7 +22531,6 @@ void CvPlayerAI::AI_updateBonusValue(BonusTypes eBonus)
     m_aiBonusValue[eBonus] = -1;
 }
 
-
 void CvPlayerAI::AI_updateBonusValue()
 {
 	PROFILE_FUNC();
@@ -22938,6 +22738,174 @@ int CvPlayerAI::AI_calculateUnitAIViability(UnitAITypes eUnitAI, DomainTypes eDo
 	
 	return (100 * iBestUnitAIStrength) / std::max(1, iBestOtherStrength);
 }
+
+// K-Mod. Units with the lowest "disband value" will be disbanded first.
+// (this code is based on the old code from CvPlayerAI::AI_disbandUnit)
+int CvPlayerAI::AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly) const
+{
+	if (pUnit->hasCargo() || pUnit->isGoldenAge() || pUnit->getUnitInfo().getProductionCost() < 0 || (bMilitaryOnly && !pUnit->canFight()))
+		return MAX_INT;
+
+	if (pUnit->isMilitaryHappiness() && pUnit->plot()->isCity() && pUnit->plot()->plotCount(PUF_isMilitaryHappiness, -1, -1, getID()) > 2)
+		return MAX_INT;
+
+	int iValue = 1000 + GC.getGameINLINE().getSorenRandNum(200, "Disband Value");
+
+	iValue *= 100 + (pUnit->getUnitInfo().getProductionCost() * 3);
+	iValue /= 100;
+
+	iValue *= 100 + std::max(pUnit->getExperience(), pUnit->getLevel() * pUnit->getLevel() * 2 / 3) * 15;
+	iValue /= 100;
+
+	/*if (plot()->getTeam() == getTeam())
+	{
+		iValue *= 2;
+
+		if (canDefend() && plot()->isCity())
+		{
+			iValue *= 2;
+		}
+	}*/
+	if (pUnit->getGroup()->isStranded())
+		iValue /= 2;
+
+	// Multiplying by higher number means unit has higher priority, less likely to be disbanded
+	switch (pUnit->AI_getUnitAIType())
+	{
+	case UNITAI_UNKNOWN:
+	case UNITAI_ANIMAL:
+		break;
+
+	case UNITAI_SETTLE:
+		iValue *= 20;
+		break;
+
+	case UNITAI_WORKER:
+		if (GC.getGame().getGameTurn() - pUnit->getGameTurnCreated() <= 10 ||
+			!pUnit->plot()->isCity() ||
+			pUnit->plot()->getPlotCity()->AI_getWorkersNeeded() > 0)
+		{
+			iValue *= 10;
+		}
+		break;
+
+	case UNITAI_ATTACK:
+	case UNITAI_ATTACK_CITY:
+	case UNITAI_COLLATERAL:
+	case UNITAI_PILLAGE:
+	case UNITAI_RESERVE:
+	case UNITAI_COUNTER:
+		iValue *= 2;
+		break;
+
+	case UNITAI_CITY_DEFENSE:
+	case UNITAI_CITY_COUNTER:
+	case UNITAI_CITY_SPECIAL:
+	case UNITAI_PARADROP:
+		iValue *= 6;
+		break;
+
+	case UNITAI_EXPLORE:
+		if (GC.getGame().getGameTurn() - pUnit->getGameTurnCreated() < 20)
+			iValue *= 2;
+		if (pUnit->plot()->getTeam() != getTeam())
+			iValue *= 2;
+		break;
+
+	case UNITAI_MISSIONARY:
+		if (GC.getGame().getGameTurn() - pUnit->getGameTurnCreated() < 10
+			|| pUnit->plot()->getTeam() != getTeam())
+		{
+			iValue *= 8;
+		}
+		break;
+
+	case UNITAI_PROPHET:
+	case UNITAI_ARTIST:
+	case UNITAI_SCIENTIST:
+	case UNITAI_GENERAL:
+	case UNITAI_MERCHANT:
+	case UNITAI_ENGINEER:
+	case UNITAI_GREAT_SPY:
+		iValue *= 20;
+		break;
+
+	case UNITAI_SPY:
+		iValue *= 10;
+		break;
+
+	case UNITAI_ICBM:
+		iValue *= 5;
+		break;
+
+	case UNITAI_WORKER_SEA:
+		iValue *= 18;
+		break;
+
+	case UNITAI_ATTACK_SEA:
+	case UNITAI_RESERVE_SEA:
+	case UNITAI_ESCORT_SEA:
+		break;
+
+	case UNITAI_EXPLORE_SEA:
+		if (GC.getGame().getGameTurn() - pUnit->getGameTurnCreated() < 20)
+			iValue *= 3;
+		if (pUnit->plot()->getTeam() != getTeam())
+			iValue *= 3;
+		break;
+
+	case UNITAI_SETTLER_SEA:
+		iValue *= 6;
+		break;
+
+	case UNITAI_MISSIONARY_SEA:
+	case UNITAI_SPY_SEA:
+		iValue *= 4;
+		break;
+
+	case UNITAI_ASSAULT_SEA:
+	case UNITAI_CARRIER_SEA:
+	case UNITAI_MISSILE_CARRIER_SEA:
+		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
+		{
+			iValue *= 5;
+		}
+		else
+		{
+			iValue *= 2;
+		}
+		break;
+
+	case UNITAI_PIRATE_SEA:
+	case UNITAI_ATTACK_AIR:
+		break;
+
+	case UNITAI_DEFENSE_AIR:
+	case UNITAI_CARRIER_AIR:
+	case UNITAI_MISSILE_AIR:
+		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
+		{
+			iValue *= 5;
+		}
+		else
+		{
+			iValue *= 3;
+		}
+		break;
+
+	default:
+		FAssert(false);
+		break;
+	}
+
+	if (pUnit->getUnitInfo().getExtraCost() > 0)
+	{
+		iValue /= pUnit->getUnitInfo().getExtraCost() + 1;
+	}
+
+	return iValue;
+}
+// K-Mod end
 
 ReligionTypes CvPlayerAI::AI_chooseReligion()
 {

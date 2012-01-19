@@ -25186,7 +25186,6 @@ bool CvUnitAI::AI_allowGroup(const CvUnit* pUnit, UnitAITypes eUnitAI) const
 	return true;
 }
 
-
 void CvUnitAI::read(FDataStreamBase* pStream)
 {
 	CvUnit::read(pStream);

@@ -20,12 +20,12 @@ public:
 
   // inlined for performance reasons
 #ifdef _USRDLL
-  static CvPlayerAI& getPlayer(PlayerTypes ePlayer) 
-  {
-	  FAssertMsg(ePlayer != NO_PLAYER, "Player is not assigned a valid value");
-	  FAssertMsg(ePlayer < MAX_PLAYERS, "Player is not assigned a valid value");
-	  return m_aPlayers[ePlayer]; 
-  }
+	static CvPlayerAI& getPlayer(PlayerTypes ePlayer)
+	{
+		FAssertMsg(ePlayer != NO_PLAYER, "Player is not assigned a valid value");
+		FAssertMsg(ePlayer < MAX_PLAYERS, "Player is not assigned a valid value");
+		return m_aPlayers[ePlayer];
+	}
 #endif
 	DllExport static CvPlayerAI& getPlayerNonInl(PlayerTypes ePlayer);
 
@@ -136,7 +136,7 @@ public:
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 	int AI_cultureVictoryTechValue(TechTypes eTech) const;
-	
+
 	void AI_chooseFreeTech();
 	void AI_chooseResearch();
 
@@ -213,12 +213,12 @@ public:
 	int AI_neededExecutives(CvArea* pArea, CorporationTypes eCorporation) const;
 	int AI_unitCostPerMil() const; // K-Mod
 	int AI_maxUnitCostPerMil(CvArea* pArea = 0, int iBuildProb = -1) const; // K-Mod
-	
+
 	int AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, PlayerTypes* peBestPlayer = NULL) const;
 	int AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer = NULL, bool bSpreadOnly = false) const;
-	
+
 	int AI_corporationValue(CorporationTypes eCorporation, const CvCity* pCity = NULL) const;
-	
+
 	int AI_adjacentPotentialAttackers(CvPlot* pPlot, bool bTestCanMove = false) const;
 	int AI_totalMissionAIs(MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup = NULL) const;
 	int AI_areaMissionAIs(CvArea* pArea, MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup = NULL) const;
@@ -347,7 +347,7 @@ public:
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/		
-	
+
 	bool AI_isDoStrategy(int iStrategy) const;
 	//void AI_forceUpdateStrategies(); // obsolete function from Original BtS
 
@@ -355,12 +355,12 @@ public:
 	int AI_getGreatPersonWeight(UnitClassTypes eGreatPerson) const; // K-Mod
 
 	void AI_nowHasTech(TechTypes eTech);
-	
-    int AI_countDeadlockedBonuses(CvPlot* pPlot) const;
-    
-    /* original bts code
+
+	int AI_countDeadlockedBonuses(CvPlot* pPlot) const;
+
+	/* original bts code
 	int AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const;
-    int AI_getEnemyPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const; */
+	int AI_getEnemyPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const; */
 	// The above two functions have been disabled by K-Mod. They are no longer used - to reduce code duplication.
 
 	//int AI_goldToUpgradeAllUnits(int iExpThreshold = 0) const;
@@ -370,19 +370,19 @@ public:
 	// K-Mod end
 
 	int AI_goldTradeValuePercent() const;
-	
+
 	int AI_averageYieldMultiplier(YieldTypes eYield) const;
 	int AI_averageCommerceMultiplier(CommerceTypes eCommerce) const;
 	int AI_averageGreatPeopleMultiplier() const;
 	int AI_averageCulturePressure() const; // K-Mod
 	int AI_averageCommerceExchange(CommerceTypes eCommerce) const;
-	
+
 	int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance) const;
-	
+
 	int AI_getTotalCityThreat() const;
 	int AI_getTotalFloatingDefenseNeeded() const;
-	
-	
+
+
 	int AI_getTotalAreaCityThreat(CvArea* pArea) const;
 	int AI_countNumAreaHostileUnits(CvArea* pArea, bool bPlayer, bool bTeam, bool bNeutral, bool bHostile) const;
 	int AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const;
@@ -391,24 +391,24 @@ public:
 	RouteTypes AI_bestAdvancedStartRoute(CvPlot* pPlot, int* piYieldValue = NULL) const;
 	UnitTypes AI_bestAdvancedStartUnitAI(CvPlot* pPlot, UnitAITypes eUnitAI) const;
 	CvPlot* AI_advancedStartFindCapitalPlot();
-	
+
 	bool AI_advancedStartPlaceExploreUnits(bool bLand);
 	void AI_advancedStartRevealRadius(CvPlot* pPlot, int iRadius);
 	bool AI_advancedStartPlaceCity(CvPlot* pPlot);
 	bool AI_advancedStartDoRoute(CvPlot* pFromPlot, CvPlot* pToPlot);
 	void AI_advancedStartRouteTerritory();
 	void AI_doAdvancedStart(bool bNoExit = false);
-	
+
 	int AI_getMinFoundValue() const;
-	
+
 	void AI_recalculateFoundValues(int iX, int iY, int iInnerRadius, int iOuterRadius) const;
-	
+
 	void AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites);
 	void AI_invalidateCitySites(int iMinFoundValueThreshold);
 	bool AI_isPlotCitySite(CvPlot* pPlot) const;
 	int AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const;
 	int AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeArea, int& iBestValue) const;
-	
+
 	int AI_getNumCitySites() const;
 	CvPlot* AI_getCitySite(int iIndex) const;
 
@@ -416,20 +416,22 @@ public:
 
 	int AI_bestAreaUnitAIValue(UnitAITypes eUnitAI, CvArea* pArea, UnitTypes* peBestUnitType = NULL) const;
 	int AI_bestCityUnitAIValue(UnitAITypes eUnitAI, CvCity* pCity, UnitTypes* peBestUnitType = NULL) const;
-	
+
 	int AI_calculateTotalBombard(DomainTypes eDomain) const;
-	
+
+	void AI_updateBonusValue(BonusTypes eBonus);
+	void AI_updateBonusValue();
+
 	int AI_getUnitClassWeight(UnitClassTypes eUnitClass) const;
 	int AI_getUnitCombatWeight(UnitCombatTypes eUnitCombat) const;
 	int AI_calculateUnitAIViability(UnitAITypes eUnitAI, DomainTypes eDomain) const;
-	
-	void AI_updateBonusValue();
-	void AI_updateBonusValue(BonusTypes eBonus);
-	
+
+	int AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly = true) const; // K-Mod
+
 	int AI_getAttitudeWeight(PlayerTypes ePlayer) const;
 
 	ReligionTypes AI_chooseReligion();
-	
+
 	int AI_getPlotAirbaseValue(CvPlot* pPlot) const;
 	int AI_getPlotCanalValue(CvPlot* pPlot) const;
 
@@ -465,19 +467,19 @@ protected:
 	int m_iCivicTimer;
 	int m_iReligionTimer;
 	int m_iExtraGoldTarget;
-	
+
 	/* original bts code
 	mutable int m_iStrategyHash;
 	mutable int m_iStrategyHashCacheTurn;
 
 	mutable int m_iAveragesCacheTurn;
-	
+
 	mutable int m_iAverageGreatPeopleMultiplier;
-	
+
 	mutable int *m_aiAverageYieldMultiplier;
 	mutable int *m_aiAverageCommerceMultiplier;
 	mutable int *m_aiAverageCommerceExchange;
-	
+
 	mutable int m_iUpgradeUnitsCacheTurn;
 	mutable int m_iUpgradeUnitsCachedExpThreshold;
 	mutable int m_iUpgradeUnitsCachedGold; */
@@ -499,7 +501,7 @@ protected:
 
 	int m_iUpgradeUnitsCachedGold; 
 	// K-Mod end
-	
+
 	int *m_aiNumTrainAIUnits;
 	int *m_aiNumAIUnits;
 	int* m_aiSameReligionCounter;
@@ -533,9 +535,9 @@ protected:
 
 	int** m_aaiContactTimer;
 	int** m_aaiMemoryCount;
-	
+
 	std::vector<int> m_aiAICitySites;
-	
+
 	bool m_bWasFinancialTrouble;
 	int m_iTurnLastProductionDirty;
 
@@ -547,23 +549,21 @@ protected:
 	void AI_doDiplo();
 	void AI_doSplit();
 	void AI_doCheckFinancialTrouble();
-	
-	bool AI_disbandUnit(int iExpThreshold, bool bObsolete);
 
 	// K-Mod. I've moved the bulk of AI_getStrategyHash into a new function: AI_updateStrategyHash.
 	inline int AI_getStrategyHash() const { return m_iStrategyHash; }
 	void AI_updateStrategyHash();
 	void AI_calculateAverages();
-	
+
 	int AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent=false) const;
 	int AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent=false) const;
-	
+
 	void AI_convertUnitAITypesForCrush();
 	int AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTriggeredData) const;
-		
+
 	void AI_doEnemyUnitData();
 	void AI_invalidateCloseBordersAttitudeCache();
-	
+
 	friend class CvGameTextMgr;
 };
 
