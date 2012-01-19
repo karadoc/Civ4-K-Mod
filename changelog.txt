@@ -1,5 +1,28 @@
-This is K-Mod version 1.14.
+This is K-Mod version 1.15.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.15 changelist
+
++ Teams are now allowed to capitulate even when it would result in a violation of their peace treaties. (This is similar to how defensive pacts can cause teams to violate peace treaties. Note: this change does not apply to voluntary vassals.)
++ "No culture flipping after conquest" now prevents cities from flipping back to the /team/ of the previous owner, rather than just the previous owner themself.
++ Units bumped out of closed borders will now stay in their groups when possible. (This will help the AI to recover when it botches its invasion approach path. The AI can still screw up, but this change will make it less bad.)
++ The field-of-view BUG setting will now still apply after the adjustment slider is turned off. (So you can activate the slider, set it how you like it, and then hide the slider without losing your settings.)
++ Made a minor adjustment to how Rapid Unit Cycling works after automated moves.
++ Made several minor efficiency improvements.
+
+AI
+
++ Rewrote the AI's decision making process for disbanding units when in financial trouble; hopefully it will now be a bit faster and a bit smarter.
++ Made several improvements to the way the AI chooses target cities - it will now have slightly better coordination between stacks, and it will adjust its targets based on the type of war plan it is using.
++ Fixed a bug which caused the AI to sometimes forget that it could avoid a river when attacking a city.
++ Fixed a bug which sometimes prevented AI stacks from attacking cities guarded only by wounded defenders.
++ Made several changes to the AI's city attack behaviour (grouping, pillaging, attack threshold, etc)
++ Increased the AI's estimate of collateral damage when calculating attack strength.
++ Rewrote most of AI_choke, to correct several behavioural problems.
++ Adjusted the behaviour of UNITAI_COLLATERAL to be more willing to attack invading forces.
++ Fixed a problem in AI_guardCityMinDefender which sometimes caused the AI to reinforce defended cites while neglecting completely undefended cities.
++ Reserve units will no longer leave a city completely undefended.
 
 --
 v1.14 changelist
