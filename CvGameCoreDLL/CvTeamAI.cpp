@@ -1898,26 +1898,7 @@ DenialTypes CvTeamAI::AI_vassalTrade(TeamTypes eTeam) const
 		}
 	}
 
-	return AI_surrenderTrade(eTeam);
-}
-
-
-int CvTeamAI::AI_surrenderTradeVal(TeamTypes eTeam) const
-{
-	FAssertMsg(eTeam != getID(), "shouldn't call this function on ourselves");
-
-	return 0;
-}
-
-
-DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) const
-{
-	PROFILE_FUNC();
-
-	FAssertMsg(eTeam != getID(), "shouldn't call this function on ourselves");
-
-	CvTeam& kMasterTeam = GET_TEAM(eTeam);
-
+	// K-Mod. code moded from AI_surrenderTrade. (see the comments there)
 	for (int iLoopTeam = 0; iLoopTeam < MAX_TEAMS; iLoopTeam++)
 	{
 		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iLoopTeam);
@@ -1945,6 +1926,59 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 			}
 		}
 	}
+	// K-Mod end
+
+	return AI_surrenderTrade(eTeam);
+}
+
+
+int CvTeamAI::AI_surrenderTradeVal(TeamTypes eTeam) const
+{
+	FAssertMsg(eTeam != getID(), "shouldn't call this function on ourselves");
+
+	return 0;
+}
+
+
+DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) const
+{
+	PROFILE_FUNC();
+
+	FAssertMsg(eTeam != getID(), "shouldn't call this function on ourselves");
+
+	CvTeam& kMasterTeam = GET_TEAM(eTeam);
+
+	// K-Mod. I've disabled the denials for "war not possible" and "peace not possible".
+	// In K-Mod, surrendering overrules existing peace treaties - just like defensive pacts overrule peace treaties.
+	// However, for voluntary vassals, the treaties still apply. So I've moved the code to there.
+	/* original bts code
+	for (int iLoopTeam = 0; iLoopTeam < MAX_TEAMS; iLoopTeam++)
+	{
+		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iLoopTeam);
+		if (kLoopTeam.isAlive() && iLoopTeam != getID() && iLoopTeam != kMasterTeam.getID())
+		{
+			if (kLoopTeam.isAtWar(kMasterTeam.getID()) && !kLoopTeam.isAtWar(getID()))
+			{
+				if (isForcePeace((TeamTypes)iLoopTeam) || !canChangeWarPeace((TeamTypes)iLoopTeam))
+				{
+					if (!kLoopTeam.isAVassal())
+					{
+						return DENIAL_WAR_NOT_POSSIBLE_US;
+					}
+				}
+			}
+			else if (!kLoopTeam.isAtWar(kMasterTeam.getID()) && kLoopTeam.isAtWar(getID()))
+			{
+				if (!canChangeWarPeace((TeamTypes)iLoopTeam))
+				{
+					if (!kLoopTeam.isAVassal())
+					{
+						return DENIAL_PEACE_NOT_POSSIBLE_US;
+					}
+				}
+			}
+		}
+	} */
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      12/07/09                                jdog5000      */
