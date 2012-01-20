@@ -1567,7 +1567,21 @@ void CvSelectionGroup::continueMission(int iSteps)
 	{
 		if (getNumUnits() > 0)
 		{
-			if (canAllMove())
+			//if (canAllMove())
+			// K-Mod. We should allow an amphibious landing even if we are out of moves.
+			if (!canAllMove())
+			{
+				if (headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO)
+				{
+					if (groupAmphibMove(GC.getMapINLINE().plotINLINE(headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2), headMissionQueueNode()->m_data.iFlags))
+					{
+						bAction = false;
+						bDone = true;
+					}
+				}
+			}
+			else // canAllMove()
+			// K-Mod end
 			{
 				switch (headMissionQueueNode()->m_data.eMissionType)
 				{
@@ -5192,7 +5206,8 @@ void CvSelectionGroup::insertAtEndMissionQueue(MissionData mission, bool bStart)
 
 	m_missionQueue.insertAtEnd(mission);
 
-	if ((getLengthMissionQueue() == 1) && bStart)
+	//if ((getLengthMissionQueue() == 1) && bStart)
+	if (getLengthMissionQueue() == 1 && !isAutomated() && (bStart || !isHuman())) // K-Mod (testing.)
 	{
 		activateHeadMission();
 	}
