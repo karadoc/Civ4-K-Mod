@@ -11234,7 +11234,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 				return;
 			}
 		}
-		if (AI_chooseProcess(COMMERCE_CULTURE))
+		if (AI_countGoodTiles(true, true, 60) == 0 && AI_chooseProcess(COMMERCE_CULTURE))
 		{
 			return;
 		}
@@ -11283,6 +11283,14 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 					return;
 				}
 			}
+		}
+
+		// adjust iBestBuildValue for the remaining comparisons. (military and spies.)
+		if (GC.getNumEraInfos() > 1)
+		{
+			FAssert(kOwner.getCurrentEra() < GC.getNumEraInfos());
+			iBestBuildingValue *= 2*(GC.getNumEraInfos()-1) - kOwner.getCurrentEra();
+			iBestBuildingValue /= GC.getNumEraInfos()-1;
 		}
 
 		//military
@@ -11339,14 +11347,17 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 
 			if (iNumSpies < iNeededSpies)
 			{
-				int iOdds = 35;
-				iOdds *= (40 + iBestBuildingValue);
-				iOdds /= (20 + 3 * iBestBuildingValue);
-				iOdds *= iNeededSpies;
-				iOdds /= (4*iNumSpies+iNeededSpies);
-				if (AI_chooseUnit(UNITAI_SPY, iOdds))
+				int iOdds = 35 - iBestBuildingValue/3;
+				if (iOdds > 0)
 				{
-					return;
+					iOdds *= (40 + iBestBuildingValue);
+					iOdds /= (20 + 3 * iBestBuildingValue);
+					iOdds *= iNeededSpies;
+					iOdds /= (4*iNumSpies+iNeededSpies);
+					if (AI_chooseUnit(UNITAI_SPY, iOdds))
+					{
+						return;
+					}
 				}
 			}
 		}

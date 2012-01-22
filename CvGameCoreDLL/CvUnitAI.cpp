@@ -4725,7 +4725,8 @@ void CvUnitAI::AI_exploreMove()
 
 	if (!isHuman())
 	{
-		if (AI_pillageRange(1))
+		//if (AI_pillageRange(1))
+		if (AI_pillageRange(3, 10)) // K-Mod
 		{
 			return;
 		}
@@ -15877,7 +15878,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bF
 						if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 						{
 							int iPathTurns;
-							if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, true) : (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange) && (iPathTurns <= iRange))))
+							if (!atPlot(pLoopPlot) && (bFollow ? canMoveInto(pLoopPlot, true) : generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange)))
 							{
 								//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
 								int iValue = AI_getWeightedOdds(pLoopPlot, true); // K-Mod

@@ -1044,7 +1044,8 @@ void CvSelectionGroup::startMission()
 		}
 	}
 
-	if (canAllMove())
+	//if (canAllMove())
+	if (canAllMove() || (headMissionQueueNode()->m_data.iFlags & MOVE_DIRECT_ATTACK && headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO && canAnyMove())) // K-Mod
 	{
 		setActivityType(ACTIVITY_MISSION);
 	}
@@ -1073,6 +1074,15 @@ void CvSelectionGroup::startMission()
 			// K-Mod. Prevent human players from accidentally attacking units that they can't see.
 			if (isHuman() && !GC.getMapINLINE().plotINLINE(headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2)->isVisible(getTeam(), false))
 				headMissionQueueNode()->m_data.iFlags |= MOVE_NO_ATTACK;
+
+			// also, we should allow an amphibious landing even if we are out of moves.
+			if (!canAllMove())
+			{
+				if (groupAmphibMove(GC.getMapINLINE().plotINLINE(headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2), headMissionQueueNode()->m_data.iFlags))
+				{
+					bDelete = true;
+				}
+			}
 			// K-Mod end
 		case MISSION_ROUTE_TO:
 		case MISSION_MOVE_TO_UNIT:
@@ -1563,25 +1573,13 @@ void CvSelectionGroup::continueMission(int iSteps)
 		return;
 	}
 
+	FAssert(bDone || !(headMissionQueueNode()->m_data.iFlags & MOVE_DIRECT_ATTACK)); // K-Mod. ('direct attack' should be used for attack commands only)
+
 	if (!bDone)
 	{
 		if (getNumUnits() > 0)
 		{
-			//if (canAllMove())
-			// K-Mod. We should allow an amphibious landing even if we are out of moves.
-			if (!canAllMove())
-			{
-				if (headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO)
-				{
-					if (groupAmphibMove(GC.getMapINLINE().plotINLINE(headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2), headMissionQueueNode()->m_data.iFlags))
-					{
-						bAction = false;
-						bDone = true;
-					}
-				}
-			}
-			else // canAllMove()
-			// K-Mod end
+			if (canAllMove())
 			{
 				switch (headMissionQueueNode()->m_data.eMissionType)
 				{
@@ -1963,28 +1961,10 @@ void CvSelectionGroup::continueMission(int iSteps)
 					}
 				}
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       08/04/09                                jdog5000      */
-/*                                                                                              */
-/* Player interface                                                                             */
-/************************************************************************************************/
-/* original bts code
 				deleteMissionQueueNode(headMissionQueueNode());
-*/
-				if (!isHuman() || (headMissionQueueNode()->m_data.eMissionType != MISSION_MOVE_TO))
-				{
-					deleteMissionQueueNode(headMissionQueueNode());
-				}
-				else
-				{
-					if (canAllMove() || (nextMissionQueueNode(headMissionQueueNode()) == NULL))
-					{
-						deleteMissionQueueNode(headMissionQueueNode());
-					}
-				}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/				
+				// K-Mod Note: the "unofficial patch" had a condition for deleting the mission node equivalent to the following:
+				//if (!isHuman() || headMissionQueueNode()->m_data.eMissionType != MISSION_MOVE_TO || canAllMove() || nextMissionQueueNode(headMissionQueueNode()) == NULL)
+				// I didn't understand what good it did, and it was causing problems with Rapid Unit Cycling. So I removed it.
 			}
 		}
 		else
