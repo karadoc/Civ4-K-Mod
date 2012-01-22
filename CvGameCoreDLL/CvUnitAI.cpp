@@ -445,7 +445,7 @@ bool CvUnitAI::AI_follow(bool bFirst)
 	// broken up on the next turn.  Also, if we can't attack now we don't want to queue up an
 	// attack for next turn, better to re-evaluate.
 	// K-Mod. The above comment is more or less true. The AI_attack functions did not work in a useful
-	// way with follow. But checking of all units can move kind of misses the point of a follow command...
+	// way with follow. But checking if all units can move kind of misses the point of a follow command...
 	// I've changed the original attack functions to deal with follow in a more practical way.
 	/* bool bCanAllMove = getGroup()->canAllMove();
 

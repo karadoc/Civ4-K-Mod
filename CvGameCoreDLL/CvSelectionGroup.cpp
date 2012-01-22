@@ -3532,7 +3532,7 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 		}
 	} */
 	// K-Mod
-	if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK))
+	if (iFlags & (MOVE_THROUGH_ENEMY | MOVE_ATTACK_STACK) && !(iFlags & MOVE_DIRECT_ATTACK))
 	{
 		if (final_path.GeneratePath(pDestPlot))
 		{
@@ -3696,10 +3696,12 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 		}
 		else
 		{
-			pLoopUnit->joinGroup(NULL, true);
+			// pLoopUnit->joinGroup(NULL, true); // disabled by K-Mod
 			pLoopUnit->ExecuteMove(((float)(GC.getMissionInfo(MISSION_MOVE_TO).getTime() * gDLL->getMillisecsPerTurn())) / 1000.0f, false);
 		}
 	}
+
+	regroupSeparatedUnits(); // K-Mod (replacing the joinGroup line that I disabled above)
 
 	//execute move
 	if(bEndMove || !canAllMove())
