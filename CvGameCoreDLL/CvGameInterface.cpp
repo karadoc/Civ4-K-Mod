@@ -312,42 +312,49 @@ void CvGame::updateColoredPlots()
 				}
 			}
 
-			iRange = 4;
+			// K-Mod. I've rearranged the following code a bit, so that it is more efficient, and so that it shows city sites within 7 turns, rather than just the ones in 4 plot range.
+			// the original code has been deleted, because it was quite bulky.
 
-			for (iDX = -(iRange); iDX <= iRange; iDX++)
+			// city sites
+			const CvPlayerAI& kActivePlayer = GET_PLAYER(getActivePlayer());
+			KmodPathFinder site_path;
+			site_path.SetSettings(pHeadSelectedUnit->getGroup(), 0, 7, GC.getMOVE_DENOMINATOR());
+			if (pHeadSelectedUnit->isFound())
 			{
-				for (iDY = -(iRange); iDY <= iRange; iDY++)
-				{
-					pLoopPlot = plotXY(pHeadSelectedUnit->getX_INLINE(), pHeadSelectedUnit->getY_INLINE(), iDX, iDY);
 
-					if (pLoopPlot != NULL)
+				for (int i = 0; i < kActivePlayer.AI_getNumCitySites(); i++)
+				{
+					CvPlot* pSite = kActivePlayer.AI_getCitySite(i);
+					if (pSite && site_path.GeneratePath(pSite))
 					{
-						if ((pLoopPlot->area() == pHeadSelectedUnit->area()) || pLoopPlot->isAdjacentToArea(pHeadSelectedUnit->area()))
+						gDLL->getEngineIFace()->addColoredPlot(pSite->getX_INLINE(), pSite->getY_INLINE(), GC.getColorInfo((ColorTypes)GC.getInfoTypeForString("COLOR_HIGHLIGHT_TEXT")).getColor(), PLOT_STYLE_CIRCLE, PLOT_LANDSCAPE_LAYER_RECOMMENDED_PLOTS);
+					}
+				}
+			}
+
+			// goody huts
+			if (pHeadSelectedUnit->isNoBadGoodies())
+			{
+				iRange = 4;
+				site_path.SetSettings(pHeadSelectedUnit->getGroup(), 0, iRange, GC.getMOVE_DENOMINATOR()); // just a smaller range.
+
+				for (iDX = -(iRange); iDX <= iRange; iDX++)
+				{
+					for (iDY = -(iRange); iDY <= iRange; iDY++)
+					{
+						pLoopPlot = plotXY(pHeadSelectedUnit->getX_INLINE(), pHeadSelectedUnit->getY_INLINE(), iDX, iDY);
+
+						if (pLoopPlot && pLoopPlot->isVisible(pHeadSelectedUnit->getTeam(), false) && pLoopPlot->isRevealedGoody(pHeadSelectedUnit->getTeam()))
 						{
-							if (pHeadSelectedUnit->canFound(pLoopPlot))
+							if (site_path.GeneratePath(pLoopPlot))
 							{
-								if (GET_PLAYER(pHeadSelectedUnit->getOwnerINLINE()).AI_isPlotCitySite(pLoopPlot))
-								{
-									gDLL->getEngineIFace()->addColoredPlot(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), GC.getColorInfo((ColorTypes)GC.getInfoTypeForString("COLOR_HIGHLIGHT_TEXT")).getColor(), PLOT_STYLE_CIRCLE, PLOT_LANDSCAPE_LAYER_RECOMMENDED_PLOTS);
-								}
-							}
-							if (plotDistance(pHeadSelectedUnit->getX_INLINE(), pHeadSelectedUnit->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= iRange)
-							{
-								if (pLoopPlot->isVisible(pHeadSelectedUnit->getTeam(), false))
-								{
-									if (pHeadSelectedUnit->isNoBadGoodies())
-									{
-										if (pLoopPlot->isRevealedGoody(pHeadSelectedUnit->getTeam()))
-										{
-											gDLL->getEngineIFace()->addColoredPlot(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), GC.getColorInfo((ColorTypes)GC.getInfoTypeForString("COLOR_HIGHLIGHT_TEXT")).getColor(), PLOT_STYLE_CIRCLE, PLOT_LANDSCAPE_LAYER_RECOMMENDED_PLOTS);
-										}
-									}
-								}
+								gDLL->getEngineIFace()->addColoredPlot(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), GC.getColorInfo((ColorTypes)GC.getInfoTypeForString("COLOR_HIGHLIGHT_TEXT")).getColor(), PLOT_STYLE_CIRCLE, PLOT_LANDSCAPE_LAYER_RECOMMENDED_PLOTS);
 							}
 						}
 					}
 				}
 			}
+			// K-Mod end
 		}
 
 		if (pHeadSelectedUnit->isBlockading())
