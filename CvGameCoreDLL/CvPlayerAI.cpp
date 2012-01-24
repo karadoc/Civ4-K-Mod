@@ -15116,30 +15116,36 @@ void CvPlayerAI::AI_doCommerce()
 				int iOurEspPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
 				int iDesiredMissionPoints = 0;
 				int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
+				WarPlanTypes eWarPlan = GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam);
 
 				aiWeight[iTeam] = 6;
 				int iRateDivisor = iTargetTurns*3;
 
-				if (GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
+				if (eWarPlan != NO_WARPLAN)
 				{
 					iTheirEspPoints *= 3;
 					iTheirEspPoints /= 2;
 
 					int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
-					if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && getCapitalCity())
+					if (eWarPlan != WARPLAN_DOGPILE && AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && getCapitalCity())
 					{
 						CvCity* pTargetCity = getCapitalCity()->area()->getTargetCity(getID());
 						if (pTargetCity && pTargetCity->getTeam() == iTeam)
+						{
 							iMissionCost = std::max(iMissionCost, getEspionageMissionCost(eCityRevoltMission, pTargetCity->getOwnerINLINE(), pTargetCity->plot()));
+							if (eWarPlan == WARPLAN_TOTAL || eWarPlan == WARPLAN_PREPARING_TOTAL)
+							{
+								iRateDivisor -= (iTargetTurns+2) / 4;
+							}
+						}
+						else
+							iMissionCost = std::max(iMissionCost, getEspionageMissionCost(eCityRevoltMission, kLoopTeam.getLeaderID()));
 					}
 
-					iMissionCost = getEspionageMissionCost(eCityRevoltMission, kLoopTeam.getLeaderID());
 					iMissionCost *= 12;
 					iMissionCost /= 10;
-					if (iDesiredMissionPoints < iMissionCost)
-					{
-						iDesiredMissionPoints = iMissionCost;
-					}
+
+					iDesiredMissionPoints = std::max(iDesiredMissionPoints, iMissionCost);
 
 					iRateDivisor -= iTargetTurns/2;
 					aiWeight[iTeam] += 6;
@@ -15154,20 +15160,14 @@ void CvPlayerAI::AI_doCommerce()
 						int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
 						iMissionCost *= 11;
 						iMissionCost /= 10;
-						if( iDesiredMissionPoints < iMissionCost )
-						{
-							iDesiredMissionPoints = iMissionCost;
-						}
+						iDesiredMissionPoints = std::max(iDesiredMissionPoints, iMissionCost);
 					}
 					else if (iAttitude < 3)
 					{
 						int iMissionCost = getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID());
 						iMissionCost *= 11;
 						iMissionCost /= 10;
-						if( iDesiredMissionPoints < iMissionCost )
-						{
-							iDesiredMissionPoints = iMissionCost;
-						}
+						iDesiredMissionPoints = std::max(iDesiredMissionPoints, iMissionCost);
 					}
 				}
 
@@ -23276,17 +23276,10 @@ void CvPlayerAI::AI_invalidateCloseBordersAttitudeCache()
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		m_aiCloseBordersAttitudeCache[i] = MAX_INT;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
 		// From Sanguo Mod Performance, ie the CAR Mod
 		// Attitude cache
 		AI_invalidateAttitudeCache((PlayerTypes)i);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		//
 	}
 }
 

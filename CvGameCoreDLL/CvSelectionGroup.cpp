@@ -3683,6 +3683,7 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 	CvUnit* pLoopUnit;
 
 	pUnitNode = headUnitNode();
+	CvSelectionGroup* pStaticGroup = 0; // K-Mod
 
 	while (pUnitNode != NULL)
 	{
@@ -3696,12 +3697,21 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 		}
 		else
 		{
-			// pLoopUnit->joinGroup(NULL, true); // disabled by K-Mod
+			// pLoopUnit->joinGroup(NULL, true);
+			// K-Mod. all units left behind should stay in the same group.
+			// (Note: it is important that units left behind are not in the original group.
+			// The later code assume that the original group has moved, and if it hasn't, there will be an infinite loop.)
+			if (pStaticGroup)
+				pLoopUnit->joinGroup(pStaticGroup, true);
+			else
+			{
+				pLoopUnit->joinGroup(0, true);
+				pStaticGroup = pLoopUnit->getGroup();
+			}
+			// K-Mod end
 			pLoopUnit->ExecuteMove(((float)(GC.getMissionInfo(MISSION_MOVE_TO).getTime() * gDLL->getMillisecsPerTurn())) / 1000.0f, false);
 		}
 	}
-
-	regroupSeparatedUnits(); // K-Mod (replacing the joinGroup line that I disabled above)
 
 	//execute move
 	if(bEndMove || !canAllMove())
@@ -3793,6 +3803,8 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 		bEndMove = true;
 
 	groupMove(pPathPlot, iFlags & MOVE_THROUGH_ENEMY, NULL, bEndMove);
+
+	FAssert(getNumUnits() == 0 || atPlot(pPathPlot)); // K-Mod
 
 	// K-Mod. If the step we just took will make us change our path to something longer, then cancel the move.
 	// This prevents units from wasting all their moves by trying to walk around enemy units.
