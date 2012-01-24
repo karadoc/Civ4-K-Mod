@@ -211,7 +211,8 @@ class CvVictoryScreen:
 									bUnknown = false
 								break
 
-					aiVoteBuildingClass.append((gc.getBuildingInfo(i).getBuildingClassType(), iUNTeam, bUnknown))
+					#aiVoteBuildingClass.append((gc.getBuildingInfo(i).getBuildingClassType(), iUNTeam, bUnknown))
+					aiVoteBuildingClass.append((j, gc.getBuildingInfo(i).getBuildingClassType(), iUNTeam, bUnknown)) # K-Mod
 
 		if (len(aiVoteBuildingClass) == 0):
 			return
@@ -225,34 +226,63 @@ class CvVictoryScreen:
 		screen.setTableColumnHeader(szTable, 0, "", self.TABLE2_WIDTH_0)
 		screen.setTableColumnHeader(szTable, 1, "", self.TABLE2_WIDTH_1)
 
-		for (iVoteBuildingClass, iUNTeam, bUnknown) in aiVoteBuildingClass:
-			iRow = screen.appendTableRow(szTable)
-			screen.setTableText(szTable, 0, iRow, localText.getText("TXT_KEY_VICTORY_SCREEN_ELECTION", (gc.getBuildingClassInfo(iVoteBuildingClass).getTextKey(), )), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-			if (iUNTeam != -1):
-				if bUnknown:
-					szName = localText.getText("TXT_KEY_TOPCIVS_UNKNOWN", ())
-				else:
-					szName = gc.getTeam(iUNTeam).getName()
-				screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_VICTORY_SCREEN_BUILT", (szName, )), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-			else:
-				screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_VICTORY_SCREEN_NOT_BUILT", ()), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+		# for (iVoteBuildingClass, iUNTeam, bUnknown) in aiVoteBuildingClass:
+			# iRow = screen.appendTableRow(szTable)
+			# screen.setTableText(szTable, 0, iRow, localText.getText("TXT_KEY_VICTORY_SCREEN_ELECTION", (gc.getBuildingClassInfo(iVoteBuildingClass).getTextKey(), )), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			# if (iUNTeam != -1):
+				# if bUnknown:
+					# szName = localText.getText("TXT_KEY_TOPCIVS_UNKNOWN", ())
+				# else:
+					# szName = gc.getTeam(iUNTeam).getName()
+				# screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_VICTORY_SCREEN_BUILT", (szName, )), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			# else:
+				# screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_VICTORY_SCREEN_NOT_BUILT", ()), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
 
-		for i in range(gc.getNumVoteSourceInfos()):
-			if (gc.getGame().canHaveSecretaryGeneral(i) and -1 != gc.getGame().getSecretaryGeneral(i)):
+		#for i in range(gc.getNumVoteSourceInfos()):
+		for (i, iVoteBuildingClass, iUNTeam, bUnknown) in aiVoteBuildingClass: # K-Mod
+			if gc.getGame().isDiploVote(i): # K-Mod (previously no condition)
+				# K-Mod
+				kVoteSource = gc.getVoteSourceInfo(i)
 				iRow = screen.appendTableRow(szTable)
-				screen.setTableText(szTable, 0, iRow, gc.getVoteSourceInfo(i).getSecretaryGeneralText(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-				screen.setTableText(szTable, 1, iRow, gc.getTeam(gc.getGame().getSecretaryGeneral(i)).getName(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+				screen.setTableText(szTable, 0, iRow, u"<font=4b>" + kVoteSource.getDescription().upper() + u"</font>", "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+				if (gc.getGame().getVoteSourceReligion(i) != -1):
+					screen.setTableText(szTable, 1, iRow, gc.getReligionInfo(gc.getGame().getVoteSourceReligion(i)).getDescription(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+				# K-Mod end
 
-			for iLoop in range(gc.getNumVoteInfos()):
-				if gc.getGame().countPossibleVote(iLoop, i) > 0:
-					info = gc.getVoteInfo(iLoop)
-					if gc.getGame().isChooseElection(iLoop):
-						iRow = screen.appendTableRow(szTable)
-						screen.setTableText(szTable, 0, iRow, info.getDescription(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-						if gc.getGame().isVotePassed(iLoop):
-							screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_POPUP_PASSED", ()), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
-						else:
-							screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_POPUP_ELECTION_OPTION", (u"", gc.getGame().getVoteRequired(iLoop, i), gc.getGame().countPossibleVote(iLoop, i))), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+				#if (gc.getGame().canHaveSecretaryGeneral(i) and -1 != gc.getGame().getSecretaryGeneral(i)):
+				if (gc.getGame().canHaveSecretaryGeneral(i) and -1 != gc.getGame().getSecretaryGeneral(i) and (gc.getGame().isDebugMode() or gc.getTeam(activePlayer.getTeam()).isHasMet(gc.getGame().getSecretaryGeneral(i)))):# K-Mod
+					iRow = screen.appendTableRow(szTable)
+					screen.setTableText(szTable, 0, iRow, gc.getVoteSourceInfo(i).getSecretaryGeneralText(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+					screen.setTableText(szTable, 1, iRow, gc.getTeam(gc.getGame().getSecretaryGeneral(i)).getName(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+
+				# K-Mod
+				# vote timing
+				if activePlayer.isVotingMember(i):
+					iRow = screen.appendTableRow(szTable)
+					iVoteTimer = gc.getGame().getVoteTimer(i)+1 # the +1 is so that when there will be a vote next turn, this reads "1" rather than "0".
+					sString = localText.getText("TXT_KEY_BUG_VICTORY_TURNS_NEXT_VOTE", (iVoteTimer,) )
+					#sString = u"<font=2b>" + sString + "</font>"
+					sString = BugUtil.colorText(sString, "COLOR_YELLOW")
+					screen.setTableText(szTable, 0, iRow, sString, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+
+					iSecGenTimer = gc.getGame().getSecretaryGeneralTimer(i)
+					sString = localText.getText("TXT_KEY_BUG_VICTORY_VOTES_NEXT_ELECTION", (iSecGenTimer,) )
+					#sString = u"<font=2b>" + sString + "</font>"
+					sString = BugUtil.colorText(sString, "COLOR_YELLOW")
+					screen.setTableText(szTable, 1, iRow, sString, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+				# K-Mod end
+
+				for iLoop in range(gc.getNumVoteInfos()):
+					if gc.getGame().countPossibleVote(iLoop, i) > 0:
+						info = gc.getVoteInfo(iLoop)
+						if gc.getGame().isChooseElection(iLoop):
+							iRow = screen.appendTableRow(szTable)
+							screen.setTableText(szTable, 0, iRow, info.getDescription(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+							if gc.getGame().isVotePassed(iLoop):
+								screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_POPUP_PASSED", ()), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+							else:
+								screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_POPUP_ELECTION_OPTION", (u"", gc.getGame().getVoteRequired(iLoop, i), gc.getGame().countPossibleVote(iLoop, i))), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+				iRow = screen.appendTableRow(szTable) # empty row between vote sources. (K-Mod)
 
 		self.drawTabs()
 
