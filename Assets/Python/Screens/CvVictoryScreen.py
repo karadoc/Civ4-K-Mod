@@ -283,6 +283,10 @@ class CvVictoryScreen:
 							else:
 								screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_POPUP_ELECTION_OPTION", (u"", gc.getGame().getVoteRequired(iLoop, i), gc.getGame().countPossibleVote(iLoop, i))), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
 				iRow = screen.appendTableRow(szTable) # empty row between vote sources. (K-Mod)
+		# Remove the final empty row (K-Mod)
+		if screen.getTableNumRows(szTable) > 0:
+			screen.setTableNumRows(szTable, iRow)
+		#
 
 		self.drawTabs()
 
@@ -668,6 +672,10 @@ class CvVictoryScreen:
 							screen.setTableText(szTable, 1, iRow, localText.getText("TXT_KEY_VOTESOURCE_VOTING_MEMBER", ()), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
 
 				iRow = screen.appendTableRow(szTable)
+		# Remove the final empty row (K-Mod)
+		if screen.getTableNumRows(szTable) > 0:
+			screen.setTableNumRows(szTable, iRow)
+		#
 
 	def formatPercent(self, f):
 		return "%.1f%%" % f
@@ -756,7 +764,7 @@ class CvVictoryScreen:
 		screen.appendListBoxStringNoUpdate(szSettingsTable, localText.getText("TXT_KEY_SETTINGS_DIFFICULTY", (gc.getHandicapInfo(activePlayer.getHandicapType()).getTextKey(), )), WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
 
 		screen.appendListBoxStringNoUpdate(szSettingsTable, " ", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
-#		screen.appendListBoxStringNoUpdate(szSettingsTable, gc.getMap().getMapScriptName(), WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+		screen.appendListBoxStringNoUpdate(szSettingsTable, gc.getMap().getMapScriptName(), WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
 
 		screen.appendListBoxStringNoUpdate(szSettingsTable, localText.getText("TXT_KEY_SETTINGS_MAP_SIZE", (gc.getWorldInfo(gc.getMap().getWorldSize()).getTextKey(), )), WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
 		screen.appendListBoxStringNoUpdate(szSettingsTable, localText.getText("TXT_KEY_SETTINGS_CLIMATE", (gc.getClimateInfo(gc.getMap().getClimate()).getTextKey(), )), WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
@@ -1319,6 +1327,11 @@ class CvVictoryScreen:
 				if (bEntriesFound):
 					screen.appendTableRow(szTable)
 					screen.appendTableRow(szTable)
+
+		# Remove the two final empty rows (K-Mod)
+		if screen.getTableNumRows(szTable) > 2:
+			screen.setTableNumRows(szTable, screen.getTableNumRows(szTable)-2)
+		#
 
 		# civ picker dropdown
 		if (CyGame().isDebugMode()):
