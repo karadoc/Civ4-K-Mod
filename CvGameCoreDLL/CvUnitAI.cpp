@@ -20715,14 +20715,14 @@ bool CvUnitAI::AI_handleStranded(int iFlags)
 
 				if (pLoopPlot->getArea() == getArea() && pLoopPlot->isCoastalLand())
 				{
-					int iPathturns;
-					if (generatePath(pLoopPlot, iFlags, true, &iPathturns, iShortestPath))
+					int iPathTurns;
+					if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iShortestPath))
 					{
-						FAssert(iPathturns <= iShortestPath);
-						iShortestPath = iPathturns;
+						FAssert(iPathTurns <= iShortestPath);
+						iShortestPath = iPathTurns;
 						pEndTurnPlot = getPathEndTurnPlot();
 						pMissionPlot = pLoopPlot;
-						if (iPathturns <= 1)
+						if (iPathTurns <= 1)
 							break;
 					}
 				}
@@ -20755,7 +20755,7 @@ bool CvUnitAI::AI_handleStranded(int iFlags)
 	}
 
 	// raise the 'stranded' flag, and wait to be rescued.
-	getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_STRANDED);
+	getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_STRANDED, plot());
 	return true;
 }
 // K-Mod end
@@ -21012,16 +21012,10 @@ bool CvUnitAI::AI_pickup(UnitAITypes eUnitAI, bool bCountProduction, int iMaxPat
 /* Naval AI                                                                                     */
 /************************************************************************************************/
 // Returns true if a mission was pushed...
+// (this function has been significantly edited for K-Mod)
 bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 {
 	PROFILE_FUNC();
-
-	CvUnit* pBestUnit;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iLoop;
-	int iCount;
 
 	FAssert(cargoSpace() > 0);
 	if (0 == cargoSpace())
@@ -21034,22 +21028,18 @@ bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 		return false;
 	}
 
-	iBestValue = 0;
-	pBestUnit = NULL;
+	int iBestValue = 0;
+	CvUnit* pBestUnit = 0;
 
-	int iI;
-	CvSelectionGroup* pLoopGroup = NULL;
-	CvUnit* pHeadUnit = NULL;
-	CvPlot* pLoopPlot = NULL;
-	CvPlot* pPickupPlot = NULL;
-	CvPlot* pAdjacentPlot = NULL;
+	CvPlot* pEndTurnPlot = 0;
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
-	for(pLoopGroup = kPlayer.firstSelectionGroup(&iLoop); pLoopGroup != NULL; pLoopGroup = kPlayer.nextSelectionGroup(&iLoop))
+	int iLoop;
+	for(CvSelectionGroup* pLoopGroup = kPlayer.firstSelectionGroup(&iLoop); pLoopGroup != NULL; pLoopGroup = kPlayer.nextSelectionGroup(&iLoop))
 	{
 		if( pLoopGroup->isStranded() )
 		{
-			pHeadUnit = pLoopGroup->getHeadUnit();
+			CvUnit* pHeadUnit = pLoopGroup->getHeadUnit();
 			if( pHeadUnit == NULL )
 			{
 				continue;
@@ -21060,55 +21050,47 @@ bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 				continue;
 			}
 
-			pLoopPlot = pHeadUnit->plot();
-			if( pLoopPlot == NULL  )
+			//pLoopPlot = pHeadUnit->plot();
+			CvPlot* pPickupPlot = pLoopGroup->AI_getMissionAIPlot(); // K-Mod
+
+			if( pPickupPlot == NULL  )
 			{
 				continue;
 			}
 
-			if( !(pLoopPlot->isCoastalLand())  && !canMoveAllTerrain() )
+			if( !(pPickupPlot->isCoastalLand())  && !canMoveAllTerrain() )
 			{
 				continue;
 			}
 
 			// Units are stranded, attempt rescue
 
-			iCount = pLoopGroup->getNumUnits();
+			int iCount = pLoopGroup->getNumUnits();
 			
 			if( 1000*iCount > iBestValue )
 			{
-				pPickupPlot = NULL;
-				if( atPlot(pLoopPlot) || (AI_plotValid(pLoopPlot) && generatePath(pLoopPlot, 0, true, &iPathTurns)) )
-				{
-					pPickupPlot = pLoopPlot;
-					// K-Mod, bug fix
-					if (atPlot(pLoopPlot))
-						iPathTurns = 0;
-					// K-Mod end.
-				}
-				else
-				{
-					for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-					{
-						pAdjacentPlot = plotDirection(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), ((DirectionTypes)iI));
+				CvPlot* pTargetPlot = 0;
+				int iPathTurns = MAX_INT;
 
-						if (pAdjacentPlot != NULL && AI_plotValid(pAdjacentPlot))
-						{
-							if( generatePath(pAdjacentPlot, 0, true, &iPathTurns) )
-							{
-								pPickupPlot = pAdjacentPlot;
-								break;
-							}
-						}
+				for (int iI = NO_DIRECTION; iI < NUM_DIRECTION_TYPES; iI++)
+				{
+					CvPlot* pAdjacentPlot = plotDirection(pPickupPlot->getX_INLINE(), pPickupPlot->getY_INLINE(), ((DirectionTypes)iI));
+
+					if (pAdjacentPlot && generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxPath))
+					{
+						pTargetPlot = getPathEndTurnPlot();
+						break;
 					}
 				}
 
-				if( pPickupPlot != NULL && iPathTurns <= iMaxPath )
+				if (pTargetPlot)
 				{
-					MissionAITypes eMissionAIType = MISSIONAI_PICKUP;
-					iCount -= GET_PLAYER(getOwnerINLINE()).AI_unitTargetMissionAIs(pHeadUnit, &eMissionAIType, 1, getGroup(), iPathTurns) * cargoSpace();
+					FAssert(iMaxPath < 0 || iPathTurns <= iMaxPath);
 
-					iValue = 1000*iCount;
+					MissionAITypes eMissionAIType = MISSIONAI_PICKUP;
+					iCount -= GET_PLAYER(getOwnerINLINE()).AI_unitTargetMissionAIs(pHeadUnit, &eMissionAIType, 1, getGroup(), iPathTurns) * cargoSpace(); // estimate
+
+					int iValue = 1000*iCount;
 
 					iValue /= (iPathTurns + 1);
 
@@ -21116,23 +21098,26 @@ bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 					{
 						iBestValue = iValue;
 						pBestUnit = pHeadUnit;
+						pEndTurnPlot = pTargetPlot;
 					}
 				}
 			}
 		}
 	}
 
-	if ((pBestUnit != NULL))
+	if (pBestUnit)
 	{
-		if( atPlot(pBestUnit->plot()) )
+		FAssert(pEndTurnPlot);
+		if (atPlot(pEndTurnPlot))
 		{
-			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_PICKUP, pBestUnit->plot());
+			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_PICKUP, 0, pBestUnit);
 			return true;
 		}
 		else
 		{
 			FAssert(!atPlot(pBestUnit->plot()));
-			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), MOVE_AVOID_ENEMY_WEIGHT_3, false, false, MISSIONAI_PICKUP, NULL, pBestUnit);
+			//getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), MOVE_AVOID_ENEMY_WEIGHT_3, false, false, MISSIONAI_PICKUP, NULL, pBestUnit);
+			getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_PICKUP, 0, pBestUnit);
 			return true;
 		}
 	}
