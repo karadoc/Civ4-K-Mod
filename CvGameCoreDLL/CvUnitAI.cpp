@@ -1364,6 +1364,7 @@ void CvUnitAI::AI_settleMove()
 	PROFILE_FUNC();
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
+	int iMoveFlags = MOVE_NO_ENEMY_TERRITORY; // K-Mod
 
 	if (kOwner.getNumCities() == 0)
 	{
@@ -1427,7 +1428,7 @@ void CvUnitAI::AI_settleMove()
 		/* original bts code
 		if (pCitySitePlot->getArea() == getArea()) */
 		// UNOFFICIAL_PATCH: Only count city sites we can get to
-		if ((pCitySitePlot->getArea() == getArea() || canMoveAllTerrain()) && generatePath(pCitySitePlot, MOVE_SAFE_TERRITORY, true))
+		if ((pCitySitePlot->getArea() == getArea() || canMoveAllTerrain()) && generatePath(pCitySitePlot, iMoveFlags, true))
 		// U_P end
 		{
 			if (plot() == pCitySitePlot)
@@ -1528,7 +1529,7 @@ void CvUnitAI::AI_settleMove()
 	{
 		if (plot()->getOwnerINLINE() == getOwnerINLINE())
 		{
-			if (AI_load(UNITAI_SETTLER_SEA, MISSIONAI_LOAD_SETTLER, NO_UNITAI, -1, -1, -1, 0, MOVE_SAFE_TERRITORY))
+			if (AI_load(UNITAI_SETTLER_SEA, MISSIONAI_LOAD_SETTLER, NO_UNITAI, -1, -1, -1, 0, iMoveFlags))
 			{
 				return;
 			}
@@ -1573,7 +1574,7 @@ void CvUnitAI::AI_settleMove()
 
 	if (iAreaBestFoundValue > 0)
 	{
-		if (AI_found())
+		if (AI_found(iMoveFlags))
 		{
 			return;
 		}
@@ -1581,7 +1582,7 @@ void CvUnitAI::AI_settleMove()
 
 	if (plot()->getOwnerINLINE() == getOwnerINLINE())
 	{
-		if (AI_load(UNITAI_SETTLER_SEA, MISSIONAI_LOAD_SETTLER, NO_UNITAI, -1, -1, -1, 0, MOVE_SAFE_TERRITORY))
+		if (AI_load(UNITAI_SETTLER_SEA, MISSIONAI_LOAD_SETTLER, NO_UNITAI, -1, -1, -1, 0, iMoveFlags))
 		{
 			return;
 		}
@@ -1600,7 +1601,7 @@ void CvUnitAI::AI_settleMove()
 				{
 					int iPathTurns = MAX_INT;
 
-					generatePath(pLoopSelectionGroup->plot(), MOVE_SAFE_TERRITORY, true, &iPathTurns, 2);
+					generatePath(pLoopSelectionGroup->plot(), iMoveFlags, true, &iPathTurns, 2);
 					if (iPathTurns <= 2)
 					{
 						CvPlot* pEndTurnPlot = getPathEndTurnPlot();
@@ -1616,11 +1617,11 @@ void CvUnitAI::AI_settleMove()
 							// if we were on our way to a site, keep the current mission plot.
 							if (getGroup()->AI_getMissionAIType() == MISSIONAI_FOUND && getGroup()->AI_getMissionAIPlot() != NULL)
 							{
-								getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_FOUND, getGroup()->AI_getMissionAIPlot());
+								getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iMoveFlags, false, false, MISSIONAI_FOUND, getGroup()->AI_getMissionAIPlot());
 							}
 							else
 							{
-								getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_GROUP, 0, pLoopSelectionGroup->getHeadUnit());
+								getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iMoveFlags, false, false, MISSIONAI_GROUP, 0, pLoopSelectionGroup->getHeadUnit());
 							}
 						}
 						return;
@@ -17042,7 +17043,7 @@ bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold, int iFlags)
 
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_found()
+bool CvUnitAI::AI_found(int iFlags)
 {
 	PROFILE_FUNC();
 //
@@ -17122,7 +17123,7 @@ bool CvUnitAI::AI_found()
 				{
 					if (getGroup()->canDefend() || GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pCitySitePlot, MISSIONAI_GUARD_CITY) > 0)
 					{
-						if (generatePath(pCitySitePlot, MOVE_SAFE_TERRITORY, true, &iPathTurns))
+						if (generatePath(pCitySitePlot, iFlags, true, &iPathTurns))
 						{
 							if (!pCitySitePlot->isVisible(getTeam(), false) || !pCitySitePlot->isVisibleEnemyUnit(this) || (iPathTurns > 1 && getGroup()->canDefend())) // K-Mod
 							{
@@ -17162,7 +17163,7 @@ bool CvUnitAI::AI_found()
 				logBBAI("    Settler heading for site %d, %d", pBestFoundPlot->getX_INLINE(), pBestFoundPlot->getY_INLINE());
 			}
 			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_SAFE_TERRITORY, false, false, MISSIONAI_FOUND, pBestFoundPlot);
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_FOUND, pBestFoundPlot);
 			return true;
 		}
 	}
