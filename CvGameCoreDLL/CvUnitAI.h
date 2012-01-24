@@ -223,6 +223,7 @@ protected:
 	bool AI_routeTerritory(bool bImprovementOnly = false);
 	bool AI_travelToUpgradeCity();
 	bool AI_retreatToCity(bool bPrimary = false, bool bAirlift = false, int iMaxPath = MAX_INT);
+	bool AI_handleStranded(int iFlags = 0); // K-mod
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      01/15/09                                jdog5000      */
 /*                                                                                              */

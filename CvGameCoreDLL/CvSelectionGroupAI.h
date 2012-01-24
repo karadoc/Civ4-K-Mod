@@ -57,7 +57,7 @@ public:
 	bool AI_isForceSeparate();
 	void AI_makeForceSeparate();
 
-	MissionAITypes AI_getMissionAIType();
+	MissionAITypes AI_getMissionAIType() const;
 	void AI_setMissionAI(MissionAITypes eNewMissionAI, CvPlot* pNewPlot, CvUnit* pNewUnit);
 	CvUnit* AI_ejectBestDefender(CvPlot* pTargetPlot);
 

@@ -98,17 +98,6 @@ void CvSelectionGroup::reset(int iID, PlayerTypes eOwner, bool bConstructorCall)
 	m_eAutomateType = NO_AUTOMATE;
 	m_bIsBusyCache = false;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-	m_bIsStrandedCache = false;
-	m_bIsStrandedCacheValid = false;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 	if (!bConstructorCall)
 	{
 		AI_reset();
@@ -183,16 +172,6 @@ void CvSelectionGroup::doTurn()
 
 	if (getNumUnits() > 0)
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-		invalidateIsStrandedCache();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 		bool bHurt = false;
 		
 		// do unit's turns (checking for damage)
@@ -3002,125 +2981,19 @@ bool CvSelectionGroup::isHasPathToAreaEnemyCity( bool bIgnoreMinors, int iFlags,
 	return false;
 }
 
-bool CvSelectionGroup::isStranded()
+bool CvSelectionGroup::isStranded() const
 {
-	PROFILE_FUNC();
+	/*PROFILE_FUNC();
 
 	if( !(m_bIsStrandedCacheValid) )
 	{
 		m_bIsStrandedCache = calculateIsStranded();
 		m_bIsStrandedCacheValid = true;
 	}
-		
-	return m_bIsStrandedCache;
-}
 
-void CvSelectionGroup::invalidateIsStrandedCache()
-{
-	m_bIsStrandedCacheValid = false;
-}
+	return m_bIsStrandedCache; */
 
-bool CvSelectionGroup::calculateIsStranded()
-{
-	PROFILE_FUNC();
-
-	FAssert(!isHuman()); // K-Mod
-
-	if( getNumUnits() <= 0 )
-	{
-		return false;
-	}
-
-	if( plot() == NULL )
-	{
-		return false;
-	}
-
-	if( getDomainType() != DOMAIN_LAND )
-	{
-		return false;
-	}
-
-	if( (getActivityType() != ACTIVITY_AWAKE) && (getActivityType() != ACTIVITY_HOLD) )
-	{
-		return false;
-	}
-
-	if( AI_getMissionAIType() != NO_MISSIONAI )
-	{
-		return false;
-	}
-
-	if( getLengthMissionQueue() > 0 )
-	{
-		return false;
-	}
-	
-	if( !canAllMove() )
-	{
-		return false;
-	}
-
-	if( getHeadUnit()->isCargo() )
-	{
-		return false;
-	}
-
-	if( plot()->area()->getNumUnrevealedTiles(getTeam()) > 0 )
-	{
-		if( (getHeadUnitAI() == UNITAI_ATTACK) || (getHeadUnitAI() == UNITAI_EXPLORE) )
-		{
-			return false;
-		}
-	}
-
-	int iBestValue;
-	if( (getHeadUnitAI() == UNITAI_SETTLE) && (GET_PLAYER(getOwner()).AI_getNumAreaCitySites(getArea(), iBestValue) > 0) )
-	{
-		return false;
-	}
-
-	if( plot()->area()->getCitiesPerPlayer(getOwner()) == 0 )
-	{
-		int iBestValue;
-		if( (plot()->area()->getNumAIUnits(getOwner(),UNITAI_SETTLE) > 0) && (GET_PLAYER(getOwner()).AI_getNumAreaCitySites(getArea(), iBestValue) > 0) )
-		{
-			return false;
-		}
-	}
-
-	if( plot()->area()->getNumCities() > 0 )
-	{
-		if( getHeadUnit()->AI_getUnitAIType() == UNITAI_SPY )
-		{
-			return false;
-		}
-
-		if( plot()->getImprovementType() != NO_IMPROVEMENT )
-		{
-			if( GC.getImprovementInfo(plot()->getImprovementType()).isActsAsCity() && canDefend() )
-			{
-				return false;
-			}
-		}
-
-		if( plot()->isCity() && (plot()->getOwner() == getOwner()) )
-		{
-			return false;
-		}
-
-		if( isHasPathToAreaPlayerCity(getOwner()) )
-		{
-			return false;
-		}
-
-		if( isHasPathToAreaEnemyCity(false) )
-		{
-			return false;
-		}
-	}
-
-	return true;
+	return AI_getMissionAIType() == MISSIONAI_STRANDED; // K-Mod
 }
 
 bool CvSelectionGroup::canMoveAllTerrain() const
@@ -3145,9 +3018,6 @@ bool CvSelectionGroup::canMoveAllTerrain() const
 
 	return true;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 void CvSelectionGroup::unloadAll()
 {

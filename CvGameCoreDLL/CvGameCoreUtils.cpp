@@ -2609,6 +2609,7 @@ void getMissionAIString(CvWString& szString, MissionAITypes eMissionAI)
 	mission_string(MISSIONAI_DEFEND)
 	mission_string(MISSIONAI_COUNTER_ATTACK)
 	mission_string(MISSIONAI_UPGRADE)
+	mission_string(MISSIONAI_STRANDED)
 #undef mission_string
 // K-Mod end
 

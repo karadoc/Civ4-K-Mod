@@ -1486,6 +1486,7 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_DEFEND,
 	MISSIONAI_COUNTER_ATTACK,
 	MISSIONAI_UPGRADE,
+	MISSIONAI_STRANDED,
 	// MISSIONAI_GOLDEN_AGE, // ie. waiting for more golden age units.
 	// note: MISSIONAI_GUARD_TRADE_NET is currently not being used:
 	// K-Mod end
