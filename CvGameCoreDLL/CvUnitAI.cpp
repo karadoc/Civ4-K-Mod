@@ -2268,7 +2268,8 @@ void CvUnitAI::AI_attackMove()
 			if( area()->getCitiesPerPlayer(getOwnerINLINE()) > kOwner.AI_totalAreaUnitAIs(area(), UNITAI_CITY_DEFENSE) )
 			{
 				// Defend colonies in new world
-				if (AI_guardCity(true, true, 3))
+				//if (AI_guardCity(true, true, 3))
+				if (getGroup()->getNumUnits() == 1 ? AI_guardCityMinDefender(true) : AI_guardCity(true, true, 3)) // K-Mod
 				{
 					return;
 				}
@@ -11305,8 +11306,6 @@ bool CvUnitAI::AI_guardCityMinDefender(bool bSearch)
 		if (getGroup()->AI_getMissionAIType() == MISSIONAI_GUARD_CITY)
 			iDefendersHave--;
 
-		FAssert(AI_getUnitAIType() == UNITAI_CITY_DEFENSE); // This doesn't really matter, but if other units are going to start using this function, I'll want to make some adjustments.
-
 		if (iDefendersHave < pPlotCity->AI_minDefenders())
 		{
 			if (iDefendersHave <= 1 || GC.getGame().getSorenRandNum(area()->getNumAIUnits(getOwnerINLINE(), UNITAI_CITY_DEFENSE) + 5, "AI shuffle defender") > 1)
@@ -11456,6 +11455,8 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath, int iFlags)
 				// K-Mod
 				int iDefendersNeeded = pLoopCity->AI_neededDefenders();
 				int iDefendersHave = pLoopCity->plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE(), NO_TEAM, AI_isCityAIType() ? PUF_isCityAIType : 0);
+				if (pCity == pLoopCity)
+					iDefendersHave-=getGroup()->getNumUnits();
 				if (iDefendersHave < iDefendersNeeded)
 				// K-Mod end
 				{

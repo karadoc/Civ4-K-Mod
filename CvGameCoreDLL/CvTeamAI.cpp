@@ -4808,10 +4808,37 @@ void CvTeamAI::AI_doWar()
 	
 	iHighUnitSpendingPercent /= iNumMembers;
 	iLowUnitSpendingPercent /= iNumMembers; */ // K-Mod, this simply wasn't being used anywhere.
-	
-	
+
+	// K-Mod. Gather some data...
+	bool bAtWar = false;
+	bool bTotalWarPlan = false;
+	bool bAnyWarPlan = false;
+	bool bLocalWarPlan = false;
+	for (int i = 0; i < MAX_CIV_TEAMS; i++)
+	{
+		if (GET_TEAM((TeamTypes)i).isAlive() && !GET_TEAM((TeamTypes)i).isMinorCiv())
+		{
+			bAtWar = bAtWar || isAtWar((TeamTypes)i);
+
+			switch (AI_getWarPlan((TeamTypes)i))
+			{
+			case NO_WARPLAN:
+				break;
+			case WARPLAN_PREPARING_TOTAL:
+			case WARPLAN_TOTAL:
+				bTotalWarPlan = true;
+			default: // all other warplans
+				bLocalWarPlan = bLocalWarPlan || AI_isLandTarget((TeamTypes)i);
+				bAnyWarPlan = true;
+				break;
+			}
+		}
+	}
+	// K-Mod end
+
 	// if at war, check for making peace
-	if (getAtWarCount(true) > 0) // XXX
+	//if (getAtWarCount(true) > 0) // XXX
+	if (bAtWar) // K-Mod
 	{
 		if (GC.getGameINLINE().getSorenRandNum(AI_makePeaceRand(), "AI Make Peace") == 0)
 		{
@@ -4922,10 +4949,11 @@ void CvTeamAI::AI_doWar()
 	}
 
 	// if no war plans, consider starting one!
-	if (getAnyWarPlanCount(true) == 0 || iEnemyPowerPercent < 45)
+	//if (getAnyWarPlanCount(true) == 0 || iEnemyPowerPercent < 45)
+	if (!bAnyWarPlan || (iEnemyPowerPercent < 45 && !(bLocalWarPlan && bTotalWarPlan))) // K-Mod
 	{
 		bool bAggressive = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
-		
+
 		int iFinancialTroubleCount = 0;
 		int iDaggerCount = 0;
 		int iGetBetterUnitsCount = 0;
@@ -5066,7 +5094,7 @@ void CvTeamAI::AI_doWar()
 												FAssertMsg(!(GET_TEAM((TeamTypes)iI).isBarbarian()), "Expected to not be declaring war on the barb civ");
 												FAssertMsg(iI != getID(), "Expected not to be declaring war on self (DOH!)");
 
-												if ((iPass > 1) || AI_isLandTarget((TeamTypes)iI) || AI_isAnyCapitalAreaAlone() || GET_TEAM((TeamTypes)iI).AI_isAnyMemberDoVictoryStrategyLevel4())
+												if ((iPass > 1 && !bLocalWarPlan) || AI_isLandTarget((TeamTypes)iI) || AI_isAnyCapitalAreaAlone() || GET_TEAM((TeamTypes)iI).AI_isAnyMemberDoVictoryStrategyLevel4())
 												{
 													if ((iPass > 0) || (AI_calculateAdjacentLandPlots((TeamTypes)iI) >= ((getTotalLand() * AI_maxWarMinAdjacentLandPercent()) / 100)) || GET_TEAM((TeamTypes)iI).AI_isAnyMemberDoVictoryStrategyLevel4())
 													{
