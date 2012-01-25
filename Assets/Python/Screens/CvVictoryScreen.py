@@ -285,7 +285,7 @@ class CvVictoryScreen:
 				iRow = screen.appendTableRow(szTable) # empty row between vote sources. (K-Mod)
 		# Remove the final empty row (K-Mod)
 		if screen.getTableNumRows(szTable) > 0:
-			screen.setTableNumRows(szTable, iRow)
+			screen.setTableNumRows(szTable, screen.getTableNumRows(szTable)-1)
 		#
 
 		self.drawTabs()
@@ -293,9 +293,8 @@ class CvVictoryScreen:
 
 # BUG Additions Start
 	def showMembersScreen(self):
-		iRelVote, iRelVoteIdx, iUNVote, iUNVoteIdx  = self.getVoteAvailable()
-
 		if AdvisorOpt.isMembers():
+			iRelVote, iRelVoteIdx, iUNVote, iUNVoteIdx  = self.getVoteAvailable()
 			if  iRelVote == -1: self.VoteBody = 2 # AP Not active
 			elif iUNVote == -1: self.VoteBody = 1 # UN Not active
 
@@ -674,7 +673,7 @@ class CvVictoryScreen:
 				iRow = screen.appendTableRow(szTable)
 		# Remove the final empty row (K-Mod)
 		if screen.getTableNumRows(szTable) > 0:
-			screen.setTableNumRows(szTable, iRow)
+			screen.setTableNumRows(szTable, screen.getTableNumRows(szTable)-1)
 		#
 
 	def formatPercent(self, f):
@@ -948,7 +947,14 @@ class CvVictoryScreen:
 
 					aiVoteBuildingClass.append((gc.getBuildingInfo(i).getBuildingClassType(), iUNTeam, bUnknown))
 
-		self.bVoteTab = (len(aiVoteBuildingClass) > 0)
+		#self.bVoteTab = (len(aiVoteBuildingClass) > 0)
+		# K-Mod
+		self.bVoteTab = False
+		for i in range(gc.getNumVoteSourceInfos()):
+			if gc.getGame().isDiploVote(i):
+				self.bVoteTab = True
+				break
+		# K-Mod end
 
 		self.deleteAllWidgets()	
 		screen = self.getScreen()
