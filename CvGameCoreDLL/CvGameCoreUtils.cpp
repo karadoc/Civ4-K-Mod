@@ -2505,6 +2505,12 @@ void getActivityTypeString(CvWString& szString, ActivityTypes eActivityType)
 	case ACTIVITY_SENTRY: szString = L"ACTIVITY_SENTRY"; break;
 	case ACTIVITY_INTERCEPT: szString = L"ACTIVITY_INTERCEPT"; break;
 	case ACTIVITY_MISSION: szString = L"ACTIVITY_MISSION"; break;
+// K-Mod. There were some missing activity strings...
+#define case_string(x) case x: szString = L#x; break;
+	case_string(ACTIVITY_PATROL)
+	case_string(ACTIVITY_PLUNDER)
+#undef case_string
+// K-Mod end
 
 	default: szString = CvWString::format(L"UNKNOWN_ACTIVITY(%d)", eActivityType); break;
 	}

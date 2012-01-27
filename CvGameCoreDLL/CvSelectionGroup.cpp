@@ -521,7 +521,8 @@ void CvSelectionGroup::autoMission()
 			if (!isBusy())
 			{
 				bool bVisibleHuman = false;
-				if (isHuman())
+				//if (isHuman())
+				if (!AI_isControlled()) // K-Mod. (otherwise the automation will just reissue commands immediately after they are cleared, resulting in an infinite loop.)
 				{
 					for (CLLNode<IDInfo>* pUnitNode = headUnitNode(); pUnitNode != NULL; pUnitNode = nextUnitNode(pUnitNode))
 					{

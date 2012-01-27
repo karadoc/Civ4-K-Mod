@@ -20654,10 +20654,12 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 // If we're on the coast, wait to be rescued!
 bool CvUnitAI::AI_handleStranded(int iFlags)
 {
-	FAssert(!isHuman());
 	FAssert(!isCargo());
 
 	PROFILE_FUNC();
+
+	if (isHuman())
+		return false;
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
