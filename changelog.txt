@@ -1,5 +1,26 @@
-This is K-Mod version 1.15.
+This is K-Mod version 1.16.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.16 changelist
+
++ Amphibious landings can now be executed even if the group isn't ready to move. (eg. if you have a transport on the coast, with no moves left, ordering it to move onto the land will now cause it to unload its cargo.)
++ Automated units will wait until the "automoves" phase before moving, rather than doing it as soon as it is their turn. (This will require some testing to make sure I haven't messed something up.)
++ Fixed a problem which sometimes caused automated units to repeated cancel and reorder their commands.
++ Made some changes to the 'resolutions' tab on the victory screen (F8). Each vote source now has a heading, and displays the number of turns until the next vote and number of votes until the next election. (I've also made a couple of minor changes to other parts of the victory screen.)
++ Rewrote the code that handles the highlighting of goody-huts and city site recommendations. It should now be more efficient for non-settlers and non-scouts, and it will now show all city sites within 7 turn range, rather than 4 plot range.
++ Units that fail to move with their group should now stay in a single split-off group rather than being completely separated.
++ Made some minor efficiency improvements.
+
+AI
+
++ Completely redesigned the system for handling stranded units. The new system is less likely to cause OOS errors, it is faster, and it fixes several bugs in the old system. For example, with the previous system (from BBAI) stranded units would often fail to recognise that they are being rescued, and thus would not load into the boat.
++ Tightened the requirements for the AI to consider starting a second war.
++ Corrected a couple of minor problems related to the AI's early-game defence of cities.
++ Made some adjustments to the AI's war-time espionage point targets.
++ CvSelectionGroup::startMission will now allow attack orders with MOVE_DIRECT_ATTACK to be executed even when not all units in the group can move. (This should enable "follow" attacks, which previous would just not happen.)
++ Tweaked AI_exploreMove to let them pillage bonuses a bit more readily.
++ Tweaked AI_buildGovernorChooseProduction to be a bit less likely to choose the culture production and to be less likely to build spies.
 
 --
 v1.15 changelist

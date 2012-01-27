@@ -29,9 +29,14 @@ Here I'll list a few significant features. See changelog.txt for a more complete
  + Actual quotes
  + BUG (modified)
  + "unofficial patch" (well known bugfixes)
- 
+
+== Technical improvements ==
+ + K-Mod includes many optimisation to the way the game runs. Although many of the calculations in K-Mod are more complex, the game actually runs a lot faster than standard BtS. In many cases, the time spent waiting between turns is _halved_.
+ + Special care has been taken to make sure K-Mod works correctly in multiplayer mode. Due to various bug-fixes and back-end changes, K-Mod has fewer OOS problems than standard BtS. (In fact, if you see _any_ OOS errors at all, please tell me about it. I suspect that OOS may have been completely eliminated.)
+ + K-Mod includes many bug fixes to the controls and user-interface of the game. For example, units will no longer automatically attack when they are ordered into an unseen enemy unit in the fog-of-war; and using the diplomacy screen to suggest peace will now bring up possible peace-trade deal rather than simply ending the war without negotiations. There are many other such minor improvements.
+
 == Better AI ==
-The BBAI mod was used as the starting point for the AI in K-Mod, but each new version of K-Mod comes further AI improvements. The AI in K-Mod is now noticeably stronger than the AI in the BBAI mod. The obvious improvements are that the AI will research faster, fight smarter, and place city more thoughtfully; but there are also some "flavour" changes as well - different AI leaders like to pursue different kinds of strategies. It's also worth noting that the AI in K-Mod actually cheats /less/ than the standard AI; not more. (For those who don't know; the standard AI 'cheats' by sometimes knowing what is on certain plots without actually seeing them. This still sometimes happens in K-Mod, but it happens far less.)
+The BBAI mod was used as the starting point for the AI in K-Mod, but each new version of K-Mod comes further AI improvements. The AI in K-Mod is now noticeably stronger than the AI in the BBAI mod. The obvious improvements are that the AI will research faster, fight smarter, and place cities more thoughtfully; but there are also some "flavour" changes as well - different AI leaders like to pursue different kinds of strategies. It's also worth noting that the AI in K-Mod actually cheats /less/ than the standard AI; not more. (For those who don't know; the standard AI 'cheats' by sometimes knowing what is on certain plots without actually seeing them. This still sometimes happens in K-Mod, but it happens far less.)
 
 == New global warming system ==
 In standard BtS, global warming is a bit of a joke. It is triggered by the wrong things, you can't really do much to prevent it, and it hits the world in a harsh and unintuitive way. I've completely changed it.
