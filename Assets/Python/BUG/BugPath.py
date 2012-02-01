@@ -493,7 +493,12 @@ def initRootFolder():
 		BugUtil.error("CvAltRoot.py module has no rootDir setting")
 	except OSError, (errno, strerror):
 		BugUtil.trace("Error accessing directory from CvAltRoot.py: [%d] %s", errno, strerror)
-	
+
+	# K-Mod. I'd like to set the user directory like this:
+#	if not setUserDir(os.path.expanduser(join("~", MY_GAMES_FOLDER))):
+#		BugUtil.debug("BugPath - default user dir failed ('%s')" % (os.path.expanduser(join("~", MY_GAMES_FOLDER))))
+	# but unfortunately, this misses the "documents" part of the path name. Oh well.
+
 	# user dir
 	if isMac():
 		# Mac OS X
@@ -502,14 +507,21 @@ def initRootFolder():
 	else:
 		# Windows
 		import _winreg
+		import re # used in a bugfix by K-Mod
 		def getRegValue(root, subkey, name):
 			key = _winreg.OpenKey(root, subkey)
 			try:
 				value = _winreg.QueryValueEx(key, name)
+				# K-Mod. We may need to expand environment variables.
+				# unfortuantely, expandvars in this particular version of python can't handle %variables%, so we need to first translate...
+				if value[1] == _winreg.REG_EXPAND_SZ:
+					# here we go...
+					return os.path.expandvars(re.sub(r'%([a-zA-Z_]+)%', r'${\1}', value[0]))
+				# K-Mod end
 				return value[0]
 			finally:
 				key.Close()
-		
+
 		for version, key, subkey in MY_DOCUMENTS_FOLDER_REG_KEYS:
 			try:
 				myDocuments = getRegValue(_winreg.HKEY_CURRENT_USER, key, subkey)
@@ -521,7 +533,8 @@ def initRootFolder():
 					break
 		else:
 			BugUtil.debug("BugPath - no valid My Documents registry key")
-	
+			BugUtil.warn("Cannot find user's Documents folder")
+
 	# try to determine missing dir from other dir
 	if not _rootDir:
 		if _userDir:
@@ -574,28 +587,29 @@ def initDataFolder():
 
 	# K-Mod. If it doesn't already exist, create the folder in the user directory.
 	dir = join(getRootDir(), getModName(), SETTINGS_FOLDER)
-	if not isdir(dir):
-		# copy the default settings from the K-Mod folder.
-		default_dir = join(getModDir(), SETTINGS_FOLDER)
-		if isdir(default_dir):
-			try:
-				safeInfoPath("BugPath - copying settings to '%s'", dir)
-				# copytree is suppose to create the missing parent directores, but apparently it doesn't work. So I need to do this:
+	if dir != None:
+		if not isdir(dir):
+			# copy the default settings from the K-Mod folder.
+			default_dir = join(getModDir(), SETTINGS_FOLDER)
+			if isdir(default_dir):
 				try:
-					os.makedirs(join(getRootDir(), getModName()))
-				except OSError:
-					pass
-				# sucks.
-				shutil.copytree(default_dir, dir)
+					safeInfoPath("BugPath - copying settings to '%s'", dir)
+					# copytree is suppose to create the missing parent directores, but apparently it doesn't work. So I need to do this:
+					try:
+						os.makedirs(join(getRootDir(), getModName()))
+					except OSError:
+						pass
+					# sucks.
+					shutil.copytree(default_dir, dir)
+				except:
+					BugUtil.trace("Failed to copy settings")
+		if not isdir(dir):
+			# Second attempt: create the directory manually
+			try:
+				safeInfoPath("BugPath - creating '%s'", dir)
+				os.makedirs(dir)
 			except OSError:
-				BugUtil.trace("Failed to copy settings")
-	if not isdir(dir):
-		# Second attempt: create the directory manually
-		try:
-			safeInfoPath("BugPath - creating '%s'", dir)
-			os.makedirs(dir)
-		except OSError:
-			BugUtil.trace("Failed to create directory '%s'", dir)
+				BugUtil.trace("Failed to create directory '%s'", dir)
 	# K-Mod end
 	
 	dataDirs = (

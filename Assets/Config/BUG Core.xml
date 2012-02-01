@@ -63,9 +63,8 @@
 			<option id="RepositoryVersion" key="Repository Revision" 
 					type="int" default="0"
 					title="Repository Revision"/>
+			<option id="LastSvnCheck" type="float" default="0"/>
 		</section>
-		
-		<option id="LastSvnCheck" type="float" default="0"/>
 	</options>
 	
 	<init module="BugUtil" function="readLoggingOptions" immediate="true"/>
