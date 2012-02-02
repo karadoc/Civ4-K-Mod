@@ -6387,10 +6387,7 @@ bool CvUnit::canTrade(const CvPlot* pPlot, bool bTestVisible) const
 		return false;
 	}
 
-	if (getTradeGold(pPlot) == 0)
-	{
-		return false;
-	}
+	// K-Mod. if (getTradeGold(pPlot) == 0) use to be here. I've moved it to the bottom, for efficiency.
 
 	if (!canEnterArea(pPlot->getTeam(), pPlot->area()))
 	{
@@ -6403,6 +6400,11 @@ bool CvUnit::canTrade(const CvPlot* pPlot, bool bTestVisible) const
 		{
 			return false;
 		}
+	}
+
+	if (getTradeGold(pPlot) == 0)
+	{
+		return false;
 	}
 
 	return true;

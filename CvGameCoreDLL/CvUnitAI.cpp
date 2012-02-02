@@ -22808,28 +22808,24 @@ int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
 		{
 			for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
 			{
-				if (AI_plotValid(pLoopCity->plot()))
+				if (AI_plotValid(pLoopCity->plot()) && !pLoopCity->plot()->isVisibleEnemyUnit(this))
 				{
-                    int iValue = getTradeGold(pLoopCity->plot());
+					int iValue = getTradeGold(pLoopCity->plot());
 					int iPathTurns;
 
-                    if ((iValue >= iThreshold) && canTrade(pLoopCity->plot(), true))
-                    {
-                        if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
-                        {
-                            if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
-                            {
-                                if (iValue / (4 + iPathTurns) > iBestValue / (4 + iBestPathTurns))
-                                {
-                                    iBestValue = iValue;
-									iBestPathTurns = iPathTurns;
-                                    pBestPlot = getPathEndTurnPlot();
-									iThreshold = std::max(iThreshold, iBestValue * 4 / (4 + iBestPathTurns));
-                                }
-                            }
-
-                        }
-                    }
+					if (iValue >= iThreshold && canTrade(pLoopCity->plot()))
+					{
+						if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
+						{
+							if (iValue / (4 + iPathTurns) > iBestValue / (4 + iBestPathTurns))
+							{
+								iBestValue = iValue;
+								iBestPathTurns = iPathTurns;
+								pBestPlot = getPathEndTurnPlot();
+								iThreshold = std::max(iThreshold, iBestValue * 4 / (4 + iBestPathTurns));
+							}
+						}
+					}
 				}
 			}
 		}
@@ -22845,6 +22841,7 @@ bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
 	{
 		if (atPlot(pTradePlot))
 		{
+			FAssert(canTrade(pTradePlot));
 			if (canTrade(pTradePlot))
 			{
 				getGroup()->pushMission(MISSION_TRADE);
