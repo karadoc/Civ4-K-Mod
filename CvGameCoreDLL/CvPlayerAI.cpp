@@ -2400,9 +2400,11 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		else if (getCommercePercent(COMMERCE_GOLD) < 25)
 		{
 			//put more money towards other commerce types
-			if (getGoldPerTurn() > -getGold()/40)
+			int iGoldPerTurn = getGoldPerTurn(); // K-Mod
+			if (iGoldPerTurn > -getGold()/40)
 			{
 				iWeight -= 25 - getCommercePercent(COMMERCE_GOLD);
+				iWeight -= (iGoldPerTurn > 0 && getCommercePercent(COMMERCE_GOLD) == 0) ? 10 : 0; // K-Mod. just a bit extra. (I'd like to compare getGold to AI_goldTarget; but it's too expensive.)
 			}
 		}
 		// K-Mod.
