@@ -1624,7 +1624,18 @@ def canTriggerHeroicGesture(argsList):
 
 	if gc.getTeam(player.getTeam()).AI_getWarSuccess(destPlayer.getTeam()) <= 0:
 		return false
-	
+
+	# K-Mod. an ugly hack to prevent the AI from signing a peace deal when it really doesn't want to.
+	tradeData = TradeData()
+	tradeData.ItemType = TradeableItems.TRADE_PEACE_TREATY
+
+	if player.getTradeDenial(kTriggeredData.eOtherPlayer, tradeData) != DenialTypes.NO_DENIAL:
+		return false
+
+	if destPlayer.getTradeDenial(kTriggeredData.ePlayer, tradeData) != DenialTypes.NO_DENIAL:
+		return false
+	# K-Mod end
+
 	return true
 
 def doHeroicGesture2(argsList):
@@ -1694,6 +1705,17 @@ def canTriggerGreatMediator(argsList):
 		
 	if gc.getTeam(player.getTeam()).AI_getAtWarCounter(destPlayer.getTeam()) < 10:
 		return false
+
+	# K-Mod. an ugly hack to prevent the AI from signing a peace deal when it really doesn't want to.
+	tradeData = TradeData()
+	tradeData.ItemType = TradeableItems.TRADE_PEACE_TREATY
+
+	if player.getTradeDenial(kTriggeredData.eOtherPlayer, tradeData) != DenialTypes.NO_DENIAL:
+		return false
+
+	if destPlayer.getTradeDenial(kTriggeredData.ePlayer, tradeData) != DenialTypes.NO_DENIAL:
+		return false
+	# K-Mod end
 
 	return true
 
