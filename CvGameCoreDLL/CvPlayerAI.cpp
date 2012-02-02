@@ -17458,7 +17458,8 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 	int iValue = GC.getGameINLINE().getSorenRandNum(kEvent.getAIValue(), "AI Event choice");
 	iValue += (getEventCost(eEvent, kTriggeredData.m_eOtherPlayer, false) + getEventCost(eEvent, kTriggeredData.m_eOtherPlayer, true)) / 2;
 
-	iValue += kEvent.getEspionagePoints();
+	//iValue += kEvent.getEspionagePoints();
+	iValue += kEvent.getEspionagePoints() * AI_commerceWeight(COMMERCE_ESPIONAGE) / 100; // K-Mod
 
 	if (kEvent.getTech() != NO_TECH)
 	{
@@ -17478,10 +17479,11 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 			}
 			else if (iUnitValue == -1)
 			{
-				iUnitValue = 200; //Great Person?
+				iUnitValue = 2000; //Great Person?  // (was 200)
 			}
 
 			iUnitValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+			iUnitValue /= 100; // K-Mod
 			iValue += kEvent.getNumUnits() * iUnitValue;
 		}
 	}
@@ -17498,10 +17500,11 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 			}
 			else if (iUnitValue == -1)
 			{
-				iUnitValue = 200; //Great Person?
+				iUnitValue = 2000; //Great Person?  // (was 200)
 			}
 
 			iUnitValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+			iUnitValue /= 100; // K-Mod
 			iValue -= iUnitValue;
 		}
 	}
@@ -17635,7 +17638,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 		
 		iCityTurnValue += aiCommerceYields[COMMERCE_RESEARCH] * 3;
 		iCityTurnValue += aiCommerceYields[COMMERCE_GOLD] * 3;
-		iCityTurnValue += aiCommerceYields[COMMERCE_CULTURE] * 1;
+		iCityTurnValue += aiCommerceYields[COMMERCE_CULTURE] * 2; // was 1
 		iCityTurnValue += aiCommerceYields[COMMERCE_ESPIONAGE] * 2;
 
 		iValue += (iCityTurnValue * 20 * iGameSpeedPercent) / 100;
@@ -17667,7 +17670,8 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 	int iBonusValue = 0;
 	if (NO_BONUS != kEvent.getBonus())
 	{
-		iBonusValue = AI_bonusVal((BonusTypes)kEvent.getBonus());
+		//iBonusValue = AI_bonusVal((BonusTypes)kEvent.getBonus());
+		iBonusValue = AI_bonusVal((BonusTypes)kEvent.getBonus(), 0); // K-Mod
 	}
 
 	if (NULL != pPlot)
@@ -17893,9 +17897,20 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 
 		if (kEvent.isDeclareWar())
 		{
+			/* original bts code
 			int iWarValue = GET_TEAM(getTeam()).getDefensivePower(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam())
 				- GET_TEAM(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam()).getPower(true);// / std::max(1, GET_TEAM(getTeam()).getDefensivePower());
-			iWarValue -= 30 * AI_getAttitudeVal(kTriggeredData.m_eOtherPlayer);
+			iWarValue -= 30 * AI_getAttitudeVal(kTriggeredData.m_eOtherPlayer); */
+
+			// K-Mod. Note: the original code doesn't touch iValue.
+			// So whatever I do here is completely new.
+			// TOOD: if I ever get around to writing code for evalutating potential war targets, I should use that here!
+			int iOurPower = GET_TEAM(getTeam()).getDefensivePower(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam());
+			int iTheirPower = GET_TEAM(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam()).getPower(true);
+			int iWarValue = 300 * (iOurPower - iTheirPower) / (iOurPower + iTheirPower) - 25;// / std::max(1, GET_TEAM(getTeam()).getDefensivePower())
+
+			iValue += iWarValue;
+			// K-Mod end
 		}
 			
 		if (kEvent.getMaxPillage() > 0)
@@ -17905,6 +17920,8 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 			iPillageValue *= 25 - iOtherPlayerAttitudeWeight;
 			iPillageValue *= iGameSpeedPercent;
 			iPillageValue /= 12500;
+
+			iValue += iPillageValue; // K-Mod!
 		}
 
 		iValue += (iDiploValue * iGameSpeedPercent) / 100;
