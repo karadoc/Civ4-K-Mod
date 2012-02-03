@@ -13136,6 +13136,8 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 // XXX should pUnit be a CvSelectionGroup???
 void CvPlayer::updateGroupCycle(CvUnit* pUnit)
 {
+	PROFILE_FUNC();
+
 	CLLNode<IDInfo>* pUnitNode;
 	CLLNode<int>* pSelectionGroupNode;
 	CLLNode<int>* pBestSelectionGroupNode;

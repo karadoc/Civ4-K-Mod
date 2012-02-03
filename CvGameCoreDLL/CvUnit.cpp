@@ -3101,10 +3101,10 @@ bool CvUnit::canAutomate(AutomateTypes eAutomate) const
 		return false;
 	}
 
-	if (!isGroupHead())
+	/*if (!isGroupHead())
 	{
 		return false;
-	}
+	}*/ // disabled by K-Mod
 
 	switch (eAutomate)
 	{

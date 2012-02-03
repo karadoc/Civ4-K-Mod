@@ -1076,6 +1076,12 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 			}
 			else if (eMessage == GAMEMESSAGE_DO_COMMAND)
 			{
+				// K-Mod. When setting a unit to automate, we must be careful not to keep it grouped
+				if (iData2 == COMMAND_AUTOMATE && !gDLL->getInterfaceIFace()->mirrorsSelectionGroup())
+				{
+					selectionListGameNetMessage(GAMEMESSAGE_JOIN_GROUP);
+				}
+				// K-Mod end
 				pSelectedUnitNode = gDLL->getInterfaceIFace()->headSelectionListNode();
 
 				while (pSelectedUnitNode != NULL)
