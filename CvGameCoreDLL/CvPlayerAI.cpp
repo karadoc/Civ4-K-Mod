@@ -1399,10 +1399,6 @@ void CvPlayerAI::AI_unitUpdate()
 	PROFILE_FUNC();
 
 	CLLNode<int>* pCurrUnitNode;
-	//CvSelectionGroup* pLoopSelectionGroup;
-	//CLinkList<int> tempGroupCycle;
-	//CLinkList<int> finalGroupCycle;
-	//int iValue;
 
 	FAssert(m_groupCycle.getLength() == m_selectionGroups.getCount());
 
@@ -1425,6 +1421,7 @@ void CvPlayerAI::AI_unitUpdate()
 			}
 		}
 
+		/* original bts code
 		if (isHuman())
 		{
 			pCurrUnitNode = headGroupCycleNode();
@@ -1440,7 +1437,8 @@ void CvPlayerAI::AI_unitUpdate()
 				}
 			}
 		}
-		else
+		else */
+		if (!isHuman()) // K-Mod - automated actions are no longer done from this function. Instead, they are done in CvGame::updateMoves
 		{
 			/* original bts code
 			tempGroupCycle.clear();

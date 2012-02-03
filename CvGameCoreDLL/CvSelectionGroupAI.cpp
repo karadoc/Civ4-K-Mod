@@ -222,7 +222,7 @@ bool CvSelectionGroupAI::AI_update()
 		doForceUpdate(); // K-Mod (based on old code)
 	}
 
-	FAssert(!(GET_PLAYER(getOwnerINLINE()).isAutoMoves()));
+	//FAssert(!(GET_PLAYER(getOwnerINLINE()).isAutoMoves())); // (no longer true in K-Mod)
 
 	int iTempHack = 0; // XXX
 

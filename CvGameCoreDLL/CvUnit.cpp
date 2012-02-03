@@ -3173,6 +3173,10 @@ void CvUnit::automate(AutomateTypes eAutomate)
 	}
 
 	getGroup()->setAutomateType(eAutomate);
+	// K-Mod
+	FAssert(GET_PLAYER(getOwnerINLINE()).isTurnActive());
+	getGroup()->AI_update();
+	// K-Mod end
 }
 
 

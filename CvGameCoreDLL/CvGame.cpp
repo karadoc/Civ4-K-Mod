@@ -7203,6 +7203,13 @@ void CvGame::updateMoves()
 					for(pLoopSelectionGroup = player.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = player.nextSelectionGroup(&iLoop))
 					{
 						pLoopSelectionGroup->autoMission();
+						// K-Mod. Here's where we do the AI for automated units.
+						if (player.isHuman() && pLoopSelectionGroup->AI_update())
+						{
+							FAssert(player.hasBusyUnit());
+							break;
+						}
+						// K-Mod end
 					}
 
 					if (!(player.hasBusyUnit()))
