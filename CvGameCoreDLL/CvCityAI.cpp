@@ -8324,17 +8324,37 @@ void CvCityAI::AI_doHurry(bool bForce)
 		bool bGrowth = false;
 		bool bDanger = AI_isDanger();
 
-		// Whip to eliminate unhappiness - thank you Blake!
-		if (getProduction() > 0)
+		//if (getProduction() > 0)
+		if (iHurryPopulation > 0)
 		{
-			if (AI_getHappyFromHurry((HurryTypes)iI) > 0)
+			int iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
+
+			if (iHappyDiff > 0 && getHurryAngerTimer() > 1)
+				iHappyDiff -= ROUND_DIVIDE(3 * getHurryAngerTimer(), flatHurryAngerLength());
+
+			int iHappy = happyLevel() - unhappyLevel();
+
+			if (iHappyDiff > 0)
 			{
-				if( gCityLogLevel >= 2 )
+				if (iHappy < 0)
 				{
-					logBBAI("      City %S hurry to remove unhappiness", getName().GetCString() );
+					if (gCityLogLevel >= 2)
+						logBBAI("      City %S hurry to reduce unhappiness", getName().GetCString() );
+					hurry((HurryTypes)iI);
+					return;
 				}
+			}
+			else if (iHappy < 0)
+			{
+				continue; // not enough happiness to afford this hurry
+			}
+
+			if (iHappy + iHappyDiff >= 1 && foodDifference() < -iHurryPopulation)
+			{
+				if (gCityLogLevel >= 2)
+					logBBAI("      City %S hurry to reduce food loss", getName().GetCString() );
 				hurry((HurryTypes)iI);
-				break;
+				return;
 			}
 		}
 
