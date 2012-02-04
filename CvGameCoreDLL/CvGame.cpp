@@ -7203,14 +7203,21 @@ void CvGame::updateMoves()
 					for(pLoopSelectionGroup = player.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = player.nextSelectionGroup(&iLoop))
 					{
 						pLoopSelectionGroup->autoMission();
-						// K-Mod. Here's where we do the AI for automated units.
-						if (player.isHuman() && pLoopSelectionGroup->AI_update())
-						{
-							FAssert(player.hasBusyUnit());
-							break;
-						}
-						// K-Mod end
 					}
+					// K-Mod. Here's where we do the AI for automated units.
+					// Note, we can't do AI_update and autoMission in the same loop, because either one might delete the group - and thus cause the other to crash.
+					if (player.isHuman())
+					{
+						for (pLoopSelectionGroup = player.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = player.nextSelectionGroup(&iLoop))
+						{
+							if (pLoopSelectionGroup->AI_update())
+							{
+								FAssert(player.hasBusyUnit());
+								break;
+							}
+						}
+					}
+					// K-Mod end
 
 					if (!(player.hasBusyUnit()))
 					{

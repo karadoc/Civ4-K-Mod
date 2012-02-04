@@ -4064,7 +4064,8 @@ bool CvSelectionGroup::readyToMove(bool bAny)
 
 bool CvSelectionGroup::readyToAuto()
 {
-	return (canAllMove() && (headMissionQueueNode() != NULL));
+	//return (canAllMove() && (headMissionQueueNode() != NULL));
+	return (canAllMove() && (headMissionQueueNode() != NULL || isAutomated()));
 }
 
 
