@@ -3475,6 +3475,13 @@ UnitTypes CvCityAI::AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync, AdvisorTypes
 				}
 			}
 		}
+		// K-Mod
+		else if (bGrowMore)
+		{
+			if (angryPopulation(1) > 0)
+				bGrowMore = false;
+		}
+		// K-Mod end
 	}
 	iBestOriginalValue = 0;
 
@@ -8291,8 +8298,10 @@ void CvCityAI::AI_doHurry(bool bForce)
 	PROFILE_FUNC();
 
 	FAssert(!isHuman() || isProductionAutomated());
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 	
-	if (isBarbarian())
+	if (kOwner.isBarbarian())
 	{
 		return;
 	}
@@ -8316,23 +8325,48 @@ void CvCityAI::AI_doHurry(bool bForce)
 			hurry((HurryTypes)iI);
 			break;
 		}
-		int iHurryAngerLength = hurryAngerLength((HurryTypes)iI);
-		int iHurryPopulation = hurryPopulation((HurryTypes)iI);
 
 		int iMinTurns = MAX_INT;
 		bool bEssential = false;
 		bool bGrowth = false;
 		bool bDanger = AI_isDanger();
 
+		// gold hurry information
+		int iHurryGold = hurryGold((HurryTypes)iI);
+		int iGoldTarget = 0;
+		int iGoldCost = 0;
+		if (iHurryGold > 0)
+		{
+			if (iHurryGold > kOwner.getGold() - kOwner.AI_goldTarget(true))
+				continue; // we don't have enough gold for this hurry type.
+			iGoldTarget = kOwner.AI_goldTarget();
+			iGoldCost = iHurryGold;
+			if (kOwner.getGold() - iHurryGold >= iGoldTarget)
+			{
+				iGoldCost *= 100;
+				iGoldCost /= 150 + 50 * (kOwner.getGold() - iHurryGold) / std::max(iGoldTarget, iHurryGold);
+			}
+		}
+		//
+
+		// population hurry information
+		int iHurryAngerLength = hurryAngerLength((HurryTypes)iI);
+		int iHurryPopulation = hurryPopulation((HurryTypes)iI);
+
+		int iHappyDiff = 0;
+		int iHappy = 0;
+		int iPopCost = 0;
+		//
+
 		//if (getProduction() > 0)
 		if (iHurryPopulation > 0)
 		{
 			int iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
 
-			if (iHappyDiff > 0 && getHurryAngerTimer() > 1)
+			if (getHurryAngerTimer() > 1)
 				iHappyDiff -= ROUND_DIVIDE(3 * getHurryAngerTimer(), flatHurryAngerLength());
 
-			int iHappy = happyLevel() - unhappyLevel();
+			iHappy = happyLevel() - unhappyLevel();
 
 			if (iHappyDiff > 0)
 			{
@@ -8344,7 +8378,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 					return;
 				}
 			}
-			else if (iHappy < 0)
+			else if (iHappy + iHappyDiff < 0)
 			{
 				continue; // not enough happiness to afford this hurry
 			}
@@ -8356,7 +8390,23 @@ void CvCityAI::AI_doHurry(bool bForce)
 				hurry((HurryTypes)iI);
 				return;
 			}
+
+			// estimate the cost of pop-rush. (1 food ~= 2 gold?)
+			/*iPopCost = 2 * (iHurryPopulation - std::min(iHappyDiff, std::max(0, 1-iHappy))); // 2 * good citizen differnce
+			iPopCost += iHappyDiff == 0 && iHappy == 0 ? 1 : 0; // extra if we are pressing the happiness limit
+			iPopCost -= std::max(0, getWorkingPopulation() - iHurryPopulation - AI_countGoodTiles((healthRate(0) == 0), false, 100)); // reduce for worked bad tiles.
+			iPopCost *= AI_yieldMultiplier(YIELD_COMMERCE);
+			iPopCost *= kOwner.getGrowthThreshold(getPopulation() - 1) * (100 - getMaxFoodKeptPercent());
+			iPopCost /= 10000; // food kept percent, and average commerce multiplier */
+
+			iPopCost = AI_citizenLossCost(iHurryPopulation, std::max(0, -iHappy));
+			// subtract overflow from the cost.
+			if ((getHurryAngerTimer() <= 1 || iHurryAngerLength == 0) && (iHappy > 0 || iHappyDiff > 0))
+				iPopCost -= 6 * (hurryProduction((HurryTypes)iI) - productionLeft());
+			// convert units from 4x commerce to 1x commerce
+			iPopCost /= 4;
 		}
+		int iTotalCost = iPopCost + iGoldCost;
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      12/07/09                                jdog5000      */
@@ -8372,7 +8422,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				{
 					bool bWait = true;
 
-					if( GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_TURTLE) )
+					if( kOwner.AI_isDoStrategy(AI_STRATEGY_TURTLE) )
 					{
 						bWait = false;
 					}
@@ -8380,7 +8430,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 					{
 						bWait = true;
 					}
-					else if( GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble() )
+					else if( kOwner.AI_isFinancialTrouble() )
 					{
 						bWait = true;
 					}
@@ -8411,23 +8461,23 @@ void CvCityAI::AI_doHurry(bool bForce)
 				}
 				else
 				{
-					if( !(GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble()) )
+					if( !(kOwner.AI_isFinancialTrouble()) )
 					{
 						int iHurryGold = hurryGold((HurryTypes)iI);
 						if( iHurryGold > 0 && iHurryAngerLength == 0 )
 						{
 							bool bWait = true;
 
-							if( GET_PLAYER(getOwnerINLINE()).AI_isDoStrategy(AI_STRATEGY_TURTLE) )
+							if( kOwner.AI_isDoStrategy(AI_STRATEGY_TURTLE) )
 							{
-								if( (bDanger ? 5 : 8)*iHurryGold < GET_PLAYER(getOwnerINLINE()).getGold() )
+								if( (bDanger ? 5 : 8)*iHurryGold < kOwner.getGold() )
 								{
 									bWait = false;
 								}
 							}
 							else
 							{
-								if( (bDanger ? 8 : 12)*iHurryGold < GET_PLAYER(getOwnerINLINE()).getGold() )
+								if( (bDanger ? 8 : 12)*iHurryGold < kOwner.getGold() )
 								{
 									bWait = false;
 								}
@@ -8451,11 +8501,11 @@ void CvCityAI::AI_doHurry(bool bForce)
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-		if ((iHurryAngerLength == 0) && (iHurryPopulation == 0))
+		/*if ((iHurryAngerLength == 0) && (iHurryPopulation == 0))
 		{
-			if (GET_PLAYER(getOwnerINLINE()).AI_avoidScience())
+			if (kOwner.AI_avoidScience())
 			{
-				if (GET_PLAYER(getOwnerINLINE()).getGold() > GET_PLAYER(getOwnerINLINE()).AI_goldTarget())
+				if (kOwner.getGold() > kOwner.AI_goldTarget())
 				{
 					iMinTurns = std::min(iMinTurns, 10);
 				}
@@ -8471,34 +8521,13 @@ void CvCityAI::AI_doHurry(bool bForce)
 				if (iValuePerTurn > 0)
 				{
 					int iHurryGold = hurryGold((HurryTypes)iI);
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       08/06/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-					if ((iHurryGold / iValuePerTurn) < getProductionTurnsLeft(eProductionBuilding, 1))
-*/
-					if ( (iHurryGold > 0) && ((iHurryGold / iValuePerTurn) < getProductionTurnsLeft(eProductionBuilding, 1)) )
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+					if (iHurryGold > 0 && (iHurryGold / iValuePerTurn < getProductionTurnsLeft(eProductionBuilding, 1)))
 					{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/06/09                                jdog5000      */
-/*                                                                                              */
-/* Gold AI                                                                                      */
-/************************************************************************************************/
-/* original bts code
-						if (iHurryGold < (GET_PLAYER(getOwnerINLINE()).getGold() / 3))
-*/
-						int iGoldThreshold = GET_PLAYER(getOwnerINLINE()).getGold();
-						iGoldThreshold -= (GET_PLAYER(getOwnerINLINE()).AI_getGoldToUpgradeAllUnits() / ((GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0) ? 1 : 3));
+						int iGoldThreshold = kOwner.getGold();
+						iGoldThreshold -= (kOwner.AI_getGoldToUpgradeAllUnits() / ((GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0) ? 1 : 3));
 						iGoldThreshold /= 3;
+
 						if (iHurryGold < iGoldThreshold)
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
 						{
 							if( gCityLogLevel >= 2 )
 							{
@@ -8510,11 +8539,90 @@ void CvCityAI::AI_doHurry(bool bForce)
 					}
 				}
 			}
+		}*/
+
+		if (eProductionUnit != NO_UNIT)
+		{
+			int iValue = 0;
+			if (!kOwner.AI_isFinancialTrouble())
+			{
+				iValue = productionLeft();
+				switch (eProductionUnitAI)
+				{
+				case UNITAI_WORKER:
+				case UNITAI_SETTLE:
+					iValue *= 6;
+					break;
+				case UNITAI_WORKER_SEA:
+				case UNITAI_SETTLER_SEA:
+				case UNITAI_EXPLORE_SEA:
+					iValue *= 5;
+					break;
+				default:
+					if (GET_TEAM(kOwner.getTeam()).getAtWarCount(true) > 0)
+						iValue *= 5;
+					else
+						iValue *= 4;
+					break;
+				}
+				iValue /= getHurryAngerTimer() > 1 ? 6 : 4;
+			}
+			if (iValue >= iTotalCost)
+			{
+				if( gCityLogLevel >= 2 )
+				{
+					logBBAI("      City %S (%d) would hurry %S. %d pop (%d) + %d gold (%d) to save %d turns. (value %d)",
+						getName().GetCString(), getPopulation(), GC.getUnitInfo(eProductionUnit).getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionUnit, 1), iValue);
+				}
+					if (kOwner.getID() % 2)
+					{
+						hurry((HurryTypes)iI);
+						return;
+					}
+			}
+			else
+			{
+				if( gCityLogLevel >= 2 )
+				{
+					logBBAI("      City %S (%d) would not hurry %S. %d pop (%d) + %d gold (%d) to save %d turns. (value %d)",
+						getName().GetCString(), getPopulation(), GC.getUnitInfo(eProductionUnit).getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionUnit, 1), iValue);
+				}
+			}
 		}
 
 		if (eProductionBuilding != NO_BUILDING)
 		{
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
+
+			int iBuildingValue = AI_buildingValue(eProductionBuilding);
+			if (iBuildingValue * getProductionTurnsLeft(eProductionBuilding, 1) / 4 >= iTotalCost)
+			{
+				if( gCityLogLevel >= 2 )
+				{
+					logBBAI("      City %S (%d) would hurry %S. %d pop (%d) + %d gold (%d) to save %d turns with %d building value (%d)",
+						getName().GetCString(), getPopulation(), kBuildingInfo.getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionBuilding, 1), iBuildingValue,
+						iBuildingValue * getProductionTurnsLeft(eProductionBuilding, 1) / 4);
+					if (kOwner.getID() % 2)
+					{
+						hurry((HurryTypes)iI);
+						return;
+					}
+				}
+				if (iHurryPopulation == 0)
+				{
+					hurry((HurryTypes)iI);
+					return;
+				}
+			}
+			else
+			{
+				if( gCityLogLevel >= 2 )
+				{
+					logBBAI("      City %S (%d) would not hurry %S. %d pop (%d) + %d gold (%d) to save %d turns with %d building value (%d)",
+						getName().GetCString(), getPopulation(), kBuildingInfo.getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionBuilding, 1), iBuildingValue,
+						iBuildingValue * getProductionTurnsLeft(eProductionBuilding, 1) / 4);
+				}
+			}
 
 			if (isWorldWonderClass((BuildingClassTypes)(kBuildingInfo.getBuildingClassType())))
 			{
@@ -8620,7 +8728,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 			if (kBuildingInfo.getCommerceModifier(COMMERCE_GOLD) > 0)
 			{
-				if (GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
+				if (kOwner.AI_isFinancialTrouble())
 				{
 					if (getBaseCommerceRate(COMMERCE_GOLD) >= 16)
 					{
@@ -8631,7 +8739,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 			if (kBuildingInfo.getCommerceModifier(COMMERCE_RESEARCH) > 0)
 			{
-				if (!(GET_PLAYER(getOwnerINLINE()).AI_avoidScience()))
+				if (!(kOwner.AI_avoidScience()))
 				{
 					if (getBaseCommerceRate(COMMERCE_RESEARCH) >= 16)
 					{
@@ -8678,7 +8786,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 		{
 			if (area()->getNumAIUnits(getOwnerINLINE(), UNITAI_SETTLE) == 0)
 			{
-				if (!(GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble()))
+				if (!(kOwner.AI_isFinancialTrouble()))
 				{
 					if (area()->getBestFoundValue(getOwnerINLINE()) > 0)
 					{
@@ -8707,7 +8815,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 		if (eProductionUnitAI == UNITAI_WORKER)
 		{
-			if (GET_PLAYER(getOwnerINLINE()).AI_neededWorkers(area()) > (area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) * 2))
+			if (kOwner.AI_neededWorkers(area()) > (area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) * 2))
 			{
 				iMinTurns = std::min(iMinTurns, 5);
 				bEssential = true;
@@ -8749,11 +8857,11 @@ void CvCityAI::AI_doHurry(bool bForce)
 		if (bGrowth)
 		{
 			int iHurryGold = hurryGold((HurryTypes)iI);
-			if ((iHurryGold > 0) && ((iHurryGold * 16) < GET_PLAYER(getOwnerINLINE()).getGold()))
+			if ((iHurryGold > 0) && ((iHurryGold * 16) < kOwner.getGold()))
 			{
 				if( gCityLogLevel >= 2 )
 				{
-					logBBAI("      City %S hurry gold at %d for growth when rich at %d", getName().GetCString(), iHurryGold, GET_PLAYER(getOwnerINLINE()).getGold() );
+					logBBAI("      City %S hurry gold at %d for growth when rich at %d", getName().GetCString(), iHurryGold, kOwner.getGold() );
 				}
 				hurry((HurryTypes)iI);
 				break;
@@ -9777,6 +9885,115 @@ void CvCityAI::AI_juggleCitizens()
 	} while (!bDone);
 }
 
+// K-Mod. Estimate the cost of recovery after losing iQuantity number of citizens in this city.
+// (units of 4x commerce.)
+int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
+{
+	PROFILE_FUNC();
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	iCitDelta = std::min(getPopulation()-1, iCitDelta);
+	if (iCitDelta < 1)
+		return 0;
+
+	short iYields[NUM_YIELD_TYPES] = {};
+	const short iYieldWeights[NUM_YIELD_TYPES] =
+	{
+		9, // food
+		7, // production
+		4, // commerce
+	};
+	std::vector<int> job_scores;
+	int iTotalScore = 0;
+
+	for (int i = 0; i < iAnger; i++)
+		job_scores.push_back(0);
+
+	if ((int)job_scores.size() < iCitDelta)
+	{
+		FAssert(CITY_HOME_PLOT == 0); // this is why the following loop starts at 1
+		for (int i = 1; i < NUM_CITY_PLOTS; i++)
+		{
+			if (isWorkingPlot(i))
+			{
+				CvPlot* pLoopPlot = getCityIndexPlot(i);
+				FAssert(pLoopPlot && pLoopPlot->getWorkingCity() == this);
+
+				int iPlotScore = 0;
+				for (int j = 0; j < NUM_YIELD_TYPES; j++)
+				{
+					int y = pLoopPlot->getYield((YieldTypes)j);
+					iYields[j] += y;
+					iPlotScore += y * iYieldWeights[j];
+				}
+				iTotalScore += iPlotScore;
+				job_scores.push_back(iPlotScore);
+			}
+		}
+	}
+	if ((int)job_scores.size() < iCitDelta)
+	{
+		for (int i = 0; i < GC.getNumSpecialistInfos(); i++)
+		{
+			if (getSpecialistCount((SpecialistTypes)i) > 0)
+			{
+				// very rough..
+				int iSpecScore = 0;
+				for (int j = 0; j < NUM_YIELD_TYPES; j++)
+				{
+					int y = kOwner.specialistYield((SpecialistTypes)i, (YieldTypes)j);
+					iYields[j] += y;
+					iSpecScore += y * iYieldWeights[j];
+				}
+				for (int j = 0 ; j < NUM_COMMERCE_TYPES; j++)
+				{
+					int c = kOwner.specialistCommerce((SpecialistTypes)i, (CommerceTypes)j);
+					iYields[YIELD_COMMERCE] += c;
+					iSpecScore += c * iYieldWeights[YIELD_COMMERCE];
+				}
+				iTotalScore += iSpecScore * getSpecialistCount((SpecialistTypes)i);
+				job_scores.resize(job_scores.size() + getSpecialistCount((SpecialistTypes)i), iSpecScore);
+			}
+		}
+	}
+
+	if ((int)job_scores.size() < iCitDelta)
+	{
+		FAssertMsg(false, "Not enough job data to calculate citizen loss cost.");
+		int iBogusData = (1+GC.getFOOD_CONSUMPTION_PER_POPULATION()) * iYieldWeights[YIELD_FOOD];
+		job_scores.resize(iCitDelta, iBogusData);
+		iTotalScore += iBogusData;
+	}
+
+	FAssert((int)job_scores.size() >= iCitDelta);
+	std::partial_sort(job_scores.begin(), job_scores.begin()+iCitDelta, job_scores.end());
+
+	int iTotalFood = getYieldRate(YIELD_FOOD);
+
+	int iScoreLoss = 0;
+	int iCost = 0;
+	for (int i = 0; i < iCitDelta; i++)
+	{
+		iScoreLoss += job_scores[i];
+
+		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (100 - getMaxFoodKeptPercent()) / 100;
+		int iFoodRate = iTotalFood - iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] / (iTotalScore * 100);
+		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
+
+		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
+		int iCostPerTurn = iYields[YIELD_PRODUCTION] * iYieldWeights[YIELD_PRODUCTION] * AI_yieldMultiplier(YIELD_PRODUCTION);
+		iCostPerTurn += iYields[YIELD_COMMERCE] * iYieldWeights[YIELD_COMMERCE] * AI_yieldMultiplier(YIELD_COMMERCE);
+		iCostPerTurn *= iScoreLoss;
+		iCostPerTurn /= iTotalScore * 100;
+
+		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0);
+
+		iCost += iRecoveryTurns * iCostPerTurn;
+	}
+	return iCost;
+}
+// K-Mod end
 
 bool CvCityAI::AI_potentialPlot(short* piYields) const
 {
@@ -10912,6 +11129,8 @@ int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry) const
 
 int CvCityAI::AI_getHappyFromHurry(int iHurryPopulation) const
 {
+	PROFILE_FUNC();
+
 	int iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
 	if (iHappyDiff > 0)
 	{
