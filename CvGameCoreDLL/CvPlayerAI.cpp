@@ -22768,7 +22768,7 @@ int CvPlayerAI::AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly) const
 	if (pUnit->hasCargo() || pUnit->isGoldenAge() || pUnit->getUnitInfo().getProductionCost() < 0 || (bMilitaryOnly && !pUnit->canFight()))
 		return MAX_INT;
 
-	if (pUnit->isMilitaryHappiness() && pUnit->plot()->isCity() && pUnit->plot()->plotCount(PUF_isMilitaryHappiness, -1, -1, getID()) > 2)
+	if (pUnit->isMilitaryHappiness() && pUnit->plot()->isCity() && pUnit->plot()->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_CITY, -1, getID()) < 2)
 		return MAX_INT;
 
 	int iValue = 1000 + GC.getGameINLINE().getSorenRandNum(200, "Disband Value");
@@ -22788,8 +22788,27 @@ int CvPlayerAI::AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly) const
 			iValue *= 2;
 		}
 	}*/
-	if (pUnit->getGroup()->isStranded())
+
+	switch (pUnit->getGroup()->AI_getMissionAIType())
+	{
+	case MISSIONAI_GUARD_CITY:
+	case MISSIONAI_PICKUP:
+	case MISSIONAI_FOUND:
+	case MISSIONAI_SPREAD:
+		iValue *= 3; // high value
+		break;
+
+	case MISSIONAI_STRANDED:
 		iValue /= 2;
+	case MISSIONAI_RETREAT:
+	case MISSIONAI_PATROL:
+	case NO_MISSIONAI:
+		break; // low value
+
+	default:
+		iValue *= 2; // medium
+		break;
+	}
 
 	// Multiplying by higher number means unit has higher priority, less likely to be disbanded
 	switch (pUnit->AI_getUnitAIType())
@@ -22799,7 +22818,7 @@ int CvPlayerAI::AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly) const
 		break;
 
 	case UNITAI_SETTLE:
-		iValue *= 20;
+		iValue *= 16;
 		break;
 
 	case UNITAI_WORKER:
@@ -22812,12 +22831,15 @@ int CvPlayerAI::AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly) const
 		break;
 
 	case UNITAI_ATTACK:
+	case UNITAI_COUNTER:
+		iValue *= 4;
+		break;
+
 	case UNITAI_ATTACK_CITY:
 	case UNITAI_COLLATERAL:
 	case UNITAI_PILLAGE:
 	case UNITAI_RESERVE:
-	case UNITAI_COUNTER:
-		iValue *= 2;
+		iValue *= 3;
 		break;
 
 	case UNITAI_CITY_DEFENSE:
@@ -22861,12 +22883,13 @@ int CvPlayerAI::AI_disbandValue(const CvUnit* pUnit, bool bMilitaryOnly) const
 		break;
 
 	case UNITAI_WORKER_SEA:
-		iValue *= 18;
+		iValue *= 15;
 		break;
 
 	case UNITAI_ATTACK_SEA:
 	case UNITAI_RESERVE_SEA:
 	case UNITAI_ESCORT_SEA:
+		iValue *= 2;
 		break;
 
 	case UNITAI_EXPLORE_SEA:
