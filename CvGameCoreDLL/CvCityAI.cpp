@@ -7965,7 +7965,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			if (kOwner.getGold() - iHurryGold >= iGoldTarget)
 			{
 				iGoldCost *= 100;
-				iGoldCost /= 150 + 50 * (kOwner.getGold() - iHurryGold) / std::max(iGoldTarget, iHurryGold);
+				iGoldCost /= 100 + 50 * (kOwner.getGold() - iHurryGold) / std::max(iGoldTarget, iHurryGold);
 			}
 		}
 		//
@@ -8018,7 +8018,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 			// subtract overflow from the cost.
 			if ((getHurryAngerTimer() <= 1 || iHurryAngerLength == 0 || isNoUnhappiness()) && (iHappy > 1 || iHappyDiff > 0))
-				iPopCost -= 6 * (hurryProduction((HurryTypes)iI) - productionLeft());
+				iPopCost -= 6 * (hurryProduction((HurryTypes)iI) - productionLeft()); // todo: correct this. some multipliers should not apply to the overflow
 			// convert units from 4x commerce to 1x commerce
 			iPopCost /= 4;
 		}
@@ -8085,7 +8085,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				}
 				iValue /= 4 + std::max(0, -iHappyDiff);
 			}
-			if (iValue >= iTotalCost)
+			if (iValue > iTotalCost)
 			{
 				if( gCityLogLevel >= 2 )
 				{
@@ -8101,14 +8101,16 @@ void CvCityAI::AI_doHurry(bool bForce)
 		{
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
 
-			int iBuildingValue = AI_buildingValue(eProductionBuilding);
-			if (iBuildingValue * getProductionTurnsLeft(eProductionBuilding, 1) / 4 >= iTotalCost)
+			int iValue = AI_buildingValue(eProductionBuilding) * getProductionTurnsLeft(eProductionBuilding, 1);
+			iValue /= std::max(4, 3 - iHappyDiff);
+
+			if (iValue > iTotalCost)
 			{
 				if( gCityLogLevel >= 2 )
 				{
 					logBBAI("      City %S (%d) hurries %S. %d pop (%d) + %d gold (%d) to save %d turns with %d building value (%d)",
-						getName().GetCString(), getPopulation(), kBuildingInfo.getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionBuilding, 1), iBuildingValue,
-						iBuildingValue * getProductionTurnsLeft(eProductionBuilding, 1) / 4);
+						getName().GetCString(), getPopulation(), kBuildingInfo.getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionBuilding, 1), AI_buildingValue(eProductionBuilding),
+						iValue);
 				}
 
 				hurry((HurryTypes)iI);
@@ -9114,14 +9116,15 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 		iScoreLoss += job_scores[i];
 
 		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (100 - getMaxFoodKeptPercent()) / 100;
-		int iFoodRate = iTotalFood - iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] / (iTotalScore * 100);
+		int iFoodRate = iTotalFood - ROUND_DIVIDE(iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD], iTotalScore * 100);
 		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
 
 		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
 		int iCostPerTurn = iYields[YIELD_PRODUCTION] * iYieldWeights[YIELD_PRODUCTION] * AI_yieldMultiplier(YIELD_PRODUCTION);
 		iCostPerTurn += iYields[YIELD_COMMERCE] * iYieldWeights[YIELD_COMMERCE] * AI_yieldMultiplier(YIELD_COMMERCE);
+		iCostPerTurn += std::max(0, iYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()*getPopulation()) * iYieldWeights[YIELD_FOOD] * AI_yieldMultiplier(YIELD_FOOD);
 		iCostPerTurn *= iScoreLoss;
-		iCostPerTurn /= iTotalScore * 100;
+		iCostPerTurn = ROUND_DIVIDE(iCostPerTurn, iTotalScore * 100) + 1;
 
 		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0);
 
