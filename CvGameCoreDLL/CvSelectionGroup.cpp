@@ -4065,7 +4065,7 @@ bool CvSelectionGroup::readyToMove(bool bAny)
 bool CvSelectionGroup::readyToAuto()
 {
 	//return (canAllMove() && (headMissionQueueNode() != NULL));
-	return (canAllMove() && (headMissionQueueNode() != NULL || isAutomated()));
+	return canAllMove() && (headMissionQueueNode() != NULL || (getActivityType() == ACTIVITY_AWAKE && isAutomated()));
 }
 
 
