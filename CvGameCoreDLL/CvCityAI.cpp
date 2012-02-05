@@ -802,27 +802,14 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 	return iValue;
 }
 
-// Heavily edited by BBAI and K-Mod
+// Heavily edited by K-Mod. (note, I've deleted a lot of the old code from BtS and from BBAI, and some of my changes are unmarked.)
 void CvCityAI::AI_chooseProduction()
 {
 	PROFILE_FUNC();
 
-	CvArea* pWaterArea;
-	UnitTypes eProductionUnit;
-	bool bWasFoodProduction;
-	bool bHasMetHuman;
-	bool bLandWar;
-	bool bAssault;
-	bool bDefenseWar;
-	bool bPrimaryArea;
-	bool bFinancialTrouble;
-	bool bDanger;
-	bool bChooseUnit;
-	int iProductionRank;
-	int iCulturePressure;
+	bool bWasFoodProduction = isFoodProduction();
+	bool bDanger = AI_isDanger();
 
-	bDanger = AI_isDanger();
-	
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
 	if (isProduction())
@@ -832,7 +819,7 @@ void CvCityAI::AI_chooseProduction()
 
 			if ((getProductionUnitAI() == UNITAI_SETTLE) && kPlayer.AI_isFinancialTrouble())
 			{
-				
+
 			}
 			//if we are killing our growth to train this, then finish it.
 			else if (!bDanger && isFoodProduction())
@@ -847,10 +834,9 @@ void CvCityAI::AI_chooseProduction()
 			{
 				return;
 			}
-			
-			
+
 			// if building a combat unit, and we have no defenders, keep building it
-			eProductionUnit = getProductionUnit();
+			UnitTypes eProductionUnit = getProductionUnit();
 			if (eProductionUnit != NO_UNIT)
 			{
 				if (plot()->getNumDefenders(getOwnerINLINE()) == 0)
@@ -861,7 +847,7 @@ void CvCityAI::AI_chooseProduction()
 					}
 				}
 			}
-			
+
 			// if we are building a wonder, do not cancel, keep building it (if no danger)
 			BuildingTypes eProductionBuilding = getProductionBuilding();
 			if (!bDanger && eProductionBuilding != NO_BUILDING && 
@@ -882,6 +868,10 @@ void CvCityAI::AI_chooseProduction()
 
 	// only clear the dirty bit if we actually do a check, multiple items might be queued
 	AI_setChooseProductionDirty(false);
+	if (bWasFoodProduction)
+	{
+		AI_assignWorkingPlots();
+	}
 
 	// allow python to handle it
 	if (GC.getUSE_AI_CHOOSE_PRODUCTION_CALLBACK()) // K-Mod. block unused python callbacks
@@ -898,17 +888,23 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-    if (isHuman() && isProductionAutomated())
-    {
-        AI_buildGovernorChooseProduction();
-        return;
-    }
-	
+	if (isHuman() && isProductionAutomated())
+	{
+		AI_buildGovernorChooseProduction();
+		return;
+	}
+
+	if (isBarbarian())
+	{
+		AI_barbChooseProduction();
+		return;
+	}
+
 	CvArea* pArea = area();
-	pWaterArea = waterArea(true);
+	CvArea* pWaterArea = waterArea(true);
 	bool bMaybeWaterArea = false;
 	bool bWaterDanger = false;
-    
+
 	if (pWaterArea != NULL)
 	{
 		bMaybeWaterArea = true;
@@ -920,30 +916,22 @@ void CvCityAI::AI_chooseProduction()
 		bWaterDanger = kPlayer.AI_getWaterDanger(plot(), 4) > 0;
 	}
 
-	bWasFoodProduction = isFoodProduction();
-	bHasMetHuman = GET_TEAM(getTeam()).hasMetHuman();
-	bLandWar = ((pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (pArea->getAreaAIType(getTeam()) == AREAAI_MASSING));
-	bDefenseWar = (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE);
+	bool bHasMetHuman = GET_TEAM(getTeam()).hasMetHuman();
+	bool bLandWar = ((pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (pArea->getAreaAIType(getTeam()) == AREAAI_MASSING));
+	bool bDefenseWar = (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE);
 	bool bAssaultAssist = (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_ASSIST);
 	bool bTotalWar = GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true); // K-Mod
-	bAssault = bAssaultAssist || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT) || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_MASSING);
-	bPrimaryArea = kPlayer.AI_isPrimaryArea(pArea);
-	bFinancialTrouble = kPlayer.AI_isFinancialTrouble();
-	iCulturePressure = AI_calculateCulturePressure();
+	bool bAssault = bAssaultAssist || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT) || (pArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT_MASSING);
+	bool bPrimaryArea = kPlayer.AI_isPrimaryArea(pArea);
+	bool bFinancialTrouble = kPlayer.AI_isFinancialTrouble();
 	int iNumCitiesInArea = pArea->getCitiesPerPlayer(getOwnerINLINE());
 	bool bImportantCity = false; //be very careful about setting this.
-	bool bBigCultureCity = false;
 	int iCultureRateRank = findCommerceRateRank(COMMERCE_CULTURE);
-    int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
+	int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
 
 	int iWarSuccessRating = GET_TEAM(getTeam()).AI_getWarSuccessRating();
 	int iEnemyPowerPerc = GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true);
-	/* int iWarTroubleThreshold = 0;
 
-	if( bLandWar && iWarSuccessRatio < 30 )
-	{
-		iWarTroubleThreshold = std::max(3,(-iWarSuccessRatio/8));
-	} */ // K-Mod disabled
 
 	if( !bLandWar && !bAssault && GET_TEAM(getTeam()).isAVassal() )
 	{
@@ -955,31 +943,31 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-    bool bGetBetterUnits = kPlayer.AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS);
-    bool bAggressiveAI = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
-    bool bAlwaysPeace = GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE);
+	bool bGetBetterUnits = kPlayer.AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS);
+	bool bAggressiveAI = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
+	bool bAlwaysPeace = GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE);
 
 	/* original bts code
 	int iUnitCostPercentage = (kPlayer.calculateUnitCost() * 100) / std::max(1, kPlayer.calculatePreInflatedCosts()); */
 	int iUnitSpending = kPlayer.AI_unitCostPerMil(); // K-Mod. (note, this is around 3x bigger than the original formula)
 	int iWaterPercent = AI_calculateWaterWorldPercent();
-	
+
 	int iBuildUnitProb = AI_buildUnitProb();
 	iBuildUnitProb /= kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 2 : 1; // K-Mod
-    
-    int iExistingWorkers = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_WORKER);
-    int iNeededWorkers = kPlayer.AI_neededWorkers(pArea);
+
+	int iExistingWorkers = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_WORKER);
+	int iNeededWorkers = kPlayer.AI_neededWorkers(pArea);
 	// Sea worker need independent of whether water area is militarily relevant
 	int iNeededSeaWorkers = (bMaybeWaterArea) ? AI_neededSeaWorkers() : 0;
 	int iExistingSeaWorkers = (waterArea(true) != NULL) ? kPlayer.AI_totalWaterAreaUnitAIs(waterArea(true), UNITAI_WORKER_SEA) : 0;
 
 
-    int iTargetCulturePerTurn = AI_calculateTargetCulturePerTurn();
-    
-    int iAreaBestFoundValue;
-    int iNumAreaCitySites = kPlayer.AI_getNumAreaCitySites(getArea(), iAreaBestFoundValue);
-    
-    int iWaterAreaBestFoundValue = 0;
+	int iTargetCulturePerTurn = AI_calculateTargetCulturePerTurn();
+
+	int iAreaBestFoundValue;
+	int iNumAreaCitySites = kPlayer.AI_getNumAreaCitySites(getArea(), iAreaBestFoundValue);
+
+	int iWaterAreaBestFoundValue = 0;
 	CvArea* pWaterSettlerArea = pWaterArea;
 	if( pWaterSettlerArea == NULL )
 	{
@@ -990,47 +978,31 @@ void CvCityAI::AI_chooseProduction()
 			pWaterSettlerArea = NULL;
 		}
 	}
-    int iNumWaterAreaCitySites = (pWaterSettlerArea == NULL) ? 0 : kPlayer.AI_getNumAdjacentAreaCitySites(pWaterSettlerArea->getID(), getArea(), iWaterAreaBestFoundValue);
-    int iNumSettlers = kPlayer.AI_totalUnitAIs(UNITAI_SETTLE);
-    
-    bool bIsCapitalArea = false;
+	int iNumWaterAreaCitySites = (pWaterSettlerArea == NULL) ? 0 : kPlayer.AI_getNumAdjacentAreaCitySites(pWaterSettlerArea->getID(), getArea(), iWaterAreaBestFoundValue);
+	int iNumSettlers = kPlayer.AI_totalUnitAIs(UNITAI_SETTLE);
+
+	bool bIsCapitalArea = false;
 	int iNumCapitalAreaCities = 0;
-    if (kPlayer.getCapitalCity() != NULL)
-    {
+	if (kPlayer.getCapitalCity() != NULL)
+	{
 		iNumCapitalAreaCities = kPlayer.getCapitalCity()->area()->getCitiesPerPlayer(getOwnerINLINE());
-    	if (getArea() == kPlayer.getCapitalCity()->getArea())
-    	{
-    		bIsCapitalArea = true;
-    	}
-    }
-        
-    int iMaxSettlers = 0;
-    if (!bFinancialTrouble)
-    {
-     	iMaxSettlers= std::min((kPlayer.getNumCities() + 1) / 2, iNumAreaCitySites + iNumWaterAreaCitySites);
-     	if (bLandWar || bAssault)
-     	{
-     		iMaxSettlers = (iMaxSettlers + 2) / 3;
-     	}
-    }
-    
-    bool bChooseWorker = false;
-    
-	int iEconomyFlags = 0;
-	iEconomyFlags |= BUILDINGFOCUS_PRODUCTION;
-	iEconomyFlags |= BUILDINGFOCUS_GOLD;
-	iEconomyFlags |= BUILDINGFOCUS_RESEARCH;
-	iEconomyFlags |= BUILDINGFOCUS_MAINTENANCE;
-	iEconomyFlags |= BUILDINGFOCUS_HAPPY;
-	iEconomyFlags |= BUILDINGFOCUS_HEALTHY;
-	if (AI_isEmphasizeGreatPeople())
-	{
-		iEconomyFlags |= BUILDINGFOCUS_SPECIALIST;
+		if (getArea() == kPlayer.getCapitalCity()->getArea())
+		{
+			bIsCapitalArea = true;
+		}
 	}
-	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+
+	int iMaxSettlers = 0;
+	if (!bFinancialTrouble)
 	{
-		iEconomyFlags |= BUILDINGFOCUS_ESPIONAGE;
+		iMaxSettlers= std::min((kPlayer.getNumCities() + 1) / 2, iNumAreaCitySites + iNumWaterAreaCitySites);
+		if (bLandWar || bAssault)
+		{
+			iMaxSettlers = (iMaxSettlers + 2) / 3;
+		}
 	}
+
+	bool bChooseWorker = false;
 
 	if (iNumCitiesInArea > 2)
 	{
@@ -1038,8 +1010,6 @@ void CvCityAI::AI_chooseProduction()
 		{
 			if (iCultureRateRank <= iCulturalVictoryNumCultureCities + 1)
 			{
-				bBigCultureCity = true;
-
 				// if we do not have enough cities, then the highest culture city will not get special attention
 				if (iCultureRateRank > 1 || (kPlayer.getNumCities() > (iCulturalVictoryNumCultureCities + 1)))
 				{
@@ -1052,8 +1022,8 @@ void CvCityAI::AI_chooseProduction()
 						bImportantCity = true;
 					}
 				}
-            }
-        }
+			}
+		}
 	}
 
 	// Free experience for various unit domains
@@ -1061,14 +1031,7 @@ void CvCityAI::AI_chooseProduction()
 	int iFreeSeaExperience = getSpecialistFreeExperience() + getDomainFreeExperience(DOMAIN_SEA);
 	int iFreeAirExperience = getSpecialistFreeExperience() + getDomainFreeExperience(DOMAIN_AIR);
 
-	clearOrderQueue();
-
-	if (bWasFoodProduction)
-	{
-		AI_assignWorkingPlots();
-	}
-
-	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
+	int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 
 	// K-Mod.
 	BuildingTypes eBestBuilding = AI_bestBuildingThreshold(); // go go value cache!
@@ -1121,164 +1084,6 @@ void CvCityAI::AI_chooseProduction()
 
 	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%s, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
 
-	// -------------------- BBAI Notes -------------------------
-	// Start special circumstances
-
-	// -------------------- BBAI Notes -------------------------
-	// Barbarian city build priorities
-	if (isBarbarian())
-	{
-		if (!AI_isDefended(plot()->plotCount(PUF_isUnitAIType, UNITAI_ATTACK, -1, getOwnerINLINE()))) // XXX check for other team's units?
-		{
-			if (AI_chooseDefender())
-			{
-				return;
-			}
-
-			if (AI_chooseUnit(UNITAI_ATTACK))
-			{
-				return;
-			}
-		}
-		
-		if (!bDanger && (2*iExistingWorkers < iNeededWorkers) && (AI_getWorkersNeeded() > 0) && (AI_getWorkersHave() == 0))
-		{
-			if( getPopulation() > 1 || (GC.getGameINLINE().getGameTurn() - getGameTurnAcquired() > (15 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent())/100) )
-			{
-				if (AI_chooseUnit(UNITAI_WORKER))
-				{
-					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose worker 1", getName().GetCString());
-					return;
-				}
-			}			
-		}
-
-		if (!bDanger && !bWaterDanger && (iNeededSeaWorkers > 0))
-		{
-			if (AI_chooseUnit(UNITAI_WORKER_SEA))
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose worker sea 1", getName().GetCString());
-				return;
-			}
-		}
-		
-		iBuildUnitProb += (3 * iFreeLandExperience);
-		
-		bool bRepelColonists = false;
-		if( area()->getNumCities() > area()->getCitiesPerPlayer(BARBARIAN_PLAYER) + 2 )
-		{
-			if( area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > area()->getNumCities()/3 )
-			{
-				// New world scenario with invading colonists ... fight back!
-				bRepelColonists = true;
-				iBuildUnitProb += 8*(area()->getNumCities() - area()->getCitiesPerPlayer(BARBARIAN_PLAYER));
-			}
-		}
-
-		bChooseUnit = false;
-		if (!bDanger && GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") > iBuildUnitProb)
-		{
-			
-			int iBarbarianFlags = 0;
-			if( getPopulation() < 4 ) iBarbarianFlags |= BUILDINGFOCUS_FOOD;
-			iBarbarianFlags |= BUILDINGFOCUS_PRODUCTION;
-			iBarbarianFlags |= BUILDINGFOCUS_EXPERIENCE;
-			if( getPopulation() > 3 ) iBarbarianFlags |= BUILDINGFOCUS_DEFENSE;
-			
-			if (AI_chooseBuilding(iBarbarianFlags, 15))
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb AI_chooseBuilding with flags and iBuildUnitProb = %d", getName().GetCString(), iBuildUnitProb);
-				return;
-			}
-
-			if( GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") > iBuildUnitProb)
-			{
-				if (AI_chooseBuilding())
-				{
-					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb AI_chooseBuilding without flags and iBuildUnitProb = %d", getName().GetCString(), iBuildUnitProb);
-					return;
-				}
-			}
-		}
-		
-		if (plot()->plotCount(PUF_isUnitAIType, UNITAI_ASSAULT_SEA, -1, getOwnerINLINE()) > 0)
-		{
-			if (AI_chooseUnit(UNITAI_ATTACK_CITY))
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose attack city for transports", getName().GetCString());
-				return;
-			}
-		}
-		
-		if (!bDanger && (pWaterArea != NULL) && (iWaterPercent > 30))
-		{
-			if (GC.getGameINLINE().getSorenRandNum(3, "AI Coast Raiders!") == 0)
-			{
-				if (kPlayer.AI_totalUnitAIs(UNITAI_ASSAULT_SEA) <= (1 + kPlayer.getNumCities() / 2))
-				{
-					if (AI_chooseUnit(UNITAI_ASSAULT_SEA))
-					{
-						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose transport", getName().GetCString());
-						return;
-					}
-				}
-			}
-			if (GC.getGameINLINE().getSorenRandNum(110, "AI arrrr!") < (iWaterPercent + 10))
-			{
-				if (kPlayer.AI_totalUnitAIs(UNITAI_PIRATE_SEA) <= kPlayer.getNumCities())
-				{
-					if (AI_chooseUnit(UNITAI_PIRATE_SEA))
-					{
-						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose pirate", getName().GetCString());
-						return;
-					}
-				}
-				
-				if (kPlayer.AI_totalAreaUnitAIs(pWaterArea, UNITAI_ATTACK_SEA) < iNumCitiesInArea)
-				{
-					if (AI_chooseUnit(UNITAI_ATTACK_SEA))
-					{
-						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose attack sea", getName().GetCString());
-						return;
-					}
-				}
-			}
-		}
-
-		if (GC.getGameINLINE().getSorenRandNum(2, "Barb worker") == 0)
-		{
-			if (!bDanger && (iExistingWorkers < iNeededWorkers) && (AI_getWorkersNeeded() > 0) && (AI_getWorkersHave() == 0))
-			{
-				if( getPopulation() > 1 )
-				{
-					if (AI_chooseUnit(UNITAI_WORKER))
-					{
-						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose worker 2", getName().GetCString());
-						return;
-					}
-				}			
-			}
-		}
-
-		UnitTypeWeightArray barbarianTypes;
-		barbarianTypes.push_back(std::make_pair(UNITAI_ATTACK, 125));
-		barbarianTypes.push_back(std::make_pair(UNITAI_ATTACK_CITY, (bRepelColonists ? 100 : 50)));
-		barbarianTypes.push_back(std::make_pair(UNITAI_COUNTER, 100));
-		barbarianTypes.push_back(std::make_pair(UNITAI_CITY_DEFENSE, 50));
-
-		if (AI_chooseLeastRepresentedUnit(barbarianTypes))
-		{
-			return;
-		}
-		
-		if (AI_chooseUnit())
-		{
-			return;
-		}
-		
-		return;
-	}
-	
 	// if we need to pop borders, then do that immediately if we have drama and can do it
 	if ((iTargetCulturePerTurn > 0) && (getCultureLevel() <= (CultureLevelTypes) 1))
 	{
@@ -1299,28 +1104,6 @@ void CvCityAI::AI_chooseProduction()
 			return;
 		}
 	}
-
-	/* original bts code. (K-Mod, we don't need this. The normal decision making should be fine.)
-	if (isOccupation())
-	{
-		// pick granary or lighthouse, any duration
-		if (AI_chooseBuilding(BUILDINGFOCUS_FOOD))
-		{
-			return;
-		}
-
-		// try picking forge, etc, any duration
-		if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION))
-		{
-			return;
-		}
-		
-		// just pick any building, any duration
-		if (AI_chooseBuilding())
-		{
-			return;
-		}
-	} */
 
 	if (plot()->getNumDefenders(getOwnerINLINE()) == 0) // XXX check for other team's units?
 	{
@@ -1359,14 +1142,6 @@ void CvCityAI::AI_chooseProduction()
 			return;
 		}
 
-		/*
-		// try picking forge, etc, any duration
-		if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION))
-		{
-			return;
-		} */ // K-Mod (a produciton building will get choosen if it is the right thing to choose)
-		
-		// just pick any building, any duration
 		if (AI_chooseBuilding())
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses strike building (w/o flags)", getName().GetCString());
@@ -1670,14 +1445,14 @@ void CvCityAI::AI_chooseProduction()
 		iNeededFloatingDefenders = (2 * iNeededFloatingDefenders + 2)/3;
 	}
  	int iTotalFloatingDefenders = (isBarbarian() ? 0 : kPlayer.AI_getTotalFloatingDefenders(pArea));
-	
+
 	UnitTypeWeightArray floatingDefenderTypes;
 	floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_DEFENSE, 125));
 	floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_COUNTER, 100));
 	//floatingDefenderTypes.push_back(std::make_pair(UNITAI_CITY_SPECIAL, 0));
 	floatingDefenderTypes.push_back(std::make_pair(UNITAI_RESERVE, 100));
 	floatingDefenderTypes.push_back(std::make_pair(UNITAI_COLLATERAL, 80)); // K-Mod, down from 100
-	
+
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
 		if (!bUnitExempt && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
@@ -2167,32 +1942,6 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	/* BBAI code
-	if( !(bLandWar && iWarSuccessRatio < -30) && !bDanger )
-	{
-		if (iExistingWorkers < iNeededWorkers )
-		{
-			if ((AI_getWorkersNeeded() > 0) && (AI_getWorkersHave() == 0))
-			{
-				if( getPopulation() > 1 || (GC.getGameINLINE().getGameTurn() - getGameTurnAcquired() > (15 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent())/100) )
-				{
-					if (!bChooseWorker && AI_chooseUnit(UNITAI_WORKER))
-					{
-						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose worker 6", getName().GetCString());
-						return;
-					}
-					bChooseWorker = true;
-				}
-			}
-		}
-	}
-	//essential economic builds
-	if (AI_chooseBuilding(iEconomyFlags, 10, 25 + iWarTroubleThreshold, (bLandWar ? 40 : -1)))
-	{
-		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 1", getName().GetCString());
-		return;
-	} */ // (K-Mod disabled)
-
 	// K-Mod, short-circuit 2 - a strong chance to build some high value buildings.
 	{
 		int iOdds = std::max(0, (bLandWar || (bAssault && pWaterArea) ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25);
@@ -2244,66 +1993,6 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	/* original bts / bbai code
-	int iMaxUnitSpending = (bAggressiveAI ? 6 : 3) + iBuildUnitProb / 3;
-
-	if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
-	{
-		iMaxUnitSpending += 7;
-	}
-	else if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3) || kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3) )
-	{
-		iMaxUnitSpending += 3;
-	}
-	else if( kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) )
-	{
-		iMaxUnitSpending += 1;
-	}
-
-    if (bAlwaysPeace)
-	{
-		iMaxUnitSpending = -10;
-	}
-    else if (kPlayer.AI_isDoStrategy(AI_STRATEGY_FINAL_WAR))
-    {
-    	iMaxUnitSpending = 5 + iMaxUnitSpending + (100 - iMaxUnitSpending) / 2;
-    }
-    else
-    {
-		iMaxUnitSpending += bTotalWar ? iBuildUnitProb / 5 : 0; // K-Mod
-    	iMaxUnitSpending += bDefenseWar ? 4 : 0;
-    	switch (pArea->getAreaAIType(getTeam()))
-    	{
-			case AREAAI_OFFENSIVE:
-				iMaxUnitSpending += 5;
-				break;
-
-			case AREAAI_DEFENSIVE:
-				iMaxUnitSpending += 10;
-				break;
-
-			case AREAAI_MASSING:
-				iMaxUnitSpending += 25;
-				break;
-
-			case AREAAI_ASSAULT:
-				iMaxUnitSpending += 8;
-				break;
-
-			case AREAAI_ASSAULT_MASSING:
-				iMaxUnitSpending += 16;
-				break;
-
-			case AREAAI_ASSAULT_ASSIST:
-				iMaxUnitSpending += 6;
-				break;
-
-			case AREAAI_NEUTRAL:
-				break;
-			default:
-				FAssert(false);
-		}
-	} */
 	int iMaxUnitSpending = kPlayer.AI_maxUnitCostPerMil(area(), iBuildUnitProb); // K-Mod. (note: this has a different scale to the original code).
 
 	int iCarriers = kPlayer.AI_totalUnitAIs(UNITAI_CARRIER_SEA);
@@ -2826,20 +2515,6 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	/* original bts code. (I've moved to spy stuff higher up - K-Mod)
-	int iNumSpies = (kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_SPY));
-	int iNeededSpies = iNumCitiesInArea / 3;
-
-	iNeededSpies += isCapital() ? 1 : 0;
-
-	if (iNumSpies < iNeededSpies)
-	{
-		if (AI_chooseUnit(UNITAI_SPY, 5 + 50 / (1 + iNumSpies)))
-		{
-			return;
-		}
-	}*/
-	
 	if (bLandWar && !bDanger)
 	{
 		if (iNumSettlers < iMaxSettlers)
@@ -2936,15 +2611,6 @@ void CvCityAI::AI_chooseProduction()
 
 	if (!bLandWar)
 	{
-		/* if ((iCulturePressure > 90) || kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
-		{
-			if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, 20))
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses cultural pressure/cultural victory 3", getName().GetCString());
-				return;
-			}
-		} */ // K-Mod (cultural buildings are valued more highly when doing cultural victory strats. This isn't needed.)
-
 		if (pWaterArea != NULL && bFinancialTrouble)
 		{
 			if (kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_MISSIONARY) > 0)
@@ -2993,10 +2659,6 @@ void CvCityAI::AI_chooseProduction()
 	    }
 	}
 
-	// K-Mod. I'm disabling a few of these "choose building" checks.
-	// I suspect they do very little other than use CPU time.
-	// If the building is good enough, it will get chosen by the general chooseBuilding function.
-
 	// Short-circuit 3 - a last chance to catch important buildings
 	{
 		int iOdds = std::max(0, (bLandWar ? 160 : 220) * iBestBuildingValue / (iBestBuildingValue + 20) - 100);
@@ -3007,37 +2669,8 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	/*if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 20, 4))
-	{
-		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 2", getName().GetCString());
-		return;
-	}*/ // K-Mod. (this ends up making cities kill themselves with unhealithiness they can't afford)
-	
-	//20 means 5g or ~2 happiness...
-	/*if (AI_chooseBuilding(iEconomyFlags, 15, 20))
-	{
-		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 2", getName().GetCString());
-		return;
-	}*/ // K-Mod. (economic value is already well estimated without flags)
-
-
 	if (!bLandWar)
 	{
-		/*if (AI_chooseBuilding(iEconomyFlags, 40, 8))
-		{
-			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose iEconomyFlags 3", getName().GetCString());
-			return;
-		}
-
-		if (iCulturePressure > 50)
-		{
-			if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, 60))
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose cultural pressure 2", getName().GetCString());
-				return;
-			}
-		}*/ // K-Mod
-
 		if (pWaterArea != NULL)
 		{
 			if (bPrimaryArea)
@@ -3051,15 +2684,6 @@ void CvCityAI::AI_chooseProduction()
 				}
 			}
 		}
-
-		/*if (getBaseYieldRate(YIELD_PRODUCTION) >= 8)
-		{
-			if (AI_chooseBuilding(BUILDINGFOCUS_PRODUCTION, 80))
-			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_PRODUCTION 3", getName().GetCString());
-				return;
-			}
-		}*/ // K-Mod
 	}
 
 	if (!bUnitExempt && plot()->plotCheck(PUF_isUnitAIType, UNITAI_CITY_COUNTER, -1, getOwnerINLINE()) == NULL)
@@ -3081,7 +2705,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	bChooseUnit = false;
+	bool bChooseUnit = false;
 	if (iUnitSpending < iMaxUnitSpending + 15) // was +5 (new metric)
 	{
 		// K-Mod
@@ -3125,12 +2749,14 @@ void CvCityAI::AI_chooseProduction()
 	{
 		if (AI_chooseUnit())
 		{
+			if (gCityLogLevel >= 2) logBBAI("      City %S uses choose unit by default", getName().GetCString());
 			return;
 		}
 	}
 
 	if (AI_chooseProcess())
 	{
+		if (gCityLogLevel >= 2) logBBAI("      City %S uses choose process by default", getName().GetCString());
 		return;
 	}
 }
@@ -8370,7 +7996,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				if (iHappy < 0)
 				{
 					if (gCityLogLevel >= 2)
-						logBBAI("      City %S hurry to reduce unhappiness", getName().GetCString() );
+						logBBAI("      City %S whips to reduce unhappiness", getName().GetCString() );
 					hurry((HurryTypes)iI);
 					return;
 				}
@@ -8383,7 +8009,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			if (iHappy + iHappyDiff >= 1 && foodDifference() < -iHurryPopulation)
 			{
 				if (gCityLogLevel >= 2)
-					logBBAI("      City %S hurry to reduce food loss", getName().GetCString() );
+					logBBAI("      City %S whips to reduce food loss", getName().GetCString() );
 				hurry((HurryTypes)iI);
 				return;
 			}
@@ -8391,7 +8017,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			iPopCost = AI_citizenLossCost(iHurryPopulation, std::max(0, -iHappy));
 
 			// subtract overflow from the cost.
-			if ((getHurryAngerTimer() <= 1 || iHurryAngerLength == 0 || isNoUnhappiness()) && (iHappy > 0 || iHappyDiff > 0))
+			if ((getHurryAngerTimer() <= 1 || iHurryAngerLength == 0 || isNoUnhappiness()) && (iHappy > 1 || iHappyDiff > 0))
 				iPopCost -= 6 * (hurryProduction((HurryTypes)iI) - productionLeft());
 			// convert units from 4x commerce to 1x commerce
 			iPopCost /= 4;
@@ -8449,6 +8075,10 @@ void CvCityAI::AI_doHurry(bool bForce)
 								int iSuccessRating = GET_TEAM(kOwner.getTeam()).AI_getWarSuccessRating();
 								iValue *= iSuccessRating < 35 ? (iSuccessRating < 1 ? 6 : 5) : 4;
 							}
+							else
+							{
+								iValue *= area()->getAreaAIType(kOwner.getTeam()) == AREAAI_NEUTRAL ? 3 : 4;
+							}
 						}
 					}
 					break;
@@ -8459,7 +8089,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			{
 				if( gCityLogLevel >= 2 )
 				{
-					logBBAI("      City %S (%d) would hurry %S. %d pop (%d) + %d gold (%d) to save %d turns. (value %d)",
+					logBBAI("      City %S (%d) hurries %S. %d pop (%d) + %d gold (%d) to save %d turns. (value %d)",
 						getName().GetCString(), getPopulation(), GC.getUnitInfo(eProductionUnit).getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionUnit, 1), iValue);
 				}
 
@@ -11043,6 +10673,191 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		return;
 	}
 }
+
+// K-Mod. This is a chunk of code that I moved out of AI_chooseProduction. The only reason I've moved it is to reduce clutter in the other function.
+void CvCityAI::AI_barbChooseProduction()
+{
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+	CvArea* pArea = area();
+	CvArea* pWaterArea = waterArea(true);
+	bool bMaybeWaterArea = false;
+	bool bWaterDanger = false;
+	bool bDanger = AI_isDanger();
+
+	if (pWaterArea != NULL)
+	{
+		bMaybeWaterArea = true;
+		if (!GET_TEAM(getTeam()).AI_isWaterAreaRelevant(pWaterArea))
+		{
+			pWaterArea = NULL;
+		}
+
+		bWaterDanger = kPlayer.AI_getWaterDanger(plot(), 4) > 0;
+	}
+
+	int iNumCitiesInArea = pArea->getCitiesPerPlayer(getOwnerINLINE());
+
+	int iBuildUnitProb = AI_buildUnitProb();
+
+	int iExistingWorkers = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_WORKER);
+	int iNeededWorkers = kPlayer.AI_neededWorkers(pArea);
+	// Sea worker need independent of whether water area is militarily relevant
+	int iNeededSeaWorkers = (bMaybeWaterArea) ? AI_neededSeaWorkers() : 0;
+	int iExistingSeaWorkers = (waterArea(true) != NULL) ? kPlayer.AI_totalWaterAreaUnitAIs(waterArea(true), UNITAI_WORKER_SEA) : 0;
+	int iWaterPercent = AI_calculateWaterWorldPercent();
+
+	if (!AI_isDefended(plot()->plotCount(PUF_isUnitAIType, UNITAI_ATTACK, -1, getOwnerINLINE()))) // XXX check for other team's units?
+	{
+		if (AI_chooseDefender())
+		{
+			return;
+		}
+
+		if (AI_chooseUnit(UNITAI_ATTACK))
+		{
+			return;
+		}
+	}
+
+	if (!bDanger && (2*iExistingWorkers < iNeededWorkers) && (AI_getWorkersNeeded() > 0) && (AI_getWorkersHave() == 0))
+	{
+		if( getPopulation() > 1 || (GC.getGameINLINE().getGameTurn() - getGameTurnAcquired() > (15 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent())/100) )
+		{
+			if (AI_chooseUnit(UNITAI_WORKER))
+			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose worker 1", getName().GetCString());
+				return;
+			}
+		}
+	}
+
+	if (!bDanger && !bWaterDanger && (iNeededSeaWorkers > 0))
+	{
+		if (AI_chooseUnit(UNITAI_WORKER_SEA))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose worker sea 1", getName().GetCString());
+			return;
+		}
+	}
+
+	int iFreeLandExperience = getSpecialistFreeExperience() + getDomainFreeExperience(DOMAIN_LAND);
+	iBuildUnitProb += (3 * iFreeLandExperience);
+
+	bool bRepelColonists = false;
+	if( area()->getNumCities() > area()->getCitiesPerPlayer(BARBARIAN_PLAYER) + 2 )
+	{
+		if( area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > area()->getNumCities()/3 )
+		{
+			// New world scenario with invading colonists ... fight back!
+			bRepelColonists = true;
+			iBuildUnitProb += 8*(area()->getNumCities() - area()->getCitiesPerPlayer(BARBARIAN_PLAYER));
+		}
+	}
+
+	if (!bDanger && GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") > iBuildUnitProb)
+	{
+
+		int iBarbarianFlags = 0;
+		if( getPopulation() < 4 ) iBarbarianFlags |= BUILDINGFOCUS_FOOD;
+		iBarbarianFlags |= BUILDINGFOCUS_PRODUCTION;
+		iBarbarianFlags |= BUILDINGFOCUS_EXPERIENCE;
+		if( getPopulation() > 3 ) iBarbarianFlags |= BUILDINGFOCUS_DEFENSE;
+
+		if (AI_chooseBuilding(iBarbarianFlags, 15))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb AI_chooseBuilding with flags and iBuildUnitProb = %d", getName().GetCString(), iBuildUnitProb);
+			return;
+		}
+
+		if( GC.getGameINLINE().getSorenRandNum(100, "AI Build Unit Production") > iBuildUnitProb)
+		{
+			if (AI_chooseBuilding())
+			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb AI_chooseBuilding without flags and iBuildUnitProb = %d", getName().GetCString(), iBuildUnitProb);
+				return;
+			}
+		}
+	}
+
+	if (plot()->plotCount(PUF_isUnitAIType, UNITAI_ASSAULT_SEA, -1, getOwnerINLINE()) > 0)
+	{
+		if (AI_chooseUnit(UNITAI_ATTACK_CITY))
+		{
+			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose attack city for transports", getName().GetCString());
+			return;
+		}
+	}
+
+	if (!bDanger && (pWaterArea != NULL) && (iWaterPercent > 30))
+	{
+		if (GC.getGameINLINE().getSorenRandNum(3, "AI Coast Raiders!") == 0)
+		{
+			if (kPlayer.AI_totalUnitAIs(UNITAI_ASSAULT_SEA) <= (1 + kPlayer.getNumCities() / 2))
+			{
+				if (AI_chooseUnit(UNITAI_ASSAULT_SEA))
+				{
+					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose transport", getName().GetCString());
+					return;
+				}
+			}
+		}
+		if (GC.getGameINLINE().getSorenRandNum(110, "AI arrrr!") < (iWaterPercent + 10))
+		{
+			if (kPlayer.AI_totalUnitAIs(UNITAI_PIRATE_SEA) <= kPlayer.getNumCities())
+			{
+				if (AI_chooseUnit(UNITAI_PIRATE_SEA))
+				{
+					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose pirate", getName().GetCString());
+					return;
+				}
+			}
+
+			if (kPlayer.AI_totalAreaUnitAIs(pWaterArea, UNITAI_ATTACK_SEA) < iNumCitiesInArea)
+			{
+				if (AI_chooseUnit(UNITAI_ATTACK_SEA))
+				{
+					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose attack sea", getName().GetCString());
+					return;
+				}
+			}
+		}
+	}
+
+	if (GC.getGameINLINE().getSorenRandNum(2, "Barb worker") == 0)
+	{
+		if (!bDanger && (iExistingWorkers < iNeededWorkers) && (AI_getWorkersNeeded() > 0) && (AI_getWorkersHave() == 0))
+		{
+			if( getPopulation() > 1 )
+			{
+				if (AI_chooseUnit(UNITAI_WORKER))
+				{
+					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses barb choose worker 2", getName().GetCString());
+					return;
+				}
+			}
+		}
+	}
+
+	UnitTypeWeightArray barbarianTypes;
+	barbarianTypes.push_back(std::make_pair(UNITAI_ATTACK, 125));
+	barbarianTypes.push_back(std::make_pair(UNITAI_ATTACK_CITY, (bRepelColonists ? 100 : 50)));
+	barbarianTypes.push_back(std::make_pair(UNITAI_COUNTER, 100));
+	barbarianTypes.push_back(std::make_pair(UNITAI_CITY_DEFENSE, 50));
+
+	if (AI_chooseLeastRepresentedUnit(barbarianTypes))
+	{
+		return;
+	}
+
+	if (AI_chooseUnit())
+	{
+		return;
+	}
+
+	return;
+}
+// K-Mod end
 
 int CvCityAI::AI_calculateWaterWorldPercent()
 {
