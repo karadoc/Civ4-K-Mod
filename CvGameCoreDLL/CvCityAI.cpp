@@ -7986,7 +7986,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
 
 				if (getHurryAngerTimer() > 1)
-					iHappyDiff -= ROUND_DIVIDE(3 * getHurryAngerTimer(), flatHurryAngerLength());
+					iHappyDiff -= ROUND_DIVIDE((kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 4 : 3) * getHurryAngerTimer(), flatHurryAngerLength());
 			}
 
 			iHappy = happyLevel() - unhappyLevel();
@@ -8018,7 +8018,14 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 			// subtract overflow from the cost.
 			if ((getHurryAngerTimer() <= 1 || iHurryAngerLength == 0 || isNoUnhappiness()) && (iHappy > 1 || iHappyDiff > 0))
-				iPopCost -= 6 * (hurryProduction((HurryTypes)iI) - productionLeft()); // todo: correct this. some multipliers should not apply to the overflow
+			{
+				int iOverflow = (hurryProduction((HurryTypes)iI) - productionLeft()); // raw overflow
+				iOverflow *= kOwner.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 ? 6 : 4; // value factor
+				iOverflow *= getBaseYieldRateModifier(YIELD_PRODUCTION); // limit which multiplier apply to the overflow
+				iOverflow /= std::max(1, getBaseYieldRateModifier(YIELD_PRODUCTION, getProductionModifier()));
+				iPopCost -= iOverflow;
+			}
+
 			// convert units from 4x commerce to 1x commerce
 			iPopCost /= 4;
 		}
@@ -8037,10 +8044,10 @@ void CvCityAI::AI_doHurry(bool bForce)
 				{
 				case UNITAI_WORKER:
 				case UNITAI_SETTLE:
-					iValue *= 6;
-					break;
 				case UNITAI_WORKER_SEA:
-					iValue *= 5;
+					iValue *= kUnitInfo.isFoodProduction() ? 5 : 4;
+					iValue += eProductionUnitAI == UNITAI_SETTLE && area()->getNumAIUnits(getOwnerINLINE(), eProductionUnitAI) == 0
+						? 20 : 12 * getProductionTurnsLeft(eProductionUnit, 1); // cf. value of commerce/turn
 					break;
 				case UNITAI_SETTLER_SEA:
 				case UNITAI_EXPLORE_SEA:
@@ -8102,7 +8109,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
 
 			int iValue = AI_buildingValue(eProductionBuilding) * getProductionTurnsLeft(eProductionBuilding, 1);
-			iValue /= std::max(4, 3 - iHappyDiff);
+			iValue /= std::max(4, 3 - iHappyDiff) + (iHurryPopulation + 2)/3;
 
 			if (iValue > iTotalCost)
 			{
