@@ -1992,10 +1992,10 @@ void CvUnitAI::AI_workerMove()
 		}
 	}
 
-	if (AI_retreatToCity(false, true))
+	/*if (AI_retreatToCity(false, true))
 	{
 		return;
-	}
+	}*/ // disabled by K-Mod (redundant)
 
 	if (AI_retreatToCity())
 	{
@@ -20542,7 +20542,7 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 								continue;
 							}
 
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), (iPass >= 3 ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, iMaxPath))
+							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), (iPass >= 2 ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, iMaxPath)) // was iPass >= 3
 							{
 								if (iPathTurns <= iMaxPath)
 								{
@@ -20632,7 +20632,7 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 	if (pBestPlot != NULL)
 	{
 		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iPass >= 3 ? MOVE_IGNORE_DANGER : 0, false, false, MISSIONAI_RETREAT);
+		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iPass >= 2 ? MOVE_IGNORE_DANGER : 0, false, false, MISSIONAI_RETREAT); // was iPass >= 3
 		return true;
 	}
 
@@ -22973,12 +22973,12 @@ bool CvUnitAI::AI_reconSpy(int iRange)
 				int iValue = 0;
 				if (pLoopPlot->getPlotCity() != NULL)
 				{
-					iValue += GC.getGameINLINE().getSorenRandNum(4000, "AI Spy Scout City");
+					iValue += GC.getGameINLINE().getSorenRandNum(2400, "AI Spy Scout City"); // was 4000
 				}
 				
 				if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 				{
-					iValue += GC.getGameINLINE().getSorenRandNum(1000, "AI Spy Recon Bonus");
+					iValue += GC.getGameINLINE().getSorenRandNum(800, "AI Spy Recon Bonus"); // was 1000
 				}
 				
 				for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
@@ -22998,7 +22998,9 @@ bool CvUnitAI::AI_reconSpy(int iRange)
 					}
 				}
 				// K-Mod
-				if (isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
+				if (pLoopPlot->getTeam() == getTeam())
+					iValue /= 4;
+				else if (isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 					iValue *= 2;
 				// K-Mod end
 
