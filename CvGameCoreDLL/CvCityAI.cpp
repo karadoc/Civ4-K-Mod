@@ -8109,7 +8109,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
 
 			int iValue = AI_buildingValue(eProductionBuilding) * getProductionTurnsLeft(eProductionBuilding, 1);
-			iValue /= std::max(4, 3 - iHappyDiff) + (iHurryPopulation + 2)/3;
+			iValue /= std::max(4, 3 - iHappyDiff) + (iHurryPopulation + 1)/2;
 
 			if (iValue > iTotalCost)
 			{
@@ -9065,12 +9065,19 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 				CvPlot* pLoopPlot = getCityIndexPlot(i);
 				FAssert(pLoopPlot && pLoopPlot->getWorkingCity() == this);
 
+				// ideally, the plots would be scored using AI_plotValue, but I'm worried that would be too slow.
+				// so here's a really rough estimate of the plot value
 				int iPlotScore = 0;
 				for (int j = 0; j < NUM_YIELD_TYPES; j++)
 				{
 					int y = pLoopPlot->getYield((YieldTypes)j);
 					iYields[j] += y;
 					iPlotScore += y * iYieldWeights[j];
+				}
+				if (pLoopPlot->getImprovementType() != NO_IMPROVEMENT && GC.getImprovementInfo(pLoopPlot->getImprovementType()).getImprovementUpgrade() != NO_IMPROVEMENT)
+				{
+					iYields[YIELD_COMMERCE] += 2;
+					iPlotScore += 2 * iYieldWeights[YIELD_COMMERCE];
 				}
 				iTotalScore += iPlotScore;
 				job_scores.push_back(iPlotScore);
@@ -9113,6 +9120,7 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 
 	FAssert((int)job_scores.size() >= iCitDelta);
 	std::partial_sort(job_scores.begin(), job_scores.begin()+iCitDelta, job_scores.end());
+	int iAverageScore = ROUND_DIVIDE(iTotalScore, job_scores.size());
 
 	int iTotalFood = getYieldRate(YIELD_FOOD);
 
@@ -9120,18 +9128,24 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 	int iCost = 0;
 	for (int i = 0; i < iCitDelta; i++)
 	{
-		iScoreLoss += job_scores[i];
+		// since the score estimate is very rough, I'm going to flatten it out a bit by combining it with the average score
+		iScoreLoss += (2*job_scores[i] + iAverageScore + 2)/3;
 
-		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (100 - getMaxFoodKeptPercent()) / 100;
-		int iFoodRate = iTotalFood - ROUND_DIVIDE(iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD], iTotalScore * 100);
+		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (110 - getMaxFoodKeptPercent()) / 100;
+		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/(iTotalScore * 100);
 		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
 
 		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
-		int iCostPerTurn = iYields[YIELD_PRODUCTION] * iYieldWeights[YIELD_PRODUCTION] * AI_yieldMultiplier(YIELD_PRODUCTION);
-		iCostPerTurn += iYields[YIELD_COMMERCE] * iYieldWeights[YIELD_COMMERCE] * AI_yieldMultiplier(YIELD_COMMERCE);
-		iCostPerTurn += std::max(0, iYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()*getPopulation()) * iYieldWeights[YIELD_FOOD] * AI_yieldMultiplier(YIELD_FOOD);
+		int iCostPerTurn = 0;
+		for (int j = 0; j < NUM_YIELD_TYPES; j++)
+		{
+			int y = iYields[j] - (j == YIELD_FOOD ? GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size() : 0);
+			if (y > 0)
+				iCostPerTurn += 4 * y * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
+		}
 		iCostPerTurn *= iScoreLoss;
-		iCostPerTurn = ROUND_DIVIDE(iCostPerTurn, iTotalScore * 100) + 1;
+		iCostPerTurn /= iTotalScore * 100;
+		iCostPerTurn += 2*(i+1); // just a little bit of extra cost, to show that we care...
 
 		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0);
 
