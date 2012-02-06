@@ -1,5 +1,28 @@
-This is K-Mod version 1.16.
+This is K-Mod version 1.17.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.17 changelist
+
++ Fixed an original BtS problem which prevented units from being un-grouped before they were automated.
++ Fixed a couple of problems with the way BUG detects the BtS user documents directory. (The original system was unable to expand environment variables in the path name.)
++ Changed the message sound effect for reporting the death of a warlord. (Previously it was the era defeat sound; now it is the "intercepted" sound. It still isn't a great fit, but it's better.)
++ The AI for automated units now executes during the "automoves" part of the turn rather than at the start of the turn. (Also, reverted the change which delayed the execution of automated unit missions. Automated units will act at the end of the turn, as they did in the previous version of K-Mod, but they will make their decisions using the latest information.)
+
+AI
+
++ Completely replaced the AI for deciding when cities should slave-whip and rush-buy. The new system will whip more often, but hopefully only when it is wise to do so. The calculation to decide when to slave-whip has some dependence on the personality of the AI player - some AIs will prefer to grow their cities; some will be especially keen to get lots of overflow hammer from whipping. The new AI is better able to adapt to different game rules. In particular, the new AI can handle hurry commands which combine gold cost and population cost; such a combination would cause the old AI to get confused and make mistakes.
++ The city governor is now allowed to slave-whip in cities set to auto production - but the governor uses slightly stricter rules than the AI players use.
++ Fixed a bug in AI_retreatToCity which caused pass 1 and 2 to be the same rather than using "ignore danger" on pass 2. (This bug was my fault.)
++ Fixed a bug in CvPlayerAI::AI_disbandValue which blocked units from being disbanded when in a well guarded city instead of blocking when in a poorly guarded city.
++ Made some other value adjustments to AI_disbandValue.
++ Fixed a bug in AI_tradeMissionValue which sometimes caused AI merchants to oscillate between trying to join a city and an impossible trade mission.
++ Slightly improved the behaviour of recon spies.
++ Closed a few problematic conditions the AI used to build units when in financial trouble. (units which would then be deleted a few turns later...)
++ AI_buildingValue now ignores half of the happiness points from military units - this is to prevent cities from getting messed up when an army decides to leave, or when the player changes civics.
++ Further lowered the AI's value of gold from specialists and buildings when it is earning more than it is spending.
++ Added some missing components to the AI's evaluation of random event options.
+
 
 --
 v1.16 changelist

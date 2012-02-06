@@ -2,7 +2,7 @@
 
 modName = "K-Mod"
 displayName = "K-Mod"
-modVersion = "(beta)"
+modVersion = ""
 
 civName = "BtS"
 civVersion = "3.19"
