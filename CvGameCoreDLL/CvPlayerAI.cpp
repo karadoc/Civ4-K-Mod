@@ -2327,6 +2327,8 @@ int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, const CvCity* pCity) const // 
 
 	// K-Mod. In the past, this function was always bundled with some code to boost the value of production and food...
 	// For simplicity and consistency, I've brought the adjustments into this function.
+	PROFILE_FUNC();
+
 	int iWeight = GC.getYieldInfo(eYield).getAIWeightPercent();
 	switch (eYield)
 	{

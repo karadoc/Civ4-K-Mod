@@ -1440,6 +1440,8 @@ void CvCityAI::AI_chooseProduction()
 	
 	bool bCrushStrategy = kPlayer.AI_isDoStrategy(AI_STRATEGY_CRUSH);
 	int iNeededFloatingDefenders = (isBarbarian() || bCrushStrategy) ?  0 : kPlayer.AI_getTotalFloatingDefendersNeeded(pArea);
+	int iMaxUnitSpending = kPlayer.AI_maxUnitCostPerMil(area(), iBuildUnitProb); // K-Mod. (note: this has a different scale to the original code).
+
 	if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS)) // K-Mod
 	{
 		iNeededFloatingDefenders = (2 * iNeededFloatingDefenders + 2)/3;
@@ -1455,7 +1457,7 @@ void CvCityAI::AI_chooseProduction()
 
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
-		if (!bUnitExempt && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+		if (!bUnitExempt && iUnitSpending < iMaxUnitSpending + 5 && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
 			return;
@@ -1679,13 +1681,6 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
-	/* original bts code. We dont' need this. It just ends up putting aqueducts everywhere.
-	if (AI_chooseBuilding(BUILDINGFOCUS_FOOD, isCapital() ? 5 : 30, 30))
-	{
-		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose BUILDINGFOCUS_FOOD 2", getName().GetCString());
-		return;
-	} */
-
 	int iSpreadUnitThreshold = 1000;
 
 	if( bLandWar )
@@ -1740,7 +1735,8 @@ void CvCityAI::AI_chooseProduction()
 	//if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount))
 	// K-Mod.. take into account any defenders that are on their way. (recall that in AI_guardCityMinDefender, defenders can be shuffled around)
 	// (I'm doing the min defender check twice for efficiency - so that we don't count targetmissionAIs when we don't need to)
-	if (!bUnitExempt && iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount)
+	if (!bUnitExempt && !(bFinancialTrouble && iUnitSpending > iMaxUnitSpending)
+		&& iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount)
 		&& iPlotCityDefenderCount < (AI_minDefenders() + iPlotSettlerCount - kPlayer.AI_plotTargetMissionAIs(plot(), MISSIONAI_GUARD_CITY)))
 	// K-Mod end
 	{
@@ -1817,36 +1813,10 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	/* original bts code.
-	//this is needed to build the cathedrals quickly
-	//also very good for giving cultural cities first dibs on wonders
-    if (bImportantCity && (iCultureRateRank <= iCulturalVictoryNumCultureCities))
-    {
-		int iWarScore = (bLandWar? 4: 0) + (bTotalWar? 4: 0) + (bDefenseWar? 4: 0);
-        //if (iCultureRateRank == iCulturalVictoryNumCultureCities)
-		if (iCultureRateRank == iCulturalVictoryNumCultureCities && GC.getGameINLINE().getSorenRandNum(10, "AI Build up Culture") >= iWarScore)
-        {
-            if (AI_chooseBuilding(BUILDINGFOCUS_BIGCULTURE | BUILDINGFOCUS_CULTURE | BUILDINGFOCUS_WONDEROK, 40))
-            {
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses cultural victory 1", getName().GetCString());
-                return;
-            }
-		}
-        //else if (GC.getGameINLINE().getSorenRandNum(((iCultureRateRank == 1) ? 4 : 1) + iCulturalVictoryNumCultureCities * 2 + (bLandWar ? 5 : 0), "AI Build up Culture") < iCultureRateRank)
-		else if (GC.getGameINLINE().getSorenRandNum(((iCultureRateRank == 1) ? 4 : 1) + iCulturalVictoryNumCultureCities * 2 + iWarScore, "AI Build up Culture") < iCultureRateRank)
-        {
-            if (AI_chooseBuilding(BUILDINGFOCUS_BIGCULTURE | BUILDINGFOCUS_CULTURE | BUILDINGFOCUS_WONDEROK, (bLandWar ? 20 : 40)))
-            {
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses cultural victory 2", getName().GetCString());
-                return;
-            }
-        }
-    } */ //  K-Mod: I don't think this is helpful anymore.
-
 	// don't build frivolous things if this is an important city unless we at war
     if (!bImportantCity || bLandWar || bAssault)
     {
-        if (bPrimaryArea)
+        if (bPrimaryArea && !bFinancialTrouble)
         {
             if (kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_ATTACK) == 0)
             {
@@ -1992,8 +1962,6 @@ void CvCityAI::AI_chooseProduction()
 			return;
 		}
 	}
-
-	int iMaxUnitSpending = kPlayer.AI_maxUnitCostPerMil(area(), iBuildUnitProb); // K-Mod. (note: this has a different scale to the original code).
 
 	int iCarriers = kPlayer.AI_totalUnitAIs(UNITAI_CARRIER_SEA);
 	
@@ -3575,28 +3543,11 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 	int iFoodDifference = foodDifference(false);
 
-	// Reduce reaction to espionage induced happy/health problems
-	/* original bts code
-	int iHappinessLevel = happyLevel() - unhappyLevel(1) + getEspionageHappinessCounter()/2;
-	int iAngryPopulation = range(-iHappinessLevel, 0, (getPopulation() + 1));
-	int iHealthLevel = goodHealth() - badHealth(false, std::max(0, (iHappinessLevel + 1) / 2)) + getEspionageHealthCounter()/2;
-	int iBadHealth = std::max(0, -iHealthLevel); */
+	// Reduce reaction to temporary happy/health problems
 	// K-Mod
-	int iHappinessLevel = happyLevel() - unhappyLevel() + getEspionageHappinessCounter()/2;
+	int iHappinessLevel = happyLevel() - unhappyLevel() + getEspionageHappinessCounter()/2 - getMilitaryHappiness()/2;
 	int iHealthLevel = goodHealth() - badHealth() + getEspionageHealthCounter()/2;
 	// K-Mod end
-
-	/* original code
-	int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 6) ? 6 : 3;
-	if (iHappinessLevel >= 10)
-	{
-		iHappyModifier = 1;
-	}
-	int iHealthModifier = (iHealthLevel < iHappinessLevel && iHealthLevel <= 4) ? 4 : 2;
-	if (iHealthLevel >= 8)
-	{
-		iHealthModifier = 0;
-	}*/
 
 	bool bProvidesPower = (kBuilding.isPower() || ((kBuilding.getPowerBonus() != NO_BONUS) && hasBonus((BonusTypes)(kBuilding.getPowerBonus()))) || kBuilding.isAreaCleanPower());
 
@@ -3604,20 +3555,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	int iNumCities = kOwner.getNumCities();
 	int iNumCitiesInArea = area()->getCitiesPerPlayer(getOwnerINLINE());
 	
-	/* K-Mod: commenting this out. The findxxxRateRank functions are cached, so lets just use those to avoid mistakes.
-	int aiYieldRank[NUM_YIELD_TYPES];
-	for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
-	{
-		aiYieldRank[iI] = MAX_INT;
-	}
-
-	int aiCommerceRank[NUM_COMMERCE_TYPES];
-	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
-	{
-		aiCommerceRank[iI] = MAX_INT;
-	} */
-
-	//aiYieldRank[YIELD_PRODUCTION] = findBaseYieldRateRank(YIELD_PRODUCTION);
 	bool bIsHighProductionCity = (findBaseYieldRateRank(YIELD_PRODUCTION) <= std::max(3, (iNumCities / 2)));
 	
 	int iCultureRank = findCommerceRateRank(COMMERCE_CULTURE);
@@ -7967,6 +7904,8 @@ void CvCityAI::AI_doHurry(bool bForce)
 				iGoldCost *= 100;
 				iGoldCost /= 100 + 50 * (kOwner.getGold() - iHurryGold) / std::max(iGoldTarget, iHurryGold);
 			}
+			if (kOwner.isHuman())
+				iGoldCost = iGoldCost * 3 / 2;
 		}
 		//
 
@@ -7985,15 +7924,15 @@ void CvCityAI::AI_doHurry(bool bForce)
 			{
 				iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
 
-				if (getHurryAngerTimer() > 1)
+				if (iHurryAngerLength > 0 && getHurryAngerTimer() > 1)
 					iHappyDiff -= ROUND_DIVIDE((kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 4 : 3) * getHurryAngerTimer(), flatHurryAngerLength());
 			}
 
 			iHappy = happyLevel() - unhappyLevel();
 
-			if (iHappyDiff > 0)
+			if (iHappyDiff > 0 && iGoldCost == 0)
 			{
-				if (iHappy < 0)
+				if (iHappy < 0 && iHurryPopulation < -4*iHappy) // don't kill 4 citizens to remove 1 angry citizen.
 				{
 					if (gCityLogLevel >= 2)
 						logBBAI("      City %S whips to reduce unhappiness", getName().GetCString() );
@@ -8006,7 +7945,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				continue; // not enough happiness to afford this hurry
 			}
 
-			if (iHappy + iHappyDiff >= 1 && foodDifference() < -iHurryPopulation)
+			if (iHappy + iHappyDiff >= 1 && iGoldCost == 0 && foodDifference() < -iHurryPopulation)
 			{
 				if (gCityLogLevel >= 2)
 					logBBAI("      City %S whips to reduce food loss", getName().GetCString() );
@@ -8016,8 +7955,11 @@ void CvCityAI::AI_doHurry(bool bForce)
 
 			iPopCost = AI_citizenLossCost(iHurryPopulation, std::max(0, -iHappy));
 
-			// subtract overflow from the cost.
-			if ((getHurryAngerTimer() <= 1 || iHurryAngerLength == 0 || isNoUnhappiness()) && (iHappy > 1 || iHappyDiff > 0))
+			if (kOwner.isHuman())
+				iPopCost = iPopCost * 3 / 2;
+
+			// subtract overflow from the cost; but only if we can be confident the city isn't being over-whipped. (iHappyDiff has been adjusted above based on the anger-timer)
+			if (iHappyDiff > 0 || isNoUnhappiness() || (iHappy > 1 && (getHurryAngerTimer() <= 1 || iHurryAngerLength == 0)))
 			{
 				int iOverflow = (hurryProduction((HurryTypes)iI) - productionLeft()); // raw overflow
 				iOverflow *= kOwner.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 ? 6 : 4; // value factor
