@@ -5412,7 +5412,7 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 /************************************************************************************************/
 			if( gTeamLogLevel >= 2 )
 			{
-				logBBAI("    Team %d (%S) acquires tech %S", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), GC.getTechInfo(eIndex).getDescription() );
+				logBBAI("    Team %d (%S) acquires tech %S", getID(), getName().GetCString(), GC.getTechInfo(eIndex).getDescription() );
 			}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */

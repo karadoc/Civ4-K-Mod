@@ -7989,7 +7989,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				case UNITAI_WORKER_SEA:
 					iValue *= kUnitInfo.isFoodProduction() ? 5 : 4;
 					iValue += eProductionUnitAI == UNITAI_SETTLE && area()->getNumAIUnits(getOwnerINLINE(), eProductionUnitAI) == 0
-						? 20 : 12 * getProductionTurnsLeft(eProductionUnit, 1); // cf. value of commerce/turn
+						? 24 : 14 * (getProductionTurnsLeft(eProductionUnit, 1)-1); // cf. value of commerce/turn
 					break;
 				case UNITAI_SETTLER_SEA:
 				case UNITAI_EXPLORE_SEA:
@@ -8050,7 +8050,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 		{
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
 
-			int iValue = AI_buildingValue(eProductionBuilding) * getProductionTurnsLeft(eProductionBuilding, 1);
+			int iValue = AI_buildingValue(eProductionBuilding) * (getProductionTurnsLeft(eProductionBuilding, 1) - 1);
 			iValue /= std::max(4, 3 - iHappyDiff) + (iHurryPopulation + 1)/2;
 
 			if (iValue > iTotalCost)
