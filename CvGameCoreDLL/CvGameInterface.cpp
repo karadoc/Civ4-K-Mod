@@ -502,7 +502,7 @@ void CvGame::updateTestEndTurn()
 					}
 					else
 					{
-						if (GET_PLAYER(getActivePlayer()).isOption(PLAYEROPTION_WAIT_END_TURN) || !(gDLL->getInterfaceIFace()->isHasMovedUnit()) || isHotSeat() || isPbem())
+						if (GET_PLAYER(getActivePlayer()).isOption(PLAYEROPTION_WAIT_END_TURN) || !gDLL->getInterfaceIFace()->isHasMovedUnit() || isHotSeat() || isPbem())
 						{
 							gDLL->getInterfaceIFace()->setEndTurnMessage(true);
 						}

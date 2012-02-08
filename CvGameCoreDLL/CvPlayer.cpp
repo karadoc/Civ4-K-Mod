@@ -3830,7 +3830,8 @@ bool CvPlayer::hasReadyUnit(bool bAny) const
 
 	for(pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 	{
-		if (pLoopSelectionGroup->readyToMove(bAny))
+		//if (pLoopSelectionGroup->readyToMove(bAny))
+		if (pLoopSelectionGroup->readyToMove(bAny) && !pLoopSelectionGroup->isAutomated()) // K-Mod
 		{
 			return true;
 		}
