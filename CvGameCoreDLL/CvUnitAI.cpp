@@ -2646,6 +2646,19 @@ void CvUnitAI::AI_attackMove()
 			}
 		}
 
+		// K-Mod
+		if (getGroup()->getNumUnits() >= 4 && plot()->getTeam() == getTeam())
+		{
+			CvSelectionGroup *pSplitGroup, *pRemainderGroup = NULL;
+			pSplitGroup = getGroup()->splitGroup(2, 0, &pRemainderGroup);
+			if (pSplitGroup)
+				pSplitGroup->pushMission(MISSION_SKIP);
+			if (pRemainderGroup)
+				pRemainderGroup->pushMission(MISSION_SKIP);
+			return;
+		}
+		// K-Mod end
+
 		if (AI_defend())
 		{
 			return;
@@ -2668,25 +2681,10 @@ void CvUnitAI::AI_attackMove()
 			return;
 		}
 
-		if( getGroup()->getNumUnits() < 4 )
+		if (AI_patrol())
 		{
-			if (AI_patrol())
-			{
-				return;
-			}
-		}
-		// K-Mod
-		else if (plot()->getTeam() == getTeam())
-		{
-			CvSelectionGroup *pSplitGroup, *pRemainderGroup = NULL;
-			pSplitGroup = getGroup()->splitGroup(2, 0, &pRemainderGroup);
-			if (pSplitGroup)
-				pSplitGroup->pushMission(MISSION_SKIP);
-			if (pRemainderGroup)
-				pRemainderGroup->pushMission(MISSION_SKIP);
 			return;
 		}
-		// K-Mod end
 
 		if (AI_retreatToCity())
 		{
