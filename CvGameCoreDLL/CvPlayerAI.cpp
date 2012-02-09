@@ -1166,172 +1166,127 @@ void CvPlayerAI::AI_updateAreaTargets()
 
 
 // Returns priority for unit movement (lower values move first...)
+// Note: the priorities have been edited by bbai and then by K-Mod.
 int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 {
-	CvUnit* pHeadUnit;
-	int iCurrCombat;
-	int iBestCombat;
-
 	// K-Mod. If the group is trying to do a stack attack, let it go first!
 	// (this is required for amphibious assults; during which a low priority group can be ordered to attack before its turn.)
 	if (pGroup->AI_isGroupAttack())
 		return -1;
 	// K-Mod end
 
-	pHeadUnit = pGroup->getHeadUnit();
+	const CvUnit* pHeadUnit = pGroup->getHeadUnit();
 
-	if (pHeadUnit != NULL)
+	if (pHeadUnit == NULL)
+		return INT_MAX;
+
+	if( pHeadUnit->isSpy() )
 	{
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD							10/08/09		jdog5000		*/
-/* 																				*/
-/* 	Air AI, Espionage AI														*/
-/********************************************************************************/
-/* original BTS code
-		if (pHeadUnit->hasCargo())
+		return 0;
+	}
+
+	/*if (pHeadUnit->hasCargo())
+	{
+		if (pHeadUnit->specialCargo() == NO_SPECIALUNIT)
 		{
-			if (pHeadUnit->specialCargo() == NO_SPECIALUNIT)
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
+			return 1;
 		}
-	
-		if (pHeadUnit->getDomainType() == DOMAIN_AIR)
+		else
 		{
 			return 2;
 		}
+	}*/
 
-		if ((pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER) || (pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER_SEA))
+	// Make fighters move before bombers, they are better at clearing out air defenses
+	if (pHeadUnit->getDomainType() == DOMAIN_AIR)
+	{
+		if( pHeadUnit->canAirDefend() )
 		{
 			return 3;
 		}
-
-		if ((pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE) || (pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE_SEA))
+		else
 		{
 			return 4;
 		}
-
-		if (pHeadUnit->bombardRate() > 0)
-		{
-			return 5;
-		}
-
-		if (pHeadUnit->collateralDamage() > 0)
-		{
-			return 6;
-		}
-
-		if (pHeadUnit->canFight())
-		{
-			if (pHeadUnit->withdrawalProbability() > 20)
-			{
-				return 7;
-			}
-
-			if (pHeadUnit->withdrawalProbability() > 0)
-			{
-				return 8;
-			}
-
-			iCurrCombat = pHeadUnit->currCombatStr(NULL, NULL);
-			iBestCombat = (GC.getGameINLINE().getBestLandUnitCombat() * 100);
-
-			if (pHeadUnit->noDefensiveBonus())
-			{
-				iCurrCombat *= 3;
-				iCurrCombat /= 2;
-			}
-
-			if (pHeadUnit->AI_isCityAIType())
-			{
-				iCurrCombat /= 2;
-			}
-
-			if (iCurrCombat > iBestCombat)
-			{
-				return 9;
-			}
-			else if (iCurrCombat > ((iBestCombat * 4) / 5))
-			{
-				return 10;
-			}
-			else if (iCurrCombat > ((iBestCombat * 3) / 5))
-			{
-				return 11;
-			}
-			else if (iCurrCombat > ((iBestCombat * 2) / 5))
-			{
-				return 12;
-			}
-			else if (iCurrCombat > ((iBestCombat * 1) / 5))
-			{
-				return 13;
-			}
-			else
-			{
-				return 14;
-			}
-		}
-
-		return 15;
 	}
 
-	return 16;
-*/
-		if( pHeadUnit->isSpy() )
-		{
-			return 0;
-		}
+	if ((pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER) || (pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER_SEA))
+	{
+		return 5;
+	}
 
+	if ((pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE) || (pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE_SEA))
+	{
+		return 6;
+	}
+
+	if (pHeadUnit->bombardRate() > 0)
+	{
+		return 7;
+	}
+
+	if (pHeadUnit->collateralDamage() > 0)
+	{
+		return 8;
+	}
+
+	if (pHeadUnit->getDomainType() != DOMAIN_LAND)
+	{
 		if (pHeadUnit->hasCargo())
+			return 9;
+		else
+			return 10;
+	}
+
+	if (pGroup->isStranded())
+		return 505;
+
+	if (pHeadUnit->canFight())
+	{
+		int iPriority = 60; // allow + or - 50
+
+		iPriority += (GC.getGameINLINE().getBestLandUnitCombat()*100 - pHeadUnit->currCombatStr(NULL, NULL) + 10) / 20; // note: currCombatStr has a factor of 100 built in.
+
+		if (pGroup->getNumUnits() > 1)
 		{
-			if (pHeadUnit->specialCargo() == NO_SPECIALUNIT)
-			{
-				return 1;
-			}
-			else
-			{
-				return 2;
-			}
+			iPriority--;
+			if (pGroup->getNumUnits() > 4)
+				iPriority--;
+		}
+		else if (pGroup->AI_getMissionAIType() == MISSIONAI_GUARD_CITY)
+			iPriority++;
+
+		if (pHeadUnit->withdrawalProbability() > 0 || pHeadUnit->noDefensiveBonus())
+		{
+			iPriority--;
+			if (pHeadUnit->withdrawalProbability() > 20)
+				iPriority--;
 		}
 
-		// Make fighters move before bombers, they are better at clearing out air defenses
-		if (pHeadUnit->getDomainType() == DOMAIN_AIR)
+		switch (pHeadUnit->AI_getUnitAIType())
 		{
-			if( pHeadUnit->canAirDefend() )
-			{
-				return 3;
-			}
-			else
-			{
-				return 4;
-			}
-		}
+		case UNITAI_ATTACK_CITY:
+		case UNITAI_ATTACK:
+			iPriority--;
+		case UNITAI_COUNTER:
+			iPriority--;
+		case UNITAI_PILLAGE:
+		case UNITAI_RESERVE:
+			iPriority--;
+		case UNITAI_CITY_DEFENSE:
+		case UNITAI_CITY_COUNTER:
+		case UNITAI_CITY_SPECIAL:
+			break;
 
-		if ((pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER) || (pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER_SEA))
-		{
-			return 5;
-		}
+		case UNITAI_COLLATERAL:
+			FAssertMsg(false, "AI_movementPriority: unit AI type doesn't seem to match traits.");
+			break;
 
-		if ((pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE) || (pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE_SEA))
-		{
-			return 6;
+		default:
+			break;
 		}
-
-		if (pHeadUnit->bombardRate() > 0)
-		{
-			return 7;
-		}
-
-		if (pHeadUnit->collateralDamage() > 0)
-		{
-			return 8;
-		}
-
+	}
+	/* old code
 		if (pHeadUnit->canFight())
 		{
 			if (pHeadUnit->withdrawalProbability() > 20)
@@ -1383,14 +1338,9 @@ int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 				return 16;
 			}
 		}
+	*/
 
-		return 17;
-	}
-
-	return 18;
-/********************************************************************************/
-/* BETTER_BTS_AI_MOD                           END                              */
-/********************************************************************************/
+	return 111;
 }
 
 

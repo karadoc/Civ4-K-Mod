@@ -187,7 +187,7 @@ protected:
 	bool AI_rangeAttack(int iRange);
 	bool AI_leaveAttack(int iRange, int iThreshold, int iStrengthThreshold);
 	bool AI_defensiveCollateral(int iThreshold, int iSearchRange); // K-Mod
-	bool AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns); // K-Mod
+	bool AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, bool bLocal = false); // K-Mod
 	bool AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRiskThreshold, int iFlags); // K-Mod
 	bool AI_blockade();
 	bool AI_pirateBlockade();

@@ -7979,7 +7979,9 @@ void CvCityAI::AI_doHurry(bool bForce)
 			const CvUnitInfo& kUnitInfo = GC.getUnitInfo(eProductionUnit);
 
 			int iValue = 0;
-			if (!kOwner.AI_isFinancialTrouble())
+			if (kOwner.AI_isFinancialTrouble())
+				iTotalCost = std::max(0, iTotalCost); // overflow is not good when it is being used to build units that we don't want.
+			else
 			{
 				iValue = productionLeft();
 				switch (eProductionUnitAI)
@@ -7988,8 +7990,8 @@ void CvCityAI::AI_doHurry(bool bForce)
 				case UNITAI_SETTLE:
 				case UNITAI_WORKER_SEA:
 					iValue *= kUnitInfo.isFoodProduction() ? 5 : 4;
-					iValue += eProductionUnitAI == UNITAI_SETTLE && area()->getNumAIUnits(getOwnerINLINE(), eProductionUnitAI) == 0
-						? 24 : 14 * (getProductionTurnsLeft(eProductionUnit, 1)-1); // cf. value of commerce/turn
+					iValue += (eProductionUnitAI == UNITAI_SETTLE && area()->getNumAIUnits(getOwnerINLINE(), eProductionUnitAI) == 0
+						? 24 : 14) * (getProductionTurnsLeft(eProductionUnit, 1)-1); // cf. value of commerce/turn
 					break;
 				case UNITAI_SETTLER_SEA:
 				case UNITAI_EXPLORE_SEA:
@@ -8009,7 +8011,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 							area()->getAreaAIType(kOwner.getTeam()) == AREAAI_ASSAULT_ASSIST ||
 							area()->getAreaAIType(kOwner.getTeam()) == AREAAI_ASSAULT_MASSING))
 						{
-							iValue *= 6;
+							iValue *= 5;
 						}
 						else
 						{
@@ -8026,7 +8028,10 @@ void CvCityAI::AI_doHurry(bool bForce)
 							}
 							else
 							{
-								iValue *= area()->getAreaAIType(kOwner.getTeam()) == AREAAI_NEUTRAL ? 3 : 4;
+								if (area()->getAreaAIType(kOwner.getTeam()) == AREAAI_NEUTRAL)
+									iValue *= kOwner.AI_unitCostPerMil() >= kOwner.AI_maxUnitCostPerMil(area(), AI_buildUnitProb()) ? 0 : 3;
+								else
+									iValue *= 4;
 							}
 						}
 					}
@@ -9072,6 +9077,8 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 	{
 		// since the score estimate is very rough, I'm going to flatten it out a bit by combining it with the average score
 		iScoreLoss += (2*job_scores[i] + iAverageScore + 2)/3;
+
+		//const int iGrowthWeight = kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 112 + kOwner.AI_getFlavorValue(FLAVOR_GROWTH) : 105;
 
 		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (110 - getMaxFoodKeptPercent()) / 100;
 		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/(iTotalScore * 100);

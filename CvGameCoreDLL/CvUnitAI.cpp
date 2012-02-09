@@ -2234,14 +2234,18 @@ void CvUnitAI::AI_attackMove()
 
 	// Attack choking units
 	// K-Mod (bbai code deleted)
-	if (plot()->isCity() && plot()->getTeam() == getTeam() && bDanger)
+	if (plot()->getTeam() == getTeam() && (bDanger || area()->getAreaAIType(getTeam()) != AREAAI_NEUTRAL))
 	{
-		if (AI_anyAttack(1, 65, 0, 2))
-			return;
-
-		if (AI_leaveAttack(3, 50, 120))
-			return;
-		// Perhaps I should put in something like AI_defensiveCollateral. That function is pretty good...
+		if (bDanger && plot()->isCity())
+		{
+			if (AI_leaveAttack(2, 55, 105))
+				return;
+		}
+		else
+		{
+			if (AI_defendTeritory(70, 0, 2, true))
+				return;
+		}
 	}
 	// K-Mod end
 
@@ -2467,7 +2471,7 @@ void CvUnitAI::AI_attackMove()
 			// K-Mod
 			if (plot()->getTeam() == getTeam())
 			{
-				if (AI_defendTeritory(50, 0, 2))
+				if (AI_defendTeritory(50, 0, 2, true))
 				{
 					return;
 				}
@@ -3807,17 +3811,11 @@ void CvUnitAI::AI_collateralMove()
 	return;
 }
 
-
 void CvUnitAI::AI_pillageMove()
 {
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/05/10                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 	PROFILE_FUNC();
 
-	if (AI_guardCity(false, true, 1))
+	if (AI_guardCity(false, true, 2)) // was 1
 	{
 		return;
 	}
@@ -3892,7 +3890,8 @@ void CvUnitAI::AI_pillageMove()
 		}
 	}
 
-	if (AI_group(UNITAI_PILLAGE, /*iMaxGroup*/ 1, /*iMaxOwnUnitAI*/ 1, -1, /*bIgnoreFaster*/ true, false, false, /*iMaxPath*/ 3))
+	//if (AI_group(UNITAI_PILLAGE, /*iMaxGroup*/ 1, /*iMaxOwnUnitAI*/ 1, -1, /*bIgnoreFaster*/ true, false, false, /*iMaxPath*/ 3))
+	if (AI_group(UNITAI_PILLAGE, /*iMaxGroup*/ 2, /*iMaxOwnUnitAI*/ 1, -1, /*bIgnoreFaster*/ true, false, false, /*iMaxPath*/ 3)) // K-Mod. (later, I might tell counter units to join up.)
 	{
 		return;
 	}
@@ -3941,6 +3940,11 @@ void CvUnitAI::AI_pillageMove()
 		return;
 	}
 
+	// K-Mod
+	if (AI_handleStranded())
+		return;
+	// K-Mod end
+
 	if (AI_safety())
 	{
 		return;
@@ -3948,9 +3952,6 @@ void CvUnitAI::AI_pillageMove()
 
 	getGroup()->pushMission(MISSION_SKIP);
 	return;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 }
 
 
@@ -3965,10 +3966,31 @@ void CvUnitAI::AI_reserveMove()
 
 	bool bDanger = (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3));
 
+	/* original bts code
 	if (bDanger && AI_leaveAttack(2, 55, 130))
 	{
 		return;
+	} */
+	// K-Mod
+	if (plot()->getTeam() == getTeam() && (bDanger || area()->getAreaAIType(getTeam()) != AREAAI_NEUTRAL))
+	{
+		if (bDanger && plot()->isCity())
+		{
+			if (AI_leaveAttack(1, 55, 110))
+				return;
+		}
+		else
+		{
+			if (AI_defendTeritory(65, 0, 2, true))
+				return;
+		}
 	}
+	else
+	{
+		if (AI_anyAttack(1, 65))
+			return;
+	}
+	// K-Mod end
 
 	if (plot()->getOwnerINLINE() == getOwnerINLINE())
 	{
@@ -4142,10 +4164,18 @@ void CvUnitAI::AI_counterMove()
 
 	// K-Mod
 	bool bDanger = GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 3);
-	if (plot()->isCity() && plot()->getTeam() == getTeam() && bDanger)
+	if (bDanger && plot()->getTeam() == getTeam())
 	{
-		if (AI_leaveAttack(1, 60, 110))
-			return;
+		if (plot()->isCity())
+		{
+			if (AI_leaveAttack(1, 65, 115))
+				return;
+		}
+		else
+		{
+			if (AI_defendTeritory(70, 0, 2, true))
+				return;
+		}
 	}
 	// K-Mod end
 
@@ -4218,10 +4248,10 @@ void CvUnitAI::AI_counterMove()
 
 	if (bDanger)
 	{
-		if (AI_cityAttack(1, 35))
+		/*if (AI_cityAttack(1, 35))
 		{
 			return;
-		}
+		}*/ // disabled by K-Mod
 
 		if (AI_anyAttack(1, 40))
 		{
@@ -4291,6 +4321,11 @@ void CvUnitAI::AI_counterMove()
 		return;
 	}
 
+	// K-Mod
+	if (AI_handleStranded())
+		return;
+	// K-Mod end
+
 	if (AI_safety())
 	{
 		return;
@@ -4337,7 +4372,7 @@ void CvUnitAI::AI_cityDefenseMove()
 
 	if (bDanger)
 	{
-		if (AI_leaveAttack(1, 70, 175))
+		if (AI_leaveAttack(1, 70, 140)) // was ,,175
 		{
 			return;
 		}
@@ -4401,7 +4436,7 @@ void CvUnitAI::AI_cityDefenseMove()
 		if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, UNITAI_ATTACK_CITY, -1, -1, -1, 0, MOVE_SAFE_TERRITORY))
 		{
 			return;
-		}		
+		}
 	}
 
 	if ((AI_getBirthmark() % 4) == 0)
@@ -4437,13 +4472,13 @@ void CvUnitAI::AI_cityDefenseMove()
 /* City AI                                                                                      */
 /************************************************************************************************/
 	//join any city attacks in progress
-	if (plot()->getOwnerINLINE() != getOwnerINLINE())
+	/*if (plot()->getOwnerINLINE() != getOwnerINLINE())
 	{
 		if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 1, true, true))
 		{
 			return;
 		}
-	}
+	}*/ // disabled by K-Mod (how often do you think this is going to help us?)
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -4613,10 +4648,10 @@ void CvUnitAI::AI_exploreMove()
 
 	if (!isHuman() && canAttack())
 	{
-		if (AI_cityAttack(1, 60))
+		/*if (AI_cityAttack(1, 60))
 		{
 			return;
-		}
+		}*/ // disabled by K-Mod
 
 		if (AI_anyAttack(1, 70))
 		{
@@ -6436,7 +6471,7 @@ void CvUnitAI::AI_pirateSeaMove()
 		}
 		
 		//if (AI_protect(30))
-		if (AI_defendTeritory(40, 0, 3)) // K-Mod
+		if (AI_defendTeritory(40, 0, 3, true)) // K-Mod
 		{
 			return;
 		}
@@ -6546,7 +6581,7 @@ void CvUnitAI::AI_attackSeaMove()
 			}
 
 			//if (AI_protect(35, 3))
-			if (AI_defendTeritory(45, 0, 3)) // K-Mod
+			if (AI_defendTeritory(45, 0, 3, true)) // K-Mod
 			{
 				return;
 			}
@@ -6784,7 +6819,7 @@ void CvUnitAI::AI_reserveSeaMove()
 			}
 
 			//if (AI_protect(40))
-			if (AI_defendTeritory(40, 0, 3)) // K-Mod
+			if (AI_defendTeritory(40, 0, 3, true)) // K-Mod
 			{
 				return;
 			}
@@ -16059,8 +16094,10 @@ bool CvUnitAI::AI_defensiveCollateral(int iThreshold, int iSearchRange)
 	return false;
 }
 
-// K-Mod
-bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
+// K-Mod.
+// bLocal is just to help with the efficiency of this function for short-range checks. It means that we should look only in nearby plots.
+// the default (bLocal == false) is to look at every plot on the map!
+bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, bool bLocal)
 {
 	PROFILE_FUNC();
 
@@ -16069,11 +16106,20 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 	CvPlot* pEndTurnPlot = NULL;
 	int iBestValue = 0;
 
-	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	//for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	// I'm going to use a loop equivalent to the above when !bLocal; and a loop in a square around our unit if bLocal.
+	int i = 0;
+	int iRange = bLocal ? AI_searchRange(iMaxPathTurns) : 0;
+	int iPlots = bLocal ? (2*iRange+1)*(2*iRange+1) : GC.getMapINLINE().numPlotsINLINE();
+	FAssert(!bLocal || (iRange > 0 && iRange < 20)); // nothing wrong with being above 20. I just don't expect it...
+	while (i < iPlots)
 	{
-		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = bLocal
+			? plotXY(getX_INLINE(), getY_INLINE(), -iRange + i % (2*iRange+1), -iRange + i / (2*iRange+1))
+			: GC.getMapINLINE().plotByIndexINLINE(i);
+		i++; // for next cycle.
 
-		if (pLoopPlot->getTeam() == getTeam() && AI_plotValid(pLoopPlot))
+		if (pLoopPlot && pLoopPlot->getTeam() == getTeam() && AI_plotValid(pLoopPlot))
 		{
 			if (pLoopPlot->isVisibleEnemyUnit(this))
 			{
@@ -16112,7 +16158,7 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 							iValue = 2*iValue/3;
 
 						if (iPathTurns > 1)
-							iValue /= iPathTurns + 1;
+							iValue /= iPathTurns + 2;
 
 						if (iOdds >= iThreshold)
 							iValue = 4*iValue/3;
@@ -16125,8 +16171,8 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns)
 					}
 				}
 			}
-		} // dy
-	} // dx
+		}
+	}
 
 	if (pEndTurnPlot != NULL)
 	{
