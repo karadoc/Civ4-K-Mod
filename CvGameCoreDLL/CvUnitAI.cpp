@@ -12608,49 +12608,28 @@ bool CvUnitAI::AI_goldenAge()
 
 
 // Returns true if a mission was pushed...
+// This function has been edited for K-Mod
 bool CvUnitAI::AI_spreadReligion()
 {
 	PROFILE_FUNC();
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
 
-	CvCity* pLoopCity;
-	CvPlot* pBestPlot;
-	CvPlot* pBestSpreadPlot;
-	ReligionTypes eReligion;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iPlayerMultiplierPercent;
-	int iLoop;
-	int iI;
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 	bool bCultureVictory = kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-	eReligion = NO_RELIGION;
 
-	// BBAI TODO: Unnecessary with changes below ...
-	if (eReligion == NO_RELIGION)
+	ReligionTypes eReligion = NO_RELIGION;
+
+	if (kOwner.getStateReligion() != NO_RELIGION)
 	{
-		if (kOwner.getStateReligion() != NO_RELIGION)
+		if (m_pUnitInfo->getReligionSpreads(kOwner.getStateReligion()) > 0)
 		{
-			if (m_pUnitInfo->getReligionSpreads(kOwner.getStateReligion()) > 0)
-			{
-				eReligion = kOwner.getStateReligion();
-			}
+			eReligion = kOwner.getStateReligion();
 		}
 	}
 
 	if (eReligion == NO_RELIGION)
 	{
-		for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
+		for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 		{
 			//if (bCultureVictory || GET_TEAM(getTeam()).hasHolyCity((ReligionTypes)iI))
 			{
@@ -12672,54 +12651,46 @@ bool CvUnitAI::AI_spreadReligion()
 	bool bHasAnyHolyCity = bHasHolyCity;
 	if (!bHasAnyHolyCity)
 	{
-		for (iI = 0; !bHasAnyHolyCity && iI < GC.getNumReligionInfos(); iI++)
+		for (int iI = 0; !bHasAnyHolyCity && iI < GC.getNumReligionInfos(); iI++)
 		{
 			bHasAnyHolyCity = GET_TEAM(getTeam()).hasHolyCity((ReligionTypes)iI);
 		}
 	}
 
-	iBestValue = 0;
-	pBestPlot = NULL;
-	pBestSpreadPlot = NULL;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = NULL;
+	CvPlot* pBestSpreadPlot = NULL;
 
 	// BBAI TODO: Could also use CvPlayerAI::AI_missionaryValue to determine which player to target ...
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (int iI = 0; iI < MAX_PLAYERS; iI++)
 	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
-		{
-		    iPlayerMultiplierPercent = 0;
+		const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      11/28/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
-			//if (GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam())
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam() && canEnterTerritory(GET_PLAYER((PlayerTypes)iI).getTeam()))
+		if (kLoopPlayer.isAlive())
+		{
+		    int iPlayerMultiplierPercent = 0;
+
+			if (kLoopPlayer.getTeam() != getTeam() && canEnterTerritory(kLoopPlayer.getTeam()))
 			{
 				if (bHasHolyCity)
 				{
 					iPlayerMultiplierPercent = 100;
-					// BBAI TODO: If going for cultural victory, don't spread to other teams?  Sure, this might decrease the chance of 
-					// someone else winning by culture, but at the cost of $$ in holy city and diplomatic conversions (ie future wars!).  
-					// Doesn't seem to up our odds of winning by culture really.  Also, no foreign spread after Free Religion?  Still get
-					// gold for city count.
 					if (!bCultureVictory || (eReligion == kOwner.getStateReligion()))
 					{
-						if (GET_PLAYER((PlayerTypes)iI).getStateReligion() == NO_RELIGION)
+						if (kLoopPlayer.getStateReligion() == NO_RELIGION)
 						{
-							if (0 == (GET_PLAYER((PlayerTypes)iI).getNonStateReligionHappiness()))
+							if (0 == (kLoopPlayer.getNonStateReligionHappiness()))
 							{
 								iPlayerMultiplierPercent += 600;
 							}
 						}
-						else if (GET_PLAYER((PlayerTypes)iI).getStateReligion() == eReligion)
+						else if (kLoopPlayer.getStateReligion() == eReligion)
 						{
 							iPlayerMultiplierPercent += 300;
 						}
 						else
 						{
-							if (GET_PLAYER((PlayerTypes)iI).hasHolyCity(GET_PLAYER((PlayerTypes)iI).getStateReligion()))
+							if (kLoopPlayer.hasHolyCity(kLoopPlayer.getStateReligion()))
 							{
 								iPlayerMultiplierPercent += 50;
 							}
@@ -12729,8 +12700,9 @@ bool CvUnitAI::AI_spreadReligion()
 							}
 						}
 						
-						int iReligionCount = GET_PLAYER((PlayerTypes)iI).countTotalHasReligion();
-						int iCityCount = kOwner.getNumCities();
+						int iReligionCount = kLoopPlayer.countTotalHasReligion();
+						//int iCityCount = kOwner.getNumCities();
+						int iCityCount = kLoopPlayer.getNumCities(); // K-Mod!
 						//magic formula to produce normalized adjustment factor based on religious infusion
 						int iAdjustment = (100 * (iCityCount + 1));
 						iAdjustment /= ((iCityCount + 1) + iReligionCount);
@@ -12745,21 +12717,18 @@ bool CvUnitAI::AI_spreadReligion()
 			}
 			else if (iI == getOwnerINLINE())
 			{
-				iPlayerMultiplierPercent = 100;
+				iPlayerMultiplierPercent = (bCultureVictory ? 1600 : 400) + (kOwner.getStateReligion() == eReligion ? 100 : 0);
 			}
-			else if (bHasHolyCity && GET_PLAYER((PlayerTypes)iI).getTeam() == getTeam())
+			else if (bHasHolyCity && kLoopPlayer.getTeam() == getTeam())
 			{
-				iPlayerMultiplierPercent = 80;
+				iPlayerMultiplierPercent = kLoopPlayer.getStateReligion() == eReligion ? 600 : 300;
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			
 			if (iPlayerMultiplierPercent > 0)
 			{
-				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+				int iLoop;
+				for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 				{
-
 					if (AI_plotValid(pLoopCity->plot()) && pLoopCity->area() == area())
 					{
 						//if (canSpread(pLoopCity->plot(), eReligion))
@@ -12769,40 +12738,18 @@ bool CvUnitAI::AI_spreadReligion()
 							{
 								if (kOwner.AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_SPREAD, getGroup()) == 0)
 								{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/03/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
+									int iPathTurns;
 									if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 									{
-										iValue = (7 + (pLoopCity->getPopulation() * 4));
+										int iValue = 16 + pLoopCity->getPopulation() * 4; // was 7 +
 
-										bool bOurCity = false;
-										// BBAI TODO: Why not just use iPlayerMultiplier??
-										if (pLoopCity->getOwnerINLINE() == getOwnerINLINE())
-										{
-											iValue *= (bCultureVictory ? 16 : 4);
-											bOurCity = true;
-										}
-										else if (pLoopCity->getTeam() == getTeam())
-										{
-											iValue *= 3;
-											bOurCity = true;
-										}
-										else
-										{
-											iValue *= iPlayerMultiplierPercent;
-											iValue /= 100;
-										}
+										iValue *= iPlayerMultiplierPercent;
+										iValue /= 100;
 										
 										int iCityReligionCount = pLoopCity->getReligionCount();
 										int iReligionCountFactor = iCityReligionCount;
 
-										if (bOurCity)
+										if (kLoopPlayer.getTeam() == kOwner.getTeam())
 										{
 											// count cities with no religion the same as cities with 2 religions
 											// prefer a city with exactly 1 religion already
@@ -12847,7 +12794,8 @@ bool CvUnitAI::AI_spreadReligion()
 
 										iValue *= 1000;
 
-										iValue /= (iPathTurns + 2);
+										if (iPathTurns > 0)
+											iValue /= (iPathTurns + 2);
 
 										if (iValue > iBestValue)
 										{
@@ -12875,15 +12823,7 @@ bool CvUnitAI::AI_spreadReligion()
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/09/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_SPREAD, pBestSpreadPlot);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			return true;
 		}
 	}
