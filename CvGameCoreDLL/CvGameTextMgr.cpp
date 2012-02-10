@@ -9270,7 +9270,7 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 		int iHappiness;
 /*
 ** K-Mod, 30/dec/10, karadoc
-** changed so that conditional happiness is double-reported. (such as happiness from state-religion buildings, or culture slider)
+** changed so that conditional happiness is not double-reported. (such as happiness from state-religion buildings, or culture slider)
 */
 		/* original bts code
 		if (NULL != pCity)
@@ -9282,6 +9282,11 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 			iHappiness = kBuilding.getHappiness();
 		}*/
 		iHappiness = kBuilding.getHappiness();
+		if (pCity)
+		{
+			// special modifiers (eg. events). These modifiers don't get their own line of text, so they need to be included here.
+			iHappiness += pCity->getBuildingHappyChange((BuildingClassTypes)kBuilding.getBuildingClassType());
+		}
 		//if (ePlayer != NO_PLAYER) (This happiness is already reported as well (eg, nationhood barracks)
 		//{
 			//iHappiness += GET_PLAYER(ePlayer).getExtraBuildingHappiness(eBuilding);
@@ -9329,6 +9334,11 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 			iHealth = pCity->getBuildingBadHealth(eBuilding);
 		}*/
 		iHealth = kBuilding.getHealth();
+		if (pCity)
+		{
+			// special modifiers (eg. events). These modifiers don't get their own line of text, so they need to be included here.
+			iHealth += pCity->getBuildingHealthChange((BuildingClassTypes)kBuilding.getBuildingClassType());
+		}
 /*
 ** K-Mod end
 */
