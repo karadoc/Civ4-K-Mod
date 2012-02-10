@@ -19,20 +19,21 @@ class BugCityScreenOptionsTab(BugOptionsTab.BugOptionsTab):
 		panel = self.createMainPanel(screen)
 		column = self.addOneColumnLayout(screen, panel)
 		
-		left, right = self.addTwoColumnLayout(screen, column, "Page", True)
+		#left, right = self.addTwoColumnLayout(screen, column, "Page", True)
+		left, middle, right = self.addThreeColumnLayout(screen, column, "Page", True) # K-Mod
 		
 		self.createRawYieldsPanel(screen, left)
 		self.addSpacer(screen, left, "CityScreen1")
 		self.createHurryDetailPanel(screen, left)
 		self.addSpacer(screen, left, "CityScreen2")
-		self.createBuildingActualEffectsPanel(screen, left)
-		self.addSpacer(screen, left, "CityScreen3")
+		self.createBuildingActualEffectsPanel(screen, middle) # was left
+		#self.addSpacer(screen, left, "CityScreen3")
 		self.createGreatPersonBarPanel(screen, left)
-		self.addSpacer(screen, left, "CityScreen4")
-		self.createProductionQueuePanel(screen, left)
+		self.addSpacer(screen, middle, "CityScreen4") # was left
+		self.createProductionQueuePanel(screen, middle) # was left
 		
 		#self.createCityBarPanel(screen, right)
-		self.addSpacer(screen, right, "CityScreen6")
+		#self.addSpacer(screen, right, "CityScreen6")
 		self.createMiscellaneousPanel(screen, right)
 		
 	def createRawYieldsPanel(self, screen, panel):
