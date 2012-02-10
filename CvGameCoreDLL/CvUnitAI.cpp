@@ -15081,7 +15081,7 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									if (transport_path.GeneratePath(pLoopCity->plot()))
 									{
 										// faster by boat
-										FAssert(transport_path.GetPathTurns() + iLoadTurns < iPathTurns);
+										FAssert(transport_path.GetPathTurns() + iLoadTurns <= iPathTurns);
 										iPathTurns = transport_path.GetPathTurns() + iLoadTurns;
 									}
 								}
