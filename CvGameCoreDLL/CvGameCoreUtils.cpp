@@ -1948,21 +1948,8 @@ int pathValid(FAStarNode* parent, FAStarNode* node, int data, const void* pointe
 	if (!pathValid_join(parent, node, pSelectionGroup, iFlags))
 		return FALSE;
 
-	//	KOSHLING MOD - none of the rest of the calculation depends on pToPlot, 
-	//	so we can cache the results from one request for each parent/pFromPlot.
-	//	The cache is reset prior to each path generation
-	bool bResult;
-	if ( pSelectionGroup->HaveCachedPathValidityResult( pFromPlot, &bResult ) )
-	{
-		return bResult;
-	}
-
 	//bResult = pathValidInternal(parent, node, data, pPathSettings, finder);
-	bResult = pathValid_source(parent, pSelectionGroup, iFlags);
-
-	pSelectionGroup->CachePathValidityResult( pFromPlot, bResult );
-
-	return bResult;
+	return pathValid_source(parent, pSelectionGroup, iFlags);
 }
 
 
