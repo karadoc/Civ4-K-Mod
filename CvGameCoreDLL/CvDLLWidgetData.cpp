@@ -19,6 +19,7 @@
 #include "CvPopupInfo.h"
 #include "FProfiler.h"
 #include "CvMessageControl.h"
+#include "CvBugOptions.h"
 
 CvDLLWidgetData* CvDLLWidgetData::m_pInst = NULL;
 
@@ -1805,7 +1806,11 @@ void CvDLLWidgetData::parseConstructHelp(CvWidgetDataStruct &widgetDataStruct, C
 	{
 		eBuilding = (BuildingTypes)GC.getCivilizationInfo(pHeadSelectedCity->getCivilizationType()).getCivilizationBuildings(widgetDataStruct.m_iData1);
 
-		GAMETEXT.setBuildingHelp(szBuffer, eBuilding, false, widgetDataStruct.m_bOption, false, pHeadSelectedCity);
+		//GAMETEXT.setBuildingHelp(szBuffer, eBuilding, false, widgetDataStruct.m_bOption, false, pHeadSelectedCity);
+// BUG - Building Actual Effects - start
+		GAMETEXT.setBuildingHelpActual(szBuffer, eBuilding, false, widgetDataStruct.m_bOption, false, pHeadSelectedCity);
+// BUG - Building Actual Effects - end
+
 	}
 }
 
@@ -2362,7 +2367,10 @@ void CvDLLWidgetData::parseActionHelp(CvWidgetDataStruct &widgetDataStruct, CvWS
 					else
 					{
 						szBuffer.append(NEWLINE);
-						GAMETEXT.setBuildingHelp(szBuffer, ((BuildingTypes)(GC.getActionInfo(widgetDataStruct.m_iData1).getMissionData())), false, false, false, pMissionCity);
+						//GAMETEXT.setBuildingHelp(szBuffer, ((BuildingTypes)(GC.getActionInfo(widgetDataStruct.m_iData1).getMissionData())), false, false, false, pMissionCity);
+// BUG - Building Actual Effects - start
+						GAMETEXT.setBuildingHelpActual(szBuffer, ((BuildingTypes)(GC.getActionInfo(widgetDataStruct.m_iData1).getMissionData())), false, false, false, pMissionCity);
+// BUG - Building Actual Effects - end
 					}
 				}
 			}
@@ -4666,6 +4674,13 @@ void CvDLLWidgetData::parseMaintenanceHelp(CvWidgetDataStruct &widgetDataStruct,
 				swprintf(szTempBuffer, L" (%s%d%%)", ((iMaintenanceValue > 0) ? L"+" : L""), iMaintenanceValue);
 				szBuffer.append(szTempBuffer);
 			}
+
+// BUG - Building Saved Maintenance - start
+			if (pHeadSelectedCity->getOwnerINLINE() == GC.getGame().getActivePlayer() && getBugOptionBOOL("MiscHover__BuildingSavedMaintenance", false, "BUG_BUILDING_SAVED_MAINTENANCE_HOVER"))
+			{
+				GAMETEXT.setBuildingSavedMaintenanceHelp(szBuffer, *pHeadSelectedCity, DOUBLE_SEPARATOR);
+			}
+// BUG - Building Saved Maintenance - end
 		}
 	}
 }
@@ -4679,6 +4694,13 @@ void CvDLLWidgetData::parseHealthHelp(CvWidgetDataStruct &widgetDataStruct, CvWS
 		GAMETEXT.setBadHealthHelp(szBuffer, *pHeadSelectedCity);
 		szBuffer.append(L"\n=======================\n");
 		GAMETEXT.setGoodHealthHelp(szBuffer, *pHeadSelectedCity);
+
+// BUG - Building Additional Health - start
+		if (pHeadSelectedCity->getOwnerINLINE() == GC.getGame().getActivePlayer() && getBugOptionBOOL("MiscHover__BuildingAdditionalHealth", false, "BUG_BUILDING_ADDITIONAL_HEALTH_HOVER"))
+		{
+			GAMETEXT.setBuildingAdditionalHealthHelp(szBuffer, *pHeadSelectedCity, DOUBLE_SEPARATOR);
+		}
+// BUG - Building Additional Health - end
 	}
 }
 
@@ -4761,6 +4783,13 @@ void CvDLLWidgetData::parseHappinessHelp(CvWidgetDataStruct &widgetDataStruct, C
 		GAMETEXT.setAngerHelp(szBuffer, *pHeadSelectedCity);
 		szBuffer.append(L"\n=======================\n");
 		GAMETEXT.setHappyHelp(szBuffer, *pHeadSelectedCity);
+
+// BUG - Building Additional Happiness - start
+		if (pHeadSelectedCity->getOwnerINLINE() == GC.getGame().getActivePlayer() && getBugOptionBOOL("MiscHover__BuildingAdditionalHappiness", false, "BUG_BUILDING_ADDITIONAL_HAPPINESS_HOVER"))
+		{
+			GAMETEXT.setBuildingAdditionalHappinessHelp(szBuffer, *pHeadSelectedCity, DOUBLE_SEPARATOR);
+		}
+// BUG - Building Additional Happiness - end
 	}
 }
 
@@ -4877,7 +4906,10 @@ void CvDLLWidgetData::parseSelectedHelp(CvWidgetDataStruct &widgetDataStruct, Cv
 				break;
 
 			case ORDER_CONSTRUCT:
-				GAMETEXT.setBuildingHelp(szBuffer, ((BuildingTypes)(pOrder->iData1)), false, false, false, pHeadSelectedCity);
+				//GAMETEXT.setBuildingHelp(szBuffer, ((BuildingTypes)(pOrder->iData1)), false, false, false, pHeadSelectedCity);
+// BUG - Building Actual Effects - start
+				GAMETEXT.setBuildingHelpActual(szBuffer, ((BuildingTypes)(pOrder->iData1)), false, false, false, pHeadSelectedCity);
+// BUG - Building Actual Effects - end
 				break;
 
 			case ORDER_CREATE:

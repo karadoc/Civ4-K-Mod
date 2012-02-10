@@ -316,6 +316,17 @@ public:
 	int getGreatPeopleRateModifier() const;																// Exposed to Python
 	void changeGreatPeopleRateModifier(int iChange);
 
+// BUG - Building Additional Great People - start
+	int getAdditionalGreatPeopleRateByBuilding(BuildingTypes eBuilding) const;
+	int getAdditionalBaseGreatPeopleRateByBuilding(BuildingTypes eBuilding) const;
+	int getAdditionalGreatPeopleRateModifierByBuilding(BuildingTypes eBuilding) const;
+// BUG - Building Additional Great People - end
+
+// BUG - Specialist Additional Great People - start
+	int getAdditionalGreatPeopleRateBySpecialist(SpecialistTypes eSpecialist, int iChange) const;
+	int getAdditionalBaseGreatPeopleRateBySpecialist(SpecialistTypes eSpecialist, int iChange) const;
+// BUG - Specialist Additional Great People - end
+
 	int getGreatPeopleProgress() const;													// Exposed to Python
 	void changeGreatPeopleProgress(int iChange);										// Exposed to Python
 
@@ -333,7 +344,11 @@ public:
 
 	int getGovernmentCenterCount() const;																	
 	bool isGovernmentCenter() const;														// Exposed to Python
-	void changeGovernmentCenterCount(int iChange);													
+	void changeGovernmentCenterCount(int iChange);		
+
+// BUG - Building Saved Maintenance - start
+	int getSavedMaintenanceTimes100ByBuilding(BuildingTypes eBuilding) const;
+// BUG - Building Saved Maintenance - end
 
 	int getMaintenance() const;																	// Exposed to Python
 	int getMaintenanceTimes100() const;																	// Exposed to Python
@@ -374,6 +389,12 @@ public:
 	int getFeatureGoodHealth() const;																			// Exposed to Python
 	int getFeatureBadHealth() const;														// Exposed to Python
 	void updateFeatureHealth();
+
+// BUG - Actual Effects - start
+	int getAdditionalAngryPopuplation(int iGood, int iBad) const;
+	int getAdditionalSpoiledFood(int iGood, int iBad) const;
+	int getAdditionalStarvation(int iSpoiledFood) const;
+// BUG - Actual Effects - end
 
 	int getBuildingGoodHealth() const;																		// Exposed to Python
 	int getBuildingBadHealth() const;																			// Exposed to Python
@@ -532,6 +553,9 @@ public:
 
 	int getBuildingDefense() const;												// Exposed to Python
 	void changeBuildingDefense(int iChange);
+// BUG - Building Additional Defense - start
+	int getAdditionalDefenseByBuilding(BuildingTypes eBuilding) const;
+// BUG - Building Additional Defense - start
 
 	int getBuildingBombardDefense() const;										// Exposed to Python
 	void changeBuildingBombardDefense(int iChange);
@@ -652,6 +676,17 @@ public:
 	int getRiverPlotYield(YieldTypes eIndex) const;								// Exposed to Python
 	void changeRiverPlotYield(YieldTypes eIndex, int iChange);
 
+// BUG - Building Additional Yield - start
+	int getAdditionalYieldByBuilding(YieldTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalBaseYieldRateByBuilding(YieldTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalYieldRateModifierByBuilding(YieldTypes eIndex, BuildingTypes eBuilding) const;
+// BUG - Building Additional Yield - end
+
+// BUG - Specialist Additional Yield - start
+	int getAdditionalYieldBySpecialist(YieldTypes eIndex, SpecialistTypes eSpecialist, int iChange) const;
+	int getAdditionalBaseYieldRateBySpecialist(YieldTypes eIndex, SpecialistTypes eSpecialist, int iChange) const;
+// BUG - Specialist Additional Yield - end
+
 	int getBaseYieldRate(YieldTypes eIndex) const;								// Exposed to Python
 	int getBaseYieldRateModifier(YieldTypes eIndex, int iExtra = 0) const;		// Exposed to Python
 	int getYieldRate(YieldTypes eIndex) const;									// Exposed to Python
@@ -696,9 +731,24 @@ public:
 	int getBuildingCommerce(CommerceTypes eIndex) const;																				// Exposed to Python
 	int getBuildingCommerceByBuilding(CommerceTypes eIndex, BuildingTypes eBuilding) const;			// Exposed to Python
 	void updateBuildingCommerce();
+// BUG - Building Additional Commerce - start
+	int getAdditionalCommerceByBuilding(CommerceTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalCommerceTimes100ByBuilding(CommerceTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalBaseCommerceRateByBuilding(CommerceTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalBaseCommerceRateByBuildingImpl(CommerceTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalCommerceRateModifierByBuilding(CommerceTypes eIndex, BuildingTypes eBuilding) const;
+	int getAdditionalCommerceRateModifierByBuildingImpl(CommerceTypes eIndex, BuildingTypes eBuilding) const;
+// BUG - Building Additional Commerce - end
 
 	int getSpecialistCommerce(CommerceTypes eIndex) const;											// Exposed to Python
 	void changeSpecialistCommerce(CommerceTypes eIndex, int iChange);			// Exposed to Python
+
+// BUG - Specialist Additional Commerce - start
+	int getAdditionalCommerceBySpecialist(CommerceTypes eIndex, SpecialistTypes eSpecialist, int iChange) const;				// Exposed to Python
+	int getAdditionalCommerceTimes100BySpecialist(CommerceTypes eIndex, SpecialistTypes eSpecialist, int iChange) const;		// Exposed to Python
+	int getAdditionalBaseCommerceRateBySpecialist(CommerceTypes eIndex, SpecialistTypes eSpecialist, int iChange) const;		// Exposed to Python
+	int getAdditionalBaseCommerceRateBySpecialistImpl(CommerceTypes eIndex, SpecialistTypes eSpecialist, int iChange) const;
+// BUG - Specialist Additional Commerce - end
 
 	int getReligionCommerce(CommerceTypes eIndex) const;																				// Exposed to Python
 	int getReligionCommerceByReligion(CommerceTypes eIndex, ReligionTypes eReligion) const;			// Exposed to Python
