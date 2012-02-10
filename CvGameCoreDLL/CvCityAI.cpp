@@ -9069,7 +9069,8 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 	std::partial_sort(job_scores.begin(), job_scores.begin()+iCitDelta, job_scores.end());
 	int iAverageScore = ROUND_DIVIDE(iTotalScore, job_scores.size());
 
-	int iTotalFood = getYieldRate(YIELD_FOOD);
+	int iWastedFood = -healthRate();
+	int iTotalFood = getYieldRate(YIELD_FOOD) - iWastedFood;
 
 	int iScoreLoss = 0;
 	int iCost = 0;
@@ -9083,12 +9084,13 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (110 - getMaxFoodKeptPercent()) / 100;
 		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/(iTotalScore * 100);
 		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
+		iFoodRate += std::max(iWastedFood, i+1);
 
 		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
 		int iCostPerTurn = 0;
 		for (int j = 0; j < NUM_YIELD_TYPES; j++)
 		{
-			int y = iYields[j] - (j == YIELD_FOOD ? GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size() : 0);
+			int y = iYields[j] - (j == YIELD_FOOD ? std::max(iWastedFood, i+1) + GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size() : 0);
 			if (y > 0)
 				iCostPerTurn += 4 * y * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
 		}

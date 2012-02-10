@@ -536,16 +536,10 @@ void CvSelectionGroup::autoMission()
 					}
 				}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/20/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
 				//if (bVisibleHuman && GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 1) > 0)
-				if (bVisibleHuman && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 1))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/	
+				// K-Mod. I want to allow players to queue actions when in danger without being overruled by this clause.
+				if (bVisibleHuman && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 1) && headMissionQueueNode()->m_data.iPushTurn != GC.getGameINLINE().getGameTurn())
+				// K-Mod end
 				{
 					clearMissionQueue();
 				}
