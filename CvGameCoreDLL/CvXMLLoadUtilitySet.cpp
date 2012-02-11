@@ -1342,23 +1342,23 @@ void CvXMLLoadUtility::SetGlobalClassInfo(std::vector<T*>& aInfos, const char* s
 		// loop through each tag
 		do
 		{
-			SkipToNextVal();	// skip to the next non-comment node
+			//SkipToNextVal();	// skip to the next non-comment node
 
-				T* pClassInfo = new T;
+			T* pClassInfo = new T;
 
-				FAssert(NULL != pClassInfo);
-				if (NULL == pClassInfo)
-				{
-					break;
-				}
+			FAssert(NULL != pClassInfo);
+			if (NULL == pClassInfo)
+			{
+				break;
+			}
 
-				bool bSuccess = pClassInfo->read(this);
-				FAssert(bSuccess);
-				if (!bSuccess)
-				{
-					delete pClassInfo;
-					break;
-				}
+			bool bSuccess = pClassInfo->read(this);
+			FAssert(bSuccess);
+			if (!bSuccess)
+			{
+				delete pClassInfo;
+				break;
+			}
 
 			int iIndex = -1;
 			if (NULL != pClassInfo->getType())
@@ -1381,7 +1381,8 @@ void CvXMLLoadUtility::SetGlobalClassInfo(std::vector<T*>& aInfos, const char* s
 			}
 
 
-		} while (gDLL->getXMLIFace()->NextSibling(m_pFXml));
+		//} while (gDLL->getXMLIFace()->NextSibling(m_pFXml));
+		} while (gDLL->getXMLIFace()->NextSibling(m_pFXml) && SkipToNextVal()); // K-Mod
 
 		if (bTwoPass)
 		{
@@ -1421,7 +1422,7 @@ void CvXMLLoadUtility::SetDiplomacyInfo(std::vector<CvDiplomacyInfo*>& DiploInfo
 		// loop through each tag
 		do
 		{
-			SkipToNextVal();	// skip to the next non-comment node
+			//SkipToNextVal();	// skip to the next non-comment node
 
 			CvString szType;
 			GetChildXmlValByName(szType, "Type");
@@ -1449,7 +1450,8 @@ void CvXMLLoadUtility::SetDiplomacyInfo(std::vector<CvDiplomacyInfo*>& DiploInfo
 				DiploInfos[iIndex]->read(this);
 			}
 
-		} while (gDLL->getXMLIFace()->NextSibling(m_pFXml));
+		//} while (gDLL->getXMLIFace()->NextSibling(m_pFXml));
+		} while (gDLL->getXMLIFace()->NextSibling(m_pFXml) && SkipToNextVal()); // K-Mod
 	}
 }
 
