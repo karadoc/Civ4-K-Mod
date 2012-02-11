@@ -8400,7 +8400,7 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 				int iRoll = (iHasCount > 4) ? iBaseChance : (((100 - iBaseChance) / iHasCount) + iBaseChance);
 				if (!kTeam.hasHeadquarters(eCorporation))
 				{
-					iRoll /= 8;			
+					iRoll /= 3; // was 8
 				}
 				
 				if (iRoll > kGame.getSorenRandNum(100, "AI choose executive"))

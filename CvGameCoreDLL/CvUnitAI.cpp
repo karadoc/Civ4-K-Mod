@@ -2471,7 +2471,7 @@ void CvUnitAI::AI_attackMove()
 			// K-Mod
 			if (plot()->getTeam() == getTeam())
 			{
-				if (AI_defendTeritory(50, 0, 2, true))
+				if (AI_defendTeritory(55, 0, 2, true))
 				{
 					return;
 				}
@@ -2813,7 +2813,7 @@ void CvUnitAI::AI_paratrooperMove()
 		return;
 	}
 
-	if (AI_defendTeritory(50, 0, 5)) // K-Mod
+	if (AI_defendTeritory(55, 0, 5)) // K-Mod
 	{
 		return;
 	}
@@ -3332,7 +3332,10 @@ void CvUnitAI::AI_attackCityMove()
 			if (bTurtle)
 			{
 				// K-Mod
-				if (AI_defendTeritory(51, iMoveFlags, 5))
+				if (AI_leaveAttack(1, 51, 100))
+					return;
+
+				if (AI_defendTeritory(70, iMoveFlags, 3))
 					return;
 				// K-Mod end
 				if (AI_guardCity(false, true, 7, iMoveFlags))
@@ -3344,7 +3347,7 @@ void CvUnitAI::AI_attackCityMove()
 			{
 				// Use smaller attack city stacks on defense
 				// K-Mod
-				if (AI_defendTeritory(60, iMoveFlags, 3))
+				if (AI_defendTeritory(65, iMoveFlags, 3))
 					return;
 				// K-Mod end
 
@@ -3570,6 +3573,11 @@ void CvUnitAI::AI_attackCityMove()
 			}
 		}
 	}
+
+	// K-Mod
+	if (AI_defendTeritory(70, iMoveFlags, 1, true))
+		return;
+	// K-Mod end
 
 	if (AI_moveToStagingCity())
 	{
@@ -3834,10 +3842,10 @@ void CvUnitAI::AI_pillageMove()
 		}
 	}
 	
-	if (AI_cityAttack(1, 55))
+	/*if (AI_cityAttack(1, 55))
 	{
 		return;
-	}
+	}*/
 
 	if (AI_anyAttack(1, 65))
 	{
@@ -3928,6 +3936,14 @@ void CvUnitAI::AI_pillageMove()
 		return;
 	}
 
+	// K-Mod
+	if (plot()->getTeam() == getTeam() && AI_defendTeritory(55, 0, 3, true))
+		return;
+
+	if (AI_handleStranded())
+		return;
+	// K-Mod end
+
 	if (AI_patrol())
 	{
 		return;
@@ -3937,11 +3953,6 @@ void CvUnitAI::AI_pillageMove()
 	{
 		return;
 	}
-
-	// K-Mod
-	if (AI_handleStranded())
-		return;
-	// K-Mod end
 
 	if (AI_safety())
 	{
@@ -6469,7 +6480,7 @@ void CvUnitAI::AI_pirateSeaMove()
 		}
 		
 		//if (AI_protect(30))
-		if (AI_defendTeritory(40, 0, 3, true)) // K-Mod
+		if (AI_defendTeritory(45, 0, 3, true)) // K-Mod
 		{
 			return;
 		}
@@ -6817,7 +6828,7 @@ void CvUnitAI::AI_reserveSeaMove()
 			}
 
 			//if (AI_protect(40))
-			if (AI_defendTeritory(40, 0, 3, true)) // K-Mod
+			if (AI_defendTeritory(45, 0, 3, true)) // K-Mod
 			{
 				return;
 			}
@@ -6864,7 +6875,7 @@ void CvUnitAI::AI_reserveSeaMove()
 	}
 	
 	//if (AI_protect(40))
-	if (AI_defendTeritory(40, 0, 5)) // K-Mod
+	if (AI_defendTeritory(45, 0, 5)) // K-Mod
 	{
 		return;
 	}
@@ -6912,7 +6923,7 @@ void CvUnitAI::AI_reserveSeaMove()
 	}
 
 	//if (AI_protect(40))
-	if (AI_defendTeritory(40, 0, -1)) // K-Mod
+	if (AI_defendTeritory(45, 0, -1)) // K-Mod
 	{
 		return;
 	}
@@ -16072,14 +16083,12 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, 
 						int iOurAttack = kOwner.AI_localAttackStrength(pLoopPlot, getTeam(), getDomainType(), 2, true, true, true);
 						int iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM, getDomainType(), 0);
 
-						if (iOurAttack > iEnemyDefence && iOurAttack > 0)
+						if (iOurAttack > iEnemyDefence && iEnemyDefence > 0)
 						{
 							int iBonus = 100 - iOdds;
-							iBonus -= iBonus * 4*iBonus / (4*iBonus + 100*(iOurAttack-iEnemyDefence)/iOurAttack);
+							iBonus -= iBonus * 4*iBonus / (4*iBonus + 100*(iOurAttack-iEnemyDefence)/iEnemyDefence);
 							// That looks overly complex, doesn't it? I hope it works...
-							// take this example: iOdds = 40, iOurAttack = 2 * iEnemyDefence.
-							// 60 - 60 * 240 / (240 + 100) = 60 - 42 = 18
-							// seems fair to me.
+							// The goal is for odds+bonus to rise quickly to around 50% when we are stronger, and then grow slowly from there.
 							FAssert(iBonus >= 0);
 							FAssert(iBonus <= 100 - iOdds);
 
@@ -24264,7 +24273,7 @@ int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
 	}
 	// similarly, adjust based on the LFB value (slightly diluted)
 	{
-		int iDilution = GC.getLFBBasedOnHealer() + ROUND_DIVIDE(10 * GC.getLFBBasedOnExperience() * (GC.getGameINLINE().getCurrentEra() - GC.getGameINLINE().getStartEra() + 1), std::max(1, GC.getNumEraInfos() - GC.getGameINLINE().getStartEra()));
+		int iDilution = GC.getLFBBasedOnExperience() + GC.getLFBBasedOnHealer() + ROUND_DIVIDE(10 * GC.getLFBBasedOnExperience() * (GC.getGameINLINE().getCurrentEra() - GC.getGameINLINE().getStartEra() + 1), std::max(1, GC.getNumEraInfos() - GC.getGameINLINE().getStartEra()));
 		int iOurValue = pAttacker->LFBgetRelativeValueRating() + iDilution;
 		int iTheirValue = pDefender->LFBgetRelativeValueRating() + iDilution;
 
