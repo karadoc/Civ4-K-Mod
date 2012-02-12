@@ -17854,10 +17854,10 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 
 			// K-Mod. Note: the original code doesn't touch iValue.
 			// So whatever I do here is completely new.
-			// TOOD: if I ever get around to writing code for evalutating potential war targets, I should use that here!
+			// TODO: if I ever get around to writing code for evalutating potential war targets, I should use that here!
 			int iOurPower = GET_TEAM(getTeam()).getDefensivePower(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam());
 			int iTheirPower = GET_TEAM(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam()).getPower(true);
-			int iWarValue = 300 * (iOurPower - iTheirPower) / (iOurPower + iTheirPower) - 25;// / std::max(1, GET_TEAM(getTeam()).getDefensivePower())
+			int iWarValue = 300 * (iOurPower - iTheirPower) / std::max(1, iOurPower + iTheirPower) - 25;// / std::max(1, GET_TEAM(getTeam()).getDefensivePower())
 
 			iValue += iWarValue;
 			// K-Mod end

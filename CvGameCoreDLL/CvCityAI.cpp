@@ -7925,7 +7925,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				iHappyDiff = iHurryPopulation - GC.getDefineINT("HURRY_POP_ANGER");
 
 				if (iHurryAngerLength > 0 && getHurryAngerTimer() > 1)
-					iHappyDiff -= ROUND_DIVIDE((kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 4 : 3) * getHurryAngerTimer(), flatHurryAngerLength());
+					iHappyDiff -= ROUND_DIVIDE((kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 4 : 3) * getHurryAngerTimer(), iHurryAngerLength);
 			}
 
 			iHappy = happyLevel() - unhappyLevel();
@@ -9082,7 +9082,7 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 		//const int iGrowthWeight = kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 112 + kOwner.AI_getFlavorValue(FLAVOR_GROWTH) : 105;
 
 		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (110 - getMaxFoodKeptPercent()) / 100;
-		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/(iTotalScore * 100);
+		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/std::max(1, iTotalScore * 100);
 		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
 		iFoodRate += std::max(iWastedFood, i+1);
 
@@ -9095,7 +9095,7 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 				iCostPerTurn += 4 * y * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
 		}
 		iCostPerTurn *= iScoreLoss;
-		iCostPerTurn /= iTotalScore * 100;
+		iCostPerTurn /= std::max(1, iTotalScore * 100);
 		iCostPerTurn += 2*(i+1); // just a little bit of extra cost, to show that we care...
 
 		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0);

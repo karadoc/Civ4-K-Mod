@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="CvGameCoreDLL"
+	Name="K-Mod DLL"
 	ProjectGUID="{29299FB8-F6C4-4054-A054-470F4E36D57B}"
 	Keyword="MakeFileProj"
 	TargetFrameworkVersion="196613"

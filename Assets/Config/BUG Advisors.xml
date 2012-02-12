@@ -40,7 +40,7 @@
 	
 			<!-- BUG Military Advisor (F5) by Ruff_Hi, EmperorFool, Karadoc -->
 			<option id="BugMA" key="BugMilitaryAdvisor"
-					type="boolean" default="True"
+					type="boolean" default="False"
 					get="isBUG_MA"/>
 	
 			<!-- Technology Advisor (F6) by EmperorFool, Ruff_Hi -->
