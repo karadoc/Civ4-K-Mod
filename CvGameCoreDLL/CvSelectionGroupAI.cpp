@@ -57,8 +57,7 @@ void CvSelectionGroupAI::AI_reset()
 	m_iGroupAttackY = -1;
 }
 
-#define NO_SEPARATE_SKIP // K-Mod
-
+// these separate function have been tweaked by K-Mod and bbai.
 void CvSelectionGroupAI::AI_separate()
 {
 	CLLNode<IDInfo>* pEntityNode;
@@ -72,20 +71,9 @@ void CvSelectionGroupAI::AI_separate()
 		pEntityNode = nextUnitNode(pEntityNode);
 
 		pLoopUnit->joinGroup(NULL);
-#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
-		if (pLoopUnit->plot()->getTeam() == getTeam())
-		{
-			pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-		}
-#endif
 	}
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/02/09                                jdog5000      */
-/*                                                                                              */
-/* General AI, Bugfix                                                                           */
-/************************************************************************************************/
 void CvSelectionGroupAI::AI_separateNonAI(UnitAITypes eUnitAI)
 {
 	CLLNode<IDInfo>* pEntityNode;
@@ -100,12 +88,6 @@ void CvSelectionGroupAI::AI_separateNonAI(UnitAITypes eUnitAI)
 		if (pLoopUnit->AI_getUnitAIType() != eUnitAI)
 		{
 			pLoopUnit->joinGroup(NULL);
-#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
-			if (pLoopUnit->plot()->getTeam() == getTeam())
-			{
-				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			}
-#endif
 		}
 	}
 }
@@ -124,68 +106,49 @@ void CvSelectionGroupAI::AI_separateAI(UnitAITypes eUnitAI)
 		if (pLoopUnit->AI_getUnitAIType() == eUnitAI)
 		{
 			pLoopUnit->joinGroup(NULL);
-			// Was potential crash in use of plot() if group emptied
-#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
-			if (pLoopUnit->plot()->getTeam() == getTeam())
-			{
-				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			}
-#endif
 		}
 	}
 }
 
-void CvSelectionGroupAI::AI_separateImpassable()
+bool CvSelectionGroupAI::AI_separateImpassable()
 {
-	CLLNode<IDInfo>* pEntityNode;
-	CvUnit* pLoopUnit;
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
+	bool bSeparated = false;
 
-	pEntityNode = headUnitNode();
+	CLLNode<IDInfo>* pEntityNode = headUnitNode();
 
 	while (pEntityNode != NULL)
 	{
-		pLoopUnit = ::getUnit(pEntityNode->m_data);
+		CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
 		pEntityNode = nextUnitNode(pEntityNode);
-		if( (kPlayer.AI_unitImpassableCount(pLoopUnit->getUnitType()) > 0) )
+		if (kPlayer.AI_unitImpassableCount(pLoopUnit->getUnitType()) > 0)
 		{
 			pLoopUnit->joinGroup(NULL);
-#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
-			if (pLoopUnit->plot()->getTeam() == getTeam())
-			{
-				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			}
-#endif
+			bSeparated = true;
 		}
 	}
+	return bSeparated;
 }
 
-void CvSelectionGroupAI::AI_separateEmptyTransports()
+bool CvSelectionGroupAI::AI_separateEmptyTransports()
 {
-	CLLNode<IDInfo>* pEntityNode;
-	CvUnit* pLoopUnit;
+	bool bSeparated = false;
 
-	pEntityNode = headUnitNode();
+	CLLNode<IDInfo>* pEntityNode = headUnitNode();
 
 	while (pEntityNode != NULL)
 	{
-		pLoopUnit = ::getUnit(pEntityNode->m_data);
+		CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
 		pEntityNode = nextUnitNode(pEntityNode);
 		if ((pLoopUnit->AI_getUnitAIType() == UNITAI_ASSAULT_SEA) && (pLoopUnit->getCargo() == 0))
 		{
 			pLoopUnit->joinGroup(NULL);
-#ifndef NO_SEPARATE_SKIP // K-Mod - I want to phase the skip out.
-			if (pLoopUnit->plot()->getTeam() == getTeam())
-			{
-				pLoopUnit->getGroup()->pushMission(MISSION_SKIP);
-			}
-#endif
+			bSeparated = true;
 		}
 	}
+	return bSeparated;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+// bbai / K-Mod
 
 
 // Returns true if the group has become busy...

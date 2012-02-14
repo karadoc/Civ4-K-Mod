@@ -238,8 +238,8 @@ public:
 /*                                                                                              */
 /* General AI                                                                                   */
 /************************************************************************************************/
-	virtual void AI_separateImpassable() = 0;
-	virtual void AI_separateEmptyTransports() = 0;
+	virtual bool AI_separateImpassable() = 0; // K-Mod added bool return value.
+	virtual bool AI_separateEmptyTransports() = 0; // same
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/

@@ -7557,7 +7557,17 @@ void CvUnitAI::AI_assaultSeaMove()
 			// split out galleys from stack of ocean capable ships
 			if( kOwner.AI_unitImpassableCount(getUnitType()) == 0 && getGroup()->getNumUnits() > 1 )
 			{
-				getGroup()->AI_separateImpassable();
+				//getGroup()->AI_separateImpassable();
+				// K-Mod
+				if (getGroup()->AI_separateImpassable())
+				{
+					// recalculate cached variables.
+					bEmpty = !getGroup()->hasCargo();
+					bFull = getGroup()->getCargo() > 0 && getGroup()->AI_isFull();
+					iCargo = getGroup()->getCargo();
+					iEscorts = getGroup()->countNumUnitAIType(UNITAI_ESCORT_SEA) + getGroup()->countNumUnitAIType(UNITAI_ATTACK_SEA);
+				}
+				// K-Mod end
 			}
 
 			// galleys with upgrade available should get that ASAP
