@@ -768,6 +768,14 @@ void CvDLLButtonPopup::OnFocus(CvPopup* pPopup, CvPopupInfo &info)
 				gDLL->getInterfaceIFace()->popupSetAsCancelled(pPopup);
 				break;
 			}
+			// K-Mod - postpone the choose-production popup if the city is in disorder.
+			else if (pCity->isDisorder() || pCity->isProductionAutomated())
+			{
+				gDLL->getInterfaceIFace()->popupSetAsCancelled(pPopup);
+				pCity->AI_setChooseProductionDirty(true);
+				break;
+			}
+			// K-Mod end
 
 			gDLL->getInterfaceIFace()->lookAtCityOffset(pCity->getID());
 		}
@@ -816,6 +824,13 @@ void CvDLLButtonPopup::OnFocus(CvPopup* pPopup, CvPopupInfo &info)
 			}
 		}
 		break;
+	// K-Mod. cancel unnecessary popups if the game is over. (It's tempting to do this for the 'default:' case, but that might break something.)
+	case BUTTONPOPUP_CHOOSEELECTION:
+	case BUTTONPOPUP_DIPLOVOTE:
+		if (GC.getGameINLINE().getGameState() == GAMESTATE_OVER)
+			gDLL->getInterfaceIFace()->popupSetAsCancelled(pPopup);
+		break;
+	// K-Mod end
 	}
 }
 

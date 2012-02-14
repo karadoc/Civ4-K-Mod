@@ -1277,6 +1277,15 @@ void CvCity::doTask(TaskTypes eTask, int iData1, int iData2, bool bOption, bool 
 
 void CvCity::chooseProduction(UnitTypes eTrainUnit, BuildingTypes eConstructBuilding, ProjectTypes eCreateProject, bool bFinish, bool bFront)
 {
+	// K-Mod. don't create the popup if the city is in disorder
+	FAssert(isHuman() && !isProductionAutomated());
+	if (isDisorder())
+	{
+		AI_setChooseProductionDirty(true);
+		return;
+	}
+	AI_setChooseProductionDirty(false);
+	// K-Mod end
 	CvPopupInfo* pPopupInfo = new CvPopupInfo(BUTTONPOPUP_CHOOSEPRODUCTION);
 	if (NULL == pPopupInfo)
 	{
@@ -7919,6 +7928,10 @@ void CvCity::setOccupationTimer(int iNewValue)
 			updateCultureLevel(true);
 
 			AI_setAssignWorkDirty(true);
+			// K-Mod
+			if (isHuman() && !isDisorder() && AI_isChooseProductionDirty() && !isProduction() && !isProductionAutomated())
+				chooseProduction();
+			// K-Mod end
 		}
 
 		setInfoDirty(true);
