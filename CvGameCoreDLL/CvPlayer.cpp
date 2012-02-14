@@ -8948,6 +8948,12 @@ void CvPlayer::changeGoldenAgeTurns(int iChange)
 			if (isGoldenAge())
 			{
 				changeAnarchyTurns(-getAnarchyTurns());
+				// K-Mod. Allow the AI to reconsider their civics. (a golden age is a good time for reform!)
+				if (!isHuman() && getMaxAnarchyTurns() != 0 && getAnarchyModifier() + 100 > 0)
+				{
+					GET_PLAYER(getID()).AI_setCivicTimer(0); // silly, I know. But what else can I do?
+				}
+				// K-Mod end
 			}
 
 			updateYield();

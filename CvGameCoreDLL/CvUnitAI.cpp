@@ -3788,7 +3788,7 @@ void CvUnitAI::AI_collateralMove()
 	// K-Mod end
 
 	//if (AI_protect(50))
-	if (AI_defendTeritory(50, 0, 6)) // K-Mod
+	if (AI_defendTeritory(55, 0, 6)) // K-Mod
 	{
 		return;
 	}
@@ -16078,21 +16078,21 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, 
 					int iOdds = AI_getWeightedOdds(pLoopPlot);
 					int iValue = iOdds;
 
-					if (iOdds > 0 && iOdds < 100)
+					if (iOdds > 0 && iOdds < 100 && iThreshold > 0)
 					{
 						int iOurAttack = kOwner.AI_localAttackStrength(pLoopPlot, getTeam(), getDomainType(), 2, true, true, true);
 						int iEnemyDefence = kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM, getDomainType(), 0);
 
 						if (iOurAttack > iEnemyDefence && iEnemyDefence > 0)
 						{
-							int iBonus = 100 - iOdds;
+							/*int iBonus = 100 - iOdds;
 							iBonus -= iBonus * 4*iBonus / (4*iBonus + 100*(iOurAttack-iEnemyDefence)/iEnemyDefence);
-							// That looks overly complex, doesn't it? I hope it works...
-							// The goal is for odds+bonus to rise quickly to around 50% when we are stronger, and then grow slowly from there.
+
 							FAssert(iBonus >= 0);
 							FAssert(iBonus <= 100 - iOdds);
 
-							iValue += iBonus;
+							iValue += iBonus;*/
+							iValue += 100 * (iOdds+10) * (iOurAttack-iEnemyDefence)/((iThreshold+100) * iEnemyDefence);
 						}
 					}
 

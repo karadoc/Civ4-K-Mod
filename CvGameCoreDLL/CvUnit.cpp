@@ -6247,6 +6247,14 @@ bool CvUnit::discover()
 
 	GET_TEAM(getTeam()).changeResearchProgress(eDiscoveryTech, getDiscoverResearch(eDiscoveryTech), getOwnerINLINE());
 
+	// K-Mod. If the AI bulbs something, let them reconsider their current research.
+	CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+	if (!kOwner.isHuman() && kOwner.getCurrentResearch() != eDiscoveryTech)
+	{
+		kOwner.clearResearchQueue();
+	}
+	// K-Mod end
+
 	if (plot()->isActiveVisible(false))
 	{
 		NotifyEntity(MISSION_DISCOVER);

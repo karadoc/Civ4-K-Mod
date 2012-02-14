@@ -2727,6 +2727,8 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 // try to not make it too slow!
 short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const
 {
+	PROFILE_FUNC();
+
 	CvCity* pNearestCity;
 	bool bHasGoodBonus;
 	int iOwnedTiles;
@@ -14775,7 +14777,6 @@ void CvPlayerAI::AI_doResearch()
 	{
 		AI_chooseResearch();
 		//AI_forceUpdateStrategies(); //to account for current research.
-		AI_updateStrategyHash(); // K-Mod
 	}
 }
 
