@@ -47,7 +47,7 @@
 /************************************************************************************************/
 
 #define GREATER_FOUND_RANGE			(5)
-#define CIVIC_CHANGE_DELAY			(25)
+#define CIVIC_CHANGE_DELAY			(20) // was 25
 #define RELIGION_CHANGE_DELAY		(15)
 
 // statics
@@ -15360,8 +15360,8 @@ void CvPlayerAI::AI_doCommerce()
 	verifyGoldCommercePercent();
 }
 
-// K-Mod had edited this function, based on edits from BBAI. I don't know what's original bts code and what's not.
-// BBAI introduced some bugs, which is why I've rewritten parts.
+// K-Mod. I've rewriten most of this function, based on edits from BBAI. I don't know what's original bts code and what's not.
+// (the BBAI implementation had some bugs)
 void CvPlayerAI::AI_doCivics()
 {
 	FAssertMsg(!isHuman(), "isHuman did not return false as expected");
@@ -15387,13 +15387,13 @@ void CvPlayerAI::AI_doCivics()
 
 	// FAssertMsg(AI_getCivicTimer() == 0, "AI Civic timer is expected to be 0"); // Disabled by K-Mod
 
-	CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
-	int* paiCurrentValue = new int[GC.getNumCivicOptionInfos()];
+	std::vector<CivicTypes> aeBestCivic(GC.getNumCivicOptionInfos());
+	std::vector<int> aiCurrentValue(GC.getNumCivicOptionInfos());
 
 	for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 	{
-		paeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
-		paiCurrentValue[iI] = AI_civicValue(paeBestCivic[iI]);
+		aeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
+		aiCurrentValue[iI] = AI_civicValue(aeBestCivic[iI]);
 	}
 
 	int iAnarchyLength = 0;
@@ -15409,22 +15409,23 @@ void CvPlayerAI::AI_doCivics()
 			int iBestValue;
 			CivicTypes eNewCivic = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
-			int iTestAnarchy = getCivicAnarchyLength(paeBestCivic);
+			int iTestAnarchy = getCivicAnarchyLength(&aeBestCivic[0]);
 			// using 20 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
 			// reduced threshold if we are already going to have a revolution.
 			int iThreshold = (iTestAnarchy > iAnarchyLength ? (!bFirstPass | bWantSwitch ? 14 : 24) : 2);
 
-			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > (100+iThreshold)*paiCurrentValue[iI])
+			if (100*iBestValue > (100+iThreshold)*aiCurrentValue[iI])
 			{
-				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%S)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, paiCurrentValue[iI], bFirstPass?"" :", on recheck");
+				FAssert(aeBestCivic[iI] != NO_CIVIC);
+				if (gPlayerLogLevel > 0) logBBAI("    %S decides to switch to %S (value: %d vs %d%S)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, aiCurrentValue[iI], bFirstPass?"" :", on recheck");
 				iAnarchyLength = iTestAnarchy;
-				paeBestCivic[iI] = eNewCivic;
-				paiCurrentValue[iI] = iBestValue;
+				aeBestCivic[iI] = eNewCivic;
+				aiCurrentValue[iI] = iBestValue;
 				bWillSwitch = true;
 			}
 			else
 			{
-				if (100*iBestValue > 114*paiCurrentValue[iI])
+				if (100*iBestValue > 114*aiCurrentValue[iI])
 					bWantSwitch = true;
 			}
 		}
@@ -15433,15 +15434,43 @@ void CvPlayerAI::AI_doCivics()
 	// Recheck, just in case we can switch another good civic without adding more anarchy.
 
 
-	// XXX AI skips revolution???
-	if (canRevolution(paeBestCivic))
+	// finally, if our current research would give us a new civic, consider waiting for that.
+	if (iAnarchyLength > 0 && bWillSwitch)
 	{
-		revolution(paeBestCivic);
+		TechTypes eResearch = getCurrentResearch();
+		int iResearchTurns;
+		if (eResearch != NO_TECH && (iResearchTurns = getResearchTurnsLeft(eResearch, true)) < 2*CIVIC_CHANGE_DELAY/3)
+		{
+			for (int iI = 0; iI < GC.getNumCivicInfos(); iI++)
+			{
+				const CvCivicInfo& kCivic = GC.getCivicInfo((CivicTypes)iI);
+				if (kCivic.getTechPrereq() == eResearch && !canDoCivics((CivicTypes)iI))
+				{
+					int iValue = AI_civicValue((CivicTypes)iI);
+					if (100 * iValue > (118+2*iResearchTurns) * aiCurrentValue[kCivic.getCivicOptionType()])
+					{
+						CivicTypes eOtherCivic = aeBestCivic[kCivic.getCivicOptionType()];
+						aeBestCivic[kCivic.getCivicOptionType()] = (CivicTypes)iI;
+						if (getCivicAnarchyLength(&aeBestCivic[0]) <= iAnarchyLength)
+						{
+							if (gPlayerLogLevel > 0)
+								logBBAI("    %S delays revolution to wait for %S (value: %d vs %d)", getCivilizationDescription(0), kCivic.getDescription(0), iValue, aiCurrentValue[kCivic.getCivicOptionType()]);
+							AI_setCivicTimer(iResearchTurns*2/3);
+							return;
+						}
+						aeBestCivic[kCivic.getCivicOptionType()] = eOtherCivic;
+					}
+				}
+			}
+		}
+	}
+	//
+
+	if (canRevolution(&aeBestCivic[0]))
+	{
+		revolution(&aeBestCivic[0]);
 		AI_setCivicTimer((getMaxAnarchyTurns() == 0) ? (GC.getDefineINT("MIN_REVOLUTION_TURNS") * 2) : CIVIC_CHANGE_DELAY);
 	}
-
-	SAFE_DELETE_ARRAY(paeBestCivic);
-	SAFE_DELETE_ARRAY(paiCurrentValue);
 }
 
 void CvPlayerAI::AI_doReligion()

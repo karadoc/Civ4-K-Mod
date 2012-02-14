@@ -9079,9 +9079,9 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 		// since the score estimate is very rough, I'm going to flatten it out a bit by combining it with the average score
 		iScoreLoss += (2*job_scores[i] + iAverageScore + 2)/3;
 
-		//const int iGrowthWeight = kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0 ? 112 + kOwner.AI_getFlavorValue(FLAVOR_GROWTH) : 105;
+		const int iGrowthWeight = kOwner.AI_getFlavorValue(FLAVOR_GROWTH) == 0 ? 110 : 118 + kOwner.AI_getFlavorValue(FLAVOR_GROWTH);
 
-		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (110 - getMaxFoodKeptPercent()) / 100;
+		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (iGrowthWeight - getMaxFoodKeptPercent()) / 100;
 		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/std::max(1, iTotalScore * 100);
 		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
 		iFoodRate += std::max(iWastedFood, i+1);
