@@ -20233,13 +20233,17 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 	}
 	int iMean = iSum / std::max(1, (int)m_GreatPersonWeights.size());
 
-	// scale the values so that they are between 50 and 500, with the mean value translating to 100.
+	// scale the values so that they are between 50 and 500 (depending on flavour), with the mean value translating to 100.
 	// (note: I don't expect it to get anywhere near the maximum. The maximum only occurs when the value is infinite!)
+	const int iMin = AI_getFlavorValue(FLAVOR_SCIENCE) == 0 ? 50 : 35 - AI_getFlavorValue(FLAVOR_SCIENCE);
+	FAssert(iMin > 10 && iMin < 95);
+	// (smaller iMin means more focus on high-value specialists)
 	for (it = m_GreatPersonWeights.begin(); it != m_GreatPersonWeights.end(); ++it)
 	{
 		int iValue = it->second;
 		iValue = 100 * iValue / std::max(1, iMean);
-		iValue = (40000 + 500 * iValue) / (800 + iValue);
+		//iValue = (40000 + 500 * iValue) / (800 + iValue);
+		iValue = (800*iMin + (9*100-8*iMin) * iValue) / (800 + iValue);
 		it->second = iValue;
 	}
 }
