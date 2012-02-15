@@ -1321,10 +1321,10 @@ bool CvUnitAI::AI_considerPathDOW(CvPlot* pPlot, int iFlags)
 	FAStarNode* pNode = getPathLastNode();
 	while (!bDOW && pNode)
 	{
-		if (pNode->m_iData2 <= 1) // only consider DOW for moves in this turn.
-		{
-			bDOW = AI_considerDOW(GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY));
-		}
+		// we need to check DOW even for moves several turns away - otherwise the actual move mission may fail to find a path.
+		// however, I would consider it irresponsible to call this function for multi-move missions.
+		FAssert(pNode->m_iData2 <= 1);
+		bDOW = AI_considerDOW(GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY));
 		pNode = pNode->m_pParent;
 	}
 
@@ -17842,7 +17842,8 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 								if (iValue > iBestValue)
 								{
 									iBestValue = iValue;
-									pBestPlot = (bCityDanger ? getPathEndTurnPlot() : pLoopCity->plot());
+									//pBestPlot = (bCityDanger ? getPathEndTurnPlot() : pLoopCity->plot());
+									pBestPlot = getPathEndTurnPlot(); // K-Mod (why did they have that other stuff?)
 									pBestAssaultPlot = pLoopCity->plot();
 								}
 							}
@@ -21082,7 +21083,7 @@ bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 				{
 					CvPlot* pAdjacentPlot = plotDirection(pPickupPlot->getX_INLINE(), pPickupPlot->getY_INLINE(), ((DirectionTypes)iI));
 
-					if (pAdjacentPlot && generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxPath))
+					if (pAdjacentPlot && canMoveInto(pAdjacentPlot) && generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxPath))
 					{
 						pTargetPlot = getPathEndTurnPlot();
 						break;
