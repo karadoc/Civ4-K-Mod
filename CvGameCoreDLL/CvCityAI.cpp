@@ -9079,15 +9079,18 @@ int CvCityAI::AI_citizenSacrificeCost(int iCitLoss, int iHappyLevel, int iNewAng
 	int iTotalFood = getYieldRate(YIELD_FOOD) - iWastedFood;
 
 	// calculate the total cost-per-turn from missing iCitLoss citizens.
-	// -- unfortunately, the calculation for food is slightly more complex, so we have to do that later.
 	int iBaseCostPerTurn = 0;
 	for (int j = 0; j < NUM_YIELD_TYPES; j++)
 	{
-		if (j != YIELD_FOOD)
-		{
-			if (iYields[j] > 0)
-				iBaseCostPerTurn += 4 * iYields[j] * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
-		}
+		if (iYields[j] > 0)
+			iBaseCostPerTurn += 4 * iYields[j] * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
+	}
+	// reduce value of food used for production - otherwise our citizens might be overvalued due to working extra food.
+	if (isFoodProduction())
+	{
+		int iExtraFood = iTotalFood - getPopulation() * GC.getFOOD_CONSUMPTION_PER_POPULATION();
+		iExtraFood = std::min(iExtraFood, iYields[YIELD_FOOD]*AI_yieldMultiplier(YIELD_FOOD)/100);
+		iBaseCostPerTurn -= 4 * iExtraFood * (kOwner.AI_yieldWeight(YIELD_FOOD)-kOwner.AI_yieldWeight(YIELD_PRODUCTION)); // note that we're keeping a factor of 100.
 	}
 	//
 
@@ -9109,18 +9112,14 @@ int CvCityAI::AI_citizenSacrificeCost(int iCitLoss, int iHappyLevel, int iNewAng
 
 		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
 		int iCostPerTurn = iBaseCostPerTurn;
-		// food component
-		{
-			int f = iYields[YIELD_FOOD]* AI_yieldMultiplier(YIELD_FOOD)/100 - (std::min(iWastedFood, i) + GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size());
-			if (f != 0)
-				iCostPerTurn += 4 * f * kOwner.AI_yieldWeight(isFoodProduction() ? YIELD_PRODUCTION : YIELD_FOOD);
-		}
+		// extra food from reducing the population:
+		iCostPerTurn -= 4 * (std::min(iWastedFood, i) + i*GC.getFOOD_CONSUMPTION_PER_POPULATION()) * kOwner.AI_yieldWeight(YIELD_FOOD);
 
 		iCostPerTurn *= iScoreLoss;
 		iCostPerTurn /= std::max(1, iTotalScore * 100);
 		iCostPerTurn += 2*i; // just a little bit of extra cost, to show that we care...
 
-		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0);
+		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0); // iCostPerTurn <= 0 is possible, but it should be rare - This assert is just for testing.
 
 		// recovery isn't complete if the citizen is still angry
 		iAngerTimer -= iRecoveryTurns;
@@ -9144,9 +9143,6 @@ int CvCityAI::AI_citizenSacrificeCost(int iCitLoss, int iHappyLevel, int iNewAng
 		if (iAngerTimer > 0)
 		{
 			int iCostPerTurn = iBaseCostPerTurn;
-			int f = iYields[YIELD_FOOD] * AI_yieldMultiplier(YIELD_FOOD)/100 - GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size();
-			if (f > 0)
-				iCostPerTurn += 4 * f * kOwner.AI_yieldWeight(YIELD_FOOD);
 
 			iCostPerTurn *= iAverageScore * (iNewAnger + 1 - iHappyLevel);
 			iCostPerTurn /= std::max(1, iTotalScore * 100);
