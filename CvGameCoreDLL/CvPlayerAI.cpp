@@ -15447,7 +15447,7 @@ void CvPlayerAI::AI_doCivics()
 				if (kCivic.getTechPrereq() == eResearch && !canDoCivics((CivicTypes)iI))
 				{
 					int iValue = AI_civicValue((CivicTypes)iI);
-					if (100 * iValue > (118+2*iResearchTurns) * aiCurrentValue[kCivic.getCivicOptionType()])
+					if (100 * iValue > (114+2*iResearchTurns) * aiCurrentValue[kCivic.getCivicOptionType()])
 					{
 						CivicTypes eOtherCivic = aeBestCivic[kCivic.getCivicOptionType()];
 						aeBestCivic[kCivic.getCivicOptionType()] = (CivicTypes)iI;

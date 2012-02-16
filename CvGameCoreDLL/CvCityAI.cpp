@@ -4604,7 +4604,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				if (iFoodDifference > 0)
 				{
 					//iValue += kBuilding.getFoodKept() / 2;
-					iValue += std::max(0, 2*(AI_getTargetPopulation() - getPopulation())+(bCanPopRush ?3 :1)) * kBuilding.getFoodKept() / 4;
+					iValue += std::max(0, 2*(std::max(4, AI_getTargetPopulation()) - getPopulation())+(bCanPopRush ?3 :1)) * kBuilding.getFoodKept() / 4;
 				}
 
 				for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -7953,7 +7953,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 				return;
 			}
 
-			iPopCost = AI_citizenLossCost(iHurryPopulation, std::max(0, -iHappy));
+			iPopCost = AI_citizenSacrificeCost(iHurryPopulation, iHappy, GC.getDefineINT("HURRY_POP_ANGER"), iHurryAngerLength);
 
 			if (kOwner.isHuman())
 				iPopCost = iPopCost * 3 / 2;
@@ -8018,7 +8018,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 							if (area()->getAreaAIType(kOwner.getTeam()) == AREAAI_DEFENSIVE)
 							{
 								int iSuccessRating = GET_TEAM(kOwner.getTeam()).AI_getWarSuccessRating();
-								iValue *= iSuccessRating < 0 ? (iSuccessRating < -40 ? 6 : 5) : 4;
+								iValue *= iSuccessRating < -5 ? (iSuccessRating < -50 ? 6 : 5) : 4;
 							}
 							else if (kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH) &&
 								(area()->getAreaAIType(kOwner.getTeam()) == AREAAI_OFFENSIVE || area()->getAreaAIType(kOwner.getTeam()) == AREAAI_MASSING))
@@ -8056,7 +8056,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
 
 			int iValue = AI_buildingValue(eProductionBuilding) * (getProductionTurnsLeft(eProductionBuilding, 1) - 1);
-			iValue /= std::max(4, 3 - iHappyDiff) + (iHurryPopulation + 1)/2;
+			iValue /= std::max(4, 4 - iHappyDiff) + (iHurryPopulation-1)/2;
 
 			if (iValue > iTotalCost)
 			{
@@ -8979,15 +8979,21 @@ void CvCityAI::AI_juggleCitizens()
 
 // K-Mod. Estimate the cost of recovery after losing iQuantity number of citizens in this city.
 // (units of 4x commerce.)
-int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
+int CvCityAI::AI_citizenSacrificeCost(int iCitLoss, int iHappyLevel, int iNewAnger, int iAngerTimer)
 {
 	PROFILE_FUNC();
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
-	iCitDelta = std::min(getPopulation()-1, iCitDelta);
-	if (iCitDelta < 1)
+	iCitLoss = std::min(getPopulation()-1, iCitLoss);
+	if (iCitLoss < 1)
 		return 0;
+
+	if (isNoUnhappiness())
+	{
+		iNewAnger = 0;
+		iAngerTimer = 0;
+	}
 
 	short iYields[NUM_YIELD_TYPES] = {};
 	const short iYieldWeights[NUM_YIELD_TYPES] =
@@ -8999,10 +9005,10 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 	std::vector<int> job_scores;
 	int iTotalScore = 0;
 
-	for (int i = 0; i < iAnger; i++)
+	for (int i = 0; i < -iHappyLevel; i++)
 		job_scores.push_back(0);
 
-	if ((int)job_scores.size() < iCitDelta)
+	if ((int)job_scores.size() < iCitLoss)
 	{
 		FAssert(CITY_HOME_PLOT == 0); // this is why the following loop starts at 1
 		for (int i = 1; i < NUM_CITY_PLOTS; i++)
@@ -9031,7 +9037,7 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 			}
 		}
 	}
-	if ((int)job_scores.size() < iCitDelta)
+	if ((int)job_scores.size() < iCitLoss)
 	{
 		for (int i = 0; i < GC.getNumSpecialistInfos(); i++)
 		{
@@ -9041,13 +9047,13 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 				int iSpecScore = 0;
 				for (int j = 0; j < NUM_YIELD_TYPES; j++)
 				{
-					int y = kOwner.specialistYield((SpecialistTypes)i, (YieldTypes)j);
+					int y = kOwner.specialistYield((SpecialistTypes)i, (YieldTypes)j)*3/2;
 					iYields[j] += y;
 					iSpecScore += y * iYieldWeights[j];
 				}
 				for (int j = 0 ; j < NUM_COMMERCE_TYPES; j++)
 				{
-					int c = kOwner.specialistCommerce((SpecialistTypes)i, (CommerceTypes)j);
+					int c = kOwner.specialistCommerce((SpecialistTypes)i, (CommerceTypes)j)*3/2;
 					iYields[YIELD_COMMERCE] += c;
 					iSpecScore += c * iYieldWeights[YIELD_COMMERCE];
 				}
@@ -9057,51 +9063,107 @@ int CvCityAI::AI_citizenLossCost(int iCitDelta, int iAnger)
 		}
 	}
 
-	if ((int)job_scores.size() < iCitDelta)
+	if ((int)job_scores.size() < iCitLoss)
 	{
 		FAssertMsg(false, "Not enough job data to calculate citizen loss cost.");
 		int iBogusData = (1+GC.getFOOD_CONSUMPTION_PER_POPULATION()) * iYieldWeights[YIELD_FOOD];
-		job_scores.resize(iCitDelta, iBogusData);
+		job_scores.resize(iCitLoss, iBogusData);
 		iTotalScore += iBogusData;
 	}
 
-	FAssert((int)job_scores.size() >= iCitDelta);
-	std::partial_sort(job_scores.begin(), job_scores.begin()+iCitDelta, job_scores.end());
+	FAssert((int)job_scores.size() >= iCitLoss);
+	std::partial_sort(job_scores.begin(), job_scores.begin()+iCitLoss, job_scores.end());
 	int iAverageScore = ROUND_DIVIDE(iTotalScore, job_scores.size());
 
 	int iWastedFood = -healthRate();
 	int iTotalFood = getYieldRate(YIELD_FOOD) - iWastedFood;
 
+	// calculate the total cost-per-turn from missing iCitLoss citizens.
+	// -- unfortunately, the calculation for food is slightly more complex, so we have to do that later.
+	int iBaseCostPerTurn = 0;
+	for (int j = 0; j < NUM_YIELD_TYPES; j++)
+	{
+		if (j != YIELD_FOOD)
+		{
+			if (iYields[j] > 0)
+				iBaseCostPerTurn += 4 * iYields[j] * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
+		}
+	}
+	//
+
+	int iCost = 0; // accumulator for the final return value
 	int iScoreLoss = 0;
-	int iCost = 0;
-	for (int i = 0; i < iCitDelta; i++)
+	for (int i = 0; i < iCitLoss; i++)
 	{
 		// since the score estimate is very rough, I'm going to flatten it out a bit by combining it with the average score
-		iScoreLoss += (2*job_scores[i] + iAverageScore + 2)/3;
+		job_scores[i] = (2*job_scores[i] + iAverageScore + 2)/3;
+		iScoreLoss += job_scores[i];
+	}
 
-		const int iGrowthWeight = kOwner.AI_getFlavorValue(FLAVOR_GROWTH) == 0 ? 110 : 118 + kOwner.AI_getFlavorValue(FLAVOR_GROWTH);
-
-		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i - 1) * (iGrowthWeight - getMaxFoodKeptPercent()) / 100;
+	for (int i = iCitLoss; i > 0; i--)
+	{
+		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i) * (105 - getMaxFoodKeptPercent()) / 100;
 		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/std::max(1, iTotalScore * 100);
-		iFoodRate -= (getPopulation() - i - 1) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
-		iFoodRate += std::max(iWastedFood, i+1);
+		iFoodRate -= (getPopulation() - i) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
+		iFoodRate += std::min(iWastedFood, i);
 
 		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
-		int iCostPerTurn = 0;
-		for (int j = 0; j < NUM_YIELD_TYPES; j++)
+		int iCostPerTurn = iBaseCostPerTurn;
+		// food component
 		{
-			int y = iYields[j] - (j == YIELD_FOOD ? std::max(iWastedFood, i+1) + GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size() : 0);
-			if (y > 0)
-				iCostPerTurn += 4 * y * AI_yieldMultiplier((YieldTypes)j) * kOwner.AI_yieldWeight((YieldTypes)j) / 100;
+			int f = iYields[YIELD_FOOD]* AI_yieldMultiplier(YIELD_FOOD)/100 - (std::min(iWastedFood, i) + GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size());
+			if (f != 0)
+				iCostPerTurn += 4 * f * kOwner.AI_yieldWeight(isFoodProduction() ? YIELD_PRODUCTION : YIELD_FOOD);
 		}
+
 		iCostPerTurn *= iScoreLoss;
 		iCostPerTurn /= std::max(1, iTotalScore * 100);
-		iCostPerTurn += 2*(i+1); // just a little bit of extra cost, to show that we care...
+		iCostPerTurn += 2*i; // just a little bit of extra cost, to show that we care...
 
 		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0);
 
+		// recovery isn't complete if the citizen is still angry
+		iAngerTimer -= iRecoveryTurns;
+		if (iAngerTimer > 0 && iHappyLevel + i - iNewAnger < 0)
+		{
+			iCost += iAngerTimer * GC.getFOOD_CONSUMPTION_PER_POPULATION() * 4 * kOwner.AI_yieldWeight(YIELD_FOOD) / 100;
+			iRecoveryTurns += iAngerTimer;
+		}
+
 		iCost += iRecoveryTurns * iCostPerTurn;
+
+		iScoreLoss -= job_scores[i-1];
 	}
+	// if there is any anger left over after regrowing, we might as well count some cost for that too.
+	if (iAngerTimer > 0 && iHappyLevel - 1 - iNewAnger < 0)
+	{
+		int iGrowthTime = std::max(1, iTotalFood - getPopulation()*GC.getFOOD_CONSUMPTION_PER_POPULATION()); // just the food rate here
+		iGrowthTime = (kOwner.getGrowthThreshold(getPopulation()) - getFood() + iGrowthTime - 1)/iGrowthTime; // now it's the time.
+
+		iAngerTimer -= iGrowthTime;
+		if (iAngerTimer > 0)
+		{
+			int iCostPerTurn = iBaseCostPerTurn;
+			int f = iYields[YIELD_FOOD] * AI_yieldMultiplier(YIELD_FOOD)/100 - GC.getFOOD_CONSUMPTION_PER_POPULATION()*job_scores.size();
+			if (f > 0)
+				iCostPerTurn += 4 * f * kOwner.AI_yieldWeight(YIELD_FOOD);
+
+			iCostPerTurn *= iAverageScore * (iNewAnger + 1 - iHappyLevel);
+			iCostPerTurn /= std::max(1, iTotalScore * 100);
+
+			iCostPerTurn += (iNewAnger + 1 - iHappyLevel) * GC.getFOOD_CONSUMPTION_PER_POPULATION() * 4 * kOwner.AI_yieldWeight(YIELD_FOOD) / 100;
+
+			FAssert(iCostPerTurn > 0 && iAngerTimer > 0);
+
+			iCost += iCostPerTurn * iAngerTimer;
+		}
+	}
+	if (kOwner.AI_getFlavorValue(FLAVOR_GROWTH) > 0)
+	{
+		iCost *= 120 + kOwner.AI_getFlavorValue(FLAVOR_GROWTH);
+		iCost /= 100;
+	}
+
 	return iCost;
 }
 // K-Mod end
