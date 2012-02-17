@@ -5436,6 +5436,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 //		}
 //	}
 
+	/* original bts code
 	if (!canConstruct(eBuilding))
 	{
 		//This building is being constructed in some special way, 
@@ -5445,7 +5446,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 			iValue /= (8 - getPopulation());
 		}
 		
-	}
+	} */ // disabled by K-Mod. I don't understand the point of this, and it messes up the building value for things that are in-progress or already built.
 
 	iValue = std::max(0, iValue);
 
@@ -7954,6 +7955,7 @@ void CvCityAI::AI_doHurry(bool bForce)
 			}
 
 			iPopCost = AI_citizenSacrificeCost(iHurryPopulation, iHappy, GC.getDefineINT("HURRY_POP_ANGER"), iHurryAngerLength);
+			iPopCost += std::max(0, 6 * -iHappyDiff) * iHurryAngerLength;
 
 			if (kOwner.isHuman())
 				iPopCost = iPopCost * 3 / 2;
@@ -8043,8 +8045,8 @@ void CvCityAI::AI_doHurry(bool bForce)
 			{
 				if( gCityLogLevel >= 2 )
 				{
-					logBBAI("      City %S (%d) hurries %S. %d pop (%d) + %d gold (%d) to save %d turns. (value %d)",
-						getName().GetCString(), getPopulation(), GC.getUnitInfo(eProductionUnit).getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionUnit, 1), iValue);
+					logBBAI("      City %S (%d) hurries %S. %d pop (%d) + %d gold (%d) to save %d turns. (value %d) (hd %d)",
+						getName().GetCString(), getPopulation(), GC.getUnitInfo(eProductionUnit).getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionUnit, 1), iValue, iHappyDiff);
 				}
 
 				hurry((HurryTypes)iI);
@@ -8056,15 +8058,15 @@ void CvCityAI::AI_doHurry(bool bForce)
 			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(eProductionBuilding);
 
 			int iValue = AI_buildingValue(eProductionBuilding) * (getProductionTurnsLeft(eProductionBuilding, 1) - 1);
-			iValue /= std::max(4, 4 - iHappyDiff) + (iHurryPopulation-1)/2;
+			iValue /= std::max(4, 4 - iHappyDiff) + (iHurryPopulation+1)/2;
 
 			if (iValue > iTotalCost)
 			{
 				if( gCityLogLevel >= 2 )
 				{
-					logBBAI("      City %S (%d) hurries %S. %d pop (%d) + %d gold (%d) to save %d turns with %d building value (%d)",
-						getName().GetCString(), getPopulation(), kBuildingInfo.getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost, getProductionTurnsLeft(eProductionBuilding, 1), AI_buildingValue(eProductionBuilding),
-						iValue);
+					logBBAI("      City %S (%d) hurries %S. %d pop (%d) + %d gold (%d) to save %d turns with %d building value (%d) (hd %d)",
+						getName().GetCString(), getPopulation(), kBuildingInfo.getDescription(0), iHurryPopulation, iPopCost, iHurryGold, iGoldCost,
+						getProductionTurnsLeft(eProductionBuilding, 1), AI_buildingValue(eProductionBuilding), iValue, iHappyDiff);
 				}
 
 				hurry((HurryTypes)iI);
@@ -9106,17 +9108,19 @@ int CvCityAI::AI_citizenSacrificeCost(int iCitLoss, int iHappyLevel, int iNewAng
 	for (int i = iCitLoss; i > 0; i--)
 	{
 		int iFoodLoss = kOwner.getGrowthThreshold(getPopulation() - i) * (105 - getMaxFoodKeptPercent()) / 100;
-		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD] + iTotalScore*100-1)/std::max(1, iTotalScore * 100);
+		int iFoodRate = iTotalFood - (iScoreLoss * AI_yieldMultiplier(YIELD_FOOD) * iYields[YIELD_FOOD])/std::max(1, iTotalScore * 100);
 		iFoodRate -= (getPopulation() - i) * GC.getFOOD_CONSUMPTION_PER_POPULATION();
 		iFoodRate += std::min(iWastedFood, i);
+		iFoodRate += iHappyLevel <= 0 ? i : 0; // if we're at the happiness cap, assume we've got some spare food that we're not currently working.
 
-		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss * 3 / 2;
+		int iRecoveryTurns = iFoodRate > 0 ? (iFoodLoss+iFoodRate-1) / iFoodRate : iFoodLoss;
+
 		int iCostPerTurn = iBaseCostPerTurn;
-		// extra food from reducing the population:
-		iCostPerTurn -= 4 * (std::min(iWastedFood, i) + i*GC.getFOOD_CONSUMPTION_PER_POPULATION()) * kOwner.AI_yieldWeight(YIELD_FOOD);
-
 		iCostPerTurn *= iScoreLoss;
 		iCostPerTurn /= std::max(1, iTotalScore * 100);
+
+		// extra food from reducing the population:
+		iCostPerTurn -= 4 * (std::min(iWastedFood, i) + i*GC.getFOOD_CONSUMPTION_PER_POPULATION()) * kOwner.AI_yieldWeight(YIELD_FOOD)/100;
 		iCostPerTurn += 2*i; // just a little bit of extra cost, to show that we care...
 
 		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0); // iCostPerTurn <= 0 is possible, but it should be rare - This assert is just for testing.

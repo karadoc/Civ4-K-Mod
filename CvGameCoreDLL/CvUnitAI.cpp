@@ -24300,6 +24300,9 @@ int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
 
 	// adjust the odds up if the enemy is wounded. We want to attack them now before they heal.
 	iAdjustedOdds += iOdds * (100 - iOdds) * pDefender->getDamage() / (100 * pDefender->maxHitPoints());
+	// adjust the odds down if our attacker is wounded - but only if healing is viable.
+	if (pAttacker->isHurt() && pAttacker->healRate(pAttacker->plot()) > 10)
+		iAdjustedOdds -= iOdds * (100 - iOdds) * pAttacker->getDamage() / (100 * pAttacker->maxHitPoints());
 
 	// We're extra keen to take cites when we can...
 	if (pPlot->isCity() && pPlot->getNumVisiblePotentialEnemyDefenders(pAttacker) == 1)
