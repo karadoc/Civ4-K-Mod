@@ -1,4 +1,4 @@
-This is K-Mod version 1.18.
+This is K-Mod version 1.18b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
@@ -28,6 +28,10 @@ AI
 + Made several changes to the AI's military defence tactics and related decision making.
 + Attack AI groups bigger than 4 will now ungroup before escorting workers.
 + Changed the way the AI decides which units to move first.
+
+v1.18b
++ Fixed a problem which sometimes prevented the AI from recognising undefended cities as attack opportunities.
++ Made some efficiency improvements
 
 
 --
