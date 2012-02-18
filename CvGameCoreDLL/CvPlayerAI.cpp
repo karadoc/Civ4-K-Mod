@@ -1446,7 +1446,7 @@ void CvPlayerAI::AI_unitUpdate()
 			// K-Mod. It seems to me that all we're trying to do is run AI_update
 			// on the highest priority groups until one of them becomes busy.
 			// ... if only they had used the STL, this would be a lot easier.
-			bool bRepeat = false;
+			bool bRepeat = true;
 			do
 			{
 				std::vector<std::pair<int, int> > groupList;
@@ -1470,6 +1470,7 @@ void CvPlayerAI::AI_unitUpdate()
 					CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
 					if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
 					{
+						bRepeat = false;
 						break;
 					}
 				}
@@ -1477,7 +1478,7 @@ void CvPlayerAI::AI_unitUpdate()
 				// one last trick that might save us a bit of time...
 				// if the number of selection groups has increased, then lets try to take care of the new groups right away.
 				// (there might be a faster way to look for the new groups, but I don't know it.)
-				bRepeat = getNumSelectionGroups() > (int)groupList.size();
+				bRepeat = bRepeat && getNumSelectionGroups() > (int)groupList.size();
 				// the repeat will do a stack of redundant checks,
 				// but I still expect it to be much faster than waiting for the next turnslice.
 			} while (bRepeat);
