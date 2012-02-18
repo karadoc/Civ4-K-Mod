@@ -565,6 +565,7 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
 	int	strSum = 0;
+	bool bDefenders = pAttackedPlot ? pAttackedPlot->isVisibleEnemyUnit(getOwnerINLINE()) : false; // K-Mod
 	bool bCountCollateral = pAttackedPlot && pAttackedPlot != plot(); // K-Mod
 
 	pUnitNode = headUnitNode();
@@ -585,13 +586,13 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 			{
 				if (pLoopUnit->getDomainType() == DOMAIN_AIR)
 				{
-					if (!pLoopUnit->canAirAttack() || !pLoopUnit->canMove() || (pAttackedPlot && !pLoopUnit->canMoveInto(pAttackedPlot, true, true)))
+					if (!pLoopUnit->canAirAttack() || !pLoopUnit->canMove() || (pAttackedPlot && bDefenders && !pLoopUnit->canMoveInto(pAttackedPlot, true, true)))
 						continue; // can't attack.
 				}
 				else
 				{
 					if (!pLoopUnit->canAttack() || !pLoopUnit->canMove()
-						|| (pAttackedPlot && !pLoopUnit->canMoveInto(pAttackedPlot, true, true))
+						|| (pAttackedPlot && bDefenders && !pLoopUnit->canMoveInto(pAttackedPlot, true, true))
 						|| (!pLoopUnit->isBlitz() && pLoopUnit->isMadeAttack()))
 						continue; // can't attack.
 				}
