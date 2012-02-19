@@ -42,17 +42,6 @@
 		<Spanish>Default</Spanish>
 	</TEXT>
 	
-<!-- Actual Effects (moved from BULL_CIV4GameText.xml) -->
-
-	<TEXT>
-		<Tag>TXT_KEY_ACTUAL_EFFECTS</Tag>
-		<English>Actual</English>
-		<French>Actual</French>
-		<German>Effektiv</German>
-		<Italian>Effettivo</Italian>
-		<Spanish>Actual</Spanish>
-	</TEXT>
-
 	<!-- Help -->
 	
 	<TEXT>
