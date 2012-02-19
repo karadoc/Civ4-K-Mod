@@ -9286,11 +9286,18 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 		{
 			// special modifiers (eg. events). These modifiers don't get their own line of text, so they need to be included here.
 			iHappiness += pCity->getBuildingHappyChange((BuildingClassTypes)kBuilding.getBuildingClassType());
+			iHappiness += GET_PLAYER(ePlayer).getExtraBuildingHappiness(eBuilding);
+			// 'Extra building happiness' includes happiness from several sources, including events, civics, traits, and boosts from other buildings.
+			// My aim here is to only include in the total what isn't already in the list of bonuses below. As far as I know the only thing that would
+			// be double-reported is the civic happiness. So I'll subtract that.
+			for (int i = 0; i < GC.getNumCivicInfos(); i++)
+			{
+				if (GET_PLAYER(ePlayer).isCivic((CivicTypes)i))
+				{
+					iHappiness -= GC.getCivicInfo((CivicTypes)i).getBuildingHappinessChanges(kBuilding.getBuildingClassType());
+				}
+			}
 		}
-		//if (ePlayer != NO_PLAYER) (This happiness is already reported as well (eg, nationhood barracks)
-		//{
-			//iHappiness += GET_PLAYER(ePlayer).getExtraBuildingHappiness(eBuilding);
-		//}
 /*
 ** K-Mod end
 */
@@ -9338,6 +9345,15 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 		{
 			// special modifiers (eg. events). These modifiers don't get their own line of text, so they need to be included here.
 			iHealth += pCity->getBuildingHealthChange((BuildingClassTypes)kBuilding.getBuildingClassType());
+			iHealth += GET_PLAYER(ePlayer).getExtraBuildingHealth(eBuilding);
+			// We need to subtract any civic bonuses from 'extra building health', so as not to double-report. (see comments for the happiness section.)
+			for (int i = 0; i < GC.getNumCivicInfos(); i++)
+			{
+				if (GET_PLAYER(ePlayer).isCivic((CivicTypes)i))
+				{
+					iHealth -= GC.getCivicInfo((CivicTypes)i).getBuildingHealthChanges(kBuilding.getBuildingClassType());
+				}
+			}
 		}
 /*
 ** K-Mod end

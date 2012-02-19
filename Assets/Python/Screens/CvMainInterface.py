@@ -3783,21 +3783,7 @@ class CvMainInterface:
 							bFirst = True
 							
 							if (pHeadSelectedCity.getNumActiveBuilding(i) > 0):
-								iHealth = pHeadSelectedCity.getBuildingHealth(i)
-
-								if (iHealth != 0):
-									if ( bFirst == False ):
-										szRightBuffer = szRightBuffer + ", "
-									else:
-										bFirst = False
-										
-									if ( iHealth > 0 ):
-										szTempBuffer = u"+%d%c" %( iHealth, CyGame().getSymbolID(FontSymbols.HEALTHY_CHAR) )
-										szRightBuffer = szRightBuffer + szTempBuffer
-									else:
-										szTempBuffer = u"+%d%c" %( -(iHealth), CyGame().getSymbolID(FontSymbols.UNHEALTHY_CHAR) )
-										szRightBuffer = szRightBuffer + szTempBuffer
-
+							# K-Mod. I've just swapped the order of health / happiness, to match the DLL hover-text.
 								iHappiness = pHeadSelectedCity.getBuildingHappiness(i)
 
 								if (iHappiness != 0):
@@ -3812,6 +3798,22 @@ class CvMainInterface:
 									else:
 										szTempBuffer = u"+%d%c" %( -(iHappiness), CyGame().getSymbolID(FontSymbols.UNHAPPY_CHAR) )
 										szRightBuffer = szRightBuffer + szTempBuffer
+
+								iHealth = pHeadSelectedCity.getBuildingHealth(i)
+
+								if (iHealth != 0):
+									if ( bFirst == False ):
+										szRightBuffer = szRightBuffer + ", "
+									else:
+										bFirst = False
+										
+									if ( iHealth > 0 ):
+										szTempBuffer = u"+%d%c" %( iHealth, CyGame().getSymbolID(FontSymbols.HEALTHY_CHAR) )
+										szRightBuffer = szRightBuffer + szTempBuffer
+									else:
+										szTempBuffer = u"+%d%c" %( -(iHealth), CyGame().getSymbolID(FontSymbols.UNHEALTHY_CHAR) )
+										szRightBuffer = szRightBuffer + szTempBuffer
+							#K-Mod end
 
 								for j in range( YieldTypes.NUM_YIELD_TYPES):
 									iYield = gc.getBuildingInfo(i).getYieldChange(j) + pHeadSelectedCity.getNumBuilding(i) * pHeadSelectedCity.getBuildingYieldChange(gc.getBuildingInfo(i).getBuildingClassType(), j)
