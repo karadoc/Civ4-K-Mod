@@ -15084,7 +15084,7 @@ void CvPlayerAI::AI_doCommerce()
 					if (eWarPlan != WARPLAN_DOGPILE && AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && getCapitalCity())
 					{
 						CvCity* pTargetCity = getCapitalCity()->area()->getTargetCity(getID());
-						if (pTargetCity && pTargetCity->getTeam() == iTeam)
+						if (pTargetCity && pTargetCity->getTeam() == iTeam && pTargetCity->area()->getAreaAIType(getTeam()) != AREAAI_DEFENSIVE && pTargetCity->area()->getNumAIUnits(getID(), UNITAI_SPY) > 0)
 						{
 							iMissionCost = std::max(iMissionCost, getEspionageMissionCost(eCityRevoltMission, pTargetCity->getOwnerINLINE(), pTargetCity->plot()));
 							if (eWarPlan == WARPLAN_TOTAL || eWarPlan == WARPLAN_PREPARING_TOTAL)
@@ -15126,6 +15126,7 @@ void CvPlayerAI::AI_doCommerce()
 				}
 
 				iRateDivisor += 4*iAttitude/(5*iTargetTurns);
+				iRateDivisor += AI_totalUnitAIs(UNITAI_SPY) == 0 ? 4 : 0;
 				aiWeight[iTeam] -= (iAttitude/3);
 				if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 				{
@@ -15224,7 +15225,7 @@ void CvPlayerAI::AI_doCommerce()
 				// This is the espionage cost modifier for stealing techs.
 
 				// lets say "cheap" means 80% of the research cost.
-				bCheapTechSteal = (8000 * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
+				bCheapTechSteal = ((AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) ? 8500 : 8000) * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
 				if (bCheapTechSteal)
 				{
 					aiTarget[eMinModTeam] += iApproxTechCost / 10;
@@ -15271,15 +15272,18 @@ void CvPlayerAI::AI_doCommerce()
 
 		//if economy is weak, neglect espionage spending.
 		//instead invest hammers into espionage via spies/builds
-		if (bFinancialTrouble || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || !bFirstTech) // K-Mod
+		if (bFinancialTrouble || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || bFirstTech) // K-Mod
 		{
 			//can still get trickle espionage income
 			iEspionageTargetRate = 0;
 		}
 		else
 		{
-			iEspionageTargetRate *= (110 - getCommercePercent(COMMERCE_GOLD) * 2);
-			iEspionageTargetRate /= 110;
+			if (!bCheapTechSteal) // K-Mod
+			{
+				iEspionageTargetRate *= (140 - getCommercePercent(COMMERCE_GOLD) * 2); // was 110 -
+				iEspionageTargetRate /= 140; // was 110
+			}
 
 			iEspionageTargetRate *= GC.getLeaderHeadInfo(getLeaderType()).getEspionageWeight();
 			iEspionageTargetRate /= 100;
@@ -15288,8 +15292,11 @@ void CvPlayerAI::AI_doCommerce()
 
 			//while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < 20)
 			// K-Mod
-			int iCap = (bCheapTechSteal? 60 :20);
-			iCap += AI_avoidScience() ? 40 : 0;
+			int iCap = AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? 20 : 10;
+			iCap += bCheapTechSteal || AI_avoidScience() ? 50 : 0;
+
+			FAssert(iCap <= 100);
+			iCap = std::min(iCap, 100); // just in case.
 
 			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
 			{
@@ -19423,41 +19430,44 @@ void CvPlayerAI::AI_updateStrategyHash()
 	}
 
 	// Espionage
+	// K-Mod
+	// Apparently BBAI wanted to use "big espionage" to save points when our espionage is weak.
+	// I've got other plans.
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 	{
-		int iTempValue = 0;
-		// K-Mod
-		// Apparently BBAI wanted to use "big espionage" to save points when our espionage is weak.
-		// I've got other plans.
-		iTempValue += AI_commerceWeight(COMMERCE_ESPIONAGE) / 8;
-		// Note: although AI_commerceWeight is doubled for Big Espionage,
-		// the value here is unaffected because the strategy hash has been cleared.
-		iTempValue += kTeam.getBestKnownTechScorePercent() < 85 ? 3 : 0;
-		iTempValue += kTeam.getAnyWarPlanCount(true) > kTeam.getAtWarCount(true) ? 2 : 0; // build up espionage before the start of a war
-		if (iWarSuccessRating < 0)
-			iTempValue += iWarSuccessRating/15 - 1;
-		iTempValue += AI_getStrategyRand(10) % 8;
-		// K-Mod end
-
-		if (iTempValue > 11)
+		// don't start espionage strategy if we have no spies
+		if (iLastStrategyHash & AI_STRATEGY_BIG_ESPIONAGE || AI_getNumAIUnits(UNITAI_SPY) > 0)
 		{
-			// K-Mod. Don't allow big esp if we have no local esp targets
-			//m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
-			for (int i = 0; i < MAX_CIV_TEAMS; i++)
+			int iTempValue = 0;
+			iTempValue += AI_commerceWeight(COMMERCE_ESPIONAGE) / 8;
+			// Note: although AI_commerceWeight is doubled for Big Espionage,
+			// the value here is unaffected because the strategy hash has been cleared.
+			iTempValue += kTeam.getBestKnownTechScorePercent() < 85 ? 3 : 0;
+			iTempValue += kTeam.getAnyWarPlanCount(true) > kTeam.getAtWarCount(true) ? 2 : 0; // build up espionage before the start of a war
+			if (iWarSuccessRating < 0)
+				iTempValue += iWarSuccessRating/15 - 1;
+			iTempValue += AI_getStrategyRand(10) % 8;
+
+			if (iTempValue > 11)
 			{
-				if (i != getTeam() && kTeam.isHasMet((TeamTypes)i) && kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)i))
+				// Don't allow big esp if we have no local esp targets
+				for (int i = 0; i < MAX_CIV_TEAMS; i++)
 				{
-					m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
-					break;
+					if (i != getTeam() && kTeam.isHasMet((TeamTypes)i) && kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)i))
+					{
+						m_iStrategyHash |= AI_STRATEGY_BIG_ESPIONAGE;
+						break;
+					}
 				}
 			}
 		}
 
-		// K-Mod.. the espionage economy decision is actually somewhere else. This is just a marker.
+		// The espionage economy decision is actually somewhere else. This is just a marker.
 		if (getCommercePercent(COMMERCE_ESPIONAGE) > 20)
 			m_iStrategyHash |= AI_STRATEGY_ESPIONAGE_ECONOMY;
 	}
 	log_strat(AI_STRATEGY_ESPIONAGE_ECONOMY)
+	// K-Mod end
 
 	// Turtle strategy
 	if( kTeam.getAtWarCount(true) > 0 && getNumCities() > 0 )

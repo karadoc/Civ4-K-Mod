@@ -9123,7 +9123,7 @@ int CvCityAI::AI_citizenSacrificeCost(int iCitLoss, int iHappyLevel, int iNewAng
 		iCostPerTurn -= 4 * (std::min(iWastedFood, i) + i*GC.getFOOD_CONSUMPTION_PER_POPULATION()) * kOwner.AI_yieldWeight(YIELD_FOOD)/100;
 		iCostPerTurn += 2*i; // just a little bit of extra cost, to show that we care...
 
-		FAssert(iCostPerTurn > 0 && iRecoveryTurns > 0); // iCostPerTurn <= 0 is possible, but it should be rare - This assert is just for testing.
+		FAssert(iRecoveryTurns > 0); // iCostPerTurn <= 0 is possible, but it should be rare
 
 		// recovery isn't complete if the citizen is still angry
 		iAngerTimer -= iRecoveryTurns;
