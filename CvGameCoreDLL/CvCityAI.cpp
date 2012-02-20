@@ -1457,10 +1457,15 @@ void CvCityAI::AI_chooseProduction()
 
 	if (iTotalFloatingDefenders < ((iNeededFloatingDefenders + 1) / (bGetBetterUnits ? 3 : 2)))
 	{
-		if (!bUnitExempt && iUnitSpending < iMaxUnitSpending + 5 && AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+		if (!bUnitExempt && iUnitSpending < iMaxUnitSpending + 5)
 		{
-			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
-			return;
+			if (pArea->getAreaAIType(getTeam()) != AREAAI_NEUTRAL || kPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT1) ||
+				GC.getGameINLINE().getSorenRandNum(iNeededFloatingDefenders, "AI floating def 1") > iTotalFloatingDefenders * (2*iUnitSpending + iMaxUnitSpending)/std::max(1, 3*iMaxUnitSpending))
+			if (AI_chooseLeastRepresentedUnit(floatingDefenderTypes))
+			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose floating defender 1", getName().GetCString());
+				return;
+			}
 		}
 	}
 
@@ -1914,7 +1919,7 @@ void CvCityAI::AI_chooseProduction()
 
 	// K-Mod, short-circuit 2 - a strong chance to build some high value buildings.
 	{
-		int iOdds = std::max(0, (bLandWar || (bAssault && pWaterArea) ? 70 : 120) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25);
+		int iOdds = std::max(0, (bLandWar || (bAssault && pWaterArea) ? 80 : 130) * iBestBuildingValue / (iBestBuildingValue + 20 + iBuildUnitProb) - 25);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses building value short-circuit 2 (odds: %d)", getName().GetCString(), iOdds);
@@ -2918,26 +2923,36 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	}
 
 	// XXX this should account for air and heli units too...
-	for (iI = 0; iI < NUM_UNITAI_TYPES; iI++)
+	// K-Mod. Human players don't choose the AI type of the units they build. Therefore we shouldn't use the unit AI counts to decide what to build next.
+	if (isHuman())
 	{
-		if (GET_PLAYER(getOwnerINLINE()).AI_unitAIDomainType((UnitAITypes)iI) == DOMAIN_SEA)
+		aiUnitAIVal[UNITAI_SETTLE] = 0;
+		aiUnitAIVal[UNITAI_WORKER] = 0;
+	}
+	else
+	// K-Mod end
+	{
+		for (iI = 0; iI < NUM_UNITAI_TYPES; iI++)
 		{
-			if (pWaterArea != NULL)
+			if (GET_PLAYER(getOwnerINLINE()).AI_unitAIDomainType((UnitAITypes)iI) == DOMAIN_SEA)
 			{
-				aiUnitAIVal[iI] -= GET_PLAYER(getOwnerINLINE()).AI_totalWaterAreaUnitAIs(pWaterArea, ((UnitAITypes)iI));
+				if (pWaterArea != NULL)
+				{
+					aiUnitAIVal[iI] -= GET_PLAYER(getOwnerINLINE()).AI_totalWaterAreaUnitAIs(pWaterArea, ((UnitAITypes)iI));
+				}
 			}
-		}
-		else if ((GET_PLAYER(getOwnerINLINE()).AI_unitAIDomainType((UnitAITypes)iI) == DOMAIN_AIR) || (iI == UNITAI_ICBM))
-		{
-			aiUnitAIVal[iI] -= GET_PLAYER(getOwnerINLINE()).AI_totalUnitAIs((UnitAITypes)iI);
-		}
-		else
-		{
-			aiUnitAIVal[iI] -= GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(area(), ((UnitAITypes)iI));
+			else if ((GET_PLAYER(getOwnerINLINE()).AI_unitAIDomainType((UnitAITypes)iI) == DOMAIN_AIR) || (iI == UNITAI_ICBM))
+			{
+				aiUnitAIVal[iI] -= GET_PLAYER(getOwnerINLINE()).AI_totalUnitAIs((UnitAITypes)iI);
+			}
+			else
+			{
+				aiUnitAIVal[iI] -= GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(area(), ((UnitAITypes)iI));
+			}
 		}
 	}
 
-	aiUnitAIVal[UNITAI_SETTLE] *= ((bDanger) ? 8 : 20);
+	aiUnitAIVal[UNITAI_SETTLE] *= ((bDanger) ? 8 : 12); // was ? 8 : 20
 	aiUnitAIVal[UNITAI_WORKER] *= ((bDanger) ? 2 : 7);
 	aiUnitAIVal[UNITAI_ATTACK] *= 3;
 	aiUnitAIVal[UNITAI_ATTACK_CITY] *= 5; // K-Mod, up from *4
@@ -3902,10 +3917,10 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				} */
 				// K-Mod.
 				// note. currently this new code matches the old code exactly,
-				// except that the value is halved in cities that we don't expect to be building troops in.
+				// except that the value is reduced in cities that we don't expect to be building troops in.
 				int iWeight = 12;
 				iWeight /= iHasMetCount > 0 ? 1 : 2;
-				iWeight /= bWarPlan || bIsHighProductionCity ? 1 : 2;
+				iWeight /= bWarPlan || bIsHighProductionCity ? 1 : 3;
 
 				iValue += kBuilding.getFreeExperience() * iWeight;
 
