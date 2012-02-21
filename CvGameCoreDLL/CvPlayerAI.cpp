@@ -1166,14 +1166,13 @@ void CvPlayerAI::AI_updateAreaTargets()
 
 
 // Returns priority for unit movement (lower values move first...)
-// Note: the priorities have been edited by bbai and then by K-Mod.
+// This function has been heavily edited for K-Mod
 int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 {
-	// K-Mod. If the group is trying to do a stack attack, let it go first!
+	// If the group is trying to do a stack attack, let it go first!
 	// (this is required for amphibious assults; during which a low priority group can be ordered to attack before its turn.)
 	if (pGroup->AI_isGroupAttack())
 		return -1;
-	// K-Mod end
 
 	const CvUnit* pHeadUnit = pGroup->getHeadUnit();
 
@@ -1185,65 +1184,58 @@ int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 		return 0;
 	}
 
-	/*if (pHeadUnit->hasCargo())
-	{
-		if (pHeadUnit->specialCargo() == NO_SPECIALUNIT)
-		{
-			return 1;
-		}
-		else
-		{
-			return 2;
-		}
-	}*/
-
-	// Make fighters move before bombers, they are better at clearing out air defenses
-	if (pHeadUnit->getDomainType() == DOMAIN_AIR)
-	{
-		if( pHeadUnit->canAirDefend() )
-		{
-			return 3;
-		}
-		else
-		{
-			return 4;
-		}
-	}
-
-	if ((pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER) || (pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER_SEA))
-	{
-		return 5;
-	}
-
-	if ((pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE) || (pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE_SEA))
-	{
-		return 6;
-	}
-
-	if (pHeadUnit->bombardRate() > 0)
-	{
-		return 7;
-	}
-
-	if (pHeadUnit->collateralDamage() > 0)
-	{
-		return 8;
-	}
-
 	if (pHeadUnit->getDomainType() != DOMAIN_LAND)
 	{
+		if (pHeadUnit->bombardRate() > 0)
+			return 1;
+
 		if (pHeadUnit->hasCargo())
-			return 9;
+		{
+			if (pHeadUnit->specialCargo() != NO_SPECIALUNIT)
+				return 2;
+			else
+				return 3;
+		}
+
+		if (pHeadUnit->getDomainType() == DOMAIN_AIR)
+		{
+			if (pHeadUnit->canAirDefend() || pHeadUnit->evasionProbability() > 10)
+				return 4;
+			else
+				return 5;
+		}
+
+		if (pHeadUnit->canFight())
+		{
+			if (pHeadUnit->collateralDamage() > 0)
+				return 6;
+			else
+				return 7;
+		}
 		else
-			return 10;
+			return 8;
 	}
+
+	FAssert(pHeadUnit->getDomainType() == DOMAIN_LAND);
+
+	if (pHeadUnit->AI_getUnitAIType() == UNITAI_WORKER)
+		return 9;
+
+	if (pHeadUnit->AI_getUnitAIType() == UNITAI_EXPLORE)
+		return 10;
+
+	if (pHeadUnit->bombardRate() > 0)
+		return 11;
+
+	if (pHeadUnit->collateralDamage() > 0)
+		return 12;
 
 	if (pGroup->isStranded())
 		return 505;
 
 	if (pHeadUnit->canFight())
 	{
-		int iPriority = 60; // allow + or - 50
+		int iPriority = 65; // allow + or - 50
 
 		iPriority += (GC.getGameINLINE().getBestLandUnitCombat()*100 - pHeadUnit->currCombatStr(NULL, NULL) + 10) / 20; // note: currCombatStr has a factor of 100 built in.
 
@@ -1340,7 +1332,7 @@ int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 		}
 	*/
 
-	return 111;
+	return 200;
 }
 
 
@@ -4334,9 +4326,9 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 	    {
             iCount += iBorderDanger;
 	    } */
-		// K-Mod. I don't want auto-workers on the frontline. So unless the plot is defended, count border danger for humans too.
+		// K-Mod. I don't want auto-workers on the frontline. So unless the plot is defended, or a water, count border danger for humans too.
 		// but on the other hand, I don't think two border tiles are really more dangerous than one border tile.
-		if (!isHuman() || pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0)
+		if (!isHuman() || (!pPlot->isWater() && pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0))
 			iCount++;
 		// K-Mod end
 	}
