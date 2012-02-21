@@ -1122,7 +1122,12 @@ void CvGame::normalizeAddRiver()
 					// if we will be able to add a lake, then use old river code
 					if (normalizeFindLakePlot((PlayerTypes)iI) != NULL)
 					{
-						CvMapGenerator::GetInstance().doRiver(pStartingPlot);
+						//CvMapGenerator::GetInstance().doRiver(pStartingPlot);
+						// K-Mod. The river shouldn't always start on the SE corner of our site.
+						CvPlot* pRiverPlot = pStartingPlot->getInlandCorner();
+						if (pRiverPlot)
+							CvMapGenerator::GetInstance().doRiver(pRiverPlot);
+						// K-Mod end.
 					}
 					// otherwise, use new river code which is much more likely to succeed
 					else
@@ -1226,9 +1231,14 @@ CvPlot* CvGame::normalizeFindLakePlot(PlayerTypes ePlayer)
 	{
 		if (!(pStartingPlot->isFreshWater()))
 		{
+			// K-Mod. Shuffle the order that plots are checked.
+			int aiShuffle[NUM_CITY_PLOTS];
+			shuffleArray(aiShuffle, NUM_CITY_PLOTS, getMapRand());
+			// K-Mod end
 			for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
 			{
-				CvPlot* pLoopPlot = plotCity(pStartingPlot->getX_INLINE(), pStartingPlot->getY_INLINE(), iJ);
+				//CvPlot* pLoopPlot = plotCity(pStartingPlot->getX_INLINE(), pStartingPlot->getY_INLINE(), iJ);
+				CvPlot* pLoopPlot = plotCity(pStartingPlot->getX_INLINE(), pStartingPlot->getY_INLINE(), aiShuffle[iJ]); // K-Mod
 
 				if (pLoopPlot != NULL)
 				{
@@ -1495,7 +1505,8 @@ void CvGame::normalizeAddFoodBonuses()
 				}
 				
 				int iTargetFoodBonusCount = 3;
-				iTargetFoodBonusCount += (iGoodNatureTileCount == 0) ? 2 : 0;
+				//iTargetFoodBonusCount += (iGoodNatureTileCount == 0) ? 2 : 0;
+				iTargetFoodBonusCount += std::max(0, 2-iGoodNatureTileCount); // K-Mod
 
 				for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
 				{
