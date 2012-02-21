@@ -15175,7 +15175,7 @@ void CvPlayerAI::AI_doCommerce()
 									{
 										if (canStealTech((PlayerTypes)iPlayer, (TechTypes)iT))
 										{
-											bValid = true;
+											bValid = iApproxTechCost > 0; // don't set it true unless there are at least 2 stealable techs.
 											// get a (very rough) approximation of how much it will cost to steal a tech.
 											iApproxTechCost = (GET_TEAM(getTeam()).getResearchCost((TechTypes)iT) + iApproxTechCost) / (iApproxTechCost != 0 ? 2 : 1);
 											break;

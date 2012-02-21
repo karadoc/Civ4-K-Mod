@@ -1123,10 +1123,14 @@ void CvGame::normalizeAddRiver()
 					if (normalizeFindLakePlot((PlayerTypes)iI) != NULL)
 					{
 						//CvMapGenerator::GetInstance().doRiver(pStartingPlot);
-						// K-Mod. The river shouldn't always start on the SE corner of our site.
-						CvPlot* pRiverPlot = pStartingPlot->getInlandCorner();
-						if (pRiverPlot)
-							CvMapGenerator::GetInstance().doRiver(pRiverPlot);
+						// K-Mod. If we can have a lake then we don't always need a river.
+						// Also, the river shouldn't always start on the SE corner of our site.
+						if (getSorenRandNum(10, "normalize add river") < (pStartingPlot->isCoastalLand() ? 5 : 7))
+						{
+							CvPlot* pRiverPlot = pStartingPlot->getInlandCorner();
+							if (pRiverPlot)
+								CvMapGenerator::GetInstance().doRiver(pRiverPlot);
+						}
 						// K-Mod end.
 					}
 					// otherwise, use new river code which is much more likely to succeed

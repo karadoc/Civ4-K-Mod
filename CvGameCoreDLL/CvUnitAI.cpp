@@ -2943,6 +2943,13 @@ void CvUnitAI::AI_attackCityMove()
 
 	// K-Mod. Try to be consistent in our usage of move flags, so that we don't cause unnecessary pathfinder resets.
 	int iMoveFlags = MOVE_AVOID_ENEMY_WEIGHT_2 | (bReadyToAttack ? MOVE_ATTACK_STACK | MOVE_DECLARE_WAR : 0);
+
+	// Barbarian stacks should be reckless and unpredictable.
+	if (isBarbarian())
+	{
+		int iThreshold = GC.getGameINLINE().getSorenRandNum(150, "barb attackCity stackVsStack threshold") + 20;
+		AI_stackVsStack(1, iThreshold, 0, iMoveFlags);
+	}
 	// K-Mod end
 
 	if (AI_guardCity(false, false, MAX_INT, iMoveFlags))
