@@ -112,7 +112,7 @@ class BnSMultilayeredFractal(CvMapGeneratorUtil.MultilayeredFractal):
 		iVerticalZones = max(1, (self.iH+iTargetSize/2) / iTargetSize)
 		
 		iTotalZones = iHorizontalZones * iVerticalZones
-		iContinentZones = (iTotalZones+1)/2 + self.dice.get(1+(iTotalZones+1)/4, "number of 'big' zones")
+		iContinentZones = (iTotalZones+1)/2 + self.dice.get(1+(iTotalZones-1)/2, "number of 'big' zones")
 		iIslandZones = iTotalZones - iContinentZones
 		
 		zone_types = [0] * iTotalZones

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Global Defines for Lead From Behind mod by Uncut Dragon -->
+<!-- Global Defines for Lead From Behind mod by Uncut Dragon, rebalanced by Karadoc -->
 <Civ4Defines xmlns="x-schema:CIV4GlobalDefinesSchema.xml">
 	<Define>
 		<DefineName>LFB_ENABLE</DefineName>

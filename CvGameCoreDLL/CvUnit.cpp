@@ -3088,6 +3088,10 @@ bool CvUnit::jumpToNearestValidPlot(bool bGroup, bool bForceMove)
 	bool bValid = true;
 	if (pBestPlot != NULL)
 	{
+		// K-Mod. If a unit is bumped, we should clear their mission queue
+		if (pBestPlot != plot())
+			getGroup()->clearMissionQueue();
+		// K-Mod end
 		setXY(pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), bGroup);
 	}
 	else

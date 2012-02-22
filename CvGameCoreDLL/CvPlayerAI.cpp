@@ -3249,7 +3249,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			{
 				//iTempValue += 10;
 				// K-Mod
-				iTempValue += (kSet.bFinancial ? 25 : 5);
+				iTempValue += (kSet.bFinancial || kSet.bStartingLoc) ? 25 : 5;
 				iTempValue += (pPlot->isRiver() ? 15 : 0);
 			}
 			// K-Mod

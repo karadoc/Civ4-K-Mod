@@ -1411,11 +1411,13 @@ void CvUnitAI::AI_settleMove()
 			{
 				return;
 			}
+			/* original bts code
 			if (AI_safety())
 			{
 				return;
 			}
-			getGroup()->pushMission(MISSION_SKIP);
+			getGroup()->pushMission(MISSION_SKIP); */
+			// fallthrough. There might be something useful we can do. eg. AI_handleStranded!
 		}
 	}
 
