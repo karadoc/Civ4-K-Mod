@@ -227,11 +227,11 @@
 
 	<TEXT>
 		<Tag>TXT_KEY_ACTUAL_EFFECTS</Tag>
-		<English>Actual</English>
-		<French>Actual</French>
+		<English>Net Effect</English>
+		<French>Net Effect</French>
 		<German>Effektiv</German>
 		<Italian>Effettivo</Italian>
-		<Spanish>Actual</Spanish>
+		<Spanish>Net Effect</Spanish>
 	</TEXT>
 
 <!-- Min/Max Commerce Rate Buttons -->
