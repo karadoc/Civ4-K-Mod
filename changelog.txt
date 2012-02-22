@@ -1,5 +1,37 @@
-This is K-Mod version 1.18b.
+This is K-Mod version 1.19.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.19 changelist
+
+UI
+
++ Reformatted the "actual effects" text for buildings and specialists. It is now called "Net Effect", and it appears at the bottom of the list, in grey text, enclosed in parentheses.
++ Net effects for buildings and specialists will now be displayed when alt is pressed, regardless of the BUG settings.
++ The hover text for buildings now includes some previously unlisted happiness and healthiness bonuses in the base bonus. (eg. charismatic leaders will now see +1 happiness on the mouseover text for monuments.)
++ Swapped the order of the happiness and healthiness info in the city-screen side-bar, to match the order used in the dll.
++ Restored some missing text for BULL options for subtotals in the city screen.
+
+Game
+
++ When units are bumped to a different plot, their mission queue is now cleared. (This prevents workers from starting work on the wrong plot.)
++ Food resources which give less than 4 net food are now worth fewer food points to the start-position normalizer. (There is no longer any chance of having plains-cow as the sole food resource for a starting site.)
++ Randomized the position of extra rivers and lakes added by the start-position normalizer, so that we don't always get a river on the south-east corner, and a lake on the north.
++ The start-position normalizer will now not always try to create a river. (Previously it always tried but sometimes failed. Now it will fail less, and also try less.)
++ The starting position normalizer now values river plots more highly than before.
++ My map generator, "Not Too Big or Small", will now make slightly more "big" zones than before.
+
+AI
+
++ Barbarian attack stacks are now more likely to attack units outside of cities on the way towards their target city. (They use AI_stackVsStack with a random attack threshold ~ [20-170])
++ The AI will now only use the 'espionage economy' strategy if the target team has at least 2 stealable techs.
++ Made some changes to the way the AI uses its espionage slider. (Expect more espionage attacks from the AI.)
++ If an AI settler is in danger and unable to retreat, it will now try to continue a useful mission rather than just stand still.
++ Fixed some minor problems in AI_movementPriority which could sometimes cause the AI to unload units from boats before they should.
++ Adjusted some of the probability formulas used in AI_chooseProduction.
++ Changed the way the city governor chooses units. (Hopefully, this will result in more balanced armies being build when using auto-production.)
++ Border danger is no longer counted on water tiles for human players.
+
 
 --
 v1.18 changelist

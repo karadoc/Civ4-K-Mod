@@ -1,6 +1,6 @@
 
 ## "not too Big or Small". A modified version of "big and small" to scale better with larger maps.
-## by Karadoc. version 1
+## by Karadoc. version 1.1
 
 from CvPythonExtensions import *
 import CvUtil
