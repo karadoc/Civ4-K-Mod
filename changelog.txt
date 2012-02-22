@@ -6,7 +6,7 @@ v1.19 changelist
 
 UI
 
-+ Reformatted the "actual effects" text for buildings and specialists. It is now called "Net Effect", and it appears at the bottom of the list, in grey text, enclosed in parentheses.
++ Reformatted the "actual effects" text for buildings and specialists. It is now called "Net Effect", and it appears at the bottom of the list, in grey text enclosed by parentheses.
 + Net effects for buildings and specialists will now be displayed when alt is pressed, regardless of the BUG settings.
 + The hover text for buildings now includes some previously unlisted happiness and healthiness bonuses in the base bonus. (eg. charismatic leaders will now see +1 happiness on the mouseover text for monuments.)
 + Swapped the order of the happiness and healthiness info in the city-screen side-bar, to match the order used in the dll.
