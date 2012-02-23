@@ -15,9 +15,9 @@ bool CvDllPythonEvents::postEvent(CyArgsList& eventData)
 {
 	eventData.add(GC.getGameINLINE().isDebugMode());
 	eventData.add(false);
-	eventData.add(gDLL->altKey());
-	eventData.add(gDLL->ctrlKey());
-	eventData.add(gDLL->shiftKey());
+	eventData.add(GC.altKey());
+	eventData.add(GC.ctrlKey());
+	eventData.add(GC.shiftKey());
 	eventData.add(gDLL->getChtLvl() > 0);
 
 	long lResult = -1;

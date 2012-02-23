@@ -1656,7 +1656,7 @@ bool CvUnit::isActionRecommended(int iAction)
 
 	if (pPlot == NULL)
 	{
-		if (gDLL->shiftKey())
+		if (GC.shiftKey())
 		{
 			pPlot = getGroup()->lastMissionPlot();
 		}

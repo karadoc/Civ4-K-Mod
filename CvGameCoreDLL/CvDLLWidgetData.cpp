@@ -615,7 +615,7 @@ bool CvDLLWidgetData::executeAction( CvWidgetDataStruct &widgetDataStruct )
 		break;
 
 	case WIDGET_PLOT_LIST_SHIFT:
-		gDLL->getInterfaceIFace()->changePlotListColumn(widgetDataStruct.m_iData1 * ((gDLL->ctrlKey()) ? (GC.getDefineINT("MAX_PLOT_LIST_SIZE") - 1) : 1));
+		gDLL->getInterfaceIFace()->changePlotListColumn(widgetDataStruct.m_iData1 * ((GC.ctrlKey()) ? (GC.getDefineINT("MAX_PLOT_LIST_SIZE") - 1) : 1));
 		break;
 
 	case WIDGET_CITY_SCROLL:
@@ -1075,7 +1075,7 @@ void CvDLLWidgetData::doPlotList(CvWidgetDataStruct &widgetDataStruct)
 		{
 			bWasCityScreenUp = gDLL->getInterfaceIFace()->isCityScreenUp();
 
-			gDLL->getInterfaceIFace()->selectGroup(pUnit, gDLL->shiftKey(), gDLL->ctrlKey(), gDLL->altKey());
+			gDLL->getInterfaceIFace()->selectGroup(pUnit, GC.shiftKey(), GC.ctrlKey(), GC.altKey());
 
 			if (bWasCityScreenUp)
 			{
@@ -1150,7 +1150,7 @@ void CvDLLWidgetData::doTrain(CvWidgetDataStruct &widgetDataStruct)
 	}
 	else
 	{
-		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_TRAIN, eUnit, -1, false, gDLL->altKey(), gDLL->shiftKey(), gDLL->ctrlKey());
+		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_TRAIN, eUnit, -1, false, GC.altKey(), GC.shiftKey(), GC.ctrlKey());
 	}
 
 	gDLL->getInterfaceIFace()->setCityTabSelectionRow(CITYTAB_UNITS);
@@ -1169,7 +1169,7 @@ void CvDLLWidgetData::doConstruct(CvWidgetDataStruct &widgetDataStruct)
 	}
 	else
 	{
-		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_CONSTRUCT, eBuilding, -1, false, gDLL->altKey(), gDLL->shiftKey(), gDLL->ctrlKey());
+		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_CONSTRUCT, eBuilding, -1, false, GC.altKey(), GC.shiftKey(), GC.ctrlKey());
 	}
 
 	if (isLimitedWonderClass((BuildingClassTypes)(widgetDataStruct.m_iData1)))
@@ -1191,7 +1191,7 @@ void CvDLLWidgetData::doCreate(CvWidgetDataStruct &widgetDataStruct)
 	}
 	else
 	{
-		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_CREATE, widgetDataStruct.m_iData1, -1, false, gDLL->altKey(), gDLL->shiftKey(), gDLL->ctrlKey());
+		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_CREATE, widgetDataStruct.m_iData1, -1, false, GC.altKey(), GC.shiftKey(), GC.ctrlKey());
 	}
 
 	gDLL->getInterfaceIFace()->setCityTabSelectionRow(CITYTAB_WONDERS);
@@ -1206,7 +1206,7 @@ void CvDLLWidgetData::doMaintain(CvWidgetDataStruct &widgetDataStruct)
 	}
 	else
 	{
-		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_MAINTAIN, widgetDataStruct.m_iData1, -1, false, gDLL->altKey(), gDLL->shiftKey(), gDLL->ctrlKey());
+		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_PUSH_ORDER, ORDER_MAINTAIN, widgetDataStruct.m_iData1, -1, false, GC.altKey(), GC.shiftKey(), GC.ctrlKey());
 	}
 
 	gDLL->getInterfaceIFace()->setCityTabSelectionRow(CITYTAB_WONDERS);
@@ -1239,9 +1239,10 @@ void CvDLLWidgetData::doChangeSpecialist(CvWidgetDataStruct &widgetDataStruct)
 
 void CvDLLWidgetData::doResearch(CvWidgetDataStruct &widgetDataStruct)
 {
+	/* original bts code
 	bool bShift;
 
-	bShift = gDLL->shiftKey();
+	bShift = GC.shiftKey();
 
 	if (!bShift)
 	{
@@ -1249,7 +1250,8 @@ void CvDLLWidgetData::doResearch(CvWidgetDataStruct &widgetDataStruct)
 		{
 			bShift = true;
 		}
-	}
+	} */
+	bool bShift = GC.shiftKey();
 
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
@@ -1312,7 +1314,7 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 /*                                                                                              */
 /* Player Interface                                                                             */
 /************************************************************************************************/
-	if (gDLL->shiftKey() && !gDLL->altKey())
+	if (GC.shiftKey() && !GC.altKey())
 	{
 		if (GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).isHuman())
 		{
@@ -1324,10 +1326,10 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 		return;
 	}
 
-	if (gDLL->altKey())
+	if (GC.altKey())
 	{
 		TeamTypes eWidgetTeam = GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam(); // K-Mod
-		if( gDLL->shiftKey() )
+		if( GC.shiftKey() )
 		{
 			// Warning: use of this is not multiplayer compatible
 // K-Mod, karadoc: since it isn't MP compatible, I'm going to disable it in multiplayer mode...
@@ -1411,7 +1413,7 @@ void CvDLLWidgetData::doAutomateProduction()
 
 	if (pHeadSelectedCity != NULL)
 	{
-		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_DO_TASK, TASK_SET_AUTOMATED_PRODUCTION, -1, -1, !pHeadSelectedCity->isProductionAutomated(), gDLL->altKey(), gDLL->shiftKey(), gDLL->ctrlKey());
+		GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_DO_TASK, TASK_SET_AUTOMATED_PRODUCTION, -1, -1, !pHeadSelectedCity->isProductionAutomated(), GC.altKey(), GC.shiftKey(), GC.ctrlKey());
 	}
 }
 
@@ -2031,8 +2033,8 @@ void CvDLLWidgetData::parseActionHelp(CvWidgetDataStruct &widgetDataStruct, CvWS
 	int iDX, iDY;
 	int iI;
 
-	bAlt = gDLL->altKey();
-	bShift = gDLL->shiftKey();
+	bAlt = GC.altKey();
+	bShift = GC.shiftKey();
 
 	CvWString szTemp;
 	szTemp.Format(SETCOLR L"%s" ENDCOLR , TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), GC.getActionInfo(widgetDataStruct.m_iData1).getHotKeyDescription().c_str());
@@ -3310,7 +3312,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 	CvTeamAI& kActiveTeam = GET_TEAM(eActiveTeam);
 	
 	// if alt down and cheat on, show extra info
-	if (gDLL->altKey() && gDLL->getChtLvl() > 0)
+	if (GC.altKey() && gDLL->getChtLvl() > 0)
 	{
 		
 		// Show tech percent adjust
@@ -4136,7 +4138,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 			szBuffer.append(NEWLINE);
 		}
 
-		if (gDLL->shiftKey())
+		if (GC.shiftKey())
 		{
 			return;
 		}
@@ -4144,7 +4146,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 
 
 	//	Show score info instead if we are trying to contact ourselves...
-	if ( eActivePlayer == ePlayer || (gDLL->ctrlKey() && gDLL->getChtLvl() > 0) )
+	if ( eActivePlayer == ePlayer || (GC.ctrlKey() && gDLL->getChtLvl() > 0) )
 	{
 		parseScoreHelp(widgetDataStruct, szBuffer);
 		return;
@@ -4170,7 +4172,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 				szBuffer.append(gDLL->getText("TXT_KEY_MISC_REFUSES_TO_TALK"));
 			}
 
-			if ( !((gDLL->altKey() || gDLL->ctrlKey()) && gDLL->getChtLvl() > 0) )
+			if ( !((GC.altKey() || GC.ctrlKey()) && gDLL->getChtLvl() > 0) )
 			{
 				szBuffer.append(NEWLINE);
 				GAMETEXT.getAttitudeString(szBuffer, ePlayer, eActivePlayer);

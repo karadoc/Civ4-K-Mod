@@ -809,6 +809,12 @@ public:
 	inline bool getUSE_DO_PILLAGE_GOLD_CALLBACK() { return m_bUSE_DO_PILLAGE_GOLD_CALLBACK; }
 	inline bool getUSE_GET_EXPERIENCE_NEEDED_CALLBACK() { return m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK; }
 	inline bool getUSE_DO_COMBAT_CALLBACK() { return m_bUSE_DO_COMBAT_CALLBACK; }
+
+	// more reliable versions of the 'gDLL->xxxKey' functions:
+	inline bool altKey() { return (GetKeyState(VK_MENU) & 0x8000); }
+	inline bool ctrlKey() { return (GetKeyState(VK_CONTROL) & 0x8000); }
+	inline bool shiftKey() { return (GetKeyState(VK_SHIFT) & 0x8000); }
+	// NOTE: I've replaced all calls to the gDLL key functions with calls to these functions.
 	// K-Mod end
 
 	DllExport int getMAX_CIV_PLAYERS();

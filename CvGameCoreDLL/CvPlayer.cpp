@@ -4516,7 +4516,7 @@ void CvPlayer::contact(PlayerTypes ePlayer)
 	{
 		pDiplo = new CvDiploParameters(ePlayer);
 		FAssert(pDiplo != NULL);
-		if (gDLL->ctrlKey())
+		if (GC.ctrlKey())
 		{
 			pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_TRADING"));
 		}

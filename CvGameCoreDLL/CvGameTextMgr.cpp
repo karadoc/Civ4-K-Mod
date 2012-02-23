@@ -468,8 +468,8 @@ void CvGameTextMgr::setUnitHelp(CvWStringBuffer &szString, const CvUnit* pUnit, 
 	int iCurrMoves;
 	int iI;
 	bool bFirst;
-	bool bShift = gDLL->shiftKey();
-	bool bAlt = gDLL->altKey();
+	bool bShift = GC.shiftKey();
+	bool bAlt = GC.altKey();
 
 	szTempBuffer.Format(SETCOLR L"%s" ENDCOLR, TEXT_COLOR("COLOR_UNIT_TEXT"), pUnit->getName().GetCString());
 	szString.append(szTempBuffer);
@@ -1203,7 +1203,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 	int numPromotionInfos = GC.getNumPromotionInfos();
 	
 	// if cheatmode and ctrl, display grouping info instead
-	if ((gDLL->getChtLvl() > 0) && gDLL->ctrlKey())
+	if ((gDLL->getChtLvl() > 0) && GC.ctrlKey())
 	{
 		if (pPlot->isVisible(GC.getGameINLINE().getActiveTeam(), GC.getGameINLINE().isDebugMode()))
 		{
@@ -1273,7 +1273,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 						szString.append(CvWString::format(SETCOLR L"\n***STRANDED***" ENDCOLR, TEXT_COLOR("COLOR_RED")));
 					}
 
-					if( !gDLL->altKey() )
+					if( !GC.altKey() )
 					{
 						// mission ai
 						MissionAITypes eMissionAI = pHeadGroup->AI_getMissionAIType();
@@ -1383,7 +1383,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 /*                                                                                              */
 /* DEBUG                                                                                        */
 /************************************************************************************************/
-					if( !gDLL->altKey() && !gDLL->shiftKey() )
+					if( !GC.altKey() && !GC.shiftKey() )
 					{
 						// display cargo for head unit
 						std::vector<CvUnit*> aCargoUnits;
@@ -1467,7 +1467,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 						}
 					}
 					
-					if( !gDLL->altKey() )
+					if( !GC.altKey() )
 					{
 						if( pPlot->getTeam() == NO_TEAM || GET_TEAM(pHeadGroup->getTeam()).isAtWar(pPlot->getTeam()) )
 						{
@@ -1597,7 +1597,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 								szString.append(CvWString::format(L"\nTarget City: None"));
 							}
 
-							if( gDLL->shiftKey() )
+							if( GC.shiftKey() )
 							{
 								CvCity* pLoopCity;
 								int iLoop = 0;
@@ -2055,7 +2055,7 @@ bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 /*                                                                                              */
 /* DEBUG                                                                                        */
 /************************************************************************************************/
-	if (gDLL->altKey() && (gDLL->getChtLvl() > 0))
+	if (GC.altKey() && (gDLL->getChtLvl() > 0))
 	{
 		setPlotHelp( szString, pPlot );
 		return true;
@@ -2074,7 +2074,7 @@ bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 	*/
 /* New Code */
 	bool ACO_enabled = getBugOptionBOOL("ACO__Enabled", false, "ACO_ENABLED");
-	bool bShift = gDLL->shiftKey();
+	bool bShift = GC.shiftKey();
 	int iView = bShift ? 2 : 1;
 	if (getBugOptionBOOL("ACO__SwapViews", false, "ACO_SWAP_VIEWS"))
 	{
@@ -2139,7 +2139,7 @@ bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 	if (pAttacker != NULL)
 	{
 		// BUG - Combat Odds for Friendlies - start
-		pDefender = pPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, !gDLL->altKey(), NO_TEAM == pAttacker->getDeclareWarMove(pPlot));
+		pDefender = pPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, !GC.altKey(), NO_TEAM == pAttacker->getDeclareWarMove(pPlot));
 		// BUG - Combat Odds for Friendlies - end
 
 		if (pDefender != NULL && pDefender != pAttacker && pDefender->canDefend(pPlot) && pAttacker->canAttack(*pDefender))
@@ -2250,7 +2250,7 @@ bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 					ACO_debug = getBugOptionBOOL("ACO__Debug", false, "ACO_DEBUG");
 
 					/** phungus sart **/
-//					bool bctrl; bctrl = gDLL->ctrlKey();
+//					bool bctrl; bctrl = GC.ctrlKey();
 //					if (bctrl)
 //					{//SWITCHAROO IS DISABLED IN V1.0.  Hopefully it will be available in the next version. At the moment is has issues when modifiers are present.
 //						CvUnit* swap = pAttacker;
@@ -4196,9 +4196,9 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 	int iYield;
 	int iTurns;
 
-	bShift = gDLL->shiftKey();
-	bAlt = gDLL->altKey();
-	bCtrl = gDLL->ctrlKey();
+	bShift = GC.shiftKey();
+	bAlt = GC.altKey();
+	bCtrl = GC.ctrlKey();
 	
 	if (bCtrl && (gDLL->getChtLvl() > 0))
 	{
@@ -5154,7 +5154,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				}
 
 				// if control key is down, ignore food
-				bool bIgnoreFood = gDLL->ctrlKey();
+				bool bIgnoreFood = GC.ctrlKey();
 
 				// line one is: blank, 20, 9, 10, blank
 				setCityPlotYieldValueString(szString, pCity, -1, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
@@ -6498,7 +6498,7 @@ void CvGameTextMgr::parseSpecialistHelp(CvWStringBuffer &szHelpString, Specialis
 			szHelpString.append(gDLL->getText("TXT_KEY_SPECIALIST_BIRTH_RATE", kInfo.getGreatPeopleRateChange()));
 
 			// K-Mod
-			if (!bCivilopediaText && gDLL->getChtLvl() > 0 && gDLL->ctrlKey())
+			if (!bCivilopediaText && gDLL->getChtLvl() > 0 && GC.ctrlKey())
 			{
 				szHelpString.append(NEWLINE);
 				szHelpString.append(CvWString::format(L"weight: %d", GET_PLAYER((pCity != NULL) ? pCity->getOwnerINLINE() : GC.getGameINLINE().getActivePlayer()).AI_getGreatPersonWeight((UnitClassTypes)kInfo.getGreatPeopleUnitClass())));
@@ -6507,7 +6507,7 @@ void CvGameTextMgr::parseSpecialistHelp(CvWStringBuffer &szHelpString, Specialis
 		}
 
 // BUG - Specialist Actual Effects - start
-		if (pCity && (gDLL->altKey() || getBugOptionBOOL("MiscHover__SpecialistActualEffects", false, "BUG_MISC_SPECIALIST_HOVER_ACTUAL_EFFECTS")) && (pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() || gDLL->getChtLvl() > 0))
+		if (pCity && (GC.altKey() || getBugOptionBOOL("MiscHover__SpecialistActualEffects", false, "BUG_MISC_SPECIALIST_HOVER_ACTUAL_EFFECTS")) && (pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() || gDLL->getChtLvl() > 0))
 		{
 			bool bStarted = false;
 			CvWString szStart;
@@ -7613,7 +7613,7 @@ void CvGameTextMgr::setTechHelp(CvWStringBuffer &szBuffer, TechTypes eTech, bool
 	int iI;
 	
 	// show debug info if cheat level > 0 and alt down
-	bool bAlt = gDLL->altKey();
+	bool bAlt = GC.altKey();
     if (bAlt && (gDLL->getChtLvl() > 0))
     {
 		szBuffer.clear();
@@ -7987,7 +7987,7 @@ void CvGameTextMgr::setTechHelp(CvWStringBuffer &szBuffer, TechTypes eTech, bool
 		else
 		{
 			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_TECH_NUM_TURNS", GET_PLAYER(GC.getGameINLINE().getActivePlayer()).getResearchTurnsLeft(eTech, (gDLL->ctrlKey() || !(gDLL->shiftKey())))));
+			szBuffer.append(gDLL->getText("TXT_KEY_TECH_NUM_TURNS", GET_PLAYER(GC.getGameINLINE().getActivePlayer()).getResearchTurnsLeft(eTech, (GC.ctrlKey() || !(GC.shiftKey())))));
 
 			szTempBuffer.Format(L" (%d/%d %c)", GET_TEAM(GC.getGameINLINE().getActiveTeam()).getResearchProgress(eTech), GET_TEAM(GC.getGameINLINE().getActiveTeam()).getResearchCost(eTech), GC.getCommerceInfo(COMMERCE_RESEARCH).getChar());
 			szBuffer.append(szTempBuffer);
@@ -9045,7 +9045,7 @@ void CvGameTextMgr::setUnitHelp(CvWStringBuffer &szBuffer, UnitTypes eUnit, bool
 		else
 		{
 			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_UNIT_TURNS", pCity->getProductionTurnsLeft(eUnit, ((gDLL->ctrlKey() || !(gDLL->shiftKey())) ? 0 : pCity->getOrderQueueLength())), pCity->getProductionNeeded(eUnit), GC.getYieldInfo(YIELD_PRODUCTION).getChar()));
+			szBuffer.append(gDLL->getText("TXT_KEY_UNIT_TURNS", pCity->getProductionTurnsLeft(eUnit, ((GC.ctrlKey() || !(GC.shiftKey())) ? 0 : pCity->getOrderQueueLength())), pCity->getProductionNeeded(eUnit), GC.getYieldInfo(YIELD_PRODUCTION).getChar()));
 
 			iProduction = pCity->getUnitProduction(eUnit);
 
@@ -9141,7 +9141,7 @@ void CvGameTextMgr::setUnitHelp(CvWStringBuffer &szBuffer, UnitTypes eUnit, bool
 	
 	if (pCity != NULL)
 	{
-		if ((gDLL->getChtLvl() > 0) && gDLL->ctrlKey())
+		if ((gDLL->getChtLvl() > 0) && GC.ctrlKey())
 		{
 			szBuffer.append(NEWLINE);
 			for (int iUnitAI = 0; iUnitAI < NUM_UNITAI_TYPES; iUnitAI++)
@@ -10471,14 +10471,14 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 			else
 			{
 		// BUG - Building Actual Effects (edited and moved by K-Mod) - start
-				if (bActual && (gDLL->altKey() || getBugOptionBOOL("MiscHover__BuildingActualEffects", false, "BUG_BUILDING_HOVER_ACTUAL_EFFECTS")) && (pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() || gDLL->getChtLvl() > 0))
+				if (bActual && (GC.altKey() || getBugOptionBOOL("MiscHover__BuildingActualEffects", false, "BUG_BUILDING_HOVER_ACTUAL_EFFECTS")) && (pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() || gDLL->getChtLvl() > 0))
 				{
 					setBuildingNetEffectsHelp(szBuffer, eBuilding, pCity);
 				}
 		// BUG - Building Actual Effects - end
 
 				szBuffer.append(NEWLINE);
-				szBuffer.append(gDLL->getText("TXT_KEY_BUILDING_NUM_TURNS", pCity->getProductionTurnsLeft(eBuilding, ((gDLL->ctrlKey() || !(gDLL->shiftKey())) ? 0 : pCity->getOrderQueueLength()))));
+				szBuffer.append(gDLL->getText("TXT_KEY_BUILDING_NUM_TURNS", pCity->getProductionTurnsLeft(eBuilding, ((GC.ctrlKey() || !(GC.shiftKey())) ? 0 : pCity->getOrderQueueLength()))));
 
 				iProduction = pCity->getBuildingProduction(eBuilding);
 				
@@ -10561,7 +10561,7 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 	}
 
 	// K-Mod. Moved from inside that }, above.
-	if (pCity && gDLL->getChtLvl() > 0 && gDLL->ctrlKey())
+	if (pCity && gDLL->getChtLvl() > 0 && GC.ctrlKey())
 	{
 		int iBuildingValue = pCity->AI_buildingValue(eBuilding, 0, 0, true);
 		szBuffer.append(CvWString::format(L"\nAI Building Value = %d", iBuildingValue));
@@ -11138,7 +11138,7 @@ void CvGameTextMgr::setProjectHelp(CvWStringBuffer &szBuffer, ProjectTypes eProj
 		else
 		{
 			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_PROJECT_NUM_TURNS", pCity->getProductionTurnsLeft(eProject, ((gDLL->ctrlKey() || !(gDLL->shiftKey())) ? 0 : pCity->getOrderQueueLength()))));
+			szBuffer.append(gDLL->getText("TXT_KEY_PROJECT_NUM_TURNS", pCity->getProductionTurnsLeft(eProject, ((GC.ctrlKey() || !(GC.shiftKey())) ? 0 : pCity->getOrderQueueLength()))));
 
 			iProduction = pCity->getProjectProduction(eProject);
 
@@ -12534,7 +12534,7 @@ void CvGameTextMgr::setReligionHelpCity(CvWStringBuffer &szBuffer, ReligionTypes
 	}
 
 	// K-Mod
-	if (GC.getGameINLINE().isReligionFounded(eReligion) && pCity && gDLL->getChtLvl() > 0 && gDLL->ctrlKey())
+	if (GC.getGameINLINE().isReligionFounded(eReligion) && pCity && gDLL->getChtLvl() > 0 && GC.ctrlKey())
 	{
 		szBuffer.append(CvWString::format(L"grip: %d", pCity->getReligionGrip(eReligion)));
 		szBuffer.append(NEWLINE);
