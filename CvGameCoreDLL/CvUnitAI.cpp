@@ -3479,7 +3479,7 @@ void CvUnitAI::AI_attackCityMove()
 			int iPathTurns;
 			if (!generatePath(pTargetCity->plot(), iMoveFlags, true, &iPathTurns))
 			{
-				FAssertMsg(false, "failed to find path to target city.");
+				//FAssertMsg(false, "failed to find path to target city."); // AI_pickTargetCity now allows boat-only paths, so this assertion no longer holds.
 				iPathTurns = 100;
 			}
 			if (!pTargetCity->isBarbarian() || iPathTurns < (bAnyWarPlan ? 7 : 12)) // don't bother with long-distance barb attacks

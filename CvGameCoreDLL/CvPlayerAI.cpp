@@ -15117,7 +15117,7 @@ void CvPlayerAI::AI_doCommerce()
 					}
 				}
 
-				iRateDivisor += 4*iAttitude/(5*iTargetTurns);
+				iRateDivisor += 4*std::max(-4, iAttitude)/(5*iTargetTurns);
 				iRateDivisor += AI_totalUnitAIs(UNITAI_SPY) == 0 ? 4 : 0;
 				aiWeight[iTeam] -= (iAttitude/3);
 				if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
@@ -15193,8 +15193,8 @@ void CvPlayerAI::AI_doCommerce()
 					int iTheirTotal = std::max(4, kLoopTeam.getEspionagePointsEver());
 
 					iTheirEspPoints *= (3*iOurTotal + iTheirTotal);
-					iTheirEspPoints /= (2*iOurTotal + 3*iTheirTotal);
-					// That's a factor between 3/2 and 1/3, centered at 4/5
+					iTheirEspPoints /= (2*iOurTotal + 4*iTheirTotal);
+					// That's a factor between 3/2 and 1/4, centered at 4/6
 					iDesiredMissionPoints = std::max(iTheirEspPoints, iDesiredMissionPoints);
 				}
 
