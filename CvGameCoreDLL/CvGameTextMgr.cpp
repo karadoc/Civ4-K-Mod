@@ -6507,7 +6507,7 @@ void CvGameTextMgr::parseSpecialistHelp(CvWStringBuffer &szHelpString, Specialis
 		}
 
 // BUG - Specialist Actual Effects - start
-		if (pCity && pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() && (gDLL->altKey() || getBugOptionBOOL("MiscHover__SpecialistActualEffects", false, "BUG_MISC_SPECIALIST_HOVER_ACTUAL_EFFECTS")))
+		if (pCity && (gDLL->altKey() || getBugOptionBOOL("MiscHover__SpecialistActualEffects", false, "BUG_MISC_SPECIALIST_HOVER_ACTUAL_EFFECTS")) && (pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() || gDLL->getChtLvl() > 0))
 		{
 			bool bStarted = false;
 			CvWString szStart;
@@ -9194,11 +9194,11 @@ void CvGameTextMgr::setBuildingNetEffectsHelp(CvWStringBuffer &szBuffer, Buildin
 		iGood = 0;
 		iBad = 0;
 		pCity->getAdditionalHealthByBuilding(eBuilding, iGood, iBad);
-		int iSpoiledFood = pCity->getAdditionalSpoiledFood(iGood, iBad);
-		int iStarvation = pCity->getAdditionalStarvation(iSpoiledFood);
+		//int iSpoiledFood = pCity->getAdditionalSpoiledFood(iGood, iBad);
+		//int iStarvation = pCity->getAdditionalStarvation(iSpoiledFood);
 		bStarted = setResumableGoodBadChangeHelp(szBuffer, szStart, L": ", L"", iGood, gDLL->getSymbolID(HEALTHY_CHAR), iBad, gDLL->getSymbolID(UNHEALTHY_CHAR), false, false, bStarted);
-		bStarted = setResumableValueChangeHelp(szBuffer, szStart, L": ", L"", iSpoiledFood, gDLL->getSymbolID(EATEN_FOOD_CHAR), false, false, bStarted);
-		bStarted = setResumableValueChangeHelp(szBuffer, szStart, L": ", L"", iStarvation, gDLL->getSymbolID(BAD_FOOD_CHAR), false, false, bStarted);
+		//bStarted = setResumableValueChangeHelp(szBuffer, szStart, L": ", L"", iSpoiledFood, gDLL->getSymbolID(EATEN_FOOD_CHAR), false, false, bStarted);
+		//bStarted = setResumableValueChangeHelp(szBuffer, szStart, L": ", L"", iStarvation, gDLL->getSymbolID(BAD_FOOD_CHAR), false, false, bStarted);
 
 		// Yield
 		int aiYields[NUM_YIELD_TYPES];
@@ -10471,7 +10471,7 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 			else
 			{
 		// BUG - Building Actual Effects (edited and moved by K-Mod) - start
-				if (bActual && pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() && (gDLL->altKey() || getBugOptionBOOL("MiscHover__BuildingActualEffects", false, "BUG_BUILDING_HOVER_ACTUAL_EFFECTS")))
+				if (bActual && (gDLL->altKey() || getBugOptionBOOL("MiscHover__BuildingActualEffects", false, "BUG_BUILDING_HOVER_ACTUAL_EFFECTS")) && (pCity->getOwnerINLINE() == GC.getGame().getActivePlayer() || gDLL->getChtLvl() > 0))
 				{
 					setBuildingNetEffectsHelp(szBuffer, eBuilding, pCity);
 				}
@@ -10558,13 +10558,15 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 				szBuffer.append(gDLL->getText("TXT_KEY_BUILDING_OBSOLETE_WITH", GC.getTechInfo((TechTypes) GC.getSpecialBuildingInfo((SpecialBuildingTypes) kBuilding.getSpecialBuildingType()).getObsoleteTech()).getTextKeyWide()));
 			}
 		}
-		
-		if ((gDLL->getChtLvl() > 0) && gDLL->ctrlKey() && (pCity != NULL))
-		{
-			int iBuildingValue = pCity->AI_buildingValue(eBuilding, 0, 0, true);
-			szBuffer.append(CvWString::format(L"\nAI Building Value = %d", iBuildingValue));
-		}
 	}
+
+	// K-Mod. Moved from inside that }, above.
+	if (pCity && gDLL->getChtLvl() > 0 && gDLL->ctrlKey())
+	{
+		int iBuildingValue = pCity->AI_buildingValue(eBuilding, 0, 0, true);
+		szBuffer.append(CvWString::format(L"\nAI Building Value = %d", iBuildingValue));
+	}
+	//
 
 	if (bStrategyText)
 	{
