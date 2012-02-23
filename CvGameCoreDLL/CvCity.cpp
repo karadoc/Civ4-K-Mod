@@ -1150,7 +1150,8 @@ void CvCity::updateSelectedCity(bool bTestProduction)
 
 	if (bTestProduction)
 	{
-		if ((getOwnerINLINE() == GC.getGameINLINE().getActivePlayer()) && !isProduction())
+		//if ((getOwnerINLINE() == GC.getGameINLINE().getActivePlayer()) && !isProduction())
+		if ((getOwnerINLINE() == GC.getGameINLINE().getActivePlayer()) && !isProduction() && !isProductionAutomated()) // K-Mod
 		{
 			chooseProduction(NO_UNIT, NO_BUILDING, NO_PROJECT, false, true);
 		}
@@ -12178,8 +12179,8 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 		pOrderNode = nextOrderQueueNode(pOrderNode);
 	}
 
-  if (pOrderNode == NULL)
-  {
+	if (pOrderNode == NULL)
+	{
 		return;
 	}
 

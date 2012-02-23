@@ -1141,7 +1141,8 @@ void CvGame::selectedCitiesGameNetMessage(int eMessage, int iData2, int iData3, 
 					break;
 
 				case GAMEMESSAGE_POP_ORDER:
-					if (pSelectedCity->getOrderQueueLength() > 1)
+					//if (pSelectedCity->getOrderQueueLength() > 1)
+					if (pSelectedCity->getOrderQueueLength() > 1 || pSelectedCity->isProductionAutomated()) // K-Mod. (automated cities will choose their production at the end of the turn)
 					{
 						CvMessageControl::getInstance().sendPopOrder(pSelectedCity->getID(), iData2);
 					}
