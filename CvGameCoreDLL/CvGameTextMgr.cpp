@@ -9396,7 +9396,7 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 					kBuilding.getReligionType() != NO_RELIGION &&
 					kBuilding.getReligionType() == GET_PLAYER(ePlayer).getStateReligion())
 				{
-					aiCommerces[iI] = GET_PLAYER(ePlayer).getStateReligionBuildingCommerce((CommerceTypes)iI);
+					aiCommerces[iI] += GET_PLAYER(ePlayer).getStateReligionBuildingCommerce((CommerceTypes)iI);
 				}
 /*
 ** K-Mod end
