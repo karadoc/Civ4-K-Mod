@@ -11845,7 +11845,7 @@ void CvCityAI::AI_updateWorkersNeededHere()
 
 		if (NULL != pLoopPlot && pLoopPlot->getWorkingCity() == this)
 		{
-			if (pLoopPlot->getArea() == getArea())
+			//if (pLoopPlot->getArea() == getArea())
 			{
 				//How slow is this? It could be almost NUM_CITY_PLOT times faster
 				//by iterating groups and seeing if the plot target lands in this city
@@ -11859,7 +11859,8 @@ void CvCityAI::AI_updateWorkersNeededHere()
 					{
 						if (pLoopPlot->isBeingWorked())
 						{
-							if (AI_getBestBuild(iI) != NO_BUILD)
+							//if (AI_getBestBuild(iI) != NO_BUILD)
+							if (AI_getBestBuild(iI) != NO_BUILD && pLoopPlot->getArea() == getArea()) // K-Mod
 							{
 								iUnimprovedWorkedPlotCount++;
 							}
@@ -11870,7 +11871,8 @@ void CvCityAI::AI_updateWorkersNeededHere()
 						}
 						else
 						{
-							if (AI_getBestBuild(iI) != NO_BUILD)
+							//if (AI_getBestBuild(iI) != NO_BUILD)
+							if (AI_getBestBuild(iI) != NO_BUILD && pLoopPlot->getArea() == getArea()) // K-Mod
 							{
 								iUnimprovedUnworkedPlotCount++;
 							}
@@ -11905,7 +11907,14 @@ void CvCityAI::AI_updateWorkersNeededHere()
 	}
 	//specialists?
 
-	iUnimprovedWorkedPlotCount += std::min(iUnimprovedUnworkedPlotCount, iWorkedUnimprovableCount) / 2;
+	//iUnimprovedWorkedPlotCount += std::min(iUnimprovedUnworkedPlotCount, iWorkedUnimprovableCount) / 2;
+	// K-Mod
+	{
+		int iPopDelta = AI_getTargetPopulation() - getPopulation();
+		int iFutureWork = std::max(0, iWorkedUnimprovableCount + range((iPopDelta+1)/2, 0, 3) - iImprovedUnworkedPlotCount);
+		iUnimprovedWorkedPlotCount += (std::min(iUnimprovedUnworkedPlotCount, iFutureWork)+1) / 2;
+	}
+	// K-Mod end
 
 	iWorkersNeeded += 2 * iUnimprovedWorkedPlotCount;
 
