@@ -10786,7 +10786,8 @@ int CvUnit::getExtraWithdrawal() const
 void CvUnit::changeExtraWithdrawal(int iChange)															
 {
 	m_iExtraWithdrawal += iChange;
-	FAssert(getExtraWithdrawal() >= 0);
+	//FAssert(getExtraWithdrawal() >= 0);
+	FAssert(withdrawalProbability() >= 0); // K-Mod. (the 'extra' can be negative during sea-patrol battles.)
 }
 
 int CvUnit::getExtraCollateralDamage() const

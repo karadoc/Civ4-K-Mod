@@ -14045,8 +14045,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 			//int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
 			// K-Mod
 			int iTempValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)iData, GET_PLAYER(eTargetPlayer).getTeam());
-			iTempValue *= 3;
-			iTempValue /= 2;
+			iTempValue *= AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? 6 : 5;
+			iTempValue /= 3;
 			// K-Mod end
 
 			iValue += iTempValue;
@@ -15069,9 +15069,6 @@ void CvPlayerAI::AI_doCommerce()
 
 				if (eWarPlan != NO_WARPLAN)
 				{
-					iTheirEspPoints *= 3;
-					iTheirEspPoints /= 2;
-
 					int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
 					if (eWarPlan != WARPLAN_DOGPILE && AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && getCapitalCity())
 					{
@@ -15099,8 +15096,6 @@ void CvPlayerAI::AI_doCommerce()
 				}
 				else
 				{
-					iTheirEspPoints -= (iTheirEspPoints*iAttitude)/(2*12);
-
 					if (iAttitude <= -3)
 					{
 						int iMissionCost = std::max(getEspionageMissionCost(eSeeResearchMission, kLoopTeam.getLeaderID()), getEspionageMissionCost(eSeeDemographicsMission, kLoopTeam.getLeaderID()));
@@ -15117,15 +15112,17 @@ void CvPlayerAI::AI_doCommerce()
 					}
 				}
 
-				iRateDivisor += 4*std::max(-4, iAttitude)/(5*iTargetTurns);
+				iRateDivisor += 4*range(iAttitude, -8, 8)/(5*iTargetTurns); // + or - 1 point, with the standard target turns.
 				iRateDivisor += AI_totalUnitAIs(UNITAI_SPY) == 0 ? 4 : 0;
 				aiWeight[iTeam] -= (iAttitude/3);
 				if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
 				{
 					aiWeight[iTeam] *= 2;
 					aiWeight[iTeam] = std::max(0, aiWeight[iTeam]);
-					iRateDivisor -= iTargetTurns;
+					iRateDivisor -= iTargetTurns/2;
 				}
+				else
+					iRateDivisor += iTargetTurns/2;
 
 				// Individual player targeting
 				if (bFocusEspionage)
@@ -15187,6 +15184,10 @@ void CvPlayerAI::AI_doCommerce()
 					&& GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_CAUTIOUS)
 				{
 					iRateDivisor += 1;
+					// adjust their points based on our current relationship
+					iTheirEspPoints *= 34 + (eWarPlan == NO_WARPLAN ? -iAttitude : 12);
+					iTheirEspPoints /= 36; // note. the scale here set by the range of iAttitude. [-12, 12]
+
 					// scale by esp points ever, so that we don't fall over ourselves trying to catch up with
 					// a civ that happens to be running an espionage economy.
 					int iOurTotal = std::max(4, GET_TEAM(getTeam()).getEspionagePointsEver());

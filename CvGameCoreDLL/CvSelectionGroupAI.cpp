@@ -569,7 +569,7 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
 	int	strSum = 0;
-	bool bDefenders = pAttackedPlot ? pAttackedPlot->isVisibleEnemyUnit(getOwnerINLINE()) : false; // K-Mod
+	bool bDefenders = pAttackedPlot ? pAttackedPlot->isVisibleEnemyUnit(getHeadOwner()) : false; // K-Mod
 	bool bCountCollateral = pAttackedPlot && pAttackedPlot != plot(); // K-Mod
 
 	pUnitNode = headUnitNode();

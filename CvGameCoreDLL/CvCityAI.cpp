@@ -3252,7 +3252,16 @@ UnitTypes CvCityAI::AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync, AdvisorTypes
 
 								if (0 == iBestHappy)
 								{
-									iValue /= std::max(1, (getProductionTurnsLeft(eLoopUnit, 0) + (GC.getUnitInfo(eLoopUnit).isSuicide() ? 1 : 4)));
+									//iValue /= std::max(1, (getProductionTurnsLeft(eLoopUnit, 0) + (GC.getUnitInfo(eLoopUnit).isSuicide() ? 1 : 4)));
+									// K-Mod. The number of turns is usually not so important. What's important is how much it is going to cost us to build this unit.
+									int iProductionNeeded = getProductionNeeded(eLoopUnit);
+									int iProductionModifier = getBaseYieldRateModifier(YIELD_PRODUCTION, getProductionModifier(eLoopUnit));
+									FAssert(iProductionNeeded > 0 && iProductionModifier > 0);
+
+									iValue *= iProductionModifier;
+									iValue /= iProductionNeeded + getBaseYieldRate(YIELD_PRODUCTION)*iProductionModifier/100; // a bit of dilution.
+									// maybe we should have a special bonus for building it in 1 turn?  ... maybe not.
+									// K-Mod end
 								}
 								else
 								{

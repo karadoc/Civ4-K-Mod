@@ -16090,7 +16090,7 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, 
 		iPlots = GC.getMapINLINE().numPlotsINLINE();
 		// otherwise it's just silly.
 	}
-	FAssert(!bLocal || (iRange > 0 && iRange < 30)); // nothing wrong with being above 30. I just don't expect it...
+	FAssert(!bLocal || iRange > 0);
 	while (i < iPlots)
 	{
 		CvPlot* pLoopPlot = bLocal
@@ -23482,8 +23482,11 @@ bool CvUnitAI::AI_espionageSpy()
 // K-Mod edition. (This use to be a CvPlayerAI:: function.)
 EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer, CvPlot*& pPlot, int& iData) const
 {
+	PROFILE_FUNC();
+
 	CvPlot* pSpyPlot = plot();
 	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+	bool bBigEspionage = kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE);
 
 	FAssert(pSpyPlot != NULL);
 
@@ -23544,24 +23547,27 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 
 				for (iTestData-- ; iTestData >= 0; iTestData--)
 				{
-					//if (kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this))
-					int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwner(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
 					int iCost = kPlayer.getEspionageMissionCost((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this);
+					if (iCost < 0 || (iCost <= iEspPoints && !kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwnerINLINE(), pSpyPlot, iTestData, this)))
+						continue; // we can't do the mission, and cost is not the limiting factor.
+
+					int iValue = kPlayer.AI_espionageVal(pSpyPlot->getOwner(), (EspionageMissionTypes)iMission, pSpyPlot, iTestData);
 					iValue *= 80 + GC.getGameINLINE().getSorenRandNum(60, "AI best espionage mission");
 					iValue /= 100;
 					iValue -= iOverhead;
-					iValue -= iCost * iCost / std::max(1, iCost + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTargetTeam));
+					iValue -= iCost * (bBigEspionage ? 2 : 1) * iCost / std::max(1, iCost + GET_TEAM(getTeam()).getEspionagePointsAgainstTeam(eTargetTeam));
 
 					// If we can't do the mission yet, don't completely give up. It might be worth saving points for.
 					if (!kPlayer.canDoEspionageMission((EspionageMissionTypes)iMission, pSpyPlot->getOwner(), pSpyPlot, iTestData, this))
 					{
 						// Is cost is the reason we can't do the mission?
-						if (GET_TEAM(getTeam()).isHasTech((TechTypes)kMissionInfo.getTechPrereq()) && iCost > iEspPoints)
+						if (GET_TEAM(getTeam()).isHasTech((TechTypes)kMissionInfo.getTechPrereq()))
 						{
+							FAssert(iCost > iEspPoints); // (see condition at the top of the loop)
 							// Scale the mission value based on how long we think it will take to get the points.
 
 							int iTurns = (iCost - iEspPoints) / std::max(1, iEspionageRate);
-							iTurns *= kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)? 1 : 2;
+							iTurns *= bBigEspionage? 1 : 2;
 							// The number of turns is approximated (poorly) by assuming our entire esp rate is targeting eTargetTeam.
 							iValue *= 3;
 							iValue /= iTurns + 3;
@@ -23575,7 +23581,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 					}
 
 					// Block small missions when using "big espionage", unless the mission is really good value.
-					if (kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)
+					if (bBigEspionage
 						&& iValue < 50*kPlayer.getCurrentEra()*(kPlayer.getCurrentEra()+1) // 100, 300, 600, 1000, 1500, ...
 						&& iValue < 2*iCost)
 					{
@@ -23597,7 +23603,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 	}
 	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION)
 	{
-		logBBAI("      %S chooses %S as their best%s espionage mission (value: %d, cost: %d).", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), kPlayer.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE)?" (big)":"", iBestValue, kPlayer.getEspionageMissionCost(eBestMission, eTargetPlayer, pPlot, iData, this));
+		logBBAI("      %S chooses %S as their best%s espionage mission (value: %d, cost: %d).", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), bBigEspionage?" (big)":"", iBestValue, kPlayer.getEspionageMissionCost(eBestMission, eTargetPlayer, pPlot, iData, this));
 	}
 
 	return eBestMission;
