@@ -429,34 +429,26 @@ bool CvUnitAI::AI_update()
 
 
 // Returns true if took an action or should wait to move later...
-// K-Mod added 'bFirst'. bFirst should be "true" if this is the first unit in the group to use this follow function.
+// K-Mod. I've basically rewriten this function.
+// bFirst should be "true" if this is the first unit in the group to use this follow function.
 // the point is that there are some calculations and checks in here which only depend on the group, not the unit
 // so for efficiency, we should only check them once.
 bool CvUnitAI::AI_follow(bool bFirst)
 {
 	FAssert(getDomainType() != DOMAIN_AIR);
+
 	if (AI_followBombard())
-	{
 		return true;
+
+	if (bFirst && getGroup()->getHeadUnitAI() == UNITAI_ATTACK_CITY)
+	{
+		// note: AI_stackAttackCity will check which of our units can attack when comparing stacks;
+		// and it will issue the attack order using MOVE_DIRECT ATTACK, which will execute without waiting for the entire group to have movement points.
+		if (AI_stackAttackCity()) // automatic threshold
+			return true;
 	}
 
-	// BBAI -
-	// Pushing MISSION_MOVE_TO missions when not all units could move resulted in stack being
-	// broken up on the next turn.  Also, if we can't attack now we don't want to queue up an
-	// attack for next turn, better to re-evaluate.
-	// K-Mod. The above comment is more or less true. The AI_attack functions did not work in a useful
-	// way with follow. But checking if all units can move kind of misses the point of a follow command...
-	// I've changed the original attack functions to deal with follow in a more practical way.
-	/* bool bCanAllMove = getGroup()->canAllMove();
-
-	if( bCanAllMove )
-	{
-		if (AI_cityAttack(1, 65, true))
-		{
-			return true;
-		}
-	} */
-	// K-Mod, I've changed attack-follow code so that it will only attack with a single unit, not the whole group.
+	// I've changed attack-follow code so that it will only attack with a single unit, not the whole group.
 	if (bFirst && AI_cityAttack(1, 70, 0, true))
 		return true;
 	if (bFirst && AI_anyAttack(1, 70, 0, 2, true, true))
@@ -472,30 +464,10 @@ bool CvUnitAI::AI_follow(bool bFirst)
 		}
 	}
 
-	/* if( bCanAllMove )
-	{
-		if (AI_anyAttack(1, 70, 2, true, true))
-		{
-			return true;
-		}
-	} */
-
-	/* original bts code
-	if (isFound())
-	{
-		if (area()->getBestFoundValue(getOwnerINLINE()) > 0)
-		{
-			if (AI_foundRange(FOUND_RANGE, true))
-			{
-				return true;
-			}
-		}
-	} */
 	// K-Mod. AI_foundRange is bad AI. It doesn't always found when we want to, and it has the potential to found when we don't!
 	// So I've replaced it.
 	if (AI_foundFollow())
 		return true;
-	// K-Mod end
 
 	return false;
 }
@@ -24371,15 +24343,6 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 
 	FAssert(canMove());
 
-	/*if (bFollow)
-	{
-		iSearchRange = 1;
-	}
-	else
-	{
-		iSearchRange = AI_searchRange(iRange);
-	}*/ // disabled by K-Mod. It isn't wrong, but we just don't need this here.
-
 	for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 	{
 		for (int iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
@@ -24396,7 +24359,28 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 						//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, /*bAttack*/ true, /*bDeclareWar*/ true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
 						if (!atPlot(pLoopPlot) && getGroup()->canMoveOrAttackInto(pLoopPlot, true))
 						{
-							if (iPowerThreshold <= 0 || getGroup()->AI_compareStacks(pLoopPlot, true) >= iPowerThreshold)
+							// K-Mod
+							if (iPowerThreshold < 0)
+							{
+								// basic threshold calculation.
+								CvCity* pCity = pLoopPlot->getPlotCity();
+								// This automatic threshold calculation is used by AI_follow; and so we can't assume this unit is the head of the group.
+								// ... But I think it's fair to assume that if our group has any bombard, it the head unit will have it.
+								if (getGroup()->getHeadUnit()->bombardRate() > 0)
+								{
+									// if we can bombard, then we should do a rough calculation to give us a 'skip bombard' threshold.
+									iPowerThreshold = ((GC.getMAX_CITY_DEFENSE_DAMAGE()-pCity->getDefenseDamage()) * GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO() + pCity->getDefenseDamage() * GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO()) / std::max(1, GC.getMAX_CITY_DEFENSE_DAMAGE());
+								}
+								else
+								{
+									// if we have no bombard ability - just use the minimum threshold
+									iPowerThreshold = GC.getBBAI_SKIP_BOMBARD_MIN_STACK_RATIO();
+								}
+								FAssert(iPowerThreshold >= GC.getBBAI_ATTACK_CITY_STACK_RATIO());
+							}
+							// K-Mod end
+
+							if (getGroup()->AI_compareStacks(pLoopPlot, true) >= iPowerThreshold)
 							{
 								pCityPlot = pLoopPlot;
 							}

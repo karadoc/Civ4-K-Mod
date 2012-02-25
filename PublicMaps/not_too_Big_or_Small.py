@@ -1,6 +1,6 @@
 
 ## "not too Big or Small". A modified version of "big and small" to scale better with larger maps.
-## by Karadoc. version 1.1
+## by Karadoc. version 1.2
 
 from CvPythonExtensions import *
 import CvUtil
@@ -116,12 +116,16 @@ class BnSMultilayeredFractal(CvMapGeneratorUtil.MultilayeredFractal):
 		iIslandZones = iTotalZones - iContinentZones
 		
 		zone_types = [0] * iTotalZones
-		for i in range(iContinentZones):
-			x = self.dice.get(iContinentZones, "zone placement")
-			for j in range(x):
+		i = 0
+		while i < iContinentZones:
+			x = self.dice.get(iTotalZones - i, "zone placement")
+			j = 0
+			while j < x:
 				if (zone_types[j] == 1):
 					x = x + 1
+				j += 1
 			zone_types[x] = 1
+			i += 1
 		
 		iZoneWidth = int(self.iW / iHorizontalZones)
 		iZoneHeight = int(self.iH / iVerticalZones)

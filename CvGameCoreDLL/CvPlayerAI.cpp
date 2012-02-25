@@ -6673,15 +6673,9 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 					if( iMilitaryValue > 0 )
 					{
-						if (iHasMetCount == 0)
+						if (iHasMetCount == 0 || AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
 						{
 							iMilitaryValue /= 2;
-						}
-
-						if (bCapitalAlone)
-						{
-							iMilitaryValue *= 2;
-							iMilitaryValue /= 3;
 						}
 
 						// K-Mod
@@ -6696,13 +6690,13 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						int iMultiplier = 100;
 						if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
 						{
-							iMultiplier += 25;
-							if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3) || AI_isDoStrategy(AI_STRATEGY_ALERT2))
+							iMultiplier += 30;
+							if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3))
 							{
-								iMultiplier += 25;
+								iMultiplier += 30;
 								if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
 								{
-									iMultiplier += 25;
+									iMultiplier += 40;
 								}
 							}
 						}
@@ -6712,7 +6706,7 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 							|| kLoopUnit.getUnitAIType(UNITAI_CITY_COUNTER)
 							|| kLoopUnit.getUnitAIType(UNITAI_COLLATERAL)))
 						{
-							iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 50 : 25;
+							iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 70 : 30;
 							if (iPathLength <= 1 && AI_isDoStrategy(AI_STRATEGY_TURTLE))
 							{
 								iMultiplier += 75;
@@ -6720,6 +6714,12 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						}
 						iMilitaryValue *= iMultiplier;
 						iMilitaryValue /= 100;
+
+						if (bCapitalAlone && iMultiplier <= 100) // I've moved this block from above, and added the multiplier condition.
+						{
+							iMilitaryValue *= 2;
+							iMilitaryValue /= 3;
+						}
 						// K-Mod end
 
 						iUnitValue += iMilitaryValue;

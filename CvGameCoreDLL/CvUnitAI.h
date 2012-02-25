@@ -307,7 +307,7 @@ protected:
 	int AI_stackOfDoomExtra() const;
 
 	//bool AI_stackAttackCity(int iRange, int iPowerThreshold, bool bFollow = true);
-	bool AI_stackAttackCity(int iPowerThreshold); // K-Mod. used for adjacent cities only.
+	bool AI_stackAttackCity(int iPowerThreshold = -1); // K-Mod. used for adjacent cities only. Negative threshold means 'automatic'.
 	bool AI_moveIntoCity(int iRange);
 
 	bool AI_groupMergeRange(UnitAITypes eUnitAI, int iRange, bool bBiggerOnly = true, bool bAllowRegrouping = false, bool bIgnoreFaster = false);
