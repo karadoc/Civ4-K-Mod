@@ -2856,6 +2856,11 @@ void CvUnitAI::AI_attackCityMove()
 			}
 		}
 
+		if (AI_guardCity(false)) // note. this will eject a unit to defend the city rather then using the whole group
+		{
+			return;
+		}
+
 		if ((eAreaAIType == AREAAI_ASSAULT) || (eAreaAIType == AREAAI_ASSAULT_ASSIST))
 		{
 		    if (AI_offensiveAirlift())
@@ -2922,21 +2927,10 @@ void CvUnitAI::AI_attackCityMove()
 	if (isBarbarian())
 	{
 		int iThreshold = GC.getGameINLINE().getSorenRandNum(150, "barb attackCity stackVsStack threshold") + 20;
-		AI_stackVsStack(1, iThreshold, 0, iMoveFlags);
+		if (AI_stackVsStack(1, iThreshold, 0, iMoveFlags))
+			return;
 	}
 	// K-Mod end
-
-	if (AI_guardCity(false, false, MAX_INT, iMoveFlags))
-	{
-		if( bReadyToAttack && (eAreaAIType != AREAAI_DEFENSIVE))
-		{
-			CvSelectionGroup* pOldGroup = getGroup();
-
-			pOldGroup->AI_separateNonAI(UNITAI_ATTACK_CITY);
-		}
-
-		return;
-	}
 
 	//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 0, true, true, bIgnoreFaster))
 	if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 0, true, false, bIgnoreFaster))
@@ -3011,15 +3005,14 @@ void CvUnitAI::AI_attackCityMove()
 			if (bTargetTooStrong)
 			{
 				// K-Mod
-				if (AI_stackVsStack(2, std::max(120, iAttackRatio), 80, iMoveFlags))
+				if (AI_stackVsStack(2, iAttackRatio, 80, iMoveFlags))
 					return;
 				// K-Mod end
 
-				//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
-				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 3, true, false, bIgnoreFaster, false, false))
+				/*if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
 				{
 					return;
-				}
+				}*/
 
 				/* BBAI
 				int iOurOffense = GET_TEAM(getTeam()).AI_getOurPlotStrength(plot(),1,false,false,true);
@@ -3032,6 +3025,9 @@ void CvUnitAI::AI_attackCityMove()
 				// If in danger, seek defensive ground
 				if (4*iOurOffense < 3*iEnemyOffense)
 				{
+					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 3, true, false, bIgnoreFaster, false, false)) // including smaller groups
+						return;
+
 					if (iAttackRatio/2 > iComparePostBombard && 4*iEnemyOffense/5 > kOwner.AI_localDefenceStrength(plot(), getTeam()))
 					{
 						// we don't have anywhere near enough attack power, and we are in serious danger.
@@ -3052,6 +3048,20 @@ void CvUnitAI::AI_attackCityMove()
 					{
 						return;
 					}
+				}
+				else
+				{
+					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 3, true, false, bIgnoreFaster)) // bigger groups only
+						return;
+
+					if (canBombard(plot()))
+					{
+						getGroup()->pushMission(MISSION_BOMBARD, -1, -1, 0, false, false, MISSIONAI_ASSAULT, pTargetCity->plot());
+						return;
+					}
+
+					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 3, true, false, bIgnoreFaster, false, false)) // any size
+						return;
 				}
 				// K-Mod end
 			}
@@ -11525,43 +11535,33 @@ bool CvUnitAI::AI_guardCity(bool bLeave, bool bSearch, int iMaxPath, int iFlags)
 		CvSelectionGroup* pOldGroup = getGroup();
 		CvUnit* pEjectedUnit = getGroup()->AI_ejectBestDefender(pPlot);
 
-		if (pEjectedUnit != NULL)
+		if (!pEjectedUnit)
 		{
-			if (atPlot(pBestGuardPlot))
-			{
-				pEjectedUnit->getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_CITY, 0);
-			}
-			else
-			{
-				FAssert(!atPlot(pEndTurnPlot));
-				pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_GUARD_CITY, pBestGuardPlot);
-			}
+			FAssertMsg(false, "AI_ejectBestDefender failed to choose a candidate for AI_guardCity.");
+			pEjectedUnit = this;
+			if (getGroup()->getNumUnits() > 0)
+				joinGroup(0);
+		}
 
-			if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+		FAssert(pEjectedUnit);
+
+		// If the unit is not suited for defense, do not use MISSIONAI_GUARD_CITY.
+		MissionAITypes eMissionAI = pEjectedUnit->noDefensiveBonus() ? NO_MISSIONAI : MISSIONAI_GUARD_CITY;
+		if (atPlot(pBestGuardPlot))
+		{
+			pEjectedUnit->getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, eMissionAI, 0);
 		}
 		else
 		{
-			//This unit is not suited for defense, skip the mission
-			//to protect this city to encourage others to defend instead.
-			if (atPlot(pBestGuardPlot))
-			{
-				getGroup()->pushMission(MISSION_SKIP);
-			}
-			else
-			{
-				FAssert(!atPlot(pEndTurnPlot));
-				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_GUARD_CITY, NULL);
-				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags); // K-Mod. (this is what "skip the mission" means)
-			}
-			return true;
+			FAssert(bSearch);
+			FAssert(!atPlot(pEndTurnPlot));
+			pEjectedUnit->getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, eMissionAI, pBestGuardPlot);
 		}
+
+		if (pEjectedUnit->getGroup() == pOldGroup || pEjectedUnit == this)
+			return true;
+		else
+			return false;
 	}
 
 	return false;

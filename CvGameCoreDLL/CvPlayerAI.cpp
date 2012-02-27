@@ -22374,6 +22374,8 @@ CvPlot* CvPlayerAI::AI_getCitySite(int iIndex) const
 // return true if is fair enough for the AI to know there is a city here
 bool CvPlayerAI::AI_deduceCitySite(CvCity* pCity) const
 {
+	PROFILE_FUNC();
+
 	if (pCity->isRevealed(getTeam(), false))
 		return true;
 
@@ -22395,7 +22397,8 @@ bool CvPlayerAI::AI_deduceCitySite(CvCity* pCity) const
 
 			if (pLoopPlot && pLoopPlot->getRevealedOwner(getTeam(), false) == pCity->getOwnerINLINE())
 			{
-				iPoints += 1 + iLevel - iDist;
+				// if multiple cities have their plot in their range, then that will make it harder to deduce the precise city location.
+				iPoints += 1 + std::max(0, iLevel - iDist - pLoopPlot->getNumCultureRangeCities(pCity->getOwnerINLINE())+1);
 
 				if (iPoints > iLevel)
 					return true;
