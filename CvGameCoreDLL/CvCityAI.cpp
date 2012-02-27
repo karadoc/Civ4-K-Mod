@@ -7265,11 +7265,18 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			aiDiffYields[iJ] /= 2;
 		}
 
+		// K-Mod. If we're going to have too much food regardless of the improvement on this plot, then reduce the food value
+		if (iDesiredFoodChange < 0 && -iDesiredFoodChange > aiFinalYields[YIELD_FOOD])
+		{
+			iValue -= aiDiffYields[YIELD_FOOD] * iCorrectedFoodPriority * 40 / 100; // (with this reduction, food has the same weight as production.)
+		}
+		// K-Mod end
+
 		if (iValue > 0)
 		{
 			// this is mainly to make it improve better tiles first
 			//flood plain > grassland > plain > tundra
-			iValue += (aiFinalYields[YIELD_FOOD] * 10);
+			iValue += (aiFinalYields[YIELD_FOOD] * 8); // was 10
 			iValue += (aiFinalYields[YIELD_PRODUCTION] * 6);
 			iValue += (aiFinalYields[YIELD_COMMERCE] * 4);
 
@@ -7302,11 +7309,12 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 						iValue /= 100;
 					}
 				}
+				/* original bts code
 				if (iDesiredFoodChange < 0)
 				{
 					iValue *= 4 - iDesiredFoodChange;
 					iValue /= 3 + aiFinalYields[YIELD_FOOD];
-				}
+				} */ // huh?
 			}
 
 			if ((iCorrectedFoodPriority < 100) && (iProductionPriority > 100))
@@ -7678,11 +7686,23 @@ void CvCityAI::AI_updateBestBuild()
 						
 						iValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
 						aiValues[iI] = iValue;
+						/* original bts code
 						if ((iValue > 0) && (pLoopPlot->getRouteType() != NO_ROUTE))
 						{
 							iValue++;
+						} */
+						// K-Mod
+						// make some minor adjustments to prioritize plots that are easy to access, and plots which aren't already improved.
+						if (iValue > 0)
+						{
+							if (pLoopPlot->getRouteType() != NO_ROUTE)
+								iValue += 2;
+							if (pLoopPlot->getImprovementType() == NO_IMPROVEMENT)
+								iValue += 4;
+							if (pLoopPlot->getNumCultureRangeCities(getOwnerINLINE()) > 1)
+								iValue += 1;
 						}
-						//FAssert(iValue > 0);
+						// K-Mod end
 						
 						iValue = std::max(0, iValue);
 						
@@ -7692,7 +7712,7 @@ void CvCityAI::AI_updateBestBuild()
 						if (iValue > iBestPlotValue)
 						{
 							iBestPlot = iI;
-							iBestPlotValue = iValue;							
+							iBestPlotValue = iValue;
 						}
 					}
 					if (!pLoopPlot->isBeingWorked())
@@ -7711,7 +7731,8 @@ void CvCityAI::AI_updateBestBuild()
 		}
 		if (iBestPlot != -1)
 		{
-			m_aiBestBuildValue[iBestPlot] *= 2;
+			//m_aiBestBuildValue[iBestPlot] *= 2;
+			m_aiBestBuildValue[iBestPlot] = m_aiBestBuildValue[iBestPlot] * 3 / 2; // K-Mod
 		}
 
 		//Prune plots which are sub-par.
