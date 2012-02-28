@@ -1,5 +1,33 @@
-This is K-Mod version 1.19.
+This is K-Mod version 1.20.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+--
+v1.20 changelist
+
+UI
+
++ Replaced all calls to gDLL->altKey, shiftKey, and ctrlKey, with equivalent native Windows functions. This should fix the problem of keys not always registering correctly.
++ It is now possible to completely clear the production queue in automated cities. (The city governor will choose the production at the end of the turn.)
++ Fixed a bug which sometimes caused unbuilt religious buildings to show an incorrect amount of culture in the mouse-over text.
++ Removed the food-loss and starvation information from Net Effects. (In my opinion, the unhealthiness info is sufficient. The rest is just clutter.)
++ Made some speed improvements.
+
+AI
+
++ Made several significant changes and bug-fixes to the way the AI chooses which plot improvements to build, and which order to build them.
++ Fixed some problems in the way the AI calculates how many workers are needed at a city.
++ Changed the way the AI scales the value of its units. Hopefully this will stop the AI from building vastly inferior units just for variety.
++ Changed the value adjustment for units to depend on the production cost itself rather than on the number of turns to build it. This will make it less sensitive to small differences in production.
++ The 'follow' AI for UNITAI_ATTACK_CITY units will now use AI_stackAttackCity. This will make it possible for AI stacks to attack their target city on the same turn they bombard.
++ Rearranged some things in AI_attackCityMove to help the AI better deal with the situation when the target city is too strong.
++ Restored the rule that units with 'noDefensiveBonuses' will not use MISSIONAI_GUARD_CITY. This will encourage the AI to bring better defenders into the city ASAP.
++ Slightly strengthed the conditions for AI_deduceCitySite. The AI will now be less likely to guess the location of cities that are already within the borders of other cities.
++ Further increased the AI tech value of military units when using alert or conquest strategies.
++ The AI is now less likely to start building things which will be obsoleted by their current research.
++ AI_buildingValue now includes a value boost for buildings that are required in the city for other buildings. eg. walls get a bonus if they would allow the city to build a castle.
++ The AI is now less likely to be motivated to use its espionage slider by hatred.
++ Fixed a bug in AI_pickupStranded which prevented the AI from recognising its current location as the best pickup plot.
++ Fixed a problem which could cause an infinite loop in certain mal-thought-out mods. (ie. if two buildings have each other as prereqs, previously it would cause an infinite loop in the AI. Now it does not.)
 
 --
 v1.19 changelist
