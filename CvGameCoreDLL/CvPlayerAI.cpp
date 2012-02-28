@@ -14515,7 +14515,7 @@ void CvPlayerAI::AI_changeMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2, 
 	AI_invalidateAttitudeCache(eIndex1); // K-Mod. (missing from CAR mod)
 }
 
-int CvPlayerAI::AI_calculateGoldenAgeValue() const
+int CvPlayerAI::AI_calculateGoldenAgeValue(bool bConsiderRevolution) const
 {
     int iValue;
     int iTempValue;
@@ -14545,7 +14545,7 @@ int CvPlayerAI::AI_calculateGoldenAgeValue() const
 
 	// K-Mod. Add some value if we would use the opportunity to switch civics
 	// Note: this first "if" isn't necessary. It just saves us checking civics when we don't need to.
-	if (getMaxAnarchyTurns() != 0 && !isGoldenAge() && getAnarchyModifier() + 100 > 0)
+	if (bConsiderRevolution && getMaxAnarchyTurns() != 0 && !isGoldenAge() && getAnarchyModifier() + 100 > 0)
 	{
 		CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)

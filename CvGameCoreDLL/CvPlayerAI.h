@@ -320,7 +320,7 @@ public:
 	int AI_getMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2) const;
 	void AI_changeMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2, int iChange);
 
-	int AI_calculateGoldenAgeValue() const;
+	int AI_calculateGoldenAgeValue(bool bConsiderRevolution = true) const;
 
 	void AI_doCommerce();
 
