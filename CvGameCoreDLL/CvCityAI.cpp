@@ -7506,6 +7506,7 @@ int CvCityAI::AI_countBestBuilds(CvArea* pArea) const
 void CvCityAI::AI_updateBestBuild()
 {
 	int iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, iDesiredFoodChange;
+	CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
 
 	AI_getYieldMultipliers(iFoodMultiplier, iProductionMultiplier, iCommerceMultiplier, iDesiredFoodChange);
 
@@ -7527,12 +7528,34 @@ void CvCityAI::AI_updateBestBuild()
 	}
 	if (!bChop)
 	{
-		UnitTypes eProductionUnit = getProductionUnit();
-		bChop = (eProductionUnit != NO_UNIT && GC.getUnitInfo(eProductionUnit).isFoodProduction());
+		bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
 	}
 	if (!bChop)
 	{
-		bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
+		/* UnitTypes eProductionUnit = getProductionUnit();
+		bChop = (eProductionUnit != NO_UNIT && GC.getUnitInfo(eProductionUnit).isFoodProduction()); */
+		// K-Mod
+		UnitAITypes eUnitAI = getProductionUnitAI();
+
+		switch (eUnitAI)
+		{
+		case UNITAI_SETTLE:
+			if (kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())
+			{
+				int iDummy;
+				bChop = kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0;
+			}
+			break;
+
+		case UNITAI_WORKER:
+			// bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < kOwner.AI_neededWorkers(area())/2; // maybe too slow
+			bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < std::max(area()->getCitiesPerPlayer(getOwnerINLINE()), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2);
+			break;
+
+		default:
+			break;
+		}
+		// K-Mod end
 	}
 
 	/*if (getProductionBuilding() != NO_BUILDING)
@@ -7621,7 +7644,6 @@ void CvCityAI::AI_updateBestBuild()
 					// since best-build has changed, cancel all current build missions on this plot
 					if (eLastBestBuildType != NO_BUILD)
 					{
-						CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
 						int iLoop;
 						for(CvSelectionGroup* pLoopSelectionGroup = kOwner.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = kOwner.nextSelectionGroup(&iLoop))
 						{
