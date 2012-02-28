@@ -3657,17 +3657,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 	int iValue = 0;
 
-	// K-Mod (moved from AI_bestBuildingThreshold)
-	if (kBuilding.getFreeBuildingClass() != NO_BUILDINGCLASS && bAllowRecursion)
-	{
-		BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(kBuilding.getFreeBuildingClass());
-		if (NO_BUILDING != eFreeBuilding)
-		{
-			iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags, 0, bConstCache, false) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
-		}
-	}
-	// K-Mod end
-
 	for (int iPass = 0; iPass < 2; iPass++)
 	{
 		if ((iFocusFlags == 0) || (iValue > 0) || (iPass == 0))
@@ -4488,6 +4477,18 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				// (I've deleted the original code for this section.)
 				if (bAllowRecursion)
 				{
+					// (moved from AI_bestBuildingThreshold)
+					if (kBuilding.getFreeBuildingClass() != NO_BUILDINGCLASS)
+					{
+						BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(kBuilding.getFreeBuildingClass());
+						if (NO_BUILDING != eFreeBuilding)
+						{
+							// K-Mod note: this is actually a pretty poor approximation, because the value of the free building is likely to be different in the other cities
+							iValue += (AI_buildingValue(eFreeBuilding, 0, 0, bConstCache, false) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
+						}
+					}
+					//
+
 					int iCountMaking = -1; // we'll count it when it is first needed.
 
 					for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
@@ -4496,15 +4497,40 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						if (eLoopBuilding == NO_BUILDING)
 							continue;
 
+						if (GC.getBuildingInfo(eLoopBuilding).getPrereqNumOfBuildingClass(eBuildingClass) <= 0 &&
+							!GC.getBuildingInfo(eLoopBuilding).isBuildingClassNeededInCity(kBuilding.getBuildingClassType()))
+							continue; // kBuilding isn't a prereq for eLoopBuilding
+
+						if (!kOwner.canConstruct(eLoopBuilding, false, true, false))
+							continue; // we can't construct eLoopBuilding anyway
+
+						// city local prereq:
+						if (GC.getBuildingInfo(eLoopBuilding).isBuildingClassNeededInCity(kBuilding.getBuildingClassType()) && getNumBuilding(eBuilding) == 0)
+						{
+							if (kBuilding.getProductionCost() > 0 && GC.getBuildingInfo(eLoopBuilding).getProductionCost() > 0)
+							{
+								int iTempValue = AI_buildingValue(eLoopBuilding, 0, 0, bConstCache, false);
+								if (iTempValue > 0)
+								{
+									// scale the bonus value by a rough approximation of how likely we are the build the thing
+									iTempValue *= kBuilding.getProductionCost();
+									iTempValue /= kBuilding.getProductionCost() + 2*GC.getBuildingInfo(eLoopBuilding).getProductionCost();
+									iValue += iTempValue;
+								}
+							}
+						}
+
+						// civ-wide prereq:
+						// (first check the basic prereq number again, to save us from counting a bunch of things when we don't need to)
 						if (GC.getBuildingInfo(eLoopBuilding).getPrereqNumOfBuildingClass(eBuildingClass) <= 0)
 							continue;
 
 						if (iCountMaking < 0)
 							iCountMaking = kOwner.getBuildingClassMaking(eBuildingClass);
 
+						// now calculate how many of this building we actually need...
 						int iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, eBuildingClass, iCountMaking);
 
-						// if we need some of us to build iI building, and we dont need more than we have cities
 						if (iPrereqBuildings > 0 && iPrereqBuildings <= iNumCities)
 						{
 							// do we need more than what we are currently building?
