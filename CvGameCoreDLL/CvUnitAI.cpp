@@ -21081,7 +21081,7 @@ bool CvUnitAI::AI_pickupStranded(UnitAITypes eUnitAI, int iMaxPath)
 				{
 					CvPlot* pAdjacentPlot = plotDirection(pPickupPlot->getX_INLINE(), pPickupPlot->getY_INLINE(), ((DirectionTypes)iI));
 
-					if (pAdjacentPlot && !pAdjacentPlot->isVisibleEnemyUnit(this) && generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxPath))
+					if (pAdjacentPlot && (atPlot(pAdjacentPlot) || canMoveInto(pAdjacentPlot)) && generatePath(pAdjacentPlot, 0, true, &iPathTurns, iMaxPath))
 					{
 						pTargetPlot = getPathEndTurnPlot();
 						break;

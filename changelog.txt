@@ -1,11 +1,12 @@
-This is K-Mod version 1.20.
+This is K-Mod version 1.20b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 --
 v1.20 changelist
 
-UI
+Game
 
++ Reduced the natural disapperance probability for fallout from 5% per turn to 2.5% per turn. (v1.20b)
 + Replaced all calls to gDLL->altKey, shiftKey, and ctrlKey, with equivalent native Windows functions. This should fix the problem of keys not always registering correctly.
 + It is now possible to completely clear the production queue in automated cities. (The city governor will choose the production at the end of the turn.)
 + Fixed a bug which sometimes caused unbuilt religious buildings to show an incorrect amount of culture in the mouse-over text.
@@ -28,6 +29,15 @@ AI
 + The AI is now less likely to be motivated to use its espionage slider by hatred.
 + Fixed a bug in AI_pickupStranded which prevented the AI from recognising its current location as the best pickup plot.
 + Fixed a problem which could cause an infinite loop in certain mal-thought-out mods. (ie. if two buildings have each other as prereqs, previously it would cause an infinite loop in the AI. Now it does not.)
+
+v1.20b
+
++ Fixed a rare infinite loop bug in AI_pickupStranded.
++ Fixed a mistake in AI_getImprovementValue which could cause the AI to oscilate improvement when close to their food target.
++ Fixed a couple of misuses of 'isHasPathToAreaEnemyCity'. This was causing some stranded groups to not recognise that they are in fact stranded.
++ When evaluating the destroy building espionage mission, the AI no longer gives a bonus to prerequite buildings.
++ AI_buildingValue now takes golden age effects into account. (eg. Taj Mahal and Mausoleum of Maussollos) - Previously, these effects were just ignored in the evaluation.
++ Fixed several mistakes in the prereq part of AI_buildingValue.
 
 --
 v1.19 changelist
