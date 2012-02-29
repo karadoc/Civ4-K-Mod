@@ -13812,7 +13812,9 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 						{
 							//iValue += pCity->AI_buildingValue((BuildingTypes)iData);
 							// K-Mod
-							iValue += 2 * pCity->AI_buildingValue((BuildingTypes)iData);
+							// Note: I'm not allowing recursion in the building evaluation.
+							// This may cause the cached value to be inaccurate, but it doesn't really matter, because the building is already built!
+							iValue += 2 * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false);
 							iValue *= 60 + kBuilding.getProductionCost();
 							iValue /= 100;
 						}
