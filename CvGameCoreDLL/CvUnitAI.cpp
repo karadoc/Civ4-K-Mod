@@ -116,6 +116,8 @@ bool CvUnitAI::AI_update()
 
 			if (pTransportUnit != NULL)
 			{
+				// K-Mod. I think the following condition is a bit suspicious; but I haven't had the need to change it yet.
+				// The thing is, transport units with cargo always have their turn before the cargo does - so... well... I'm not sure what the point of this is.
 				if (pTransportUnit->getGroup()->hasMoved() || (pTransportUnit->getGroup()->headMissionQueueNode() != NULL))
 				{
 					getGroup()->pushMission(MISSION_SKIP);
@@ -2610,7 +2612,7 @@ void CvUnitAI::AI_attackMove()
 					return;
 				}
 
-				if( (GET_TEAM(getTeam()).getAtWarCount(true) > 0) && !(getGroup()->isHasPathToAreaEnemyCity(false)) )
+				if( (GET_TEAM(getTeam()).getAtWarCount(true) > 0) && !(getGroup()->isHasPathToAreaEnemyCity()) )
 				{
 					if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, MOVE_SAFE_TERRITORY, 4))
 					{
@@ -20650,9 +20652,13 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 // If we're on the coast, wait to be rescued!
 bool CvUnitAI::AI_handleStranded(int iFlags)
 {
-	FAssert(!isCargo());
-
 	PROFILE_FUNC();
+
+	if (isCargo())
+	{
+		// This is possible, in some rare cases, but I'm currently trying to pin down precisely what those cases are.
+		FAssertMsg(false, "AI_handleStranded: this unit is already cargo.");
+	}
 
 	if (isHuman())
 		return false;
@@ -20676,7 +20682,7 @@ bool CvUnitAI::AI_handleStranded(int iFlags)
 			return false;
 		}
 
-		if ((canFight() || isSpy()) && getGroup()->isHasPathToAreaEnemyCity(false, iFlags))
+		if ((canFight() || isSpy()) && getGroup()->isHasPathToAreaEnemyCity(true, iFlags))
 		{
 			return false;
 		}

@@ -2657,6 +2657,7 @@ void getUnitAIString(CvWString& szString, UnitAITypes eUnitAI)
 	case UNITAI_ATTACK_AIR: szString = L"attack air"; break;
 	case UNITAI_DEFENSE_AIR: szString = L"defense air"; break;
 	case UNITAI_CARRIER_AIR: szString = L"carrier air"; break;
+	case UNITAI_MISSILE_AIR: szString = L"missile air"; break; // K-Mod (this string was missing)
 	case UNITAI_PARADROP: szString = L"paradrop"; break;
 	case UNITAI_ATTACK_CITY_LEMMING: szString = L"attack city lemming"; break;
 

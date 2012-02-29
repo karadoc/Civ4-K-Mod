@@ -7232,7 +7232,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		}
 	}
 
-	if (iValue >= 0)
+	//if (iValue >= 0) // condition disabled by K-Mod. (maybe the yield will be worth it!)
 	{
 		iValue *= 2;
 		for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
@@ -7324,7 +7324,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		}
 
 		// K-Mod. If we're going to have too much food regardless of the improvement on this plot, then reduce the food value
-		if (iDesiredFoodChange < 0 && -iDesiredFoodChange > aiFinalYields[YIELD_FOOD])
+		if (iDesiredFoodChange < 0 && -iDesiredFoodChange > aiFinalYields[YIELD_FOOD] - aiDiffYields[YIELD_FOOD])
 		{
 			iValue -= aiDiffYields[YIELD_FOOD] * iCorrectedFoodPriority * 40 / 100; // (with this reduction, food has the same weight as production.)
 		}
