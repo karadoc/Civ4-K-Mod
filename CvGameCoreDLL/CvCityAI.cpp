@@ -4512,9 +4512,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						}
 					}
 					//
-
-					int iCountMaking = -1; // we'll count it when it is first needed.
-
 					for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 					{
 						BuildingTypes eLoopBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings((BuildingClassTypes)iI); // K-Mod
@@ -4534,21 +4531,45 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 						if (kLoopBuilding.getPrereqNumOfBuildingClass(eBuildingClass) > 0)
 						{
-							// if we haven't already, count how many of eBuildingClass we are currently making
-							if (iCountMaking < 0)
-								iCountMaking = kOwner.getBuildingClassMaking(eBuildingClass);
+							BuildingClassTypes eLoopClass = (BuildingClassTypes)kLoopBuilding.getBuildingClassType();
 
-							// calculate how many more of eBuilding we actually need.
-							iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, eBuildingClass, iCountMaking);
+							// calculate how many more of eBuilding we actually need, given that we might be constructing some eLoopBuilding already.
+							iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, eBuildingClass, kOwner.getBuildingClassMaking(eLoopClass));
+							FAssert(iPrereqBuildings > 0);
+
+							// subtract the number of eBuildings we have already.
+							// (Note, both BuildingClassCount and BuildingClassMaking are cached. This is fast.)
+							iPrereqBuildings -= kOwner.getBuildingClassCount(eBuildingClass);
+						}
+
+						// only score the local building requirement if the civ-wide requirement is already met
+						if (kLoopBuilding.isBuildingClassNeededInCity(kBuilding.getBuildingClassType()) &&
+							getNumBuilding(eBuilding) == 0 && iPrereqBuildings <= 0)
+						{
+							if (kBuilding.getProductionCost() > 0 && kLoopBuilding.getProductionCost() > 0)
+							{
+								int iTempValue = AI_buildingValue(eLoopBuilding, 0, 0, bConstCache, false);
+								if (iTempValue > 0)
+								{
+									// scale the bonus value by a rough approximation of how likely we are the build the thing
+									// (note. the combined production cost is essentially the cost of completing kLoopBuilding given our current position.)
+									iTempValue *= 2*kBuilding.getProductionCost();
+									iTempValue /= 2*kBuilding.getProductionCost() + 3*kLoopBuilding.getProductionCost();
+									iValue += iTempValue;
+								}
+							}
 						}
 
 						if (iPrereqBuildings > 0 && iPrereqBuildings <= iNumCities)
 						{
-							// do we need more than what we are currently building?
-							iPrereqBuildings -= kOwner.getBuildingClassCountPlusMaking(eBuildingClass);
+							// We've already subtracted the number of eBuilding that are already built.
+							// Now we subtract the number of eBuilding that we are currently constructing.
+							//iPrereqBuildings -= kOwner.getBuildingClassMaking(eBuildingClass) - (getFirstBuildingOrder(eBuilding) < 0 ? 0 : 1);
+							iPrereqBuildings -= kOwner.getBuildingClassMaking(eBuildingClass); // (keep it simple)
 							if (iPrereqBuildings > 0)
 							{
-								// K-Mod, lets do it the long and slow way...
+								// Now we work out how valuable it would be to enable eLoopBuilding;
+								// and then scale that value by how many more eBuildings we need.
 								CvCity* pLoopCity;
 								int iLoop;
 								int iHighestValue = 0;
@@ -4570,24 +4591,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 									iTempValue *= iCanBuildPrereq + 3*iPrereqBuildings;
 									iTempValue /= (iPrereqBuildings+1)*(3*iCanBuildPrereq + iPrereqBuildings);
 									// That's between 1/(iPrereqBuildings+1) and 1/3*(iPrereqBuildings+1), depending on # needed and # buildable
-									iValue += iTempValue;
-								}
-							}
-						}
-
-						// only score the local building requirement if the civ-wide requirement is already met, or will be met by building the prereq here.
-						if (kLoopBuilding.isBuildingClassNeededInCity(kBuilding.getBuildingClassType()) &&
-							getNumBuilding(eBuilding) == 0 && iPrereqBuildings <= (getProductionBuilding() == eBuilding ? 0 : 1))
-						{
-							if (kBuilding.getProductionCost() > 0 && kLoopBuilding.getProductionCost() > 0)
-							{
-								int iTempValue = AI_buildingValue(eLoopBuilding, 0, 0, bConstCache, false);
-								if (iTempValue > 0)
-								{
-									// scale the bonus value by a rough approximation of how likely we are the build the thing
-									// (note. the combined production cost is essentially the cost of completing kLoopBuilding given our current position.)
-									iTempValue *= 2*kBuilding.getProductionCost();
-									iTempValue /= 2*kBuilding.getProductionCost() + 3*kLoopBuilding.getProductionCost();
 									iValue += iTempValue;
 								}
 							}
