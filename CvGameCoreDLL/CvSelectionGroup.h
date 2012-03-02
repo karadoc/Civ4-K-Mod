@@ -62,6 +62,7 @@ public:
 	bool isFull();																																											// Exposed to Python
 	bool hasCargo();																																										// Exposed to Python
 	int getCargo() const;
+	int cargoSpaceAvailable(SpecialUnitTypes eSpecialCargo = NO_SPECIALUNIT, DomainTypes eDomainCargo = NO_DOMAIN) const; // K-Mod
 	DllExport bool canAllMove();																																				// Exposed to Python
 	bool canAnyMove();																																									// Exposed to Python
 	bool hasMoved();																																										// Exposed to Python
@@ -123,7 +124,7 @@ public:
 /* General AI                                                                                   */
 /************************************************************************************************/
 	void setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup** pOtherGroup = NULL);
-	void setRemoteTransportUnit(CvUnit* pTransportUnit);
+	//void setRemoteTransportUnit(CvUnit* pTransportUnit);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/

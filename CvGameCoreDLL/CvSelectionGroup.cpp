@@ -1189,10 +1189,29 @@ void CvSelectionGroup::startMission()
 				{
 					switch (headMissionQueueNode()->m_data.eMissionType)
 					{
+					// K-Mod
+					case MISSION_SKIP:
+						// If the unit has some particular purpose for its 'skip' mission, automatically unload it.
+						// (eg. if a unit in a boat wants to do MISSIONAI_GUARD_CITY; we should unload it here.)
+						switch (AI_getMissionAIType())
+						{
+						case NO_MISSIONAI:
+						case MISSIONAI_LOAD_ASSAULT:
+						case MISSIONAI_LOAD_SETTLER:
+						case MISSIONAI_LOAD_SPECIAL:
+							pUnitNode = 0; // don't auto-unload. Just do nothing.
+							break;
+						default:
+							FAssert(AI_isControlled());
+							pLoopUnit->unload(); // this checks canUnload internally
+							break;
+						}
+						break;
+					// K-Mod end
 					case MISSION_MOVE_TO:
 					case MISSION_ROUTE_TO:
 					case MISSION_MOVE_TO_UNIT:
-					case MISSION_SKIP:
+					//case MISSION_SKIP:
 					case MISSION_SLEEP:
 					case MISSION_FORTIFY:
 					case MISSION_AIRPATROL:
@@ -1598,6 +1617,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 					pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
 					if (pTargetUnit != NULL)
 					{
+#ifdef OLD_PICKUP_CODE // K-Mod, I've disabled this old pickup code.   AI junk like this shouldn't be in the game-mechanics part of the code.
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      12/07/08                                jdog5000      */
 /*                                                                                              */
@@ -1706,6 +1726,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
+#endif
 
 						if (AI_getMissionAIType() != MISSIONAI_SHADOW && AI_getMissionAIType() != MISSIONAI_GROUP)
 						{
@@ -2568,6 +2589,24 @@ int CvSelectionGroup::getCargo() const
 
 	return iCargoCount;
 }
+
+// K-Mod
+int CvSelectionGroup::cargoSpaceAvailable(SpecialUnitTypes eSpecialCargo, DomainTypes eDomainCargo) const
+{
+	int iSpace = 0;
+
+	CLLNode<IDInfo>* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = nextUnitNode(pUnitNode);
+
+		iSpace += pLoopUnit->cargoSpaceAvailable(eSpecialCargo, eDomainCargo);
+	}
+
+	return iSpace;
+}
+// K-Mod end
 
 bool CvSelectionGroup::canAllMove()
 {
@@ -3859,6 +3898,7 @@ void CvSelectionGroup::setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup
 
 /// \brief Function for loading stranded units onto an offshore transport
 ///
+/* disabled by K-Mod
 void CvSelectionGroup::setRemoteTransportUnit(CvUnit* pTransportUnit)
 {
 	// if we are loading
@@ -3940,7 +3980,7 @@ void CvSelectionGroup::setRemoteTransportUnit(CvUnit* pTransportUnit)
 			}
 		}
 	}
-}
+} */
 
 bool CvSelectionGroup::isAmphibPlot(const CvPlot* pPlot) const
 {

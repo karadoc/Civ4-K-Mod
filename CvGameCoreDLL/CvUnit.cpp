@@ -11497,19 +11497,6 @@ void CvUnit::setTransportUnit(CvUnit* pTransportUnit)
 			if (getGroup()->getActivityType() != ACTIVITY_MISSION) // K-Mod. (the unit might be trying to walk somewhere.)
 				getGroup()->setActivityType(ACTIVITY_AWAKE);
 		}
-
-#ifdef _DEBUG
-		std::vector<CvUnit*> aCargoUnits;
-		if (pOldTransportUnit != NULL)
-		{
-			pOldTransportUnit->getCargoUnits(aCargoUnits);
-		}
-		if (pTransportUnit != NULL)
-		{
-			pTransportUnit->getCargoUnits(aCargoUnits);
-		}
-#endif
-
 	}
 }
 

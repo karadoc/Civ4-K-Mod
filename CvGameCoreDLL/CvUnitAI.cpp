@@ -116,9 +116,10 @@ bool CvUnitAI::AI_update()
 
 			if (pTransportUnit != NULL)
 			{
-				// K-Mod. I think the following condition is a bit suspicious; but I haven't had the need to change it yet.
-				// The thing is, transport units with cargo always have their turn before the cargo does - so... well... I'm not sure what the point of this is.
-				if (pTransportUnit->getGroup()->hasMoved() || (pTransportUnit->getGroup()->headMissionQueueNode() != NULL))
+				//if (pTransportUnit->getGroup()->hasMoved() || (pTransportUnit->getGroup()->headMissionQueueNode() != NULL))
+				// K-Mod. Note: transport units with cargo always have their turn before the cargo does - so... well... I've changed the skip condition.
+				if (pTransportUnit->getGroup()->headMissionQueueNode() != NULL)
+				// K-Mod end
 				{
 					getGroup()->pushMission(MISSION_SKIP);
 					return false;
@@ -2863,7 +2864,8 @@ void CvUnitAI::AI_attackCityMove()
 			return;
 		}
 
-		if ((eAreaAIType == AREAAI_ASSAULT) || (eAreaAIType == AREAAI_ASSAULT_ASSIST))
+		//if ((eAreaAIType == AREAAI_ASSAULT) || (eAreaAIType == AREAAI_ASSAULT_ASSIST))
+		if (bAssault) // K-Mod
 		{
 		    if (AI_offensiveAirlift())
 		    {
@@ -3180,6 +3182,15 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 		}
 	}
+	//
+	// K-Mod. The loading of units for assault needs to be before the following omnigroup - otherwise the units may leave the boat to join their friends.
+	if (bAssault && (!pTargetCity || pTargetCity->area() != area()))
+	{
+		if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, iMoveFlags, 6)) // was 4 max-turns
+		{
+			return;
+		}
+	}
 	// K-Mod end
 
 	//if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
@@ -3283,13 +3294,14 @@ void CvUnitAI::AI_attackCityMove()
 
 	if (plot()->getOwnerINLINE() == getOwnerINLINE())
 	{
+		/* original bts code
 		if (!bLandWar)
 		{
 			if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, iMoveFlags, 4))
 			{
 				return;
 			}
-		}
+		} */ // I've moved this to be above the omniGroup stuff, otherwise it just causes AI confusion.
 
 		if( bReadyToAttack )
 		{
@@ -6570,7 +6582,7 @@ void CvUnitAI::AI_attackSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if (AI_anyAttack(2, 50))
 			{
@@ -6813,7 +6825,7 @@ void CvUnitAI::AI_reserveSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if (AI_anyAttack(2, 60))
 			{
@@ -7033,7 +7045,7 @@ void CvUnitAI::AI_escortSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if (AI_anyAttack(1, 60))
 			{
@@ -7246,7 +7258,7 @@ void CvUnitAI::AI_exploreSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if (!isHuman())
 			{
@@ -7431,9 +7443,9 @@ void CvUnitAI::AI_assaultSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/4  || iOurDefense == 0) // was 1 vs 1/8
+		if (iEnemyOffense > iOurDefense/4) // was 1 vs 1/8
 		{
-			if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+			if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 			{
 				if( !bEmpty )
 				{
@@ -8136,7 +8148,7 @@ void CvUnitAI::AI_settlerSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if( bEmpty )
 			{
@@ -8518,7 +8530,7 @@ void CvUnitAI::AI_missionarySeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			// Retreat to primary area first
 			if (AI_retreatToCity(true))
@@ -8628,7 +8640,7 @@ void CvUnitAI::AI_spySeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			// Retreat to primary area first
 			if (AI_retreatToCity(true))
@@ -8742,7 +8754,7 @@ void CvUnitAI::AI_carrierSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if (AI_retreatToCity(true))
 			{
@@ -8870,7 +8882,7 @@ void CvUnitAI::AI_missileCarrierSeaMove()
 			iOurDefense *= 2;
 		}
 
-		if (iEnemyOffense > iOurDefense/2  || iOurDefense == 0) // was 1 vs 1/4
+		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
 			if (AI_shadow(UNITAI_ASSAULT_SEA, 1, 50, false, true, getMoves()))
 			{
@@ -11253,25 +11265,37 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 		else
 		{
 			// BBAI TODO: To split or not to split?
-			int iCargoSpaceAvailable = pBestUnit->cargoSpaceAvailable(getSpecialUnitType(), getDomainType());
-			FAssertMsg(iCargoSpaceAvailable > 0, "best unit has no space");
-
-			// split our group to fit on the transport
-			CvSelectionGroup* pOtherGroup = NULL;
-			CvSelectionGroup* pSplitGroup = getGroup()->splitGroup(iCargoSpaceAvailable, this, &pOtherGroup);			
-			FAssertMsg(pSplitGroup, "splitGroup failed");
-			FAssertMsg(getGroupID() == pSplitGroup->getID(), "splitGroup failed to put head unit in the new group");
-
-			if (pSplitGroup != NULL)
+			// K-Mod. Wow about we this:
+			// Split the group only if it is going to take more than 1 turn to get to the transport.
+			if (generatePath(pBestUnit->plot(), iFlags, true, 0, 1))
 			{
-				CvPlot* pOldPlot = pSplitGroup->plot();
-				pSplitGroup->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), iFlags, false, false, eMissionAI, NULL, pBestUnit);
-				bool bMoved = (pSplitGroup->plot() != pOldPlot);
-				if (!bMoved && pOtherGroup != NULL)
+				// only 1 turn. Don't split.
+				getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), iFlags, false, false, eMissionAI, NULL, pBestUnit);
+				return true;
+			}
+			else
+			{
+				// (bbai code. split the group)
+				int iCargoSpaceAvailable = pBestUnit->cargoSpaceAvailable(getSpecialUnitType(), getDomainType());
+				FAssertMsg(iCargoSpaceAvailable > 0, "best unit has no space");
+
+				// split our group to fit on the transport
+				CvSelectionGroup* pOtherGroup = NULL;
+				CvSelectionGroup* pSplitGroup = getGroup()->splitGroup(iCargoSpaceAvailable, this, &pOtherGroup);			
+				FAssertMsg(pSplitGroup, "splitGroup failed");
+				FAssertMsg(getGroupID() == pSplitGroup->getID(), "splitGroup failed to put head unit in the new group");
+
+				if (pSplitGroup != NULL)
 				{
-					joinGroup(pOtherGroup);
+					CvPlot* pOldPlot = pSplitGroup->plot();
+					pSplitGroup->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), iFlags, false, false, eMissionAI, NULL, pBestUnit);
+					bool bMoved = (pSplitGroup->plot() != pOldPlot);
+					if (!bMoved && pOtherGroup != NULL)
+					{
+						joinGroup(pOtherGroup);
+					}
+					return bMoved;
 				}
-				return bMoved;
 			}
 		}
 	}

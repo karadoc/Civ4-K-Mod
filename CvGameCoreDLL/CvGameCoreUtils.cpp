@@ -1676,7 +1676,11 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 			if (pLoopUnit->canFight())
 			{
 				iDefenceCount++;
-				iDefenceMod += pLoopUnit->noDefensiveBonus() ? 0 : pToPlot->defenseModifier(eTeam, false);
+				if (pLoopUnit->canDefend(pToPlot))
+					iDefenceMod += pLoopUnit->noDefensiveBonus() ? 0 : pToPlot->defenseModifier(eTeam, false);
+				else
+					iDefenceMod -= 100; // we don't want to be here.
+
 				// K-Mod note. the above code doesn't count all defensive bonuses, unfortunately.
 				// We could count everything like this:
 				/*
