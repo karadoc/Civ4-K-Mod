@@ -12140,7 +12140,8 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 					else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
 						iAttitudeWeight = 50;
 					else
-						iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - 75;
+						iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - (isHuman() ? 125 : 75);
+					// note: this is to discourage automated human units from spreading to the AI, not AI to human.
 
 					// a rough check to save us some time.
 					if (iAttitudeWeight <= 0 && iSpreadExternalValue <= 0)
@@ -19835,11 +19836,11 @@ void CvPlayerAI::AI_updateStrategyHash()
 
 					if (kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_PREPARING_TOTAL)
 					{
-						iCrushValue += 6;					
+						iCrushValue += 6;
 					}
 					else if ((kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_TOTAL) && (kTeam.AI_getWarPlanStateCounter((TeamTypes)iI) < 20))
 					{
-						iCrushValue += 6;						
+						iCrushValue += 6;
 					}
 					
 					if ((kTeam.AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE) && (kTeam.AI_getWarPlanStateCounter((TeamTypes)iI) < 20))

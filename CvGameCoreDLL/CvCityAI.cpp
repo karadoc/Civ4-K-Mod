@@ -661,7 +661,8 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			// (note: I haven't tried to match this value decrease with the actual cost increase,
 			// because the value of the great people changes as well.)
 			iTempValue *= 100;
-			iTempValue /= 90 + 10 * kOwner.getGreatPeopleCreated();
+			iTempValue /= 90 + 7 * kOwner.getGreatPeopleCreated(); // it would be nice if we had a flavour modifier for this.
+			//iTempValue /= 90 + kOwner.getGreatPeopleCreated() * 900/std::max(10, kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass()));
 		}
 
 		iTempValue *= getTotalGreatPeopleRateModifier();
@@ -4526,6 +4527,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 							!kOwner.canConstruct(eLoopBuilding, false, true, false))
 						{
 							// either we don't need eBuilding in order to build eLoopBuilding, or we can't construct eLoopBuilding anyway
+							// NOTE: the above call to canConstruct will return true even if the city already has the maximum number of national wonders. This is a minor flaw in the AI.
 							continue;
 						}
 
@@ -8562,6 +8564,7 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 								{
 									if (canTrain(eLoopUnit))
 									{
+										/* original bts code
 										int iValue = iCorporationValue;
 										iValue /= kUnitInfo.getProductionCost();
 
@@ -8579,8 +8582,17 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 												}
 											}
 										}
-										iCorporationValue /= std::max(1, (iTotalCount / 4) + iPlotCount);
+										iCorporationValue /= std::max(1, (iTotalCount / 4) + iPlotCount); */
+										// K-Mod
+										int iExistingUnits = kPlayer.getUnitClassCount((UnitClassTypes)iI) + kPlayer.getUnitClassMaking((UnitClassTypes)iI)/2;
+										iCorporationValue *= 3;
+										iCorporationValue /= iExistingUnits > 1 ? 2 + iExistingUnits : 3;
 
+										int iValue = iCorporationValue;
+										iValue /= kUnitInfo.getProductionCost();
+										// K-Mod end
+
+										/* original bts code
 										int iCost = std::max(0, GC.getCorporationInfo(eCorporation).getSpreadCost() * (100 + GET_PLAYER(getOwnerINLINE()).calculateInflationRate()));
 										iCost /= 100;
 
@@ -8596,7 +8608,7 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 										else if (iTotalCount > 1)
 										{
 											iCorporationValue /= 5;
-										}
+										} */
 										if (iValue > iBestValue)
 										{
 											iBestValue = iValue;
