@@ -2677,17 +2677,6 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 
 			if (bAttack)
 			{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/14/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-/*
-** K-Mod, 25/dec/10, karadoc
-** 'original' code restored, but I don't know if this code is bts code or LFB code.
-*/
-				// From Lead From Behind by UncutDragon
-				// original
 				CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
 				if (NULL != pDefender)
 				{
@@ -2696,25 +2685,6 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 						return false;
 					}
 				}
-				// modified
-				//if( combatLimit() < 100 )
-				//{
-				//	CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
-				//	if (NULL != pDefender)
-				//	{
-				//		if (!canAttack(*pDefender))
-				//		{
-				//			return false;
-				//		}
-				//	}
-				//}
-				//else if (!pPlot->hasDefender(true, NO_PLAYER, getOwnerINLINE(), this, true))
-				//{
-				//	return false;
-				//}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			}
 		}
 		else

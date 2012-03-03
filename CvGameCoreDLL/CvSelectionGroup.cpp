@@ -1617,117 +1617,6 @@ void CvSelectionGroup::continueMission(int iSteps)
 					pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
 					if (pTargetUnit != NULL)
 					{
-#ifdef OLD_PICKUP_CODE // K-Mod, I've disabled this old pickup code.   AI junk like this shouldn't be in the game-mechanics part of the code.
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      12/07/08                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-						// Handling for mission to retrieve a unit
-						if( AI_getMissionAIType() == MISSIONAI_PICKUP )
-						{
-							if( !(pTargetUnit->getGroup()->isStranded()) || isFull() || (pTargetUnit->plot() == NULL) )
-							{
-								bDone = true;
-								bAction = false;
-								break;
-							}
-
-							CvPlot* pPickupPlot = NULL;
-							CvPlot* pAdjacentPlot = NULL;
-							int iPathTurns;
-							int iBestPathTurns = MAX_INT;
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/08/09                        Maniac & jdog5000     */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-/* original bts code
-							if( (pTargetUnit->plot()->isWater() || pTargetUnit->plot()->isFriendlyCity(*getHeadUnit(), true)) && generatePath(plot(), pTargetUnit->plot(), 0, false, &iPathTurns) )
-*/
-							if( (canMoveAllTerrain() || pTargetUnit->plot()->isWater() || pTargetUnit->plot()->isFriendlyCity(*getHeadUnit(), true)) && generatePath(plot(), pTargetUnit->plot(), 0, true, &iPathTurns) )
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-							{
-								pPickupPlot = pTargetUnit->plot();
-							}
-							else
-							{
-								for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-								{
-									pAdjacentPlot = plotDirection(pTargetUnit->plot()->getX_INLINE(), pTargetUnit->plot()->getY_INLINE(), ((DirectionTypes)iI));
-
-									if (pAdjacentPlot != NULL)
-									{
-										if( atPlot(pAdjacentPlot) )
-										{
-											pPickupPlot = pAdjacentPlot;
-											break;
-										}
-
-										if( pAdjacentPlot->isWater() || pAdjacentPlot->isFriendlyCity(*getHeadUnit(), true) )
-										{
-											if( generatePath(plot(), pAdjacentPlot, 0, true, &iPathTurns, iBestPathTurns) )
-											{
-												if( iPathTurns < iBestPathTurns )
-												{
-													pPickupPlot = pAdjacentPlot;
-													iBestPathTurns = iPathTurns;
-												}
-											}
-										}
-									}
-								}
-							}
-
-							if( pPickupPlot != NULL )
-							{
-								if( atPlot(pPickupPlot) )
-								{
-									CLLNode<IDInfo>* pEntityNode;
-									CvUnit* pLoopUnit;
-
-									pEntityNode = headUnitNode();
-
-									while (pEntityNode != NULL)
-									{
-										pLoopUnit = ::getUnit(pEntityNode->m_data);
-										pEntityNode = nextUnitNode(pEntityNode);
-
-										if( !(pLoopUnit->isFull()) )
-										{
-											pTargetUnit->getGroup()->setRemoteTransportUnit(pLoopUnit);
-										}
-									}
-
-									bAction = true;
-									bDone = true;
-								}
-								else
-								{
-									if (groupPathTo(pPickupPlot->getX_INLINE(), pPickupPlot->getY_INLINE(), headMissionQueueNode()->m_data.iFlags))
-									{
-										bAction = true;
-									}
-									else
-									{
-										bDone = true;
-									}
-								}
-							}
-							else
-							{
-								bDone = true;
-							}
-							break;
-						}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-#endif
-
 						if (AI_getMissionAIType() != MISSIONAI_SHADOW && AI_getMissionAIType() != MISSIONAI_GROUP)
 						{
 							if (!plot()->isOwned() || plot()->getOwnerINLINE() == getOwnerINLINE())
@@ -3370,38 +3259,6 @@ RouteTypes CvSelectionGroup::getBestBuildRoute(CvPlot* pPlot, BuildTypes* peBest
 	return eBestRoute;
 }
 
-
-// Returns true if group was bumped...
-/* original bts code. disabled by K-Mod
-bool CvSelectionGroup::groupDeclareWar(CvPlot* pPlot, bool bForce)
-{
-	CvTeamAI& kTeam = GET_TEAM(getTeam());
-	TeamTypes ePlotTeam = pPlot->getTeam();
-	
-	if (!AI_isDeclareWar(pPlot))
-	{
-		return false;
-	}
-
-	int iNumUnits = getNumUnits();
-
-	if (bForce || !canEnterArea(ePlotTeam, pPlot->area(), true))
-	{
-		if (ePlotTeam != NO_TEAM && kTeam.AI_isSneakAttackReady(ePlotTeam))
-		{
-			if (kTeam.canDeclareWar(ePlotTeam))
-			{
-				FAssertMsg(false, "war declared using groupDeclareWar"); // K-Mod, I'm trying to phase this out.
-				if (gUnitLogLevel > 0) logBBAI("    %S declares war on %S with groupDeclareWar (%S - %S).", kTeam.getName().GetCString(), GET_TEAM(ePlotTeam).getName().GetCString(), getHeadUnit()->getName(0).GetCString(), GC.getUnitAIInfo(getHeadUnitAI()).getDescription());
-				kTeam.declareWar(ePlotTeam, true, NO_WARPLAN);
-			}
-		}
-	}
-
-	return (iNumUnits != getNumUnits());
-} */
-
-
 // Returns true if attack was made...
 bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlreadyFighting)
 {
@@ -3811,11 +3668,7 @@ bool CvSelectionGroup::groupBuild(BuildTypes eBuild)
 	return bContinue;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/18/10                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
+// (edited by BBAI)
 void CvSelectionGroup::setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup** pOtherGroup)
 {
 	// if we are loading
@@ -3894,93 +3747,6 @@ void CvSelectionGroup::setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup
 		}
 	}
 }
-
-
-/// \brief Function for loading stranded units onto an offshore transport
-///
-/* disabled by K-Mod
-void CvSelectionGroup::setRemoteTransportUnit(CvUnit* pTransportUnit)
-{
-	// if we are loading
-	if (pTransportUnit != NULL)
-	{
-		CvUnit* pHeadUnit = getHeadUnit();
-		FAssertMsg(pHeadUnit != NULL, "non-zero group without head unit");
-		
-		int iCargoSpaceAvailable = pTransportUnit->cargoSpaceAvailable(pHeadUnit->getSpecialUnitType(), pHeadUnit->getDomainType());
-		
-		// if no space at all, give up
-		if (iCargoSpaceAvailable < 1)
-		{
-			return;
-		}
-
-		// if there is space, but not enough to fit whole group, then split us, and set on the new group
-		if (iCargoSpaceAvailable < getNumUnits())
-		{
-			CvSelectionGroup* pSplitGroup = splitGroup(iCargoSpaceAvailable);
-			if (pSplitGroup != NULL)
-			{
-				pSplitGroup->setRemoteTransportUnit(pTransportUnit);
-			}
-			return;
-		}
-		
-		FAssertMsg(iCargoSpaceAvailable >= getNumUnits(), "cargo size too small");
-
-		bool bLoadedOne;
-		do
-		{
-			bLoadedOne = false;
-
-			// loop over all the units on the plot, looping through this selection group did not work
-			CLLNode<IDInfo>* pUnitNode = headUnitNode();
-			while (pUnitNode != NULL && !bLoadedOne)
-			{
-				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-				pUnitNode = nextUnitNode(pUnitNode);
-				
-				if (pLoopUnit != NULL && pLoopUnit->getTransportUnit() != pTransportUnit && pLoopUnit->getOwnerINLINE() == pTransportUnit->getOwnerINLINE())
-				{
-					bool bSpaceAvailable = pTransportUnit->cargoSpaceAvailable(pLoopUnit->getSpecialUnitType(), pLoopUnit->getDomainType());
-					if (bSpaceAvailable)
-					{
-						if( !(pLoopUnit->atPlot(pTransportUnit->plot())) )
-						{
-							// Putting a land unit on water automatically loads it
-							pLoopUnit->setXY(pTransportUnit->getX_INLINE(),pTransportUnit->getY_INLINE());
-						}
-
-						if( pLoopUnit->getTransportUnit() != pTransportUnit ) 
-						{
-							pLoopUnit->setTransportUnit(pTransportUnit);
-						}
-
-						bLoadedOne = true;
-					}
-				}
-			}
-		}
-		while (bLoadedOne);
-	}
-	// otherwise we are unloading
-	else
-	{
-		// loop over all the units, unloading them
-		CLLNode<IDInfo>* pUnitNode = headUnitNode();
-		while (pUnitNode != NULL)
-		{
-			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-			pUnitNode = nextUnitNode(pUnitNode);
-			
-			if (pLoopUnit != NULL)
-			{
-				// unload unit
-				pLoopUnit->setTransportUnit(NULL);
-			}
-		}
-	}
-} */
 
 bool CvSelectionGroup::isAmphibPlot(const CvPlot* pPlot) const
 {

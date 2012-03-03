@@ -112,22 +112,13 @@ public:
 
 	RouteTypes getBestBuildRoute(CvPlot* pPlot, BuildTypes* peBestBuild = NULL) const;	// Exposed to Python
 
-	//bool groupDeclareWar(CvPlot* pPlot, bool bForce = false); // disabled by K-Mod
 	bool groupAttack(int iX, int iY, int iFlags, bool& bFailedAlreadyFighting);
 	void groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUnit = NULL, bool bEndMove = false);
 	bool groupPathTo(int iX, int iY, int iFlags);
 	bool groupRoadTo(int iX, int iY, int iFlags);
 	bool groupBuild(BuildTypes eBuild);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/18/10                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
-	void setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup** pOtherGroup = NULL);
-	//void setRemoteTransportUnit(CvUnit* pTransportUnit);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+
+	void setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup** pOtherGroup = NULL); // bbai added pOtherGroup
 
 	bool isAmphibPlot(const CvPlot* pPlot) const;																																		// Exposed to Python
 	bool groupAmphibMove(CvPlot* pPlot, int iFlags);
