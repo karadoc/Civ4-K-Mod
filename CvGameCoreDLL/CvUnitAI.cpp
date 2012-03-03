@@ -5875,6 +5875,11 @@ void CvUnitAI::AI_spyMove()
 				{
 					getGroup()->AI_setMissionAI(NO_MISSIONAI, 0, 0);
 				}*/
+				break;
+			case MISSIONAI_LOAD_SPECIAL:
+				if (AI_load(UNITAI_SPY_SEA, MISSIONAI_LOAD_SPECIAL))
+					return;
+
 			default:
 				break;
 			}
@@ -6027,9 +6032,13 @@ void CvUnitAI::AI_spyMove()
 
 	// Do with have enough points on anyone for an attack mission to be useful?
 	int iAttackChance = 0;
+	int iTransportChance = 0;
 	{
 		int iScale = 100 * (kOwner.getCurrentEra() + 1);
 		int iAttackSpies = kOwner.AI_areaMissionAIs(area(), MISSIONAI_ATTACK_SPY);
+		int iLocalPoints = 0;
+		int iTotalPoints = 0;
+
 		if (kOwner.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
 		{
 			iScale += 50 * kOwner.getCurrentEra() * (kOwner.getCurrentEra()+1);
@@ -6037,12 +6046,17 @@ void CvUnitAI::AI_spyMove()
 
 		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
+			int iPoints = kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI);
+			iTotalPoints += iPoints;
+
 			if (iI != getTeam() && GET_TEAM((TeamTypes)iI).isAlive() && kTeam.isHasMet((TeamTypes)iI) &&
 				GET_TEAM((TeamTypes)iI).countNumCitiesByArea(area()) > 0)
 			{
-				int x = 100 * kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + iScale;
-				x /= kTeam.getEspionagePointsAgainstTeam((TeamTypes)iI) + (1 + iAttackSpies) * iScale;
+				int x = 100 * iPoints + iScale;
+				x /= iPoints + (1 + iAttackSpies) * iScale;
 				iAttackChance = std::max(iAttackChance, x);
+
+				iLocalPoints += iPoints;
 			}
 		}
 		iAttackChance /= kTeam.getAnyWarPlanCount(true) == 0 ? 3 : 1;
@@ -6053,12 +6067,20 @@ void CvUnitAI::AI_spyMove()
 		// scale for game speed
 		iAttackChance *= 100;
 		iAttackChance /= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
+
+		iTransportChance = (100 * iTotalPoints - 130 * iLocalPoints) / std::max(1, iTotalPoints);
 	}
 	
 	if (plot()->getTeam() == getTeam())
 	{
-		if (GC.getGame().getSorenRandNum(100, "AI Spy defense") >= iAttackChance)
+		if (GC.getGame().getSorenRandNum(100, "AI Spy guard / transport") >= iAttackChance)
 		{
+			if (GC.getGame().getSorenRandNum(100, "AI Spy transport") < iTransportChance)
+			{
+				if (AI_load(UNITAI_SPY_SEA, MISSIONAI_LOAD_SPECIAL, NO_UNITAI, -1, -1, -1, 0, 0, 8))
+					return;
+			}
+
 			if (AI_guardSpy(0))
 			{
 				return;
@@ -6129,10 +6151,9 @@ void CvUnitAI::AI_spyMove()
 		}
 	}
 	
-	if (AI_load(UNITAI_SPY_SEA, MISSIONAI_LOAD_SPECIAL, NO_UNITAI, -1, -1, -1, 0, MOVE_NO_ENEMY_TERRITORY))
-	{
+	//if (AI_load(UNITAI_SPY_SEA, MISSIONAI_LOAD_SPECIAL, NO_UNITAI, -1, -1, -1, 0, MOVE_NO_ENEMY_TERRITORY))
+	if (AI_load(UNITAI_SPY_SEA, MISSIONAI_LOAD_SPECIAL))
 		return;
-	}
 
 	if (AI_retreatToCity())
 	{
@@ -11265,7 +11286,7 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 		else
 		{
 			// BBAI TODO: To split or not to split?
-			// K-Mod. Wow about we this:
+			// K-Mod. How about we this:
 			// Split the group only if it is going to take more than 1 turn to get to the transport.
 			if (generatePath(pBestUnit->plot(), iFlags, true, 0, 1))
 			{
@@ -18612,121 +18633,134 @@ bool CvUnitAI::AI_specialSeaTransportMissionary()
 }
 
 
-// Returns true if a mission was pushed...
+// The body of this function has been completely deleted and rewriten for K-Mod
 bool CvUnitAI::AI_specialSeaTransportSpy()
 {
-	//PROFILE_FUNC();
+	const CvTeamAI& kOurTeam = GET_TEAM(getTeam());
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	CvPlot* pBestSpyPlot;
-	PlayerTypes eBestPlayer;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iI;
+	std::vector<int> base_value(MAX_CIV_PLAYERS);
 
-	FAssert(getCargo() > 0);
-	FAssert(getUnitAICargo(UNITAI_SPY) > 0);
+	int iTotalPoints = kOurTeam.getTotalUnspentEspionage();
 
-	if (!canCargoAllMove())
+	int iBestValue = 0;
+	PlayerTypes eBestTarget = NO_PLAYER;
+
+	for (int i = 0; i < MAX_CIV_PLAYERS; i++)
 	{
-		return false;
-	}
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)i);
 
-	iBestValue = 0;
-	eBestPlayer = NO_PLAYER;
-
-	for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
-	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		if (kLoopPlayer.getTeam() == getTeam() || !kOurTeam.isHasMet(kLoopPlayer.getTeam()))
 		{
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() != getTeam())
-			{
-				if (GET_PLAYER(getOwnerINLINE()).AI_getAttitude((PlayerTypes)iI) <= ATTITUDE_ANNOYED)
-				{
-					iValue = GET_PLAYER((PlayerTypes)iI).getTotalPopulation();
+			base_value[i] = 0;
+		}
+		else
+		{
+			int iValue = 1000 * kOurTeam.getEspionagePointsAgainstTeam(kLoopPlayer.getTeam()) / std::max(1, iTotalPoints);
 
-					if (iValue > iBestValue)
-					{
-						iBestValue = iValue;
-						eBestPlayer = ((PlayerTypes)iI);
-					}
-				}
+			if (kOwner.isMaliciousEspionageTarget((PlayerTypes)i))
+				iValue = 3*iValue/2;
+
+			if (kOurTeam.isAtWar(kLoopPlayer.getTeam()) && !isInvisible(kLoopPlayer.getTeam(), false))
+			{
+				iValue /= 3; // it might be too risky.
+			}
+
+			if (kOurTeam.AI_hasCitiesInPrimaryArea(kLoopPlayer.getTeam()))
+				iValue /= 6;
+
+			iValue *= 100 - kOurTeam.AI_getAttitudeWeight(kLoopPlayer.getTeam())/2;
+
+			base_value[i] = iValue; // of order 1000 * percentage of espionage. (~20000)
+
+			if (iValue > iBestValue)
+			{
+				iBestValue = iValue;
+				eBestTarget = (PlayerTypes)i;
 			}
 		}
 	}
 
-	if (eBestPlayer == NO_PLAYER)
-	{
+	if (eBestTarget == NO_PLAYER)
 		return false;
-	}
 
-	pBestPlot = NULL;
-	pBestSpyPlot = NULL;
+	iBestValue = 0; // was best player value, now it is best plot value
+	CvPlot* pTargetPlot = 0;
+	CvPlot* pEndTurnPlot = 0;
 
-	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	for (int i = 0; i < GC.getMapINLINE().numPlotsINLINE(); i++)
 	{
-		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(i);
+		PlayerTypes ePlotOwner = pLoopPlot->getRevealedOwner(getTeam(), false);
 
-		if (pLoopPlot->isCoastalLand())
+		// only consider coast plots, owned by civ teams, with base value greater than the current best
+		if (ePlotOwner == NO_PLAYER || ePlotOwner >= base_value.size() || !pLoopPlot->isCoastalLand() || iBestValue >= base_value[ePlotOwner])
+			continue;
+
+		FAssert(pLoopPlot->isRevealed(getTeam(), false)); // otherwise, how do we have a revealed owner?
+
+		int iValue = base_value[ePlotOwner];
+
+		iValue *= 2;
+		iValue /= 2 + kOwner.AI_totalAreaUnitAIs(pLoopPlot->area(), UNITAI_SPY);
+
+		CvCity* pPlotCity = pLoopPlot->getPlotCity();
+		if (pPlotCity && !kOurTeam.isAtWar(GET_PLAYER(ePlotOwner).getTeam())) // don't go directly to cities if we are at war.
 		{
-			if (pLoopPlot->getOwnerINLINE() == eBestPlayer)
+			iValue *= 100;
+			iValue /= std::max(100, 3 * kOwner.getEspionageMissionCostModifier(NO_ESPIONAGEMISSION, ePlotOwner, pLoopPlot));
+		}
+		else
+		{
+			iValue /= 5;
+		}
+
+		if (GET_PLAYER(ePlotOwner).AI_isDoVictoryStrategyLevel4() && !GET_PLAYER(ePlotOwner).AI_isPrimaryArea(pLoopPlot->area()))
+		{
+			iValue /= 4;
+		}
+
+		FAssert(iValue <= base_value[ePlotOwner]);
+		int iPathTurns;
+		if (iValue > iBestValue && generatePath(pLoopPlot, 0, true, &iPathTurns))
+		{
+			iValue *= 10;
+			iValue /= 3 + iPathTurns;
+			if (iValue > iBestValue)
 			{
-				iValue = pLoopPlot->area()->getCitiesPerPlayer(eBestPlayer);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/23/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-				iValue *= 1000;
-
-				if (iValue > iBestValue)
-				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-					if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ATTACK_SPY, getGroup(), 4) == 0)
-					{
-						if (generatePath(pLoopPlot, 0, true, &iPathTurns))
-						{
-							iValue /= (iPathTurns + 1);
-
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								pBestPlot = getPathEndTurnPlot();
-								pBestSpyPlot = pLoopPlot;
-							}
-						}
-					}
-				}
+				iBestValue = iValue;
+				pTargetPlot = pLoopPlot;
+				pEndTurnPlot = getPathEndTurnPlot();
 			}
 		}
 	}
 
-	if ((pBestPlot != NULL) && (pBestSpyPlot != NULL))
+	if (pTargetPlot)
 	{
-		FAssert(!(pBestPlot->isImpassable()));
-
-		if ((pBestPlot == pBestSpyPlot) || (stepDistance(pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), pBestSpyPlot->getX_INLINE(), pBestSpyPlot->getY_INLINE()) == 1))
+		if (atPlot(pTargetPlot))
 		{
-			if (atPlot(pBestSpyPlot))
+			getGroup()->unloadAll();
+			return true; // no actual mission pushed, but we need to rethink our next move.
+		}
+		else
+		{
+			if (canMoveInto(pEndTurnPlot) || canCargoAllMove()) // (without this, we could get into an infinite loop when the cargo isn't ready to move)
 			{
-				unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+				if (gUnitLogLevel > 2 && pTargetPlot->getOwnerINLINE() != NO_PLAYER && generatePath(pTargetPlot, 0, true, 0, 1))
+				{
+					logBBAI("      %S lands sea-spy in %S territory. (%d%s of unspent points)", // for a percent sign, %% doesn't work, and neither does \%.  What else am I meant to do?
+						kOurTeam.getName().GetCString(), GET_PLAYER(pTargetPlot->getOwnerINLINE()).getCivilizationDescription(0), kOurTeam.getEspionagePointsAgainstTeam(pTargetPlot->getTeam())*100/iTotalPoints, "%");
+				}
+
+				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY, pTargetPlot);
 				return true;
 			}
 			else
 			{
-				getGroup()->pushMission(MISSION_MOVE_TO, pBestSpyPlot->getX_INLINE(), pBestSpyPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY, pBestSpyPlot);
+				// need to wait for our cargo to be ready
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_ATTACK_SPY, pTargetPlot);
 				return true;
 			}
-		}
-		else
-		{
-			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY, pBestSpyPlot);
-			return true;
 		}
 	}
 

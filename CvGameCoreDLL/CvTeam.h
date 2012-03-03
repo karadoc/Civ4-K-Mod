@@ -357,6 +357,8 @@ public:
 	void setEspionagePointsAgainstTeam(TeamTypes eIndex, int iValue);																							// Exposed to Python
 	void changeEspionagePointsAgainstTeam(TeamTypes eIndex, int iChange);																				// Exposed to Python
 
+	int getTotalUnspentEspionage() const; // K-Mod
+
 	int getEspionagePointsEver() const;																							// Exposed to Python
 	void setEspionagePointsEver(int iValue);																							// Exposed to Python
 	void changeEspionagePointsEver(int iChange);																				// Exposed to Python

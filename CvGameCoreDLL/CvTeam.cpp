@@ -6301,6 +6301,18 @@ void CvTeam::changeEspionagePointsAgainstTeam(TeamTypes eIndex, int iChange)
 	setEspionagePointsAgainstTeam(eIndex, getEspionagePointsAgainstTeam(eIndex) + iChange);
 }
 
+// K-Mod
+int CvTeam::getTotalUnspentEspionage() const
+{
+	int iTotal = 0;
+	for (int i = 0; i < MAX_CIV_TEAMS; i++)
+	{
+		iTotal += getEspionagePointsAgainstTeam((TeamTypes)i);
+	}
+	return iTotal;
+}
+// K-Mod end
+
 int CvTeam::getEspionagePointsEver() const
 {
 	return m_iEspionagePointsEver;
