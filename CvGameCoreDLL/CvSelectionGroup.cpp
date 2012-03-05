@@ -496,7 +496,7 @@ void CvSelectionGroup::popMission()
 }
 
 
-void CvSelectionGroup::autoMission()
+bool CvSelectionGroup::autoMission() // K-Mod changed this from void to bool.
 {
 	FAssert(getOwnerINLINE() != NO_PLAYER);
 
@@ -543,7 +543,7 @@ void CvSelectionGroup::autoMission()
 		}
 	}
 
-	doDelayedDeath();
+	return doDelayedDeath();
 }
 
 

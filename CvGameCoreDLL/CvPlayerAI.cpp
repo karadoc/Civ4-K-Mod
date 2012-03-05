@@ -1450,10 +1450,15 @@ void CvPlayerAI::AI_unitUpdate()
 				for (size_t i = 0; i < groupList.size(); i++)
 				{
 					CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(groupList[i].second);
-					if (pLoopSelectionGroup && pLoopSelectionGroup->AI_update())
+					// I think it's probably a good idea to activate automissions here, so that the move priority is respected even for commands issued on the previous turn.
+					// (This will allow reserve units to guard workers that have already moved, rather than trying to guard workers who are about to move to a different plot.)
+					if (pLoopSelectionGroup && !pLoopSelectionGroup->autoMission())
 					{
-						bRepeat = false;
-						break;
+						if (pLoopSelectionGroup->isBusy() || pLoopSelectionGroup->isCargoBusy() || pLoopSelectionGroup->AI_update())
+						{
+							bRepeat = false;
+							break;
+						}
 					}
 				}
 
