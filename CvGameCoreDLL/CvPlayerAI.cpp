@@ -405,17 +405,7 @@ void CvPlayerAI::AI_doTurnPre()
 
 	AI_doCounter();
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	AI_invalidateAttitudeCache();
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	// AI_invalidateAttitudeCache(); // (Moved by K-Mod to avoid a particular OOS problem)
 
 	AI_updateBonusValue();
 	// K-Mod. GP weights can take a little bit of time, so lets only do it once every 3 turns.

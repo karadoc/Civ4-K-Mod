@@ -5964,7 +5964,14 @@ void CvGame::doTurn()
 
 	doUpdateCacheOnTurn();
 
-	CvSelectionGroup::path_finder.Reset(); // K-Mod. (this is the only manual reset we need. - I hope.)
+	CvSelectionGroup::path_finder.Reset(); // K-Mod. (one of the few manual resets we need)
+	// K-Mod - fixing a problem from the CAR mod.
+	// (CvTeamAI::AI_doCounter has a couple of things which invalidate the cache without clearing it. So I'm clearing the cache here to avoid OOS errors.)
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache();
+	}
+	// K-Mod end
 
 	updateScore();
 
