@@ -14452,7 +14452,8 @@ bool CvUnitAI::AI_defend()
 /************************************************************************************************/
 		if( !(pBestPlot->isCity()) && (getGroup()->getNumUnits() > 1) )
 		{
-			getGroup()->AI_makeForceSeparate();
+			//getGroup()->AI_makeForceSeparate();
+			joinGroup(0); // K-Mod. (AI_makeForceSeparate is a complete waste of time here.)
 		}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */

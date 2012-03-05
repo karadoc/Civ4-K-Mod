@@ -1454,22 +1454,25 @@ void CvGame::normalizeAddFoodBonuses()
 
 	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI); // K-Mod
+
+		if (kLoopPlayer.isAlive())
 		{
-			CvPlot* pStartingPlot = GET_PLAYER((PlayerTypes)iI).getStartingPlot();
+			CvPlot* pStartingPlot = kLoopPlayer.getStartingPlot();
 
 			if (pStartingPlot != NULL)
 			{
 				int iFoodBonus = 0;
 				int iGoodNatureTileCount = 0;
 
-				for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+				//for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+				for (int iJ = 1; iJ < NUM_CITY_PLOTS; iJ++) // K-Mod. Don't count the city plot.
 				{
 					CvPlot* pLoopPlot = plotCity(pStartingPlot->getX_INLINE(), pStartingPlot->getY_INLINE(), iJ);
 
 					if (pLoopPlot != NULL)
 					{
-						BonusTypes eBonus = pLoopPlot->getBonusType(GET_PLAYER((PlayerTypes)iI).getTeam());
+						BonusTypes eBonus = pLoopPlot->getBonusType(kLoopPlayer.getTeam());
 
 						if (eBonus != NO_BONUS)
 						{
@@ -1493,14 +1496,14 @@ void CvGame::normalizeAddFoodBonuses()
 									}
 								}
 							}
-							else if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, GET_PLAYER((PlayerTypes)iI).getTeam()) >= 2)
+							else if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam()) >= 2)
 						    {
 						        iGoodNatureTileCount++;
 						    }
 						}
 						else
 						{
-                            if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, GET_PLAYER((PlayerTypes)iI).getTeam()) >= 3)
+                            if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam()) >= 3)
 						    {
 						        iGoodNatureTileCount++;
 						    }
@@ -1512,7 +1515,8 @@ void CvGame::normalizeAddFoodBonuses()
 				//iTargetFoodBonusCount += (iGoodNatureTileCount == 0) ? 2 : 0;
 				iTargetFoodBonusCount += std::max(0, 2-iGoodNatureTileCount); // K-Mod
 
-				for (int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+				// K-Mod. I've rearranged a couple of things to make it a bit more efficient and easier to read.
+				for (int iJ = 1; iJ < NUM_CITY_PLOTS; iJ++)
 				{
 					if (iFoodBonus >= iTargetFoodBonusCount)
 					{
@@ -1521,37 +1525,29 @@ void CvGame::normalizeAddFoodBonuses()
 
 					CvPlot* pLoopPlot = plotCity(pStartingPlot->getX_INLINE(), pStartingPlot->getY_INLINE(), iJ);
 
-					if (pLoopPlot != NULL)
+					if (pLoopPlot && pLoopPlot->getBonusType() == NO_BONUS)
 					{
-						if (pLoopPlot != pStartingPlot)
+						for (int iK = 0; iK < GC.getNumBonusInfos(); iK++)
 						{
-							if (pLoopPlot->getBonusType() == NO_BONUS)
+							const CvBonusInfo& kLoopBonus = GC.getBonusInfo((BonusTypes)iK);
+							if (kLoopBonus.isNormalize() && kLoopBonus.getYieldChange(YIELD_FOOD) > 0)
 							{
-								for (int iK = 0; iK < GC.getNumBonusInfos(); iK++)
+								if ((kLoopBonus.getTechCityTrade() == NO_TECH) || (GC.getTechInfo((TechTypes)(kLoopBonus.getTechCityTrade())).getEra() <= getStartEra()))
 								{
-									if (GC.getBonusInfo((BonusTypes)iK).isNormalize())
+									if (GET_TEAM(kLoopPlayer.getTeam()).isHasTech((TechTypes)kLoopBonus.getTechReveal()))
 									{
-										if (GC.getBonusInfo((BonusTypes)iK).getYieldChange(YIELD_FOOD) > 0)
+										if (pLoopPlot->canHaveBonus(((BonusTypes)iK), bIgnoreLatitude))
 										{
-											if ((GC.getBonusInfo((BonusTypes)iK).getTechCityTrade() == NO_TECH) || (GC.getTechInfo((TechTypes)(GC.getBonusInfo((BonusTypes)iK).getTechCityTrade())).getEra() <= getStartEra()))
+											pLoopPlot->setBonusType((BonusTypes)iK);
+											if (pLoopPlot->isWater())
 											{
-												if (GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)iK).getTechReveal())))
-												{
-													if (pLoopPlot->canHaveBonus(((BonusTypes)iK), bIgnoreLatitude))
-													{
-														pLoopPlot->setBonusType((BonusTypes)iK);
-														if (pLoopPlot->isWater())
-														{
-															iFoodBonus += 2;
-														}
-														else
-														{
-															iFoodBonus += 3;
-														}
-														break;
-													}
-												}
+												iFoodBonus += 2;
 											}
+											else
+											{
+												iFoodBonus += 3;
+											}
+											break;
 										}
 									}
 								}
