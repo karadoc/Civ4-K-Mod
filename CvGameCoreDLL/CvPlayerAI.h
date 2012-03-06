@@ -327,16 +327,16 @@ public:
 	EventTypes AI_chooseEvent(int iTriggeredId) const;
 	virtual void AI_launch(VictoryTypes eVictory);
 
-	int AI_getCultureVictoryStage() const;
+	int AI_calculateCultureVictoryStage() const;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      03/17/10                                jdog5000      */
 /*                                                                                              */
 /* Victory Strategy AI                                                                          */
 /************************************************************************************************/
-	int AI_getSpaceVictoryStage() const;
-	int AI_getConquestVictoryStage() const;
-	int AI_getDominationVictoryStage() const;
-	int AI_getDiplomacyVictoryStage() const;
+	int AI_calculateSpaceVictoryStage() const;
+	int AI_calculateConquestVictoryStage() const;
+	int AI_calculateDominationVictoryStage() const;
+	int AI_calculateDiplomacyVictoryStage() const;
 	bool AI_isDoVictoryStrategy(int iVictoryStrategy) const;
 	bool AI_isDoVictoryStrategyLevel4() const;
 	bool AI_isDoVictoryStrategyLevel3() const;

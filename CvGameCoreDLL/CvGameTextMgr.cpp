@@ -11196,6 +11196,20 @@ void CvGameTextMgr::setProjectHelp(CvWStringBuffer &szBuffer, ProjectTypes eProj
 			}
 		}
 	}
+
+	// K-Mod
+	if (pCity && gDLL->getChtLvl() > 0 && GC.ctrlKey())
+	{
+		int iValue = pCity->AI_projectValue(eProject);
+		szBuffer.append(CvWString::format(L"\nProject Value (base) = %d", iValue));
+
+		ProjectTypes eBestProject = ((CvCityAI*)pCity)->AI_bestProject(&iValue);
+		if (eBestProject == eProject)
+		{
+			szBuffer.append(CvWString::format(SETCOLR L"\n(Best project value (scaled) = %d)" ENDCOLR, TEXT_COLOR("COLOR_LIGHT_GREY"), iValue));
+		}
+	}
+	//
 }
 
 

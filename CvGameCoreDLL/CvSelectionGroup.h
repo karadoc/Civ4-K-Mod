@@ -38,7 +38,7 @@ public:
 	DllExport void pushMission(MissionTypes eMission, int iData1 = -1, int iData2 = -1, int iFlags = 0, bool bAppend = false, bool bManual = false, MissionAITypes eMissionAI = NO_MISSIONAI, CvPlot* pMissionAIPlot = NULL, CvUnit* pMissionAIUnit = NULL);		// Exposed to Python
 	void popMission();																																										// Exposed to Python
 	//DllExport void autoMission();
-	DllExport bool autoMission(); // K-Mod. (are you serious!?)
+	bool autoMission(); // K-Mod. (No 'DllExport'? Are you serious!?)
 	void updateMission();
 	DllExport CvPlot* lastMissionPlot();																																					// Exposed to Python
 

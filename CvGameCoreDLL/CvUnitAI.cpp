@@ -18695,7 +18695,7 @@ bool CvUnitAI::AI_specialSeaTransportSpy()
 		PlayerTypes ePlotOwner = pLoopPlot->getRevealedOwner(getTeam(), false);
 
 		// only consider coast plots, owned by civ teams, with base value greater than the current best
-		if (ePlotOwner == NO_PLAYER || ePlotOwner >= base_value.size() || !pLoopPlot->isCoastalLand() || iBestValue >= base_value[ePlotOwner])
+		if (ePlotOwner == NO_PLAYER || ePlotOwner >= MAX_CIV_PLAYERS || !pLoopPlot->isCoastalLand() || iBestValue >= base_value[ePlotOwner])
 			continue;
 
 		FAssert(pLoopPlot->isRevealed(getTeam(), false)); // otherwise, how do we have a revealed owner?
@@ -18749,8 +18749,8 @@ bool CvUnitAI::AI_specialSeaTransportSpy()
 			{
 				if (gUnitLogLevel > 2 && pTargetPlot->getOwnerINLINE() != NO_PLAYER && generatePath(pTargetPlot, 0, true, 0, 1))
 				{
-					logBBAI("      %S lands sea-spy in %S territory. (%d%s of unspent points)", // for a percent sign, %% doesn't work, and neither does \%.  What else am I meant to do?
-						kOurTeam.getName().GetCString(), GET_PLAYER(pTargetPlot->getOwnerINLINE()).getCivilizationDescription(0), kOurTeam.getEspionagePointsAgainstTeam(pTargetPlot->getTeam())*100/iTotalPoints, "%");
+					logBBAI("      %S lands sea-spy in %S territory. (%d percent of unspent points)", // apparently it's impossible to actually use a % sign in this Microsoft version of vsnprintf. madness
+						kOurTeam.getName().GetCString(), GET_PLAYER(pTargetPlot->getOwnerINLINE()).getCivilizationDescription(0), kOurTeam.getEspionagePointsAgainstTeam(pTargetPlot->getTeam())*100/iTotalPoints);
 				}
 
 				getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), 0, false, false, MISSIONAI_ATTACK_SPY, pTargetPlot);

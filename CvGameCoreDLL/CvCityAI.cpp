@@ -1721,20 +1721,32 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 	
+	ProjectTypes eBestProject = NO_PROJECT; // K-Mod
+	int iProjectValue = 0; //
+
 	if( !(bLandWar && iWarSuccessRating < 30) )
 	{
+		/* original code
 		if (!bDanger && (iProductionRank <= ((kPlayer.getNumCities() / 5) + 1)))
 		{
-			// BBAI TODO: Temporary for testing
-			//if( getOwnerINLINE()%2 == 1 )
-			//{
-				if (AI_chooseProject())
-				{
-					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 1", getName().GetCString());
-					return;
-				}
-			//}
+			if (AI_chooseProject())
+			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 1", getName().GetCString());
+				return;
+			}
+		} */
+		// K-Mod
+		eBestProject = AI_bestProject(&iProjectValue);
+		if (eBestProject != NO_PROJECT && iProjectValue > iBestBuildingValue)
+		{
+			int iOdds = 100 * (iProjectValue - iBestBuildingValue) / (iProjectValue + iBestBuildingValue + iBuildUnitProb);
+			if (GC.getGameINLINE().getSorenRandNum(100, "Build Project chance 1") < iOdds)
+			{
+				pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 1. (project value: %d, building value: %d, odds: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue, iOdds);
+			}
 		}
+		// K-Mod end
 	}
 
 	//minimal defense.
@@ -2203,6 +2215,7 @@ void CvCityAI::AI_chooseProduction()
 								// Don't always build missiles, more likely if really low
 								if (AI_chooseUnit(UNITAI_MISSILE_AIR, (kPlayer.AI_totalUnitAIs(UNITAI_MISSILE_AIR) < iMissileCarrierAirNeeded/2) ? 50 : 20))
 								{
+									if( gCityLogLevel >= 2 ) logBBAI("      City %S uses build missile", getName().GetCString());
 									return;
 								}
 							}
@@ -2270,6 +2283,7 @@ void CvCityAI::AI_chooseProduction()
 				{
 					if (AI_chooseLeastRepresentedUnit(airUnitTypes))
 					{
+						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses build least represented air", getName().GetCString());
 						return;
 					}
 				}
@@ -2280,6 +2294,7 @@ void CvCityAI::AI_chooseProduction()
 				{
 					if (AI_chooseUnit(UNITAI_DEFENSE_AIR))
 					{
+						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses build air defence", getName().GetCString());
 						return;
 					}
 				}
@@ -2305,6 +2320,7 @@ void CvCityAI::AI_chooseProduction()
 				{
 					if (AI_chooseUnit(UNITAI_CARRIER_AIR, (iFreeAirExperience > 0) ? -1 : 35))
 					{
+						if( gCityLogLevel >= 2 ) logBBAI("      City %S uses build carrier air", getName().GetCString());
 						return;
 					}
 				}
@@ -2703,6 +2719,7 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	// Only cities with reasonable production
+	/* original bts code
 	if ((iProductionRank <= ((kPlayer.getNumCities() > 8) ? 3 : 2))
 		&& (getPopulation() > 3))
 	{
@@ -2711,7 +2728,18 @@ void CvCityAI::AI_chooseProduction()
 			if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2", getName().GetCString());
 			return;
 		}
+	} */
+	// K-Mod
+	if (eBestProject == NO_PROJECT)
+		eBestProject = AI_bestProject(&iProjectValue);
+	if (iProjectValue > iBestBuildingValue)
+	{
+		FAssert(eBestProject != NO_PROJECT);
+		pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
+		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2. (project value: %d, building value: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue);
+			return;
 	}
+	// K-Mod end
 
 	if (AI_chooseBuilding())
 	{
@@ -3389,7 +3417,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 
 							if ((eObsoleteTech != NO_TECH && kOwner.getCurrentResearch() == eObsoleteTech) || (eSpObsoleteTech != NO_TECH && kOwner.getCurrentResearch() == eSpObsoleteTech))
 								iValue /= 2;
-							// K-Moe end
+							// K-Mod end
 
 							if (isProductionAutomated())
 							{
@@ -3435,12 +3463,11 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 									if (iLimit != -1)
 									{
 										const int iMaxNumWonders = (GC.getGameINLINE().isOption(GAMEOPTION_ONE_CITY_CHALLENGE) && isHuman()) ? GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY_FOR_OCC") : GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY");
-										int iRelativeValue = iValue;
 
 										if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
 										{
-											iRelativeValue *= iMaxNumWonders + 1 - getNumNationalWonders();
-											iRelativeValue /= iMaxNumWonders + 1;
+											iValue *= iMaxNumWonders + 1 - getNumNationalWonders();
+											iValue /= iMaxNumWonders + 1;
 										}
 
 										int iLoop;
@@ -3454,7 +3481,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 													iLoopValue *= iMaxNumWonders + 1 - pLoopCity->getNumNationalWonders();
 													iLoopValue /= iMaxNumWonders + 1;
 												}
-												if (80 * iLoopValue > 100 * iRelativeValue)
+												if (80 * iLoopValue > 100 * iValue)
 												{
 													if (--iLimit <= 0)
 													{
@@ -4509,7 +4536,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						if (NO_BUILDING != eFreeBuilding)
 						{
 							// K-Mod note: this is actually a pretty poor approximation, because the value of the free building is likely to be different in the other cities
-							iValue += (AI_buildingValue(eFreeBuilding, 0, 0, bConstCache, false) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
+							int iFreeBuildingValue = std::min(AI_buildingValue(eFreeBuilding, 0, 0, bConstCache, false), kOwner.getProductionNeeded(eFreeBuilding));
+							iValue += iFreeBuildingValue * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass()));
 						}
 					}
 					//
@@ -5566,109 +5594,315 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 }
 
 
-ProjectTypes CvCityAI::AI_bestProject()
+// This function has been significantly modified for K-Mod
+ProjectTypes CvCityAI::AI_bestProject(int* piBestValue)
 {
-	ProjectTypes eBestProject;
-	int iProductionRank;
-	int iTurnsLeft;
-	int iValue;
-	int iBestValue;
-	int iI;
+	int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
 
-	iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
+	int iBestValue = 0;
+	ProjectTypes eBestProject = NO_PROJECT;
 
-	iBestValue = 0;
-	eBestProject = NO_PROJECT;
-
-	for (iI = 0; iI < GC.getNumProjectInfos(); iI++)
+	for (ProjectTypes i = (ProjectTypes)0; i < GC.getNumProjectInfos(); i = (ProjectTypes)(i+1))
 	{
-		if (canCreate((ProjectTypes)iI))
+		const CvProjectInfo& kLoopProject = GC.getProjectInfo(i);
+
+		if (!canCreate(i))
+			continue; // can't build it. skip to the next project.
+
+		int iTurnsLeft = getProductionTurnsLeft(i, 0);
+		int iRelativeTurns = (100 * iTurnsLeft + 50) / GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getCreatePercent();
+
+		if (iRelativeTurns > 10 && kLoopProject.getMaxTeamInstances() > 0 && GET_TEAM(getTeam()).isHuman())
+			continue; // not fast enough to risk blocking our human allies from building it.
+
+		if (iRelativeTurns > 20 && iProductionRank > std::max(3, GET_PLAYER(getOwnerINLINE()).getNumCities()/2))
+			continue; // not fast enough to risk blocking our more productive cities from building it.
+
+		// otherwise, the project is something we can consider building!
+
+		int iValue = AI_projectValue(i);
+
+		// give a small chance of building global projects, regardless of strategy, just for a bit of variety.
+		if ((kLoopProject.getEveryoneSpecialUnit() != NO_SPECIALUNIT) ||
+			  (kLoopProject.getEveryoneSpecialBuilding() != NO_SPECIALBUILDING) ||
+			  kLoopProject.isAllowsNukes())
 		{
-			iValue = AI_projectValue((ProjectTypes)iI);
-
-			if ((GC.getProjectInfo((ProjectTypes)iI).getEveryoneSpecialUnit() != NO_SPECIALUNIT) ||
-				  (GC.getProjectInfo((ProjectTypes)iI).getEveryoneSpecialBuilding() != NO_SPECIALBUILDING) ||
-				  GC.getProjectInfo((ProjectTypes)iI).isAllowsNukes())
+			if (GC.getGameINLINE().getSorenRandNum(100, "Project Everyone") == 0)
 			{
-				if (GC.getGameINLINE().getSorenRandNum(100, "Project Everyone") == 0)
-				{
-					iValue++;
-				}
+				iValue++;
 			}
+		}
 
-			if (iValue > 0)
+		if (iValue <= 0)
+			continue; // the project is worthless. Skip it.
+
+		bool bVictory = false;
+		bool bGoodFit = false;
+
+		if (GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
+		{
+			for (VictoryTypes j = (VictoryTypes)0; j < GC.getNumVictoryInfos(); j = (VictoryTypes)(j+1))
 			{
-				iValue += getProjectProduction((ProjectTypes)iI);
-
-				iTurnsLeft = getProductionTurnsLeft(((ProjectTypes)iI), 0);
-
-				if ((iTurnsLeft <= GC.getGameINLINE().AI_turnsPercent(10, GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getCreatePercent())) || !(GET_TEAM(getTeam()).isHuman()))
+				if (GC.getGameINLINE().isVictoryValid(j) && kLoopProject.getVictoryThreshold(j) > 0)
 				{
-					if ((iTurnsLeft <= GC.getGameINLINE().AI_turnsPercent(20, GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getCreatePercent())) || (iProductionRank <= std::max(3, (GET_PLAYER(getOwnerINLINE()).getNumCities() / 2))))
+					bVictory = true;
+
+					// count the total number of projects we still require for this type of victory.
+					int iNeededPieces = 0;
+					for (ProjectTypes k = (ProjectTypes)0; k < GC.getNumProjectInfos(); k = (ProjectTypes)(k+1))
 					{
-						if (iProductionRank == 1)
-						{
-							iValue += iTurnsLeft;
-						}
-						else
-						{
-							FAssert((MAX_INT / 1000) > iValue);
-							iValue *= 1000;
-							iValue /= std::max(1, (iTurnsLeft + 10));
-						}
+						// try not to confuse loop project i, with loop project k, or loop victory j...
+						iNeededPieces += std::max(0, GC.getProjectInfo(k).getVictoryThreshold(j) - GET_TEAM(getTeam()).getProjectCount(k));
+					}
 
-						iValue = std::max(1, iValue);
-
-						if (iValue > iBestValue)
-						{
-							iBestValue = iValue;
-							eBestProject = ((ProjectTypes)iI);
-						}
+					if (GET_TEAM(getTeam()).getProjectCount(i) < kLoopProject.getVictoryThreshold(j))
+					{
+						// we need more of this project. ie. it is a high priority.
+						FAssert(iNeededPieces > 0);
+						bGoodFit = bGoodFit || iProductionRank <= iNeededPieces;
+					}
+					else
+					{
+						// build this with high priority, but save our best cities for the projects that we still need.
+						bGoodFit = bGoodFit || iProductionRank > iNeededPieces;
 					}
 				}
 			}
 		}
+
+		if (!bVictory)
+		{
+			// work out how many of this project we can still build
+			int iLimit = -1;
+			if (kLoopProject.getMaxGlobalInstances() >= 0) // global limit
+			{
+				int iRemaining = std::max(0, kLoopProject.getMaxGlobalInstances() - GC.getGameINLINE().getProjectCreatedCount(i) - GET_TEAM(getTeam()).getProjectMaking(i));
+				if (iLimit < 0 || iRemaining < iLimit)
+					iLimit = iRemaining;
+			}
+			if (kLoopProject.getMaxTeamInstances() >= 0) // team limit
+			{
+				int iRemaining = std::max(0, kLoopProject.getMaxTeamInstances() - GET_TEAM(getTeam()).getProjectCount(i) - GET_TEAM(getTeam()).getProjectMaking(i));
+				if (iLimit < 0 || iRemaining < iLimit)
+					iLimit = iRemaining;
+			}
+			bGoodFit = iProductionRank <= iLimit;
+		}
+
+		if (bGoodFit)
+		{
+			// building the project in this city is probably a good idea.
+			iValue += getProjectProduction(i) + (bVictory ? getProductionNeeded(i)/4 : 0);
+		}
+		else
+		{
+			if (bVictory)
+			{
+				iValue *= 3;
+				iValue /= iRelativeTurns + 3;
+			}
+			else
+			{
+				iValue *= 5;
+				iValue /= iRelativeTurns + 5;
+			}
+		}
+
+		if (iValue > iBestValue)
+		{
+			iBestValue = iValue;
+			eBestProject = i;
+		}
 	}
+
+	if (piBestValue)
+		*piBestValue = iBestValue;
 
 	return eBestProject;
 }
 
-
+// This function has been completely rewriten for K-Mod
+// The return value is roughly in units of 4 * commerce per turn, to match AI_buildingValue.
+// However, note that most projects don't actually give commerce per turn - so the evaluation is quite rough.
 int CvCityAI::AI_projectValue(ProjectTypes eProject)
 {
-	int iValue;
-	int iI;
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+	const CvTeam& kTeam = GET_TEAM(kOwner.getTeam());
+	const CvProjectInfo& kProject = GC.getProjectInfo(eProject);
 
-	iValue = 0;
+	int iValue = 0;
 
-	if (GC.getProjectInfo(eProject).getNukeInterception() > 0)
+	if (kProject.getTechShare() > 0)
 	{
-		if (GC.getGameINLINE().canTrainNukes())
+		if (kProject.getTechShare() < GET_TEAM(getTeam()).getHasMetCivCount(true) && !kOwner.AI_avoidScience())
 		{
-			iValue += (GC.getProjectInfo(eProject).getNukeInterception() / 10);
+			TechTypes eSampleTech = kOwner.getCurrentResearch();
+
+			if (eSampleTech == NO_TECH)
+			{
+				// what a pest...
+				for (TechTypes i = (TechTypes)0; i < GC.getNumTechInfos(); i = (TechTypes)(i+1))
+				{
+					if (kTeam.isHasTech(i) && (eSampleTech == NO_TECH || GC.getTechInfo(eSampleTech).getResearchCost() < GC.getTechInfo(i).getResearchCost()))
+						eSampleTech =  i;
+				}
+			}
+			FAssert(eSampleTech != NO_TECH);
+			if (eSampleTech != NO_TECH)
+			{
+				int iRelativeTechScore = kTeam.getBestKnownTechScorePercent();
+				int iTechValue = 50 * kTeam.getResearchCost(eSampleTech) / std::max(1, iRelativeTechScore);
+				iTechValue = 100 * iTechValue / std::max(1, iRelativeTechScore); // again, for emphasis.
+				iTechValue *= (2 * GC.getNumEraInfos() - kOwner.getCurrentEra());
+				iTechValue /= std::max(1, 2 * GC.getNumEraInfos() - GC.getGameINLINE().getStartEra());
+				iValue += iTechValue;
+			}
+			//iValue += (20 / GC.getProjectInfo(eProject).getTechShare());
 		}
 	}
 
-	if (GC.getProjectInfo(eProject).getTechShare() > 0)
+	// SDI
+	if (kProject.getNukeInterception() > 0)
 	{
-		if (GC.getProjectInfo(eProject).getTechShare() < GET_TEAM(getTeam()).getHasMetCivCount(true))
+		int iForeignNukes = 0; // we're going to cheat a little bit, by counting nukes that we probably shouldn't know about.
+		int iTeamsMet = 0;
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i = (PlayerTypes)(i + 1))
 		{
-			iValue += (20 / GC.getProjectInfo(eProject).getTechShare());
+			const CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+			if (kLoopPlayer.getTeam() != kOwner.getTeam() && kTeam.isHasMet(kLoopPlayer.getTeam()))
+			{
+				iForeignNukes += kLoopPlayer.getNumNukeUnits();
+				iTeamsMet++;
+			}
+		}
+		if (!GC.getGameINLINE().isNoNukes() || iForeignNukes > iTeamsMet)
+		{
+			int iTargetValue = 10 + (getYieldRate(YIELD_PRODUCTION) * 5 + getYieldRate(YIELD_COMMERCE) * 3)/2; // a very rough estimate of the cost of being nuked
+			int iEstimatedNukeAttacks = iForeignNukes * (2 + iTeamsMet) / (2 + 2*iTeamsMet) + (GC.getGameINLINE().isNoNukes() ? 0 : 2 + GC.getGameINLINE().getNukesExploded() / (2 + iTeamsMet));
+			iValue += kProject.getNukeInterception() * iEstimatedNukeAttacks * iTargetValue / 100;
+		}
+		//iValue += (GC.getProjectInfo(eProject).getNukeInterception() / 10);
+	}
+	// Manhattan project
+	if (kProject.isAllowsNukes() && !GC.getGameINLINE().isNoNukes())
+	{
+		// evaluating this is difficult, because it enables the nukes for enemies.
+		// In general, I want the AI to lean in favour of -not- building the Manhattan project, so that the human players generally get to decide whether or not the game will have nukes.
+		// But I do want the AI to build it if it will be particular adventagious for them. eg. when they want a conquest victory, and they know that their enemies don't have uranium...
+		if (kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH | AI_STRATEGY_DAGGER) || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4))
+		{
+			int iNukeValue = 0;
+
+			for (UnitTypes i = (UnitTypes)0; i < GC.getNumUnitInfos(); i = (UnitTypes)(i+1))
+			{
+				const CvUnitInfo& kLoopUnit = GC.getUnitInfo(i);
+
+				if (kLoopUnit.getNukeRange() < 0 || kLoopUnit.getProductionCost() < 0)
+					continue; // either not a unit, or not normally buildable
+
+				for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j = (PlayerTypes)(j+1))
+				{
+					const CvPlayer& kLoopPlayer = GET_PLAYER(j);
+					if (kLoopPlayer.isAlive() && GC.getCivilizationInfo(kLoopPlayer.getCivilizationType()).getCivilizationUnits(kLoopUnit.getUnitClassType()) == i &&
+						(kLoopPlayer.getTeam() == kOwner.getTeam() || kTeam.isHasMet(kLoopPlayer.getTeam())))
+					{
+						const CvTeam& kLoopTeam = GET_TEAM(kLoopPlayer.getTeam());
+						int iTemp;
+
+						if (kLoopPlayer.getID() == kOwner.getID())
+							iTemp = 100 + GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getConquestVictoryWeight(); // victory weight is between 0 and 100. (usually around 30).
+						else if (kLoopPlayer.getTeam() == kOwner.getTeam())
+							iTemp = 100;
+						else if (kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
+							iTemp = -100;
+						else
+							iTemp = (kOwner.AI_getAttitudeWeight(j) - 100)/2;
+
+						// tech prereqs.  halve the value for each missing prereq
+						if (!kLoopTeam.isHasTech((TechTypes)(kLoopUnit.getPrereqAndTech())))
+						{
+							iTemp /= 2;
+							if (!kLoopPlayer.canResearch((TechTypes)kLoopUnit.getPrereqAndTech()))
+								iTemp /= 3;
+						}
+
+						for (int k = 0; k < GC.getNUM_UNIT_AND_TECH_PREREQS(); k++)
+						{
+							TechTypes ePrereqTech = (TechTypes)kLoopUnit.getPrereqAndTechs(k);
+							if (ePrereqTech != NO_TECH && !kLoopTeam.isHasTech(ePrereqTech))
+							{
+								iTemp /= 2;
+								if (!kLoopPlayer.canResearch(ePrereqTech))
+									iTemp /= 3;
+							}
+						}
+
+						// resource prereq.
+						BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqAndBonus();
+						if (ePrereqBonus != NO_BONUS && !kLoopPlayer.hasBonus(ePrereqBonus) && kLoopPlayer.countOwnedBonuses(ePrereqBonus) == 0)
+						{
+							iTemp /= 6;
+						}
+
+						iTemp *= kLoopPlayer.getPower();
+						iTemp /= std::max(1, kOwner.getPower());
+
+						iNukeValue += iTemp;
+					}
+				}
+			}
+			if (iNukeValue > 0)
+			{
+				// ok. At this point, the scale of iNukeValue is roughly a percentage of the number of different nuke units which would be helpful to us... kind of.
+				// It's very likely to be to be less than 100. In a situation where nukes would be very helpful, I estimate that iNukeValue would currently be around 30.
+
+				// I'm just going to do a very rough job or rescaling it to be more like the other project value.
+				// But first, I want to make a few more situational adjustments to the value.
+				iNukeValue *= (2 + kTeam.getAnyWarPlanCount(true));
+				iNukeValue /= 2;
+
+				//
+				iNukeValue *= 10 + (getYieldRate(YIELD_PRODUCTION) * 5 + getYieldRate(YIELD_COMMERCE) * 3)/2; // cf. iTargetValue in the SDI section.
+				iNukeValue /= 25;
+				iValue += iNukeValue;
+			}
 		}
 	}
 
-	for (iI = 0; iI < GC.getNumVictoryInfos(); iI++)
+	// Space victory
+	// How am I meant to gauge the value of a direct step towards victory? It just doesn't conform to the usual metrics...
+	// this is going to be very arbitrary...  -- and it will be based on the original BtS code!
+	int iSpaceValue = 0;
+
+	// a project which enables other projects... We're talking about the Apolo Program
+	for (int iI = 0; iI < GC.getNumProjectInfos(); iI++)
 	{
-		if (GC.getGameINLINE().isVictoryValid((VictoryTypes)iI))
+		iSpaceValue += (std::max(0, (GC.getProjectInfo((ProjectTypes)iI).getProjectsNeeded(eProject) - GET_TEAM(getTeam()).getProjectCount(eProject))) * 8); // was *10
+	}
+	if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE1))
+		iSpaceValue = 3*iSpaceValue/2; // a boost to compound with the other boosts lower down.
+
+	// projects which are required components for victory. (ie. components of the spaceship)
+	for (int iI = 0; iI < GC.getNumVictoryInfos(); iI++)
+	{
+		if (GC.getGameINLINE().isVictoryValid((VictoryTypes)iI) && kProject.getVictoryThreshold(iI) > 0)
 		{
-			iValue += (std::max(0, (GC.getProjectInfo(eProject).getVictoryThreshold(iI) - GET_TEAM(getTeam()).getProjectCount(eProject))) * 20);
+			iSpaceValue += 20;
+			iSpaceValue += (std::max(0, (kProject.getVictoryThreshold(iI) - GET_TEAM(getTeam()).getProjectCount(eProject))) * 20);
 		}
 	}
 
-	for (iI = 0; iI < GC.getNumProjectInfos(); iI++)
-	{
-		iValue += (std::max(0, (GC.getProjectInfo((ProjectTypes)iI).getProjectsNeeded(eProject) - GET_TEAM(getTeam()).getProjectCount(eProject))) * 10);
-	}
+	if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
+		iSpaceValue = 3*iSpaceValue;
+	else if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE2))
+		iSpaceValue = 2*iSpaceValue;
+	else if (!kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE1) && kOwner.AI_isDoVictoryStrategyLevel4())
+		iSpaceValue = 2*iSpaceValue/3;
+
+	if (area()->getAreaAIType(kOwner.getTeam()) != AREAAI_NEUTRAL)
+		iSpaceValue = area()->getAreaAIType(kOwner.getTeam()) == AREAAI_DEFENSIVE ? iSpaceValue/2 : 2*iSpaceValue/3;
+
+	iValue += iSpaceValue;
 
 	return iValue;
 }
@@ -10483,6 +10717,7 @@ int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry, BuildingTypes eBuilding, b
 }
 
 
+// K-Mod note: units ~ commerce x100
 int CvCityAI::AI_cityValue() const
 {
 	
@@ -10496,9 +10731,9 @@ int CvCityAI::AI_cityValue() const
 	if (isDisorder())
 		return 0;
 	// K-Mod end
-    
+
 	int iValue = 0;
-	
+
 	/* original bts code
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
 	iValue += getCommerceRateTimes100(COMMERCE_RESEARCH);

@@ -18139,7 +18139,7 @@ void CvPlayerAI::AI_doCheckFinancialTrouble()
 /*                                                                                              */
 /* Victory Strategy AI                                                                          */
 /************************************************************************************************/
-int CvPlayerAI::AI_getCultureVictoryStage() const
+int CvPlayerAI::AI_calculateCultureVictoryStage() const
 {
     int iValue;
 
@@ -18382,7 +18382,7 @@ int CvPlayerAI::AI_getCultureVictoryStage() const
 	return 1;
 }
 
-int CvPlayerAI::AI_getSpaceVictoryStage() const
+int CvPlayerAI::AI_calculateSpaceVictoryStage() const
 {
     int iValue;
 
@@ -18569,7 +18569,7 @@ int CvPlayerAI::AI_getSpaceVictoryStage() const
 	return 0;
 }
 
-int CvPlayerAI::AI_getConquestVictoryStage() const
+int CvPlayerAI::AI_calculateConquestVictoryStage() const
 {
 	int iValue;
 
@@ -18707,7 +18707,7 @@ int CvPlayerAI::AI_getConquestVictoryStage() const
 	return 0;
 }
 
-int CvPlayerAI::AI_getDominationVictoryStage() const
+int CvPlayerAI::AI_calculateDominationVictoryStage() const
 {
 	int iValue = 0;
 
@@ -18791,7 +18791,7 @@ int CvPlayerAI::AI_getDominationVictoryStage() const
 	return 0;
 }
 
-int CvPlayerAI::AI_getDiplomacyVictoryStage() const
+int CvPlayerAI::AI_calculateDiplomacyVictoryStage() const
 {
 	int iValue = 0;
 
@@ -18975,7 +18975,7 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 	bool bStartedOtherLevel4 = false;
 
 	// Space victory
-	int iVictoryStage = AI_getSpaceVictoryStage();
+	int iVictoryStage = AI_calculateSpaceVictoryStage();
 
 	if( iVictoryStage >= 1 )
 	{
@@ -18998,7 +18998,7 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 	}
 
 	// Conquest victory
-	iVictoryStage = AI_getConquestVictoryStage();
+	iVictoryStage = AI_calculateConquestVictoryStage();
 
 	if( iVictoryStage >= 1 )
 	{
@@ -19021,7 +19021,7 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 	}
 
 	// Domination victory
-	iVictoryStage = AI_getDominationVictoryStage();
+	iVictoryStage = AI_calculateDominationVictoryStage();
 
 	if( iVictoryStage >= 1 )
 	{
@@ -19044,9 +19044,9 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 	}
 
 	// Cultural victory
-	// K-Mod Note: AI_getCultureVictoryStage now checks some of the other victory strategies,
+	// K-Mod Note: AI_calculateCultureVictoryStage now checks some of the other victory strategies,
 	// so it is important that they are set first.
-	iVictoryStage = AI_getCultureVictoryStage();
+	iVictoryStage = AI_calculateCultureVictoryStage();
 
 	if( iVictoryStage >= 1 )
 	{
@@ -19069,7 +19069,7 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 	}
 
 	// Diplomacy victory
-	iVictoryStage = AI_getDiplomacyVictoryStage();
+	iVictoryStage = AI_calculateDiplomacyVictoryStage();
 
 	if( iVictoryStage >= 1 )
 	{
