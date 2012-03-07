@@ -3430,7 +3430,10 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 	CvUnit* pLoopUnit;
 
 	pUnitNode = headUnitNode();
-	CvSelectionGroup* pStaticGroup = 0; // K-Mod
+	// K-Mod. Some variables to help us regroup appropriately if not everyone can move.
+	CvSelectionGroup* pStaticGroup = 0;
+	UnitAITypes eHeadAI = getHeadUnitAI();
+	// K-Mod end
 
 	while (pUnitNode != NULL)
 	{
@@ -3445,10 +3448,10 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 		else
 		{
 			// pLoopUnit->joinGroup(NULL, true);
-			// K-Mod. all units left behind should stay in the same group.
+			// K-Mod. all units left behind should stay in the same group. (unless it would mean a change of group AI)
 			// (Note: it is important that units left behind are not in the original group.
 			// The later code assume that the original group has moved, and if it hasn't, there will be an infinite loop.)
-			if (pStaticGroup)
+			if (pStaticGroup && (isHuman() || pStaticGroup->getHeadUnitAI() == eHeadAI))
 				pLoopUnit->joinGroup(pStaticGroup, true);
 			else
 			{
@@ -4602,6 +4605,7 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 void CvSelectionGroup::regroupSeparatedUnits()
 {
 	const CvUnit* pHeadUnit = getHeadUnit();
+	UnitAITypes eHeadUnitAI = getHeadUnitAI(); // the AI doesn't like to stay grouped when the group's AI type had changed.
 	std::vector<CvSelectionGroup*> new_groups;
 
 	CLLNode<IDInfo>* pUnitNode = headUnitNode();
@@ -4617,7 +4621,10 @@ void CvSelectionGroup::regroupSeparatedUnits()
 			{
 				if (pLoopUnit->plot() == new_groups[i]->plot())
 				{
-					pLoopUnit->joinGroup(new_groups[i], true);
+					if (isHuman() || new_groups[i]->getHeadUnitAI() == eHeadUnitAI)
+						pLoopUnit->joinGroup(new_groups[i], true);
+					else
+						pLoopUnit->joinGroup(0, true);
 					bFoundGroup = true;
 				}
 			}

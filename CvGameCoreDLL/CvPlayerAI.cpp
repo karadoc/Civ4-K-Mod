@@ -2561,7 +2561,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 {
 	iMinRivalRange = -1;
 	iGreed = 120;
-	bEasyCulture = false;
+	bEasyCulture = bStartingLoc;
 	bAmbitious = false;
 	bFinancial = false;
 	bDefensive = false;
