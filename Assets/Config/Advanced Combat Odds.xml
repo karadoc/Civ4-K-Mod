@@ -51,7 +51,7 @@
 			<list   id="ShowAttackerHealthBars" key="Show Attacker Health Bars" 
 					type="int" default="3" listType="string" 
 					values="ACO__ShowBasicInfo"/>
-			<list   id="ShowDedenderHealthBars" key="Show Dedender Health Bars" 
+			<list   id="ShowDefenderHealthBars" key="Show Dedender Health Bars" 
 					type="int" default="2" listType="string" 
 					values="ACO__ShowBasicInfo"/>
 					

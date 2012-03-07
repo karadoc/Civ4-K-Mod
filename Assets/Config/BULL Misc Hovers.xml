@@ -39,9 +39,11 @@
 					type="boolean" default="False" dll="3"/>
 		</section>
 		
-		<section id="Building">
+		<section id="Net Effects">
 			<option id="BuildingActualEffects" key="Building Actual Effects" 
 					type="boolean" default="False"/>
+			<option id="SpecialistActualEffects" key="Specialist Actual Effects" 
+					type="boolean" default="False"/> <!-- K-Mod added (this was unused, but missing) -->
 		</section>
 		
 		<section id="Tech">

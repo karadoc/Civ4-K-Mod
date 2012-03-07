@@ -51,7 +51,7 @@ class BugACOOptionsTab(BugOptionsTab.BugOptionsTab):
 		self.addSpacer(screen, rightR, "ACO_Tab2.2")
 		self.addTextDropdown(screen, rightL, rightR, "ACO__ShowAverageHealth")
 		self.addTextDropdown(screen, rightL, rightR, "ACO__ShowAttackerHealthBars")
-		self.addTextDropdown(screen, rightL, rightR, "ACO__ShowDedenderHealthBars")
+		self.addTextDropdown(screen, rightL, rightR, "ACO__ShowDefenderHealthBars")
 		
 		self.addSpacer(screen, rightL, "ACO_Tab3.1")
 		self.addSpacer(screen, rightR, "ACO_Tab3.2")

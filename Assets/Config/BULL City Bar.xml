@@ -16,54 +16,54 @@
 	<options id="CityBar" file="BUG City Bar.ini">
 		<section id="Bar">
 			<option id="AirportIcons" key="Airport Icons" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="StarvationTurns" key="Starvation Turns" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 		</section>
 		
 		<section id="Hover">
 			<option id="Health" key="Health" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="Happiness" key="Happiness" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="HurryAnger" key="Hurry Anger" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="DraftAnger" key="Draft Anger" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="FoodAssist" key="Food Assist" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="BaseValues" key="Base Values" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="BaseProduction" key="Base Production" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="BuildingActualEffects" key="Building Actual Effects" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="HurryAssist" key="Hurry Assist" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="HurryAssistIncludeCurrent" key="Hurry Assist Include Current" 
 					type="boolean" default="False"/>
 					
 			<option id="TradeDetail" key="Trade Detail" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="Commerce" key="Commerce" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="BuildingIcons" key="BuildingIcons" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="CultureTurns" key="Culture Turns" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="GreatPersonTurns" key="Great Person Turns" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="Specialists" key="Specialists" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="RevoltChance" key="Revolt Chance" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 					
 			<option id="HideInstructions" key="Hide Instructions" 
 					type="boolean" default="True"/>

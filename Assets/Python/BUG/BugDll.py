@@ -177,7 +177,6 @@ def getOptionSTRING(argsList):
 	return castOptionValue(str, *argsList)
 
 def castOptionValue(func, id, default):
-	BugUtil.debug("getOption %s, answer is %d (%d)", id, BugOptions.getOption(id).getValue(), default)
 	try:
 		return func(BugOptions.getOption(id).getValue())
 	except:

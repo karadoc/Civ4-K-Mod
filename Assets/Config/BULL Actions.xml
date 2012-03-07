@@ -17,25 +17,25 @@
 		<section id="Units">
 			<!-- Ask Declare War -->
 			<option id="AskDeclareWarUnits" key="Ask Declare War Units" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			
 			<!-- Sentry Healing by Unofficial Patch -->
 			<option id="SentryHealing" key="Sentry Healing" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="SentryHealingOnlyNeutral" key="Sentry Healing Only Neutral" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			
 			<!-- Ignore Harmless Barbarians (with Great Wall) -->
 			<option id="IgnoreHarmlessBarbarians" key="Ignore Harmless Barbarians" 
-					type="boolean" default="True" dll="2"/>
+					type="boolean" default="False" dll="2"/>
 		</section>
 		
 		<section id="Workers">
 			<!-- PreChop by EmperorFool -->
 			<option id="PreChopForests" key="Pre Chop Forests" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 			<option id="PreChopImprovements" key="Pre Chop Improvements" 
-					type="boolean" default="True"/>
+					type="boolean" default="False"/>
 		</section>
 	</options>
 </mod>
