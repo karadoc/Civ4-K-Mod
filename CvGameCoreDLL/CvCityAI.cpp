@@ -4376,9 +4376,25 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 				iValue += std::max(0, kBuilding.getAirUnitCapacity() - plot()->airUnitSpaceAvailable(getTeam())/2) * (getPopulation() + 12); // K-Mod
 
+				/* original bts code
 				iValue += (kBuilding.getFreeSpecialist() * 16);
 				iValue += (kBuilding.getAreaFreeSpecialist() * iNumCitiesInArea * 12);
-				iValue += (kBuilding.getGlobalFreeSpecialist() * iNumCities * 12);
+				iValue += (kBuilding.getGlobalFreeSpecialist() * iNumCities * 12); */
+				// K-Mod. Still very rough, but a bit closer to true value...
+				{
+					int iFreeSpecialists = kBuilding.getFreeSpecialist() + kBuilding.getAreaFreeSpecialist() * iNumCitiesInArea + kBuilding.getGlobalFreeSpecialist() * iNumCities;
+					if (iFreeSpecialists > 0)
+					{
+						int iSpecialistValue = 16 * 100; // rough base value
+						// additional bonuses
+						for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
+						{
+							iSpecialistValue += kOwner.getSpecialistExtraCommerce(i) * 4 * kOwner.AI_commerceWeight(i);
+						}
+						iValue += iFreeSpecialists * iSpecialistValue / 100;
+					}
+				}
+				// K-Mod end
 
 				iValue += ((kBuilding.getWorkerSpeedModifier() * kOwner.AI_getNumAIUnits(UNITAI_WORKER)) / 10);
 
@@ -4536,7 +4552,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						if (NO_BUILDING != eFreeBuilding)
 						{
 							// K-Mod note: this is actually a pretty poor approximation, because the value of the free building is likely to be different in the other cities
-							int iFreeBuildingValue = std::min(AI_buildingValue(eFreeBuilding, 0, 0, bConstCache, false), kOwner.getProductionNeeded(eFreeBuilding));
+							int iFreeBuildingValue = std::min(AI_buildingValue(eFreeBuilding, 0, 0, bConstCache, false), kOwner.getProductionNeeded(eFreeBuilding)/2);
 							iValue += iFreeBuildingValue * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass()));
 						}
 					}
