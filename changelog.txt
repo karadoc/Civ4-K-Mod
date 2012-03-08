@@ -1,5 +1,32 @@
-This is K-Mod version 1.20b.
+This is K-Mod version 1.21.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+
+v1.21 changelist
+
+Game
+
++ When normalising food bonuses, the city plot is no longer counted. (ie. floodplains on the city plot no longer counts towards the minimum food for a starting city.)
++ Starting locations are now evaluated with the bEasyCulture flag, which means that the outer plots of the fat cross are worth just as much as the inner plots.
++ Disabled some special ad-hoc game mechanics that the BBAI mod used for picking up stranded units. (AI players should adhere to the same game rules that are imposed on human players!)
++ Adjusted pathCost so that units will prefer not to end their turn on plots that they cannot fight on. (eg. boats in forts)
++ Fixed a rare OOS bug caused by the attitude cache.
++ '%' characters are now automatically removed when renaming a city. (City names with percentage signs can cause the game to crash.)
++ Changed the way units are activated inside CvUnit::automate. (The previous implementation caused the game to crash if the unit was immediately consumed.)
++ Added a couple of missing BUG options to the config files. (renamed ShowDedenderHealthBars to ShowDefenderHealthBars, added SpecialistActualEffects)
++ Made some minor speed improvements.
+
+AI
+
++ Redesigned and rewrote the AI for evaluating projects, and for deciding when and where to build projects. (eg. spaceship parts, Manhattan Project, The Internet) - In general, the AI should be better able to focus on building spaceship parts when aiming for a space victory, and they should be better at deciding when it is a good time to build the Manhattan Project. (although they still won't build the Manhattan Project very often - for game-play reasons.)
++ Made several changes to the way the AI evaluates world wonders and national wonders.
++ The AI will now continue unfinished missions using the same priority queue as for issuing new missions. This will prevent the AI from moving units to guard workers before the workers have moved.
++ Completely redesigned (and rewrote) the code for the AI's use of overseas espionage. (They still won't do it a lot, but at least they'll do it better!)
++ Fixed some AI problems which sometimes made it hard for the AI to load their units onto naval transports.
++ Fixed a problem which sometimes caused the AI to not unload units from a boat when it is intending to guard the city the boat is in.
++ Fixed a couple of special cases which allowed AI groups to change their head unit AI type without forcing the group to separate.
++ Made some changes to the way the AI evaluates corporation executives.
++ Tweaked the executive AI to further discourage automated units from spreading corporations to foreign civs. (They'll only spread to close friends, vassals, and allies.)
++ Slightly increased the AI's desire for great-person points.
 
 --
 v1.20 changelist
