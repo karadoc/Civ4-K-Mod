@@ -28,8 +28,8 @@
 #define PATH_DEFENSE_WEIGHT     (4) // K-Mod. ( * defence bonus)
 #define PATH_TERRITORY_WEIGHT   (5) // was 3
 #define PATH_STEP_WEIGHT        (4) // was 2
-#define PATH_STRAIGHT_WEIGHT    (2) // was 1
-#define PATH_ASYMMETRY_WEIGHT   (1) // K-Mod
+#define PATH_STRAIGHT_WEIGHT    (3) // was 1
+//#define PATH_ASYMMETRY_WEIGHT   (1) // K-Mod
 
 // #define PATH_DAMAGE_WEIGHT      (500) // K-Mod (disabled because it isn't used)
 #define PATH_COMBAT_WEIGHT      (300) // K-Mod. penalty for having to fight along the way.
@@ -1565,6 +1565,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 	// symmetry breaking. This is meant to prevent two paths from having equal cost.
 	// (If two paths have equal cost, sometimes the interface shows one path and the units follow the other. This is bad.)
+	/* original K-Mod symmetry breaking. (extra cost for turning a corner)
 	if (parent->m_pParent)
 	{
 		const int map_width = GC.getMapINLINE().getGridWidthINLINE();
@@ -1599,7 +1600,17 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 #undef WRAP_X
 #undef WRAP_Y
-	}
+	} */
+
+	// Unfortunately, the above code is not sufficient to fix the symmetry problem.
+	// Here's a new method:
+	iWorstCost += (node->m_iX + node->m_iY)%3;
+	// unfortunately, this simple method may have problems at the world-wrap boundries.
+	// It's difficult to tell when to correct for wrap effects and when not to, because as soon as the
+	// unit start moving, the start position of the path changes, and so it's no longer posible to tell
+	// whether or not the unit started on the other side of the boundry.  Drat.
+
+	// end symmetry breaking.
 
 	// lets try this without cheating, shall we?
 	if (!pToPlot->isRevealed(eTeam, false))
