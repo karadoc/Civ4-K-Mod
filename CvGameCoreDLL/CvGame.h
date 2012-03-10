@@ -394,21 +394,21 @@ public:
 
 	DllExport void setVoteChosen(int iSelection, int iVoteId);
 
-	int getReligionGameTurnFounded(ReligionTypes eIndex);												// Exposed to Python
-	bool isReligionFounded(ReligionTypes eIndex);																// Exposed to Python
+	int getReligionGameTurnFounded(ReligionTypes eIndex) const; // Exposed to Python
+	bool isReligionFounded(ReligionTypes eIndex) const; // Exposed to Python
 	void makeReligionFounded(ReligionTypes eIndex, PlayerTypes ePlayer);
 
-	bool isReligionSlotTaken(ReligionTypes eReligion) const;											// Exposed to Python
+	bool isReligionSlotTaken(ReligionTypes eReligion) const; // Exposed to Python
 	void setReligionSlotTaken(ReligionTypes eReligion, bool bTaken);
 
 	CvCity* getHolyCity(ReligionTypes eIndex);																	// Exposed to Python
 	void setHolyCity(ReligionTypes eIndex, CvCity* pNewValue, bool bAnnounce);	// Exposed to Python
 
-	int getCorporationGameTurnFounded(CorporationTypes eIndex);												// Exposed to Python
-	bool isCorporationFounded(CorporationTypes eIndex);																// Exposed to Python
+	int getCorporationGameTurnFounded(CorporationTypes eIndex) const; // Exposed to Python
+	bool isCorporationFounded(CorporationTypes eIndex) const; // Exposed to Python
 	void makeCorporationFounded(CorporationTypes eIndex, PlayerTypes ePlayer);
 
-	CvCity* getHeadquarters(CorporationTypes eIndex);																	// Exposed to Python
+	CvCity* getHeadquarters(CorporationTypes eIndex) const; // Exposed to Python
 	void setHeadquarters(CorporationTypes eIndex, CvCity* pNewValue, bool bAnnounce);	// Exposed to Python
 
 	PlayerVoteTypes getPlayerVote(PlayerTypes eOwnerIndex, int iVoteId) const;			// Exposed to Python
@@ -475,7 +475,8 @@ public:
 	DllExport virtual void AI_reset() = 0;
 	DllExport virtual void AI_makeAssignWorkDirty() = 0;
 	DllExport virtual void AI_updateAssignWork() = 0;
-	DllExport virtual int AI_combatValue(UnitTypes eUnit) = 0;
+	//DllExport virtual int AI_combatValue(UnitTypes eUnit) = 0;
+	DllExport virtual int AI_combatValue(UnitTypes eUnit) const = 0; // K-Mod!
 
 	CvReplayInfo* getReplayInfo() const;
 	DllExport void setReplayInfo(CvReplayInfo* pReplay);

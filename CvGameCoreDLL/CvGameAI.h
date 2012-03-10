@@ -22,7 +22,7 @@ public:
 	void AI_makeAssignWorkDirty();
 	void AI_updateAssignWork();
 
-	int AI_combatValue(UnitTypes eUnit);
+	int AI_combatValue(UnitTypes eUnit) const;
 
 	int AI_turnsPercent(int iTurns, int iPercent);
 

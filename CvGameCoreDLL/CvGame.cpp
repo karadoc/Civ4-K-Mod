@@ -1451,6 +1451,7 @@ void CvGame::normalizeRemoveBadTerrain()
 void CvGame::normalizeAddFoodBonuses()
 {
 	bool bIgnoreLatitude = pythonIsBonusIgnoreLatitudes();
+	int iFoodPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION(); // K-Mod
 
 	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 	{
@@ -1488,7 +1489,7 @@ void CvGame::normalizeAddFoodBonuses()
 									{
 										//iFoodBonus += 3;
 										// K-Mod. Bonus which only give 3 food with their improvement should not be worth 3 points. (ie. plains-cow should not be the only food resource.)
-										if (pLoopPlot->calculateMaxYield(YIELD_FOOD) >= 2*GC.getFOOD_CONSUMPTION_PER_POPULATION()) // ie. >= 4
+										if (pLoopPlot->calculateMaxYield(YIELD_FOOD) >= 2*iFoodPerPop) // ie. >= 4
 											iFoodBonus += 3;
 										else
 											iFoodBonus += 2;
@@ -1496,14 +1497,14 @@ void CvGame::normalizeAddFoodBonuses()
 									}
 								}
 							}
-							else if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam()) >= 2)
+							else if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam()) >= iFoodPerPop)
 						    {
 						        iGoodNatureTileCount++;
 						    }
 						}
 						else
 						{
-                            if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam()) >= 3)
+                            if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam()) >= iFoodPerPop+1)
 						    {
 						        iGoodNatureTileCount++;
 						    }
@@ -5438,20 +5439,14 @@ void CvGame::setVoteOutcome(const VoteTriggeredData& kData, PlayerVoteTypes eNew
 }
 
 
-int CvGame::getReligionGameTurnFounded(ReligionTypes eIndex)
+int CvGame::getReligionGameTurnFounded(ReligionTypes eIndex) const
 {
-// K-Mod
-	/* original bts code
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < GC.getNumReligionInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getNumReligionInfos(), eIndex, "CvGame::getReligionGameTurnFounded");
-// K-Mod end
 	return m_paiReligionGameTurnFounded[eIndex];
 }
 
 
-bool CvGame::isReligionFounded(ReligionTypes eIndex)
+bool CvGame::isReligionFounded(ReligionTypes eIndex) const
 {
 	return (getReligionGameTurnFounded(eIndex) != -1);
 }
@@ -5486,7 +5481,7 @@ void CvGame::setReligionSlotTaken(ReligionTypes eReligion, bool bTaken)
 }
 
 
-int CvGame::getCorporationGameTurnFounded(CorporationTypes eIndex)
+int CvGame::getCorporationGameTurnFounded(CorporationTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumCorporationInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -5494,7 +5489,7 @@ int CvGame::getCorporationGameTurnFounded(CorporationTypes eIndex)
 }
 
 
-bool CvGame::isCorporationFounded(CorporationTypes eIndex)
+bool CvGame::isCorporationFounded(CorporationTypes eIndex) const
 {
 	return (getCorporationGameTurnFounded(eIndex) != -1);
 }
@@ -5740,7 +5735,7 @@ void CvGame::setHolyCity(ReligionTypes eIndex, CvCity* pNewValue, bool bAnnounce
 }
 
 
-CvCity* CvGame::getHeadquarters(CorporationTypes eIndex)
+CvCity* CvGame::getHeadquarters(CorporationTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumCorporationInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");

@@ -240,16 +240,7 @@ public:
 	int AI_unitTargetMissionAIs(CvUnit* pUnit, MissionAITypes* aeMissionAI, int iMissionAICount, CvSelectionGroup* pSkipSelectionGroup, int iMaxPathTurns) const;
 // BBAI end
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      07/19/09                                jdog5000      */
-/*                                                                                              */
-/* Civic AI                                                                                     */
-/************************************************************************************************/
-	CivicTypes AI_bestCivic(CivicOptionTypes eCivicOption, int* iBestValue) const;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-	CivicTypes AI_bestCivic(CivicOptionTypes eCivicOption) const;
+	CivicTypes AI_bestCivic(CivicOptionTypes eCivicOption, int* iBestValue = 0) const;
 	int AI_civicValue(CivicTypes eCivic) const;
 
 	ReligionTypes AI_bestReligion() const;

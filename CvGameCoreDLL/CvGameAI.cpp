@@ -72,7 +72,7 @@ void CvGameAI::AI_updateAssignWork()
 }
 
 
-int CvGameAI::AI_combatValue(UnitTypes eUnit)
+int CvGameAI::AI_combatValue(UnitTypes eUnit) const
 {
 	int iValue;
 
