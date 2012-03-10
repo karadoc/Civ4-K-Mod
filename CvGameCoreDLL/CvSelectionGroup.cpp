@@ -179,25 +179,13 @@ void CvSelectionGroup::doTurn()
 		// wake unit if skipped last turn 
 		//		or healing and automated or no longer hurt (automated healing is one turn at a time)
 		//		or on sentry and there is danger
-		if ((eActivityType == ACTIVITY_HOLD) ||
-			((eActivityType == ACTIVITY_HEAL) && (AI_isControlled() || !bHurt)) ||
-			((eActivityType == ACTIVITY_SENTRY) && (sentryAlert())))
+		if (eActivityType == ACTIVITY_HOLD ||
+			(eActivityType == ACTIVITY_HEAL && (AI_isControlled() || !bHurt)) ||
+			((eActivityType == ACTIVITY_INTERCEPT || eActivityType == ACTIVITY_PATROL) && AI_isControlled()) || // K-Mod
+			(eActivityType == ACTIVITY_SENTRY && sentryAlert()))
 		{
 			setActivityType(ACTIVITY_AWAKE);
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/21/08                                jdog5000      */
-/*                                                                                              */
-/* Air AI                                                                                       */
-/************************************************************************************************/
-		// with improvements to launching air patrols, now can wake every turn
-		if ( (eActivityType == ACTIVITY_INTERCEPT) && !isHuman() )
-		{
-			setActivityType(ACTIVITY_AWAKE);
-		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/	
 
 		if (AI_isControlled())
 		{

@@ -6799,9 +6799,10 @@ void CvUnitAI::AI_attackSeaMove()
 
 	// K-Mod
 	if (AI_guardBonus(10))
-	{
 		return;
-	}
+
+	if (AI_getBirthmark()%2 == 0 && AI_guardCoast()) // I want some attackSea units to just patrol the area.
+		return;
 	// K-Mod end
 
 	if (AI_patrol())
@@ -6993,9 +6994,10 @@ void CvUnitAI::AI_reserveSeaMove()
 
 	// K-Mod
 	if (AI_guardBonus(10))
-	{
 		return;
-	}
+
+	if (AI_guardCoast())
+		return;
 	// K-Mod end
 
 	if (AI_patrol())
@@ -7234,10 +7236,15 @@ void CvUnitAI::AI_escortSeaMove()
 
 	// Pull back to primary area if it's not too far so primary area cities know you exist
 	// and don't build more, unnecessary escorts
+	/* original code
 	if (AI_retreatToCity(true,false,6))
 	{
 		return;
-	}
+	} */
+	// K-Mod. We don't want to actually end our turn inside the city...
+	if (AI_guardCoast(true))
+		return;
+	// K-Mod end
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -11682,6 +11689,95 @@ bool CvUnitAI::AI_guardCityAirlift()
 	return false;
 }
 
+// K-Mod.
+// This function will use our naval unit to block the coast outside our cities.
+bool CvUnitAI::AI_guardCoast(bool bPrimaryOnly, int iFlags, int iMaxPath)
+{
+	PROFILE_FUNC();
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	CvPlot* pBestCityPlot = 0;
+	CvPlot* pEndTurnPlot = 0;
+	int iBestValue = 0;
+
+	int iLoop;
+	for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+	{
+		if (!pLoopCity->isCoastal(GC.getMIN_WATER_SIZE_FOR_OCEAN()) || (bPrimaryOnly && !kOwner.AI_isPrimaryArea(pLoopCity->area())))
+			continue;
+
+		int iCoastPlots = 0;
+
+		for (DirectionTypes i = (DirectionTypes)0; i < NUM_DIRECTION_TYPES; i=(DirectionTypes)(i+1))
+		{
+			CvPlot* pAdjacentPlot = plotDirection(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE(), i);
+
+			if (!pAdjacentPlot || !pAdjacentPlot->isWater() || pAdjacentPlot->getTeam() != getTeam())
+				continue; // strange way to do it... just so that it matches the second loop.
+
+			iCoastPlots++;
+		}
+
+		int iBaseValue = iCoastPlots > 0
+			? 1000 * pLoopCity->AI_neededDefenders() / (iCoastPlots + 2) // arbitrary units
+			: 0;
+
+		if (iBaseValue <= iBestValue)
+			continue;
+
+		iBestValue *= 3;
+		iBestValue /= 3 + kOwner.AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GUARD_COAST, getGroup(), 1);
+
+		if (iBaseValue <= iBestValue)
+			continue;
+
+		for (DirectionTypes i = (DirectionTypes)0; i < NUM_DIRECTION_TYPES; i=(DirectionTypes)(i+1))
+		{
+			CvPlot* pAdjacentPlot = plotDirection(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE(), i);
+
+			if (!pAdjacentPlot || !pAdjacentPlot->isWater() || pAdjacentPlot->getTeam() != getTeam())
+				continue;
+
+			int iValue = iBaseValue;
+
+			iValue /= pAdjacentPlot->getBonusType(getTeam()) == NO_BONUS ? 2 : 1;
+			iValue *= 3;
+			iValue /= std::max(3, (atPlot(pAdjacentPlot) ? 1-getGroup()->getNumUnits() : 1)+pAdjacentPlot->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_COAST, -1, getOwnerINLINE()));
+
+			int iPathTurns;
+			if (iValue > iBestValue && generatePath(pAdjacentPlot, iFlags, true, &iPathTurns, iMaxPath))
+			{
+				iValue *= 4;
+				iValue /= 4 + iPathTurns;
+
+				if (iValue > iBestValue)
+				{
+					iBestValue = iValue;
+					pBestCityPlot = pLoopCity->plot();
+					pEndTurnPlot = getPathEndTurnPlot();
+				}
+			}
+		}
+	}
+
+	if (pEndTurnPlot)
+	{
+		if (atPlot(pEndTurnPlot))
+		{
+			getGroup()->pushMission(canSeaPatrol(pEndTurnPlot) ? MISSION_SEAPATROL : MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_COAST, pBestCityPlot);
+		}
+		else
+		{
+			getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_GUARD_COAST, pBestCityPlot);
+		}
+		return true;
+	}
+
+	return false;
+}
+// K-Mod end
+
 
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_guardBonus(int iMinValue)
@@ -11760,7 +11856,8 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 	{
 		if (atPlot(pBestGuardPlot))
 		{
-			getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_BONUS, pBestGuardPlot);
+			//getGroup()->pushMission(MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_BONUS, pBestGuardPlot);
+			getGroup()->pushMission(canSeaPatrol(pBestGuardPlot) ? MISSION_SEAPATROL : MISSION_SKIP, -1, -1, 0, false, false, MISSIONAI_GUARD_BONUS, pBestGuardPlot); // K-Mod
 			return true;
 		}
 		else

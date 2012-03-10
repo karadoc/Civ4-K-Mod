@@ -2605,6 +2605,7 @@ void getMissionAIString(CvWString& szString, MissionAITypes eMissionAI)
 	case MISSIONAI_PICKUP: szString = L"MISSIONAI_PICKUP"; break;
 // K-Mod
 #define mission_string(x) case x: szString = L#x; break;
+	mission_string(MISSIONAI_GUARD_COAST)
 	mission_string(MISSIONAI_SPREAD_CORPORATION)
 	mission_string(MISSIONAI_RECON_SPY)
 	mission_string(MISSIONAI_JOIN)

@@ -136,6 +136,7 @@ protected:
 	bool AI_guardCityMinDefender(bool bSearch = true);
 	bool AI_guardCity(bool bLeave = false, bool bSearch = false, int iMaxPath = MAX_INT, int iFlags = 0);
 	bool AI_guardCityAirlift();
+	bool AI_guardCoast(bool bPrimaryOnly = false, int iFlags = 0, int iMaxPath = -1); // K-Mod
 	bool AI_guardBonus(int iMinValue = 0);
 	int AI_getPlotDefendersNeeded(CvPlot* pPlot, int iExtra);
 	bool AI_guardFort(bool bSearch = true);

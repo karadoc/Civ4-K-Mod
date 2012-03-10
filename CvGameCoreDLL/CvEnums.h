@@ -1458,7 +1458,8 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_LOAD_SPECIAL,
 	MISSIONAI_GUARD_CITY,
 	MISSIONAI_GUARD_BONUS,
-	MISSIONAI_GUARD_TRADE_NET,
+	//MISSIONAI_GUARD_TRADE_NET,
+	MISSIONAI_GUARD_COAST, // K-Mod
 	MISSIONAI_GUARD_SPY,
 	MISSIONAI_ATTACK_SPY,
 	MISSIONAI_RECON_SPY, // K-Mod
@@ -1488,7 +1489,6 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_UPGRADE,
 	MISSIONAI_STRANDED,
 	// MISSIONAI_GOLDEN_AGE, // ie. waiting for more golden age units.
-	// note: MISSIONAI_GUARD_TRADE_NET is currently not being used:
 	// K-Mod end
 };
 
