@@ -4285,7 +4285,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 				if (kBuilding.getNoBonus() != NO_BONUS)
 				{
-					iValue -= kOwner.AI_bonusVal((BonusTypes)kBuilding.getNoBonus());
+					//iValue -= kOwner.AI_bonusVal((BonusTypes)kBuilding.getNoBonus());
+					iValue -= kOwner.AI_bonusVal((BonusTypes)kBuilding.getNoBonus(), -1); // K-Mod
 				}
 
 				if (kBuilding.getFreePromotion() != NO_PROMOTION)
@@ -10874,7 +10875,7 @@ int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
 
                     if (eNonObsoleteBonus != NO_BONUS)
                     {
-                        iTempValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) * ((GET_PLAYER(getOwnerINLINE()).getNumTradeableBonuses(eNonObsoleteBonus) == 0) ? 4 : 2));
+                        iTempValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 0) * ((GET_PLAYER(getOwnerINLINE()).getNumTradeableBonuses(eNonObsoleteBonus) == 0) ? 4 : 2));
                     }
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                       03/20/10                          denev & jdog5000    */

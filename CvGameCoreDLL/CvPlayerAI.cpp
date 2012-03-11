@@ -2040,7 +2040,7 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity)
 					{
 						if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 						{
-							iRazeValue -= std::max(2, AI_bonusVal(pLoopPlot->getBonusType(getTeam()))/2);
+							iRazeValue -= std::max(2, AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true)/2);
 						}
 					}
 				}
@@ -2987,7 +2987,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 
 							if (eBonus != NO_BONUS)
 							{
-								if ((getNumTradeableBonuses(eBonus) == 0) || (AI_bonusVal(eBonus) > 10)
+								if ((getNumTradeableBonuses(eBonus) == 0) || (AI_bonusVal(eBonus, 1, true) > 10)
 									|| (GC.getBonusInfo(eBonus).getYieldChange(YIELD_FOOD) > 0))
 								{
 									bHasGoodBonus = true;
@@ -3313,7 +3313,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
                     paiBonusCount[eBonus]++;
                     FAssert(paiBonusCount[eBonus] > 0);
 
-                    iTempValue = (AI_bonusVal(eBonus) * ((!kSet.bStartingLoc && (getNumTradeableBonuses(eBonus) == 0) && (paiBonusCount[eBonus] == 1)) ? 80 : 20));
+                    iTempValue = AI_bonusVal(eBonus, 1, true) * ((!kSet.bStartingLoc && (getNumTradeableBonuses(eBonus) == 0) && (paiBonusCount[eBonus] == 1)) ? 80 : 20);
                     iTempValue *= (kSet.bStartingLoc ? 100 : kSet.iGreed);
                     iTempValue /= 100;
 
@@ -3930,7 +3930,7 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 		{
 			if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 			{
-				iValue += std::max(1, AI_bonusVal(pLoopPlot->getBonusType(getTeam()))/5);
+				iValue += std::max(1, AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true)/5);
 			}
 
 			if (pLoopPlot->getOwnerINLINE() == getID())
@@ -5156,7 +5156,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					int iBonusValue = 0;
 
 					iBonusValue += ((kImprovement.isImprovementBonusMakesValid(iK)) ? 450 : 0);
-					iBonusValue += ((kImprovement.isImprovementBonusTrade(iK)) ? (45 * AI_bonusVal((BonusTypes) iK)) : 0);
+					iBonusValue += ((kImprovement.isImprovementBonusTrade(iK)) ? (45 * AI_bonusVal((BonusTypes) iK, 1, true)) : 0);
 
 					// K-Mod
 					int iNumBonuses = 0; // only spend time counting if it's worth something.
@@ -5390,7 +5390,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		if (GC.getBonusInfo((BonusTypes)iJ).getTechReveal() == eTech)
 		{
 			int iRevealValue = 150;
-			iRevealValue += (AI_bonusVal((BonusTypes)iJ) * 50);
+			iRevealValue += (AI_bonusVal((BonusTypes)iJ, 1, true) * 50);
 			
 			BonusClassTypes eBonusClass = (BonusClassTypes)GC.getBonusInfo((BonusTypes)iJ).getBonusClassType();
 			int iBonusClassTotal = (paiBonusClassRevealed[eBonusClass] + paiBonusClassUnrevealed[eBonusClass]);
@@ -5434,7 +5434,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			if (iOwned > 0)
 			{
 				int iEnableValue = 150;
-				iEnableValue += (AI_bonusVal((BonusTypes)iJ) * 50);
+				iEnableValue += (AI_bonusVal((BonusTypes)iJ, 1, true) * 50);
 				iEnableValue *= (iOwned > 1) ? 150 : 100;
 				iEnableValue /= 100;
 
@@ -9516,7 +9516,7 @@ int CvPlayerAI::AI_goldPerTurnTradeVal(int iGoldPerTurn) const
 	return iValue;
 }
 
-int CvPlayerAI::AI_bonusVal(BonusTypes eBonus, int iChange) const
+int CvPlayerAI::AI_bonusVal(BonusTypes eBonus, int iChange, bool bAssumeEnabled) const
 {
 	int iValue = 0;
 	int iBonusCount = getNumAvailableBonuses(eBonus);
@@ -9525,6 +9525,19 @@ int CvPlayerAI::AI_bonusVal(BonusTypes eBonus, int iChange) const
 		//This is assuming the none-to-one or one-to-none case.
 		iValue += AI_baseBonusVal(eBonus);
 		iValue += AI_corporationBonusVal(eBonus);
+
+		// K-Mod.
+		if (!bAssumeEnabled)
+		{
+			// Decrease the value if there is some tech reason for not having the bonus..
+			const CvTeam& kTeam = GET_TEAM(getTeam());
+
+			if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechReveal()))
+				iValue /= 2;
+			if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechCityTrade()))
+				iValue /= 2;
+		}
+		// K-Mod end
 	}
 	else
 	{
@@ -10078,7 +10091,7 @@ int CvPlayerAI::AI_cityTradeVal(CvCity* pCity) const
 		{
 			if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 			{
-				iValue += (AI_bonusVal(pLoopPlot->getBonusType(getTeam())) * 10);
+				iValue += (AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true) * 10);
 			}
 		}
 	}
@@ -13120,13 +13133,16 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	{
 		PROFILE("civicValue: corporation effects");
 
+		int iPotentialCorpValue = 0; // an estimate of the value lost when "isNoCorporations" blocks us from founding a good corp.
+
 		for (CorporationTypes eCorp = (CorporationTypes)0; eCorp < GC.getNumCorporationInfos(); eCorp=(CorporationTypes)(eCorp+1))
 		{
+			const CvCorporationInfo& kCorpInfo = GC.getCorporationInfo(eCorp);
 			int iSpeculation = 0;
 
 			if (!kGame.isCorporationFounded(eCorp))
 			{
-				if (kCivic.isNoCorporations() && GC.getCorporationInfo(eCorp).getTechPrereq() == NO_TECH)
+				if (kCivic.isNoCorporations() && kCorpInfo.getTechPrereq() == NO_TECH)
 				{
 					// if this civic is going to block us from founding any new corporations
 					// then we should try to estimate the cost of blocking such an opportunity.
@@ -13153,11 +13169,18 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 							const CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(i);
 							if (kLoopBuilding.getFoundsCorporation() == eCorp && kLoopBuilding.getProductionCost() < 0) // don't count buildings that can be constructed normally
 							{
-								bool bHasPrereq = kTeam.isHasTech((TechTypes)kLoopBuilding.getPrereqAndTech()) || canResearch((TechTypes)kLoopBuilding.getPrereqAndTech());
+								bool bHasPrereq = true;
 
-								for (int iI = 0; bHasPrereq && iI < GC.getNUM_BUILDING_AND_TECH_PREREQS(); iI++)
+								if (canDoCivics(eCivic))
 								{
-									bHasPrereq = kTeam.isHasTech((TechTypes)kLoopBuilding.getPrereqAndTechs(iI)) || canResearch((TechTypes)kLoopBuilding.getPrereqAndTechs(iI));
+									// Only check the tech prereqs for the corp if we already have the prereqs for this civic.
+									// (This condition will help us research towards the corp tech rather than researching towards the civic that will block the corp.)
+									bHasPrereq = kTeam.isHasTech((TechTypes)kLoopBuilding.getPrereqAndTech()) || canResearch((TechTypes)kLoopBuilding.getPrereqAndTech());
+
+									for (int iI = 0; bHasPrereq && iI < GC.getNUM_BUILDING_AND_TECH_PREREQS(); iI++)
+									{
+										bHasPrereq = kTeam.isHasTech((TechTypes)kLoopBuilding.getPrereqAndTechs(iI)) || canResearch((TechTypes)kLoopBuilding.getPrereqAndTechs(iI));
+									}
 								}
 
 								if (bHasPrereq)
@@ -13217,7 +13240,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 			for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
 			{
-				BonusTypes eBonus = (BonusTypes)GC.getCorporationInfo(eCorp).getPrereqBonus(i);
+				BonusTypes eBonus = (BonusTypes)kCorpInfo.getPrereqBonus(i);
 				if (NO_BONUS != eBonus)
 				{
 					iBonuses += countOwnedBonuses(eBonus);
@@ -13239,13 +13262,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				{
 					CvCity* pHqCity = iSpeculation == 0 ? kGame.getHeadquarters(eCorp) : pCapital;
 					if (pHqCity)
-						iTempValue -= pHqCity->getCommerceRateModifier(i) * GC.getCorporationInfo(eCorp).getHeadquarterCommerce(i) * iCorpCities / 100;
+						iTempValue -= pHqCity->getCommerceRateModifier(i) * kCorpInfo.getHeadquarterCommerce(i) * iCorpCities / 100;
 				}
 
 				// loss of corp commerce bonuses
 				if (kCivic.isNoCorporations() || (kCivic.isNoForeignCorporations() && !bPlayerHQ))
 				{
-					iTempValue -= iCorpCities * ((AI_averageCommerceMultiplier(i) * GC.getCorporationInfo(eCorp).getCommerceProduced(i))/100 * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
+					iTempValue -= iCorpCities * ((AI_averageCommerceMultiplier(i) * kCorpInfo.getCommerceProduced(i))/100 * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
 				}
 
 				iTempValue *= AI_commerceWeight(i);
@@ -13253,14 +13276,15 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 				iCorpValue += iTempValue;
 
-				iMaintenance += GC.getCorporationInfo(eCorp).getHeadquarterCommerce(i) * iCorpCities;
+				iMaintenance += kCorpInfo.getHeadquarterCommerce(i) * iCorpCities;
 			}
-			// loss of corp yield bonuses
+
 			if (kCivic.isNoCorporations() || (kCivic.isNoForeignCorporations() && !bPlayerHQ))
 			{
+				// loss of corp yield bonuses
 				for (int iI = 0; iI < NUM_YIELD_TYPES; ++iI)
 				{
-					iTempValue = -(iCorpCities * GC.getCorporationInfo(eCorp).getYieldProduced((YieldTypes)iI) * iBonuses);
+					iTempValue = -(iCorpCities * kCorpInfo.getYieldProduced((YieldTypes)iI) * iBonuses);
 					iTempValue *= AI_averageYieldMultiplier((YieldTypes)iI);
 					iTempValue /= 100;
 					iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
@@ -13271,10 +13295,16 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 					iCorpValue += iTempValue;
 				}
+
+				// loss of corp resource
+				if (kCorpInfo.getBonusProduced() != NO_BONUS)
+				{
+					iCorpValue -= AI_bonusVal((BonusTypes)kCorpInfo.getBonusProduced(), 1, false);
+				}
 			}
 
 			// loss of maintenance cost (money saved)
-			iTempValue = GC.getCorporationInfo(eCorp).getMaintenance() * iBonuses * iCorpCities;
+			iTempValue = kCorpInfo.getMaintenance() * iBonuses * iCorpCities;
 			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 			iTempValue /= 10000;
 			iTempValue += iMaintenance;
@@ -13295,10 +13325,15 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			}
 
 			FAssert(iSpeculation == 0 || (!kGame.isCorporationFounded(eCorp) && kCivic.isNoCorporations()));
+			iCorpValue /= (iSpeculation + 1);
+			if (iSpeculation == 0)
+				iValue += iCorpValue;
 			// if speculating about disabling corps that we haven't yet created, only count the losses!
-			if (iSpeculation == 0 || iCorpValue < 0)
-				iValue += iCorpValue / (iSpeculation + 1);
+			else if (iCorpValue < iPotentialCorpValue)
+				iPotentialCorpValue = iCorpValue;
 		}
+		FAssert(iPotentialCorpValue <= 0);
+		iValue += iPotentialCorpValue;
 	}
 	// K-Mod end
 
@@ -17710,7 +17745,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 	if (NO_BONUS != kEvent.getBonus())
 	{
 		//iBonusValue = AI_bonusVal((BonusTypes)kEvent.getBonus());
-		iBonusValue = AI_bonusVal((BonusTypes)kEvent.getBonus(), 0); // K-Mod
+		iBonusValue = AI_bonusVal((BonusTypes)kEvent.getBonus(), 0, true); // K-Mod
 	}
 
 	if (NULL != pPlot)
@@ -21740,7 +21775,7 @@ void CvPlayerAI::AI_advancedStartRouteTerritory()
 				{
 					if (GC.getImprovementInfo(pLoopPlot->getImprovementType()).isImprovementBonusTrade(eBonus))
 					{
-						int iBonusValue = AI_bonusVal(eBonus, 1);
+						int iBonusValue = AI_bonusVal(eBonus, 1, true);
 						if (iBonusValue > 9)
 						{
 							int iBestValue = 0;

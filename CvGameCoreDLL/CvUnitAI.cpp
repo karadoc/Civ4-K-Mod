@@ -11877,7 +11877,7 @@ int CvUnitAI::AI_getPlotDefendersNeeded(CvPlot* pPlot, int iExtra)
 	BonusTypes eNonObsoleteBonus = pPlot->getNonObsoleteBonusType(getTeam());
 	if (eNonObsoleteBonus != NO_BONUS)
 	{
-		iNeeded += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus) + 10) / 19;
+		iNeeded += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 1) + 10) / 19;
 	}
 
 	int iDefense = pPlot->defenseModifier(getTeam(), true);
@@ -14262,7 +14262,7 @@ bool CvUnitAI::AI_paradrop(int iRange)
 						// in the AI territory they probably have it
 						if (NO_BONUS != pLoopPlot->getNonObsoleteBonusType(getTeam()))
 						{
-							iValue += std::max(1,GET_PLAYER(eTargetPlayer).AI_bonusVal(pLoopPlot->getBonusType()) - 10);
+							iValue += std::max(1,GET_PLAYER(eTargetPlayer).AI_bonusVal(pLoopPlot->getBonusType(), 0) - 10);
 						}
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                        END                                                  */
@@ -19925,7 +19925,7 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
                         {
                         	if (generatePath(pLoopPlot, 0, true, &iPathTurns))
 							{
-								iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus);
+								iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 1);
 											
 								if (bDoImprove)
 								{
@@ -21594,7 +21594,7 @@ int CvUnitAI::AI_airOffenseBaseValue( CvPlot* pPlot )
 									{
 										if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 										{
-											iTempValue += 8*std::max(2, GET_PLAYER(pLoopPlot->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(getTeam()))/10);
+											iTempValue += 8*std::max(2, GET_PLAYER(pLoopPlot->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(getTeam()),0)/10);
 										}
 									}
 								}
@@ -22051,7 +22051,7 @@ bool CvUnitAI::AI_airStrike()
 						if (eBonus != NO_BONUS && pLoopPlot->isOwned() && canAirBombAt(plot(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()))
 						{
 							iBombValue = GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, -1);
-							iBombValue += GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus);
+							iBombValue += GET_PLAYER(pLoopPlot->getOwner()).AI_bonusVal(eBonus, 0);
 						}
 					}
 				}
@@ -22356,7 +22356,7 @@ bool CvUnitAI::AI_airBombPlots()
 							if (pLoopPlot->getBonusType(pLoopPlot->getTeam()) != NO_BONUS)
 							{
 								//and even more so if it's a resource
-								iValue += GET_PLAYER(pLoopPlot->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(pLoopPlot->getTeam()));
+								iValue += GET_PLAYER(pLoopPlot->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(pLoopPlot->getTeam()), 0);
 							}
 						}
 

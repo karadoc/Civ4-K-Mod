@@ -717,7 +717,7 @@ int CvTeamAI::AI_calculateBonusWarValue(TeamTypes eTeam) const
 					{
 						// 10 seems like a typical value for a health/happiness resource the AI doesn't have
 						// Values for strategic resources can be 60 or higher
-						iThisValue += GET_PLAYER((PlayerTypes)iJ).AI_bonusVal(eNonObsoleteBonus);
+						iThisValue += GET_PLAYER((PlayerTypes)iJ).AI_bonusVal(eNonObsoleteBonus, 1, true);
 					}
 				}
 				iThisValue /= getAliveCount();
@@ -2640,7 +2640,7 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 							BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getID());
 							if ( eBonus != NO_BONUS)
 							{
-								if(GET_PLAYER(getLeaderID()).AI_bonusVal(eBonus) > 15)
+								if(GET_PLAYER(getLeaderID()).AI_bonusVal(eBonus, 1) > 15)
 								{
 									bValuable = true;
 									break;

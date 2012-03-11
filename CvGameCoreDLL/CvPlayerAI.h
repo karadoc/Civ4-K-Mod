@@ -182,7 +182,7 @@ public:
 	DllExport int AI_maxGoldPerTurnTrade(PlayerTypes ePlayer) const;
 	int AI_goldPerTurnTradeVal(int iGoldPerTurn) const;
 
-	int AI_bonusVal(BonusTypes eBonus, int iChange = 1) const;
+	int AI_bonusVal(BonusTypes eBonus, int iChange, bool bAssumeEnabled = false) const; // K-Mod added bAssumeEnabled
 	int AI_baseBonusVal(BonusTypes eBonus) const;
 	int AI_bonusTradeVal(BonusTypes eBonus, PlayerTypes ePlayer, int iChange) const;
 	DenialTypes AI_bonusTrade(BonusTypes eBonus, PlayerTypes ePlayer) const;
