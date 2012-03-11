@@ -1744,6 +1744,7 @@ void CvCityAI::AI_chooseProduction()
 			{
 				pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 1. (project value: %d, building value: %d, odds: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue, iOdds);
+				return;
 			}
 		}
 		// K-Mod end
@@ -2766,7 +2767,7 @@ void CvCityAI::AI_chooseProduction()
 		FAssert(eBestProject != NO_PROJECT);
 		pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2. (project value: %d, building value: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue);
-			return;
+		return;
 	}
 	// K-Mod end
 
@@ -2964,16 +2965,16 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 				}
 			}
 			// K-Mod
-			if (bLandWar && !bDefense && GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true))
+			if (bLandWar && !bDefense && !isHuman() && GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true))
 			{
 				// if we're winning, then focus on capturing cities.
 				int iSuccessRatio = GET_TEAM(getTeam()).AI_getWarSuccessRating();
 				if (iSuccessRatio > 0)
 				{
-					aiUnitAIVal[UNITAI_ATTACK] += iSuccessRatio * iMilitaryWeight / 1200;
-					aiUnitAIVal[UNITAI_ATTACK_CITY] += iSuccessRatio * iMilitaryWeight / 600;
+					aiUnitAIVal[UNITAI_ATTACK] += iSuccessRatio * iMilitaryWeight / 800;
+					aiUnitAIVal[UNITAI_ATTACK_CITY] += iSuccessRatio * iMilitaryWeight / 800;
 					aiUnitAIVal[UNITAI_COUNTER] += iSuccessRatio * iMilitaryWeight / 1200;
-					aiUnitAIVal[UNITAI_PARADROP] += iSuccessRatio * iMilitaryWeight / 600;
+					aiUnitAIVal[UNITAI_PARADROP] += iSuccessRatio * iMilitaryWeight / 800;
 				}
 			}
 			// K-Mod end
@@ -3024,7 +3025,7 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	aiUnitAIVal[UNITAI_CITY_SPECIAL] *= 2;
 	aiUnitAIVal[UNITAI_EXPLORE] *= ((bDanger) ? 6 : 15);
 	//aiUnitAIVal[UNITAI_ICBM] *= 18;
-	aiUnitAIVal[UNITAI_ICBM] *= 18 * GET_PLAYER(getOwnerINLINE()).AI_nukeWeight() / 100;
+	aiUnitAIVal[UNITAI_ICBM] *= 18 * GET_PLAYER(getOwnerINLINE()).AI_nukeWeight() / 100; // K-Mod
 	aiUnitAIVal[UNITAI_WORKER_SEA] *= ((bDanger) ? 3 : 10);
 	aiUnitAIVal[UNITAI_ATTACK_SEA] *= 5;
 	aiUnitAIVal[UNITAI_RESERVE_SEA] *= 4;
@@ -3046,9 +3047,8 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	if (GET_PLAYER(getOwner()).AI_isDoStrategy(AI_STRATEGY_CRUSH))
 	{
 		aiUnitAIVal[UNITAI_ATTACK_CITY] *= 2;
-		aiUnitAIVal[UNITAI_ATTACK] *= 3;
-		aiUnitAIVal[UNITAI_ATTACK] /= 2;
-		aiUnitAIVal[UNITAI_ATTACK_AIR] *= 2;
+		aiUnitAIVal[UNITAI_ATTACK] *= 2;
+		aiUnitAIVal[UNITAI_ATTACK_AIR] *= 3;
 	}
 	if (GET_TEAM(getTeam()).AI_getRivalAirPower() <= 8 * GET_PLAYER(getOwner()).AI_totalAreaUnitAIs(area(), UNITAI_DEFENSE_AIR))
 	{
