@@ -11713,10 +11713,8 @@ bool CvUnitAI::AI_guardCoast(bool bPrimaryOnly, int iFlags, int iMaxPath)
 		{
 			CvPlot* pAdjacentPlot = plotDirection(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE(), i);
 
-			if (!pAdjacentPlot || !pAdjacentPlot->isWater() || pAdjacentPlot->getTeam() != getTeam())
-				continue; // strange way to do it... just so that it matches the second loop.
-
-			iCoastPlots++;
+			if (pAdjacentPlot && pAdjacentPlot->isWater())
+				iCoastPlots++;
 		}
 
 		int iBaseValue = iCoastPlots > 0
@@ -22798,7 +22796,8 @@ bool CvUnitAI::AI_nukeRange(int iRange)
 									}
 								}
 								
-								iValue += (iEnemyCount + iDamagedEnemyCount) * (pLoopPlot2->isWater() ? 25 : 12);
+								//iValue += (iEnemyCount + iDamagedEnemyCount) * (pLoopPlot2->isWater() ? 25 : 12);
+								iValue += (iEnemyCount + std::min(0, iEnemyCount/2-iDamagedEnemyCount)) * (pLoopPlot2->isWater() ? 25 : 12); // K-Mod
 								iValue -= iTeamCount * 15;
 								iValue -= iNeutralCount * 20;
 								
