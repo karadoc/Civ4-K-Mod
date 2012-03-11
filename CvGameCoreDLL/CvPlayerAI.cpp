@@ -6330,7 +6330,15 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 						break;
 
 					case UNITAI_ICBM:
-						iMilitaryValue += ((bWarPlan) ? 200 : 100);
+						//iMilitaryValue += ((bWarPlan) ? 200 : 100);
+						// K-Mod
+						if (!GC.getGameINLINE().isNoNukes())
+						{
+							iMilitaryValue += ((bWarPlan) ? 200 : 100);
+							iMilitaryValue += GC.getGameINLINE().isNukesValid() ? 2*AI_nukeWeight() : 0;
+							FAssert(!GC.getGameINLINE().isNukesValid() || AI_nukeWeight() > 0);
+						}
+						// K-Mod end
 						break;
 
 					case UNITAI_WORKER_SEA:
@@ -11850,6 +11858,55 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 		}
 	}
 	return iMaxUnitSpending;
+}
+
+// When nukes are enabled, this function returns a percentage factor of how keen this player is to build nukes.
+// The starting value is around 100, which corresponds to quite a low tendency to build nukes.
+int CvPlayerAI::AI_nukeWeight() const
+{
+	PROFILE_FUNC();
+
+	if (!GC.getGameINLINE().isNukesValid() || GC.getGameINLINE().isNoNukes())
+		return 0;
+
+	const CvTeamAI& kTeam = GET_TEAM(getTeam());
+
+	int iNukeWeight = 100;
+
+	// Increase the weight based on how many nukes the world has made & used so far.
+	int iHistory = 2*GC.getGameINLINE().getNukesExploded() + GC.getGameINLINE().countTotalNukeUnits() - GC.getLeaderHeadInfo(getPersonalityType()).getBasePeaceWeight();
+	iHistory *= 35; // 5% for each nuke, 10% for each exploded
+	iHistory /= std::max(1, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getDefaultPlayers());
+	iHistory = std::min(iHistory, 300);
+	if (iHistory > 0)
+	{
+		iHistory *= 90 + GC.getLeaderHeadInfo(getPersonalityType()).getConquestVictoryWeight();
+		iHistory /= 100;
+	}
+
+	iNukeWeight += iHistory;
+
+	// increase the weight if we were the team who enabled nukes. (look for projects only. buildings can get stuffed.)
+	for (ProjectTypes i = (ProjectTypes)0; i < GC.getNumProjectInfos(); i = (ProjectTypes)(i+1))
+	{
+		if (GC.getProjectInfo(i).isAllowsNukes() && kTeam.getProjectCount(i) > 0)
+		{
+			iNukeWeight += std::max(0, 100 - iHistory/2);
+			break;
+		}
+	}
+
+	// increase the weight for total war, or for the home-stretch to victory, or for losing wars.
+	if (kTeam.AI_isAnyMemberDoVictoryStrategyLevel4())
+	{
+		iNukeWeight = iNukeWeight*3/2;
+	}
+	else if (kTeam.getWarPlanCount(WARPLAN_TOTAL, true) > 0 || kTeam.AI_getWarSuccessRating() < -20)
+	{
+		iNukeWeight = iNukeWeight*4/3;
+	}
+
+	return iNukeWeight;
 }
 // K-Mod end
 

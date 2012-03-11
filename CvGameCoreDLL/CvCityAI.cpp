@@ -2232,6 +2232,8 @@ void CvCityAI::AI_chooseProduction()
     int iAircraftHave = 0;
     UnitTypes eBestAttackAircraft = NO_UNIT;
     UnitTypes eBestMissile = NO_UNIT;
+
+	int iNukeWeight = kPlayer.AI_nukeWeight(); // K-Mod
     
 	if (iUnitSpending < (iMaxUnitSpending + 12) && (!bImportantCity || bDefenseWar) ) // K-Mod. was +4, now +12 for the new unit spending metric
 	{
@@ -2277,7 +2279,8 @@ void CvCityAI::AI_chooseProduction()
 					airUnitTypes.push_back(std::make_pair(UNITAI_MISSILE_AIR, bAssault ? 60 : 40));
 				}
 				
-				airUnitTypes.push_back(std::make_pair(UNITAI_ICBM, 20));
+				//airUnitTypes.push_back(std::make_pair(UNITAI_ICBM, 20));
+				airUnitTypes.push_back(std::make_pair(UNITAI_ICBM, 20 * iNukeWeight / 100)); // K-Mod
 				
 				if (iAircraftHave * 2 < iAircraftNeed)
 				{
@@ -2327,7 +2330,8 @@ void CvCityAI::AI_chooseProduction()
 			}
 		}
 	}
-	
+
+	/* original code
 	if (!bAlwaysPeace && !(bLandWar || bAssault) && (kPlayer.AI_isDoStrategy(AI_STRATEGY_OWABWNW) || (GC.getGame().getSorenRandNum(12, "AI consider Nuke") == 0)))
 	{
 		if( !bFinancialTrouble )
@@ -2336,12 +2340,11 @@ void CvCityAI::AI_chooseProduction()
 			int iNukesWanted = 1 + 2 * std::min(kPlayer.getNumCities(), GC.getGame().getNumCities() - kPlayer.getNumCities());
 			if ((iTotalNukes < iNukesWanted) && (GC.getGame().getSorenRandNum(100, "AI train nuke MWAHAHAH") < (90 - (80 * iTotalNukes) / iNukesWanted)))
 			{
-				//if ((pWaterArea != NULL))
-				if ((pWaterArea != NULL) && GC.getGame().getSorenRandNum(3, "AI train boat instead") == 0) // K-Mod
+				if ((pWaterArea != NULL))
 				{
 					if (AI_chooseUnit(UNITAI_MISSILE_CARRIER_SEA, 50))
 					{
-						return;	
+						return;
 					}
 				}
 
@@ -2351,7 +2354,33 @@ void CvCityAI::AI_chooseProduction()
 				}
 			}
 		}
-	}   
+	} */
+	// K-Mod. Roughly the same conditions for builing a nuke, but with a few adjustments for flavour and strategy
+	if (!bAlwaysPeace && !bLandWar && !bUnitExempt && !bFinancialTrouble)
+	{
+		if ((kPlayer.AI_isDoStrategy(AI_STRATEGY_OWABWNW) || GC.getGame().getSorenRandNum(1200, "AI consider Nuke") < std::min(400, iNukeWeight))
+			&& (!bAssault || GC.getGame().getSorenRandNum(400, "AI consider Nuke despite assult") < std::min(200, 50 + iNukeWeight/2)))
+		{
+			int iTotalNukes = kPlayer.AI_totalUnitAIs(UNITAI_ICBM);
+			int iNukesWanted = 1 + 2 * std::min(kPlayer.getNumCities(), GC.getGame().getNumCities() - kPlayer.getNumCities());
+			if ((iTotalNukes < iNukesWanted) && (GC.getGame().getSorenRandNum(100, "AI train nuke MWAHAHAH") < (90 - (80 * iTotalNukes) / iNukesWanted)))
+			{
+				if (pWaterArea && kPlayer.AI_totalUnitAIs(UNITAI_MISSILE_CARRIER_SEA) < iTotalNukes/2 && GC.getGame().getSorenRandNum(3, "AI train boat instead") == 0)
+				{
+					if (AI_chooseUnit(UNITAI_MISSILE_CARRIER_SEA, 50))
+					{
+						return;
+					}
+				}
+
+				if (AI_chooseUnit(UNITAI_ICBM))
+				{
+					return;
+				}
+			}
+		}
+	}
+	// K-Mod end
 
 	// Assault case now completely handled above
 	if (!bAssault && (!bImportantCity || bDefenseWar) && (iUnitSpending < iMaxUnitSpending))
@@ -2994,7 +3023,8 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	aiUnitAIVal[UNITAI_CITY_COUNTER] *= 2;
 	aiUnitAIVal[UNITAI_CITY_SPECIAL] *= 2;
 	aiUnitAIVal[UNITAI_EXPLORE] *= ((bDanger) ? 6 : 15);
-	aiUnitAIVal[UNITAI_ICBM] *= 18;
+	//aiUnitAIVal[UNITAI_ICBM] *= 18;
+	aiUnitAIVal[UNITAI_ICBM] *= 18 * GET_PLAYER(getOwnerINLINE()).AI_nukeWeight() / 100;
 	aiUnitAIVal[UNITAI_WORKER_SEA] *= ((bDanger) ? 3 : 10);
 	aiUnitAIVal[UNITAI_ATTACK_SEA] *= 5;
 	aiUnitAIVal[UNITAI_RESERVE_SEA] *= 4;
@@ -5827,13 +5857,13 @@ int CvCityAI::AI_projectValue(ProjectTypes eProject)
 						int iTemp;
 
 						if (kLoopPlayer.getID() == kOwner.getID())
-							iTemp = 100 + GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getConquestVictoryWeight(); // victory weight is between 0 and 100. (usually around 30).
+							iTemp = 85 + GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getConquestVictoryWeight(); // victory weight is between 0 and 100. (usually around 30).
 						else if (kLoopPlayer.getTeam() == kOwner.getTeam())
-							iTemp = 100;
+							iTemp = 85;
 						else if (kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
 							iTemp = -100;
 						else
-							iTemp = (kOwner.AI_getAttitudeWeight(j) - 100)/2;
+							iTemp = std::max(-100, (kOwner.AI_getAttitudeWeight(j) - 125)/2);
 
 						// tech prereqs.  halve the value for each missing prereq
 						if (!kLoopTeam.isHasTech((TechTypes)(kLoopUnit.getPrereqAndTech())))
@@ -5858,11 +5888,11 @@ int CvCityAI::AI_projectValue(ProjectTypes eProject)
 						BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqAndBonus();
 						if (ePrereqBonus != NO_BONUS && !kLoopPlayer.hasBonus(ePrereqBonus) && kLoopPlayer.countOwnedBonuses(ePrereqBonus) == 0)
 						{
-							iTemp /= 6;
+							iTemp /= 5;
 						}
 
-						iTemp *= kLoopPlayer.getPower();
-						iTemp /= std::max(1, kOwner.getPower());
+						iTemp *= 3*kLoopPlayer.getPower();
+						iTemp /= std::max(1, 2*kOwner.getPower()+kLoopPlayer.getPower());
 
 						iNukeValue += iTemp;
 					}
