@@ -5155,31 +5155,37 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				{
 					int iBonusValue = 0;
 
+					/* original bts code
 					iBonusValue += ((kImprovement.isImprovementBonusMakesValid(iK)) ? 450 : 0);
-					iBonusValue += ((kImprovement.isImprovementBonusTrade(iK)) ? (45 * AI_bonusVal((BonusTypes) iK, 1, true)) : 0);
+					iBonusValue += ((kImprovement.isImprovementBonusTrade(iK)) ? (45 * AI_bonusVal((BonusTypes) iK, 1, true)) : 0); */
 
 					// K-Mod
-					int iNumBonuses = 0; // only spend time counting if it's worth something.
-					if (iBonusValue > 0)
+					const CvBonusInfo& kBonusInfo = GC.getBonusInfo((BonusTypes)iK);
+
+					if (!kImprovement.isImprovementBonusMakesValid(iK) && !kImprovement.isImprovementBonusTrade(iK))
+						continue;
+
+					bool bRevealed = kTeam.isHasTech((TechTypes)kBonusInfo.getTechReveal()) || kTeam.isForceRevealedBonus((BonusTypes)iK);
+
+					int iNumBonuses = bRevealed
+						? countOwnedBonuses((BonusTypes)iK) // actual count
+						: std::max(1, 2*getNumCities() / std::max(1, 3*GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())); // a guess
+
+					if (iNumBonuses > 0 && (bRevealed || kBonusInfo.getTechReveal() == eTech))
 					{
-						iNumBonuses = countOwnedBonuses((BonusTypes)iK);
-						if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo((BonusTypes)iK).getTechReveal()))
+						TechTypes eConnectTech = (TechTypes)kBonusInfo.getTechCityTrade();
+						if ((kTeam.isHasTech(eConnectTech) || eConnectTech == eTech) && !kTeam.isBonusObsolete((BonusTypes)iK) && kBonusInfo.getTechObsolete() != eTech)
 						{
-							iBonusValue *= 2;
-							iBonusValue /= 3;
-						}
-						else if (iNumBonuses == 0)
-						{
-							iBonusValue = 0;
-						}
-						else
-						{
-							iBonusValue += (iNumBonuses -1) * iBonusValue / 10;
+							// note: this is in addition to the getTechCityTrade evaluation lower in this function.
+							iBonusValue += AI_bonusVal((BonusTypes)iK, 1, true);
+							iBonusValue += (iNumBonuses-1) * iBonusValue / 10;
 						}
 					}
-					// K-Mod end
-					if (iBonusValue > 0)
+
+					//if (iBonusValue > 0)
+					if (iNumBonuses > 0)
 					{
+					// K-Mod end (kind of)
 						int iYieldValue = 0; // K-Mod
 						for (int iL = 0; iL < NUM_YIELD_TYPES; iL++)
 						{
@@ -5420,15 +5426,17 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			// K-Mod
 			// If we don't yet have the 'enable' tech, reduce the value of the reveal.
 			if (GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade() != eTech &&
-				!GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade())))
-				iValue /= 3;
+				!kTeam.isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade())))
+			{
+				iRevealValue /= 3;
+			}
 			// K-Mod end
 
 			iValue += iRevealValue;
 		}
 		// K-Mod: Value for enabling resources that are already revealed
 		else if (GC.getBonusInfo((BonusTypes)iJ).getTechCityTrade() == eTech &&
-			GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)iJ).getTechReveal())))
+			(kTeam.isHasTech((TechTypes)GC.getBonusInfo((BonusTypes)iJ).getTechReveal()) || kTeam.isForceRevealedBonus((BonusTypes)iJ)))
 		{
 			int iOwned = countOwnedBonuses((BonusTypes)iJ);
 			if (iOwned > 0)
