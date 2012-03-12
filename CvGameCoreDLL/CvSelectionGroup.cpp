@@ -1487,12 +1487,19 @@ void CvSelectionGroup::startMission()
 	}
 }
 
-void CvSelectionGroup::continueMission(int iSteps)
+// K-Mod. CvSelectionGroup::continueMission used to be a recursive function.
+// I've moved the bulk of the function into a new function, and turned continueMission into just a simple loop to remove the recursion.
+void CvSelectionGroup::continueMission()
 {
-	CvUnit* pTargetUnit;
-	bool bDone;
-	bool bAction;
+	int iSteps = 0;
+	while (continueMission_step(iSteps))
+	{
+		iSteps++;
+	}
+}
 
+bool CvSelectionGroup::continueMission_step(int iSteps)
+{
 	FAssert(!isBusy());
 	FAssert(headMissionQueueNode() != NULL);
 	FAssert(getOwnerINLINE() != NO_PLAYER);
@@ -1502,11 +1509,11 @@ void CvSelectionGroup::continueMission(int iSteps)
 	{
 		// just in case...
 		setActivityType(ACTIVITY_AWAKE);
-		return;
+		return false;
 	}
 
-	bDone = false;
-	bAction = false;
+	bool bDone = false;
+	bool bAction = false;
 
 	if (!(headMissionQueueNode()->m_data.iFlags & MOVE_NO_ATTACK) && // K-Mod
 		(headMissionQueueNode()->m_data.iPushTurn == GC.getGameINLINE().getGameTurn() || headMissionQueueNode()->m_data.iFlags & MOVE_THROUGH_ENEMY))
@@ -1525,7 +1532,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 		else if (headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO_UNIT && headMissionQueueNode()->m_data.iFlags & MOVE_ATTACK_STACK)
 		{
 			bool bDummy;
-			pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
+			CvUnit* pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
 			if (pTargetUnit && groupAttack(pTargetUnit->getX_INLINE(), pTargetUnit->getY_INLINE(), headMissionQueueNode()->m_data.iFlags, bDummy))
 				bDone = true;
 		}
@@ -1537,7 +1544,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 	if (headMissionQueueNode() == NULL)
 	{
 		setActivityType(ACTIVITY_AWAKE);
-		return;
+		return false;
 	}
 
 	FAssert(bDone || !(headMissionQueueNode()->m_data.iFlags & MOVE_DIRECT_ATTACK)); // K-Mod. ('direct attack' should be used for attack commands only)
@@ -1602,38 +1609,41 @@ void CvSelectionGroup::continueMission(int iSteps)
 							break;
 						}
 					}
-					pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
-					if (pTargetUnit != NULL)
+
 					{
-						if (AI_getMissionAIType() != MISSIONAI_SHADOW && AI_getMissionAIType() != MISSIONAI_GROUP)
+						CvUnit* pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
+						if (pTargetUnit != NULL)
 						{
-							if (!plot()->isOwned() || plot()->getOwnerINLINE() == getOwnerINLINE())
+							if (AI_getMissionAIType() != MISSIONAI_SHADOW && AI_getMissionAIType() != MISSIONAI_GROUP)
 							{
-								CvPlot* pMissionPlot = pTargetUnit->getGroup()->AI_getMissionAIPlot();
-								if (pMissionPlot != NULL && NO_TEAM != pMissionPlot->getTeam())
+								if (!plot()->isOwned() || plot()->getOwnerINLINE() == getOwnerINLINE())
 								{
-									if (pMissionPlot->isOwned() && pTargetUnit->isPotentialEnemy(pMissionPlot->getTeam(), pMissionPlot))
+									CvPlot* pMissionPlot = pTargetUnit->getGroup()->AI_getMissionAIPlot();
+									if (pMissionPlot != NULL && NO_TEAM != pMissionPlot->getTeam())
 									{
-										bAction = false;
-										bDone = true;
-										break;								
+										if (pMissionPlot->isOwned() && pTargetUnit->isPotentialEnemy(pMissionPlot->getTeam(), pMissionPlot))
+										{
+											bAction = false;
+											bDone = true;
+											break;								
+										}
 									}
 								}
 							}
-						}
-							 
-						if (groupPathTo(pTargetUnit->getX_INLINE(), pTargetUnit->getY_INLINE(), headMissionQueueNode()->m_data.iFlags))
-						{
-							bAction = true;
+
+							if (groupPathTo(pTargetUnit->getX_INLINE(), pTargetUnit->getY_INLINE(), headMissionQueueNode()->m_data.iFlags))
+							{
+								bAction = true;
+							}
+							else
+							{
+								bDone = true;
+							}
 						}
 						else
 						{
 							bDone = true;
 						}
-					}
-					else
-					{
-						bDone = true;
 					}
 					break;
 
@@ -1714,10 +1724,12 @@ void CvSelectionGroup::continueMission(int iSteps)
 				break;
 
 			case MISSION_MOVE_TO_UNIT:
-				pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
-				if ((pTargetUnit == NULL) || atPlot(pTargetUnit->plot()))
 				{
-					bDone = true;
+					CvUnit* pTargetUnit = GET_PLAYER((PlayerTypes)headMissionQueueNode()->m_data.iData1).getUnit(headMissionQueueNode()->m_data.iData2);
+					if ((pTargetUnit == NULL) || atPlot(pTargetUnit->plot()))
+					{
+						bDone = true;
+					}
 				}
 				break;
 
@@ -1829,7 +1841,8 @@ void CvSelectionGroup::continueMission(int iSteps)
 		{
 			if (canAllMove())
 			{
-				continueMission(iSteps + 1);
+				//continueMission(iSteps + 1);
+				return true;
 			}
 			else if (!isBusy())
 			{
@@ -1843,6 +1856,7 @@ void CvSelectionGroup::continueMission(int iSteps)
 			}
 		}
 	}
+	return false;
 }
 
 

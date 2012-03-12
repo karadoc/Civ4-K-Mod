@@ -44,7 +44,13 @@ public:
 
 	DllExport bool canStartMission(int iMission, int iData1, int iData2, CvPlot* pPlot = NULL, bool bTestVisible = false, bool bUseCache = false);		// Exposed to Python
 	void startMission();
-	void continueMission(int iSteps = 0);
+	//void continueMission(int iSteps = 0);
+	// K-Mod. Split continueMission into two functions to remove the recursion.
+	void continueMission();
+protected:
+	bool continueMission_step(int iSteps);
+public:
+	// K-Mod end
 
 	DllExport bool canDoInterfaceMode(InterfaceModeTypes eInterfaceMode);													// Exposed to Python
 	DllExport bool canDoInterfaceModeAt(InterfaceModeTypes eInterfaceMode, CvPlot* pPlot);				// Exposed to Python
