@@ -2786,9 +2786,10 @@ void CvDLLWidgetData::parseActionHelp(CvWidgetDataStruct &widgetDataStruct, CvWS
 				{
 					if (eBonus != NO_BONUS)
 					{
-						if (!GET_TEAM(pHeadSelectedUnit->getTeam()).isBonusObsolete(eBonus))
+						//if (!GET_TEAM(pHeadSelectedUnit->getTeam()).isBonusObsolete(eBonus))
+						if (GET_PLAYER(pHeadSelectedUnit->getOwnerINLINE()).doesImprovementConnectBonus(eImprovement, eBonus)) // K-Mod
 						{
-							if (GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus))
+							//if (GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus))
 							{
 								szBuffer.append(NEWLINE);
 								szBuffer.append(gDLL->getText("TXT_KEY_ACTION_PROVIDES_BONUS", GC.getBonusInfo(eBonus).getTextKeyWide()));

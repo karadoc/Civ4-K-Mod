@@ -1744,22 +1744,32 @@ bool CvUnit::isActionRecommended(int iAction)
 
 					if (eImprovement != NO_IMPROVEMENT)
 					{
+						/* original code
 						if (eBonus != NO_BONUS)
 						{
 							if (GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus))
 							{
 								return true;
 							}
-						}
+						} */
+
 						// K-Mod
-						if (pPlot->getImprovementType() == NO_IMPROVEMENT && pWorkingCity == NULL)
+						if (eBonus != NO_BONUS &&
+							!GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(pPlot->getImprovementType(), eBonus) &&
+							GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(eImprovement, eBonus))
 						{
-							if (!(pPlot->isIrrigated()) && pPlot->isIrrigationAvailable(true))
+							return true;
+						}
+
+						if (pPlot->getImprovementType() == NO_IMPROVEMENT && eBonus == NO_BONUS && pWorkingCity == NULL)
+						{
+							if (pPlot->getFeatureType() == NO_FEATURE || !GC.getBuildInfo(eBuild).isFeatureRemove((FeatureTypes)pPlot->getFeatureType()))
 							{
-								if (GC.getImprovementInfo(eImprovement).isCarriesIrrigation())
-								{
+								if (GC.getImprovementInfo(eImprovement).isCarriesIrrigation() && !pPlot->isIrrigated() && pPlot->isIrrigationAvailable(true))
 									return true;
-								}
+
+								if (pPlot->getFeatureType() != NO_FEATURE && GC.getImprovementInfo(eImprovement).getFeatureGrowthProbability() > 0)
+									return true;
 							}
 						}
 						// K-Mod end

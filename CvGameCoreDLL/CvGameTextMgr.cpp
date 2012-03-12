@@ -4206,7 +4206,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 		{
 			return;
 		}
-			
+
 		if (pPlot->getOwnerINLINE() != NO_PLAYER)
 		{
 			int iPlotDanger = GET_PLAYER(pPlot->getOwnerINLINE()).AI_getPlotDanger(pPlot, 2);
@@ -4233,9 +4233,9 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 //			{
 //				szString+=CvWString::format(L"\nHostiles = %d", iHostileUnits);
 //			}
-			
+
 			szString.append(CvWString::format(L"\nThreat C/P (%d / %d)", pPlotCity->AI_cityThreat(), kPlayer.AI_getTotalAreaCityThreat(pPlotCity->area())));
-			
+
 			bool bFirst = true;
 			for (int iI = 0; iI < MAX_PLAYERS; ++iI)
 			{
@@ -4325,7 +4325,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 										{
 											szString.append(CvWString::format(L" %d", iStartWarVal));
 										}
-										
+
 										szString.append(CvWString::format(L" (%d", GET_TEAM(kPlayer.getTeam()).AI_calculatePlotWarValue(kLoopPlayer.getTeam())));
 										szString.append(CvWString::format(L", %d", GET_TEAM(kPlayer.getTeam()).AI_calculateBonusWarValue(kLoopPlayer.getTeam())));
 										szString.append(CvWString::format(L", %d", GET_TEAM(kPlayer.getTeam()).AI_calculateCapitalProximity(kLoopPlayer.getTeam())));
@@ -4343,7 +4343,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					else 
 					{
 						int iCloseness = pPlotCity->AI_playerCloseness(eLoopPlayer, DEFAULT_PLAYER_CLOSENESS);
-						
+
 						if (iCloseness != 0)
 						{
 							if (bFirst)
@@ -4363,7 +4363,6 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 							{
 								szString.append(CvWString::format(L"-]"));
 							}
-							
 						}
 					}
 /************************************************************************************************/
@@ -4383,11 +4382,9 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 			int iNumAreaCitySites = kPlayer.AI_getNumAreaCitySites(pPlot->getArea(), iAreaSiteBestValue);
 			int iOtherSiteBestValue = 0;
 			int iNumOtherCitySites = (pPlot->waterArea() == NULL) ? 0 : kPlayer.AI_getNumAdjacentAreaCitySites(pPlot->waterArea()->getID(), pPlot->getArea(), iOtherSiteBestValue);
-			
+
 			szString.append(CvWString::format(L"\n\nArea Sites = %d (%d)", iNumAreaCitySites, iAreaSiteBestValue));
 			szString.append(CvWString::format(L"\nOther Sites = %d (%d)", iNumOtherCitySites, iOtherSiteBestValue));
-			
-			
 		}
 		else if (pPlot->getOwner() != NO_PLAYER)
 		{
@@ -4408,18 +4405,18 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				int* paiBonusClassRevealed;
 				int* paiBonusClassUnrevealed;
 				int* paiBonusClassHave;
-				
+
 				paiBonusClassRevealed = new int[GC.getNumBonusClassInfos()];
 				paiBonusClassUnrevealed = new int[GC.getNumBonusClassInfos()];
 				paiBonusClassHave = new int[GC.getNumBonusClassInfos()];
-				
+
 				for (int iI = 0; iI < GC.getNumBonusClassInfos(); iI++)
 				{
 					paiBonusClassRevealed[iI] = 0;
 					paiBonusClassUnrevealed[iI] = 0;
 					paiBonusClassHave[iI] = 0;	    
 				}
-				
+
 				for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
 				{
 					TechTypes eRevealTech = (TechTypes)GC.getBonusInfo((BonusTypes)iI).getTechReveal();
@@ -4469,7 +4466,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				{
 					szString.append(CvWString::format(L"\nCan reach an enemy city\n\n"));	
 				}
-				else 
+				else
 				{
 					szString.append(CvWString::format(L"\nNo reachable enemy cities\n\n"));	
 				}
@@ -4637,7 +4634,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				}
 			}
 		}
-		
+
 		PlayerTypes eActivePlayer = GC.getGameINLINE().getActivePlayer();
 		int iActualFoundValue = pPlot->getFoundValue(eActivePlayer);
 		int iCalcFoundValue = GET_PLAYER(eActivePlayer).AI_foundValue(pPlot->getX_INLINE(), pPlot->getY_INLINE(), -1, false);
@@ -4671,7 +4668,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 			szString.append(szTempBuffer);
 
 			ImprovementTypes eImprovement = pPlot->getImprovementType();
-			
+
             if (NO_BUILD != eBestBuild)
             {
 				
@@ -4732,12 +4729,12 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 				pPlot->AI_sumStrength(NO_PLAYER, NO_PLAYER, DOMAIN_AIR, true, false, false));
 			szString.append(szTempBuffer);
 		}*/
-		
+
 		if (pPlot->getPlotCity() != NULL)
 		{
 			PlayerTypes ePlayer = pPlot->getOwnerINLINE();
 			CvPlayerAI& kPlayer = GET_PLAYER(ePlayer);
-			
+
 			szString.append(CvWString::format(L"\n\nAI unit class weights ..."));
 			for (iI = 0; iI < GC.getNumUnitClassInfos(); ++iI)
 			{
@@ -5057,7 +5054,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
                 int iBestAreaFoundValue = pPlot->area()->getBestFoundValue(ePlayer);
                 int iCitySiteBestValue;
                 int iNumAreaCitySites = kPlayer.AI_getNumAreaCitySites(pPlot->getArea(), iCitySiteBestValue);
-				
+
 				if ((iActualFoundValue > 0 || iCalcFoundValue > 0 || iStartingFoundValue > 0)
 					|| ((pPlot->getOwner() == iI) && (iBestAreaFoundValue > 0)))
 				{
@@ -5131,7 +5128,6 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 			// if we over the city, then do an array of all the plots
 			if (pPlot->getPlotCity() != NULL)
 			{
-				
 				// check avoid growth
 				if (bAvoidGrowth || bIgnoreGrowth)
 				{
@@ -5145,10 +5141,10 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 						if (bIgnoreGrowth)
 							szString.append(CvWString::format(L", "));
 					}
-					
+
 					if (bIgnoreGrowth)
 						szString.append(CvWString::format(L"IgnoreGrowth"));
-					
+
 					// end color
 					szString.append(CvWString::format( ENDCOLR L"\n" ));
 				}
@@ -5479,87 +5475,97 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 			szString.append(NEWLINE);
 			szString.append(szTempBuffer);
 
-			if (GC.getBonusInfo(eBonus).getHealth() != 0)
+			// K-Mod. I've rearranged and edited some of the code in this section to fix some bugs.
+			// (for example, obsolete bonuses shouldn't say "requires x improvement"; and neither should bonuses that are already connected with a fort.)
+			if (!GET_TEAM(GC.getGameINLINE().getActiveTeam()).isBonusObsolete(eBonus))
 			{
-				szTempBuffer.Format(L", +%d%c", abs(GC.getBonusInfo(eBonus).getHealth()), ((GC.getBonusInfo(eBonus).getHealth() > 0) ? gDLL->getSymbolID(HEALTHY_CHAR): gDLL->getSymbolID(UNHEALTHY_CHAR)));
-				szString.append(szTempBuffer);
-			}
+				if (GC.getBonusInfo(eBonus).getHealth() != 0)
+				{
+					szTempBuffer.Format(L", +%d%c", abs(GC.getBonusInfo(eBonus).getHealth()), ((GC.getBonusInfo(eBonus).getHealth() > 0) ? gDLL->getSymbolID(HEALTHY_CHAR): gDLL->getSymbolID(UNHEALTHY_CHAR)));
+					szString.append(szTempBuffer);
+				}
 
-			if (GC.getBonusInfo(eBonus).getHappiness() != 0)
-			{
-				szTempBuffer.Format(L", +%d%c", abs(GC.getBonusInfo(eBonus).getHappiness()), ((GC.getBonusInfo(eBonus).getHappiness() > 0) ? gDLL->getSymbolID(HAPPY_CHAR): gDLL->getSymbolID(UNHAPPY_CHAR)));
-				szString.append(szTempBuffer);
-			}
-		
-			if ((pPlot->getImprovementType() == NO_IMPROVEMENT) || !(GC.getImprovementInfo(pPlot->getImprovementType()).isImprovementBonusTrade(eBonus)))
-			{
+				if (GC.getBonusInfo(eBonus).getHappiness() != 0)
+				{
+					szTempBuffer.Format(L", +%d%c", abs(GC.getBonusInfo(eBonus).getHappiness()), ((GC.getBonusInfo(eBonus).getHappiness() > 0) ? gDLL->getSymbolID(HAPPY_CHAR): gDLL->getSymbolID(UNHAPPY_CHAR)));
+					szString.append(szTempBuffer);
+				}
+
 				if (!(GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechCityTrade())))
 				{
 					szString.append(gDLL->getText("TXT_KEY_PLOT_RESEARCH", GC.getTechInfo((TechTypes) GC.getBonusInfo(eBonus).getTechCityTrade()).getTextKeyWide()));
 				}
 
+				ImprovementTypes ePlotImprovement = pPlot->getImprovementType();
+
 				if (!pPlot->isCity())
 				{
-					for (iI = 0; iI < GC.getNumBuildInfos(); ++iI)
+					if (!GET_PLAYER(GC.getGameINLINE().getActivePlayer()).doesImprovementConnectBonus(pPlot->getImprovementType(), eBonus))
 					{
-						if (GC.getBuildInfo((BuildTypes) iI).getImprovement() != NO_IMPROVEMENT)
+						// K-Mod note: unfortunately, the following code assumes that there is only one improvement marked "isImprovementBonusTrade" for each bonus.
+						for (iI = 0; iI < GC.getNumBuildInfos(); ++iI)
 						{
-							CvImprovementInfo& kImprovementInfo = GC.getImprovementInfo((ImprovementTypes) GC.getBuildInfo((BuildTypes) iI).getImprovement());
-							if (kImprovementInfo.isImprovementBonusTrade(eBonus))
+							if (GC.getBuildInfo((BuildTypes) iI).getImprovement() != NO_IMPROVEMENT)
 							{
-								if (pPlot->canHaveImprovement(((ImprovementTypes)(GC.getBuildInfo((BuildTypes) iI).getImprovement())), GC.getGameINLINE().getActiveTeam(), true))
+								CvImprovementInfo& kImprovementInfo = GC.getImprovementInfo((ImprovementTypes) GC.getBuildInfo((BuildTypes) iI).getImprovement());
+								if (kImprovementInfo.isImprovementBonusTrade(eBonus))
 								{
-									if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasTech((TechTypes)GC.getBuildInfo((BuildTypes) iI).getTechPrereq()))
+									if (pPlot->canHaveImprovement(((ImprovementTypes)(GC.getBuildInfo((BuildTypes) iI).getImprovement())), GC.getGameINLINE().getActiveTeam(), true))
 									{
-										szString.append(gDLL->getText("TXT_KEY_PLOT_REQUIRES", kImprovementInfo.getTextKeyWide()));
-									}
-									else if (GC.getBonusInfo(eBonus).getTechCityTrade() != GC.getBuildInfo((BuildTypes) iI).getTechPrereq())
-									{
-										szString.append(gDLL->getText("TXT_KEY_PLOT_RESEARCH", GC.getTechInfo((TechTypes) GC.getBuildInfo((BuildTypes) iI).getTechPrereq()).getTextKeyWide()));
-									}
-
-									bool bFirst = true;
-
-									for (int k = 0; k < NUM_YIELD_TYPES; k++)
-									{
-										int iYieldChange = kImprovementInfo.getImprovementBonusYield(eBonus, k) + kImprovementInfo.getYieldChange(k);
-										if (iYieldChange != 0)
+										if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasTech((TechTypes)GC.getBuildInfo((BuildTypes) iI).getTechPrereq()))
 										{
-											if (iYieldChange > 0)
-											{
-												szTempBuffer.Format(L"+%d%c", iYieldChange, GC.getYieldInfo((YieldTypes)k).getChar());
-											}
-											else
-											{
-												szTempBuffer.Format(L"%d%c", iYieldChange, GC.getYieldInfo((YieldTypes)k).getChar());
-											}
-											setListHelp(szString, L"\n", szTempBuffer, L", ", bFirst);
-											bFirst = false;
+											szString.append(gDLL->getText("TXT_KEY_PLOT_REQUIRES", kImprovementInfo.getTextKeyWide()));
 										}
-									}
+										else if (GC.getBonusInfo(eBonus).getTechCityTrade() != GC.getBuildInfo((BuildTypes) iI).getTechPrereq())
+										{
+											szString.append(gDLL->getText("TXT_KEY_PLOT_RESEARCH", GC.getTechInfo((TechTypes) GC.getBuildInfo((BuildTypes) iI).getTechPrereq()).getTextKeyWide()));
+										}
 
-									if (!bFirst)
-									{
-										szString.append(gDLL->getText("TXT_KEY_BONUS_WITH_IMPROVEMENT", kImprovementInfo.getTextKeyWide()));
-									}
+										bool bFirst = true;
 
-									break;
+										for (int k = 0; k < NUM_YIELD_TYPES; k++)
+										{
+											int iYieldChange = kImprovementInfo.getImprovementBonusYield(eBonus, k) + kImprovementInfo.getYieldChange(k);
+											if (iYieldChange != 0)
+											{
+												if (iYieldChange > 0)
+												{
+													szTempBuffer.Format(L"+%d%c", iYieldChange, GC.getYieldInfo((YieldTypes)k).getChar());
+												}
+												else
+												{
+													szTempBuffer.Format(L"%d%c", iYieldChange, GC.getYieldInfo((YieldTypes)k).getChar());
+												}
+												setListHelp(szString, L"\n", szTempBuffer, L", ", bFirst);
+												bFirst = false;
+											}
+										}
+
+										if (!bFirst)
+										{
+											szString.append(gDLL->getText("TXT_KEY_BONUS_WITH_IMPROVEMENT", kImprovementInfo.getTextKeyWide()));
+										}
+
+										break;
+									}
 								}
 							}
 						}
 					}
+					if (!(pPlot->isBonusNetwork(GC.getGameINLINE().getActiveTeam())))
+					{
+						szString.append(gDLL->getText("TXT_KEY_PLOT_REQUIRES_ROUTE"));
+					}
 				}
-			}
-			else if (!(pPlot->isBonusNetwork(GC.getGameINLINE().getActiveTeam())))
-			{
-				szString.append(gDLL->getText("TXT_KEY_PLOT_REQUIRES_ROUTE"));
-			}
 
-			if (!CvWString(GC.getBonusInfo(eBonus).getHelp()).empty())
-			{
-				szString.append(NEWLINE);
-				szString.append(GC.getBonusInfo(eBonus).getHelp());
-			}
+				// K-Mod note: I'm not sure whether or not the help should be displayed when the bonus is obsolete.
+				// The fact is, none of the bonuses have help text in K-Mod (or standard bts.)
+				if (!CvWString(GC.getBonusInfo(eBonus).getHelp()).empty())
+				{
+					szString.append(NEWLINE);
+					szString.append(GC.getBonusInfo(eBonus).getHelp());
+				}
+			} // end !isBonusObsolete
 		}
 
 		eImprovement = pPlot->getRevealedImprovementType(GC.getGameINLINE().getActiveTeam(), true);

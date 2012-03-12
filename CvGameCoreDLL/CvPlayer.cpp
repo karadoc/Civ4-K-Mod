@@ -4210,56 +4210,37 @@ int CvPlayer::countOwnedBonuses(BonusTypes eBonus) const
 }
 
 
+// K-Mod. I've rearranged some stuff in this function to fix a couple of minor bugs; and to make the code neater and less error prone.
 int CvPlayer::countUnimprovedBonuses(CvArea* pArea, CvPlot* pFromPlot) const
 {
 	PROFILE_FUNC();
 
-	CvPlot* pLoopPlot;
-	ImprovementTypes eImprovement;
-	BuildTypes eBuild;
-	BonusTypes eNonObsoleteBonus;
-	int iCount;
-	int iI, iJ;
-
 	gDLL->getFAStarIFace()->ForceReset(&GC.getBorderFinder());
 
-	iCount = 0;
+	int iCount = 0;
 
-	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
-		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
-		if (pLoopPlot->area() == pArea)
+		if (pLoopPlot->getOwnerINLINE() == getID() && pLoopPlot->area() == pArea && !pLoopPlot->isCity())
 		{
-			if (pLoopPlot->getOwnerINLINE() == getID())
+			BonusTypes eNonObsoleteBonus = pLoopPlot->getNonObsoleteBonusType(getTeam());
+
+			if (eNonObsoleteBonus != NO_BONUS)
 			{
-				if (!(pLoopPlot->isCity()))
+				if (!doesImprovementConnectBonus(pLoopPlot->getImprovementType(), eNonObsoleteBonus))
 				{
-					eNonObsoleteBonus = pLoopPlot->getNonObsoleteBonusType(getTeam());
-
-					if (eNonObsoleteBonus != NO_BONUS)
+					if ((pFromPlot == NULL) || gDLL->getFAStarIFace()->GeneratePath(&GC.getBorderFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), false, getID(), true))
 					{
-						eImprovement = pLoopPlot->getImprovementType();
-
-						if ((eImprovement == NO_IMPROVEMENT) || !(GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eNonObsoleteBonus)))
+						for (int iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
 						{
-							if ((pFromPlot == NULL) || gDLL->getFAStarIFace()->GeneratePath(&GC.getBorderFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), false, getID(), true))
-							{
-								for (iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
-								{
-									eBuild = ((BuildTypes)iJ);
+							BuildTypes eBuild = ((BuildTypes)iJ);
 
-									if (GC.getBuildInfo(eBuild).getImprovement() != NO_IMPROVEMENT)
-									{
-										if (GC.getImprovementInfo((ImprovementTypes)(GC.getBuildInfo(eBuild).getImprovement())).isImprovementBonusTrade(eNonObsoleteBonus))
-										{
-											if (canBuild(pLoopPlot, eBuild))
-											{
-												iCount++;
-											}
-										}
-									}
-								}
+							if (doesImprovementConnectBonus((ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement(), eNonObsoleteBonus) && canBuild(pLoopPlot, eBuild))
+							{
+								iCount++;
+								break; // K-Mod!
 							}
 						}
 					}
@@ -4420,6 +4401,27 @@ int CvPlayer::countPotentialForeignTradeCitiesConnected() const
 	return iCount;
 }
 
+// K-Mod. In the original code, there seems to be a lot of confusion about what the exact conditions are for a bonus being connected.
+// There were heaps of bugs where CvImprovementInfo::isImprovementBonusTrade was mistakenly used as the sole condition for a bonus being connected or not.
+// I created this function to make the situation a bit more clear...
+bool CvPlayer::doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const
+{
+	FAssert(eImprovement <= GC.getNumImprovementInfos());
+	FAssert(eBonus <= GC.getNumBonusInfos());
+
+	if (eImprovement == NO_IMPROVEMENT || eBonus == NO_BONUS)
+		return false;
+
+	const CvImprovementInfo& kImprovementInfo = GC.getImprovementInfo(eImprovement);
+	const CvBonusInfo& kBonusInfo = GC.getBonusInfo(eBonus);
+	const CvTeam& kTeam = GET_TEAM(getTeam());
+
+	if (!kTeam.isHasTech((TechTypes)kBonusInfo.getTechCityTrade()) || (kBonusInfo.getTechObsolete() != NO_TECH && kTeam.isHasTech((TechTypes)kBonusInfo.getTechObsolete())))
+		return false;
+
+	return kImprovementInfo.isImprovementBonusTrade(eBonus) || kImprovementInfo.isActsAsCity();
+}
+// K-Mod end
 
 
 bool CvPlayer::canContact(PlayerTypes ePlayer) const

@@ -7386,6 +7386,8 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 
 int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iDesiredFoodChange, int iClearFeatureValue, bool bEmphasizeIrrigation, BuildTypes* peBestBuild) const
 {
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
+
 	// first check if the improvement is valid on this plot
 	// this also allows us work out whether or not the improvement will remove the plot feature...
 	int iBestTempBuildValue = 0;
@@ -7409,7 +7411,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 
 			if (GC.getBuildInfo(eBuild).getImprovement() == eImprovement)
 			{
-				if (GET_PLAYER(getOwnerINLINE()).canBuild(pPlot, eBuild, false))
+				if (kOwner.canBuild(pPlot, eBuild, false))
 				{
 					iValue = 10000;
 
@@ -7440,7 +7442,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 					{
 						if (eNonObsoleteBonus == NO_BONUS)
 						{
-							if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_LEAVE_FORESTS))
+							if (kOwner.isOption(PLAYEROPTION_LEAVE_FORESTS))
 							{
 								bValid = false;
 							}
@@ -7448,7 +7450,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 							{
 								bValid = false;
 							}
-							else if (GET_PLAYER(getOwnerINLINE()).getFeatureHappiness(pPlot->getFeatureType()) > 0)
+							else if (kOwner.getFeatureHappiness(pPlot->getFeatureType()) > 0)
 							{
 								bValid = false;
 							}
@@ -7483,10 +7485,11 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 	{
 		if (eNonObsoleteBonus != NO_BONUS)
 		{
-			if (GC.getImprovementInfo(eFinalImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
+			//if (GC.getImprovementInfo(eFinalImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
+			if (kOwner.doesImprovementConnectBonus(eFinalImprovement, eNonObsoleteBonus))
 			{
 				// K-Mod
-				iValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 1) * 50);
+				iValue += (kOwner.AI_bonusVal(eNonObsoleteBonus, 1) * 50);
 				iValue += 100;
 				// K-Mod end
 			}
@@ -7494,11 +7497,10 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			{
 				// K-Mod, bug fix. (original code deleted now.)
 				// Presumablly the original author wanted to subtract 1000 if eBestBuild would take away the bonus; not ... the nonsense they actually wrote.
-				ImprovementTypes eCurrentImprovement = pPlot->getImprovementType();
-				if (eCurrentImprovement != NO_IMPROVEMENT && GC.getImprovementInfo(eCurrentImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
+				if (kOwner.doesImprovementConnectBonus(pPlot->getImprovementType(), eNonObsoleteBonus))
 				{
 					// By the way, AI_bonusVal is typically 10 for the first bonus, and 2 for subsequent.
-					iValue -= (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, -1) * 50);
+					iValue -= (kOwner.AI_bonusVal(eNonObsoleteBonus, -1) * 50);
 					iValue -= 100;
 				}
 			}
@@ -7643,7 +7645,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			{
 				if ((aiDiffYields[YIELD_PRODUCTION] > 0) && (aiFinalYields[YIELD_FOOD]+aiFinalYields[YIELD_PRODUCTION] > 3))
 				{
-					if (iCorrectedFoodPriority < 100 || GET_PLAYER(getOwnerINLINE()).getCurrentEra() < 2)
+					if (iCorrectedFoodPriority < 100 || kOwner.getCurrentEra() < 2)
 					{
 						//value booster for mines on hills
 						iValue *= (100 + 25 * aiDiffYields[YIELD_PRODUCTION]);
@@ -7691,7 +7693,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		}
 
 		int iHappiness = GC.getImprovementInfo(eFinalImprovement).getHappiness();
-		if ((iHappiness != 0) && !(GET_PLAYER(getOwnerINLINE()).getAdvancedStartPoints() >= 0))
+		if ((iHappiness != 0) && !(kOwner.getAdvancedStartPoints() >= 0))
 		{
 			//int iHappyLevel = iHappyAdjust + (happyLevel() - unhappyLevel(0));
 			int iHappyLevel = happyLevel() - unhappyLevel(0); // iHappyAdjust isn't currently being used.
@@ -7790,7 +7792,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 				}
 			}
 
-			if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
+			if (kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION))
 			{
 				iValue /= 4;	//Greatly prefer builds which are legal.
 			}
@@ -10403,6 +10405,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	BonusTypes eBonus = pPlot->getBonusType(getTeam());
 	BonusTypes eNonObsoleteBonus = pPlot->getNonObsoleteBonusType(getTeam());
 
+	/* original code
 	bool bHasBonusImprovement = false;
 
 	if (eNonObsoleteBonus != NO_BONUS)
@@ -10414,7 +10417,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 				bHasBonusImprovement = true;
 			}
 		}
-	}
+	} */
+	bool bHasBonusImprovement = pPlot->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS; // K-Mod
 
 	iBestValue = 0;
 	eBestBuild = NO_BUILD;
@@ -11880,11 +11884,7 @@ int CvCityAI::AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bInc
     
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      11/14/09                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
+// BBAI. K-Mod: I've rearranged some stuff and fixed some bugs.
 int CvCityAI::AI_countNumImprovableBonuses( bool bIncludeNeutral, TechTypes eExtraTech, bool bLand, bool bWater )
 {
 	CvPlot* pLoopPlot;
@@ -11900,19 +11900,18 @@ int CvCityAI::AI_countNumImprovableBonuses( bool bIncludeNeutral, TechTypes eExt
         	if ((bLand && pLoopPlot->area() == area()) || (bWater && pLoopPlot->isWater()))
         	{
 				eLoopBonus = pLoopPlot->getBonusType(getTeam());
-				if (eLoopBonus != NO_BONUS)
+				if (eLoopBonus != NO_BONUS && (GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getBonusInfo(eLoopBonus).getTechCityTrade()) || GC.getBonusInfo(eLoopBonus).getTechCityTrade() == eExtraTech))
 				{
 					if ( ((pLoopPlot->getOwnerINLINE() == getOwnerINLINE()) && (pLoopPlot->getWorkingCity() == this)) || (bIncludeNeutral && (!pLoopPlot->isOwned())))
 					{
 						for (int iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
 						{
 							BuildTypes eBuild = ((BuildTypes)iJ);
-							
-							if( eBuild != NO_BUILD && pLoopPlot->canBuild(eBuild, getOwnerINLINE()) )
-							{
-								ImprovementTypes eImp = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
+							ImprovementTypes eImp = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
 
-								if( eImp != NO_IMPROVEMENT && GC.getImprovementInfo(eImp).isImprovementBonusTrade(eLoopBonus) )
+							if (eImp != NO_IMPROVEMENT && pLoopPlot->canBuild(eBuild, getOwnerINLINE()))
+							{
+								if (GC.getImprovementInfo(eImp).isImprovementBonusTrade(eLoopBonus) || GC.getImprovementInfo(eImp).isActsAsCity())
 								{
 									if( GET_PLAYER(getOwnerINLINE()).canBuild(pLoopPlot, eBuild) )
 									{
@@ -11939,9 +11938,7 @@ int CvCityAI::AI_countNumImprovableBonuses( bool bIncludeNeutral, TechTypes eExt
     
     return iCount;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+// bbai / K-Mod end
 
 int CvCityAI::AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance)
 {

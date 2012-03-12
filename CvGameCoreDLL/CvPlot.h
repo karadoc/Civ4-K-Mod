@@ -339,7 +339,7 @@ public:
 	DllExport void resetFeatureModel();
 
 	DllExport BonusTypes getBonusType(TeamTypes eTeam = NO_TEAM) const;																							// Exposed to Python
-	BonusTypes getNonObsoleteBonusType(TeamTypes eTeam = NO_TEAM, bool bCheckImprovement = false) const;																	// Exposed to Python
+	BonusTypes getNonObsoleteBonusType(TeamTypes eTeam = NO_TEAM, bool bCheckConnected = false) const;																	// Exposed to Python
 	void setBonusType(BonusTypes eNewValue);																															// Exposed to Python
 
 	DllExport ImprovementTypes getImprovementType() const;																													// Exposed to Python

@@ -1166,25 +1166,20 @@ void CvPlot::updatePlotGroupBonus(bool bAdd)
 {
 	PROFILE_FUNC();
 
-	CvCity* pPlotCity;
-	CvPlotGroup* pPlotGroup;
-	BonusTypes eNonObsoleteBonus;
-	int iI;
-
 	if (!isOwned())
 	{
 		return;
 	}
 
-	pPlotGroup = getPlotGroup(getOwnerINLINE());
+	CvPlotGroup* pPlotGroup = getPlotGroup(getOwnerINLINE());
 
 	if (pPlotGroup != NULL)
 	{
-		pPlotCity = getPlotCity();
+		CvCity* pPlotCity = getPlotCity();
 
 		if (pPlotCity != NULL)
 		{
-			for (iI = 0; iI < GC.getNumBonusInfos(); ++iI)
+			for (int iI = 0; iI < GC.getNumBonusInfos(); ++iI)
 			{
 				if (!GET_TEAM(getTeam()).isBonusObsolete((BonusTypes)iI))
 				{
@@ -1194,7 +1189,7 @@ void CvPlot::updatePlotGroupBonus(bool bAdd)
 
 			if (pPlotCity->isCapital())
 			{
-				for (iI = 0; iI < GC.getNumBonusInfos(); ++iI)
+				for (int iI = 0; iI < GC.getNumBonusInfos(); ++iI)
 				{
 					pPlotGroup->changeNumBonuses(((BonusTypes)iI), (GET_PLAYER(getOwnerINLINE()).getBonusExport((BonusTypes)iI) * ((bAdd) ? -1 : 1)));
 					pPlotGroup->changeNumBonuses(((BonusTypes)iI), (GET_PLAYER(getOwnerINLINE()).getBonusImport((BonusTypes)iI) * ((bAdd) ? 1 : -1)));
@@ -1202,6 +1197,7 @@ void CvPlot::updatePlotGroupBonus(bool bAdd)
 			}
 		}
 
+		/* original code
 		eNonObsoleteBonus = getNonObsoleteBonusType(getTeam());
 
 		if (eNonObsoleteBonus != NO_BONUS)
@@ -1217,7 +1213,14 @@ void CvPlot::updatePlotGroupBonus(bool bAdd)
 					}
 				}
 			}
+		} */
+		// K-Mod. I'm just trying to standardize the code to reduce the potential for mistakes. There are no functionality changes here.
+		BonusTypes eBonus = getNonObsoleteBonusType(getTeam(), true);
+		if (eBonus != NO_BONUS && pPlotGroup && isBonusNetwork(getTeam()))
+		{
+			pPlotGroup->changeNumBonuses(eBonus, bAdd ? 1 : -1);
 		}
+		// K-Mod end
 	}
 }
 
@@ -5594,9 +5597,10 @@ BonusTypes CvPlot::getBonusType(TeamTypes eTeam) const
 }
 
 
-BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckImprovement) const // K-Mod added bCheckImprovement
+BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckConnected) const // K-Mod added bCheckConnected
 {
 	FAssert(eTeam != NO_TEAM);
+	FAssert(GET_TEAM(eTeam).isAlive()); // K-Mod
 
 	BonusTypes eBonus = getBonusType(eTeam);
 	if (eBonus != NO_BONUS)
@@ -5606,12 +5610,14 @@ BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckImproveme
 			return NO_BONUS;
 		}
 		// K-Mod
-		if (bCheckImprovement)
+		if (bCheckConnected)
 		{
-			if (getImprovementType() == NO_IMPROVEMENT || !GC.getImprovementInfo(getImprovementType()).isImprovementBonusTrade(eBonus))
+			if (!isCity(true, eTeam) && (getImprovementType() == NO_IMPROVEMENT || !GC.getImprovementInfo(getImprovementType()).isImprovementBonusTrade(eBonus)))
 			{
+				FAssert(!GET_PLAYER(GET_TEAM(eTeam).getLeaderID()).doesImprovementConnectBonus(getImprovementType(), eBonus));
 				return NO_BONUS;
 			}
+			FAssert(isCity() || GET_PLAYER(GET_TEAM(eTeam).getLeaderID()).doesImprovementConnectBonus(getImprovementType(), eBonus));
 		}
 		// K-Mod end
 	}

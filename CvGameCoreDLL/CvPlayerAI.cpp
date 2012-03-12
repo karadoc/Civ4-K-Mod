@@ -21830,7 +21830,8 @@ void CvPlayerAI::AI_advancedStartRouteTerritory()
 				BonusTypes eBonus = pLoopPlot->getBonusType(getTeam());
 				if (eBonus != NO_BONUS)
 				{
-					if (GC.getImprovementInfo(pLoopPlot->getImprovementType()).isImprovementBonusTrade(eBonus))
+					//if (GC.getImprovementInfo(pLoopPlot->getImprovementType()).isImprovementBonusTrade(eBonus))
+					if (doesImprovementConnectBonus(pLoopPlot->getImprovementType(), eBonus))
 					{
 						int iBonusValue = AI_bonusVal(eBonus, 1, true);
 						if (iBonusValue > 9)

@@ -3610,14 +3610,25 @@ bool CvSelectionGroup::groupBuild(BuildTypes eBuild)
 			{
 				if ((pPlot->getImprovementType() != NO_IMPROVEMENT) && (pPlot->getImprovementType() != (ImprovementTypes)(GC.getDefineINT("RUINS_IMPROVEMENT"))))
 				{
-				    BonusTypes eBonus = (BonusTypes)pPlot->getNonObsoleteBonusType(GET_PLAYER(getOwnerINLINE()).getTeam());
-				    if ((eBonus == NO_BONUS) || !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus))
+					BonusTypes eBonus = (BonusTypes)pPlot->getNonObsoleteBonusType(GET_PLAYER(getOwnerINLINE()).getTeam());
+				    /* original bts code
+					if ((eBonus == NO_BONUS) || !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus))
 				    {
-                        if (GC.getImprovementInfo(eImprovement).getImprovementPillage() != NO_IMPROVEMENT)
+                         if (GC.getImprovementInfo(eImprovement).getImprovementPillage() != NO_IMPROVEMENT)
                         {
                             return false;
                         }
-				    }
+				    } */
+					// K-Mod
+					if (eBonus == NO_BONUS ||
+						GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(pPlot->getImprovementType(), eBonus) ||
+						!GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(eImprovement, eBonus))
+					{
+						// (I don't understand the point of checking "getImprovementPillage() != NO_IMPROVEMENT")
+						return false;
+					}
+					// K-Mod end.
+
 				}
 			}
 //
