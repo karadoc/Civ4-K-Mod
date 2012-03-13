@@ -2426,6 +2426,7 @@ bool CvUnit::willRevealByMove(const CvPlot* pPlot) const
 	return false;
 }
 
+// K-Mod. I've rearranged a few things to make the function slightly faster.
 bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bool bIgnoreLoad) const
 {
 	PROFILE_FUNC();
@@ -2437,12 +2438,9 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 		return false;
 	}
 
-	if (pPlot->isImpassable())
+	if (!m_pUnitInfo->isCanMoveImpassable() && pPlot->isImpassable())
 	{
-		if (!canMoveImpassable())
-		{
-			return false;
-		}
+		return false;
 	}
 
 	// Cannot move around in unrevealed land freely
@@ -2451,14 +2449,11 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 		return false;
 	}
 
-	if (GC.getUSE_SPIES_NO_ENTER_BORDERS())
+	if (m_pUnitInfo->isSpy() && GC.getUSE_SPIES_NO_ENTER_BORDERS())
 	{
-		if (isSpy() && NO_PLAYER != pPlot->getOwnerINLINE())
+		if (pPlot->getOwnerINLINE() != NO_PLAYER && !GET_PLAYER(getOwnerINLINE()).canSpiesEnterBorders(pPlot->getOwnerINLINE()))
 		{
-			if (!GET_PLAYER(getOwnerINLINE()).canSpiesEnterBorders(pPlot->getOwnerINLINE()))
-			{
-				return false;
-			}
+			return false;
 		}
 	}
 
@@ -2481,30 +2476,17 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 				}
 			}
 		}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       09/17/09                         TC01 & jdog5000      */
-/*                                                                                              */
-/* Bugfix				                                                                        */
-/************************************************************************************************/
-/* original bts code
-		else
-*/
-		// always check terrain also
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+
+		if (m_pUnitInfo->getTerrainImpassable(pPlot->getTerrainType()))
 		{
-			if (m_pUnitInfo->getTerrainImpassable(pPlot->getTerrainType()))
+			TechTypes eTech = (TechTypes)m_pUnitInfo->getTerrainPassableTech(pPlot->getTerrainType());
+			if (NO_TECH == eTech || !GET_TEAM(getTeam()).isHasTech(eTech))
 			{
-				TechTypes eTech = (TechTypes)m_pUnitInfo->getTerrainPassableTech(pPlot->getTerrainType());
-				if (NO_TECH == eTech || !GET_TEAM(getTeam()).isHasTech(eTech))
+				if (DOMAIN_SEA != getDomainType() || pPlot->getTeam() != getTeam())  // sea units can enter impassable in own cultural borders
 				{
-					if (DOMAIN_SEA != getDomainType() || pPlot->getTeam() != getTeam())  // sea units can enter impassable in own cultural borders
+					if (bIgnoreLoad || !canLoad(pPlot))
 					{
-						if (bIgnoreLoad || !canLoad(pPlot)) 
-						{ 
-							return false;
-						}
+						return false;
 					}
 				}
 			}
@@ -2642,7 +2624,7 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 	// made a previous attack or paradrop
 	if (bAttack)
 	{
-		if (isMadeAttack() && !isBlitz() && (pPlot->getNumVisibleEnemyDefenders(this) > 0))
+		if (isMadeAttack() && !isBlitz() && pPlot->isVisibleEnemyDefender(this))
 		{
 			return false;
 		}
@@ -2687,14 +2669,18 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 
 			if (bAttack)
 			{
-				CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
+				/* CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
 				if (NULL != pDefender)
 				{
 					if (!canAttack(*pDefender))
 					{
 						return false;
 					}
-				}
+				} */
+				// K-Mod. (this is much faster.)
+				if (!pPlot->hasDefender(true, NO_PLAYER, getOwnerINLINE(), this, true))
+					return false;
+				// K-Mod end
 			}
 		}
 		else
