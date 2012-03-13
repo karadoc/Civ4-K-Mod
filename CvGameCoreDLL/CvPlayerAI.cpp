@@ -2373,11 +2373,11 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			}
 			// Slider check works for detection of whether human player is going for cultural victory
 			// (all weights changed for K-Mod)
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 70)
+			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 60)
 			{
 				int iCultureRateRank = pCity->findCommerceRateRank(COMMERCE_CULTURE);
 				int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
-				bool bC3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE); // K-Mod
+				bool bC3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >= 80; // K-Mod
 				
 				// if one of the currently best cities, then focus hard
 				if (iCultureRateRank <= iCulturalVictoryNumCultureCities)
@@ -2385,26 +2385,27 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 					if (bC3)
 					{
 						// culture3
-						iWeight *= 4 + iCultureRateRank;
+						iWeight *= 2 + 2*iCultureRateRank + (iCultureRateRank == iCulturalVictoryNumCultureCities ? 1 : 0);
 					}
 					else
 					{
 						// culture2
-						iWeight *= 7;
+						iWeight *= 6 + iCultureRateRank;
 						iWeight /= 2;
 					}
 				}
 				// if one of the 3 close to the top, then still emphasize culture some
 				else if (iCultureRateRank <= iCulturalVictoryNumCultureCities + 3)
 				{
-					iWeight *= bC3 ? 4 : 3;
+					//iWeight *= bC3 ? 4 : 3;
+					iWeight *= 3;
 				}
 				else
 				{
 					iWeight *= 2;
 				}
 			}
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 50)
+			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 30)
 			{
 				iWeight *= 2;
 			}
