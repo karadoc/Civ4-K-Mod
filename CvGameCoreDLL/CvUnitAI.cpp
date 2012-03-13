@@ -2901,25 +2901,30 @@ void CvUnitAI::AI_attackCityMove()
 	if( bReadyToAttack )
 	{
 		// Check that stack has units which can capture cities
+		// (K-Mod, I've edited this section to distiguish between 'no capture' and 'combat limit < 100')
 		bReadyToAttack = false;
-		int iCityCaptureCount = 0;
+		int iNoCombatLimit = 0;
+		int iCityCapture = 0;
+		CvSelectionGroup* pGroup = getGroup();
 
-		CLLNode<IDInfo>* pUnitNode = getGroup()->headUnitNode();
+		CLLNode<IDInfo>* pUnitNode = pGroup->headUnitNode();
 		while (pUnitNode != NULL && !bReadyToAttack)
 		{
 			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-			pUnitNode = getGroup()->nextUnitNode(pUnitNode);
+			pUnitNode = pGroup->nextUnitNode(pUnitNode);
 
-			if( !pLoopUnit->isOnlyDefensive() )
+			//if( !pLoopUnit->isOnlyDefensive() )
+			if (pLoopUnit->canAttack()) // K-Mod
 			{
-				if( !(pLoopUnit->isNoCapture()) && (pLoopUnit->combatLimit() >= 100) )
-				{
-					iCityCaptureCount++;
+				iCityCapture += pLoopUnit->isNoCapture() ? 0 : 1;
+				iNoCombatLimit += pLoopUnit->combatLimit() < 100 ? 0 : 1;
 
-					if( iCityCaptureCount > 5 || 3*iCityCaptureCount > getGroup()->getNumUnits() )
-					{
-						bReadyToAttack = true;
-					}
+				//if( iCityCaptureCount > 5 || 3*iCityCaptureCount > getGroup()->getNumUnits() )
+
+				if ((iCityCapture >= 3 || 2*iCityCapture > pGroup->getNumUnits()) &&
+					(iNoCombatLimit >= 6 || 3*iNoCombatLimit > pGroup->getNumUnits()))
+				{
+					bReadyToAttack = true;
 				}
 			}
 		}
