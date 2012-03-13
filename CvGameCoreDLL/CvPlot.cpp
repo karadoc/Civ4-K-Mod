@@ -5621,12 +5621,12 @@ BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckConnected
 
 			FAssert(ePlotTeam != eTeam || eImprovement == getImprovementType());
 
-			if (!isCity(true, ePlotTeam) && (eImprovement == NO_IMPROVEMENT || !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus)))
+			if (ePlotTeam == NO_TEAM
+				? eImprovement != NO_IMPROVEMENT && !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus)
+				: !isCity() && !GET_TEAM(ePlotTeam).doesImprovementConnectBonus(eImprovement, eBonus))
 			{
-				FAssert(ePlotTeam == NO_TEAM || !GET_PLAYER(GET_TEAM(ePlotTeam).getLeaderID()).doesImprovementConnectBonus(eImprovement, eBonus));
 				return NO_BONUS;
 			}
-			FAssert(isCity() || GET_PLAYER(GET_TEAM(ePlotTeam).getLeaderID()).doesImprovementConnectBonus(eImprovement, eBonus));
 		}
 		// K-Mod end
 	}

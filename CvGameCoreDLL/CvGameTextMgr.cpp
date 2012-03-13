@@ -1205,7 +1205,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 	// if cheatmode and ctrl, display grouping info instead
 	if ((gDLL->getChtLvl() > 0) && GC.ctrlKey())
 	{
-		if (pPlot->isVisible(GC.getGameINLINE().getActiveTeam(), GC.getGameINLINE().isDebugMode()))
+		if (pPlot->isVisible(GC.getGameINLINE().getActiveTeam(), true))
 		{
 			CvWString szTempString;
 
@@ -1216,7 +1216,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 				pUnitNode = pPlot->nextUnitNode(pUnitNode);
 
 				// is this unit the head of a group, not cargo, and visible?
-				if (pHeadUnit && pHeadUnit->isGroupHead() && !pHeadUnit->isCargo() && !pHeadUnit->isInvisible(GC.getGameINLINE().getActiveTeam(), GC.getGameINLINE().isDebugMode()))
+				if (pHeadUnit && pHeadUnit->isGroupHead() && !pHeadUnit->isCargo() && !pHeadUnit->isInvisible(GC.getGameINLINE().getActiveTeam(), true))
 				{
 					// head unit name and unitai
 					szString.append(CvWString::format(SETCOLR L"%s" ENDCOLR, 255,190,0,255, pHeadUnit->getName().GetCString()));

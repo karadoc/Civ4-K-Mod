@@ -5827,6 +5827,332 @@ void CvTeam::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes e
 	}
 }
 
+// K-Mod. In the original code, there seems to be a lot of confusion about what the exact conditions are for a bonus being connected.
+// There were heaps of bugs where CvImprovementInfo::isImprovementBonusTrade was mistakenly used as the sole condition for a bonus being connected or not.
+// I created this function to make the situation a bit more clear...
+bool CvTeam::doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const
+{
+	FAssert(eImprovement <= GC.getNumImprovementInfos());
+	FAssert(eBonus <= GC.getNumBonusInfos());
+
+	if (eImprovement == NO_IMPROVEMENT || eBonus == NO_BONUS)
+		return false;
+
+	const CvImprovementInfo& kImprovementInfo = GC.getImprovementInfo(eImprovement);
+	const CvBonusInfo& kBonusInfo = GC.getBonusInfo(eBonus);
+
+	if (!isHasTech((TechTypes)kBonusInfo.getTechCityTrade()) || (kBonusInfo.getTechObsolete() != NO_TECH && isHasTech((TechTypes)kBonusInfo.getTechObsolete())))
+		return false;
+
+	return kImprovementInfo.isImprovementBonusTrade(eBonus) || kImprovementInfo.isActsAsCity();
+}
+// K-Mod end
+
+bool CvTeam::isFriendlyTerritory(TeamTypes eTeam) const
+{
+	if (eTeam == NO_TEAM)
+	{
+		return false;
+	}
+
+	if (eTeam == getID())
+	{
+		return true;
+	}
+
+	if (GET_TEAM(eTeam).isVassal(getID()))
+	{
+		return true;
+	}
+
+	if (isVassal(eTeam) && isOpenBorders(eTeam))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+int CvTeam::getEspionagePointsAgainstTeam(TeamTypes eIndex) const
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_aiEspionagePointsAgainstTeam[eIndex];
+}
+
+void CvTeam::setEspionagePointsAgainstTeam(TeamTypes eIndex, int iValue)
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	if (iValue != getEspionagePointsAgainstTeam(eIndex))
+	{
+		m_aiEspionagePointsAgainstTeam[eIndex] = iValue;
+
+		verifySpyUnitsValidPlot();
+		GET_TEAM(eIndex).verifySpyUnitsValidPlot();
+	}
+}
+
+void CvTeam::changeEspionagePointsAgainstTeam(TeamTypes eIndex, int iChange)
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	setEspionagePointsAgainstTeam(eIndex, getEspionagePointsAgainstTeam(eIndex) + iChange);
+}
+
+// K-Mod
+int CvTeam::getTotalUnspentEspionage() const
+{
+	int iTotal = 0;
+	for (int i = 0; i < MAX_CIV_TEAMS; i++)
+	{
+		iTotal += getEspionagePointsAgainstTeam((TeamTypes)i);
+	}
+	return iTotal;
+}
+// K-Mod end
+
+int CvTeam::getEspionagePointsEver() const
+{
+	return m_iEspionagePointsEver;
+}
+
+void CvTeam::setEspionagePointsEver(int iValue)
+{
+	if (iValue != getEspionagePointsEver())
+	{
+		m_iEspionagePointsEver = iValue;
+	}
+}
+
+void CvTeam::changeEspionagePointsEver(int iChange)
+{
+	setEspionagePointsEver(getEspionagePointsEver() + iChange);
+}
+
+int CvTeam::getCounterespionageTurnsLeftAgainstTeam(TeamTypes eIndex) const
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_aiCounterespionageTurnsLeftAgainstTeam[eIndex];
+}
+
+void CvTeam::setCounterespionageTurnsLeftAgainstTeam(TeamTypes eIndex, int iValue)
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	if (iValue != getCounterespionageTurnsLeftAgainstTeam(eIndex))
+	{
+		m_aiCounterespionageTurnsLeftAgainstTeam[eIndex] = iValue;
+
+		gDLL->getInterfaceIFace()->setDirty(Espionage_Advisor_DIRTY_BIT, true);
+	}
+}
+
+void CvTeam::changeCounterespionageTurnsLeftAgainstTeam(TeamTypes eIndex, int iChange)
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	setCounterespionageTurnsLeftAgainstTeam(eIndex, getCounterespionageTurnsLeftAgainstTeam(eIndex) + iChange);
+}
+
+int CvTeam::getCounterespionageModAgainstTeam(TeamTypes eIndex) const
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_aiCounterespionageModAgainstTeam[eIndex];
+}
+
+void CvTeam::setCounterespionageModAgainstTeam(TeamTypes eIndex, int iValue)
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	if (iValue != getCounterespionageModAgainstTeam(eIndex))
+	{
+		m_aiCounterespionageModAgainstTeam[eIndex] = iValue;
+
+		gDLL->getInterfaceIFace()->setDirty(Espionage_Advisor_DIRTY_BIT, true);
+	}
+}
+
+void CvTeam::changeCounterespionageModAgainstTeam(TeamTypes eIndex, int iChange)
+{
+	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	setCounterespionageModAgainstTeam(eIndex, getCounterespionageModAgainstTeam(eIndex) + iChange);
+}
+
+void CvTeam::verifySpyUnitsValidPlot()
+{
+	std::vector<CvUnit*> aUnits;
+
+	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
+
+		if (kPlayer.isAlive() && kPlayer.getTeam() == getID())
+		{
+			int iLoop;
+			for (CvUnit* pUnit = kPlayer.firstUnit(&iLoop); pUnit != NULL; pUnit = kPlayer.nextUnit(&iLoop))
+			{
+				PlayerTypes eOwner = pUnit->plot()->getOwnerINLINE();
+				if (NO_PLAYER != eOwner)
+				{
+					if (pUnit->isSpy())
+					{
+						if (!kPlayer.canSpiesEnterBorders(eOwner))
+						{
+							aUnits.push_back(pUnit);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (uint i = 0; i < aUnits.size(); ++i)
+	{
+		aUnits[i]->jumpToNearestValidPlot();
+	}
+}
+
+void CvTeam::setForceRevealedBonus(BonusTypes eBonus, bool bRevealed)
+{
+	if (isForceRevealedBonus(eBonus) == bRevealed)
+	{
+		return;
+	}
+
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); ++iI)
+	{
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+
+		if (pLoopPlot->getBonusType() == eBonus)
+		{
+			if (pLoopPlot->getTeam() == getID())
+			{
+				pLoopPlot->updatePlotGroupBonus(false);
+			}
+		}
+	}
+
+	if (bRevealed)
+	{
+		m_aeRevealedBonuses.push_back(eBonus);
+	}
+	else
+	{
+		std::vector<BonusTypes>::iterator it;
+
+		for (it = m_aeRevealedBonuses.begin(); it != m_aeRevealedBonuses.end(); ++it)
+		{
+			if (*it == eBonus)
+			{
+				m_aeRevealedBonuses.erase(it);
+				break;
+			}
+		}
+	}
+
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); ++iI)
+	{
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+
+		if (pLoopPlot->getBonusType() == eBonus)
+		{
+			if (pLoopPlot->getTeam() == getID())
+			{
+				pLoopPlot->updatePlotGroupBonus(true);
+			}
+		}
+	}
+
+	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); ++iI)
+	{
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+
+		if (pLoopPlot->getBonusType() == eBonus)
+		{
+			pLoopPlot->updateYield();
+			pLoopPlot->setLayoutDirty(true);
+		}
+	}
+}
+
+bool CvTeam::isForceRevealedBonus(BonusTypes eBonus) const
+{
+	std::vector<BonusTypes>::const_iterator it;
+
+	for (it = m_aeRevealedBonuses.begin(); it != m_aeRevealedBonuses.end(); ++it)
+	{
+		if (*it == eBonus)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+int CvTeam::countNumHumanGameTurnActive() const
+{
+	int iCount = 0;
+
+	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	{
+		CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+
+		if (kLoopPlayer.isHuman() && kLoopPlayer.getTeam() == getID())
+		{
+			if (kLoopPlayer.isTurnActive())
+			{
+				++iCount;
+			}
+		}
+	}
+
+	return iCount;
+}
+
+void CvTeam::setTurnActive(bool bNewValue, bool bDoTurn)
+{
+	FAssert(GC.getGameINLINE().isSimultaneousTeamTurns());
+
+	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
+		if (kPlayer.isAlive() && kPlayer.getTeam() == getID())
+		{
+			kPlayer.setTurnActive(bNewValue, bDoTurn);
+		}
+	}
+}
+
+bool CvTeam::isTurnActive() const
+{
+	FAssert(GC.getGameINLINE().isSimultaneousTeamTurns());
+
+	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
+		if (kPlayer.getTeam() == getID())
+		{
+			if (kPlayer.isTurnActive())
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // Protected Functions...
 
 void CvTeam::doWarWeariness()
@@ -6244,313 +6570,6 @@ void CvTeam::cancelDefensivePacts()
 			pLoopDeal->kill();
 		}
 	}
-}
-
-
-bool CvTeam::isFriendlyTerritory(TeamTypes eTeam) const
-{
-	if (eTeam == NO_TEAM)
-	{
-		return false;
-	}
-
-	if (eTeam == getID())
-	{
-		return true;
-	}
-
-	if (GET_TEAM(eTeam).isVassal(getID()))
-	{
-		return true;
-	}
-
-	if (isVassal(eTeam) && isOpenBorders(eTeam))
-	{
-		return true;
-	}
-
-	return false;
-}
-
-int CvTeam::getEspionagePointsAgainstTeam(TeamTypes eIndex) const
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-	return m_aiEspionagePointsAgainstTeam[eIndex];
-}
-
-void CvTeam::setEspionagePointsAgainstTeam(TeamTypes eIndex, int iValue)
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-
-	if (iValue != getEspionagePointsAgainstTeam(eIndex))
-	{
-		m_aiEspionagePointsAgainstTeam[eIndex] = iValue;
-
-		verifySpyUnitsValidPlot();
-		GET_TEAM(eIndex).verifySpyUnitsValidPlot();
-	}
-}
-
-void CvTeam::changeEspionagePointsAgainstTeam(TeamTypes eIndex, int iChange)
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-
-	setEspionagePointsAgainstTeam(eIndex, getEspionagePointsAgainstTeam(eIndex) + iChange);
-}
-
-// K-Mod
-int CvTeam::getTotalUnspentEspionage() const
-{
-	int iTotal = 0;
-	for (int i = 0; i < MAX_CIV_TEAMS; i++)
-	{
-		iTotal += getEspionagePointsAgainstTeam((TeamTypes)i);
-	}
-	return iTotal;
-}
-// K-Mod end
-
-int CvTeam::getEspionagePointsEver() const
-{
-	return m_iEspionagePointsEver;
-}
-
-void CvTeam::setEspionagePointsEver(int iValue)
-{
-	if (iValue != getEspionagePointsEver())
-	{
-		m_iEspionagePointsEver = iValue;
-	}
-}
-
-void CvTeam::changeEspionagePointsEver(int iChange)
-{
-	setEspionagePointsEver(getEspionagePointsEver() + iChange);
-}
-
-int CvTeam::getCounterespionageTurnsLeftAgainstTeam(TeamTypes eIndex) const
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-	return m_aiCounterespionageTurnsLeftAgainstTeam[eIndex];
-}
-
-void CvTeam::setCounterespionageTurnsLeftAgainstTeam(TeamTypes eIndex, int iValue)
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-
-	if (iValue != getCounterespionageTurnsLeftAgainstTeam(eIndex))
-	{
-		m_aiCounterespionageTurnsLeftAgainstTeam[eIndex] = iValue;
-
-		gDLL->getInterfaceIFace()->setDirty(Espionage_Advisor_DIRTY_BIT, true);
-	}
-}
-
-void CvTeam::changeCounterespionageTurnsLeftAgainstTeam(TeamTypes eIndex, int iChange)
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-
-	setCounterespionageTurnsLeftAgainstTeam(eIndex, getCounterespionageTurnsLeftAgainstTeam(eIndex) + iChange);
-}
-
-int CvTeam::getCounterespionageModAgainstTeam(TeamTypes eIndex) const
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-	return m_aiCounterespionageModAgainstTeam[eIndex];
-}
-
-void CvTeam::setCounterespionageModAgainstTeam(TeamTypes eIndex, int iValue)
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-
-	if (iValue != getCounterespionageModAgainstTeam(eIndex))
-	{
-		m_aiCounterespionageModAgainstTeam[eIndex] = iValue;
-
-		gDLL->getInterfaceIFace()->setDirty(Espionage_Advisor_DIRTY_BIT, true);
-	}
-}
-
-void CvTeam::changeCounterespionageModAgainstTeam(TeamTypes eIndex, int iChange)
-{
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-
-	setCounterespionageModAgainstTeam(eIndex, getCounterespionageModAgainstTeam(eIndex) + iChange);
-}
-
-void CvTeam::verifySpyUnitsValidPlot()
-{
-	std::vector<CvUnit*> aUnits;
-
-	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
-	{
-		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
-
-		if (kPlayer.isAlive() && kPlayer.getTeam() == getID())
-		{
-			int iLoop;
-			for (CvUnit* pUnit = kPlayer.firstUnit(&iLoop); pUnit != NULL; pUnit = kPlayer.nextUnit(&iLoop))
-			{
-				PlayerTypes eOwner = pUnit->plot()->getOwnerINLINE();
-				if (NO_PLAYER != eOwner)
-				{
-					if (pUnit->isSpy())
-					{
-						if (!kPlayer.canSpiesEnterBorders(eOwner))
-						{
-							aUnits.push_back(pUnit);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	for (uint i = 0; i < aUnits.size(); ++i)
-	{
-		aUnits[i]->jumpToNearestValidPlot();
-	}
-}
-
-
-void CvTeam::setForceRevealedBonus(BonusTypes eBonus, bool bRevealed)
-{
-	if (isForceRevealedBonus(eBonus) == bRevealed)
-	{
-		return;
-	}
-
-	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); ++iI)
-	{
-		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
-
-		if (pLoopPlot->getBonusType() == eBonus)
-		{
-			if (pLoopPlot->getTeam() == getID())
-			{
-				pLoopPlot->updatePlotGroupBonus(false);
-			}
-		}
-	}
-
-	if (bRevealed)
-	{
-		m_aeRevealedBonuses.push_back(eBonus);
-	}
-	else
-	{
-		std::vector<BonusTypes>::iterator it;
-
-		for (it = m_aeRevealedBonuses.begin(); it != m_aeRevealedBonuses.end(); ++it)
-		{
-			if (*it == eBonus)
-			{
-				m_aeRevealedBonuses.erase(it);
-				break;
-			}
-		}
-	}
-
-	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); ++iI)
-	{
-		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
-
-		if (pLoopPlot->getBonusType() == eBonus)
-		{
-			if (pLoopPlot->getTeam() == getID())
-			{
-				pLoopPlot->updatePlotGroupBonus(true);
-			}
-		}
-	}
-
-	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); ++iI)
-	{
-		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
-
-		if (pLoopPlot->getBonusType() == eBonus)
-		{
-			pLoopPlot->updateYield();
-			pLoopPlot->setLayoutDirty(true);
-		}
-	}
-}
-
-bool CvTeam::isForceRevealedBonus(BonusTypes eBonus) const
-{
-	std::vector<BonusTypes>::const_iterator it;
-
-	for (it = m_aeRevealedBonuses.begin(); it != m_aeRevealedBonuses.end(); ++it)
-	{
-		if (*it == eBonus)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-int CvTeam::countNumHumanGameTurnActive() const
-{
-	int iCount = 0;
-
-	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
-	{
-		CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
-
-		if (kLoopPlayer.isHuman() && kLoopPlayer.getTeam() == getID())
-		{
-			if (kLoopPlayer.isTurnActive())
-			{
-				++iCount;
-			}
-		}
-	}
-
-	return iCount;
-}
-
-void CvTeam::setTurnActive(bool bNewValue, bool bDoTurn)
-{
-	FAssert(GC.getGameINLINE().isSimultaneousTeamTurns());
-
-	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
-	{
-		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
-		if (kPlayer.isAlive() && kPlayer.getTeam() == getID())
-		{
-			kPlayer.setTurnActive(bNewValue, bDoTurn);
-		}
-	}
-}
-
-bool CvTeam::isTurnActive() const
-{
-	FAssert(GC.getGameINLINE().isSimultaneousTeamTurns());
-
-	for (int iPlayer = 0; iPlayer < MAX_PLAYERS; ++iPlayer)
-	{
-		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
-		if (kPlayer.getTeam() == getID())
-		{
-			if (kPlayer.isTurnActive())
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
 }
 
 

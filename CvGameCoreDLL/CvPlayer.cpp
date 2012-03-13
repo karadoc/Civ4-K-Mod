@@ -4401,25 +4401,10 @@ int CvPlayer::countPotentialForeignTradeCitiesConnected() const
 	return iCount;
 }
 
-// K-Mod. In the original code, there seems to be a lot of confusion about what the exact conditions are for a bonus being connected.
-// There were heaps of bugs where CvImprovementInfo::isImprovementBonusTrade was mistakenly used as the sole condition for a bonus being connected or not.
-// I created this function to make the situation a bit more clear...
+// K-Mod
 bool CvPlayer::doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const
 {
-	FAssert(eImprovement <= GC.getNumImprovementInfos());
-	FAssert(eBonus <= GC.getNumBonusInfos());
-
-	if (eImprovement == NO_IMPROVEMENT || eBonus == NO_BONUS)
-		return false;
-
-	const CvImprovementInfo& kImprovementInfo = GC.getImprovementInfo(eImprovement);
-	const CvBonusInfo& kBonusInfo = GC.getBonusInfo(eBonus);
-	const CvTeam& kTeam = GET_TEAM(getTeam());
-
-	if (!kTeam.isHasTech((TechTypes)kBonusInfo.getTechCityTrade()) || (kBonusInfo.getTechObsolete() != NO_TECH && kTeam.isHasTech((TechTypes)kBonusInfo.getTechObsolete())))
-		return false;
-
-	return kImprovementInfo.isImprovementBonusTrade(eBonus) || kImprovementInfo.isActsAsCity();
+	return GET_TEAM(getTeam()).doesImprovementConnectBonus(eImprovement, eBonus);
 }
 // K-Mod end
 

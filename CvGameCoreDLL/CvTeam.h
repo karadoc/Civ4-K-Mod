@@ -331,17 +331,6 @@ public:
 	bool isRiverTrade() const;																												// Exposed to Python
 	void changeRiverTradeCount(int iChange);
 
-	bool isHasTech(TechTypes eIndex) const;																																			// Exposed to Python
-	void setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, bool bFirst, bool bAnnounce);	// Exposed to Python
-
-	bool isNoTradeTech(TechTypes eIndex) const;																														// Exposed to Python
-	void setNoTradeTech(TechTypes eIndex, bool bNewValue);																					// Exposed to Python
-
-	int getImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2) const;										// Exposed to Python 
-	void changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2, int iChange);		// Exposed to Python 
-
-	bool isFriendlyTerritory(TeamTypes eTeam) const;
-
 	int getVictoryCountdown(VictoryTypes eIndex) const;																							// Exposed to Python
 	void setVictoryCountdown(VictoryTypes eIndex, int iTurnsLeft);
 	void changeVictoryCountdown(VictoryTypes eIndex, int iChange);
@@ -352,6 +341,19 @@ public:
 	void resetVictoryProgress();
 
 	bool isParent(TeamTypes eTeam) const;		// Exposed to Python 
+
+	bool isHasTech(TechTypes eIndex) const;																																			// Exposed to Python
+	void setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, bool bFirst, bool bAnnounce);	// Exposed to Python
+
+	bool isNoTradeTech(TechTypes eIndex) const;																														// Exposed to Python
+	void setNoTradeTech(TechTypes eIndex, bool bNewValue);																					// Exposed to Python
+
+	int getImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2) const;										// Exposed to Python 
+	void changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2, int iChange);		// Exposed to Python 
+
+	bool doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const; // K-Mod
+
+	bool isFriendlyTerritory(TeamTypes eTeam) const;
 
 	int getEspionagePointsAgainstTeam(TeamTypes eIndex) const;																							// Exposed to Python
 	void setEspionagePointsAgainstTeam(TeamTypes eIndex, int iValue);																							// Exposed to Python
