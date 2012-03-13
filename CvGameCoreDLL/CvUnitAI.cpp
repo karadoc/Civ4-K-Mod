@@ -19841,16 +19841,15 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 					bool bIsConnected = pLoopPlot->isConnectedToCapital(getOwnerINLINE());
 					if ((pLoopPlot->getWorkingCity() != NULL) || (bIsConnected || bCanRoute))
 					{
+						/* original bts code
 						ImprovementTypes eImprovement = pLoopPlot->getImprovementType();
-
 						bool bDoImprove = false;
 
 						if (eImprovement == NO_IMPROVEMENT)
 						{
 							bDoImprove = true;
 						}
-						//else if (GC.getImprovementInfo(eImprovement).isActsAsCity() || GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
-						else if (kOwner.doesImprovementConnectBonus(eImprovement, eNonObsoleteBonus)) // K-Mod
+						else if (GC.getImprovementInfo(eImprovement).isActsAsCity() || GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eNonObsoleteBonus))
 						{
 							bDoImprove = false;
 						}
@@ -19858,22 +19857,40 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 						{
 							bDoImprove = true;
 						}
-						/* else if (!GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
+						else if (!GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
                         {
                         	bDoImprove = true;
-                        } */
-						// K-Mod. Let "best build" handle improvement replacements near cities.
-						else if (pLoopPlot->getWorkingCity() == NULL && !kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION))
+                        }
+
+						int iBestTempBuildValue = MAX_INT;
+						BuildTypes eBestTempBuild = NO_BUILD; */
+
+						// K-Mod. Simplier, and better.
+						bool bDoImprove = false;
+						ImprovementTypes eImprovement = pLoopPlot->getImprovementType();
+						CvCity* pWorkingCity = pLoopPlot->getWorkingCity();
+						BuildTypes eBestTempBuild = NO_BUILD;
+
+						if (pWorkingCity)
 						{
-							bDoImprove = true;
+							// Let "best build" handle improvement replacements near cities.
+							BuildTypes eBuild = pWorkingCity->AI_getBestBuild(plotCityXY(pWorkingCity, pLoopPlot));
+							if (eBuild != NO_BUILD && kOwner.doesImprovementConnectBonus((ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement(), eNonObsoleteBonus) && canBuild(pLoopPlot, eBuild))
+							{
+								bDoImprove = true;
+								eBestTempBuild = eBuild;
+							}
+						}
+						else if (!kOwner.doesImprovementConnectBonus(eImprovement, eNonObsoleteBonus))
+						{
+							bDoImprove = !kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION) || eImprovement == NO_IMPROVEMENT || eImprovement == GC.getDefineINT("RUINS_IMPROVEMENT");
 						}
 						// K-Mod end
 
-						int iBestTempBuildValue = MAX_INT;
-						BuildTypes eBestTempBuild = NO_BUILD;
-
-						if (bDoImprove)
+						//if (bDoImprove)
+						if (bDoImprove && eBestTempBuild == NO_BUILD) // K-Mod
 						{
+							int iBestTempBuildValue = MAX_INT; // K-Mod
 							for (int iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
 							{
 								BuildTypes eBuild = ((BuildTypes)iJ);

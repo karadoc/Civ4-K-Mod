@@ -5612,12 +5612,21 @@ BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckConnected
 		// K-Mod
 		if (bCheckConnected)
 		{
-			if (!isCity(true, eTeam) && (getImprovementType() == NO_IMPROVEMENT || !GC.getImprovementInfo(getImprovementType()).isImprovementBonusTrade(eBonus)))
+			// note: this checks whether the bonus is connected for the owner of the plot, from the point of view of eTeam.
+			TeamTypes ePlotTeam = getTeam();
+			// note: this function is used inside CvPlot::updatePlotGroupBonuses, which is called during CvPlot::setImprovementType
+			// between when the improvement is changed and the revealed improvement type is updated...
+			// therefore when eTeam == ePlotTeam, we use the real improvement, not the revealed one.
+			ImprovementTypes eImprovement = eTeam == NO_TEAM || eTeam == ePlotTeam ? getImprovementType() : getRevealedImprovementType(eTeam, false);
+
+			FAssert(ePlotTeam != eTeam || eImprovement == getImprovementType());
+
+			if (!isCity(true, ePlotTeam) && (eImprovement == NO_IMPROVEMENT || !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus)))
 			{
-				FAssert(!GET_PLAYER(GET_TEAM(eTeam).getLeaderID()).doesImprovementConnectBonus(getImprovementType(), eBonus));
+				FAssert(ePlotTeam == NO_TEAM || !GET_PLAYER(GET_TEAM(ePlotTeam).getLeaderID()).doesImprovementConnectBonus(eImprovement, eBonus));
 				return NO_BONUS;
 			}
-			FAssert(isCity() || GET_PLAYER(GET_TEAM(eTeam).getLeaderID()).doesImprovementConnectBonus(getImprovementType(), eBonus));
+			FAssert(isCity() || GET_PLAYER(GET_TEAM(ePlotTeam).getLeaderID()).doesImprovementConnectBonus(eImprovement, eBonus));
 		}
 		// K-Mod end
 	}
