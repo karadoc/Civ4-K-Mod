@@ -11832,7 +11832,8 @@ bool CvUnitAI::AI_guardBonus(int iMinValue)
 			{
 				eNonObsoleteBonus = pLoopPlot->getNonObsoleteBonusType(getTeam(), true);
 
-				if (eNonObsoleteBonus != NO_BONUS)
+				//if (eNonObsoleteBonus != NO_BONUS)
+				if (eNonObsoleteBonus != NO_BONUS && pLoopPlot->isValidDomainForAction(*this)) // K-Mod. (boats shouldn't defend forts!)
 				{
 					//iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus);
 					iValue = GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 0); // K-Mod
