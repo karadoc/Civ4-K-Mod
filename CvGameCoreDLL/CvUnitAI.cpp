@@ -14590,103 +14590,83 @@ bool CvUnitAI::AI_defend()
 }
 
 
-// Returns true if a mission was pushed...
+// This function has been edited for K-Mod
 bool CvUnitAI::AI_safety()
 {
 	PROFILE_FUNC();
 
-	CLLNode<IDInfo>* pUnitNode;
-	CvUnit* pLoopUnit;
-	CvUnit* pHeadUnit;
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	int iSearchRange;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iCount;
-	int iPass;
-	int iDX, iDY;
+	int iSearchRange = AI_searchRange(1);
 
-	iSearchRange = AI_searchRange(1);
-
-	iBestValue = 0;
-	pBestPlot = NULL;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = 0;
+	bool bEnemyTerritory = isEnemy(plot()->getTeam());
 
 	//for (iPass = 0; iPass < 2; iPass++)
-	iPass = 0; // K-Mod. That multiple pass thing is nothing more than a waste of time.
+	for (int iPass = 0; !pBestPlot && iPass < 2; iPass++)// K-Mod. What's the point of the first pass if it is just ignored?
 	{
-		for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
+		for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 		{
-			for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
+			for (int iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
 			{
-				pLoopPlot	= plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+				CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
-				if (pLoopPlot != NULL)
+				if (pLoopPlot && AI_plotValid(pLoopPlot) && !pLoopPlot->isVisibleEnemyUnit(this))
 				{
-					if (AI_plotValid(pLoopPlot))
+					int iPathTurns;
+					if (generatePath(pLoopPlot, ((iPass > 0) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, 1))
 					{
-						if (!(pLoopPlot->isVisibleEnemyUnit(this)))
+						int iCount = 0;
+
+						CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
+
+						while (pUnitNode != NULL)
 						{
-							if (generatePath(pLoopPlot, ((iPass > 0) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, 1))
+							CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+							pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+
+							if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE())
 							{
-								if (iPathTurns <= 1)
+								if (pLoopUnit->canDefend())
 								{
-									iCount = 0;
+									CvUnit* pHeadUnit = pLoopUnit->getGroup()->getHeadUnit();
+									FAssert(pHeadUnit != NULL);
+									FAssert(getGroup()->getHeadUnit() == this);
 
-									pUnitNode = pLoopPlot->headUnitNode();
-
-									while (pUnitNode != NULL)
+									if (pHeadUnit != this)
 									{
-										pLoopUnit = ::getUnit(pUnitNode->m_data);
-										pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
-
-										if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE())
+										if (pHeadUnit->isWaiting() || !(pHeadUnit->canMove()))
 										{
-											if (pLoopUnit->canDefend())
-											{
-												pHeadUnit = pLoopUnit->getGroup()->getHeadUnit();
-												FAssert(pHeadUnit != NULL);
-												FAssert(getGroup()->getHeadUnit() == this);
-
-												if (pHeadUnit != this)
-												{
-													if (pHeadUnit->isWaiting() || !(pHeadUnit->canMove()))
-													{
-														FAssert(pLoopUnit != this);
-														FAssert(pHeadUnit != getGroup()->getHeadUnit());
-														iCount++;
-													}
-												}
-											}
+											FAssert(pLoopUnit != this);
+											FAssert(pHeadUnit != getGroup()->getHeadUnit());
+											iCount++;
 										}
-									}
-
-									iValue = (iCount * 100);
-
-									iValue += pLoopPlot->defenseModifier(getTeam(), false);
-
-									// K-Mod
-									iValue += pLoopPlot->getTeam() == getTeam() ? 60 : (isEnemy(pLoopPlot->getTeam(), pLoopPlot) ? -25 : 0);
-									iValue += pLoopPlot->isValidRoute(this) ? 25 : 0;
-									// K-Mod end
-
-									if (atPlot(pLoopPlot))
-									{
-										iValue += 50;
-									}
-									else
-									{
-										iValue += GC.getGameINLINE().getSorenRandNum(50, "AI Safety");
-									}
-
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										pBestPlot = pLoopPlot;
 									}
 								}
 							}
+						}
+
+						int iValue = (iCount * 100);
+
+						iValue += pLoopPlot->defenseModifier(getTeam(), false);
+
+						// K-Mod
+						iValue += (bEnemyTerritory ? !isEnemy(pLoopPlot->getTeam(), pLoopPlot) : pLoopPlot->getTeam() == getTeam()) ? 30 : 0;
+						iValue += pLoopPlot->isValidRoute(this) ? 25 : 0;
+						// K-Mod end
+
+						if (atPlot(pLoopPlot))
+						{
+							iValue += 50;
+						}
+						else
+						{
+							iValue += GC.getGameINLINE().getSorenRandNum(50, "AI Safety");
+						}
+
+						if (iValue > iBestValue)
+						{
+							iBestValue = iValue;
+							pBestPlot = pLoopPlot;
 						}
 					}
 				}
