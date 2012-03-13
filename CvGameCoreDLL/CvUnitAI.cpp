@@ -3527,13 +3527,32 @@ void CvUnitAI::AI_attackCityMove()
 	}
 	else
 	{
+		/* original code
 		int iTargetCount = kOwner.AI_unitTargetMissionAIs(this, MISSIONAI_GROUP);
 		if( ((iTargetCount * 4) > getGroup()->getNumUnits()) || ((getGroup()->getNumUnits() + iTargetCount) >= (bHuntBarbs ? 3 : AI_stackOfDoomExtra())) )
 		{
 			MissionAITypes eMissionAIType = MISSIONAI_GROUP;
 			int iJoiners = kOwner.AI_unitTargetMissionAIs(this, &eMissionAIType, 1, getGroup(), 2);
 			
-			if (5*iJoiners > getGroup()->getNumUnits()) // was 6*
+			if (6*iJoiners > getGroup()->getNumUnits())
+			{
+				getGroup()->pushMission(MISSION_SKIP);
+				return;
+			}
+
+			if (AI_safety())
+			{
+				return;
+			}
+		}*/
+		// K-Mod
+		int iTargetCount = kOwner.AI_unitTargetMissionAIs(this, MISSIONAI_GROUP);
+		if (6*iTargetCount > getGroup()->getNumUnits())
+		{
+			MissionAITypes eMissionAIType = MISSIONAI_GROUP;
+			int iNearbyJoiners = kOwner.AI_unitTargetMissionAIs(this, &eMissionAIType, 1, getGroup(), 2);
+
+			if (4*iNearbyJoiners > getGroup()->getNumUnits())
 			{
 				getGroup()->pushMission(MISSION_SKIP);
 				return;
@@ -3544,6 +3563,7 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 		}
+		// K-Mod end
 
 		if ((bombardRate() > 0) && noDefensiveBonus())
 		{
@@ -14644,6 +14664,11 @@ bool CvUnitAI::AI_safety()
 									iValue = (iCount * 100);
 
 									iValue += pLoopPlot->defenseModifier(getTeam(), false);
+
+									// K-Mod
+									iValue += pLoopPlot->getTeam() == getTeam() ? 60 : (isEnemy(pLoopPlot->getTeam(), pLoopPlot) ? -25 : 0);
+									iValue += pLoopPlot->isValidRoute(this) ? 25 : 0;
+									// K-Mod end
 
 									if (atPlot(pLoopPlot))
 									{
