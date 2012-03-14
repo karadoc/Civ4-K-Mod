@@ -5801,6 +5801,8 @@ int CvCity::getMaintenanceTimes100() const
 
 void CvCity::updateMaintenance()
 {
+	PROFILE_FUNC();
+
 	int iOldMaintenance;
 	int iNewMaintenance;
 

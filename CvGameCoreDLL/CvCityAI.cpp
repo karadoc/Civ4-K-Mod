@@ -8125,15 +8125,20 @@ void CvCityAI::AI_updateBestBuild()
 							}
 							else if ((pLoopPlot->getImprovementType() != NO_IMPROVEMENT) && (GC.getBuildInfo(m_aeBestBuild[iI]).getImprovement() != NO_IMPROVEMENT))
 							{
-								for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+								// K-Mod. If the new improvement will upgrade over time, then don't mark it as being low-priority. We want to build it sooner rather than later.
+								if (GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(m_aeBestBuild[iI]).getImprovement()).getImprovementUpgrade() == NO_IMPROVEMENT)
+								// K-Mod end
 								{
-									aiYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
-								}
-								
-								iValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
-								if (iValue > aiValues[iI])
-								{
-									m_aiBestBuildValue[iI] = 1;
+									for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+									{
+										aiYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
+									}
+
+									iValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
+									if (iValue > aiValues[iI])
+									{
+										m_aiBestBuildValue[iI] = 1;
+									}
 								}
 							}
 						}

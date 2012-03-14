@@ -6100,6 +6100,14 @@ bool CvTeam::isForceRevealedBonus(BonusTypes eBonus) const
 	return false;
 }
 
+// K-Mod
+bool CvTeam::isBonusRevealed(BonusTypes eBonus) const
+{
+	FAssert(eBonus >= 0 && eBonus < GC.getNumBonusInfos());
+	return isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechReveal()) || isForceRevealedBonus(eBonus);
+}
+// K-Mod end
+
 int CvTeam::countNumHumanGameTurnActive() const
 {
 	int iCount = 0;

@@ -5166,7 +5166,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					if (!kImprovement.isImprovementBonusMakesValid(iK) && !kImprovement.isImprovementBonusTrade(iK))
 						continue;
 
-					bool bRevealed = kTeam.isHasTech((TechTypes)kBonusInfo.getTechReveal()) || kTeam.isForceRevealedBonus((BonusTypes)iK);
+					bool bRevealed = kTeam.isBonusRevealed((BonusTypes)iK);
 
 					int iNumBonuses = bRevealed
 						? countOwnedBonuses((BonusTypes)iK) // actual count
@@ -5302,7 +5302,6 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				// K-Mod. Devalue it if we don't have the resources. (based on my code for unit evaluation)
 				bool bMaybeMissing = false; // if we don't know if we have the bonus or not
 				bool bDefinitelyMissing = false; // if we can see the bonuses, and we know we don't have any.
-				const CvTeam& kTeam = GET_TEAM(getTeam());
 
 				for (int iK = 0; iK < GC.getNUM_ROUTE_PREREQ_OR_BONUSES(); ++iK)
 				{
@@ -5317,7 +5316,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						}
 						else
 						{
-							if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) && countOwnedBonuses(ePrereqBonus) == 0)
+							if (kTeam.isBonusRevealed(ePrereqBonus) && countOwnedBonuses(ePrereqBonus) == 0)
 							{
 								bDefinitelyMissing = true;
 							}
@@ -12923,6 +12922,7 @@ CivicTypes CvPlayerAI::AI_bestCivic(CivicOptionTypes eCivicOption, int* piBestVa
 }
 
 // This function has been heavily edited for K-Mod. (some original code deleted, some edited by BBAI)
+// Note: the value is roughly in units of commerce per turn.
 int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 {
 	PROFILE_FUNC();
@@ -13046,8 +13046,41 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	iValue += ((kCivic.getGreatPeopleRateModifier() * iCities) / 10);
 	iValue += ((kCivic.getGreatGeneralRateModifier() * getNumMilitaryUnits()) / 50);
 	iValue += ((kCivic.getDomesticGreatGeneralRateModifier() * getNumMilitaryUnits()) / 100);
+	/* original bts code
 	iValue += -((kCivic.getDistanceMaintenanceModifier() * std::max(0, (iCities - 3))) / 8);
-	iValue += -((kCivic.getNumCitiesMaintenanceModifier() * std::max(0, (iCities - 3))) / 8);
+	iValue += -((kCivic.getNumCitiesMaintenanceModifier() * std::max(0, (iCities - 3))) / 8); */
+	// K-Mod. After looking at a couple of examples, it's plain to see that the above maintenance estimates are far too big.
+	// Surprisingly, it actually doesn't take much time to calculate the precise magnitude of the maintenance change. So that's what I'll do!
+	if (kCivic.getNumCitiesMaintenanceModifier() != 0)
+	{
+		PROFILE("civicValue: NumCitiesMaintenance");
+		int iTemp = 0;
+		int iLoop;
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			iTemp += pLoopCity->calculateNumCitiesMaintenanceTimes100() * (pLoopCity->getMaintenanceModifier() + 100) / 100;
+		}
+		iTemp *= 100;
+		iTemp /= std::max(1, getNumCitiesMaintenanceModifier() + 100);
+
+		iValue -= iTemp * kCivic.getNumCitiesMaintenanceModifier() / 10000;
+	}
+	if (kCivic.getDistanceMaintenanceModifier() != 0)
+	{
+		PROFILE("civicValue: DistanceMaintenance");
+		int iTemp = 0;
+		int iLoop;
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			iTemp += pLoopCity->calculateDistanceMaintenanceTimes100() * (pLoopCity->getMaintenanceModifier() + 100) / 100;
+		}
+		iTemp *= 100;
+		iTemp /= std::max(1, getDistanceMaintenanceModifier() + 100);
+
+		iValue -= iTemp * kCivic.getDistanceMaintenanceModifier() / 10000;
+	}
+	// K-Mod end
+
 	if( kCivic.getFreeExperience() > 0 )
 	{
 		// Free experience increases value of hammers spent on units, population is an okay measure of base hammer production
@@ -13309,10 +13342,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				BonusTypes eBonus = (BonusTypes)kCorpInfo.getPrereqBonus(i);
 				if (NO_BONUS != eBonus)
 				{
-					iBonuses += countOwnedBonuses(eBonus);
+					iBonuses +=	kTeam.isBonusRevealed(eBonus) ? countOwnedBonuses(eBonus) : 1; // expect that we'll get at least one of each unrevealed bonus.
 					// maybe use getNumAvailableBonuses ?
-					iBonuses +=	!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechReveal()) && !kTeam.isForceRevealedBonus(eBonus)
-						? 1 : 0; // expect that we'll get at least one of each unrevealed bonus.
 				}
 			}
 			iBonuses += bPlayerHQ ? 1 : 0;

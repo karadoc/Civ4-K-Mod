@@ -378,6 +378,8 @@ public:
 	void setForceRevealedBonus(BonusTypes eBonus, bool bRevealed);
 	bool isForceRevealedBonus(BonusTypes eBonus) const;
 
+	bool isBonusRevealed(BonusTypes eBonus) const; // K-Mod. (the definitive answer)
+
 	DllExport int countNumHumanGameTurnActive() const;
 	void setTurnActive(bool bNewValue, bool bTurn = true);
 	bool isTurnActive() const;

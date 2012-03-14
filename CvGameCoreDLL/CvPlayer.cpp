@@ -4172,6 +4172,11 @@ int CvPlayer::countOwnedBonuses(BonusTypes eBonus) const
 	int iCount;
 	int iI;
     int iLoop;
+
+	// K-Mod. Shortcut.
+	if (!GET_TEAM(getTeam()).isBonusRevealed(eBonus))
+		return 0;
+	// K-Mod end
     
     bool bAdvancedStart = (getAdvancedStartPoints() >= 0) && (getCurrentEra() < 3);
 

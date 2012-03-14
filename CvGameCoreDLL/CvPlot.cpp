@@ -5586,7 +5586,8 @@ BonusTypes CvPlot::getBonusType(TeamTypes eTeam) const
 	{
 		if (m_eBonusType != NO_BONUS)
 		{
-			if (!GET_TEAM(eTeam).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)m_eBonusType).getTechReveal())) && !GET_TEAM(eTeam).isForceRevealedBonus((BonusTypes)m_eBonusType))
+			//if (!GET_TEAM(eTeam).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes)m_eBonusType).getTechReveal())) && !GET_TEAM(eTeam).isForceRevealedBonus((BonusTypes)m_eBonusType))
+			if (!GET_TEAM(eTeam).isBonusRevealed((BonusTypes)m_eBonusType)) // K-Mod
 			{
 				return NO_BONUS;
 			}
