@@ -2268,21 +2268,28 @@ int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, const CvCity* pCity) const // 
 	PROFILE_FUNC();
 
 	int iWeight = GC.getYieldInfo(eYield).getAIWeightPercent();
+	// Note: to reduce confusion, I'd changed all of the xml yield AIWeightPercent values to be 100. (originally they were f:100, p:110, and c:80)
+	// I've adjusted the weights here to compenstate for the changes to the xml weights.
 	switch (eYield)
 	{
 	case YIELD_FOOD:
 		if (pCity)
 		{
-			iWeight *= (pCity->happyLevel() - pCity->unhappyLevel(1) - pCity->foodDifference() >= 0) ? 3 : 2;
+			// was ? 3 : 2
+			iWeight *= (pCity->happyLevel() - pCity->unhappyLevel(1) - pCity->foodDifference() >= 0) ? 370 : 250;
+			iWeight /= 100;
 		}
 		else
 		{
-			iWeight *= 250;
+			// was 2.5
+			iWeight *= 300;
 			iWeight /= 100;
 		}
 		break;
 	case YIELD_PRODUCTION:
-		iWeight *= 2;
+		// was 2
+		iWeight *= 270;
+		iWeight /= 100;
 		break;
 	case YIELD_COMMERCE:
 		if (AI_isFinancialTrouble())
