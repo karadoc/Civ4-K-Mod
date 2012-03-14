@@ -6732,7 +6732,7 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 	if (eBonus != NO_BONUS)
 	{
 		iValue += kFeatureInfo.getYieldChange(YIELD_FOOD) * 100;
-		iValue += kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 60;
+		iValue += kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 70; // was 60
 		iValue += kFeatureInfo.getYieldChange(YIELD_COMMERCE) * 40;
 		iValue *= 2;
 		// that should be enough incentive to keep good features
@@ -6853,8 +6853,8 @@ int CvCityAI::AI_getGoodTileCount() const
 					}
 				}
 
-				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
-					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 21))
+				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 > 27 || // prod was *6
+					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 > 21)) // was *6
 				{
 					iGoodTileCount++;
 				}
@@ -6930,8 +6930,8 @@ int CvCityAI::AI_countWorkedPoorTiles() const
 				}
 				
 				if (pLoopPlot->isBeingWorked() &&
-					aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 <= 27 &&
-					(pLoopPlot->isWater() || aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 <= 21))
+					aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 <= 27 && //prod was *6
+					(pLoopPlot->isWater() || aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 <= 21))
 				{
 					iWorkedPoorTileCount++;
 				}
@@ -7127,8 +7127,8 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 					// note: worked plots are already counted.
 					iFoodTotal += aiFinalYields[YIELD_FOOD];
 				}
-				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
-					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*6 + aiFinalYields[YIELD_COMMERCE]*4 > 21))
+				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 > 27 ||
+					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 > 21))
 				{
 					iGoodTileCount++;
 					if (!pLoopPlot->isBeingWorked())
@@ -7597,7 +7597,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		// K-Mod end
 
 		iValue += (aiDiffYields[YIELD_FOOD] * ((100 * iCorrectedFoodPriority) / 100));
-		iValue += (aiDiffYields[YIELD_PRODUCTION] * ((60 * iProductionPriority) / 100));
+		iValue += (aiDiffYields[YIELD_PRODUCTION] * ((70 * iProductionPriority) / 100)); // was 60
 		iValue += (aiDiffYields[YIELD_COMMERCE] * ((40 * iCommercePriority) / 100));
 
 		iValue /= 2;
@@ -7620,7 +7620,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			// this is mainly to make it improve better tiles first
 			//flood plain > grassland > plain > tundra
 			iValue += (aiFinalYields[YIELD_FOOD] * 8); // was 10
-			iValue += (aiFinalYields[YIELD_PRODUCTION] * 6);
+			iValue += (aiFinalYields[YIELD_PRODUCTION] * 7); // was 6
 			iValue += (aiFinalYields[YIELD_COMMERCE] * 4);
 
 			if (aiFinalYields[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
@@ -7935,14 +7935,15 @@ void CvCityAI::AI_updateBestBuild()
 				}
 
 				// K-Mod, make some adjustments to our yield weights based on our new bestbuild
-				if (m_aeBestBuild[iI] != NO_BUILD && m_aeBestBuild[iI] != eLastBestBuildType)
+				if (m_aeBestBuild[iI] != eLastBestBuildType)
 				{
-					// its a new improvement, so lets adjust our values.
-					// This is rough, but better than nothing. (at least, I hope so...)
-					int iOldFood = (eLastBestBuildType == NO_BUILD)? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_FOOD, true);
-					int iOldProd = (eLastBestBuildType == NO_BUILD)? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_PRODUCTION, true);
+					// its a new best-build, so lets adjust our multiplier values.
+					// This adjustment is rough, but better than nothing. (at least, I hope so...)
+					int iDelta;
 
-					int iDelta = pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_FOOD, true) - iOldFood;
+					// food
+					iDelta =   m_aeBestBuild[iI] == NO_BUILD ? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_FOOD, true); // new
+					iDelta -= eLastBestBuildType == NO_BUILD ? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_FOOD, true); // old
 					if (iDelta != 0)
 					{
 						/* original K-Mod code...
@@ -7964,7 +7965,9 @@ void CvCityAI::AI_updateBestBuild()
 						iFoodMultiplier -= 4 * iDelta;
 					}
 
-					iDelta = pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_PRODUCTION, true) - iOldProd;
+					// production
+					iDelta =   m_aeBestBuild[iI] == NO_BUILD ? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_PRODUCTION, true); // new
+					iDelta -= eLastBestBuildType == NO_BUILD ? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_PRODUCTION, true); // old
 					if (iDelta != 0)
 					{
 						/* original K-Mod code... 
@@ -10373,37 +10376,10 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 	//When improving new plots only, count emphasis twice
 	//helps to avoid too much tearing up of old improvements.
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/06/09                                jdog5000      */
-/*                                                                                              */
-/* Worker AI                                                                                    */
-/************************************************************************************************/
-	// AI no longer uses emphasis really, except for short term boosts to commerce.
-	// Inappropriate to base improvements on short term goals.
-	if( isHuman() )
-	{
-		if (pPlot->getImprovementType() == NO_IMPROVEMENT)
-		{
-			if (AI_isEmphasizeYield(YIELD_FOOD))
-			{
-				iFoodPriority *= 130;
-				iFoodPriority /= 100;
-			}
-			if (AI_isEmphasizeYield(YIELD_PRODUCTION))
-			{
-				iProductionPriority *= 180;
-				iProductionPriority /= 100;
-			}
-			if (AI_isEmphasizeYield(YIELD_COMMERCE))
-			{
-				iCommercePriority *= 180;
-				iCommercePriority /= 100;
-			}
-		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+
+	// K-Mod: I've deleted the section about counting emphasis twice...
+	// It's absurd to think it would help avoid tearing up old improvements.
+	// If the emphasis changes as soon as the improvment is built, then that is likely to cause us to tear up the improvement!
 
 	FAssertMsg(pPlot->getOwnerINLINE() == getOwnerINLINE(), "pPlot must be owned by this city's owner");
 
@@ -10440,7 +10416,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 		const CvFeatureInfo& kFeatureInfo = GC.getFeatureInfo(pPlot->getFeatureType());
 		iClearValue_wYield = iClearFeatureValue;
 		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_FOOD) * 100 * iFoodPriority / 100;
-		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 60 * iProductionPriority / 100;
+		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 70 * iProductionPriority / 100; // was 60
 		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_COMMERCE) * 40 * iCommercePriority / 100;
 	}
 
@@ -10668,7 +10644,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 				if ((eOldRoute == NO_ROUTE) || (GC.getRouteInfo(eRoute).getValue() > GC.getRouteInfo(eOldRoute).getValue()))
 				{
 					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_FOOD)) * 100);
-					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_PRODUCTION)) * 60);
+					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_PRODUCTION)) * 70); // was 60
 					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_COMMERCE)) * 40);
 				}
 
@@ -11391,7 +11367,7 @@ int CvCityAI::AI_getYieldMagicValue(const int* piYieldsTimes100, bool bHealthy) 
 	iPopEats += (bHealthy ? 0 : 1);
 	iPopEats *= 100;
 
-	int iValue = ((piYieldsTimes100[YIELD_FOOD] * 100 + piYieldsTimes100[YIELD_PRODUCTION]*55 + piYieldsTimes100[YIELD_COMMERCE]*40) - iPopEats * 102);
+	int iValue = ((piYieldsTimes100[YIELD_FOOD] * 100 + piYieldsTimes100[YIELD_PRODUCTION]*70 + piYieldsTimes100[YIELD_COMMERCE]*40) - iPopEats * 102); // prod was *55
 	iValue /= 100;
 	return iValue;
 }
