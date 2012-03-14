@@ -1,6 +1,46 @@
-This is K-Mod version 1.21.
+This is K-Mod version 1.22.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.22 changelist
+
+Game
+
++ Fixed many (minor) bugs caused by inconsistencies in how the original code checked whether or not a plot improvement gives access to a resource.
++ Changed the symmetry breaking mechanism in the pathfinder.
++ Redesigned the mouse-over text for bonuses (ie. resources).
+  + Removed misleading information from obsolete resources (eg. "requires camp", or "+1 happiness with market")
+  + Obsolete resources now display "Obsolete" instead of "[player] has 0"
+  + The additional plot yield information now says "on plot" at the end, to make it clear that it isn't a civ-wide effect.
+  + Changed the style to be more consistent with other in-game information. (eg. removed the word "HAPPY" and replaced it with a bullet point.)
++ Fixed a couple of problems in original BtS civilopedia pages for resources. (References to buildings in the effects panel now link to their corresponding civilopedia page. The font of the improvement yield change is now the same size at the other information.)
++ Made several changes to the way the game recommends actions for workers.
++ Made some speed improvements. (particularly in times of war)
+
+AI
+
++ Fixed several minor AI inconsistencies related to the value of commerce.
++ Increased the AI's value of production when choosing plot improvements.
++ Fixed several problems related to the way the AI chooses best plot builds. In particular, the AI will now interrupt workers on the plot if the best-build gets changed to NO_BUILD.
++ Fixed many minor AI bugs caused by inconsistent use of AI_bonusValue. (The original code makes it unclear what the default arguments are, and apparently this caused some confusion.)
++ The AI will now be less keen to trade for strategic resources that it doesn't yet have the tech to reveal or use.
++ In AI_civicValue, changes in city maintenance are now calculated precisely. (Previously, a very poor approximation was used.)
++ When considering a civic which will disable corporations, the AI will now speculate about the potential value of unfounded corporations and adjust the civic value accordingly.
++ Resources produced by corps are now taken into account in AI_civicValue.
++ Improved the accuracy of the capital city yield multiplier evaluation in AI_civicValue.
++ Made several improvements and bug-fixes in the evaluation of bonuses and improvements in CvPlayerAI::AI_techValue.
++ Made several changes throughout the AI relating to nuclear weapons.
++ AI_safety will now prefer plots that are not in hostile territory. (!!)
++ Fixed a problem in AI_attackCityMove which sometimes caused large groups to wander aimlessly if they were not ready to attack a city.
++ Changed the AI's conditions for stacks being "ready to attack" to distinguish between 'no capture' and 'combat limit < 100'.
++ Fixed a problem which sometimes caused the AI to land spies on islands with no cities.
++ Fixed an original BtS bug which sometimes caused naval units to try to guard land resources.
++ The AI will now use its naval units to guard the coastal plots adjacent to its cities. (as opposed to leaving the boats inside the cities)
++ The AI will now use sea-patrol when guarding sea resources.
++ Adjusted the culture value scaling for the AI's cultural victory strategy. (This should help the 3rd culture city build up faster.)
++ Fixed a bug which often caused AI cities queue something of low value first when they want to build a high value project. (ie. it would choose the project, and then put something else at the front of the queue.)
++ Made some adjustments to the AI's unit type preferences in AI_bestUnit.
+
+--
 v1.21 changelist
 
 Game

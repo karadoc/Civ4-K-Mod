@@ -18802,10 +18802,11 @@ bool CvUnitAI::AI_specialSeaTransportSpy()
 		PlayerTypes ePlotOwner = pLoopPlot->getRevealedOwner(getTeam(), false);
 
 		// only consider coast plots, owned by civ teams, with base value greater than the current best
-		if (ePlotOwner == NO_PLAYER || ePlotOwner >= MAX_CIV_PLAYERS || !pLoopPlot->isCoastalLand() || iBestValue >= base_value[ePlotOwner])
+		if (ePlotOwner == NO_PLAYER || ePlotOwner >= MAX_CIV_PLAYERS || !pLoopPlot->isCoastalLand() || iBestValue >= base_value[ePlotOwner] || pLoopPlot->area()->getCitiesPerPlayer(ePlotOwner) == 0)
 			continue;
 
-		FAssert(pLoopPlot->isRevealed(getTeam(), false)); // otherwise, how do we have a revealed owner?
+		//FAssert(pLoopPlot->isRevealed(getTeam(), false)); // otherwise, how do we have a revealed owner?
+		// Actually, the owner gets revealed when any of the adjacent plots are visable - so this assert is not always true. I think it's fair to consider this plot anyway.
 
 		int iValue = base_value[ePlotOwner];
 
