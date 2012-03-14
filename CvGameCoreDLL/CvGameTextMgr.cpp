@@ -12302,6 +12302,7 @@ bool CvGameTextMgr::setResumableValueTimes100ChangeHelp(CvWStringBuffer &szBuffe
 }
 // BUG - Resumable Value Change Help - end
 
+// This function has been effectly rewritten for K-Mod. (there were a lot of things to change.)
 void CvGameTextMgr::setBonusHelp(CvWStringBuffer &szBuffer, BonusTypes eBonus, bool bCivilopediaText)
 {
 	if (NO_BONUS == eBonus)
@@ -12309,50 +12310,67 @@ void CvGameTextMgr::setBonusHelp(CvWStringBuffer &szBuffer, BonusTypes eBonus, b
 		return;
 	}
 
-	if (!bCivilopediaText)
-	{		
+	int iHappiness = GC.getBonusInfo(eBonus).getHappiness();
+	int iHealth = GC.getBonusInfo(eBonus).getHealth();
+
+	if (bCivilopediaText)
+	{
+		// K-Mod. for the civilopedia text, display the basic bonuses as individual bullet points.
+		// (they are displayed beside the name of the bonus when outside of the civilopedia.)
+		if (iHappiness != 0)
+		{
+			szBuffer.append(CvWString::format(L"\n%c+%d%c", gDLL->getSymbolID(BULLET_CHAR), abs(iHappiness), iHappiness > 0 ? gDLL->getSymbolID(HAPPY_CHAR) : gDLL->getSymbolID(UNHAPPY_CHAR)));
+		}
+		if (iHealth != 0)
+		{
+			szBuffer.append(CvWString::format(L"\n%c+%d%c", gDLL->getSymbolID(BULLET_CHAR), abs(iHealth), iHealth > 0 ? gDLL->getSymbolID(HEALTHY_CHAR) : gDLL->getSymbolID(UNHEALTHY_CHAR)));
+		}
+	}
+	else
+	{
 		szBuffer.append(CvWString::format( SETCOLR L"%s" ENDCOLR , TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), GC.getBonusInfo(eBonus).getDescription()));
 
 		if (NO_PLAYER != GC.getGameINLINE().getActivePlayer())
 		{
 			CvPlayer& kActivePlayer = GET_PLAYER(GC.getGameINLINE().getActivePlayer());
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_AVAILABLE_PLAYER", kActivePlayer.getNumAvailableBonuses(eBonus), kActivePlayer.getNameKey()));
 
-			for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); ++iCorp)
+			// K-Mod. Bonuses now display "(Obsolete)" instead of "(player has 0)" when the bonus is obsolete.
+			if (GET_TEAM(kActivePlayer.getTeam()).isBonusObsolete(eBonus))
 			{
-				bool bFound = false;
-				if (kActivePlayer.isActiveCorporation((CorporationTypes)iCorp))
+				szBuffer.append(gDLL->getText("TXT_KEY_BONUS_OBSOLETE"));
+			}
+			else
+			{
+				// display the basic bonuses next to the name of the bonus
+				if (iHappiness != 0)
 				{
-					for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
-					{
-						if (eBonus == GC.getCorporationInfo((CorporationTypes)iCorp).getPrereqBonus(i))
-						{
-							int iLoop;
-							for (CvCity* pCity = kActivePlayer.firstCity(&iLoop); NULL != pCity; pCity = kActivePlayer.nextCity(&iLoop))
-							{
-								if (pCity->isHasCorporation((CorporationTypes)iCorp))
-								{
-									bFound = true;
-									break;
-								}
-							}
-						}
-
-						if (bFound)
-						{
-							break;
-						}
-					}
+					szBuffer.append(CvWString::format(L", +%d%c", abs(iHappiness), iHappiness > 0 ? gDLL->getSymbolID(HAPPY_CHAR) : gDLL->getSymbolID(UNHAPPY_CHAR)));
+				}
+				if (iHealth != 0)
+				{
+					szBuffer.append(CvWString::format(L", +%d%c", abs(iHealth), iHealth > 0 ? gDLL->getSymbolID(HEALTHY_CHAR) : gDLL->getSymbolID(UNHEALTHY_CHAR)));
 				}
 
-				if (bFound)
+				szBuffer.append(gDLL->getText("TXT_KEY_BONUS_AVAILABLE_PLAYER", kActivePlayer.getNumAvailableBonuses(eBonus), kActivePlayer.getNameKey()));
+
+				for (int iCorp = 0; iCorp < GC.getNumCorporationInfos(); ++iCorp)
 				{
-					szBuffer.append(GC.getCorporationInfo((CorporationTypes)iCorp).getChar());
+					bool bCorpBonus = false;
+					if (kActivePlayer.getHasCorporationCount((CorporationTypes)iCorp) > 0)
+					{
+						for (int i = 0; !bCorpBonus && i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
+						{
+							bCorpBonus = eBonus == GC.getCorporationInfo((CorporationTypes)iCorp).getPrereqBonus(i);
+						}
+					}
+
+					if (bCorpBonus)
+						szBuffer.append(GC.getCorporationInfo((CorporationTypes)iCorp).getChar());
 				}
 			}
 		}
 
-		setYieldChangeHelp(szBuffer, L"", L"", L"", GC.getBonusInfo(eBonus).getYieldChangeArray());
+		setYieldChangeHelp(szBuffer, L"", L"", gDLL->getText("TXT_KEY_BONUS_ON_PLOT"), GC.getBonusInfo(eBonus).getYieldChangeArray());
 
 		if (GC.getBonusInfo(eBonus).getTechReveal() != NO_TECH)
 		{
@@ -12361,109 +12379,47 @@ void CvGameTextMgr::setBonusHelp(CvWStringBuffer &szBuffer, BonusTypes eBonus, b
 		}
 	}
 
-	ImprovementTypes eImprovement = NO_IMPROVEMENT;
-	for (int iLoopImprovement = 0; iLoopImprovement < GC.getNumImprovementInfos(); iLoopImprovement++)
+	// K-Mod. Only display the perks of the bonus if it is not already obsolete
+	if (bCivilopediaText || GC.getGameINLINE().getActiveTeam() == NO_TEAM || !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isBonusObsolete(eBonus))
 	{
-		if (GC.getImprovementInfo((ImprovementTypes)iLoopImprovement).isImprovementBonusMakesValid(eBonus))
-		{
-			eImprovement = (ImprovementTypes)iLoopImprovement;
-			break;
-		}
-	}
+		CivilizationTypes eCivilization = GC.getGameINLINE().getActiveCivilizationType();
 
-	if (GC.getBonusInfo(eBonus).getHealth() != 0)
-	{
-		if (GC.getBonusInfo(eBonus).getHealth() > 0)
+		for (int i = 0; i < GC.getNumBuildingClassInfos(); i++)
 		{
-			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_HEALTHY", GC.getBonusInfo(eBonus).getHealth()));
-		}
-		else
-		{
-			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_UNHEALTHY", -GC.getBonusInfo(eBonus).getHealth()));
-		}
-
-		if (eImprovement != NO_IMPROVEMENT)
-		{
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_WITH_IMPROVEMENT", GC.getImprovementInfo(eImprovement).getTextKeyWide()));
-		}
-	}
-
-	if (GC.getBonusInfo(eBonus).getHappiness() != 0)
-	{
-		if (GC.getBonusInfo(eBonus).getHappiness() > 0)
-		{
-			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_HAPPY", GC.getBonusInfo(eBonus).getHappiness()));
-		}
-		else
-		{
-			szBuffer.append(NEWLINE);
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_UNHAPPY", -GC.getBonusInfo(eBonus).getHappiness()));
-		}
-
-		if (eImprovement != NO_IMPROVEMENT)
-		{
-			szBuffer.append(gDLL->getText("TXT_KEY_BONUS_WITH_IMPROVEMENT", GC.getImprovementInfo(eImprovement).getTextKeyWide()));
-		}
-	}
-
-	CivilizationTypes eCivilization = GC.getGameINLINE().getActiveCivilizationType();
-
-	for (int i = 0; i < GC.getNumBuildingClassInfos(); i++)
-	{
-		BuildingTypes eLoopBuilding;
-		if (eCivilization == NO_CIVILIZATION)
-		{
-			eLoopBuilding = ((BuildingTypes)(GC.getBuildingClassInfo((BuildingClassTypes)i).getDefaultBuildingIndex()));
-		}
-		else
-		{
-			eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(eCivilization).getCivilizationBuildings(i)));
-		}
-
-		if (eLoopBuilding != NO_BUILDING)
-		{
-			CvBuildingInfo& kBuilding = GC.getBuildingInfo(eLoopBuilding);
-			if (kBuilding.getBonusHappinessChanges(eBonus) != 0)
+			BuildingTypes eLoopBuilding;
+			if (eCivilization == NO_CIVILIZATION)
 			{
-				if (kBuilding.getBonusHappinessChanges(eBonus) > 0)
-				{
-					szBuffer.append(NEWLINE);
-					szBuffer.append(gDLL->getText("TXT_KEY_BONUS_HAPPY", kBuilding.getBonusHappinessChanges(eBonus)));
-				}
-				else
-				{
-					szBuffer.append(NEWLINE);
-					szBuffer.append(gDLL->getText("TXT_KEY_BONUS_UNHAPPY", -kBuilding.getBonusHappinessChanges(eBonus)));
-				}
-
-				szBuffer.append(gDLL->getText("TXT_KEY_BONUS_WITH_IMPROVEMENT", kBuilding.getTextKeyWide()));
+				eLoopBuilding = ((BuildingTypes)(GC.getBuildingClassInfo((BuildingClassTypes)i).getDefaultBuildingIndex()));
+			}
+			else
+			{
+				eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(eCivilization).getCivilizationBuildings(i)));
 			}
 
-			if (kBuilding.getBonusHealthChanges(eBonus) != 0)
+			if (eLoopBuilding != NO_BUILDING)
 			{
-				if (kBuilding.getBonusHealthChanges(eBonus) > 0)
+				CvBuildingInfo& kBuilding = GC.getBuildingInfo(eLoopBuilding);
+				if (kBuilding.getBonusHappinessChanges(eBonus) != 0)
 				{
-					szBuffer.append(NEWLINE);
-					szBuffer.append(gDLL->getText("TXT_KEY_BONUS_HEALTHY", kBuilding.getBonusHealthChanges(eBonus)));
-				}
-				else
-				{
-					szBuffer.append(NEWLINE);
-					szBuffer.append(gDLL->getText("TXT_KEY_BONUS_UNHEALTHY", -kBuilding.getBonusHealthChanges(eBonus)));
+					szBuffer.append(CvWString::format(L"\n%s", gDLL->getText("TXT_KEY_BUILDING_CIVIC_HEALTH_HAPPINESS_CHANGE", abs(kBuilding.getBonusHappinessChanges(eBonus)),
+						kBuilding.getBonusHappinessChanges(eBonus) > 0 ? gDLL->getSymbolID(HAPPY_CHAR) : gDLL->getSymbolID(UNHAPPY_CHAR)).c_str()));
+					szBuffer.append(CvWString::format(L"<link=literal>%s</link>", kBuilding.getDescription()));
 				}
 
-				szBuffer.append(gDLL->getText("TXT_KEY_BONUS_WITH_IMPROVEMENT", kBuilding.getTextKeyWide()));
+				if (kBuilding.getBonusHealthChanges(eBonus) != 0)
+				{
+					szBuffer.append(CvWString::format(L"\n%s", gDLL->getText("TXT_KEY_BUILDING_CIVIC_HEALTH_HAPPINESS_CHANGE", abs(kBuilding.getBonusHealthChanges(eBonus)),
+						kBuilding.getBonusHealthChanges(eBonus) > 0 ? gDLL->getSymbolID(HEALTHY_CHAR) : gDLL->getSymbolID(UNHEALTHY_CHAR)).c_str()));
+					szBuffer.append(CvWString::format(L"<link=literal>%s</link>", kBuilding.getDescription()));
+				}
 			}
 		}
-	}
 
-	if (!CvWString(GC.getBonusInfo(eBonus).getHelp()).empty())
-	{
-		szBuffer.append(NEWLINE);
-		szBuffer.append(GC.getBonusInfo(eBonus).getHelp());
+		if (!CvWString(GC.getBonusInfo(eBonus).getHelp()).empty())
+		{
+			szBuffer.append(NEWLINE);
+			szBuffer.append(GC.getBonusInfo(eBonus).getHelp());
+		}
 	}
 }
 

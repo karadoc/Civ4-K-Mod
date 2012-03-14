@@ -5,6 +5,26 @@
 <!-- -->
 <!-- Game Text Infos -->
 <Civ4GameText xmlns="http://www.firaxis.com">
+
+	<!-- The word "obsolete", used to describe bonuses after they are made obsolete. -->
+	<TEXT>
+		<Tag>TXT_KEY_BONUS_OBSOLETE</Tag>
+		<English>[COLOR_LIGHT_GREY][SPACE](Obsolete)[SPACE][COLOR_REVERT]</English>
+		<French>[SPACE](Obsolète)[SPACE]</French>
+		<German>[SPACE](Obsolet)[SPACE]</German>
+		<Italian>[SPACE](Obsoleto)[SPACE]</Italian>
+		<Spanish>[SPACE](Obsoleto)[SPACE]</Spanish>
+	</TEXT>
+	<!-- tag line for yield changes for bonuses -->
+	<TEXT>
+		<Tag>TXT_KEY_BONUS_ON_PLOT</Tag>
+		<English>[SPACE]on plot</English>
+		<French>[SPACE]sur le case</French>
+		<German>[SPACE]auf geländefeld</German>
+		<Italian>[SPACE]su casella</Italian>
+		<Spanish>[SPACE]en la casilla</Spanish>
+	</TEXT>
+
 	<TEXT>
 		<Tag>TXT_KEY_PER</Tag>
 		<English>[SPACE]per[SPACE]</English>
