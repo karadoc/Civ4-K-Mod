@@ -14824,8 +14824,8 @@ int CvPlayerAI::AI_calculateGoldenAgeValue(bool bConsiderRevolution) const
 			int iBestValue;
 			CivicTypes eNewCivic = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 			
-			// using a 7 percent thresold. (cf the higher threshold used in AI_doCivics)
-			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > 107*iCurrentValue)
+			// using a 10 percent thresold. (cf the higher threshold used in AI_doCivics)
+			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > 110*iCurrentValue)
 			{
 				paeBestCivic[iI] = eNewCivic;
 				if (gPlayerLogLevel > 0) logBBAI("      %S wants a golden age to switch to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, iCurrentValue);
@@ -15676,9 +15676,9 @@ void CvPlayerAI::AI_doCivics()
 			CivicTypes eNewCivic = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 
 			int iTestAnarchy = getCivicAnarchyLength(&aeBestCivic[0]);
-			// using 20 percent as a rough estimate of revolution cost, and 2 percent just for a bit of inertia.
+			// using ~30 percent as a rough estimate of revolution cost, and low threshold regardless of anarchy just for a bit of inertia.
 			// reduced threshold if we are already going to have a revolution.
-			int iThreshold = (iTestAnarchy > iAnarchyLength ? (!bFirstPass | bWantSwitch ? 14 : 24) : 2);
+			int iThreshold = (iTestAnarchy > iAnarchyLength ? (!bFirstPass | bWantSwitch ? 20 : 30) : 5);
 
 			if (100*iBestValue > (100+iThreshold)*aiCurrentValue[iI])
 			{
@@ -15691,7 +15691,7 @@ void CvPlayerAI::AI_doCivics()
 			}
 			else
 			{
-				if (100*iBestValue > 114*aiCurrentValue[iI])
+				if (100*iBestValue > 120*aiCurrentValue[iI])
 					bWantSwitch = true;
 			}
 		}
@@ -15712,20 +15712,21 @@ void CvPlayerAI::AI_doCivics()
 				const CvCivicInfo& kCivic = GC.getCivicInfo((CivicTypes)iI);
 				if (kCivic.getTechPrereq() == eResearch && !canDoCivics((CivicTypes)iI))
 				{
-					int iValue = AI_civicValue((CivicTypes)iI);
-					if (100 * iValue > (114+2*iResearchTurns) * aiCurrentValue[kCivic.getCivicOptionType()])
+					CivicTypes eOtherCivic = aeBestCivic[kCivic.getCivicOptionType()];
+					aeBestCivic[kCivic.getCivicOptionType()] = (CivicTypes)iI; // temporary switch just to test the anarchy length
+					if (getCivicAnarchyLength(&aeBestCivic[0]) <= iAnarchyLength)
 					{
-						CivicTypes eOtherCivic = aeBestCivic[kCivic.getCivicOptionType()];
-						aeBestCivic[kCivic.getCivicOptionType()] = (CivicTypes)iI;
-						if (getCivicAnarchyLength(&aeBestCivic[0]) <= iAnarchyLength)
+						// if the anarchy length would be the same, consider waiting for the new civic..
+						int iValue = AI_civicValue((CivicTypes)iI);
+						if (100 * iValue > (102+2*iResearchTurns) * aiCurrentValue[kCivic.getCivicOptionType()])
 						{
 							if (gPlayerLogLevel > 0)
 								logBBAI("    %S delays revolution to wait for %S (value: %d vs %d)", getCivilizationDescription(0), kCivic.getDescription(0), iValue, aiCurrentValue[kCivic.getCivicOptionType()]);
 							AI_setCivicTimer(iResearchTurns*2/3);
 							return;
 						}
-						aeBestCivic[kCivic.getCivicOptionType()] = eOtherCivic;
 					}
+					aeBestCivic[kCivic.getCivicOptionType()] = eOtherCivic;
 				}
 			}
 		}
