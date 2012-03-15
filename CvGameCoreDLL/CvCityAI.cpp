@@ -4411,12 +4411,12 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				iValue += (kBuilding.getFreeSpecialist() * 16);
 				iValue += (kBuilding.getAreaFreeSpecialist() * iNumCitiesInArea * 12);
 				iValue += (kBuilding.getGlobalFreeSpecialist() * iNumCities * 12); */
-				// K-Mod. Still very rough, but a bit closer to true value...
+				// K-Mod. Still very rough, but a bit closer to true value.  (this is for the statue of liberty)
 				{
 					int iFreeSpecialists = kBuilding.getFreeSpecialist() + kBuilding.getAreaFreeSpecialist() * iNumCitiesInArea + kBuilding.getGlobalFreeSpecialist() * iNumCities;
 					if (iFreeSpecialists > 0)
 					{
-						int iSpecialistValue = 16 * 100; // rough base value
+						int iSpecialistValue = 20 * 100; // rough base value
 						// additional bonuses
 						for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 						{

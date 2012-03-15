@@ -3749,6 +3749,8 @@ void CvPlayer::updateCitySight(bool bIncrement, bool bUpdatePlotGroups)
 
 void CvPlayer::updateTradeRoutes()
 {
+	PROFILE_FUNC();
+
 	CLLNode<int>* pCityNode;
 	CvCity* pLoopCity;
 	CvCity* pListCity;
