@@ -5036,19 +5036,20 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				if (pCapitalCity != NULL)
 				{
 					//iValue += (countPotentialForeignTradeCities(pCapitalCity->area()) * 100);
-					iValue += AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0, pCapitalCity->area()) * 100; // K-Mod
+					iValue += std::min(iCityCount*2, AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0, pCapitalCity->area())) * 70; // K-Mod
 				}
 
 				if (iCoastalCities > 0)
 				{
-					iValue += ((bCapitalAlone) ? 950 : 350);
+					//iValue += ((bCapitalAlone) ? 950 : 350);
+					iValue += bCapitalAlone ? 400 : 200; // K-Mod. Note: we're not talking about galleons here. That's an additional value.
 				}
 
 				iValue += 50;
 			}
 			else
 			{
-				iValue += 1000;
+				iValue += 1000; // ??? (what could it be?)
 			}
 		}
 	}
@@ -5759,17 +5760,27 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		// K-Mod end
 			int iReligionValue = 0;
 			int iPotentialReligions = 0;
+			int iAvailableReligions = 0; // K-Mod
 			for (int iJ = 0; iJ < GC.getNumReligionInfos(); iJ++)
 			{
 				TechTypes eReligionTech = (TechTypes)GC.getReligionInfo((ReligionTypes)iJ).getTechPrereq();
+				/* original bts code
 				if (kTeam.isHasTech(eReligionTech))
 				{
 					if (!(GC.getGameINLINE().isReligionSlotTaken((ReligionTypes)iJ)))
 					{
 						iPotentialReligions++;
 					}
+				} */
+				// K-Mod. iPotentialReligions will only be non-zero during the first few turns of advanced start games. Otherwise it is always zero.
+				// Presumably that's what the original developers intended... so I'm going to leave that alone, and create a new value: iAvailableReligions.
+				if (!GC.getGameINLINE().isReligionSlotTaken((ReligionTypes)iJ))
+				{
+					iAvailableReligions++;
+					if (kTeam.isHasTech(eReligionTech))
+						iPotentialReligions++;
 				}
-				// K-Mod note: iPotentialReligions will only be non-zero during the first few turns of advanced start games. Otherwise it is always zero.
+				// K-Mod end
 
 				if (eReligionTech == eTech)
 				{
@@ -5834,8 +5845,21 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 				if ((countTotalHasReligion() == 0) && (iPotentialReligions == 0))
 				{
+					/* original bts code
 					iReligionValue *= 2;
-					iReligionValue += 500;
+					iReligionValue += 500; */
+					// K-Mod
+					if (iAvailableReligions <= 4 || AI_getFlavorValue(FLAVOR_RELIGION) > 0)
+					{
+						iReligionValue *= 2;
+						iReligionValue += 200 + std::max(0, 6 - iAvailableReligions)*100;
+					}
+					else
+					{
+						iReligionValue = iReligionValue*3/2;
+						iReligionValue += 100;
+					}
+					// K-Mod end
 				}
 
 				if (AI_isDoStrategy(AI_STRATEGY_DAGGER))
