@@ -4718,11 +4718,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 	return iGold + AI_getExtraGoldTarget();
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/14/10                                jdog5000      */
-/*                                                                                              */
-/* Tech AI                                                                                      */
-/************************************************************************************************/
+// edited by K-Mod and BBAI
 TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bIgnoreCost, bool bAsync, TechTypes eIgnoreTech, AdvisorTypes eIgnoreAdvisor) const
 {
 	PROFILE("CvPlayerAI::AI_bestTech");
@@ -4827,6 +4823,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bIgnoreCost, bool bAs
 	return eBestTech;
 }
 
+// This function has been heavily edited for K-Mod.
 int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const
 {
 	PROFILE_FUNC();
@@ -4982,7 +4979,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	// K-Mod. TODO: the actual value of this is completely bogus; but at the moment I'm just changing the style.
 	if (kTechInfo.getTradeRoutes() != 0)
 	{
-		int iConnectedForeignCities = AI_countPotentialForeignTradeCities();
+		int iConnectedForeignCities = AI_countPotentialForeignTradeCities(true, AI_getFlavorValue(FLAVOR_GOLD) == 0);
 		iValue += kTechInfo.getTradeRoutes() * (std::max(getNumCities() + 2, iConnectedForeignCities) + 1) * (bFinancialTrouble ? 200 : 100);
 	}
 	// K-Mod end
@@ -5039,7 +5036,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				if (pCapitalCity != NULL)
 				{
 					//iValue += (countPotentialForeignTradeCities(pCapitalCity->area()) * 100);
-					iValue += AI_countPotentialForeignTradeCities(false, pCapitalCity->area()) * 100; // K-Mod
+					iValue += AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0, pCapitalCity->area()) * 100; // K-Mod
 				}
 
 				if (iCoastalCities > 0)
@@ -6845,9 +6842,6 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 
 	return iValue;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 int CvPlayerAI::AI_cultureVictoryTechValue(TechTypes eTech) const
 {
@@ -13217,22 +13211,60 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	// NOTE: this calculation makes a bunch of assumptions about about the yield type and magnitude from trade routes.
 	if (kCivic.getTradeRoutes() != 0 || kCivic.isNoForeignTrade())
 	{
-		int iTempValue = 0;
-		int iConnectedForeignCities = AI_countPotentialForeignTradeCities();
-
+		PROFILE("civicValue: trade routes");
 		// As a rough approximation, let each foreign trade route give base 3 commerce, and local trade routes give 1.
-		// Our civ can have 1 connection to each foreign city. For simplicity, assume that each city has ~3 trade routes.
+		// Our civ can have 1 connection to each foreign city.
+
+		int iTempValue = 0;
+		int iConnectedForeignCities = AI_countPotentialForeignTradeCities(true, AI_getFlavorValue(FLAVOR_GOLD) == 0);
+
+		int iTotalTradeRoutes = iCities * 3; // I'll save the proper count for when the estimate of yield / route improves...
+		/* int iLoop;
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			iTotalTradeRoutes += pLoopCity->getTradeRoutes();
+		}
+		if (iS < 0)
+			iTotalTradeRoutes -= kCivic.getTradeRoutes() * iCities; */
+
+		FAssert(iTotalTradeRoutes >= iCities);
 
 		if (kCivic.isNoForeignTrade())
 		{
-			iTempValue -= std::min(iConnectedForeignCities, iCities*3) * 2;
-			iConnectedForeignCities = 0;
-			// if foreign trade is already blocked for a different reason, then reduce the penalty here.
-			// (don't reduce it to zero, because that may cause a lock-in effect with pairs of civics)
-			if (getNoForeignTradeCount() + std::min(0, iS) > 0)
-				iTempValue /= 2;
+			// We should attempt the block one-way trade which other civs might be getting from us.
+			// count how many foreign trade cities we are not connected to...
+			int iDisconnectedForeignTrade = AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0) - iConnectedForeignCities;
+			FAssert(iDisconnectedForeignTrade >= 0);
+			// and estimate the value of blocking foreign trade to these cities. (we don't get anything from this, but we're denying our potential rivals.)
+			iTempValue += std::min(iDisconnectedForeignTrade, iCities); // just 1 point per city.
+
+			// estimate the number of foreign cities which are immune to "no foreign trade".
+			int iSafeOverseasTrade = 0;
+			for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
+			{
+				if (i == getTeam() || !kTeam.isFreeTrade(i))
+					continue;
+				if (kTeam.isVassal(i) || GET_TEAM(i).isVassal(getTeam()))
+					iSafeOverseasTrade += GET_TEAM(i).getNumCities();
+			}
+			iSafeOverseasTrade = std::min(iSafeOverseasTrade, iConnectedForeignCities);
+
+			iTempValue -= std::min(iConnectedForeignCities - iSafeOverseasTrade, iTotalTradeRoutes) * 3/2; // only reduce by 1.5 rather than 2, because it is good to deny our rivals the trade.
+			iConnectedForeignCities = iSafeOverseasTrade;
 		}
-		iTempValue += kCivic.getTradeRoutes() * std::max(0, iConnectedForeignCities - iCities * 3) * 2 + iCities * 1;
+
+		// Unfortunately, it's not easy to tell whether or not we'll foreign trade when we switch to this civic.
+		// for example, if we are considering a switch from mercantilism to free market, we'd currently have "noForeignTrade", but if we actually make the switch then we wouldn't.
+		//  ... So for simplicity I'm going to just assume that there is only one civic with noForeignTrade, and therefore the value of iConnectedForeignCities is unchanged.
+
+		CvCity* pCapital = getCapitalCity();
+		if (pCapital)
+		{
+			// add an estimate of our own overseas cities (even though they are not really "foreign".
+			iConnectedForeignCities += iCities - pCapital->area()->getCitiesPerPlayer(getID());
+		}
+
+		iTempValue += kCivic.getTradeRoutes() * std::max(0, iConnectedForeignCities - iTotalTradeRoutes) * 2 + iCities * 1;
 
 		// Trade routes increase in value as cities grow, and build trade multipliers
 		iTempValue *= 2*(getCurrentEra()+1) + GC.getNumEraInfos();
@@ -22582,7 +22614,7 @@ bool CvPlayerAI::AI_deduceCitySite(CvCity* pCity) const
 // K-Mod. This function is essentially a merged version of two original bts functions: CvPlayer::countPotentialForeignTradeCities and CvPlayer::countPotentialForeignTradeCitiesConnected.
 // I've rewritten it to be a single function, and changed it so that when checking that he cities are connected, it does not count cities if the foreign civ has "no foreign trade".
 // (it ignores that effect for our civ, but checks it for the foreign civ - the reasoning is basically that the other player's civics are out of our control.)
-int CvPlayerAI::AI_countPotentialForeignTradeCities(bool bCheckConnected, CvArea* pIgnoreArea) const
+int CvPlayerAI::AI_countPotentialForeignTradeCities(bool bCheckConnected, bool bCheckForeignTradePolicy, CvArea* pIgnoreArea) const
 {
 	CvCity* pCapitalCity = getCapitalCity();
 
@@ -22600,7 +22632,7 @@ int CvPlayerAI::AI_countPotentialForeignTradeCities(bool bCheckConnected, CvArea
 		if (!kLoopPlayer.isAlive() || kLoopPlayer.getTeam() == getTeam() || !kTeam.isFreeTrade(kLoopPlayer.getTeam()))
 			continue;
 
-		if (bCheckConnected && kLoopPlayer.isNoForeignTrade() && !kTeam.isVassal(kLoopPlayer.getTeam()) && !GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
+		if (bCheckForeignTradePolicy && kLoopPlayer.isNoForeignTrade() && !kTeam.isVassal(kLoopPlayer.getTeam()) && !GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
 			continue;
 
 		// this is a legitimate foreign trade partner. Count the number of (connected) cities.
