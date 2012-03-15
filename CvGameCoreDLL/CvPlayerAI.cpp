@@ -4845,7 +4845,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	pCapitalCity = getCapitalCity();
 
-	CvTeam& kTeam = GET_TEAM(getTeam());
+	const CvTeam& kTeam = GET_TEAM(getTeam());
+	const CvTechInfo& kTechInfo = GC.getTechInfo(eTech); // K-Mod
 
 	//bool bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
 	bool bCapitalAlone = (GC.getGameINLINE().getElapsedGameTurns() > 0) ? AI_isCapitalAreaAlone() : false;
@@ -4854,7 +4855,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	int iHasMetCount = kTeam.getHasMetCivCount(true);
 	int iCoastalCities = countNumCoastalCities();
-	int iConnectedForeignCities = countPotentialForeignTradeCitiesConnected();
+	//int iConnectedForeignCities = countPotentialForeignTradeCitiesConnected();
 
 	int iCityCount = getNumCities();
 	//int iTeamCityCount = kTeam.getNumCities();
@@ -4868,7 +4869,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	iValue += kTeam.getResearchProgress(eTech);
 
 	// Map stuff
-	if (GC.getTechInfo(eTech).isExtraWaterSeeFrom())
+	if (kTechInfo.isExtraWaterSeeFrom())
 	{
 		if (iCoastalCities > 0)
 		{
@@ -4881,13 +4882,13 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	if (GC.getTechInfo(eTech).isMapCentering())
+	if (kTechInfo.isMapCentering())
 	{
 		// K-Mod
 		//iValue += 100;
 	}
 
-	if (GC.getTechInfo(eTech).isMapVisible())
+	if (kTechInfo.isMapVisible())
 	{
 		iValue += 100;
 
@@ -4898,7 +4899,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	}
 
 	// Expand trading options
-	if (GC.getTechInfo(eTech).isMapTrading())
+	if (kTechInfo.isMapTrading())
 	{
 		iValue += 100;
 
@@ -4908,7 +4909,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	if (GC.getTechInfo(eTech).isTechTrading() && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
+	if (kTechInfo.isTechTrading() && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
 	{
 		iValue += 500;
 
@@ -4916,7 +4917,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		// K-Mod TODO; increase the bonus for each known civ that we can't already tech trade with
 	}
 
-	if (GC.getTechInfo(eTech).isGoldTrading())
+	if (kTechInfo.isGoldTrading())
 	{
 		iValue += 200;
 
@@ -4926,7 +4927,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	if (GC.getTechInfo(eTech).isOpenBordersTrading())
+	if (kTechInfo.isOpenBordersTrading())
 	{
 		if (iHasMetCount > 0)
 		{
@@ -4939,64 +4940,71 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	if (GC.getTechInfo(eTech).isDefensivePactTrading())
+	if (kTechInfo.isDefensivePactTrading())
 	{
 		iValue += 400;
 	}
 
-	if (GC.getTechInfo(eTech).isPermanentAllianceTrading() && (GC.getGameINLINE().isOption(GAMEOPTION_PERMANENT_ALLIANCES)))
+	if (kTechInfo.isPermanentAllianceTrading() && (GC.getGameINLINE().isOption(GAMEOPTION_PERMANENT_ALLIANCES)))
 	{
 		iValue += 200;
 	}
 
-	if (GC.getTechInfo(eTech).isVassalStateTrading() && !(GC.getGameINLINE().isOption(GAMEOPTION_NO_VASSAL_STATES)))
+	if (kTechInfo.isVassalStateTrading() && !(GC.getGameINLINE().isOption(GAMEOPTION_NO_VASSAL_STATES)))
 	{
 		iValue += 200;
 	}
 
 	// Tile improvement abilities
-	if (GC.getTechInfo(eTech).isBridgeBuilding())
+	if (kTechInfo.isBridgeBuilding())
 	{
 		iValue += 200;
 	}
 
-	if (GC.getTechInfo(eTech).isIrrigation())
+	if (kTechInfo.isIrrigation())
 	{
 		iValue += 400;
 	}
 
-	if (GC.getTechInfo(eTech).isIgnoreIrrigation())
+	if (kTechInfo.isIgnoreIrrigation())
 	{
 		iValue += 500;
 	}
 
-	if (GC.getTechInfo(eTech).isWaterWork())
+	if (kTechInfo.isWaterWork())
 	{
 		iValue += (600 * iCoastalCities);
 	}
 
-	iValue += (GC.getTechInfo(eTech).getFeatureProductionModifier() * 2);
-	iValue += (GC.getTechInfo(eTech).getWorkerSpeedModifier() * 4);
-	iValue += (GC.getTechInfo(eTech).getTradeRoutes() * (std::max((getNumCities() + 2), iConnectedForeignCities) + 1) * ((bFinancialTrouble) ? 200 : 100));
+	iValue += (kTechInfo.getFeatureProductionModifier() * 2);
+	iValue += (kTechInfo.getWorkerSpeedModifier() * 4);
+	//iValue += (kTechInfo.getTradeRoutes() * (std::max((getNumCities() + 2), iConnectedForeignCities) + 1) * ((bFinancialTrouble) ? 200 : 100));
+	// K-Mod. TODO: the actual value of this is completely bogus; but at the moment I'm just changing the style.
+	if (kTechInfo.getTradeRoutes() != 0)
+	{
+		int iConnectedForeignCities = AI_countPotentialForeignTradeCities();
+		iValue += kTechInfo.getTradeRoutes() * (std::max(getNumCities() + 2, iConnectedForeignCities) + 1) * (bFinancialTrouble ? 200 : 100);
+	}
+	// K-Mod end
 	
 	/* original bts code
 	if ( AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION4) )
 	{
-		iValue += (GC.getTechInfo(eTech).getHealth() * 350);
+		iValue += (kTechInfo.getHealth() * 350);
 	}
 	else
 	{
-		iValue += (GC.getTechInfo(eTech).getHealth() * 200);
+		iValue += (kTechInfo.getHealth() * 200);
 	} */
 	// K-Mod
-	if (GC.getTechInfo(eTech).getHealth() != 0)
+	if (kTechInfo.getHealth() != 0)
 	{
-		iValue += 4 * AI_getHealthWeight(GC.getTechInfo(eTech).getHealth(), 1);
+		iValue += 4 * AI_getHealthWeight(kTechInfo.getHealth(), 1);
 	}
-	if (GC.getTechInfo(eTech).getHappiness() != 0)
+	if (kTechInfo.getHappiness() != 0)
 	{
 		// (this part of the evaluation was completely missing from the original bts code)
-		iValue += 6 * AI_getHappinessWeight(GC.getTechInfo(eTech).getHappiness(), 1);
+		iValue += 6 * AI_getHappinessWeight(kTechInfo.getHappiness(), 1);
 	}
 	// K-Mod end
 
@@ -5007,12 +5015,12 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	for (int iJ = 0; iJ < NUM_DOMAIN_TYPES; iJ++)
 	{
-		iValue += (GC.getTechInfo(eTech).getDomainExtraMoves(iJ) * 200);
+		iValue += (kTechInfo.getDomainExtraMoves(iJ) * 200);
 	}
 
 	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
 	{
-		if (GC.getTechInfo(eTech).isCommerceFlexible(iJ))
+		if (kTechInfo.isCommerceFlexible(iJ))
 		{
 			iValue += 100;
 			if ((iJ == COMMERCE_CULTURE) && (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2)))
@@ -5024,13 +5032,14 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	for (int iJ = 0; iJ < GC.getNumTerrainInfos(); iJ++)
 	{
-		if (GC.getTechInfo(eTech).isTerrainTrade(iJ))
+		if (kTechInfo.isTerrainTrade(iJ))
 		{
 			if (GC.getTerrainInfo((TerrainTypes)iJ).isWater())
 			{
 				if (pCapitalCity != NULL)
 				{
-					iValue += (countPotentialForeignTradeCities(pCapitalCity->area()) * 100);
+					//iValue += (countPotentialForeignTradeCities(pCapitalCity->area()) * 100);
+					iValue += AI_countPotentialForeignTradeCities(false, pCapitalCity->area()) * 100; // K-Mod
 				}
 
 				if (iCoastalCities > 0)
@@ -5047,7 +5056,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	if (GC.getTechInfo(eTech).isRiverTrade())
+	if (kTechInfo.isRiverTrade())
 	{
 		//iValue += 1000;
 		iValue += 100; // K-Mod
@@ -5819,24 +5828,24 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				iValue += 200;
 			}
 
-			//iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (200 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Free Tech"))));
+			//iValue += (kTechInfo.getFirstFreeTechs() * (200 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Free Tech"))));
 			// K-Mod, 22/jan/11, karadoc: more ad-hoc adjustments... this stuff sucks so much.
-			iValue += (GC.getTechInfo(eTech).getFirstFreeTechs() * (500 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech"))));
+			iValue += (kTechInfo.getFirstFreeTechs() * (500 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech"))));
 			iRandomMax += 6000; // K-Mod
 		}
 	}
 
-	iValue += GC.getTechInfo(eTech).getAIWeight();
+	iValue += kTechInfo.getAIWeight();
 
 	if (!isHuman())
 	{
 		for (int iJ = 0; iJ < GC.getNumFlavorTypes(); iJ++)
 		{
-			iValue += (AI_getFlavorValue((FlavorTypes)iJ) * GC.getTechInfo(eTech).getFlavorValue(iJ) * 20);
+			iValue += (AI_getFlavorValue((FlavorTypes)iJ) * kTechInfo.getFlavorValue(iJ) * 20);
 		}
 	}
 
-	if (GC.getTechInfo(eTech).isRepeat())
+	if (kTechInfo.isRepeat())
 	{
 		iValue /= 10;
 	}
@@ -5868,7 +5877,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	//Tech Whore								
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
 	{
-		if (GC.getTechInfo(eTech).isTechTrading() || kTeam.isTechTrading())
+		if (kTechInfo.isTechTrading() || kTeam.isTechTrading())
 		{
 			// K-Mod TODO: Consider changing this so that it is less random
 			if (((bAsync) ? GC.getASyncRand().get(100, "AI Tech Whore ASYNC") : GC.getGameINLINE().getSorenRandNum(100, "AI Tech Whore")) < (GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_BROKERING) ? 20 : 10))
@@ -13209,7 +13218,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	if (kCivic.getTradeRoutes() != 0 || kCivic.isNoForeignTrade())
 	{
 		int iTempValue = 0;
-		int iConnectedForeignCities = countPotentialForeignTradeCitiesConnected();
+		int iConnectedForeignCities = AI_countPotentialForeignTradeCities();
 
 		// As a rough approximation, let each foreign trade route give base 3 commerce, and local trade routes give 1.
 		// Our civ can have 1 connection to each foreign city. For simplicity, assume that each city has ~3 trade routes.
@@ -22568,6 +22577,58 @@ bool CvPlayerAI::AI_deduceCitySite(CvCity* pCity) const
 		}
 	}
 	return false;
+}
+
+// K-Mod. This function is essentially a merged version of two original bts functions: CvPlayer::countPotentialForeignTradeCities and CvPlayer::countPotentialForeignTradeCitiesConnected.
+// I've rewritten it to be a single function, and changed it so that when checking that he cities are connected, it does not count cities if the foreign civ has "no foreign trade".
+// (it ignores that effect for our civ, but checks it for the foreign civ - the reasoning is basically that the other player's civics are out of our control.)
+int CvPlayerAI::AI_countPotentialForeignTradeCities(bool bCheckConnected, CvArea* pIgnoreArea) const
+{
+	CvCity* pCapitalCity = getCapitalCity();
+
+	if (pCapitalCity == 0)
+		return 0;
+
+	const CvTeam& kTeam = GET_TEAM(getTeam());
+
+	int iCount = 0;
+
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i = (PlayerTypes)(i+1))
+	{
+		const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+
+		if (!kLoopPlayer.isAlive() || kLoopPlayer.getTeam() == getTeam() || !kTeam.isFreeTrade(kLoopPlayer.getTeam()))
+			continue;
+
+		if (bCheckConnected && kLoopPlayer.isNoForeignTrade() && !kTeam.isVassal(kLoopPlayer.getTeam()) && !GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
+			continue;
+
+		// this is a legitimate foreign trade partner. Count the number of (connected) cities.
+		if (bCheckConnected)
+		{
+			int iLoop;
+			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
+			{
+				if ((!pIgnoreArea || pLoopCity->area() != pIgnoreArea) && pLoopCity->plotGroup(getID()) == pCapitalCity->plotGroup(getID()))
+				{
+					iCount++;
+				}
+			}
+		}
+		else
+		{
+			iCount += kLoopPlayer.getNumCities();
+
+			if (pIgnoreArea)
+			{
+				iCount -= pIgnoreArea->getCitiesPerPlayer(i);
+			}
+		}
+	}
+
+	FAssert(iCount > 0);
+
+	return iCount;
 }
 // K-Mod end
 

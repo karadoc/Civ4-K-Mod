@@ -198,8 +198,8 @@ public:
 	int countCityFeatures(FeatureTypes eFeature) const;																										// Exposed to Python
 	int countNumBuildings(BuildingTypes eBuilding) const;																									// Exposed to Python
 	DllExport int countNumCitiesConnectedToCapital() const;																								// Exposed to Python
-	int countPotentialForeignTradeCities(CvArea* pIgnoreArea = NULL) const;																// Exposed to Python
-	int countPotentialForeignTradeCitiesConnected() const;																								// Exposed to Python
+	/* int countPotentialForeignTradeCities(CvArea* pIgnoreArea = NULL) const;
+	int countPotentialForeignTradeCitiesConnected() const; */ // K-Mod: These functions were used exclusively for AI.  I've moved them to CvPlayerAI.
 	bool doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const; // K-Mod
 
 	DllExport bool canContact(PlayerTypes ePlayer) const;																									// Exposed to Python

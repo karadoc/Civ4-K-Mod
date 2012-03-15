@@ -83,8 +83,8 @@ public:
 	int countUnimprovedBonuses(CyArea* pArea, CyPlot* pFromPlot);
 	int countCityFeatures(int /*FeatureTypes*/ eFeature);
 	int countNumBuildings(int /*BuildingTypes*/ eBuilding);
-	int countPotentialForeignTradeCities(CyArea* pIgnoreArea);
-	int countPotentialForeignTradeCitiesConnected();
+	//int countPotentialForeignTradeCities(CyArea* pIgnoreArea);
+	//int countPotentialForeignTradeCitiesConnected();
 	int countNumCitiesConnectedToCapital();
 
 	bool canContact(int /*PlayerTypes*/ ePlayer);

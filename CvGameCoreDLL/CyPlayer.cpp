@@ -261,16 +261,6 @@ int CyPlayer::countNumBuildings(int /*BuildingTypes*/ eBuilding)
 	return m_pPlayer ? m_pPlayer->countNumBuildings((BuildingTypes) eBuilding) : -1;
 }
 
-int CyPlayer::countPotentialForeignTradeCities(CyArea* pIgnoreArea)
-{
-	return m_pPlayer ? m_pPlayer->countPotentialForeignTradeCities(pIgnoreArea->getArea()) : -1;
-}
-
-int CyPlayer::countPotentialForeignTradeCitiesConnected()
-{
-	return m_pPlayer ? m_pPlayer->countPotentialForeignTradeCitiesConnected() : -1;
-}
-
 int CyPlayer::countNumCitiesConnectedToCapital()
 {
 	return m_pPlayer ? m_pPlayer->countNumCitiesConnectedToCapital() : -1;

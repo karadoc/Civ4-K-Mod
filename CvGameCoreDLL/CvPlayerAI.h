@@ -405,6 +405,7 @@ public:
 	CvPlot* AI_getCitySite(int iIndex) const;
 
 	bool AI_deduceCitySite(CvCity* pCity) const; // K-Mod
+	int AI_countPotentialForeignTradeCities(bool bCheckConnected = true, CvArea* pIgnoreArea = 0) const; // K-Mod
 
 	int AI_bestAreaUnitAIValue(UnitAITypes eUnitAI, CvArea* pArea, UnitTypes* peBestUnitType = NULL) const;
 	int AI_bestCityUnitAIValue(UnitAITypes eUnitAI, CvCity* pCity, UnitTypes* peBestUnitType = NULL) const;
