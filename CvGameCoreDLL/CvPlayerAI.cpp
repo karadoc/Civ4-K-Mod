@@ -5635,8 +5635,128 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	if (iPathLength <= 2)
 	{
-		if (GC.getGameINLINE().countKnownTechNumTeams(eTech) == 0)
+		bool bFirst = GC.getGameINLINE().countKnownTechNumTeams(eTech) == 0; // K-Mod
+
+		// K-Mod. Make a list of corporation HQs that this tech enables.
+		// (note: for convenience, I've assumed that each corp has at most one type of HQ building.)
+		std::vector<BuildingTypes> corpHQs(GC.getNumCorporationInfos(), NO_BUILDING);
+
+		for (int iB = 0; iB < GC.getNumBuildingInfos(); iB++)
 		{
+			const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo((BuildingTypes)iB);
+			if (kBuildingInfo.getFoundsCorporation() != NO_CORPORATION)
+			{
+				if (isTechRequiredForBuilding(eTech, (BuildingTypes)iB))
+				{
+					FAssert(kBuildingInfo.getFoundsCorporation() < (int)corpHQs.size());
+					corpHQs[kBuildingInfo.getFoundsCorporation()] = (BuildingTypes)iB;
+				}
+			}
+		}
+		// K-Mod end (the corpHQs map is used in the next section)
+
+		// note: K-mod has moved this section from out of the first-discoverer block
+		for (int iJ = 0; iJ < GC.getNumCorporationInfos(); iJ++)
+		{
+			/* original bts code
+			if (GC.getCorporationInfo((CorporationTypes)iJ).getTechPrereq() == eTech)
+			{
+				if (!(GC.getGameINLINE().isCorporationFounded((CorporationTypes)iJ)))
+				{
+					iValue += 100 + ((bAsync) ? GC.getASyncRand().get(2400, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(2400, "AI Research Corporation"));
+				}
+			} */
+			// K-Mod
+			if (!GC.getGameINLINE().isCorporationFounded((CorporationTypes)iJ))
+			{
+				int iMissingTechs = 0;
+				bool bCorpTech = false;
+
+				if (GC.getCorporationInfo((CorporationTypes)iJ).getTechPrereq() == eTech)
+				{
+					bCorpTech = bFirst; // only good if we are the first to get the tech
+					// missing tech stays at 0, because this is a special case. (ie. no great person required)
+				}
+				else if (corpHQs[iJ] != NO_BUILDING)
+				{
+					const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(corpHQs[iJ]);
+					if (kBuildingInfo.getPrereqAndTech() == eTech ||
+						kTeam.isHasTech((TechTypes)kBuildingInfo.getPrereqAndTech()) ||
+						canResearch((TechTypes)kBuildingInfo.getPrereqAndTech()))
+					{
+						bCorpTech = true;
+						// Count the required techs. (cf. isTechRequiredForBuilding)
+
+						iMissingTechs += !kTeam.isHasTech((TechTypes)kBuildingInfo.getPrereqAndTech()) ? 1 : 0;
+
+						for (int iP = 0; iP < GC.getNUM_BUILDING_AND_TECH_PREREQS(); iP++)
+						{
+							iMissingTechs += !kTeam.isHasTech((TechTypes)kBuildingInfo.getPrereqAndTechs(iP)) ? 1 : 0;
+						}
+
+						SpecialBuildingTypes eSpecial = (SpecialBuildingTypes)kBuildingInfo.getSpecialBuildingType();
+						iMissingTechs += eSpecial != NO_SPECIALBUILDING && !kTeam.isHasTech((TechTypes)GC.getSpecialBuildingInfo(eSpecial).getTechPrereq()) ? 1 : 0;
+
+						FAssert(iMissingTechs > 0);
+					}
+				}
+				if (bCorpTech)
+				{
+					int iCorpValue = AI_corporationValue((CorporationTypes)iJ); // roughly 100x commerce from corp.
+					if (iMissingTechs == 0)
+						iCorpValue = 3 * iCorpValue / 2; // this won't happen in standard BtS - but it might in some mods.
+					else
+						iCorpValue /= iMissingTechs;
+
+					if (iCorpValue > 0)
+					{
+						if (isNoCorporations())
+							iCorpValue /= 4;
+
+						if (AI_getFlavorValue(FLAVOR_GOLD) > 0)
+						{
+							iCorpValue *= 20 + AI_getFlavorValue(FLAVOR_GOLD);
+							iCorpValue /= 20;
+							iValue += iCorpValue/2;
+							iValue += ((bAsync) ? GC.getASyncRand().get(iCorpValue, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(3*iCorpValue/2, "AI Research Corporation"));
+							iRandomMax += iCorpValue;
+						}
+						else
+						{
+							iValue += iCorpValue/3;
+							iValue += ((bAsync) ? GC.getASyncRand().get(iCorpValue, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(5*iCorpValue/3, "AI Research Corporation"));
+							iRandomMax += iCorpValue;
+						}
+					}
+				}
+			}
+			// K-Mod end
+		}
+
+		//if (GC.getGameINLINE().countKnownTechNumTeams(eTech) == 0)
+		// K-Mod
+		if (bFirst)
+		{
+			int iRaceModifier = 0; // 100 means very likely we will be first, -100 means very unlikely. 0 is 'unknown'.
+			{
+				int iTotalPlayers = 0;
+				int iCount = 0;
+				for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i = (PlayerTypes)(i+1))
+				{
+					const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+					if (kLoopPlayer.getTeam() != getTeam() && kLoopPlayer.isAlive())
+					{
+						iTotalPlayers++; // count players even if we haven't met them. (we know they're out there...)
+						if (kTeam.isHasMet(kLoopPlayer.getTeam()) && (iPathLength <= 1 != kLoopPlayer.canResearch(eTech)))
+						{
+							iCount++; // if path is <= 1, count civs who can't research it. if path > 1, count civs who can research it.
+						}
+					}
+				}
+				iRaceModifier = (iPathLength <= 1 ? 100 : -100) * iCount / std::max(1, iTotalPlayers);
+			}
+			FAssert(iRaceModifier >= -100 && iRaceModifier <= 100);
+		// K-Mod end
 			int iReligionValue = 0;
 			int iPotentialReligions = 0;
 			for (int iJ = 0; iJ < GC.getNumReligionInfos(); iJ++)
@@ -5649,6 +5769,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						iPotentialReligions++;
 					}
 				}
+				// K-Mod note: iPotentialReligions will only be non-zero during the first few turns of advanced start games. Otherwise it is always zero.
+
 				if (eReligionTech == eTech)
 				{
 					if (!(GC.getGameINLINE().isReligionSlotTaken((ReligionTypes)iJ)))
@@ -5671,6 +5793,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 								}
 							}
 						}
+						/* original bts code
 						iReligionValue += 1 + ((bAsync) ? GC.getASyncRand().get(iRoll, "AI Research Religion ASYNC") : GC.getGameINLINE().getSorenRandNum(iRoll, "AI Research Religion"));
 						iRandomMax += iRoll;
 						iRandomFactor += iReligionValue;
@@ -5679,7 +5802,16 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						{
 							iReligionValue *= 3;
 							iReligionValue /= 2;
-						}
+						} */
+						// K-Mod
+						iRoll *= 200 + iRaceModifier;
+						iRoll /= 200;
+						if (iRaceModifier > 10 && AI_getFlavorValue(FLAVOR_RELIGION) > 0)
+							iReligionValue += iRoll * (iRaceModifier-10) / 300;
+
+						iReligionValue += bAsync ? GC.getASyncRand().get(iRoll, "AI Research Religion ASYNC") : GC.getGameINLINE().getSorenRandNum(iRoll, "AI Research Religion");
+						iRandomMax += iRoll;
+						// K-Mod end
 					}
 				}
 			}
@@ -5713,105 +5845,12 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				iValue += iReligionValue;
 			}
 
-			// K-Mod. Made a list of corporation HQs that this tech enables.
-			// (note: for convenience, I've assumed that each corp has at most one type of HQ building.)
-			std::vector<BuildingTypes> corpHQs(GC.getNumCorporationInfos(), NO_BUILDING);
-
-			for (int iB = 0; iB < GC.getNumBuildingInfos(); iB++)
-			{
-				const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo((BuildingTypes)iB);
-				if (kBuildingInfo.getFoundsCorporation() != NO_CORPORATION)
-				{
-					if (isTechRequiredForBuilding(eTech, (BuildingTypes)iB))
-					{
-						FAssert(kBuildingInfo.getFoundsCorporation() < (int)corpHQs.size());
-						corpHQs[kBuildingInfo.getFoundsCorporation()] = (BuildingTypes)iB;
-					}
-				}
-			}
-			// K-Mod end (the corpHQs map is used in the next section)
-
-			for (int iJ = 0; iJ < GC.getNumCorporationInfos(); iJ++)
-			{
-				/* original bts code
-				if (GC.getCorporationInfo((CorporationTypes)iJ).getTechPrereq() == eTech)
-				{
-					if (!(GC.getGameINLINE().isCorporationFounded((CorporationTypes)iJ)))
-					{
-						iValue += 100 + ((bAsync) ? GC.getASyncRand().get(2400, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(2400, "AI Research Corporation"));
-					}
-				} */
-				// K-Mod
-				if (!GC.getGameINLINE().isCorporationFounded((CorporationTypes)iJ))
-				{
-					int iMissingTechs = 0;
-					bool bCorpTech = false;
-
-					if (GC.getCorporationInfo((CorporationTypes)iJ).getTechPrereq() == eTech)
-					{
-						bCorpTech = true;
-						// missing tech stays at 0, because this is a special case. (ie. no great person required)
-					}
-					else if (corpHQs[iJ] != NO_BUILDING)
-					{
-						const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(corpHQs[iJ]);
-						if (kBuildingInfo.getPrereqAndTech() == eTech ||
-							kTeam.isHasTech((TechTypes)kBuildingInfo.getPrereqAndTech()) ||
-							canResearch((TechTypes)kBuildingInfo.getPrereqAndTech()))
-						{
-							bCorpTech = true;
-							// Count the required techs. (cf. isTechRequiredForBuilding)
-
-							iMissingTechs += !kTeam.isHasTech((TechTypes)kBuildingInfo.getPrereqAndTech()) ? 1 : 0;
-
-							for (int iP = 0; iP < GC.getNUM_BUILDING_AND_TECH_PREREQS(); iP++)
-							{
-								iMissingTechs += !kTeam.isHasTech((TechTypes)kBuildingInfo.getPrereqAndTechs(iP)) ? 1 : 0;
-							}
-
-							SpecialBuildingTypes eSpecial = (SpecialBuildingTypes)kBuildingInfo.getSpecialBuildingType();
-							iMissingTechs += eSpecial != NO_SPECIALBUILDING && !kTeam.isHasTech((TechTypes)GC.getSpecialBuildingInfo(eSpecial).getTechPrereq()) ? 1 : 0;
-
-							FAssert(iMissingTechs > 0);
-						}
-					}
-					if (bCorpTech)
-					{
-						int iCorpValue = AI_corporationValue((CorporationTypes)iJ); // roughly 100x commerce from corp.
-						if (iMissingTechs == 0)
-							iCorpValue = 3 * iCorpValue / 2; // this won't happen in standard BtS - but it might in some mods.
-						else
-							iCorpValue /= iMissingTechs;
-
-						if (iCorpValue > 0)
-						{
-							if (isNoCorporations())
-								iCorpValue /= 3;
-
-							if (AI_getFlavorValue(FLAVOR_GOLD) > 0)
-							{
-								iCorpValue *= 20 + AI_getFlavorValue(FLAVOR_GOLD);
-								iCorpValue /= 20;
-								iValue += iCorpValue/2;
-								iValue += ((bAsync) ? GC.getASyncRand().get(iCorpValue, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(3*iCorpValue/2, "AI Research Corporation"));
-								iRandomMax += iCorpValue;
-							}
-							else
-							{
-								iValue += iCorpValue/3;
-								iValue += ((bAsync) ? GC.getASyncRand().get(iCorpValue, "AI Research Corporation ASYNC") : GC.getGameINLINE().getSorenRandNum(5*iCorpValue/3, "AI Research Corporation"));
-								iRandomMax += iCorpValue;
-							}
-						}
-					}
-				}
-				// K-Mod end
-			}
+			// K-Mod note: I've moved corporation value outside of this block. (because you don't need to be first to the tech to get the corp!)
 
 			if (getTechFreeUnit(eTech) != NO_UNIT)
 			{
+				/* original bts code
 				int iGreatPeopleRandom = ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Great People ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Great People"));
-				iRandomMax += 3200; // K-Mod
 				iValue += iGreatPeopleRandom;
 				
 				iRandomMax += 3200;
@@ -5822,13 +5861,37 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					iValue += 400;
 				}
 
-				iValue += 200;
+				iValue += 200; */
+
+				// K-Mod
+				int iRoll = 16 * (100 + AI_getGreatPersonWeight((UnitClassTypes)GC.getTechInfo(eTech).getFirstFreeUnitClass()));
+				// I've diluted the weight because free great people doesn't have the negative effect of making it harder to get more great people
+				iRoll *= 200 + iRaceModifier;
+				iRoll /= 200;
+				if (iRaceModifier > 20 && AI_getFlavorValue(FLAVOR_SCIENCE) + AI_getFlavorValue(FLAVOR_GROWTH) > 0)
+					iValue += iRoll * (iRaceModifier-10) / 400;
+				iValue += bAsync ? GC.getASyncRand().get(iRoll, "AI Research Great People ASYNC") : GC.getGameINLINE().getSorenRandNum(iRoll, "AI Research Great People");
+				iRandomMax += iRoll;
+				// K-Mod end
 			}
 
 			//iValue += (kTechInfo.getFirstFreeTechs() * (200 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(3200, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(3200, "AI Research Free Tech"))));
-			// K-Mod, 22/jan/11, karadoc: more ad-hoc adjustments... this stuff sucks so much.
-			iValue += (kTechInfo.getFirstFreeTechs() * (500 + ((bCapitalAlone) ? 400 : 0) + ((bAsync) ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech"))));
-			iRandomMax += 6000; // K-Mod
+			// K-Mod
+			if (kTechInfo.getFirstFreeTechs() > 0)
+			{
+				int iRoll = 6000;
+				iRoll *= 200 + iRaceModifier;
+				iRoll /= 200;
+				if (iRaceModifier > 30 && iRaceModifier < 100 && AI_getFlavorValue(FLAVOR_SCIENCE) > 0) // save the free tech if we have no competition!
+					iValue += iRoll * (iRaceModifier-20) / 400; // this is potentially big.
+
+				int iTempValue = 500 + (bCapitalAlone ? 100 : 0); // value regardless of race or random.
+
+				iTempValue += bAsync ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech");
+				iValue += iTempValue * kTechInfo.getFirstFreeTechs();
+				iRandomMax += iRoll * kTechInfo.getFirstFreeTechs();
+			}
+			// K-Mod end
 		}
 	}
 
@@ -22658,7 +22721,7 @@ int CvPlayerAI::AI_countPotentialForeignTradeCities(bool bCheckConnected, bool b
 		}
 	}
 
-	FAssert(iCount > 0);
+	FAssert(iCount >= 0);
 
 	return iCount;
 }
