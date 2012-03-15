@@ -13200,6 +13200,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	iValue += -(kCivic.getGoldPerMilitaryUnit() * getNumMilitaryUnits() * iWarmongerPercent) / 200;
 
 	//iValue += ((kCivic.isMilitaryFoodProduction()) ? 0 : 0);
+	// bbai
 	int iMaxConscript = getWorldSizeMaxConscript(eCivic);
 	if( iMaxConscript > 0 && (pCapital != NULL) )
 	{
@@ -13237,6 +13238,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			}
 		}
 	}
+	// bbai end
 /*
 ** K-Mod.
 ** evaluation of my new unhealthiness modifier
@@ -13611,6 +13613,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	{
 		if (iHighestReligionCount > 0)
 		{
+			// K-Mod note: the evaluation of relgious civics is currently very poor. The scale doesn't match the scale of the other civics.
+			// But actually, the outcome of the civic choices isn't too bad, so I'm just going to leave it alone for now.
 			iValue += iHighestReligionCount;
 
 			iValue += ((kCivic.isNoNonStateReligionSpread()) ? ((iCities - iHighestReligionCount) * 2) : 0);
@@ -13747,10 +13751,20 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 	// K-Mod: count bonus specialists,
 	// so that we can more accurately gauge the representation bonus
-	int iTotalBonusSpecialists = 0;
-	int iTotalCurrentSpecialists = 0;
+	int iTotalBonusSpecialists = -1;
+	int iTotalCurrentSpecialists = -1;
 
+	// only take the time to count them if the civic has a bonus for specialists
+	bool bSpecialistCommerce = false;
+	for (int iI = 0; !bSpecialistCommerce && iI < NUM_COMMERCE_TYPES; iI++)
 	{
+		bSpecialistCommerce = kCivic.getSpecialistExtraCommerce(iI) != 0;
+	}
+
+	if (bSpecialistCommerce)
+	{
+		iTotalBonusSpecialists = iTotalCurrentSpecialists = 0;
+
 		int iLoop;
 		CvCity* pLoopCity;
 		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
@@ -13787,7 +13801,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		// Representation
 		//iTempValue += ((kCivic.getSpecialistExtraCommerce(iI) * getTotalPopulation()) / 15);
 		// K-Mod
-		iTempValue += AI_averageCommerceMultiplier((CommerceTypes)iI)*(kCivic.getSpecialistExtraCommerce(iI) * std::max((getTotalPopulation()+10*iTotalBonusSpecialists) / 10, iTotalCurrentSpecialists));
+		if (bSpecialistCommerce)
+			iTempValue += AI_averageCommerceMultiplier((CommerceTypes)iI)*(kCivic.getSpecialistExtraCommerce(iI) * std::max((getTotalPopulation()+10*iTotalBonusSpecialists) / 10, iTotalCurrentSpecialists));
+		// K-Mod end
 
 		iTempValue /= 100; // (for the 3 things above)
 
@@ -13856,23 +13872,23 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 	}
 
-	for (int iI = 0; iI < GC.getNumSpecialBuildingInfos(); iI++)
+	/* for (int iI = 0; iI < GC.getNumSpecialBuildingInfos(); iI++)
 	{
 		if (kCivic.isSpecialBuildingNotRequired(iI))
 		{
 			iValue += ((iCities / 2) + 1); // XXX
 		}
-	}
+	} */ // Disabled by K-Mod. This evaluation isn't accurate enough to be useful - but it does sometimes cause civs to switch to organized religion when they don't have a religion...
 
-	for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++) 
-	{ 
+	for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+	{
 		int iTempValue = 0;
-		if (kCivic.isSpecialistValid(iI)) 
-		{ 
+		if (kCivic.isSpecialistValid(iI))
+		{
 			iTempValue += ((iCities *  (bCultureVictory3 ? 10 : 1)) + 6);
-		} 
-		iValue += (iTempValue / 2); 
-	} 
+		}
+		iValue += (iTempValue / 2);
+	}
 
 	if (GC.getLeaderHeadInfo(getPersonalityType()).getFavoriteCivic() == eCivic)
 	{
@@ -13887,15 +13903,11 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) && (GC.getCivicInfo(eCivic).isNoNonStateReligionSpread()))
 	{
-	    iValue /= 10;	    
+		iValue /= 10;
 	}
 
 	return iValue;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 ReligionTypes CvPlayerAI::AI_bestReligion() const
 {
@@ -13919,8 +13931,8 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 			// K-Mod
 			if (iI == getStateReligion() && getReligionAnarchyLength() > 0)
 			{
-				iValue *= 5;
-				iValue /= 4;
+				iValue *= 4;
+				iValue /= 3;
 			}
 			// K-Mod end
 
