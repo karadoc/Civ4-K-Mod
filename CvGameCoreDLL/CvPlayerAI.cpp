@@ -13248,12 +13248,11 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 			if (!kGame.isCorporationFounded(eCorp))
 			{
-				if (kCivic.isNoCorporations() && kCorpInfo.getTechPrereq() == NO_TECH)
+				// if this civic is going to block us from founding any new corporations
+				// then we should try to estimate the cost of blocking such an opportunity.
+				// (but we don't count corporations that are simply founded by a technology)
+				if (AI_getFlavorValue(FLAVOR_GROWTH) + AI_getFlavorValue(FLAVOR_SCIENCE) > 0 && kCivic.isNoCorporations() && kCorpInfo.getTechPrereq() == NO_TECH)
 				{
-					// if this civic is going to block us from founding any new corporations
-					// then we should try to estimate the cost of blocking such an opportunity.
-					// (but we don't count corporations that are simply founded by a technology)
-
 					// first, if this corp competes with a corp that we already have, then assume we don't want it.
 					bool bConflict = false;
 					for (CorporationTypes i = (CorporationTypes)0; i < GC.getNumCorporationInfos(); i=(CorporationTypes)(i+1))
@@ -13291,7 +13290,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 								if (bHasPrereq)
 								{
-									iSpeculation = 1;
+									iSpeculation = 2;
 									// +1 for each other player we know with all the prereqs
 									for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
 									{
@@ -13429,12 +13428,17 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			}
 
 			FAssert(iSpeculation == 0 || (!kGame.isCorporationFounded(eCorp) && kCivic.isNoCorporations()));
-			iCorpValue /= (iSpeculation + 1);
+			iCorpValue;
 			if (iSpeculation == 0)
 				iValue += iCorpValue;
-			// if speculating about disabling corps that we haven't yet created, only count the losses!
-			else if (iCorpValue < iPotentialCorpValue)
-				iPotentialCorpValue = iCorpValue;
+			else
+			{
+				// Note: when speculating about disabling unfounded corps, we only count the losses. (If the corp is negative value, then we wouldn't found it!)
+				iCorpValue *= 2;
+				iCorpValue /= iSpeculation + 1; // iSpeculation == 2 + # of other civs with the prereqs.
+				if (iCorpValue < iPotentialCorpValue)
+					iPotentialCorpValue = iCorpValue;
+			}
 		}
 		FAssert(iPotentialCorpValue <= 0);
 		iValue += iPotentialCorpValue;

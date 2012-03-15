@@ -6946,6 +6946,8 @@ int CvCityAI::AI_getTargetPopulation() const
 {
 	int iHealth = goodHealth() - badHealth() + getEspionageHealthCounter();
 	int iTargetSize = AI_getGoodTileCount();
+	if (GET_PLAYER(getOwnerINLINE()).AI_getFlavorValue(FLAVOR_GROWTH) > 0)
+		iTargetSize += iTargetSize / 6; // specialists.
 
 	iTargetSize = std::min(iTargetSize, 2 + getPopulation() + iHealth/2);
 
@@ -7160,9 +7162,13 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 			}
 		}
 	}
-	// K-Mod, based on ideas from BBAI, and original bts code
+	// K-Mod, based on ideas from BBAI, and original bts code.
+	// I'd like to use AI_getTargetPopulation here, to avoid code duplication, but that would result in us doing a bunch of unneccessary recalculations.
 	int iHealth = goodHealth() - badHealth() + getEspionageHealthCounter();
 	int iTargetSize = iGoodTileCount;
+
+	if (kPlayer.AI_getFlavorValue(FLAVOR_GROWTH) > 0)
+		iTargetSize += iGoodTileCount / 6; // specialists.
 
 	iTargetSize = std::min(iTargetSize, 2 + getPopulation() + iHealth/2);
 
@@ -7172,6 +7178,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	}
 
 	iTargetSize = std::min(iTargetSize, 1 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
+	//
 
 	int iFutureFoodAdjustment = 0;
 	if (iWorkableFoodPlotCount > 0)
