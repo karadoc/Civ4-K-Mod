@@ -5007,7 +5007,14 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	for (int iJ = 0; iJ < GC.getNumRouteInfos(); iJ++)
 	{
-		iValue += -(GC.getRouteInfo((RouteTypes)iJ).getTechMovementChange(eTech) * 100);
+		//iValue += -(GC.getRouteInfo((RouteTypes)iJ).getTechMovementChange(eTech) * 100);
+		// K-Mod. Still bogus, but a bit more nuanced.
+		int iCityTarget = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+		int iTemp = 30 * std::min(iCityCount - iCoastalCities/2, iCityTarget*3/2) / std::max(1, iCityTarget);
+		iTemp += bCapitalAlone ? 0 : 20;
+		iTemp += kTeam.getAnyWarPlanCount(true) ? 30 : 0;
+		iValue -= GC.getRouteInfo((RouteTypes)iJ).getTechMovementChange(eTech) * iTemp;
+		// K-Mod end
 	}
 
 	for (int iJ = 0; iJ < NUM_DOMAIN_TYPES; iJ++)
@@ -5036,7 +5043,13 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				if (pCapitalCity != NULL)
 				{
 					//iValue += (countPotentialForeignTradeCities(pCapitalCity->area()) * 100);
-					iValue += std::min(iCityCount*2, AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0, pCapitalCity->area())) * 70; // K-Mod
+					// K-Mod. The values in AI_techValue are mostly quite arbitrary, but as a general rule of thumb, they should not be proportial to civ-size.
+					// Besides, the original value here was way too big.
+					int iUnusedRoutes = std::max(0, iCityCount*3 - AI_countPotentialForeignTradeCities(true, AI_getFlavorValue(FLAVOR_GOLD) == 0));
+					int iNewTrade = AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0, pCapitalCity->area());
+
+					iValue += (std::min(iUnusedRoutes, iNewTrade) * 700  + std::min(iNewTrade, iCityCount*3) * 300) / std::max(1, iCityCount);
+					// K-Mod end
 				}
 
 				if (iCoastalCities > 0)
@@ -5909,7 +5922,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				if (iRaceModifier > 30 && iRaceModifier < 100 && AI_getFlavorValue(FLAVOR_SCIENCE) > 0) // save the free tech if we have no competition!
 					iValue += iRoll * (iRaceModifier-20) / 400; // this is potentially big.
 
-				int iTempValue = 500 + (bCapitalAlone ? 100 : 0); // value regardless of race or random.
+				int iTempValue = (iRaceModifier >= 0 ? 700 : 350) + (bCapitalAlone ? 100 : 0); // some value regardless of race or random.
 
 				iTempValue += bAsync ? GC.getASyncRand().get(6000, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(6000, "AI Research Free Tech");
 				iValue += iTempValue * kTechInfo.getFirstFreeTechs();
