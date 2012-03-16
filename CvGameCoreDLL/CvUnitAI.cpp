@@ -118,7 +118,8 @@ bool CvUnitAI::AI_update()
 			{
 				//if (pTransportUnit->getGroup()->hasMoved() || (pTransportUnit->getGroup()->headMissionQueueNode() != NULL))
 				// K-Mod. Note: transport units with cargo always have their turn before the cargo does - so... well... I've changed the skip condition.
-				if (pTransportUnit->getGroup()->headMissionQueueNode() != NULL)
+				if (pTransportUnit->getGroup()->headMissionQueueNode() != NULL ||
+					(pTransportUnit->getGroup()->AI_getMissionAIType() == MISSIONAI_ASSAULT && !atPlot(pTransportUnit->getGroup()->AI_getMissionAIPlot())))
 				// K-Mod end
 				{
 					getGroup()->pushMission(MISSION_SKIP);
@@ -20834,6 +20835,8 @@ bool CvUnitAI::AI_handleStranded(int iFlags)
 	{
 		// This is possible, in some rare cases, but I'm currently trying to pin down precisely what those cases are.
 		FAssertMsg(false, "AI_handleStranded: this unit is already cargo.");
+		getGroup()->pushMission(MISSION_SKIP);
+		return true;
 	}
 
 	if (isHuman())

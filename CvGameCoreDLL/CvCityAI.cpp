@@ -5857,15 +5857,15 @@ int CvCityAI::AI_projectValue(ProjectTypes eProject)
 						int iTemp;
 
 						if (kLoopPlayer.getID() == kOwner.getID())
-							iTemp = 85 + GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getConquestVictoryWeight(); // victory weight is between 0 and 100. (usually around 30).
+							iTemp = 85 + GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getConquestVictoryWeight()/2; // victory weight is between 0 and 100. (usually around 30).
 						else if (kLoopPlayer.getTeam() == kOwner.getTeam())
-							iTemp = 85;
+							iTemp = 90;
 						else if (kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
 							iTemp = -100;
 						else
 							iTemp = std::max(-100, (kOwner.AI_getAttitudeWeight(j) - 125)/2);
 
-						// tech prereqs.  halve the value for each missing prereq
+						// tech prereqs.  reduce the value for each missing prereq
 						if (!kLoopTeam.isHasTech((TechTypes)(kLoopUnit.getPrereqAndTech())))
 						{
 							iTemp /= 2;
@@ -6039,9 +6039,14 @@ int CvCityAI::AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType
 		    iTempValue *= 2;
 		}
 
+		/* original bts code
 		iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_commerceWeight(((CommerceTypes)iI), this);
-		
+		iTempValue /= 100; */
+		// K-Mod. culture is local, the other commerce types are non-local.
+		// We don't want the non-local commerceWeights in this function, because maintaining a process is just a short-term arrangement.
+		iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_commerceWeight(((CommerceTypes)iI), iI == COMMERCE_CULTURE ? this : 0);
 		iTempValue /= 100;
+		// K-Mod end
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      07/08/09                                jdog5000      */
