@@ -11465,6 +11465,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 	case UNITAI_ICBM:
 		if (GC.getUnitInfo(eUnit).getNukeRange() != -1)
 		{
+			/* original bts code
 			iTempValue = 40 + (GC.getUnitInfo(eUnit).getNukeRange() * 40);
 			if (GC.getUnitInfo(eUnit).getAirRange() == 0)
 			{
@@ -11474,7 +11475,37 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			{
 				iValue += (iTempValue * std::min(10, GC.getUnitInfo(eUnit).getAirRange())) / 10;
 			}
-			iValue += (iTempValue * (60 + GC.getUnitInfo(eUnit).getEvasionProbability())) / 100;
+			iValue += (iTempValue * (60 + GC.getUnitInfo(eUnit).getEvasionProbability())) / 100; */
+			// K-Mod
+			iTempValue = 100 + (GC.getUnitInfo(eUnit).getNukeRange() * 40);
+			if (GC.getUnitInfo(eUnit).getAirRange() > 0)
+			{
+				iTempValue = iTempValue * std::min(8, GC.getUnitInfo(eUnit).getAirRange()) / 10;
+			}
+			// estimate the expected loss from being shot down.
+			{
+				bool bWar = pArea && pArea->getAreaAIType(getTeam()) != AREAAI_NEUTRAL;
+				const CvTeamAI& kTeam = GET_TEAM(getTeam());
+				int iInterceptTally = 0;
+				int iPowerTally = 0;
+				for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
+				{
+					const CvTeam& kLoopTeam = GET_TEAM(i);
+					if (kLoopTeam.isAlive() && kTeam.isHasMet(i) && (!bWar || kTeam.AI_getWarPlan(i) != NO_WARPLAN))
+					{
+						int iPower = kLoopTeam.getPower(false);
+						iPowerTally += iPower;
+						iInterceptTally += kLoopTeam.getNukeInterception() * iPower;
+					}
+				}
+				if (iInterceptTally > 0)
+				{
+					FAssert(iPowerTally > 0);
+					iTempValue -= iTempValue * (iInterceptTally / iPowerTally) * (100 - GC.getUnitInfo(eUnit).getEvasionProbability()) / 10000;
+				}
+			}
+			iValue += iTempValue;
+			// K-Mod end
 		}
 		break;
 
