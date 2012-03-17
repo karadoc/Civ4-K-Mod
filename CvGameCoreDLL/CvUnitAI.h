@@ -239,7 +239,7 @@ protected:
 	bool AI_airDefensiveCity();
 	bool AI_airCarrier();
 	bool AI_missileLoad(UnitAITypes eTargetUnitAI, int iMaxOwnUnitAI = -1, bool bStealthOnly = false);
-	bool AI_airStrike(); // K-Mod note. this function now handles bombing defences, and defensive strikes.
+	bool AI_airStrike(int iThreshold = 0); // K-Mod note. this function now handles bombing defences, and defensive strikes.
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						9/26/08				jdog5000	    */
 /* 																			    */
@@ -331,17 +331,9 @@ protected:
 	// added so under cheat mode we can call protected functions for testing
 	friend class CvGameTextMgr;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Lead From Behind                                                                             */
-/************************************************************************************************/
-// From Lead From Behind by UncutDragon
+// Lead From Behind by UncutDragon
 public:
 	void LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) const;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 };
 
 #endif

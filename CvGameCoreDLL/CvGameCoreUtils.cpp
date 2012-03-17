@@ -1321,6 +1321,11 @@ bool PUF_isMissionAIType(const CvUnit* pUnit, int iData1, int iData2)
 {
 	return pUnit->getGroup()->AI_getMissionAIType() == iData1;
 }
+
+bool PUF_isAirIntercept(const CvUnit* pUnit, int iData1, int iData2)
+{
+	return pUnit->getDomainType() == DOMAIN_AIR && pUnit->getGroup()->getActivityType() == ACTIVITY_INTERCEPT;
+}
 // K-Mod end
 
 int potentialIrrigation(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder)

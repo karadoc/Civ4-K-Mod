@@ -402,15 +402,6 @@ public:
 
 	int countNumAirUnits(TeamTypes eTeam) const;																					// Exposed to Python
 	int airUnitSpaceAvailable(TeamTypes eTeam) const;
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						10/17/08		jdog5000		*/
-/* 																			*/
-/* 	Air AI																	*/
-/********************************************************************************/
-	int countAirInterceptorsActive(TeamTypes eTeam) const;
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								*/
-/********************************************************************************/
 
 	int getFoundValue(PlayerTypes eIndex);							// Exposed to Python
 	bool isBestAdjacentFound(PlayerTypes eIndex);						// Exposed to Python

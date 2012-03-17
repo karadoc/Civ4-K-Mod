@@ -321,6 +321,7 @@ bool PUF_isUnitAITypeGroupie(const CvUnit* pUnit, int iData1, int iData2);
 bool PUF_isFiniteRangeAndNotJustProduced(const CvUnit* pUnit, int iData1, int iData2);
 // bbai end
 bool PUF_isMissionAIType(const CvUnit* pUnit, int iData1, int iData2); // K-Mod
+bool PUF_isAirIntercept(const CvUnit* pUnit, int iData1, int iData2); // K-Mod
 
 // FAStarFunc...
 int potentialIrrigation(FAStarNode* parent, FAStarNode* node, int data, const void* pointer, FAStar* finder);

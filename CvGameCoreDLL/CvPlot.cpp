@@ -10254,37 +10254,6 @@ int CvPlot::airUnitSpaceAvailable(TeamTypes eTeam) const
 	return (iMaxUnits - countNumAirUnits(eTeam));
 }
 
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						10/17/08		jdog5000		*/
-/* 																			*/
-/* 	Air AI																	*/
-/********************************************************************************/
-int CvPlot::countAirInterceptorsActive(TeamTypes eTeam) const
-{
-	int iCount = 0;
-
-	CLLNode<IDInfo>* pUnitNode = headUnitNode();
-	while (pUnitNode != NULL)
-	{
-		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-		pUnitNode = nextUnitNode(pUnitNode);
-
-		if (DOMAIN_AIR == pLoopUnit->getDomainType() && !pLoopUnit->isCargo() && pLoopUnit->getTeam() == eTeam)
-		{
-			if( pLoopUnit->getGroup()->getActivityType() == ACTIVITY_INTERCEPT )
-			{
-				iCount += 1;
-			}
-		}
-	}
-
-	return iCount;
-}
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								*/
-/********************************************************************************/
-
-
 bool CvPlot::isEspionageCounterSpy(TeamTypes eTeam) const
 {
 	CvCity* pCity = getPlotCity();

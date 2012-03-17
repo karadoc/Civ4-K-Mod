@@ -9564,7 +9564,8 @@ void CvUnitAI::AI_defenseAirMove()
 			iBaseAirDefenders += pCity->AI_neededAirDefenders()/2;
 		}
 
-		if( plot()->countAirInterceptorsActive(getTeam()) < iBaseAirDefenders )
+		//if( plot()->countAirInterceptorsActive(getTeam()) < iBaseAirDefenders )
+		if (plot()->plotCount(PUF_isAirIntercept, -1, -1, NO_PLAYER, getTeam()) < iBaseAirDefenders) // K-Mod
 		{
 			getGroup()->pushMission(MISSION_AIRPATROL);
 			return;
@@ -9738,10 +9739,14 @@ void CvUnitAI::AI_carrierAirMove()
 			}
 		} */
 		// K-Mod
-		if (canAirDefend() && (GC.getGameINLINE().getSorenRandNum(4, "AI Air Carrier Move") == 0 || plot()->countAirInterceptorsActive(getTeam()) < 1))
+		if (canAirDefend())
 		{
-			getGroup()->pushMission(MISSION_AIRPATROL);
-			return;
+			int iActiveInterceptors = plot()->plotCount(PUF_isAirIntercept, -1, -1, getOwnerINLINE());
+			if (GC.getGameINLINE().getSorenRandNum(16, "AI Air Carrier Move") < 4 - std::min(3, iActiveInterceptors))
+			{
+				getGroup()->pushMission(MISSION_AIRPATROL);
+				return;
+			}
 		}
 		if (AI_airStrike())
 		{
@@ -22010,15 +22015,15 @@ bool CvUnitAI::AI_missileLoad(UnitAITypes eTargetUnitAI, int iMaxOwnUnitAI, bool
 
 
 // Returns true if a mission was pushed...
-// K-Mod: This function now considers bombarding city defences, and bombing improvements,
+// K-Mod. I'm rewritten this function so that it now considers bombarding city defences and bombing improvements
 // as well as air strikes against enemy troops. Also, it now prefers to hit targets that are in our territory.
-bool CvUnitAI::AI_airStrike()
+bool CvUnitAI::AI_airStrike(int iThreshold)
 {
-	//PROFILE_FUNC();
+	PROFILE_FUNC();
 
 	int iSearchRange = airRange();
 
-	int iBestValue = (isSuicide() && m_pUnitInfo->getProductionCost() > 0) ? (5 * m_pUnitInfo->getProductionCost()) / 6 : 0;
+	int iBestValue = iThreshold + isSuicide() && m_pUnitInfo->getProductionCost() > 0 ? m_pUnitInfo->getProductionCost() * 5 / 6 : 0;
 	CvPlot* pBestPlot = NULL;
 	bool bBombard = false; // K-Mod. bombard (city / improvement), rather than air strike (damage)
 
@@ -22032,14 +22037,15 @@ bool CvUnitAI::AI_airStrike()
 			{
 				int iStrikeValue = 0;
 				int iBombValue = 0;
-				int iPotentialAttackers = 0; // (only count adjacent units if we can air-strike)
-				if (pLoopPlot->isCity())
-					iPotentialAttackers += GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup(), 1) * 2;							
+				int iAdjacentAttackers = 0; // (only count adjacent units if we can air-strike)
+				int iAssaultEnRoute = pLoopPlot->isCity() ? GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup(), 1) : 0;
+
+				// TODO: consider changing the evaluation system so that instead of simply counting units, it counts attack / defence power.
 
 				// air strike (damage)
 				if (canMoveInto(pLoopPlot, true))
 				{
-					iPotentialAttackers += GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
+					iAdjacentAttackers += GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
 					//if (pLoopPlot->isWater() || (iPotentialAttackers > 0) || pLoopPlot->isAdjacentTeam(getTeam()))
 					{
 						CvUnit* pDefender = pLoopPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
@@ -22048,13 +22054,14 @@ bool CvUnitAI::AI_airStrike()
 						FAssert(pDefender->canDefend());
 
 						int iDamage = airCombatDamage(pDefender);
+						int iDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
 
-						iStrikeValue = std::max(0, (std::min((pDefender->getDamage() + iDamage), airCombatLimit()) - pDefender->getDamage()));
+						iStrikeValue = std::max(0, std::min(pDefender->getDamage() + iDamage, airCombatLimit()) - pDefender->getDamage());
 
-						iStrikeValue += ((((iDamage * collateralDamage()) / 100) * std::min((pLoopPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits())) / 2);
+						iStrikeValue += iDamage * collateralDamage() * std::min(iDefenders - 1, collateralDamageMaxUnits()) / 200;
 
-						iStrikeValue *= (3 + iPotentialAttackers);
-						iStrikeValue /= iPotentialAttackers > 0 ? 4 : 6;
+						iStrikeValue *= (3 + iAdjacentAttackers + iAssaultEnRoute / 2);
+						iStrikeValue /= (iAdjacentAttackers + iAssaultEnRoute > 0 ? 4 : 6) + std::min(iAdjacentAttackers + iAssaultEnRoute / 2, iDefenders)/2;
 
 						if (pLoopPlot->isCity(true, pDefender->getTeam()))
 						{
@@ -22062,7 +22069,7 @@ bool CvUnitAI::AI_airStrike()
 							iStrikeValue *= 3;
 							iStrikeValue /= 4;
 						}
-						if (pLoopPlot->isWater() && (iPotentialAttackers > 0 || pLoopPlot->getTeam() == getTeam()))
+						if (pLoopPlot->isWater() && (iAdjacentAttackers > 0 || pLoopPlot->getTeam() == getTeam()))
 						{
 							iStrikeValue *= 3;
 						}
@@ -22079,7 +22086,7 @@ bool CvUnitAI::AI_airStrike()
 					{
 						const CvCity* pCity = pLoopPlot->getPlotCity();
 						iBombValue = std::max(0, std::min(pCity->getDefenseDamage() + airBombCurrRate(), GC.getMAX_CITY_DEFENSE_DAMAGE()) - pCity->getDefenseDamage());
-						iBombValue *= iPotentialAttackers + (area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE ? 5 : 1);
+						iBombValue *= iAdjacentAttackers + 2*iAssaultEnRoute + (area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE ? 5 : 1);
 						iBombValue /= 2;
 					}
 					else
@@ -22142,114 +22149,6 @@ bool CvUnitAI::AI_airStrike()
 
 	return false;
 }
-
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						9/16/08			jdog5000		*/
-/* 																			*/
-/* 	Air AI																	*/
-/********************************************************************************/
-// Air strike focused on weakening enemy stacks threatening our cities
-// Returns true if a mission was pushed...
-/* bool CvUnitAI::AI_defensiveAirStrike()
-{
-	PROFILE_FUNC();
-
-	CvUnit* pDefender;
-	CvUnit* pInterceptor;
-	CvPlot* pLoopPlot;
-	CvPlot* pBestPlot;
-	int iSearchRange;
-	int iDamage;
-	int iInterceptProb;
-	int iValue;
-	int iBestValue;
-	int iDX, iDY;
-
-	iSearchRange = airRange();
-
-	iBestValue = (isSuicide() && m_pUnitInfo->getProductionCost() > 0) ? (60 * m_pUnitInfo->getProductionCost()) : 0;
-	pBestPlot = NULL;
-
-	for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
-	{
-		for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
-		{
-			pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
-
-			if (pLoopPlot != NULL)
-			{
-				if (canMoveInto(pLoopPlot, true)) // Only true of plots this unit can airstrike
-				{
-					// Only attack enemy land units near our cities
-					if( pLoopPlot->isPlayerCityRadius(getOwnerINLINE()) && !pLoopPlot->isWater() )
-					{
-						CvCity* pClosestCity = GC.getMapINLINE().findCity(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), getOwnerINLINE(), getTeam(), true, false);
-
-						if( pClosestCity != NULL )
-						{
-							// City and pLoopPlot forced to be in same area, check they're still close
-							int iStepDist = plotDistance(pClosestCity->getX_INLINE(), pClosestCity->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE());
-
-							if( iStepDist < 3 )
-							{
-								iValue = 0;
-
-								pDefender = pLoopPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, true);
-
-								FAssert(pDefender != NULL);
-								FAssert(pDefender->canDefend());
-
-								iDamage = airCombatDamage(pDefender);
-
-								iValue = std::max(0, (std::min((pDefender->getDamage() + iDamage), airCombatLimit()) - pDefender->getDamage()));
-
-								iValue += ((((iDamage * collateralDamage()) / 100) * std::min((pLoopPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits())) / 2);
-
-								iValue *= GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(pClosestCity->plot(),2,false,false);
-								iValue /= std::max(1, GET_TEAM(getTeam()).AI_getOurPlotStrength(pClosestCity->plot(),0,true,false,true));
-
-								if( iStepDist == 1 )
-								{
-									iValue *= 5;
-									iValue /= 4;
-								}
-
-								pInterceptor = bestInterceptor(pLoopPlot);
-
-								if (pInterceptor != NULL)
-								{
-									iInterceptProb = isSuicide() ? 100 : pInterceptor->currInterceptionProbability();
-
-									iInterceptProb *= std::max(0, (100 - evasionProbability()));
-									iInterceptProb /= 100;
-
-									iValue *= std::max(0, 100 - iInterceptProb / 2);
-									iValue /= 100;
-								}
-
-								if (iValue > iBestValue)
-								{
-									iBestValue = iValue;
-									pBestPlot = pLoopPlot;
-									FAssert(!atPlot(pBestPlot));
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (pBestPlot != NULL)
-	{
-		FAssert(!atPlot(pBestPlot));
-		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
-		return true;
-	}
-
-	return false;
-} */
 
 // Air strike around base city
 // Returns true if a mission was pushed...
@@ -25325,13 +25224,7 @@ void CvUnitAI::write(FDataStreamBase* pStream)
 
 // Private Functions...
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Lead From Behind                                                                             */
-/************************************************************************************************/
-// From Lead From Behind by UncutDragon
-
+// Lead From Behind, by UncutDragon, edited for K-Mod
 void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) const
 {
 	CvUnit* pThis = (CvUnit*)this;
@@ -25379,7 +25272,3 @@ void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bo
 		iAttackerValue = iValue;
 	}
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
