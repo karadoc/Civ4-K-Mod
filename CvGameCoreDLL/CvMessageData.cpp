@@ -182,6 +182,10 @@ void CvNetPushOrder::Execute()
 		if (pCity != NULL)
 		{
 			pCity->pushOrder(m_eOrder, m_iData, -1, m_bAlt, !(m_bShift || m_bCtrl), m_bShift);
+			// K-Mod. We don't want automated cities to overrules our production choice.
+			if (pCity->isHuman())
+				pCity->AI_setChooseProductionDirty(false);
+			// K-Mod end
 		}
 
 		if (GC.getGameINLINE().getActivePlayer() == m_ePlayer)

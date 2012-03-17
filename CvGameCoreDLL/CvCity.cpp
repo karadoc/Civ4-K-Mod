@@ -5415,7 +5415,8 @@ void CvCity::setPopulation(int iNewValue)
 			  ((getPopulation() == 1) && (iOldPopulation > 1))
 			  || ((getPopulation() > iOldPopulation) && (GET_PLAYER(getOwnerINLINE()).getNumCities() <= 2)))
 		{
-			if (!isHuman())
+			//if (!isHuman())
+			if (!isHuman() || isProductionAutomated()) // K-Mod
 			{
 				AI_setChooseProductionDirty(true);
 			}
