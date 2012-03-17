@@ -51,6 +51,12 @@ import BugCore
 AdvisorOpt = BugCore.game.Advisors
 CustDomAdvOpt = BugCore.game.CustDomAdv
 TechWindowOpt = BugCore.game.TechWindow
+
+# K-Mod
+import BugOptionsScreen
+def showBugOptionsScreen(argsList=None):
+	BugOptionsScreen.showOptionsScreen()
+# K-Mod end
 # BUG - Options - end
 
 g_bIsScreenActive = -1
