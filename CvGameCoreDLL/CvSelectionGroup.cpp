@@ -2649,7 +2649,8 @@ bool CvSelectionGroup::canMoveInto(CvPlot* pPlot, bool bAttack)
 }
 
 
-bool CvSelectionGroup::canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar)
+//bool CvSelectionGroup::canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar)
+bool CvSelectionGroup::canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar, bool bCheckMoves) // K-Mod
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
@@ -2663,7 +2664,8 @@ bool CvSelectionGroup::canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar)
 			pLoopUnit = ::getUnit(pUnitNode->m_data);
 			pUnitNode = nextUnitNode(pUnitNode);
 
-			if (pLoopUnit->canMoveOrAttackInto(pPlot, bDeclareWar))
+			//if (pLoopUnit->canMoveOrAttackInto(pPlot, bDeclareWar))
+			if ((!bCheckMoves || pLoopUnit->canMove()) && pLoopUnit->canMoveOrAttackInto(pPlot, bDeclareWar)) // K-Mod
 			{
 				return true;
 			}

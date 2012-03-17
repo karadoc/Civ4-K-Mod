@@ -2761,13 +2761,13 @@ void CvUnitAI::AI_paratrooperMove()
 		}
 	}
 
-	if (collateralDamage() > 0)
+	/* if (collateralDamage() > 0)
 	{
 		if (AI_anyAttack(1, 45, 0, 3))
 		{
 			return;
 		}
-	}
+	} */ // disabled by K-Mod. (redundant)
 
 	if (AI_pillageRange(1, 15))
 	{
@@ -12714,12 +12714,26 @@ bool CvUnitAI::AI_afterAttack()
 		return false;
 	}
 
+	// K-Mod. Large groups may still have important stuff to do!
+	if (getGroup()->getNumUnits() > 2)
+		return false;
+	// K-Mod end
+
 	if (getDomainType() == DOMAIN_LAND)
 	{
 		if (AI_guardCity(false, true, 1))
 		{
 			return true;
 		}
+
+		// K-Mod. We might be able to capture an undefended city, or at least a worker. (think paratrooper)
+		// (note: it's also possible that we are asking our group partner to attack something.)
+		// (also, note that AI_anyAttack will favour undefended cities over workers.)
+		if (AI_anyAttack(1, 65))
+		{
+			return true;
+		}
+		// K-Mod end
 	}
 
 	if (AI_pillageRange(1))
@@ -15905,7 +15919,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 						{
 							if (!atPlot(pLoopPlot) && (bFollow ? canMoveOrAttackInto(pLoopPlot, bDeclareWar) : generatePath(pLoopPlot, iFlags, true, 0, iRange)))
 							{
-								int iOdds = iEnemies == 0 ? 100 : AI_getWeightedOdds(pLoopPlot, false);
+								int iOdds = iEnemies == 0 ? (pLoopPlot->isCity() ? 101 : 100) : AI_getWeightedOdds(pLoopPlot, false); // 101 for cities, because that's a better thing to capture.
 								if (iOdds >= iOddsThreshold)
 								{
 									iOddsThreshold = iOdds;
@@ -24544,7 +24558,7 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 					if (AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 					{
 						//if (!atPlot(pLoopPlot) && ((bFollow) ? canMoveInto(pLoopPlot, /*bAttack*/ true, /*bDeclareWar*/ true) : (generatePath(pLoopPlot, 0, true, &iPathTurns) && (iPathTurns <= iRange))))
-						if (!atPlot(pLoopPlot) && getGroup()->canMoveOrAttackInto(pLoopPlot, true))
+						if (!atPlot(pLoopPlot) && getGroup()->canMoveOrAttackInto(pLoopPlot, true, true))
 						{
 							// K-Mod
 							if (iPowerThreshold < 0)
