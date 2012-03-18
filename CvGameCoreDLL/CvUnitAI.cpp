@@ -3013,22 +3013,12 @@ void CvUnitAI::AI_attackCityMove()
 
 		if (iStepDistToTarget <= 2)
 		{
+			// K-Mod. I've rearranged and rewriten most of this section - removing the bbai code.
 			if (bTargetTooStrong)
 			{
-				// K-Mod
 				if (AI_stackVsStack(2, iAttackRatio, 80, iMoveFlags))
 					return;
-				// K-Mod end
 
-				/*if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 2, true, true, bIgnoreFaster))
-				{
-					return;
-				}*/
-
-				/* BBAI
-				int iOurOffense = GET_TEAM(getTeam()).AI_getOurPlotStrength(plot(),1,false,false,true);
-				int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(pTargetCity->plot(),2,false,false); */
-				// K-Mod
 				FAssert(getDomainType() == DOMAIN_LAND);
 				int iOurOffense = kOwner.AI_localAttackStrength(plot(), getTeam(), DOMAIN_LAND, 1, false);
 				int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2, false);
@@ -3074,90 +3064,40 @@ void CvUnitAI::AI_attackCityMove()
 					if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, iMoveFlags, 3, true, false, bIgnoreFaster, false, false)) // any size
 						return;
 				}
-				// K-Mod end
 			}
 
 			if (iStepDistToTarget == 1)
 			{
-				// K-Mod. I've rearranged and rewriten most of this section - removing the bbai code.
-
-				// Consider getting into position for attack.
-				if (iComparePostBombard < iAttackRatioSkipBombard || pTargetCity->getDefenseDamage() < GC.getMAX_CITY_DEFENSE_DAMAGE()/ 2)
+				// Consider getting into a better position for attack.
+				if (iComparePostBombard < GC.getBBAI_SKIP_BOMBARD_BASE_STACK_RATIO() && // only if we don't already have overwhelming force
+					(iComparePostBombard < iAttackRatioSkipBombard ||
+					pTargetCity->getDefenseDamage() < GC.getMAX_CITY_DEFENSE_DAMAGE()/ 2 ||
+					plot()->isRiverCrossing(directionXY(plot(), pTargetCity->plot()))))
 				{
 					// Only move into attack position if we have a chance.
 					// Without this check, the AI can get stuck alternating between this, and pillage.
 					// I've tried to roughly take into account how much our ratio would improve by removing a river penalty.
-					if ((getGroup()->canBombard(plot()) && iBombardTurns > 2) || 150 * iComparePostBombard >= (150 + (plot()->isRiverCrossing(directionXY(plot(), pTargetCity->plot()))?GC.getRIVER_ATTACK_MODIFIER() : 0)) * iAttackRatio)
+					if ((getGroup()->canBombard(plot()) && iBombardTurns > 2) ||
+						(plot()->isRiverCrossing(directionXY(plot(), pTargetCity->plot())) && 150 * iComparePostBombard >= (150 + GC.getRIVER_ATTACK_MODIFIER()) * iAttackRatio))
 					{
 						if (AI_goToTargetCity(iMoveFlags, 2, pTargetCity))
 							return;
 					}
+					// Note: bombard may skip if stack is powerful enough
 					if (AI_bombardCity())
 						return;
 				}
+				else if (iComparePostBombard >= iAttackRatio && AI_bombardCity()) // we're satisfied with our position already. But we still want to consider bombarding.
+					return;
 
 				if (iComparePostBombard >= iAttackRatio)
 				{
-
-					// Bombard may skip if stack is powerful enough
-					// (Note: the first condition is just to avoid a redundant check - we did the < skip case a couple of lines ago.)
-					if (iComparePostBombard >= iAttackRatioSkipBombard && AI_bombardCity())
-					{
-						return;
-					}
-
-					//stack attack
+					// in position; and no desire to bombard.  So attack!
 					if (AI_stackAttackCity(iAttackRatio))
-					{
 						return;
-					}
-				}
-				// K-Mod end
-			}
-
-			/* original bbai code. (this code is mostly duplicated, and because of where it is, it can cause AI confusion.)
-			if( iComparePostBombard < iAttackRatio )
-			{
-				// If not strong enough, pillage around target city without exposing ourselves
-				if( AI_pillageRange(0, 0, iMoveFlags) )
-				{
-					return;
-				}
-				
-				if( AI_anyAttack(1, 60, iMoveFlags, 0, false, false) )
-				{
-					return;
-				}
-
-				if (AI_heal(30, 1))
-				{
-					return;
-				}
-
-				// Pillage around enemy city
-				if( AI_pillageAroundCity(pTargetCity, 11, iMoveFlags, 3) )
-				{
-					return;
-				}
-
-				if (AI_pillageAroundCity(pTargetCity, 0, iMoveFlags, 5))
-				{
-					return;
-				}
-
-				if( AI_choke(1) )
-				{
-					return;
 				}
 			}
-			else
-			{
-				if( AI_goToTargetCity(iMoveFlags,4,pTargetCity) )
-				{
-					return;
-				}
-			} */
-			// K-Mod
+
 			if (iComparePostBombard >= iAttackRatio && AI_goToTargetCity(iMoveFlags, 4, pTargetCity))
 				return;
 			// K-Mod end
@@ -24502,7 +24442,7 @@ bool CvUnitAI::AI_stackAttackCity(int iPowerThreshold)
 
 		FAssert(!atPlot(pCityPlot));
 		AI_considerDOW(pCityPlot);
-		getGroup()->pushMission(MISSION_MOVE_TO, pCityPlot->getX_INLINE(), pCityPlot->getY_INLINE(), MOVE_DIRECT_ATTACK);
+		getGroup()->pushMission(MISSION_MOVE_TO, pCityPlot->getX_INLINE(), pCityPlot->getY_INLINE(), pCityPlot->isVisibleEnemyDefender(this) ? MOVE_DIRECT_ATTACK : 0);
 		return true;
 	}
 
