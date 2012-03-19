@@ -1,6 +1,40 @@
-This is K-Mod version 1.22.
+This is K-Mod version 1.23.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.23 changelist
+
+Game
+
++ When a peace deal is signed, units are now only bumped after the trade is completed. This fixes several problems, for example, if the peace deal involves a city gift, the new owner of the city will not have their units bumped out of that city.
++ When a civ capitulates, the vassal's units will now be bumped out of the master's land. (Previously they were not bumped until the following turn.)
++ When a plot's best-build is an improvement that connects the bonus, other builds which connect the bonus will no longer be marked as recommended.
++ Added a button for accessing the BUG Options screen in the in-game main menu, and in the non-BUG options screen (only when in-game).
++ Added some loading-screen tips.
+
+
+AI
+
++ Moved the corporations section of AI_techValue so that it is still counted when other civs have the tech already!
++ Made some changes to religion value and overseas trade value in AI_techValue. (Astronomy will be significantly less attractive, and early religions will be slightly less attractive for non-religious flavour leaders.)
++ In AI_tech value, the random value of first-discoverer bonuses is now scaled based on how many other civs are able to research the tech. Some extra value is given base on leader flavour. (This applies to religions, free great people, and free techs.)
++ The AI will now consider the effects of vassals, colonies, and one-way trade routes, when considering whether or not to block foreign trade in AI_civicValue. Also, AI leaders with gold flavour will be optimistic about future free trade.
++ Leaders with growth flavour will now aim for slightly more populous cities.
++ Corporation speculation when choosing civics is now more weighted than before, but it is now only done by particular leaders.
++ Fixed an original BtS problem which prevented vassals from changing their war strategy from "attacked recently" to "attacked", and thus prevented them from building their own attack stacks.
++ The AI value of evasion on nuke units now scales depending on who has the ability to shoot down the nukes. This will make ICBMs more attractive to the AI until people start building SDI.
++ Made some adjustments in the AI for air-strikes, particularly for carrier groups.
++ Changed the default unit AI of berserkers from 'counter' to 'attack city'.
++ Fixed bug in AI_guardCoast which completely messed up the calculation for the best city.
++ Tightened the conditions used to decide whether an attack stack should reposition before the city attack. (Previously it would always reposition if the city had > 50% defence, even if there were no defenders!)
++ Fixed a minor problem in AI_stackAttackCity which sometimes resulted in issuing attack orders that could only be executed on the following turn.
++ Fixed a problem in the way the AI's group attacks are handled which sometimes caused the AI to attack with its second-best unit instead of its best.
++ AI_afterAttack will no longer take control of stacks larger than 2 units, even if the group leader has attacked already. (This will help the AI make better decisions when controlling stacks with mixed speeds.)
++ AI_afterAttack will now attempt to capture undefended cities and workers. (This allows the AI to use the "chop & drop" strategy, with gunships and paratroopers.)
++ Increased the AI's state religion inertia.
++ Slightly decreased the AI's tendency to switch civics.
++ Fixed a problem which sometimes caused the AI to switch to organized religion when it had no religion.
+
+--
 v1.22 changelist
 
 Game
