@@ -11694,14 +11694,16 @@ bool CvUnitAI::AI_guardCoast(bool bPrimaryOnly, int iFlags, int iMaxPath)
 		}
 
 		int iBaseValue = iCoastPlots > 0
-			? 1000 * pLoopCity->AI_neededDefenders() / (iCoastPlots + 2) // arbitrary units
+			? 1000 * pLoopCity->AI_neededDefenders() / (iCoastPlots + 3) // arbitrary units (AI_cityValue is a bit slower)
 			: 0;
+
+		iBaseValue /= kOwner.AI_isLandWar(pLoopCity->area()) ? 2 : 1;
 
 		if (iBaseValue <= iBestValue)
 			continue;
 
-		iBestValue *= 3;
-		iBestValue /= 3 + kOwner.AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GUARD_COAST, getGroup(), 1);
+		iBaseValue *= 4;
+		iBaseValue /= 4 + kOwner.AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GUARD_COAST, getGroup(), 1);
 
 		if (iBaseValue <= iBestValue)
 			continue;
@@ -11715,7 +11717,8 @@ bool CvUnitAI::AI_guardCoast(bool bPrimaryOnly, int iFlags, int iMaxPath)
 
 			int iValue = iBaseValue;
 
-			iValue /= pAdjacentPlot->getBonusType(getTeam()) == NO_BONUS ? 2 : 1;
+			iValue *= 2;
+			iValue /= pAdjacentPlot->getBonusType(getTeam()) == NO_BONUS ? 3 : 2;
 			iValue *= 3;
 			iValue /= std::max(3, (atPlot(pAdjacentPlot) ? 1-getGroup()->getNumUnits() : 1)+pAdjacentPlot->plotCount(PUF_isMissionAIType, MISSIONAI_GUARD_COAST, -1, getOwnerINLINE()));
 
@@ -11723,7 +11726,7 @@ bool CvUnitAI::AI_guardCoast(bool bPrimaryOnly, int iFlags, int iMaxPath)
 			if (iValue > iBestValue && generatePath(pAdjacentPlot, iFlags, true, &iPathTurns, iMaxPath))
 			{
 				iValue *= 4;
-				iValue /= 4 + iPathTurns;
+				iValue /= 3 + iPathTurns;
 
 				if (iValue > iBestValue)
 				{

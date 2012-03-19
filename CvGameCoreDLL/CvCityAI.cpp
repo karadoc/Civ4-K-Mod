@@ -10771,7 +10771,7 @@ int CvCityAI::AI_getHappyFromHurry(HurryTypes eHurry, BuildingTypes eBuilding, b
 // note: units ~ commerce x100
 int CvCityAI::AI_cityValue() const
 {
-
+	PROFILE_FUNC();
 	/* original bts code
 	AreaAITypes eAreaAI = area()->getAreaAIType(getTeam());
     if ((eAreaAI == AREAAI_OFFENSIVE) || (eAreaAI == AREAAI_MASSING) || (eAreaAI == AREAAI_DEFENSIVE))
