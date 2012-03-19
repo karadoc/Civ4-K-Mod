@@ -290,24 +290,6 @@ class AutoLogEvent(AbstractAutoLogEvent):
 				CyInterface().addMessage(CyGame().getActivePlayer(), True, 10, message, None, 2, None, ColorTypes(8), 0, 0, False, False)
 				return 1
 
-			'Check if ALT + T was hit == testing!'
-#			if (theKey == int(InputTypes.KB_T)
-#			and self.eventMgr.bAlt):
-#				message = "Civ / Civic %i %i %i" % (0, 0, self.CIVCivics[0])
-#				CyInterface().addMessage(CyGame().getActivePlayer(), True, 10, message, None, 2, None, ColorTypes(8), 0, 0, False, False)
-
-#				self.storeStuff()
-#				return 1
-
-			'Check if ALT + T was hit == testing!'
-			if (theKey == int(InputTypes.KB_T)
-			and self.eventMgr.bAlt):
-				for i in range(0, 126):   #range(0,1000000):
-					ci = gc.getColorInfo(i)
-					ci2 = "XML Val %i %s" % (i, ci.getXmlVal())
-					print ci2
-
-
 	def onLoadGame(self, argsList):
 		self.bHumanPlaying = True
 		self.bHumanEndTurn = False

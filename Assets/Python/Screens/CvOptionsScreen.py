@@ -5,7 +5,6 @@
 
 import CvUtil
 from CvPythonExtensions import *
-import BugOptionsScreen
 
 # globals
 gc = CyGlobalContext()
