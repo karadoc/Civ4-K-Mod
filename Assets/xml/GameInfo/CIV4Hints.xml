@@ -451,5 +451,20 @@
 		<HintInfo>
 			<Description>TXT_KEY_KMOD_HINT_7</Description>
 		</HintInfo>
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_8</Description>
+		</HintInfo>
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_9</Description>
+		</HintInfo>
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_10</Description>
+		</HintInfo>
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_11</Description>
+		</HintInfo>
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_12</Description>
+		</HintInfo>
 	</HintInfos>
 </Civ4Hints>
