@@ -12057,6 +12057,19 @@ int CvPlayerAI::AI_nukeWeight() const
 
 	return iNukeWeight;
 }
+
+bool CvPlayerAI::AI_isLandWar(CvArea* pArea) const
+{
+	switch(pArea->getAreaAIType(getTeam()))
+	{
+	case AREAAI_OFFENSIVE:
+	case AREAAI_MASSING:
+	case AREAAI_DEFENSIVE:
+		return true;
+	default:
+		return false;
+	}
+}
 // K-Mod end
 
 int CvPlayerAI::AI_adjacentPotentialAttackers(CvPlot* pPlot, bool bTestCanMove) const
@@ -18348,7 +18361,14 @@ void CvPlayerAI::AI_doSplit()
 
 	for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
-		mapAreaValues[pLoopCity->area()->getID()] += pLoopCity->AI_cityValue();
+		//mapAreaValues[pLoopCity->area()->getID()] += pLoopCity->AI_cityValue();
+		// K-Mod
+		// we don't consider splitting empire while there is a land war. (this check use to be in AI_cityValue)
+		if (!AI_isLandWar(pLoopCity->area()))
+		{
+			mapAreaValues[pLoopCity->getArea()] += pLoopCity->AI_cityValue();
+		}
+		// K-Mod end
 	}
 
 	std::map<int, int>::iterator it;
@@ -21326,7 +21346,8 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 /*                                                                                              */
 /* War strategy AI, Victory Strategy AI                                                         */
 /************************************************************************************************/
-	if( pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE || pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE || pArea->getAreaAIType(getTeam()) == AREAAI_MASSING )
+	//if( pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE || pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE || pArea->getAreaAIType(getTeam()) == AREAAI_MASSING )
+	if (AI_isLandWar(pArea)) // K-Mod
 	{
 		if( iAreaCities <= std::min(4, pArea->getNumCities()/3) )
 		{
