@@ -239,7 +239,8 @@ int getLandPlotsScore(int iLandPlots);									// Exposed to Python
 int getTechScore(TechTypes eTech);											// Exposed to Python
 int getWonderScore(BuildingClassTypes eWonderClass);		// Exposed to Python
 
-ImprovementTypes finalImprovementUpgrade(ImprovementTypes eImprovement, int iCount = 0);		// Exposed to Python
+//ImprovementTypes finalImprovementUpgrade(ImprovementTypes eImprovement, int iCount = 0);		// Exposed to Python
+ImprovementTypes finalImprovementUpgrade(ImprovementTypes eImprovement); // Exposed to Python, K-Mod. (I've removed iCount here, and in the python defs. It's a meaningless parameter.)
 
 int getWorldSizeMaxConscript(CivicTypes eCivic);								// Exposed to Python
 

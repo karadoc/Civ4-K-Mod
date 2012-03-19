@@ -48,7 +48,7 @@ void CyGameCoreUtilsPythonInterface()
 	python::def("getLandPlotsScore", cyGetLandPlotsScore, "int (int iPopulation)");
 	python::def("getTechScore", cyGetTechScore, "int (int /*TechTypes*/ eTech)");
 	python::def("getWonderScore", cyGetWonderScore, "int (int /*BuildingClassTypes*/ eWonderClass)");
-	python::def("finalImprovementUpgrade", cyFinalImprovementUpgrade, "int /*ImprovementTypes*/ (int /*ImprovementTypes*/ eImprovement, int iCount)");
+	python::def("finalImprovementUpgrade", cyFinalImprovementUpgrade, "int /*ImprovementTypes*/ (int /*ImprovementTypes*/ eImprovement)");
 
 	python::def("getWorldSizeMaxConscript", cyGetWorldSizeMaxConscript, "int (int /*CivicTypes*/ eCivic)");
 	python::def("isReligionTech", cyIsReligionTech, "int (int /*TechTypes*/ eTech)");

@@ -1621,14 +1621,14 @@ void CvUnit::checkRemoveSelectionAfterAttack()
 
 bool CvUnit::isActionRecommended(int iAction)
 {
-	CvCity* pWorkingCity;
-	CvPlot* pPlot;
-	ImprovementTypes eImprovement;
-	ImprovementTypes eFinalImprovement;
-	BuildTypes eBuild;
-	RouteTypes eRoute;
-	BonusTypes eBonus;
-	int iIndex;
+	//CvCity* pWorkingCity;
+	//CvPlot* pPlot;
+	//ImprovementTypes eImprovement;
+	//ImprovementTypes eFinalImprovement;
+	//BuildTypes eBuild;
+	//RouteTypes eRoute;
+	//BonusTypes eBonus;
+	//int iIndex;
 
 	if (getOwnerINLINE() != GC.getGameINLINE().getActivePlayer())
 	{
@@ -1652,7 +1652,7 @@ bool CvUnit::isActionRecommended(int iAction)
 		return true;
 	}
 
-	pPlot = gDLL->getInterfaceIFace()->getGotoPlot();
+	CvPlot* pPlot = gDLL->getInterfaceIFace()->getGotoPlot();
 
 	if (pPlot == NULL)
 	{
@@ -1710,7 +1710,7 @@ bool CvUnit::isActionRecommended(int iAction)
 	{
 		if (pPlot->getOwnerINLINE() == getOwnerINLINE())
 		{
-			eBuild = ((BuildTypes)(GC.getActionInfo(iAction).getMissionData()));
+			BuildTypes eBuild = (BuildTypes)GC.getActionInfo(iAction).getMissionData();
 			FAssert(eBuild != NO_BUILD);
 			FAssertMsg(eBuild < GC.getNumBuildInfos(), "Invalid Build");
 
@@ -1721,25 +1721,24 @@ bool CvUnit::isActionRecommended(int iAction)
 					return true;
 				// K-Mod end
 
-				eImprovement = ((ImprovementTypes)(GC.getBuildInfo(eBuild).getImprovement()));
-				eRoute = ((RouteTypes)(GC.getBuildInfo(eBuild).getRoute()));
+				ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
+				RouteTypes eRoute = (RouteTypes)(GC.getBuildInfo(eBuild).getRoute());
 				//eBonus = pPlot->getBonusType(getTeam());
-				eBonus = pPlot->getNonObsoleteBonusType(getTeam()); // K-Mod
-				pWorkingCity = pPlot->getWorkingCity();
+				BonusTypes eBonus = pPlot->getNonObsoleteBonusType(getTeam()); // K-Mod
+				CvCity* pWorkingCity = pPlot->getWorkingCity();
 
 				// if (pPlot->getImprovementType() == NO_IMPROVEMENT) // Disabled by K-Mod (this looks like a bug to me)
 				{
-					if (pWorkingCity != NULL)
+					BuildTypes eBestBuild = NO_BUILD; // K-Mod. (I use this again later.)
+					if (pWorkingCity)
 					{
-						iIndex = pWorkingCity->getCityPlotIndex(pPlot);
+						int iIndex = pWorkingCity->getCityPlotIndex(pPlot);
+						FAssert(iIndex != -1); // K-Mod. this use to be an if statement in the release code
 
-						if (iIndex != -1)
-						{
-							if (pWorkingCity->AI_getBestBuild(iIndex) == eBuild)
-							{
-								return true;
-							}
-						}
+						eBestBuild = pWorkingCity->AI_getBestBuild(iIndex);
+
+						if (eBestBuild == eBuild)
+							return true;
 					}
 
 					if (eImprovement != NO_IMPROVEMENT)
@@ -1756,7 +1755,8 @@ bool CvUnit::isActionRecommended(int iAction)
 						// K-Mod
 						if (eBonus != NO_BONUS &&
 							!GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(pPlot->getImprovementType(), eBonus) &&
-							GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(eImprovement, eBonus))
+							GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(eImprovement, eBonus) &&
+							(eBestBuild == NO_BUILD || !GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement(), eBonus)))
 						{
 							return true;
 						}
@@ -1829,12 +1829,16 @@ bool CvUnit::isActionRecommended(int iAction)
 						}
 					}
 
+					/* original bts code
 					eFinalImprovement = eImprovement;
 
 					if (eFinalImprovement == NO_IMPROVEMENT)
 					{
 						eFinalImprovement = pPlot->getImprovementType();
-					}
+					} */
+					// K-Mod
+					ImprovementTypes eFinalImprovement = finalImprovementUpgrade(eImprovement != NO_IMPROVEMENT ? eImprovement : pPlot->getImprovementType());
+					// K-Mod end
 
 					if (eFinalImprovement != NO_IMPROVEMENT)
 					{

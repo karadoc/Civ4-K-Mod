@@ -401,6 +401,7 @@ int getWonderScore(BuildingClassTypes eWonderClass)
 	}
 }
 
+/* original bts code
 ImprovementTypes finalImprovementUpgrade(ImprovementTypes eImprovement, int iCount)
 {
 	FAssertMsg(eImprovement != NO_IMPROVEMENT, "Improvement is not assigned a valid value");
@@ -418,7 +419,23 @@ ImprovementTypes finalImprovementUpgrade(ImprovementTypes eImprovement, int iCou
 	{
 		return eImprovement;
 	}
+} */
+// K-Mod
+ImprovementTypes finalImprovementUpgrade(ImprovementTypes eImprovement)
+{
+	if (eImprovement == NO_IMPROVEMENT)
+		return NO_IMPROVEMENT;
+
+	FAssert(eImprovement < GC.getNumImprovementInfos());
+
+	int iLoopDetector = GC.getNumImprovementInfos();
+
+	while (GC.getImprovementInfo(eImprovement).getImprovementUpgrade() != NO_IMPROVEMENT && --iLoopDetector > 0)
+		eImprovement = (ImprovementTypes)GC.getImprovementInfo(eImprovement).getImprovementUpgrade();
+
+	return iLoopDetector == 0 ? NO_IMPROVEMENT : eImprovement;
 }
+// K-Mod end
 
 int getWorldSizeMaxConscript(CivicTypes eCivic)
 {
