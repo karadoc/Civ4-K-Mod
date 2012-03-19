@@ -3268,6 +3268,8 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 {
 	PROFILE_FUNC();
 
+	FAssert(!isBusy()); // K-Mod
+
 	CvPlot* pDestPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 
 	// K-Mod. Rather than clearing the existing path data; use a temporary pathfinder.
@@ -3390,7 +3392,8 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 							{
 								bFailedAlreadyFighting = true;
 							}
-							if (!pBestAttackUnit->isAttacking())
+							//if (!pBestAttackUnit->isCombat())
+							FAssert(!pBestAttackUnit->isCombat());
 							{
 								// we need to issue the attack order to start the attack
 								pBestAttackUnit->attack(pDestPlot, bStack);
@@ -3429,6 +3432,8 @@ bool CvSelectionGroup::groupAttack(int iX, int iY, int iFlags, bool& bFailedAlre
 void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUnit, bool bEndMove)
 {
 	//PROFILE_FUNC();
+
+	FAssert(!isBusy()); // K-Mod
 
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;

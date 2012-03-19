@@ -219,7 +219,7 @@ public:
 	// K-Mod end
 	virtual void AI_queueGroupAttack(int iX, int iY) = 0;
 	virtual void AI_cancelGroupAttack() = 0;
-	virtual bool AI_isGroupAttack() = 0;
+	virtual bool AI_isGroupAttack() const = 0; // K-Mod made const
 
 	virtual bool AI_isControlled() = 0;
 	virtual bool AI_isDeclareWar(const CvPlot* pPlot = NULL) = 0;
