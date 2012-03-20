@@ -1337,8 +1337,8 @@ void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, 
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 		// Plot danger cache
-		GC.getMapINLINE().invalidateIsTeamBorderCache(eTeam);
-		GC.getMapINLINE().invalidateIsTeamBorderCache(getID());
+		GC.getMapINLINE().invalidateBorderDangerCache(eTeam);
+		GC.getMapINLINE().invalidateBorderDangerCache(getID());
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -1728,8 +1728,8 @@ void CvTeam::makePeace(TeamTypes eTeam, bool bBumpUnits)
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 		// Plot danger cache
-		GC.getMapINLINE().invalidateIsTeamBorderCache(eTeam);
-		GC.getMapINLINE().invalidateIsTeamBorderCache(getID());
+		GC.getMapINLINE().invalidateBorderDangerCache(eTeam);
+		GC.getMapINLINE().invalidateBorderDangerCache(getID());
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/

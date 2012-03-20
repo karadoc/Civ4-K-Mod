@@ -1263,13 +1263,13 @@ void CvMap::invalidateIsActivePlayerNoDangerCache()
 
 		if( pLoopPlot != NULL )
 		{
-			pLoopPlot->setIsActivePlayerNoDangerCache(false);
+			pLoopPlot->setActivePlayerNoDangerCache(false);
 		}
 	}
 }
 
 
-void CvMap::invalidateIsTeamBorderCache(TeamTypes eTeam)
+void CvMap::invalidateBorderDangerCache(TeamTypes eTeam)
 {
 	PROFILE_FUNC();
 
@@ -1282,7 +1282,7 @@ void CvMap::invalidateIsTeamBorderCache(TeamTypes eTeam)
 
 		if( pLoopPlot != NULL )
 		{
-			pLoopPlot->setIsTeamBorderCache(eTeam, false);
+			pLoopPlot->setBorderDangerCache(eTeam, false);
 		}
 	}
 }

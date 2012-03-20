@@ -268,7 +268,7 @@ public:
 /************************************************************************************************/
 	// Plot danger cache
 	void invalidateIsActivePlayerNoDangerCache();
-	void invalidateIsTeamBorderCache(TeamTypes eTeam);
+	void invalidateBorderDangerCache(TeamTypes eTeam);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/

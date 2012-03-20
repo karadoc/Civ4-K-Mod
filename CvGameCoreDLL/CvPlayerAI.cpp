@@ -25,26 +25,7 @@
 #include "FAStarNode.h"
 #include "CvEventReporter.h"
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 #include "BetterBTSAI.h"
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/21/09                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-// Plot danger cache
-//#define DANGER_RANGE						(4)
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 #define GREATER_FOUND_RANGE			(5)
 #define CIVIC_CHANGE_DELAY			(20) // was 25
@@ -4077,6 +4058,10 @@ bool CvPlayerAI::AI_isCommercePlot(CvPlot* pPlot) const
 // The border cache is done by team and works for all game types.  The border cache is reset for all
 // plots when war or peace are declared, and reset over a limited range whenever a ownership over a plot
 // changes.
+
+// K-Mod. The cache also needs to be reset when routes are destroyed, because distance 2 border danger only counts when there is a route.
+// (Actually, the cache doesn't need to be cleared when war is declared; because false negatives have no impact with this cache.)
+// (In general, I think this cache is a poorly planned idea. It's prone to subtle bugs if there are rule changes in seemingly independant parts of the games.)
 bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) const
 {
 	PROFILE_FUNC();
@@ -4088,7 +4073,7 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves)
 
 	if( bTestMoves && isTurnActive() )
 	{
-		if( (iRange <= DANGER_RANGE) && pPlot->isActivePlayerNoDangerCache() )
+		if( (iRange <= DANGER_RANGE) && pPlot->getActivePlayerNoDangerCache() )
 		{
 			return false;
 		}
@@ -4096,14 +4081,15 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves)
 
 	TeamTypes eTeam = getTeam();
 	//bool bCheckBorder = (!isHuman() && !pPlot->isCity());
-	// K-Mod. I don't want auto-workers on the frontline. Cities need to be excluded for some legacy AI code.
+	// K-Mod. I don't want auto-workers on the frontline. Cities need to be excluded for some legacy AI code. (cf. condition in AI_getPlotDanger)
 	bool bCheckBorder = !pPlot->isCity() && (!isHuman() || pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0);
 	// K-Mod end
 
 	
 	if( bCheckBorder )
 	{
-		if( (iRange >= DANGER_RANGE) && pPlot->isTeamBorderCache(eTeam) )
+		//if( (iRange >= DANGER_RANGE) && pPlot->isTeamBorderCache(eTeam) )
+		if (iRange >= BORDER_DANGER_RANGE && pPlot->getBorderDangerCache(eTeam)) // K-Mod. border danger doesn't count anything further than range 2.
 		{
 			return true;
 		}
@@ -4132,23 +4118,48 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves)
 					{
 						if (atWar(pLoopPlot->getTeam(), eTeam))
 						{
-							// Border cache is reversible, set for both team and enemy
+							/* original bbai code
+							// Border cache is reversible, set for both team and enemy.
 							if (iDistance == 1)
 							{
-								pPlot->setIsTeamBorderCache(eTeam, true);
-								pPlot->setIsTeamBorderCache(pLoopPlot->getTeam(), true);
-								pLoopPlot->setIsTeamBorderCache(eTeam, true);
-								pLoopPlot->setIsTeamBorderCache(pLoopPlot->getTeam(), true);
+								pPlot->setBorderDangerCache(eTeam, true);
+								pPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+								pLoopPlot->setBorderDangerCache(eTeam, true);
+								pLoopPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
 								return true;
 							}
 							else if ((iDistance == 2) && (pLoopPlot->isRoute()))
 							{
-								pPlot->setIsTeamBorderCache(eTeam, true);
-								pPlot->setIsTeamBorderCache(pLoopPlot->getTeam(), true);
-								pLoopPlot->setIsTeamBorderCache(eTeam, true);
-								pLoopPlot->setIsTeamBorderCache(pLoopPlot->getTeam(), true);
+								pPlot->setBorderDangerCache(eTeam, true);
+								pPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+								pLoopPlot->setBorderDangerCache(eTeam, true);
+								pLoopPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+								return true;
+							} */
+							// K-Mod. reversible my arse.
+							if (iDistance == 1)
+							{
+								pPlot->setBorderDangerCache(eTeam, true);
+								pLoopPlot->setBorderDangerCache(eTeam, true); // pLoopPlot is in enemy territory, so this is fine.
+								if (pPlot->getTeam() == eTeam) // only set the cache for the pLoopPlot team if pPlot is owned by us! (ie. owned by their enemy)
+								{
+									pLoopPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+									pPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+								}
 								return true;
 							}
+							else if (iDistance == 2 && pLoopPlot->isRoute())
+							{
+								pPlot->setBorderDangerCache(eTeam, true);
+								pLoopPlot->setBorderDangerCache(eTeam, true); // owned by our enemy
+								if (pPlot->isRoute() && pPlot->getTeam() == eTeam)
+								{
+									pLoopPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+									pPlot->setBorderDangerCache(pLoopPlot->getTeam(), true);
+								}
+								return true;
+							}
+							// K-Mod end
 						}
 					}
 
@@ -4211,7 +4222,7 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves)
 		{
 			if( !(GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS)) && (GC.getGameINLINE().getNumGameTurnActive() == 1) )
 			{
-				pPlot->setIsActivePlayerNoDangerCache(true);
+				pPlot->setActivePlayerNoDangerCache(true);
 			}
 		}
 	}
@@ -4245,7 +4256,7 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 
 	if( bTestMoves && isTurnActive() )
 	{
-		if( (iRange <= DANGER_RANGE) && pPlot->isActivePlayerNoDangerCache() )
+		if( (iRange <= DANGER_RANGE) && pPlot->getActivePlayerNoDangerCache() )
 		{
 			return 0;
 		}
@@ -4329,9 +4340,10 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 	    {
             iCount += iBorderDanger;
 	    } */
-		// K-Mod. I don't want auto-workers on the frontline. So unless the plot is defended, or a water, count border danger for humans too.
+		// K-Mod. I don't want auto-workers on the frontline. So count border danger for humans too, unless the plot is defended.
 		// but on the other hand, I don't think two border tiles are really more dangerous than one border tile.
-		if (!isHuman() || (!pPlot->isWater() && pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0))
+		// (cf. condition used in AI_anyPlotDanger. Note that here we still count border danger in cities - because I want it for AI_cityThreat)
+		if (!isHuman() || pPlot->plotCount(PUF_canDefend, -1, -1, getID(), NO_TEAM) == 0)
 			iCount++;
 		// K-Mod end
 	}

@@ -50,7 +50,7 @@ CvPlot::CvPlot()
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	m_abIsTeamBorderCache = new bool[MAX_TEAMS];
+	m_abBorderDangerCache = new bool[MAX_TEAMS];
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -97,7 +97,7 @@ CvPlot::~CvPlot()
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	SAFE_DELETE_ARRAY(m_abIsTeamBorderCache);
+	SAFE_DELETE_ARRAY(m_abBorderDangerCache);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -235,11 +235,11 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	m_bIsActivePlayerNoDangerCache = false;
+	m_bActivePlayerNoDangerCache = false;
 
 	for (iI = 0; iI < MAX_TEAMS; iI++)
 	{
-		m_abIsTeamBorderCache[iI] = false;
+		m_abBorderDangerCache[iI] = false;
 	}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -3151,36 +3151,39 @@ int CvPlot::calculatePathDistanceToPlot( TeamTypes eTeam, CvPlot* pTargetPlot )
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-bool CvPlot::isActivePlayerNoDangerCache() const
+bool CvPlot::getActivePlayerNoDangerCache() const
 {
-	return m_bIsActivePlayerNoDangerCache;
+	return m_bActivePlayerNoDangerCache;
 }
 
-bool CvPlot::isTeamBorderCache( TeamTypes eTeam ) const
+void CvPlot::setActivePlayerNoDangerCache( bool bNewValue )
 {
-	return m_abIsTeamBorderCache[eTeam];
+	m_bActivePlayerNoDangerCache = bNewValue;
 }
 
-void CvPlot::setIsActivePlayerNoDangerCache( bool bNewValue )
+// K-Mod. I've changed the purpose of this function - because this is the way it is always used...
+void CvPlot::invalidateBorderDangerCache()
 {
-	PROFILE_FUNC();
-	m_bIsActivePlayerNoDangerCache = bNewValue;
-}
-
-void CvPlot::setIsTeamBorderCache( TeamTypes eTeam, bool bNewValue )
-{
-	PROFILE_FUNC();
-	m_abIsTeamBorderCache[eTeam] = bNewValue;
-}
-
-void CvPlot::invalidateIsTeamBorderCache()
-{
-	PROFILE_FUNC();
-
-	for( int iI = 0; iI < MAX_TEAMS; iI++ )
+	/* for( int iI = 0; iI < MAX_TEAMS; iI++ )
 	{
-		m_abIsTeamBorderCache[iI] = false;
+		m_abBorderDangerCache[iI] = false;
+	} */
+	for (int iDX = -BORDER_DANGER_RANGE; iDX <= BORDER_DANGER_RANGE; iDX++)
+	{
+		for (int iDY = -BORDER_DANGER_RANGE; iDY <= BORDER_DANGER_RANGE; iDY++)
+		{
+			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+
+			if (pLoopPlot)
+			{
+				for (TeamTypes i = (TeamTypes)0; i < MAX_TEAMS; i = (TeamTypes)(i+1))
+				{
+					pLoopPlot->setBorderDangerCache(i, false);
+				}
+			}
+		}
 	}
+	//
 }
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -5081,28 +5084,18 @@ void CvPlot::setOwner(PlayerTypes eNewValue, bool bCheckUnits, bool bUpdatePlotG
 		}
 
 		
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/21/09                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-		// Plot danger cache
-		CvPlot* pLoopPlot;
-		for (int iDX = -(DANGER_RANGE); iDX <= DANGER_RANGE; iDX++)
+		// BBAI / K-Mod. Plot danger cache.
+		for (int iDX = -BORDER_DANGER_RANGE; iDX <= BORDER_DANGER_RANGE; iDX++)
 		{
-			for (int iDY = -(DANGER_RANGE); iDY <= (DANGER_RANGE); iDY++)
+			for (int iDY = -BORDER_DANGER_RANGE; iDY <= BORDER_DANGER_RANGE; iDY++)
 			{
-				pLoopPlot	= plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+				CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
-				if (pLoopPlot != NULL)
-				{
-					pLoopPlot->invalidateIsTeamBorderCache();
-				}
+				if (pLoopPlot)
+					pLoopPlot->invalidateBorderDangerCache();
 			}
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		// BBAI / K-Mod end
 		
 		updateSymbols();
 	}
@@ -5851,6 +5844,11 @@ void CvPlot::setRouteType(RouteTypes eNewValue, bool bUpdatePlotGroups)
 		{
 			CvEventReporter::getInstance().routeBuilt(getRouteType(), getX_INLINE(), getY_INLINE());
 		}
+
+		// K-Mod. Fixing a bug in the border danger cache from BBAI.
+		if (bOldRoute && !isRoute())
+			invalidateBorderDangerCache();
+		// K-Mod end
 	}
 }
 
@@ -9027,8 +9025,13 @@ void CvPlot::read(FDataStreamBase* pStream)
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	m_bIsActivePlayerNoDangerCache = false;
-	invalidateIsTeamBorderCache();
+	m_bActivePlayerNoDangerCache = false;
+	//invalidateBorderDangerCache();
+	// K-Mod. I've changed the purpose of invalidateBorderDangerCache. It is no longer appropriate for this.
+	for (int i = 0; i < MAX_TEAMS; i++)
+	{
+		m_abBorderDangerCache[i] = false;
+	}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/

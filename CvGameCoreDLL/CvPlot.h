@@ -155,12 +155,12 @@ public:
 /*                                                                                              */
 /* Efficiency                                                                                   */
 /************************************************************************************************/
-	// Plot danger cache
-	bool isActivePlayerNoDangerCache() const;
-	bool isTeamBorderCache( TeamTypes eTeam ) const;
-	void setIsActivePlayerNoDangerCache( bool bNewValue );
-	void setIsTeamBorderCache( TeamTypes eTeam, bool bNewValue );
-	void invalidateIsTeamBorderCache();
+	// Plot danger cache (renamed and edited for K-Mod)
+	bool getActivePlayerNoDangerCache() const;
+	void setActivePlayerNoDangerCache( bool bNewValue );
+	inline bool getBorderDangerCache(TeamTypes eTeam) const { return m_abBorderDangerCache[eTeam]; }
+	inline void setBorderDangerCache(TeamTypes eTeam, bool bNewValue) { m_abBorderDangerCache[eTeam] = bNewValue; }
+	void invalidateBorderDangerCache();
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -575,8 +575,8 @@ protected:
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	bool m_bIsActivePlayerNoDangerCache;
-	bool* m_abIsTeamBorderCache;
+	bool m_bActivePlayerNoDangerCache;
+	bool* m_abBorderDangerCache;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
