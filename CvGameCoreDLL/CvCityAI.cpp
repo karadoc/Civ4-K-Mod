@@ -1048,11 +1048,11 @@ void CvCityAI::AI_chooseProduction()
 	}
 	// also, reduce the value to encourage early expansion until we reach the recommend city target
 	{
-		int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
-		if (iNumAreaCitySites > 0 && kPlayer.getNumCities() < iTargetCities)
+		int iCitiesTarget = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+		if (iNumAreaCitySites > 0 && kPlayer.getNumCities() < iCitiesTarget)
 		{
-			iBestBuildingValue *= kPlayer.getNumCities() + iTargetCities;
-			iBestBuildingValue /= 2*iTargetCities;
+			iBestBuildingValue *= kPlayer.getNumCities() + iCitiesTarget;
+			iBestBuildingValue /= 2*iCitiesTarget;
 		}
 	}
 
@@ -3661,6 +3661,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	int iTotalPopulation = kOwner.getTotalPopulation();
 	int iNumCities = kOwner.getNumCities();
 	int iNumCitiesInArea = area()->getCitiesPerPlayer(getOwnerINLINE());
+	int iCitiesTarget = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities(); // K-Mod
 	
 	bool bIsHighProductionCity = (findBaseYieldRateRank(YIELD_PRODUCTION) <= std::max(3, (iNumCities / 2)));
 	
@@ -3880,11 +3881,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				/*iValue += (kBuilding.getAreaHappiness() * (iNumCitiesInArea - 1) * 8);
 				iValue += (kBuilding.getGlobalHappiness() * iNumCities * 8);*/
 				// K-Mod - just a tweak.. nothing fancy.
-				{
-					int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
-					iValue += kBuilding.getAreaHappiness() * (iNumCitiesInArea + iTargetCities/3) * 8;
-					iValue += kBuilding.getGlobalHappiness() * (iNumCities + iTargetCities/2) * 8;
-				}
+				iValue += kBuilding.getAreaHappiness() * (iNumCitiesInArea + iCitiesTarget/3) * 8;
+				iValue += kBuilding.getGlobalHappiness() * (iNumCities + iCitiesTarget/2) * 8;
 				// K-Mod end
 
 				int iWarWearinessPercentAnger = kOwner.getWarWearinessPercentAnger();
@@ -4586,9 +4584,10 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(kBuilding.getFreeBuildingClass());
 						if (NO_BUILDING != eFreeBuilding)
 						{
-							// K-Mod note: this is actually a pretty poor approximation, because the value of the free building is likely to be different in the other cities
+							// K-Mod note: this is actually a pretty poor approximation, because the value of the free building is likely to be different in the other cities.
+							// also, if the free building is very powerful, then our other cities will probably build it themselves before they get the freebie! (that's why I reduce the city count below)
 							int iFreeBuildingValue = std::min(AI_buildingValue(eFreeBuilding, 0, 0, bConstCache, false), kOwner.getProductionNeeded(eFreeBuilding)/2);
-							iValue += iFreeBuildingValue * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass()));
+							iValue += iFreeBuildingValue * (std::max(iCitiesTarget, kOwner.getNumCities()*2/3) - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass()));
 						}
 					}
 					//

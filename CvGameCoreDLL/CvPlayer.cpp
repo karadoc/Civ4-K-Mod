@@ -14504,10 +14504,10 @@ int CvPlayer::getEspionageMissionBaseCost(EspionageMissionTypes eMission, Player
 					// maybe getReligionPopulation would be slightly better, but it's a bit slower.
 					int iCurrent = GET_PLAYER(eTargetPlayer).getHasReligionCount(eCurrentReligion);
 					int iNew = GET_PLAYER(eTargetPlayer).getHasReligionCount(eReligion);
-					int iTargetCities = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+					int iCitiesTarget = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
 					FAssert(iCurrent > 0 && iNew > 0);
-					iMissionCost *= std::max(iCurrent, iNew) + iTargetCities;
-					iMissionCost /= iNew + iTargetCities;
+					iMissionCost *= std::max(iCurrent, iNew) + iCitiesTarget;
+					iMissionCost /= iNew + iCitiesTarget;
 				}
 				// K-Mod end
 			}
