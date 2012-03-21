@@ -2813,7 +2813,7 @@ void CvUnitAI::AI_paratrooperMove()
 	return;
 }
 
-// This function has been heavily edited by BBAI and K-Mod
+// This function has been heavily edited by K-Mod and by BBAI
 void CvUnitAI::AI_attackCityMove()
 {
 	PROFILE_FUNC();
@@ -2955,7 +2955,7 @@ void CvUnitAI::AI_attackCityMove()
 	CvCity* pTargetCity = NULL;
 	if( isBarbarian() )
 	{
-		pTargetCity = AI_pickTargetCity(iMoveFlags, 12);
+		pTargetCity = AI_pickTargetCity(iMoveFlags, 10); // was 12 (K-Mod)
 	}
 	else
 	{
@@ -3366,6 +3366,7 @@ void CvUnitAI::AI_attackCityMove()
 
 	if (bReadyToAttack)
 	{
+		/* BBAI code
 		if( isBarbarian() )
 		{
 			if (AI_goToTargetCity(iMoveFlags, 12))
@@ -3383,13 +3384,21 @@ void CvUnitAI::AI_attackCityMove()
 				return;
 			}
 		}
-		/* BBAI code
 		else if (bHuntBarbs && AI_goToTargetBarbCity((bAnyWarPlan ? 7 : 12)))
 		{
 			return;
 		}
 		else if (bLandWar && pTargetCity != NULL) */
-		else if (pTargetCity) // K-Mod. Just go to the target city. Barb or not.
+		// K-Mod
+		if (isBarbarian())
+		{
+			if (pTargetCity && AI_goToTargetCity(iMoveFlags, 12, pTargetCity)) // target city has already been calculated.
+				return;
+			if (AI_pillageRange(3, 0, iMoveFlags))
+				return;
+		}
+		else if (pTargetCity)
+		// K-Mod end
 		{
 			// Before heading out, check whether to wait to allow unit upgrades
 			if( bInCity && plot()->getOwnerINLINE() == getOwnerINLINE() )
@@ -3449,10 +3458,20 @@ void CvUnitAI::AI_attackCityMove()
 				{
 					return;
 				}
-				// K-Mod end
 
 				if (bAnyWarPlan)
 				{
+					// We're at war, but we failed to walk to the target. Before we start wigging out, lets just check one more thing...
+					if (bTargetTooStrong && iStepDistToTarget == 1)
+					{
+						// we're standing outside the city already, but we can't capture it and we can't pillage or choke it.
+						// I guess we'll just wait for reinforcements to arrive.
+						if (AI_safety())
+							return;
+						getGroup()->pushMission(MISSION_SKIP);
+						return;
+					}
+
 					CvCity* pTargetCity = area()->getTargetCity(getOwnerINLINE());
 
 					if (pTargetCity != NULL)
@@ -3467,6 +3486,7 @@ void CvUnitAI::AI_attackCityMove()
 					}
 				}
 			}
+			// K-Mod end
 		}
 	}
 	else
