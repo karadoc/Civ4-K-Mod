@@ -1724,30 +1724,25 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 				// but that seems like overkill. I'm worried it would be too slow.
 
 				// defence for units who stay behind after attacking an enemy.
-				//if (pSelectionGroup->AI_isControlled()) // let human players have this convenience...
-				if (pSelectionGroup->AI_isControlled() || parent->m_iKnownCost != 0) // but not for the first step.
+				if (iEnemies > 0)
 				{
-					if (pLoopUnit->canAttack())
+					// For human-controlled units, only apply the following effects for multi-step moves.
+					// (otherwise this might prevent the user from attacking from where they want to attack from.)
+					if (pSelectionGroup->AI_isControlled() || parent->m_iKnownCost != 0 || iFlags & MOVE_HAS_STEPPED)
 					{
-						if (iEnemies > 0)
+						iAttackCount++;
+						iFromDefenceMod += pLoopUnit->noDefensiveBonus() ? 0 : pFromPlot->defenseModifier(eTeam, false);
+
+						if (!pFromPlot->isCity())
 						{
-							iAttackCount++;
-							iFromDefenceMod += pLoopUnit->noDefensiveBonus() ? 0 : pFromPlot->defenseModifier(eTeam, false);
+							iAttackWeight += PATH_CITY_WEIGHT;
+							// it's done this way around rather than subtracting when in a city so that the overall adjustment can't be negative.
+						}
 
-							if (!pFromPlot->isCity())
-							{
-								iAttackWeight += PATH_CITY_WEIGHT;
-								// it's done this way around rather than subtracting when in a city so that the overall adjustment can't be negative.
-							}
-
-							if (pFromPlot->isRiverCrossing(directionXY(pFromPlot, pToPlot)))
-							{
-								if (!pLoopUnit->isRiver())
-								{
-									iAttackWeight -= PATH_RIVER_WEIGHT * GC.getRIVER_ATTACK_MODIFIER(); // Note, river modifier will be negative.
-									//iAttackMod -= (PATH_MOVEMENT_WEIGHT * iMovesLeft);
-								}
-							}
+						if (pLoopUnit->canAttack() && !pLoopUnit->isRiver() && pFromPlot->isRiverCrossing(directionXY(pFromPlot, pToPlot)))
+						{
+							iAttackWeight -= PATH_RIVER_WEIGHT * GC.getRIVER_ATTACK_MODIFIER(); // Note, river modifier will be negative.
+							//iAttackMod -= (PATH_MOVEMENT_WEIGHT * iMovesLeft);
 						}
 					}
 				}

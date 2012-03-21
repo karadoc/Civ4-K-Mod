@@ -1707,6 +1707,7 @@ bool CvSelectionGroup::continueMission_step(int iSteps)
 			switch (headMissionQueueNode()->m_data.eMissionType)
 			{
 			case MISSION_MOVE_TO:
+				headMissionQueueNode()->m_data.iFlags |= MOVE_HAS_STEPPED; // K-Mod
 				if (at(headMissionQueueNode()->m_data.iData1, headMissionQueueNode()->m_data.iData2))
 				{
 					bDone = true;
