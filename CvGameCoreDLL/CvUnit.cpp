@@ -1863,11 +1863,6 @@ bool CvUnit::isActionRecommended(int iAction)
 }
 
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency, Lead From Behind                                                                 */
-/************************************************************************************************/
 // From Lead From Behind by UncutDragon
 // original
 //bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttacker) const
@@ -1957,23 +1952,13 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 	{
 		if (!(pAttacker->immuneToFirstStrikes()))
 		{
-			// UncutDragon
-			// original
-			//iOurDefense *= ((((firstStrikes() * 2) + chanceFirstStrikes()) * ((GC.getDefineINT("COMBAT_DAMAGE") * 2) / 5)) + 100);
-			// modified
-			iOurDefense *= ((((firstStrikes() * 2) + chanceFirstStrikes()) * ((GC.getCOMBAT_DAMAGE() * 2) / 5)) + 100);
-			// /UncutDragon
+			iOurDefense *= 100 + (firstStrikes() * 2 + chanceFirstStrikes()) * GC.getCOMBAT_DAMAGE() * 2 / 5;
 			iOurDefense /= 100;
 		}
 
 		if (immuneToFirstStrikes())
 		{
-			// UncutDragon
-			// original
-			//iOurDefense *= ((((pAttacker->firstStrikes() * 2) + pAttacker->chanceFirstStrikes()) * ((GC.getDefineINT("COMBAT_DAMAGE") * 2) / 5)) + 100);
-			// modified
-			iOurDefense *= ((((pAttacker->firstStrikes() * 2) + pAttacker->chanceFirstStrikes()) * ((GC.getCOMBAT_DAMAGE() * 2) / 5)) + 100);
-			// /UncutDragon
+			iOurDefense *= 100 + (pAttacker->firstStrikes() * 2 + pAttacker->chanceFirstStrikes()) * GC.getCOMBAT_DAMAGE() * 2 / 5;
 			iOurDefense /= 100;
 		}
 	}
@@ -2012,23 +1997,13 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 	{
 		if (!(pAttacker->immuneToFirstStrikes()))
 		{
-			// UncutDragon
-			// original
-			//iTheirDefense *= ((((pDefender->firstStrikes() * 2) + pDefender->chanceFirstStrikes()) * ((GC.getDefineINT("COMBAT_DAMAGE") * 2) / 5)) + 100);
-			// modified
-			iTheirDefense *= ((((pDefender->firstStrikes() * 2) + pDefender->chanceFirstStrikes()) * ((GC.getCOMBAT_DAMAGE() * 2) / 5)) + 100);
-			// /UncutDragon
+			iTheirDefense *= 100 + (pDefender->firstStrikes() * 2 + pDefender->chanceFirstStrikes()) * GC.getCOMBAT_DAMAGE() * 2 / 5;
 			iTheirDefense /= 100;
 		}
 
 		if (pDefender->immuneToFirstStrikes())
 		{
-			// UncutDragon
-			// original
-			//iTheirDefense *= ((((pAttacker->firstStrikes() * 2) + pAttacker->chanceFirstStrikes()) * ((GC.getDefineINT("COMBAT_DAMAGE") * 2) / 5)) + 100);
-			// modified
-			iTheirDefense *= ((((pAttacker->firstStrikes() * 2) + pAttacker->chanceFirstStrikes()) * ((GC.getCOMBAT_DAMAGE() * 2) / 5)) + 100);
-			// /UncutDragon
+			iTheirDefense *= 100 + (pAttacker->firstStrikes() * 2 + pAttacker->chanceFirstStrikes()) * GC.getCOMBAT_DAMAGE() * 2 / 5;
 			iTheirDefense /= 100;
 		}
 	}
@@ -2060,10 +2035,6 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 
 	return (iOurDefense > iTheirDefense);
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 bool CvUnit::canDoCommand(CommandTypes eCommand, int iData1, int iData2, bool bTestVisible, bool bTestBusy)
 {
@@ -13597,6 +13568,7 @@ int CvUnit::LFBgetDefenderOdds(const CvUnit* pAttacker) const
 	{
 		// This part is taken directly from the standard method
 		// Reduces value if a unit is carrying other units
+		/* (disabled by K-Mod)
 		int iAssetValue = std::max(1, getUnitInfo().getAssetValue());
 		int iCargoAssetValue = 0;
 		std::vector<CvUnit*> aCargoUnits;
@@ -13605,7 +13577,14 @@ int CvUnit::LFBgetDefenderOdds(const CvUnit* pAttacker) const
 		{
 			iCargoAssetValue += aCargoUnits[i]->getUnitInfo().getAssetValue();
 		}
-		iDefense = iDefense * iAssetValue / std::max(1, iAssetValue + iCargoAssetValue);
+		iDefense = iDefense * iAssetValue / std::max(1, iAssetValue + iCargoAssetValue); */
+
+		// K-Mod. The above code does not achieve the goal, which is to protect cargo-carrying ships from being killed first.
+		// The problem with the code is that when the odds of winning are very small, the artificial reduction is also very small;
+		// on the other hand, when the odds of winning are very great, the artificial reduction is huge. This is the opposite of what we want!
+		// We want to let the boats fight if they are going to win anyway, but give them protection if they would lose.
+
+		// I've added my own version of the value adjustment to LFBgetValueAdjustedOdds.
 	}
 
 	return iDefense;
@@ -13640,6 +13619,22 @@ int CvUnit::LFBgetValueAdjustedOdds(int iOdds, bool bDefender) const
 	int iRank = iOdds + iValueAdj + 10000;
 	// Note that the +10000 is just to try keeping it > 0 - doesn't really matter, other than that -1
 	// would be interpreted later as not computed yet, which would cause us to compute it again each time
+
+	// K-Mod. If this unit is a transport, reduce the value based on the risk of losing the cargo.
+	// (This replaces the adjustment from LFBgetDefenderOdds. For more info, see the comments in that function.)
+	if (hasCargo())
+	{
+		int iAssetValue = std::max(1, getUnitInfo().getAssetValue());
+		int iCargoAssetValue = 0;
+		std::vector<CvUnit*> aCargoUnits;
+		getCargoUnits(aCargoUnits);
+		for (uint i = 0; i < aCargoUnits.size(); ++i)
+		{
+			iCargoAssetValue += aCargoUnits[i]->getUnitInfo().getAssetValue();
+		}
+		iRank -= 2 * (1000 - iOdds) * iCargoAssetValue / std::max(1, iAssetValue + iCargoAssetValue);
+	}
+	// K-Mod end
 
 	return iRank;
 }
@@ -13684,6 +13679,8 @@ int CvUnit::LFBgetRelativeValueRating() const
 	return iValueRating;
 }
 
+// K-Mod. unit value adjustment based on how many defensive promotions are active on this plot.
+// (The purpose of this is to encourage experienced units to fight when their promotions are especially suited to the plot they are defending.)
 int CvUnit::LFGgetDefensiveValueAdjustment() const
 {
 	int iValue = 0;
@@ -13735,6 +13732,7 @@ int CvUnit::LFGgetDefensiveValueAdjustment() const
 
 	return iValue;
 }
+// K-Mod end
 
 int CvUnit::LFBgetDefenderCombatOdds(const CvUnit* pAttacker) const
 {

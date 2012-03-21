@@ -2702,12 +2702,7 @@ void getUnitAIString(CvWString& szString, UnitAITypes eUnitAI)
 	}
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-// From Lead From Behind by UncutDragon
+// Lead From Behind by UncutDragon
 typedef std::vector<int> LFBoddsAttOdds;
 typedef std::vector<LFBoddsAttOdds> LFBoddsDefRounds;
 typedef std::vector<LFBoddsDefRounds> LFBoddsAttRounds;
@@ -2840,7 +2835,8 @@ int LFBlookupCombatOdds(LFBoddsFirstStrike* pOdds, int iFSIndex, int iFirstStrik
 		int iMaxOdds = LFBlookupCombatOdds(pAttOdds, iMaxOddsIndex, iFirstStrikes, iNeededRoundsAttacker, iNeededRoundsDefender, iMaxOddsValue);
 		
 		// Do a simple weighted average on the two odds
-		iOdds += (((iAttackerOdds - iMinOddsValue) * (iMaxOdds - iOdds)) / LFB_ODDS_INTERVAL_SIZE);
+		//iOdds += (((iAttackerOdds - iMinOddsValue) * (iMaxOdds - iOdds)) / LFB_ODDS_INTERVAL_SIZE);
+		iOdds += ((iAttackerOdds - iMinOddsValue) * (iMaxOdds - iOdds) + LFB_ODDS_INTERVAL_SIZE/2) / LFB_ODDS_INTERVAL_SIZE; // K-Mod. (rounded rather than truncated)
 	}
 
 	return iOdds;
@@ -3021,6 +3017,4 @@ int LFBcalculateCombatOdds(int iFirstStrikes, int iNeededRoundsAttacker, int iNe
 
 	return iOdds;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+// lfb end
