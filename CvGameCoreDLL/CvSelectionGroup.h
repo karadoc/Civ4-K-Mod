@@ -48,7 +48,7 @@ public:
 	// K-Mod. Split continueMission into two functions to remove the recursion.
 	void continueMission();
 protected:
-	bool continueMission_step(int iSteps);
+	bool continueMission_bulk(int iSteps);
 public:
 	// K-Mod end
 

@@ -1492,13 +1492,14 @@ void CvSelectionGroup::startMission()
 void CvSelectionGroup::continueMission()
 {
 	int iSteps = 0;
-	while (continueMission_step(iSteps))
+	while (continueMission_bulk(iSteps))
 	{
 		iSteps++;
 	}
 }
 
-bool CvSelectionGroup::continueMission_step(int iSteps)
+// return true if we are ready to take another step
+bool CvSelectionGroup::continueMission_bulk(int iSteps)
 {
 	FAssert(!isBusy());
 	FAssert(headMissionQueueNode() != NULL);
@@ -3774,22 +3775,22 @@ void CvSelectionGroup::setTransportUnit(CvUnit* pTransportUnit, CvSelectionGroup
 
 bool CvSelectionGroup::isAmphibPlot(const CvPlot* pPlot) const
 {
-	bool bFriendly = true;
+	bool bFriendlyCity = true; // K-Mod. I've renamed this from bFriendly, because it was confusing me.
 	CvUnit* pUnit = getHeadUnit();
 	if (NULL != pUnit)
 	{
-		bFriendly = pPlot->isFriendlyCity(*pUnit, true);
+		bFriendlyCity = pPlot->isFriendlyCity(*pUnit, true);
 	}
 
-	//return ((getDomainType() == DOMAIN_SEA) && pPlot->isCoastalLand() && !bFriendly && !canMoveAllTerrain());
+	//return ((getDomainType() == DOMAIN_SEA) && pPlot->isCoastalLand() && !bFriendlyCity && !canMoveAllTerrain());
 
 	if (getDomainType() == DOMAIN_SEA)
 	{
-		if (pPlot->isCity() && !bFriendly && (pPlot->isCoastalLand() || pPlot->isWater() || canMoveAllTerrain()))
+		if (pPlot->isCity() && !bFriendlyCity && (pPlot->isCoastalLand() || pPlot->isWater() || canMoveAllTerrain()))
 		{
 			return true;
 		}
-		return (pPlot->isCoastalLand() && !bFriendly && !canMoveAllTerrain());
+		return (pPlot->isCoastalLand() && !bFriendlyCity && !canMoveAllTerrain());
 	}
 	return false;
 }

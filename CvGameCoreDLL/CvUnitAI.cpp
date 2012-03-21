@@ -18138,6 +18138,13 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 				return false;
 			pEndTurnPlot = getPathEndTurnPlot();
 		}
+		// If target is actually an amphibious landing from pEndTurnPlot, then set pEndTurnPlot = pTargetPlot so that we can land this turn.
+		if (getGroup()->isAmphibPlot(pTargetPlot) &&
+			plotDistance(pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE(), pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE()) == 1)
+		{
+			pEndTurnPlot = pTargetPlot;
+		}
+
 		// Group all moveable land units together before landing,
 		// this will help the AI to think more clearly about attacking on the next turn.
 		if (pEndTurnPlot == pTargetPlot && !pTargetPlot->isWater() && !pTargetPlot->isCity())
