@@ -1745,6 +1745,10 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 							//iAttackMod -= (PATH_MOVEMENT_WEIGHT * iMovesLeft);
 						}
 					}
+					// If this is a direct attack move from a human player, make sure it is the best value move possible. (This allows humans to choose which plot they attack from.)
+					// (note: humans have no way of ordering units to attack units en-route, so the fact that this is an attack move means we are at the destination.)
+					else if (pLoopUnit->canAttack()) // parent->m_iKnownCost == 0 && !(iFlags & MOVE_HAS_STEPPED) && !pSelectionGroup->AI_isControlled()
+						return PATH_STEP_WEIGHT; // DONE!
 				}
 			}
 		}
