@@ -261,7 +261,7 @@ public:
 	bool isFull();
 	int cargoSpaceAvailable(int /*SpecialUnitTypes*/ eSpecialCargo, int /*DomainTypes*/ eDomainCargo);	 
 	bool hasCargo();
-	bool canCargoAllMove();
+	//bool canCargoAllMove();
 	int getUnitAICargo(UnitAITypes eUnitAI);
 	int getID();
 

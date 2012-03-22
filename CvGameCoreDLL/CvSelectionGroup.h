@@ -71,8 +71,9 @@ public:
 	int getCargo() const;
 	int cargoSpaceAvailable(SpecialUnitTypes eSpecialCargo = NO_SPECIALUNIT, DomainTypes eDomainCargo = NO_DOMAIN) const; // K-Mod
 	DllExport bool canAllMove();																																				// Exposed to Python
-	bool canAnyMove();																																									// Exposed to Python
-	bool hasMoved();																																										// Exposed to Python
+	bool canAnyMove() const; // Exposed to Python
+	bool canCargoAllMove() const; // K-Mod (moved from CvUnit)
+	bool hasMoved() const; // Exposed to Python
 	bool canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage = false) const;									// Exposed to Python
 	bool canEnterArea(TeamTypes eTeam, const CvArea* pArea, bool bIgnoreRightOfPassage = false) const;									// Exposed to Python
 	DllExport bool canMoveInto(CvPlot* pPlot, bool bAttack = false);																		// Exposed to Python

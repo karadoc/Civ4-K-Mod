@@ -251,7 +251,7 @@ void CyUnitPythonInterface1(python::class_<CyUnit>& x)
 		.def("isFull", &CyUnit::isFull, "bool ()")
 		.def("cargoSpaceAvailable", &CyUnit::cargoSpaceAvailable, "int ()")
 		.def("hasCargo", &CyUnit::hasCargo, "bool ()")
-		.def("canCargoAllMove", &CyUnit::canCargoAllMove, "bool ()")
+		//.def("canCargoAllMove", &CyUnit::canCargoAllMove, "bool ()")
 		.def("getUnitAICargo", &CyUnit::getUnitAICargo, "int (int (UnitAITypes) eUnitAI)")
 		.def("getID", &CyUnit::getID, "int ()")
 

@@ -17417,10 +17417,11 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 	FAssert(getGroup()->hasCargo());
 	//FAssert(bIsAttackCity || getGroup()->getUnitAICargo(UNITAI_ATTACK) > 0);
 
+	/* original bts code
 	if (!canCargoAllMove())
 	{
 		return false;
-	}
+	} */ // disabled by K-Mod. (this is now checked in AI_assaultGoTo)
 
 	std::vector<CvUnit*> aGroupCargo;
 	CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
@@ -17688,15 +17689,13 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 	
 	FAssert(getGroup()->hasCargo());
 
+	/* original bts code
 	if (!canCargoAllMove())
 	{
 		return false;
-	}
+	} */ // disabled by K-Mod. (this is now checked in AI_assaultGoTo)
 
-	if( !(getGroup()->canAllMove()) )
-	{
-		return false;
-	}
+	FAssert(getGroup()->canAllMove()); // K-Mod (replacing a BBAI check that I'm sure is unnecessary.)
 
 	std::vector<CvUnit*> aGroupCargo;
 	CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
@@ -17753,24 +17752,21 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 									iPathTurns;
 									if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, 2))
 									{
-										if( iPathTurns <= 2 )
+										CvPlot* pEndTurnPlot = getPathEndTurnPlot();
+
+										iValue = 10*iTargetCities;
+										iValue += 8*iOurFightersHere;
+										iValue += 3*GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
+
+										iValue *= 100;
+
+										iValue /= (iPathTurns + 1);
+
+										if (iValue > iBestValue)
 										{
-											CvPlot* pEndTurnPlot = getPathEndTurnPlot();
-
-											iValue = 10*iTargetCities;
-											iValue += 8*iOurFightersHere;
-											iValue += 3*GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
-
-											iValue *= 100;
-
-											iValue /= (iPathTurns + 1);
-
-											if (iValue > iBestValue)
-											{
-												iBestValue = iValue;
-												pBestPlot = pEndTurnPlot;
-												pBestAssaultPlot = pLoopPlot;
-											}
+											iBestValue = iValue;
+											pBestPlot = pEndTurnPlot;
+											pBestAssaultPlot = pLoopPlot;
 										}
 									}
 								}
@@ -18132,17 +18128,29 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 	}
 	else
 	{
+		if (getGroup()->isAmphibPlot(pTargetPlot))
+		{
+			// If target is actually an amphibious landing from pEndTurnPlot, then set pEndTurnPlot = pTargetPlot so that we can land this turn.
+			if (pTargetPlot != pEndTurnPlot &&
+				plotDistance(pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE(), pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE()) == 1)
+			{
+				pEndTurnPlot = pTargetPlot;
+			}
+
+			// if our cargo isn't going to be ready to land, just wait.
+			if (pTargetPlot == pEndTurnPlot && !getGroup()->canCargoAllMove())
+			{
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, iFlags, false, false, MISSIONAI_ASSAULT, pTargetPlot);
+				return true;
+			}
+		}
+
+		// declare war if we need to
 		if (AI_considerPathDOW(pEndTurnPlot, iFlags))
 		{
 			if (!generatePath(pTargetPlot, iFlags, false))
 				return false;
 			pEndTurnPlot = getPathEndTurnPlot();
-		}
-		// If target is actually an amphibious landing from pEndTurnPlot, then set pEndTurnPlot = pTargetPlot so that we can land this turn.
-		if (getGroup()->isAmphibPlot(pTargetPlot) &&
-			plotDistance(pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE(), pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE()) == 1)
-		{
-			pEndTurnPlot = pTargetPlot;
 		}
 
 		// Group all moveable land units together before landing,
@@ -18208,7 +18216,7 @@ bool CvUnitAI::AI_settlerSeaTransport()
 	FAssert(getCargo() > 0);
 	FAssert(getUnitAICargo(UNITAI_SETTLE) > 0);
 
-	if (!canCargoAllMove())
+	if (!getGroup()->canCargoAllMove())
 	{
 		return false;
 	}
@@ -18450,7 +18458,7 @@ bool CvUnitAI::AI_settlerSeaFerry()
 	FAssert(getCargo() > 0);
 	FAssert(getUnitAICargo(UNITAI_WORKER) > 0);
 
-	if (!canCargoAllMove())
+	if (!getGroup()->canCargoAllMove())
 	{
 		return false;
 	}
@@ -18535,7 +18543,7 @@ bool CvUnitAI::AI_specialSeaTransportMissionary()
 	FAssert(getCargo() > 0);
 	FAssert(getUnitAICargo(UNITAI_MISSIONARY) > 0);
 
-	if (!canCargoAllMove())
+	if (!getGroup()->canCargoAllMove())
 	{
 		return false;
 	}
@@ -18848,7 +18856,7 @@ bool CvUnitAI::AI_specialSeaTransportSpy()
 		}
 		else
 		{
-			if (canMoveInto(pEndTurnPlot) || canCargoAllMove()) // (without this, we could get into an infinite loop when the cargo isn't ready to move)
+			if (canMoveInto(pEndTurnPlot) || getGroup()->canCargoAllMove()) // (without this, we could get into an infinite loop when the cargo isn't ready to move)
 			{
 				if (gUnitLogLevel > 2 && pTargetPlot->getOwnerINLINE() != NO_PLAYER && generatePath(pTargetPlot, 0, true, 0, 1))
 				{

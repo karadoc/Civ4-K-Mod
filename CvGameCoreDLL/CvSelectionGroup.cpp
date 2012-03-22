@@ -2530,7 +2530,7 @@ bool CvSelectionGroup::canAllMove()
 }
 
 
-bool CvSelectionGroup::canAnyMove()
+bool CvSelectionGroup::canAnyMove() const
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
@@ -2551,7 +2551,34 @@ bool CvSelectionGroup::canAnyMove()
 	return false;
 }
 
-bool CvSelectionGroup::hasMoved()
+// K-Mod. Originally, there there was a function called CvUnit::canCargoAllMove; which would only checked the cargo of that particular unit.
+// I've removed that function and replaced it with this one, which checks the cargo of the entire group.
+bool CvSelectionGroup::canCargoAllMove() const
+{
+	CvPlot* pPlot = plot();
+	CLLNode<IDInfo>* pUnitNode = pPlot->headUnitNode();
+
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = pPlot->nextUnitNode(pUnitNode);
+
+		if (pLoopUnit->isCargo() && pLoopUnit->getTransportUnit()->getGroup() == this)
+		{
+			if (pLoopUnit->getDomainType() == DOMAIN_LAND)
+			{
+				if (!pLoopUnit->canMove())
+				{
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+bool CvSelectionGroup::hasMoved() const
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;

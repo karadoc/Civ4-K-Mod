@@ -413,7 +413,7 @@ public:
 	bool isFull() const;																															// Exposed to Python
 	int cargoSpaceAvailable(SpecialUnitTypes eSpecialCargo = NO_SPECIALUNIT, DomainTypes eDomainCargo = NO_DOMAIN) const;	// Exposed to Python
 	bool hasCargo() const;																									// Exposed to Python
-	bool canCargoAllMove() const;																											// Exposed to Python
+	//bool canCargoAllMove() const; // disabled by K-Mod (was exposed to Python)
 	bool canCargoEnterArea(TeamTypes eTeam, const CvArea* pArea, bool bIgnoreRightOfPassage) const;
 	int getUnitAICargo(UnitAITypes eUnitAI) const;																		// Exposed to Python
 

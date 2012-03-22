@@ -9314,7 +9314,7 @@ bool CvUnit::hasCargo() const
 }
 
 
-bool CvUnit::canCargoAllMove() const
+/* bool CvUnit::canCargoAllMove() const
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
@@ -9342,7 +9342,7 @@ bool CvUnit::canCargoAllMove() const
 	}
 
 	return true;
-}
+} */
 
 bool CvUnit::canCargoEnterArea(TeamTypes eTeam, const CvArea* pArea, bool bIgnoreRightOfPassage) const
 {

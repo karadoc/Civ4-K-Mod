@@ -1039,10 +1039,10 @@ bool CyUnit::hasCargo()
 	return m_pUnit ? m_pUnit->hasCargo() : false;
 }
 
-bool CyUnit::canCargoAllMove()
+/* bool CyUnit::canCargoAllMove()
 {
 	return m_pUnit ? m_pUnit->canCargoAllMove() : false;
-}
+} */
 
 int CyUnit::getUnitAICargo(UnitAITypes eUnitAI)
 {
