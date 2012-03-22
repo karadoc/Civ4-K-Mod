@@ -1,6 +1,22 @@
-This is K-Mod version 1.23.
+This is K-Mod version 1.24.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.24 changelist
+
+Game
+
++ Fixed some bugs in the border danger cache from the BBAI mod. These bugs caused the AI to think certain plots were in danger, indefinitely, regardless of whether it was true. This would then cause automated workers and work-boats to avoid particular areas for no apparent reason.
++ Fixed a flaw which caused cargo-carrying units to be chosen as the best defender more often than they should. (The protection for cargo-carrying units was proportional to their odds of winning the battle; so if they were almost certain to lose then their cargo did not affect their willingness to defend.)
++ When ordered to attack an adjacent plot, human controlled groups will now move their directly instead of trying to find the shortest path. (Previously, they would sometimes want to step off their origin plot so that they could enter the target plot by road, and thus save some movement points. Unfortunately, this meant it was sometimes impossible for players to use the plot they wanted to attack from.)
++ Fixed a bug which sometimes caused units to not follow the path shown by the UI when attacking from several steps away.
+
+AI
+
++ AI_assaultGoTo will now automatically order an amphibious landing if the end turn plot is 1 step from the target.
++ Fixed a rare problem which sometimes caused the AI to issue the city attack order before they are ready.
++ Slightly reduced the distance barbarians are willing to walk to get to a target city.
+
+--
 v1.23 changelist
 
 Game
