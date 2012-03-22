@@ -13096,12 +13096,6 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod
 	const CvGame& kGame = GC.getGameINLINE(); // K-Mod
 
-	bool bWarPlan;
-	int iTotalReligonCount;
-	int iHighestReligionCount;
-	//int iWarmongerPercent;
-	int iValue;
-	//int iTempValue;
 	int iCities = getNumCities();
 	bool bCultureVictory3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3);
 	bool bCultureVictory2 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2);
@@ -13132,7 +13126,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 	int iS = (isCivic(eCivic)?-1 :1);// K-Mod, sign for whether we should be considering gaining a bonus, or losing a bonus
 
-	bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
+	bool bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
 	if( bWarPlan )
 	{
 		bWarPlan = false;
@@ -13188,16 +13182,16 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	}
 
 	//int iConnectedForeignCities = countPotentialForeignTradeCitiesConnected();
-	iTotalReligonCount = countTotalHasReligion();
+	int iTotalReligonCount = countTotalHasReligion();
 	ReligionTypes eBestReligion = AI_bestReligion();
 	if (eBestReligion == NO_RELIGION)
 	{
 		eBestReligion = getStateReligion();
 	}
-	iHighestReligionCount = ((eBestReligion == NO_RELIGION) ? 0 : getHasReligionCount(eBestReligion));
+	int iHighestReligionCount = ((eBestReligion == NO_RELIGION) ? 0 : getHasReligionCount(eBestReligion));
 	int iWarmongerPercent = 25000 / std::max(100, (100 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand())); 
 
-	iValue = (iCities * 6);
+	int iValue = (iCities * 6);
 
 	iValue += (GC.getCivicInfo(eCivic).getAIWeight() * iCities);
 
@@ -13206,7 +13200,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 	iValue += -(GC.getCivicInfo(eCivic).getAnarchyLength() * iCities);
 
-	iValue += -(getSingleCivicUpkeep(eCivic, true)*80)/100;
+	//iValue += -(getSingleCivicUpkeep(eCivic, true)*80)/100;
+	iValue -= getSingleCivicUpkeep(eCivic, true) * AI_commerceWeight(COMMERCE_GOLD) / 100; // K-Mod. (note. upkeep modifiers are included in getSingleCivicUpkeep.)
 
 	CvCity* pCapital = getCapitalCity();
 	iValue += ((kCivic.getGreatPeopleRateModifier() * iCities) / 10);
@@ -15146,11 +15141,6 @@ void CvPlayerAI::AI_doResearch()
 
 void CvPlayerAI::AI_doCommerce()
 {
-	CvCity* pLoopCity;
-	int iIdealPercent;
-	int iGoldTarget;
-	int iLoop;
-
 	FAssertMsg(!isHuman(), "isHuman did not return false as expected");
 
 /************************************************************************************************/
@@ -15166,7 +15156,7 @@ void CvPlayerAI::AI_doCommerce()
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-	iGoldTarget = AI_goldTarget();
+	int iGoldTarget = AI_goldTarget();
 	int iTargetTurns = 4 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
 	iTargetTurns /= 100;
 	iTargetTurns = std::max(3, iTargetTurns);
@@ -15250,9 +15240,10 @@ void CvPlayerAI::AI_doCommerce()
 	{
 		if (getNumCities() > 0)
 		{
-			iIdealPercent = 0;
+			int iIdealPercent = 0;
 
-			for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+			int iLoop;
+			for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 			{
 				if (pLoopCity->getCommerceHappinessPer(COMMERCE_CULTURE) > 0)
 				{
@@ -15276,20 +15267,16 @@ void CvPlayerAI::AI_doCommerce()
 			}
 			iIdealPercent += (AI_averageCulturePressure() - 100)/10;
 			iIdealPercent = std::max(iIdealPercent, (AI_averageCulturePressure() - 100)/5);
-			iIdealPercent -= (iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
-			//iIdealPercent = std::min(iIdealPercent, 20);
+			if (AI_avoidScience())
+			{
+				iCap += 30;
+				iIdealPercent *= 2;
+			}
+			iIdealPercent -= iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS");
 			iIdealPercent = std::min(iIdealPercent, iCap);
 			// K-Mod end
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			{
 			    iIdealPercent = 100;
 			}
@@ -15300,15 +15287,7 @@ void CvPlayerAI::AI_doCommerce()
 
 	if (isCommerceFlexible(COMMERCE_RESEARCH))
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 		if ((isNoResearchAvailable() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)) && !bFirstTech)
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		{
 			setCommercePercent(COMMERCE_RESEARCH, 0);
 		}
