@@ -104,10 +104,10 @@ bool CyUnit::canMoveOrAttackInto(CyPlot* pPlot, bool bDeclareWar)
 	return m_pUnit ? m_pUnit->canMoveOrAttackInto(pPlot->getPlot(), bDeclareWar) : false;
 }
 
-bool CyUnit::canMoveThrough(CyPlot* pPlot)
+/*bool CyUnit::canMoveThrough(CyPlot* pPlot)
 {
 	return m_pUnit ? m_pUnit->canMoveThrough(pPlot->getPlot()) : false;
-}
+}*/
 
 bool CyUnit::jumpToNearestValidPlot()
 {

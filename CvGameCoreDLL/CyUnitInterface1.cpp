@@ -38,7 +38,7 @@ void CyUnitPythonInterface1(python::class_<CyUnit>& x)
 		.def("getDeclareWarMove", &CyUnit::getDeclareWarMove, "TeamTypes (CyPlot* pPlot)")
 		.def("canMoveInto", &CyUnit::canMoveInto, "bool (CyPlot* pPlot, bool bAttack, bool bDeclareWar, bool bIgnoreLoad)")
 		.def("canMoveOrAttackInto", &CyUnit::canMoveOrAttackInto, "bool (CyPlot* pPlot, bool bDeclareWar)")
-		.def("canMoveThrough", &CyUnit::canMoveThrough, "bool (CyPlot* pPlot)")
+		//.def("canMoveThrough", &CyUnit::canMoveThrough, "bool (CyPlot* pPlot)")
 		.def("jumpToNearestValidPlot", &CyUnit::jumpToNearestValidPlot, "bool ()")
 
 		.def("canAutomate", &CyUnit::canAutomate, "bool (int (AutomateTypes) eAutomate)")

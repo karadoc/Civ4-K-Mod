@@ -2363,7 +2363,7 @@ TeamTypes CvUnit::getDeclareWarMove(const CvPlot* pPlot) const
 			{
 				//if (canMoveInto(pPlot, true, true, true))
 				// K-Mod. Don't give the "declare war" popup unless we need war to move into the plot.
-				if (canMoveInto(pPlot, true, true, true) && !canMoveInto(pPlot))
+				if (canMoveInto(pPlot, true, true, true, false) && !canMoveInto(pPlot, false, false, false, false))
 				// K-Mod end
 				{
 					pUnit = pPlot->plotCheck(PUF_canDeclareWar, getOwnerINLINE(), isAlwaysHostile(pPlot), NO_PLAYER, NO_TEAM, PUF_isVisible, getOwnerINLINE());
@@ -2401,8 +2401,8 @@ bool CvUnit::willRevealByMove(const CvPlot* pPlot) const
 	return false;
 }
 
-// K-Mod. I've rearranged a few things to make the function slightly faster.
-bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bool bIgnoreLoad) const
+// K-Mod. I've rearranged a few things to make the function slightly faster, and added "bAssumeVisible" which signals that we should check for units on the plot regardless of whether we can actually see.
+bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bool bIgnoreLoad, bool bAssumeVisible) const
 {
 	PROFILE_FUNC();
 
@@ -2624,7 +2624,8 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 		{
 			if (bAttack || !canCoexistWithEnemyUnit(NO_TEAM))
 			{
-				if (!isHuman() || (pPlot->isVisible(getTeam(), false)))
+				//if (!isHuman() || (pPlot->isVisible(getTeam(), false)))
+				if (bAssumeVisible || pPlot->isVisible(getTeam(), false))
 				{
 					if (pPlot->isVisibleEnemyUnit(this) != bAttack)
 					{
@@ -2667,7 +2668,8 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 
 			if (!canCoexistWithEnemyUnit(NO_TEAM))
 			{
-				if (!isHuman() || pPlot->isVisible(getTeam(), false))
+				//if (!isHuman() || pPlot->isVisible(getTeam(), false))
+				if (bAssumeVisible || pPlot->isVisible(getTeam(), false)) // K-Mod
 				{
 					if (pPlot->isEnemyCity(*this))
 					{
@@ -2682,7 +2684,7 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 			}
 		}
 
-		if (isHuman())
+		if (isHuman()) // (should this be !bAssumeVisible? It's a bit different to the other isHuman() checks)
 		{
 			ePlotTeam = pPlot->getRevealedTeam(getTeam(), false);
 			bCanEnterArea = canEnterArea(ePlotTeam, pPlotArea);
@@ -2763,10 +2765,10 @@ bool CvUnit::canMoveOrAttackInto(const CvPlot* pPlot, bool bDeclareWar) const
 }
 
 
-bool CvUnit::canMoveThrough(const CvPlot* pPlot, bool bDeclareWar) const
+/* bool CvUnit::canMoveThrough(const CvPlot* pPlot, bool bDeclareWar) const
 {
 	return canMoveInto(pPlot, false, bDeclareWar, true);
-}
+}*/
 
 
 void CvUnit::attack(CvPlot* pPlot, bool bQuick)
@@ -3938,10 +3940,7 @@ bool CvUnit::canAirliftAt(const CvPlot* pPlot, int iX, int iY) const
 
 	pTargetPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 
-	if (!canMoveInto(pTargetPlot))
-	{
-		return false;
-	}
+	// canMoveInto use to be here
 
 	pTargetCity = pTargetPlot->getPlotCity();
 
@@ -3956,6 +3955,11 @@ bool CvUnit::canAirliftAt(const CvPlot* pPlot, int iX, int iY) const
 	}
 
 	if (pTargetCity->getTeam() != getTeam() && !GET_TEAM(pTargetCity->getTeam()).isVassal(getTeam()))
+	{
+		return false;
+	}
+
+	if (!canMoveInto(pTargetPlot)) // moved by K-Mod
 	{
 		return false;
 	}

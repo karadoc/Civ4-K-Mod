@@ -2199,7 +2199,7 @@ bool CvSelectionGroup::canDoInterfaceModeAt(InterfaceModeTypes eInterfaceMode, C
 		case INTERFACEMODE_AIRSTRIKE:
 			if (pLoopUnit != NULL)
 			{
-				if (pLoopUnit->canMoveInto(pPlot, true))
+				if (pLoopUnit->canMoveInto(pPlot, true, false, false, false))
 				{
 					return true;
 				}
@@ -2705,7 +2705,7 @@ bool CvSelectionGroup::canMoveOrAttackInto(CvPlot* pPlot, bool bDeclareWar, bool
 }
 
 
-bool CvSelectionGroup::canMoveThrough(CvPlot* pPlot, bool bDeclareWar) const
+bool CvSelectionGroup::canMoveThrough(CvPlot* pPlot, bool bDeclareWar, bool bAssumeVisible) const
 {
 	CLLNode<IDInfo>* pUnitNode;
 	CvUnit* pLoopUnit;
@@ -2719,7 +2719,8 @@ bool CvSelectionGroup::canMoveThrough(CvPlot* pPlot, bool bDeclareWar) const
 			pLoopUnit = ::getUnit(pUnitNode->m_data);
 			pUnitNode = nextUnitNode(pUnitNode);
 
-			if (!pLoopUnit->canMoveThrough(pPlot, bDeclareWar))
+			//if (!pLoopUnit->canMoveThrough(pPlot))
+			if (!pLoopUnit->canMoveInto(pPlot, false, bDeclareWar, true, bAssumeVisible)) // K-Mod
 			{
 				return false;
 			}
@@ -3520,6 +3521,7 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 {
 	KmodPathFinder final_path; // K-Mod
+	CvPlot* pOriginPlot = plot(); // K-Mod
 
 	if (at(iX, iY))
 	{
@@ -3594,16 +3596,23 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 
 	FAssert(getNumUnits() == 0 || atPlot(pPathPlot)); // K-Mod
 
-	// K-Mod. If the step we just took will make us change our path to something longer, then cancel the move.
-	// This prevents units from wasting all their moves by trying to walk around enemy units.
+	// K-Mod.
 	if (!AI_isControlled() && !bEndMove)
 	{
+		//If the step we just took will make us change our path to something longer, then cancel the move.
+		// This prevents units from wasting all their moves by trying to walk around enemy units.
 		FAssert(final_path.GetEndNode());
 		std::pair<int, int> old_moves = std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1);
 		if (!final_path.GeneratePath(pDestPlot)
 			|| std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1) > old_moves)
 		{
 			clearMissionQueue();
+		}
+		// Also, if the step we just took causes us to backtrack - its probably because we've lost vision of a unit that was blocking the path.
+		// Apply the MOVE_ASSUME_VISIBLE flag, so that we remember to go the long way around.
+		else if (final_path.GetPathFirstPlot() == pOriginPlot)
+		{
+			headMissionQueueNode()->m_data.iFlags |= MOVE_ASSUME_VISIBLE;
 		}
 	}
 	// K-Mod end

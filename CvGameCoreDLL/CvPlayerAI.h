@@ -324,7 +324,7 @@ public:
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      03/17/10                                jdog5000      */
 /*                                                                                              */
-/* Victory Strategy AI                                                                          */
+/* Victory Strategy AI       (functions renamed and edited for K-Mod)                           */
 /************************************************************************************************/
 	int AI_calculateSpaceVictoryStage() const;
 	int AI_calculateConquestVictoryStage() const;
@@ -342,7 +342,6 @@ public:
 /************************************************************************************************/		
 
 	bool AI_isDoStrategy(int iStrategy) const;
-	//void AI_forceUpdateStrategies(); // obsolete function from Original BtS
 
 	void AI_updateGreatPersonWeights(); // K-Mod
 	int AI_getGreatPersonWeight(UnitClassTypes eGreatPerson) const; // K-Mod
@@ -350,11 +349,6 @@ public:
 	void AI_nowHasTech(TechTypes eTech);
 
 	int AI_countDeadlockedBonuses(CvPlot* pPlot) const;
-
-	/* original bts code
-	int AI_getOurPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const;
-	int AI_getEnemyPlotStrength(CvPlot* pPlot, int iRange, bool bDefensiveBonuses, bool bTestMoves) const; */
-	// The above two functions have been disabled by K-Mod. They are no longer used - to reduce code duplication.
 
 	//int AI_goldToUpgradeAllUnits(int iExpThreshold = 0) const;
 	// K-Mod
