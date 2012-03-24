@@ -67,6 +67,22 @@
 		<Italian>Trasferimento dati</Italian>
 		<Spanish>Transfiriendo datos de la partida</Spanish>
 	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_FINANCE_ADVISOR_UNIT_COST</Tag>
+		<English>[NEWLINE]%d3[ICON_GOLD]: Unit cost for %d1 [NUM1:unit:units] (free support for %d2)</English>
+		<French>[NEWLINE]%d3[ICON_GOLD] : Coût unitaire pour %d1 [NUM1:unité:unités] (gratuit pour les %d2)</French>
+		<German>[NEWLINE]%d3[ICON_GOLD]: Einheitenkosten f&#252;r %d1 [NUM1:Einheit:Einheiten] (freier Unterhalt f&#252;r %d2)</German>
+		<Italian>[NEWLINE]%d3[ICON_GOLD]: Costo per %d1 unit&#224; (supporto gratuito per %d2)</Italian>
+		<Spanish>[NEWLINE]%d3 [ICON_GOLD]: coste unitario de %d1 [NUM1:unidad:unidades] (abastecimiento gratis para %d2)</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_FINANCE_ADVISOR_UNIT_COST_2</Tag>
+		<English>[NEWLINE]%d3[ICON_GOLD]: Military Supply cost for %d1 [NUM1:unit:units] (free support for %d2)</English>
+		<French>[NEWLINE]%d3[ICON_GOLD] : Co&#251;t de ravitaillement pour %d1 unités militaires (gratuit pour %d2)</French>
+		<German>[NEWLINE]%d3[ICON_GOLD]: Milit&#228;rkosten f&#252;r %d1 Einheiten (freier Unterhalt f&#252;r %d2)</German>
+		<Italian>[NEWLINE]%d3[ICON_GOLD]: Costo per %d1 unit&#224; militari (supporto gratuito per %d2)</Italian>
+		<Spanish>[NEWLINE]%d3 [ICON_GOLD]: coste unitario de %d1 [NUM1:unidad militar:unidades militares] (abastecimiento gratis para %d2)</Spanish>
+	</TEXT>
 	<!-- "-X% strength to opposing city defenders"?
 	<TEXT>
 		<Tag>TXT_KEY_PROMOTION_CITY_ATTACK_TEXT</Tag>
