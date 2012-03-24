@@ -1299,7 +1299,8 @@ bool CvUnitAI::AI_considerPathDOW(CvPlot* pPlot, int iFlags)
 	{
 		// we need to check DOW even for moves several turns away - otherwise the actual move mission may fail to find a path.
 		// however, I would consider it irresponsible to call this function for multi-move missions.
-		FAssert(pNode->m_iData2 <= 1);
+		// (note: amphibious landings may say 2 turns, even though it is really only 1...)
+		FAssert(pNode->m_iData2 <= 1 || (pNode->m_iData2 == 2 && getGroup()->isAmphibPlot(GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY))));
 		bDOW = AI_considerDOW(GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY));
 		pNode = pNode->m_pParent;
 	}
@@ -7749,16 +7750,19 @@ void CvUnitAI::AI_assaultSeaMove()
 				CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
 				pEntityNode = getGroup()->nextUnitNode(pEntityNode);
 				// (maybe we should adjust this to ungroup "escorts" last?)
-				switch (pLoopUnit->AI_getUnitAIType())
+				if (!pLoopUnit->hasCargo())
 				{
-				case UNITAI_ATTACK_SEA:
-				case UNITAI_RESERVE_SEA:
-				case UNITAI_ESCORT_SEA:
-					pLoopUnit->joinGroup(NULL);
-					iEscorts--;
-					break;
-				default:
-					break;
+					switch (pLoopUnit->AI_getUnitAIType())
+					{
+					case UNITAI_ATTACK_SEA:
+					case UNITAI_RESERVE_SEA:
+					case UNITAI_ESCORT_SEA:
+						pLoopUnit->joinGroup(NULL);
+						iEscorts--;
+						break;
+					default:
+						break;
+					}
 				}
 			}
 			FAssert(!(iEscorts > 3 && iEscorts > 2*iAssaultUnits && iEscorts > 2*iCargo));
