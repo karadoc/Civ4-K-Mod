@@ -6777,9 +6777,21 @@ int CvUnit::getSpyInterceptPercent(TeamTypes eTargetTeam) const
 
 	int iSuccess = 0;
 
+	/* original bts code
 	int iTargetPoints = GET_TEAM(eTargetTeam).getEspionagePointsEver();
 	int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
-	iSuccess += (GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetPoints) / std::max(1, iTargetPoints + iOurPoints);
+	iSuccess += (GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetPoints) / std::max(1, iTargetPoints + iOurPoints); */
+	// K-Mod. Scale based on the teams' population.
+	{
+		const CvTeam& kTeam = GET_TEAM(getTeam());
+		const CvTeam& kTargetTeam = GET_TEAM(eTargetTeam);
+
+		int iPopScale = 7 * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+		int iTargetPoints = 10 * kTargetTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTargetTeam.getTotalPopulation(false));
+		int iOurPoints = 10 * kTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTeam.getTotalPopulation(false));
+		iSuccess += GC.getDefineINT("ESPIONAGE_INTERCEPT_SPENDING_MAX") * iTargetPoints / std::max(1, iTargetPoints + iOurPoints);
+	}
+	// K-Mod end
 
 	if (plot()->isEspionageCounterSpy(eTargetTeam))
 	{

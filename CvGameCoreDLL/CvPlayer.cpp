@@ -14814,6 +14814,9 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 		eTargetPlayer = getID();
 	}
 
+	const CvTeam& kTeam = GET_TEAM(getTeam()); // K-Mod
+	const CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam()); // (moved from the bottom of the function)
+
 	//if (pCity != NULL && kMission.isTargetsCity())
 	if (pCity != NULL && (eMission == NO_ESPIONAGEMISSION || GC.getEspionageMissionInfo(eMission).isTargetsCity()))
 	{
@@ -14895,21 +14898,29 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 	}
 
 	// My points VS. Your points to mod cost
-	int iTargetPoints = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam()).getEspionagePointsEver();
-	int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
-	iModifier *= (GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints)) / std::max(1, iTargetPoints + 2 * iOurPoints);
-	iModifier /= 100;
+	/* original bts code
+	int iTargetPoints = kTargetTeam.getEspionagePointsEver();
+	int iOurPoints = kTeam.getEspionagePointsEver(); */
+	// K-Mod. Scale the points modifier based on the teams' population. (Note ESPIONAGE_SPENDING_MULTIPLIER is 100 in the default xml.)
+	{
+		int iPopScale = 7 * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+		int iTargetPoints = 10 * kTargetTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTargetTeam.getTotalPopulation(false));
+		int iOurPoints = 10 * kTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTeam.getTotalPopulation(false));
+	// K-Mod end
+		iModifier *= (GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints)) / std::max(1, iTargetPoints + 2 * iOurPoints);
+		iModifier /= 100;
+	} //
 	
 	// Counterespionage Mission Mod
-	CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam());
 	/* if (kTargetTeam.getCounterespionageModAgainstTeam(getTeam()) > 0)
 	{
 		iModifier *= kTargetTeam.getCounterespionageModAgainstTeam(getTeam());
 		iModifier /= 100;
 	} */
 	// K-Mod
-	iModifier *= (100 + std::max(-100, kTargetTeam.getCounterespionageModAgainstTeam(getTeam())));
+	iModifier *= 100 + std::max(-100, kTargetTeam.getCounterespionageModAgainstTeam(getTeam()));
 	iModifier /= 100;
+	// K-Mod end
 
 	return iModifier;
 }
