@@ -13189,7 +13189,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		eBestReligion = getStateReligion();
 	}
 	int iHighestReligionCount = ((eBestReligion == NO_RELIGION) ? 0 : getHasReligionCount(eBestReligion));
-	int iWarmongerPercent = 25000 / std::max(100, (100 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand())); 
+	int iWarmongerFactor = 25000 / std::max(100, (100 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand()));
+	// K-Mod note. max war rand is between 50 and 400, so I've renamed the above number from iWarmongerPercent to iWarmongerFactor.
+	// I don't know what it is meant to be a percentage of. It's a number roughly between 56 and 167.
 
 	int iValue = (iCities * 6);
 
@@ -13248,11 +13250,12 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		int iTempValue = (kCivic.getFreeExperience() * getTotalPopulation() * (bWarPlan ? 30 : 12))/100;
 		iTempValue *= AI_averageYieldMultiplier(YIELD_PRODUCTION);
 		iTempValue /= 100;
-		iTempValue *= iWarmongerPercent;
+		iTempValue *= iWarmongerFactor;
 		iTempValue /= 100;
 		iValue += iTempValue;
 	}
 
+	/* original bts code
 	iValue += ((kCivic.getWorkerSpeedModifier() * AI_getNumAIUnits(UNITAI_WORKER)) / 15);
 	iValue += ((kCivic.getImprovementUpgradeRateModifier() * iCities) / 50);
 	iValue += (kCivic.getMilitaryProductionModifier() * iCities * iWarmongerPercent) / (bWarPlan ? 300 : 500 ); 
@@ -13260,8 +13263,65 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	iValue += (kCivic.getBaseFreeMilitaryUnits() / 2);
 	iValue += ((kCivic.getFreeUnitsPopulationPercent() * getTotalPopulation()) / 200);
 	iValue += ((kCivic.getFreeMilitaryUnitsPopulationPercent() * getTotalPopulation()) / 300);
-	iValue += -(kCivic.getGoldPerUnit() * getNumUnits())/100; // didn't have /100
-	iValue += -(kCivic.getGoldPerMilitaryUnit() * getNumMilitaryUnits() * iWarmongerPercent) / 20000; // was 200
+	iValue += -(kCivic.getGoldPerUnit() * getNumUnits());
+	iValue += -(kCivic.getGoldPerMilitaryUnit() * getNumMilitaryUnits() * iWarmongerPercent) / 200; */
+	// K-Mod, just a bunch of minor accuracy improvements to these approximations.
+	if (kCivic.getWorkerSpeedModifier() != 0)
+	{
+		int iWorkers = 0;
+		int iLoop;
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			iWorkers += 2 * pLoopCity->AI_getWorkersNeeded();
+		}
+		iWorkers -= AI_getNumAIUnits(UNITAI_WORKER);
+		if (iWorkers > 0)
+		{
+			iValue += kCivic.getWorkerSpeedModifier() * iWorkers / 15;
+		}
+	}
+	iValue += kCivic.getImprovementUpgradeRateModifier() * iCities / 50; // this is a tough one... I'll leave it alone for now.
+	iValue += (kCivic.getMilitaryProductionModifier() * iCities * iWarmongerFactor) / (bWarPlan ? 300 : 500 ); // whatever
+	if (kCivic.getBaseFreeUnits() || kCivic.getBaseFreeMilitaryUnits() ||
+		kCivic.getFreeUnitsPopulationPercent() || kCivic.getFreeMilitaryUnitsPopulationPercent() ||
+		kCivic.getGoldPerUnit() || kCivic.getGoldPerMilitaryUnit())
+	{
+		int iFreeUnits = 0;
+		int iFreeMilitaryUnits = 0;
+		int iUnits = getNumUnits();
+		int iMilitaryUnits = getNumMilitaryUnits();
+		int iPaidUnits = iUnits;
+		int iPaidMilitaryUnits = iMilitaryUnits;
+		int iMilitaryCost = 0;
+		int iUnitCost = 0;
+		int iExtraCost = 0; // unused
+		calculateUnitCost(iFreeUnits, iFreeMilitaryUnits, iPaidUnits, iPaidMilitaryUnits, iUnitCost, iMilitaryCost, iExtraCost);
+
+		int iTempValue = 0;
+
+		// units costs
+		int iCostPerUnit = (getGoldPerUnit() + (iS > 0 ? kCivic.getGoldPerUnit() : 0)) * getUnitCostMultiplier() / 100;
+		int iFreeUnitDelta = iS * (std::min(iUnits, iFreeUnits + iS*(kCivic.getBaseFreeUnits() + kCivic.getFreeUnitsPopulationPercent() * getTotalPopulation()/100)) - std::min(iUnits, iFreeUnits));
+		FAssert(iFreeUnitDelta >= 0);
+		iTempValue += iFreeUnitDelta * iCostPerUnit * AI_commerceWeight(COMMERCE_GOLD) / 10000;
+		iTempValue -= (iPaidUnits-iFreeUnitDelta) * kCivic.getGoldPerUnit() * AI_commerceWeight(COMMERCE_GOLD) / 10000;
+
+		// military
+		iCostPerUnit = getGoldPerMilitaryUnit() + (iS > 0 ? kCivic.getGoldPerMilitaryUnit() : 0);
+		iFreeUnitDelta = iS * (std::min(iMilitaryUnits, iFreeMilitaryUnits + iS*(kCivic.getBaseFreeMilitaryUnits() + kCivic.getFreeMilitaryUnitsPopulationPercent() * getTotalPopulation()/100)) - std::min(iMilitaryUnits, iFreeMilitaryUnits));
+		FAssert(iFreeUnitDelta >= 0);
+		iTempValue += iFreeUnitDelta * iCostPerUnit * AI_commerceWeight(COMMERCE_GOLD) / 10000;
+		iTempValue -= (iPaidMilitaryUnits-iFreeUnitDelta) * kCivic.getGoldPerMilitaryUnit() * AI_commerceWeight(COMMERCE_GOLD) / 10000;
+
+		// adjust based on future expectations
+		if (iTempValue < 0)
+		{
+			iTempValue *= 100 + iWarmongerFactor / (bWarPlan ? 3 : 6);
+			iTempValue /= 100;
+		}
+		iValue += iTempValue;
+	}
+	// K-Mod end
 
 	//iValue += ((kCivic.isMilitaryFoodProduction()) ? 0 : 0);
 	// bbai

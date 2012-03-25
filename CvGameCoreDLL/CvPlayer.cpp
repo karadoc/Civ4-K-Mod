@@ -7229,6 +7229,26 @@ void CvPlayer::setGwPercentAnger(int iNewValue)
 ** K-Mod end
 */
 
+// K-Mod
+int CvPlayer::getUnitCostMultiplier() const
+{
+	int iMultiplier = 100;
+	iMultiplier *= GC.getHandicapInfo(getHandicapType()).getUnitCostPercent();
+	iMultiplier /= 100;
+
+	if (!isHuman() && !isBarbarian())
+	{
+		iMultiplier *= GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIUnitCostPercent();
+		iMultiplier /= 100;
+
+		iMultiplier *= std::max(0, ((GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIPerEraModifier() * getCurrentEra()) + 100));
+		iMultiplier /= 100;
+	}
+
+	return iMultiplier;
+}
+// K-Mod end
+
 int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iUnitCost, int& iMilitaryCost, int& iExtraCost) const
 {
 	//int iSupport;
@@ -7278,21 +7298,10 @@ int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& i
 	// K-Mod. GoldPerUnit, etc, are now done as percentages.
 	// Also, "UnitCostPercent" handicap modifiers now apply directly to unit cost only, not military or extra cost.
 	// (iBaseUnitCost is no longer fed back to the caller. Only the modified cost is.)
-	iUnitCost = iPaidUnits * getGoldPerUnit() / 100;
+	iUnitCost = iPaidUnits * getGoldPerUnit() * getUnitCostMultiplier() / 10000;
 	iMilitaryCost = iPaidMilitaryUnits * getGoldPerMilitaryUnit() / 100;
 	iExtraCost = getExtraUnitCost() / 100;
 
-	iUnitCost *= GC.getHandicapInfo(getHandicapType()).getUnitCostPercent();
-	iUnitCost /= 100;
-
-	if (!isHuman() && !isBarbarian())
-	{
-		iUnitCost *= GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIUnitCostPercent();
-		iUnitCost /= 100;
-
-		iUnitCost *= std::max(0, ((GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIPerEraModifier() * getCurrentEra()) + 100));
-		iUnitCost /= 100;
-	}
 	int iSupport = iUnitCost + iMilitaryCost + iExtraCost;
 	// K-Mod end
 

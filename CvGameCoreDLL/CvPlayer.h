@@ -272,6 +272,7 @@ public:
 	int getGwPercentAnger() const; // K-Mod, Exposed to Python
 	void setGwPercentAnger(int iNewValue); // K-Mod
 
+	int getUnitCostMultiplier() const; // K-Mod
 	int calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iUnitCost, int& iMilitaryCost, int& iExtraCost) const; // (K-Mod changed iBaseUnitCost to iUnitCost)
 	int calculateUnitCost() const;																																				// Exposed to Python
 	int calculateUnitSupply(int& iPaidUnits, int& iBaseSupplyCost) const;																	// Exposed to Python
