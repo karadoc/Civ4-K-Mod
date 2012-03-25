@@ -13260,8 +13260,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	iValue += (kCivic.getBaseFreeMilitaryUnits() / 2);
 	iValue += ((kCivic.getFreeUnitsPopulationPercent() * getTotalPopulation()) / 200);
 	iValue += ((kCivic.getFreeMilitaryUnitsPopulationPercent() * getTotalPopulation()) / 300);
-	iValue += -(kCivic.getGoldPerUnit() * getNumUnits());
-	iValue += -(kCivic.getGoldPerMilitaryUnit() * getNumMilitaryUnits() * iWarmongerPercent) / 200;
+	iValue += -(kCivic.getGoldPerUnit() * getNumUnits())/100; // didn't have /100
+	iValue += -(kCivic.getGoldPerMilitaryUnit() * getNumMilitaryUnits() * iWarmongerPercent) / 20000; // was 200
 
 	//iValue += ((kCivic.isMilitaryFoodProduction()) ? 0 : 0);
 	// bbai

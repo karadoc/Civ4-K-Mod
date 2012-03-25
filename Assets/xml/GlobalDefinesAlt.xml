@@ -10,6 +10,10 @@
 		<iDefineIntVal>303</iDefineIntVal>
 	</Define>
 	<Define>
+		<DefineName>INITIAL_GOLD_PER_UNIT</DefineName>
+		<iDefineIntVal>100</iDefineIntVal> <!-- this is now percent cost, so I've changed it from 1 to 100 -->
+	</Define>
+	<Define>
 		<DefineName>BASE_REVOLT_OCCUPATION_TURNS</DefineName>
 		<iDefineIntVal>3</iDefineIntVal> <!-- increased from 2, because of changes that I've made to its useage -->
 	</Define>

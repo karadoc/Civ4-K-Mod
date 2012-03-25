@@ -5766,8 +5766,15 @@ void CvCivicInfo::read(FDataStreamBase* stream)
 	stream->Read(&m_iBaseFreeMilitaryUnits);								
 	stream->Read(&m_iFreeUnitsPopulationPercent);						
 	stream->Read(&m_iFreeMilitaryUnitsPopulationPercent);			
-	stream->Read(&m_iGoldPerUnit);												
-	stream->Read(&m_iGoldPerMilitaryUnit);									
+	stream->Read(&m_iGoldPerUnit);
+	stream->Read(&m_iGoldPerMilitaryUnit);
+	// K-Mod
+	if (uiFlag < 1)
+	{
+		m_iGoldPerUnit *= 100;
+		m_iGoldPerMilitaryUnit *= 100;
+	}
+	// K-Mod end
 	stream->Read(&m_iHappyPerMilitaryUnit);
 	stream->Read(&m_iLargestCityHappiness);
 	stream->Read(&m_iWarWearinessModifier);
@@ -5866,7 +5873,7 @@ void CvCivicInfo::write(FDataStreamBase* stream)
 {
 	CvInfoBase::write(stream);
 
-	uint uiFlag=0;
+	uint uiFlag=1;
 	stream->Write(uiFlag);		// flag for expansion
 
 	stream->Write(m_iCivicOptionType);

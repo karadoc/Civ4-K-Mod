@@ -58,7 +58,7 @@
 		<Italian>[ICON_BULLET]%s1[ICON_CULTURE] dalla [ICON_TRADE]</Italian>
 		<Spanish>[ICON_BULLET]%s1[ICON_CULTURE] por [ICON_TRADE]</Spanish>
 	</TEXT>
-	<!-- a replacement for the standard game text... for some minor things that have been bothering me -->
+	<!-- replacements for standard game text -->
 	<TEXT>
 		<Tag>TXT_KEY_TRANSFER_GAME_DATA_TITLE</Tag>
 		<English>Transferring Game Data</English>
@@ -83,6 +83,23 @@
 		<Italian>[NEWLINE]%d3[ICON_GOLD]: Costo per %d1 unit&#224; militari (supporto gratuito per %d2)</Italian>
 		<Spanish>[NEWLINE]%d3 [ICON_GOLD]: coste unitario de %d1 [NUM1:unidad militar:unidades militares] (abastecimiento gratis para %d2)</Spanish>
 	</TEXT>
+	<!-- unit support costs use to be gold per unit, now they are 1/100 gold per unit - so the text needs to be changed to be more flexible. I've removed the bullet, the number, and the icon. Those will now be in the dll. -->
+	<TEXT>
+		<Tag>TXT_KEY_CIVIC_SUPPORT_COSTS</Tag>
+		<English>Support Cost per Unit</English>
+		<French>Co&#251;t d'entretien par unit&#233;</French>
+		<German>Unterhaltskosten pro Einheit</German>
+		<Italian>Costo di supporto per unit&#224;</Italian>
+		<Spanish>de coste de abastecimiento por cada unidad</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_CIVIC_MILITARY_SUPPORT_COSTS</Tag>
+		<English>Support Cost per Military Unit</English>
+		<French>Co&#251;t de ravitaillement par unit&#233; militaire</French>
+		<German>Unterhaltskosten pro Milit&#228;reinheit</German>
+		<Italian>Costo di supporto per le unit&#224; militari</Italian>
+		<Spanish>de coste de abastecimiento por cada unidad militar</Spanish>
+	</TEXT>	
 	<!-- "-X% strength to opposing city defenders"?
 	<TEXT>
 		<Tag>TXT_KEY_PROMOTION_CITY_ATTACK_TEXT</Tag>

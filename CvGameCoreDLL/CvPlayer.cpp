@@ -7229,9 +7229,9 @@ void CvPlayer::setGwPercentAnger(int iNewValue)
 ** K-Mod end
 */
 
-int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iBaseUnitCost, int& iMilitaryCost, int& iExtraCost) const
+int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iUnitCost, int& iMilitaryCost, int& iExtraCost) const
 {
-	int iSupport;
+	//int iSupport;
 
 	iFreeUnits = GC.getHandicapInfo(getHandicapType()).getFreeUnits();
 
@@ -7241,12 +7241,7 @@ int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& i
 	iFreeMilitaryUnits = getBaseFreeMilitaryUnits();
 	iFreeMilitaryUnits += ((getTotalPopulation() * getFreeMilitaryUnitsPopulationPercent()) / 100);
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/17/09                                jdog5000      */
-/*                                                                                              */
-/*                                                                                              */
-/************************************************************************************************/
-/* original BTS code
+	/* original BTS code
 	if (!isHuman())
 	{
 		if (GET_TEAM(getTeam()).hasMetHuman())
@@ -7254,18 +7249,14 @@ int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& i
 			iFreeUnits += getNumCities(); // XXX
 			iFreeMilitaryUnits += getNumCities(); // XXX
 		}
-	}
-*/
-	// Removed hidden AI bonus
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	} */ // Hidden AI bonus removed by BBAI.
 
 	iPaidUnits = std::max(0, getNumUnits() - iFreeUnits);
 	iPaidMilitaryUnits = std::max(0, getNumMilitaryUnits() - iFreeMilitaryUnits);
 
-	iSupport = 0;
+	//iSupport = 0;
 
+	/* original bts code
 	iBaseUnitCost = iPaidUnits * getGoldPerUnit();
 	iMilitaryCost = iPaidMilitaryUnits * getGoldPerMilitaryUnit();
 	iExtraCost = getExtraUnitCost();
@@ -7282,7 +7273,28 @@ int CvPlayer::calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& i
 
 		iSupport *= std::max(0, ((GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIPerEraModifier() * getCurrentEra()) + 100));
 		iSupport /= 100;
+	}*/
+
+	// K-Mod. GoldPerUnit, etc, are now done as percentages.
+	// Also, "UnitCostPercent" handicap modifiers now apply directly to unit cost only, not military or extra cost.
+	// (iBaseUnitCost is no longer fed back to the caller. Only the modified cost is.)
+	iUnitCost = iPaidUnits * getGoldPerUnit() / 100;
+	iMilitaryCost = iPaidMilitaryUnits * getGoldPerMilitaryUnit() / 100;
+	iExtraCost = getExtraUnitCost() / 100;
+
+	iUnitCost *= GC.getHandicapInfo(getHandicapType()).getUnitCostPercent();
+	iUnitCost /= 100;
+
+	if (!isHuman() && !isBarbarian())
+	{
+		iUnitCost *= GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIUnitCostPercent();
+		iUnitCost /= 100;
+
+		iUnitCost *= std::max(0, ((GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIPerEraModifier() * getCurrentEra()) + 100));
+		iUnitCost /= 100;
 	}
+	int iSupport = iUnitCost + iMilitaryCost + iExtraCost;
+	// K-Mod end
 
 	FAssert(iSupport >= 0);
 
@@ -17145,6 +17157,13 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(&m_iFreeMilitaryUnitsPopulationPercent);
 	pStream->Read(&m_iGoldPerUnit);
 	pStream->Read(&m_iGoldPerMilitaryUnit);
+	// K-Mod
+	if (uiFlag < 3)
+	{
+		m_iGoldPerUnit *= 100;
+		m_iGoldPerMilitaryUnit *= 100;
+	}
+	// K-Mod end
 	pStream->Read(&m_iExtraUnitCost);
 	pStream->Read(&m_iNumMilitaryUnits);
 	pStream->Read(&m_iHappyPerMilitaryUnit);
@@ -17567,7 +17586,7 @@ void CvPlayer::write(FDataStreamBase* pStream)
 {
 	int iI;
 
-	uint uiFlag = 2;
+	uint uiFlag = 3;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iStartingX);

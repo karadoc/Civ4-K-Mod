@@ -272,7 +272,7 @@ public:
 	int getGwPercentAnger() const; // K-Mod, Exposed to Python
 	void setGwPercentAnger(int iNewValue); // K-Mod
 
-	int calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iBaseUnitCost, int& iMilitaryCost, int& iExtraCost) const;
+	int calculateUnitCost(int& iFreeUnits, int& iFreeMilitaryUnits, int& iPaidUnits, int& iPaidMilitaryUnits, int& iUnitCost, int& iMilitaryCost, int& iExtraCost) const; // (K-Mod changed iBaseUnitCost to iUnitCost)
 	int calculateUnitCost() const;																																				// Exposed to Python
 	int calculateUnitSupply(int& iPaidUnits, int& iBaseSupplyCost) const;																	// Exposed to Python
 	int calculateUnitSupply() const;																																			// Exposed to Python
@@ -485,9 +485,9 @@ public:
 	int getFreeMilitaryUnitsPopulationPercent() const;																										// Exposed to Python
 	void changeFreeMilitaryUnitsPopulationPercent(int iChange);											
 
-	// K-Mod
-	int getTypicalUnitValue(UnitAITypes eUnitAI) const;
+	int getTypicalUnitValue(UnitAITypes eUnitAI) const; // K-Mod
 
+	// K-Mod note: GoldPerUnit and GoldPerMilitaryUnit are now in units of 1/100 gold.
 	int getGoldPerUnit() const;																																								// Exposed to Python
 	void changeGoldPerUnit(int iChange);															
 

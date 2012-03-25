@@ -7589,15 +7589,23 @@ void CvGameTextMgr::parseCivicInfo(CvWStringBuffer &szHelpText, CivicTypes eCivi
 	//	Gold cost per unit
 	if (GC.getCivicInfo(eCivic).getGoldPerUnit() != 0)
 	{
-		szHelpText.append(NEWLINE);
-		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_SUPPORT_COSTS", (GC.getCivicInfo(eCivic).getGoldPerUnit() > 0), GC.getCommerceInfo(COMMERCE_GOLD).getChar()));
+		/* szHelpText.append(NEWLINE);
+		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_SUPPORT_COSTS", (GC.getCivicInfo(eCivic).getGoldPerUnit() > 0), GC.getCommerceInfo(COMMERCE_GOLD).getChar())); */
+		// K-Mod
+		szHelpText.append(CvWString::format(L"\n%c%+.2f%c %s", gDLL->getSymbolID(BULLET_CHAR), (float)GC.getCivicInfo(eCivic).getGoldPerUnit()/100, GC.getCommerceInfo(COMMERCE_GOLD).getChar(),
+			gDLL->getText("TXT_KEY_CIVIC_SUPPORT_COSTS").GetCString()));
+		// K-Mod end
 	}
 
 	//	Gold cost per military unit
 	if (GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit() != 0)
 	{
-		szHelpText.append(NEWLINE);
-		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_MILITARY_SUPPORT_COSTS", (GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit() > 0), GC.getCommerceInfo(COMMERCE_GOLD).getChar()));
+		/* szHelpText.append(NEWLINE);
+		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_MILITARY_SUPPORT_COSTS", (GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit() > 0), GC.getCommerceInfo(COMMERCE_GOLD).getChar())); */
+		// K-Mod
+		szHelpText.append(CvWString::format(L"\n%c%+.2f%c %s", gDLL->getSymbolID(BULLET_CHAR), (float)GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit()/100, GC.getCommerceInfo(COMMERCE_GOLD).getChar(),
+			gDLL->getText("TXT_KEY_CIVIC_MILITARY_SUPPORT_COSTS").GetCString()));
+		// K-Mod end
 	}
 
 	if (!CvWString(GC.getCivicInfo(eCivic).getHelp()).empty())
@@ -14463,14 +14471,14 @@ void CvGameTextMgr::buildFinanceUnitCostString(CvWStringBuffer& szBuffer, Player
 	int iPaidUnits = iUnits;
 	int iPaidMilitaryUnits = iMilitaryUnits;
 	int iMilitaryCost = 0;
-	int iBaseUnitCost = 0;
+	int iUnitCost = 0; // was called "base unit cost"
 	int iExtraCost = 0;
-	int iCost = player.calculateUnitCost(iFreeUnits, iFreeMilitaryUnits, iPaidUnits, iPaidMilitaryUnits, iBaseUnitCost, iMilitaryCost, iExtraCost);
-	int iHandicap = iCost-iBaseUnitCost-iMilitaryCost-iExtraCost;
+	int iCost = player.calculateUnitCost(iFreeUnits, iFreeMilitaryUnits, iPaidUnits, iPaidMilitaryUnits, iUnitCost, iMilitaryCost, iExtraCost);
+	int iHandicap = iCost-iUnitCost-iMilitaryCost-iExtraCost;
 
 	szBuffer.append(NEWLINE);
 	//szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_UNIT_COST", iPaidUnits, iFreeUnits, iBaseUnitCost));
-	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_UNIT_COST", iUnits, iFreeUnits, iBaseUnitCost)); // K-Mod
+	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_UNIT_COST", iUnits, iFreeUnits, iUnitCost)); // K-Mod
 
 	//if (iPaidMilitaryUnits != 0)
 	if (iMilitaryCost != 0) // K-Mod
@@ -14484,6 +14492,7 @@ void CvGameTextMgr::buildFinanceUnitCostString(CvWStringBuffer& szBuffer, Player
 	}
 	if (iHandicap != 0)
 	{
+		FAssertMsg(false, "not all unit costs were accounted for"); // K-Mod (handicap modifier are now rolled into the other costs)
 		szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_HANDICAP_COST", iHandicap));
 		szBuffer.append(CvWString::format(L" (%+d%%)", GC.getHandicapInfo(player.getHandicapType()).getUnitCostPercent()-100)); // K-Mod
 	}
@@ -14507,6 +14516,7 @@ void CvGameTextMgr::buildFinanceAwaySupplyString(CvWStringBuffer& szBuffer, Play
 	CvWString szHandicap;
 	if (iHandicap != 0)
 	{
+		FAssertMsg(false, "not all supply costs were accounted for"); // K-Mod (handicap modifier are now rolled into the other costs)
 		szHandicap = gDLL->getText("TXT_KEY_FINANCE_ADVISOR_HANDICAP_COST", iHandicap);
 	}
 
