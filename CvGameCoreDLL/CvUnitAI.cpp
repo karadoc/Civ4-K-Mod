@@ -2635,7 +2635,12 @@ void CvUnitAI::AI_attackMove()
 			if (pSplitGroup)
 				pSplitGroup->pushMission(MISSION_SKIP);
 			if (pRemainderGroup)
-				pRemainderGroup->pushMission(MISSION_SKIP);
+			{
+				if (pRemainderGroup->AI_isForceSeparate())
+					pRemainderGroup->AI_separate();
+				else
+					pRemainderGroup->pushMission(MISSION_SKIP);
+			}
 			return;
 		}
 		// K-Mod end
@@ -11269,24 +11274,30 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 	{
 		if (atPlot(pBestUnit->plot()))
 		{
-			CvSelectionGroup* pOtherGroup = NULL;
-			getGroup()->setTransportUnit(pBestUnit, &pOtherGroup); // XXX is this dangerous (not pushing a mission...) XXX air units?
+			CvSelectionGroup* pRemainderGroup = NULL; // K-Mod renamed from 'pOtherGroup'
+			getGroup()->setTransportUnit(pBestUnit, &pRemainderGroup); // XXX is this dangerous (not pushing a mission...) XXX air units?
 
 			// If part of large group loaded, then try to keep loading the rest
 			if( eUnitAI == UNITAI_ASSAULT_SEA && eMissionAI == MISSIONAI_LOAD_ASSAULT )
 			{
-				if( pOtherGroup != NULL && pOtherGroup->getNumUnits() > 0 )
+				if( pRemainderGroup != NULL && pRemainderGroup->getNumUnits() > 0 )
 				{
-					if( pOtherGroup->getHeadUnitAI() == AI_getUnitAIType() )
+					if( pRemainderGroup->getHeadUnitAI() == AI_getUnitAIType() )
 					{
-						pOtherGroup->getHeadUnit()->AI_load( eUnitAI, eMissionAI, eTransportedUnitAI, iMinCargo, iMinCargoSpace, iMaxCargoSpace, iMaxCargoOurUnitAI, iFlags, 0, iMaxTransportPath );
+						if (pRemainderGroup->getHeadUnit()->AI_load( eUnitAI, eMissionAI, eTransportedUnitAI, iMinCargo, iMinCargoSpace, iMaxCargoSpace, iMaxCargoOurUnitAI, iFlags, 0, iMaxTransportPath ))
+							pRemainderGroup->AI_setForceSeparate(false); // K-Mod
 					}
 					else if( eTransportedUnitAI == NO_UNITAI && iMinCargo < 0 && iMinCargoSpace < 0 && iMaxCargoSpace < 0 && iMaxCargoOurUnitAI < 0 )
 					{
-						pOtherGroup->getHeadUnit()->AI_load( eUnitAI, eMissionAI, NO_UNITAI, -1, -1, -1, -1, iFlags, 0, iMaxTransportPath );
+						if (pRemainderGroup->getHeadUnit()->AI_load( eUnitAI, eMissionAI, NO_UNITAI, -1, -1, -1, -1, iFlags, 0, iMaxTransportPath ))
+							pRemainderGroup->AI_setForceSeparate(false); // K-Mod
 					}
 				}
 			}
+			// K-Mod - just for efficiency, I'll take care of the force separate stuff here.
+			if (pRemainderGroup && pRemainderGroup->AI_isForceSeparate())
+				pRemainderGroup->AI_separate();
+			// K-Mod end
 
 			return true;
 		}
@@ -11308,8 +11319,8 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 				FAssertMsg(iCargoSpaceAvailable > 0, "best unit has no space");
 
 				// split our group to fit on the transport
-				CvSelectionGroup* pOtherGroup = NULL;
-				CvSelectionGroup* pSplitGroup = getGroup()->splitGroup(iCargoSpaceAvailable, this, &pOtherGroup);			
+				CvSelectionGroup* pRemainderGroup = NULL;
+				CvSelectionGroup* pSplitGroup = getGroup()->splitGroup(iCargoSpaceAvailable, this, &pRemainderGroup);			
 				FAssertMsg(pSplitGroup, "splitGroup failed");
 				FAssertMsg(getGroupID() == pSplitGroup->getID(), "splitGroup failed to put head unit in the new group");
 
@@ -11317,14 +11328,21 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 				{
 					CvPlot* pOldPlot = pSplitGroup->plot();
 					pSplitGroup->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), iFlags, false, false, eMissionAI, NULL, pBestUnit);
-					bool bMoved = (pSplitGroup->plot() != pOldPlot);
+					/* bool bMoved = (pSplitGroup->plot() != pOldPlot);
 					if (!bMoved && pOtherGroup != NULL)
 					{
 						joinGroup(pOtherGroup);
 					}
 					return bMoved;
+					*/ // K-Mod. (that block is obsolete)
+					// K-Mod - just for efficiency, I'll take care of the force separate stuff here.
+					if (pRemainderGroup && pRemainderGroup->AI_isForceSeparate())
+						pRemainderGroup->AI_separate();
+					// K-Mod end
+					return true;
 				}
 			}
+			// K-Mod end
 		}
 	}
 

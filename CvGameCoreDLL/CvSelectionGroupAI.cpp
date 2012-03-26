@@ -771,10 +771,10 @@ bool CvSelectionGroupAI::AI_isForceSeparate()
 }
 
 
-void CvSelectionGroupAI::AI_makeForceSeparate()
+/* void CvSelectionGroupAI::AI_makeForceSeparate()
 {
 	m_bForceSeparate = true;
-}
+} */
 
 
 MissionAITypes CvSelectionGroupAI::AI_getMissionAIType() const

@@ -226,7 +226,8 @@ public:
 	virtual bool AI_isDeclareWar(const CvPlot* pPlot = NULL) = 0;
 	virtual CvPlot* AI_getMissionAIPlot() = 0;
 	virtual bool AI_isForceSeparate() = 0;
-	virtual void AI_makeForceSeparate() = 0;
+	//virtual void AI_makeForceSeparate() = 0;
+	virtual void AI_setForceSeparate(bool bNewValue = true) = 0; // K-Mod
 	//virtual MissionAITypes AI_getMissionAIType() = 0;
 	virtual MissionAITypes AI_getMissionAIType() const = 0; // K-Mod
 	virtual void AI_setMissionAI(MissionAITypes eNewMissionAI, CvPlot* pNewPlot, CvUnit* pNewUnit) = 0;

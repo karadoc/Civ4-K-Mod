@@ -55,7 +55,8 @@ public:
 	CvPlot* AI_getMissionAIPlot();
 
 	bool AI_isForceSeparate();
-	void AI_makeForceSeparate();
+	//void AI_makeForceSeparate();
+	inline void AI_setForceSeparate(bool bNewValue = true) { m_bForceSeparate = bNewValue; } // K-Mod
 
 	MissionAITypes AI_getMissionAIType() const;
 	void AI_setMissionAI(MissionAITypes eNewMissionAI, CvPlot* pNewPlot, CvUnit* pNewUnit);

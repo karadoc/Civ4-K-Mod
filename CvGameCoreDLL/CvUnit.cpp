@@ -9551,7 +9551,7 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 					FAssert(pOldSelectionGroup->getHeadUnit() != NULL);
 					if (pOldSelectionGroup->getHeadUnit()->AI_getUnitAIType() != AI_getUnitAIType())
 					{
-						pOldSelectionGroup->AI_makeForceSeparate();
+						pOldSelectionGroup->AI_setForceSeparate();
 					}
 				}
 			}

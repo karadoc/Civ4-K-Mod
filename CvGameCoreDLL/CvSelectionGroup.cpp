@@ -4649,7 +4649,14 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 	}
 
 	FAssertMsg(pSplitGroup->getNumUnits() <= iSplitSize, "somehow our split group is too large");
-	
+
+	// K-Mod
+	// if the remainder group doesn't have the same unitAI, and didn't get loaded into a boat. Then tell it to split, so that we don't get any strange groups forming.
+	// Note: the force split can be overridden by the calling function if need be.
+	if (pRemainderGroup && pRemainderGroup->getHeadUnitAI() != eOldHeadAI)
+		pRemainderGroup->AI_setForceSeparate();
+	// K-Mod end
+
 	if (ppOtherGroup != NULL)
 	{
 		*ppOtherGroup = pRemainderGroup;
