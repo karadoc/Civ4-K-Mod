@@ -13087,8 +13087,10 @@ CivicTypes CvPlayerAI::AI_bestCivic(CivicOptionTypes eCivicOption, int* piBestVa
 	return eBestCivic;
 }
 
-// This function has been heavily edited for K-Mod. (some original code deleted, some edited by BBAI)
+// The bulk of this function has been rewriten for K-Mod. (some original code deleted, some edited by BBAI)
 // Note: the value is roughly in units of commerce per turn.
+// Also, this function could probably be made a bit more accurate and perhaps even faster if it calculated effects on a city-by-city basis,
+// rather than averaging effects across all cities. (certainly this would work better for happiness modifiers.)
 int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 {
 	PROFILE_FUNC();
@@ -13097,34 +13099,24 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	const CvGame& kGame = GC.getGameINLINE(); // K-Mod
 
 	int iCities = getNumCities();
-	bool bCultureVictory3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3);
-	bool bCultureVictory2 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2);
 
 	FAssertMsg(eCivic < GC.getNumCivicInfos(), "eCivic is expected to be within maximum bounds (invalid Index)");
 	FAssertMsg(eCivic >= 0, "eCivic is expected to be non-negative (invalid Index)");
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       10/05/09                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
 	// Circumvents crash bug in simultaneous turns MP games
 	if( eCivic == NO_CIVIC )
 	{
 		return 1;
 	}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 
 	if( isBarbarian() )
 	{
 		return 1;
 	}
 
-	CvCivicInfo& kCivic = GC.getCivicInfo(eCivic);
+	const CvCivicInfo& kCivic = GC.getCivicInfo(eCivic);
 
-	int iS = (isCivic(eCivic)?-1 :1);// K-Mod, sign for whether we should be considering gaining a bonus, or losing a bonus
+	int iS = isCivic(eCivic)?-1 :1;// K-Mod, sign for whether we should be considering gaining a bonus, or losing a bonus
 
 	bool bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
 	if( bWarPlan )
@@ -13183,12 +13175,24 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 	//int iConnectedForeignCities = countPotentialForeignTradeCitiesConnected();
 	int iTotalReligonCount = countTotalHasReligion();
-	ReligionTypes eBestReligion = AI_bestReligion();
-	if (eBestReligion == NO_RELIGION)
+	ReligionTypes eBestReligion = getStateReligion();
+	int iBestReligionPopulation = 0;
+	if (kCivic.isStateReligion())
 	{
-		eBestReligion = getStateReligion();
+		ReligionTypes temp = AI_bestReligion(); // only calculate best religion if this is a religious civic
+		if (temp != NO_RELIGION)
+			eBestReligion = temp;
+
+		if (eBestReligion != NO_RELIGION)
+		{
+			int iLoop;
+			for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity; pLoopCity = nextCity(&iLoop))
+			{
+				iBestReligionPopulation += pLoopCity->isHasReligion(eBestReligion) ? pLoopCity->getPopulation() : 0;
+			}
+		}
 	}
-	int iHighestReligionCount = ((eBestReligion == NO_RELIGION) ? 0 : getHasReligionCount(eBestReligion));
+	int iBestReligionCities = eBestReligion == NO_RELIGION ? 0 : getHasReligionCount(eBestReligion);
 	int iWarmongerFactor = 25000 / std::max(100, (100 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand()));
 	// K-Mod note. max war rand is between 50 and 400, so I've renamed the above number from iWarmongerPercent to iWarmongerFactor.
 	// I don't know what it is meant to be a percentage of. It's a number roughly between 56 and 167.
@@ -13244,17 +13248,6 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	}
 	// K-Mod end
 
-	if( kCivic.getFreeExperience() > 0 )
-	{
-		// Free experience increases value of hammers spent on units, population is an okay measure of base hammer production
-		int iTempValue = (kCivic.getFreeExperience() * getTotalPopulation() * (bWarPlan ? 30 : 12))/100;
-		iTempValue *= AI_averageYieldMultiplier(YIELD_PRODUCTION);
-		iTempValue /= 100;
-		iTempValue *= iWarmongerFactor;
-		iTempValue /= 100;
-		iValue += iTempValue;
-	}
-
 	/* original bts code
 	iValue += ((kCivic.getWorkerSpeedModifier() * AI_getNumAIUnits(UNITAI_WORKER)) / 15);
 	iValue += ((kCivic.getImprovementUpgradeRateModifier() * iCities) / 50);
@@ -13281,7 +13274,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 	}
 	iValue += kCivic.getImprovementUpgradeRateModifier() * iCities / 50; // this is a tough one... I'll leave it alone for now.
-	iValue += (kCivic.getMilitaryProductionModifier() * iCities * iWarmongerFactor) / (bWarPlan ? 300 : 500 ); // whatever
+	// value for kCivic.getMilitaryProductionModifier() has been moved
 	if (kCivic.getBaseFreeUnits() || kCivic.getBaseFreeMilitaryUnits() ||
 		kCivic.getFreeUnitsPopulationPercent() || kCivic.getFreeMilitaryUnitsPopulationPercent() ||
 		kCivic.getGoldPerUnit() || kCivic.getGoldPerMilitaryUnit())
@@ -13711,34 +13704,81 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	}
 
 	if (kCivic.getExtraHealth() != 0)
-	{
 		iValue += (iCities * 6 * iS * AI_getHealthWeight(iS*kCivic.getExtraHealth(), 1)) / 100;
-	}
 
 	if (kCivic.getHappyPerMilitaryUnit() != 0)
-	{
 		iValue += (iCities * 9 * iS * AI_getHappinessWeight(iS*kCivic.getHappyPerMilitaryUnit() * 3, 1)) / 100;
-	}
 
 	if (kCivic.getLargestCityHappiness() != 0)
-	{
 		iValue += (14 * std::min(iCities, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()) * iS * AI_getHappinessWeight(iS*kCivic.getLargestCityHappiness(), 1)) / 100;
-	}
 
-	if (kCivic.getWarWearinessModifier() != 0)
-	{
-		// K-Mod. (original code deleted)
+	if (kCivic.getWarWearinessModifier() != 0) // K-Mod. (original code deleted)
 		iValue += (12 * iCities * iS * AI_getHappinessWeight(iS*ROUND_DIVIDE(getWarWearinessPercentAnger() * -getWarWearinessModifier(), GC.getPERCENT_ANGER_DIVISOR()), 1, true)) / 100;
-	}
 
-	iValue += (kCivic.getNonStateReligionHappiness() * (iTotalReligonCount - iHighestReligionCount) * 5);
+	//iValue += (kCivic.getNonStateReligionHappiness() * (iTotalReligonCount - iHighestReligionCount) * 5);
+	// K-Mod
+	if (kCivic.getNonStateReligionHappiness() != 0)
+		iValue += 12 * iCities * iS * AI_getHappinessWeight(iS * kCivic.getNonStateReligionHappiness() * iTotalReligonCount / std::max(1, iCities), 0) / 100;
+	// K-Mod end
+
+	// K-Mod. Experience and production modifiers
+	{
+		// Roughly speaking these are the approximations used in this section:
+		// each population produces 1 hammer.
+		// percentage of hammers spent on units is BuildUnitProb + 40 if at war
+		// experience points are worth a production boost of 8% each, multiplied by the warmonger factor, and componded with actual production multipliers
+		int iProductionShareUnits = GC.getLeaderHeadInfo(getPersonalityType()).getBuildUnitProb();
+		if (bWarPlan)
+			iProductionShareUnits = (100 + iProductionShareUnits)/2;
+		else if (AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
+			iProductionShareUnits /= 2;
+
+		int iProductionShareBuildings = 100 - iProductionShareUnits;
+
+		int iTempValue = getTotalPopulation() * kCivic.getMilitaryProductionModifier() + iBestReligionPopulation * kCivic.getStateReligionUnitProductionModifier();
+
+		int iExperience = getTotalPopulation() * kCivic.getFreeExperience() + iBestReligionPopulation * kCivic.getStateReligionFreeExperience();
+		if (iExperience)
+		{
+			iExperience *= 8 * iWarmongerFactor;
+			iExperience /= 100;
+			iExperience *= AI_averageYieldMultiplier(YIELD_PRODUCTION);
+			iExperience /= 100;
+
+			iTempValue += iExperience;
+		}
+
+		iTempValue *= iProductionShareUnits;
+		iTempValue /= 100;
+
+		iTempValue += iBestReligionPopulation * kCivic.getStateReligionBuildingProductionModifier() * iProductionShareBuildings / 100;
+		iTempValue *= AI_yieldWeight(YIELD_PRODUCTION);
+		iTempValue /= 100;
+		iValue += iTempValue / 100;
+
+		/* old modifiers, (just for reference)
+		iValue += (kCivic.getMilitaryProductionModifier() * iCities * iWarmongerFactor) / (bWarPlan ? 300 : 500 );
+		if (kCivic.getFreeExperience() > 0)
+		{
+			// Free experience increases value of hammers spent on units, population is an okay measure of base hammer production
+			int iTempValue = (kCivic.getFreeExperience() * getTotalPopulation() * (bWarPlan ? 30 : 12))/100;
+			iTempValue *= AI_averageYieldMultiplier(YIELD_PRODUCTION);
+			iTempValue /= 100;
+			iTempValue *= iWarmongerFactor;
+			iTempValue /= 100;
+			iValue += iTempValue;
+		}
+		iValue += ((kCivic.getStateReligionUnitProductionModifier() * iBestReligionCities) / 4);
+		iValue += ((kCivic.getStateReligionBuildingProductionModifier() * iBestReligionCities) / 3);
+		iValue += (kCivic.getStateReligionFreeExperience() * iBestReligionCities * ((bWarPlan) ? 6 : 2)); */
+	}
+	// K-Mod end
 
 	if (kCivic.isStateReligion())
 	{
-		if (iHighestReligionCount > 0)
+		if (iBestReligionCities > 0)
 		{
-			// K-Mod note: the evaluation of relgious civics is currently very poor. The scale doesn't match the scale of the other civics.
-			// But actually, the outcome of the civic choices isn't too bad, so I'm just going to leave it alone for now.
+			/* original bts code
 			iValue += iHighestReligionCount;
 
 			iValue += ((kCivic.isNoNonStateReligionSpread()) ? ((iCities - iHighestReligionCount) * 2) : 0);
@@ -13747,64 +13787,86 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iValue += (kCivic.getStateReligionGreatPeopleRateModifier() / 4);
 			iValue += ((kCivic.getStateReligionUnitProductionModifier() * iHighestReligionCount) / 4);
 			iValue += ((kCivic.getStateReligionBuildingProductionModifier() * iHighestReligionCount) / 3);
-			iValue += (kCivic.getStateReligionFreeExperience() * iHighestReligionCount * ((bWarPlan) ? 6 : 2));
+			iValue += (kCivic.getStateReligionFreeExperience() * iHighestReligionCount * ((bWarPlan) ? 6 : 2)); */
 
-			// Value civic based on current gains from having a state religion
-			for (int iI = 0; iI < GC.getNumVoteSourceInfos(); ++iI)
+			// K-Mod
+			FAssert(eBestReligion != NO_RELIGION);
+			iValue += (2 * iBestReligionPopulation - getTotalPopulation()) / 4;
+
+			if (isNoNonStateReligionSpread())
 			{
-				if (kGame.isDiploVote((VoteSourceTypes)iI))
+				if (eBestReligion == GC.getLeaderHeadInfo(getLeaderType()).getFavoriteReligion() ||
+					(hasHolyCity(eBestReligion) && countHolyCities() == 1))
 				{
-					ReligionTypes eReligion = kGame.getVoteSourceReligion((VoteSourceTypes)iI);
+					iValue += iCities * 2; // protection vs espionage? depriving foreign civs of religion revenue?
+				}
+			}
 
-					if( NO_RELIGION != eReligion && eReligion == eBestReligion )
+			// getStateReligionFreeExperience, getStateReligionBuildingProductionModifier, getStateReligionUnitProductionModifier; all moved elsewhere.
+
+			if (kCivic.getStateReligionHappiness() != 0)
+			{
+				iValue += 10 * iCities * iS * AI_getHappinessWeight(iS * kCivic.getStateReligionHappiness(), 1) * iBestReligionPopulation / std::max(1, 100 * getTotalPopulation());
+			}
+			if (kCivic.getStateReligionGreatPeopleRateModifier() != 0)
+			{
+				// This is not going to be very good. I'm sorry about that. I can't think of a neat way to make it better.
+				// (The best way would involve counting GGP, weighted by the AI value for great person type,
+				// multiplied by the probability that the city will actually be able to produce a great person, and so on.
+				// But I'm worried that would be too slow / complex.)
+
+				std::vector<int> base_rates;
+				int iLoop;
+				for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity; pLoopCity = nextCity(&iLoop))
+				{
+					if (pLoopCity->isHasReligion(eBestReligion))
+						base_rates.push_back(pLoopCity->getBaseGreatPeopleRate());
+				}
+				int iGpCities = std::min((int)base_rates.size(), 3);
+				std::partial_sort(base_rates.begin(), base_rates.begin()+iGpCities, base_rates.end());
+
+				int iTempValue = 0;
+				for (int i = 0; i < iGpCities; i++)
+					iTempValue += base_rates[i];
+
+				iValue += 2 * kCivic.getStateReligionGreatPeopleRateModifier() * iTempValue / 100;
+			}
+
+			// apostolic palace
+			for (VoteSourceTypes i = (VoteSourceTypes)0; i < GC.getNumVoteSourceInfos(); i = (VoteSourceTypes)(i+1))
+			{
+				if (kGame.isDiploVote(i))
+				{
+					if (kGame.getVoteSourceReligion(i) == eBestReligion && isLoyalMember(i))
 					{
-						// Are we leader of AP?
-						if( getTeam() == kGame.getSecretaryGeneral((VoteSourceTypes)iI) )
-						{
-							iValue += 100;
-						}
+						int iTempValue = getTotalPopulation() * iBestReligionCities / std::max(1, iCities);
 
-						// Any benefits we get from AP tied to state religion?
-						/*
-						for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
-						{
-							iTempValue = iHighestReligionCount*GC.getVoteSourceInfo((VoteSourceTypes)iI).getReligionYield(iYield);
+						if (getTeam() == kGame.getSecretaryGeneral(i))
+							iTempValue *= 2;
+						if (kTeam.isForceTeamVoteEligible(i))
+							iTempValue /= 2;
 
-							iTempValue *= AI_yieldWeight((YieldTypes)iYield);
-							iTempValue /= 100;
-
-							iValue += iTempValue;
-						}
-
-						for (int iCommerce = 0; iCommerce < NUM_COMMERCE_TYPES; ++iCommerce)
-						{
-							iTempValue = (iHighestReligionCount*GC.getVoteSourceInfo((VoteSourceTypes)iI).getReligionCommerce(iCommerce))/2;
-
-							iTempValue *= AI_commerceWeight((CommerceTypes)iCommerce);
-							iTempValue = 100;
-
-							iValue += iTempValue;
-						}
-						*/
+						iValue += iTempValue;
 					}
 				}
 			}
 
 			// Value civic based on wonders granting state religion boosts
-			for (int iCommerce = 0; iCommerce < NUM_COMMERCE_TYPES; ++iCommerce)
+			for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 			{
-				int iTempValue = (iHighestReligionCount * getStateReligionBuildingCommerce((CommerceTypes)iCommerce))/2;
+				int iTempValue = iBestReligionCities * getStateReligionBuildingCommerce(i);
+				if (iTempValue)
+				{
+					iTempValue *= AI_averageCommerceMultiplier(i);
+					iTempValue /= 100;
 
-				// K-Mod
-				iTempValue *= AI_averageCommerceMultiplier((CommerceTypes)iCommerce);
-				iTempValue /= 100;
-				// K-mod end
+					iTempValue *= AI_commerceWeight(i);
+					iTempValue /= 100;
 
-				iTempValue *= AI_commerceWeight((CommerceTypes)iCommerce);
-				iTempValue /= 100;
-
-				iValue += iTempValue;
+					iValue += iTempValue;
+				}
 			}
+			// K-Mod end
 		}
 	}
 
@@ -13906,15 +13968,6 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	{
 		int iTempValue = 0;
 
-		// Nationhood
-		/* original bts code (lolwut?)
-		iTempValue += ((kCivic.getCommerceModifier(iI) * iCities) / 3);
-		iTempValue += (kCivic.getCapitalCommerceModifier(iI) / 2);
-		if (iI == COMMERCE_ESPIONAGE)
-		{
-			iTempValue *= AI_getEspionageWeight();
-			iTempValue /= 500;
-		}*/
 		// K-Mod
 		iTempValue += kCivic.getCommerceModifier(iI) * 100*getCommerceRate((CommerceTypes)iI) / AI_averageCommerceMultiplier((CommerceTypes)iI);
 		if (pCapital != NULL)
@@ -13933,14 +13986,6 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 		iTempValue *= AI_commerceWeight((CommerceTypes)iI);
 
-		/*if ((iI == COMMERCE_CULTURE) && bCultureVictory2)
-		{
-		    iTempValue *= 2;
-		    if (bCultureVictory3)
-		    {
-		        iTempValue *= 2;		        
-		    }
-		}*/
 		iTempValue /= 100;
 
 		iValue += iTempValue;
@@ -14009,14 +14054,15 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		int iTempValue = 0;
 		if (kCivic.isSpecialistValid(iI))
 		{
-			iTempValue += ((iCities *  (bCultureVictory3 ? 10 : 1)) + 6);
+			// K-Mod todo: the current code sucks. Fix it.
+			iTempValue += iCities * (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) ? 10 : 1) + 6;
 		}
 		iValue += (iTempValue / 2);
 	}
 
 	if (GC.getLeaderHeadInfo(getPersonalityType()).getFavoriteCivic() == eCivic)
 	{
-		if (!kCivic.isStateReligion() || iHighestReligionCount > 0)
+		if (!kCivic.isStateReligion() || iBestReligionCities > 0)
 		{
 			iValue *= 5; 
 			iValue /= 4; 
@@ -14055,8 +14101,10 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 			// K-Mod
 			if (iI == getStateReligion() && getReligionAnarchyLength() > 0)
 			{
-				iValue *= 4;
-				iValue /= 3;
+				if (AI_isFirstTech(getCurrentResearch()) || GET_TEAM(getTeam()).getAnyWarPlanCount(true))
+					iValue = iValue*3/2;
+				else
+					iValue = iValue*4/3;
 			}
 			// K-Mod end
 
@@ -14082,7 +14130,7 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 	int iBestCount = getHasReligionCount(eBestReligion);
 	int iSpreadPercent = (iBestCount * 100) / std::max(1, getNumCities());
 	int iPurityPercent = (iBestCount * 100) / std::max(1, countTotalHasReligion());
-	// K-Mod. Don't instantly convert to the first religion avaiable, unless it if your own religion.
+	// K-Mod. Don't instantly convert to the first religion avaiable, unless it is your own religion.
 	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - AI_getFlavorValue(FLAVOR_RELIGION)
 		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
 	{
@@ -23709,6 +23757,9 @@ bool CvPlayerAI::AI_isPlotThreatened(CvPlot* pPlot, int iRange, bool bTestMoves)
 
 bool CvPlayerAI::AI_isFirstTech(TechTypes eTech) const
 {
+	if (eTech == NO_TECH)
+		return false; // K-Mod
+
 	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 	{
 		if (GC.getReligionInfo((ReligionTypes)iI).getTechPrereq() == eTech)
