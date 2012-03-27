@@ -6095,6 +6095,7 @@ int CvCity::calculateCorporationMaintenanceTimes100(CorporationTypes eCorporatio
 	}
 
 	FAssert(iMaintenance >= 0);
+	// K-Mod note. This assert (and others like it) can fail sometimes during the process or updating plot groups; because the # of bonuses can be temporarily negative.
 
 	return iMaintenance;
 }

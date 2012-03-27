@@ -216,26 +216,26 @@ bool CvPlotGroup::hasBonus(BonusTypes eBonus)
 
 void CvPlotGroup::changeNumBonuses(BonusTypes eBonus, int iChange)
 {
-	CLLNode<XYCoords>* pPlotNode;
-	CvCity* pCity;
-	int iOldNumBonuses;
-
 	FAssertMsg(eBonus >= 0, "eBonus is expected to be non-negative (invalid Index)");
 	FAssertMsg(eBonus < GC.getNumBonusInfos(), "eBonus is expected to be within maximum bounds (invalid Index)");
 
 	if (iChange != 0)
 	{
-		iOldNumBonuses = getNumBonuses(eBonus);
+		//iOldNumBonuses = getNumBonuses(eBonus);
 
 		m_paiNumBonuses[eBonus] = (m_paiNumBonuses[eBonus] + iChange);
 
 		//FAssertMsg(m_paiNumBonuses[eBonus] >= 0, "m_paiNumBonuses[eBonus] is expected to be non-negative (invalid Index)"); XXX
 
-		pPlotNode = headPlotsNode();
+		// K-Mod note, m_paiNumBonuses[eBonus] is often temporarily negative while plot groups are being updated.
+		// It's an unfortuante side effect of the way the update is implemented. ... and so this assert is invalid.
+		// (This isn't my fault. I haven't changed it. It has always been like this.)
+
+		CLLNode<XYCoords>* pPlotNode = headPlotsNode();
 
 		while (pPlotNode != NULL)
 		{
-			pCity = GC.getMapINLINE().plotSorenINLINE(pPlotNode->m_data.iX, pPlotNode->m_data.iY)->getPlotCity();
+			CvCity* pCity = GC.getMapINLINE().plotSorenINLINE(pPlotNode->m_data.iX, pPlotNode->m_data.iY)->getPlotCity();
 
 			if (pCity != NULL)
 			{

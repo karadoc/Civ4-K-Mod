@@ -1,6 +1,30 @@
-This is K-Mod version 1.24.
+This is K-Mod version 1.25.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.25 changelist
+
+Game
+
++ The cost of espionage missions and the probability of spies being caught both depend on the total espionage points ever earnt by each of the two teams involved. These total-points modifiers are now scaled by the relative populations of the teams. This change will give small civs a slightly better chance of spying successfully on large civs.
++ Military Unit cost (from pacifism) is no longer multiplied by the handicap modifier for unit cost. Neither is "extra cost" for units (which is currently unused).
++ Changed the pacifism cost from +1 gold per military unit to +0.5 gold per military unit. (Note, the new cost is independent of difficulty level, whereas the previous cost was actually between 0.2 $/unit and 1 $/unit depending on difficulty. 0.5 gold / unit matches the previous cost on Nobel.)
++ The "handicap cost" is no longer shown on the unit cost mouse-over text. Instead, it is included in the unit cost. (This change makes it consistent with other handicap modifiers in the game.)
++ "Gold per unit" and "gold per military unit" are now in units of 1/100 gold, rather than just 1 gold.
++ Increased the range of guided missiles from 4 to 5.
++ Fixed a pathfinding problem which sometimes caused boats to fail to find a path around enemy units.
++ The field-of-view settings will now only persist if Remember Field Of View is set in the BUG options.
+
+AI
+
++ Rewrote several sections of AI_civicValue, including the parts about unit costs, production bonuses, experience bonuses, and everything to do with religion.
++ Inertia against religion switching is now increased when at war and when researching a tech with a first discoverer bonus.
++ Fixed a problem which sometimes caused the AI to chop jungle forest preserves at their national park city.
++ Fixed a minor bug in CvPlot::getNonObsoleteBonusType. (It reported that the resource was 'connected' if it visiable with a city built on it, regardless of whether the resource was enabled yet. eg. oil without combustion.)
++ Fixed a minor problem in AI_assaultSeaMove which caused a little bit of confusion after empty transports are separated from an assault group.
++ Fixed a minor problem in CvSelectionGroup::splitGroup which sometimes resulted in AI groups led by a unit type which isn't meant to lead a group.
++ The AI will now use their culture slider more freely if they don't need any more research.
+
+--
 v1.24 changelist
 
 Game
