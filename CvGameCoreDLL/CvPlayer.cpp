@@ -14814,7 +14814,6 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 		eTargetPlayer = getID();
 	}
 
-	const CvTeam& kTeam = GET_TEAM(getTeam()); // K-Mod
 	const CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam()); // (moved from the bottom of the function)
 
 	//if (pCity != NULL && kMission.isTargetsCity())
@@ -14900,16 +14899,14 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 	// My points VS. Your points to mod cost
 	/* original bts code
 	int iTargetPoints = kTargetTeam.getEspionagePointsEver();
-	int iOurPoints = kTeam.getEspionagePointsEver(); */
-	// K-Mod. Scale the points modifier based on the teams' population. (Note ESPIONAGE_SPENDING_MULTIPLIER is 100 in the default xml.)
-	{
-		int iPopScale = 7 * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
-		int iTargetPoints = 10 * kTargetTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTargetTeam.getTotalPopulation(false));
-		int iOurPoints = 10 * kTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTeam.getTotalPopulation(false));
-	// K-Mod end
+	int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsEver();
 		iModifier *= (GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints)) / std::max(1, iTargetPoints + 2 * iOurPoints);
 		iModifier /= 100;
-	} //
+	} */
+	// K-Mod. use the dedicated function that exists for this modifier, for consistency.
+	iModifier *= ::getEspionageModifier(getTeam(), kTargetTeam.getID());
+	iModifier /= 100;
+	// K-Mod end
 	
 	// Counterespionage Mission Mod
 	/* if (kTargetTeam.getCounterespionageModAgainstTeam(getTeam()) > 0)

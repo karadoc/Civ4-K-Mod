@@ -943,14 +943,25 @@ int getEspionageModifier(TeamTypes eOurTeam, TeamTypes eTargetTeam)
 {
 	FAssert(eOurTeam != eTargetTeam);
 	FAssert(eOurTeam != BARBARIAN_TEAM);
-	FAssert(eTargetTeam != BARBARIAN_TEAM);
+	// FAssert(eTargetTeam != BARBARIAN_TEAM); // K-Mod note. This is possible for legitimate reasons (although, the result is never important...)
 
+	/* original bts code
 	int iTargetPoints = GET_TEAM(eTargetTeam).getEspionagePointsEver();
 	int iOurPoints = GET_TEAM(eOurTeam).getEspionagePointsEver();
 
 	int iModifier = GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints);
 	iModifier /= std::max(1, iTargetPoints + 2 * iOurPoints);
-	return iModifier;
+	return iModifier; */
+	// K-Mod. Scale the points modifier based on the teams' population. (Note ESPIONAGE_SPENDING_MULTIPLIER is 100 in the default xml.)
+	const CvTeam& kOurTeam = GET_TEAM(eOurTeam);
+	const CvTeam& kTargetTeam = GET_TEAM(eTargetTeam);
+
+	int iPopScale = 5 * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+	int iTargetPoints = 10 * kTargetTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTargetTeam.getTotalPopulation(false));
+	int iOurPoints = 10 * kOurTeam.getEspionagePointsEver() / std::max(1, iPopScale + kOurTeam.getTotalPopulation(false));
+
+	return GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints) / std::max(1, iTargetPoints + 2 * iOurPoints);
+	// K-Mod end
 }
 
 void setTradeItem(TradeData* pItem, TradeableItems eItemType, int iData)
