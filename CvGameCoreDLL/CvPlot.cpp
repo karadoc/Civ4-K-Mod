@@ -5608,6 +5608,9 @@ BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckConnected
 		{
 			// note: this checks whether the bonus is connected for the owner of the plot, from the point of view of eTeam.
 			TeamTypes ePlotTeam = getTeam();
+			if (ePlotTeam == NO_TEAM || !GET_TEAM(ePlotTeam).isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechCityTrade()))
+				return NO_BONUS;
+
 			// note: this function is used inside CvPlot::updatePlotGroupBonuses, which is called during CvPlot::setImprovementType
 			// between when the improvement is changed and the revealed improvement type is updated...
 			// therefore when eTeam == ePlotTeam, we use the real improvement, not the revealed one.
@@ -5615,12 +5618,8 @@ BonusTypes CvPlot::getNonObsoleteBonusType(TeamTypes eTeam, bool bCheckConnected
 
 			FAssert(ePlotTeam != eTeam || eImprovement == getImprovementType());
 
-			if (ePlotTeam == NO_TEAM
-				? eImprovement != NO_IMPROVEMENT && !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus)
-				: !isCity() && !GET_TEAM(ePlotTeam).doesImprovementConnectBonus(eImprovement, eBonus))
-			{
+			if (!isCity() && !GET_TEAM(ePlotTeam).doesImprovementConnectBonus(eImprovement, eBonus))
 				return NO_BONUS;
-			}
 		}
 		// K-Mod end
 	}
