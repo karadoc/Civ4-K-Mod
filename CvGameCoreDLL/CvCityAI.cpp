@@ -10540,7 +10540,14 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 		}
 	}
 
-	if (iClearValue_wYield > 0)
+	// K-Mod. Don't chop the feature if we need it for our best improvement!
+	if (eBestBuild == NO_BUILD || (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT
+		&& GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature()))
+	{
+		bChop = false;
+	}
+	else if (iClearValue_wYield > 0)
+	// K-Mod end
 	{
 		FAssert(pPlot->getFeatureType() != NO_FEATURE);
 
@@ -10581,16 +10588,6 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 	//Chop - maybe integrate this better with the other feature-clear code tho the logic
 	//is kinda different
-	// K-Mod. Don't chop the feature if we need it for our best improvement!
-	if (bChop)
-	{
-		if (eBestBuild == NO_BUILD || (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT
-			&& GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature()))
-		{
-			bChop = false;
-		}
-	}
-	// K-Mod end
 	if (bChop && (eBonus == NO_BONUS) && (pPlot->getFeatureType() != NO_FEATURE) &&
 		(pPlot->getImprovementType() == NO_IMPROVEMENT) && !(kOwner.isOption(PLAYEROPTION_LEAVE_FORESTS)))
 	{
