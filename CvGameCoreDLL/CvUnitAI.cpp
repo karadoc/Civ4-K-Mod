@@ -7688,7 +7688,10 @@ void CvUnitAI::AI_assaultSeaMove()
 					// this unit was empty group leader
 					//getGroup()->pushMission(MISSION_SKIP);
 					//return;
-					iCargo = 0; // K-Mod. (and I've made a second if iCargo > thing)
+					// K-Mod. (and I've made a second if iCargo > thing)
+					FAssert(getGroup()->getNumUnits() == 1);
+					iCargo = 0;
+					iEscorts = 0;
 				}
 			}
 			if (iCargo >= iTargetReinforcementSize)
