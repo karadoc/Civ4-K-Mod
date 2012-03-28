@@ -2458,17 +2458,13 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 {
 	PROFILE_FUNC();
 
-	CLLNode<IDInfo>* pUnitNode;
-	CvUnit* pLoopUnit;
-	CvPlot* pUnitPlot;
-	bool bGroup;
-
 	FAssertMsg(pUnit != NULL, "pUnit == NULL unexpectedly");
 
 	if (bAlt || bCtrl)
 	{
 		gDLL->getInterfaceIFace()->clearSelectedCities();
 
+		bool bGroup;
 		if (!bShift)
 		{
 			gDLL->getInterfaceIFace()->clearSelectionList();
@@ -2479,20 +2475,21 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 			bGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
 		}
 
-		pUnitPlot = pUnit->plot();
+		CvPlot* pUnitPlot = pUnit->plot();
+		DomainTypes eDomain = pUnit->getDomainType(); // K-Mod
 
-		pUnitNode = pUnitPlot->headUnitNode();
+		CLLNode<IDInfo>* pUnitNode = pUnitPlot->headUnitNode();
 
 		gDLL->getInterfaceIFace()->selectionListPreChange();
 
 		while (pUnitNode != NULL)
 		{
-			pLoopUnit = ::getUnit(pUnitNode->m_data);
+			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 			pUnitNode = pUnitPlot->nextUnitNode(pUnitNode);
 
 			if (pLoopUnit->getOwnerINLINE() == getActivePlayer())
 			{
-				if (pLoopUnit->canMove())
+				if (pLoopUnit->getDomainType() == eDomain && pLoopUnit->canMove()) // K-Mod added domain check
 				{
 					//if (!isMPOption(MPOPTION_SIMULTANEOUS_TURNS) || getTurnSlice() - pLoopUnit->getLastMoveTurn() > GC.getDefineINT("MIN_TIMER_UNIT_DOUBLE_MOVES")) // disabled by K-Mod
 					{
