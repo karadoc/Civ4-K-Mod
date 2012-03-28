@@ -498,7 +498,6 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
 	short aiYields[NUM_YIELD_TYPES];
-	int iValue;
 	int iNumCities = kOwner.getNumCities();
     
 	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
@@ -513,9 +512,9 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		aiCommerceYields[iI] = kOwner.specialistCommerce(eSpecialist, ((CommerceTypes)iI));
 	}
 	
-	iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove) * 100;
+	int iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove) * 100;
 
-	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
+	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange(); // note: this will get a factor of 100 in the next block
 
 	int iEmphasisCount = 0;
 	if (iGreatPeopleRate != 0)
@@ -545,14 +544,9 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			}
 		}
 		
-		int iTempValue = 100 * iGreatPeopleRate * iGPPValue;
+		iGreatPeopleRate *= getTotalGreatPeopleRateModifier();
+		int iTempValue = iGreatPeopleRate * iGPPValue;
 		
-//		if (isHuman() && (getGreatPeopleUnitRate(iGreatPeopleType) == 0)
-//			&& (getForceSpecialistCount(eSpecialist) == 0) && !AI_isEmphasizeGreatPeople())
-//		{
-//			iTempValue -= (iGreatPeopleRate * 4);			
-//		}
-
 		if (!isHuman() || AI_isEmphasizeGreatPeople())
 		{
 			int iProgress = getGreatPeopleProgress();
@@ -561,7 +555,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				int iThreshold = kOwner.greatPeopleThreshold();
 				//iTempValue += 100*(iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold);
 				// K-Mod. The original code overflows the int when iProgress is big.
-				int iCloseBonus = 100 * iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress / iThreshold;
+				int iCloseBonus = iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress / iThreshold;
 				iCloseBonus *= iProgress;
 				iCloseBonus /= iThreshold;
 				iTempValue += iCloseBonus;
@@ -569,72 +563,6 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			}
 		}
 		
-		/*
-		int iCurrentEra = kOwner.getCurrentEra();
-		int iTotalEras = GC.getNumEraInfos();
-		
-		if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
-		{
-			int iUnitClass = GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass();
-			FAssert(iUnitClass != NO_UNITCLASS);
-			
-			UnitTypes eGreatPeopleUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iUnitClass);
-			if (eGreatPeopleUnit != NO_UNIT)
-			{
-				CvUnitInfo& kUnitInfo = GC.getUnitInfo(eGreatPeopleUnit);
-				if (kUnitInfo.getGreatWorkCulture() > 0)
-				{
-					iTempValue += 100 * iGreatPeopleRate * kUnitInfo.getGreatWorkCulture() * (std::max(2*iTotalEras/3, (int)kOwner.getCurrentEra())) / ((kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 500 : 700);
-				}
-			}
-		}
-
-        if (!isHuman() && (iCurrentEra <= ((iTotalEras * 2) / 3)))
-        {
-            // try to spawn a prophet for any shrines we have yet to build
-            bool bNeedProphet = false;
-            int iBestSpreadValue = 0;
-
-			
-			for (int iJ = 0; iJ < GC.getNumReligionInfos(); iJ++)
-            {
-                ReligionTypes eReligion = (ReligionTypes) iJ;
-
-                if (isHolyCity(eReligion) && !hasShrine(eReligion)
-                	&& ((iCurrentEra < iTotalEras / 2) || GC.getGameINLINE().countReligionLevels(eReligion) >= 10))
-                {
-					CvCivilizationInfo* pCivilizationInfo = &GC.getCivilizationInfo(getCivilizationType());
-					
-					int iUnitClass = GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass();
-                    FAssert(iUnitClass != NO_UNITCLASS);
-                    
-					UnitTypes eGreatPeopleUnit = (UnitTypes) pCivilizationInfo->getCivilizationUnits(iUnitClass);
-					if (eGreatPeopleUnit != NO_UNIT)
-					{
-						// note, for normal XML, this count will be one (there is only 1 shrine building for each religion)
-						int	shrineBuildingCount = GC.getGameINLINE().getShrineBuildingCount(eReligion);
-						for (int iI = 0; iI < shrineBuildingCount; iI++)
-						{
-							int eBuilding = (int) GC.getGameINLINE().getShrineBuilding(iI, eReligion);
-							
-							// if this unit builds or forceBuilds this building
-							if (GC.getUnitInfo(eGreatPeopleUnit).getBuildings(eBuilding) || GC.getUnitInfo(eGreatPeopleUnit).getForceBuildings(eBuilding))
-							{
-								bNeedProphet = true;
-								iBestSpreadValue = std::max(iBestSpreadValue, GC.getGameINLINE().countReligionLevels(eReligion));
-							}
-						}
-				
-					}
-				}
-			}
-
-			if (bNeedProphet)
-            {
-                iTempValue += 100 * iGreatPeopleRate * iBestSpreadValue;
-            }
-		} */
-
 		// K-Mod: I've replaced the above code with a new method for targeting particular great person types.
 		if (!isHuman())
 		{
@@ -645,7 +573,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		// Scale based on how often this city will actually get a great person.
 		if (!AI_isEmphasizeGreatPeople())
 		{
-			int iCityRate = getGreatPeopleRate();
+			int iCityRate = getGreatPeopleRate() + bRemove ? 0 : iGreatPeopleRate/100;
 			int iHighestRate = 0;
 			int iLoop;
 			for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
@@ -655,7 +583,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			if (iHighestRate > iCityRate)
 			{
 				iTempValue *= 100;
-				iTempValue /= (2*100*(iHighestRate+4))/(iCityRate+4) - 100;
+				iTempValue /= (2*100*(iHighestRate+8))/(iCityRate+8) - 100; // the +8 is just so that we don't block ourselves from assigning the first couple of specialists.
 			}
 			// each successive great person costs more points. So the points are effectively worth less...
 			// (note: I haven't tried to match this value decrease with the actual cost increase,
@@ -665,29 +593,28 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 			//iTempValue /= 90 + kOwner.getGreatPeopleCreated() * 900/std::max(10, kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass()));
 		}
 
-		iTempValue *= getTotalGreatPeopleRateModifier();
 		//iTempValue /= kOwner.AI_averageGreatPeopleMultiplier();
 		// K-Mod note: ultimately, I don't think the value should be divided by the average multiplier.
 		// because more great people points is always better, regardless of what the average multiplier is.
 		// However, because of the flawed way that food is currently evaluated, I need to dilute the value of GPP
 		// so that specialists don't get value more highly than food tiles. (I hope to correct this, later.)
 		iTempValue /= (200 + kOwner.AI_averageGreatPeopleMultiplier())/3;
-		
+
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
 	}
 	else
 	{
 		SpecialistTypes eGenericCitizen = (SpecialistTypes) GC.getDefineINT("DEFAULT_SPECIALIST");
-		
+
 		// are we the generic specialist?
 		if (eSpecialist == eGenericCitizen)
 		{
-			iValue *= 60;
+			iValue *= 80; // was 60
 			iValue /= 100;
 		}
 	}
-	
+
 	int iExperience = GC.getSpecialistInfo(eSpecialist).getExperience();
 	if (0 != iExperience)
 	{
