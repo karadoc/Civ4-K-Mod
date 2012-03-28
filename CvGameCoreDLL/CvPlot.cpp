@@ -6717,7 +6717,7 @@ bool CvPlot::isBestAdjacentFound(PlayerTypes eIndex)
 	CvPlayerAI::CvFoundSettings kFoundSet(GET_PLAYER(eIndex), false); // K-Mod
 
 	//int iPlotValue = GET_PLAYER(eIndex).AI_foundValue(getX_INLINE(), getY_INLINE());
-	int iPlotValue = GET_PLAYER(eIndex).AI_foundValueBulk(getX_INLINE(), getY_INLINE(), kFoundSet);
+	int iPlotValue = GET_PLAYER(eIndex).AI_foundValue_bulk(getX_INLINE(), getY_INLINE(), kFoundSet);
 
 	if (iPlotValue == 0)
 	{
@@ -6731,7 +6731,7 @@ bool CvPlot::isBestAdjacentFound(PlayerTypes eIndex)
 		if ((pAdjacentPlot != NULL) && pAdjacentPlot->isRevealed(GET_PLAYER(eIndex).getTeam(), false))
 		{
 			//if (pAdjacentPlot->getFoundValue(eIndex) >= getFoundValue(eIndex))
-			if (GET_PLAYER(eIndex).AI_foundValueBulk(pAdjacentPlot->getX_INLINE(), pAdjacentPlot->getY_INLINE(), kFoundSet) > iPlotValue)
+			if (GET_PLAYER(eIndex).AI_foundValue_bulk(pAdjacentPlot->getX_INLINE(), pAdjacentPlot->getY_INLINE(), kFoundSet) > iPlotValue)
 			{
 				return false;
 			}

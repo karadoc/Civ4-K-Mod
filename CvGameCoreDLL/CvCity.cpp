@@ -12833,11 +12833,10 @@ void CvCity::doCulture()
 }
 
 
-//void CvCity::doPlotCulture(bool bUpdate, PlayerTypes ePlayer, int iCultureRate, bool bCityCulture)
-void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture) //K-Mod
+// This function has essentially been rewriten for K-Mod. (and it use to not be 'times 100')
+// A note about scale: the city plot itself gets roughly 10x the culture. The outer edges of the cultural influence get 1x the culture (ie. the influence that extends beyond the borders).
+void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture)
 {
-	CvPlot* pLoopPlot;
-	int iDX, iDY;
 	CultureLevelTypes eCultureLevel = (CultureLevelTypes)0;
 
 	if (GC.getUSE_DO_PLOT_CULTURE_CALLBACK()) // K-Mod. block unused python callbacks
@@ -12877,48 +12876,10 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 	}
 
 /**
-*** K-Mod, 26/sep/10, 6/nov/10, Karadoc
-*** the value and effect of 'free city culture' has been changed.
-**/
-	/* original bts code
-	int iFreeCultureRate = GC.getDefineINT("CITY_FREE_CULTURE_GROWTH_FACTOR");
-	*/
-/*
-** K-Mod end
-*/
-
-/**
 *** K-Mod, 30/oct/10, Karadoc
 *** increased culture range, added a percentage based distance bonus (decreasing the importance flat rate bonus).
 **/
-	/* original bts code. (note: the original code is not designed for iCultureRate to be x100)
-	if (getCultureTimes100(ePlayer) > 0)
-	{
-		if (eCultureLevel != NO_CULTURELEVEL)
-		{
-			for (iDX = -eCultureLevel; iDX <= eCultureLevel; iDX++)
-			{
-				for (iDY = -eCultureLevel; iDY <= eCultureLevel; iDY++)
-				{
-					iCultureRange = cultureDistance(iDX, iDY);
-
-					if (iCultureRange <= eCultureLevel)
-					{
-						pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
-
-						if (pLoopPlot != NULL)
-						{
-							if (pLoopPlot->isPotentialCityWorkForArea(area()))
-							{
-								pLoopPlot->changeCulture(ePlayer, (((eCultureLevel - iCultureRange) * iFreeCultureRate) + iCultureRate + 1), (bUpdate || !(pLoopPlot->isOwned())));
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	*/
+	// (original bts code deleted)
 
 	// Experimental culture profile...
 	// Ae^(-bx). A = 10 (no effect), b = log(full_range_ratio)/range
@@ -12935,15 +12896,15 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 	// note, original code had "if (getCultureTimes100(ePlayer) > 0)". I took that part out.
 	if (eCultureLevel != NO_CULTURELEVEL &&	(iCultureRateTimes100*iScale >= 100 || bCityCulture))
 	{
-		for (iDX = -iCultureRange; iDX <= iCultureRange; iDX++)
+		for (int iDX = -iCultureRange; iDX <= iCultureRange; iDX++)
 		{
-			for (iDY = -iCultureRange; iDY <= iCultureRange; iDY++)
+			for (int iDY = -iCultureRange; iDY <= iCultureRange; iDY++)
 			{
 				int iDistance = cultureDistance(iDX, iDY);
 
 				if (iDistance <= iCultureRange)
 				{
-					pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+					CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
 					if (pLoopPlot != NULL)
 					{

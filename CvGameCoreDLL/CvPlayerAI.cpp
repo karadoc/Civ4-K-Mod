@@ -1092,7 +1092,7 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc)
 				if (iValue == -1)
 				{
 					//iValue = AI_foundValue(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE());
-					iValue = AI_foundValueBulk(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), kFoundSet); // K-Mod
+					iValue = AI_foundValue_bulk(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), kFoundSet); // K-Mod
 				}
 
 				iValue = std::min((long)MAX_SHORT, iValue); // K-Mod
@@ -2538,12 +2538,12 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 	return iWeight;
 }
 
-// K-Mod: I've moved the bulk of this function into AI_foundValueBulk...
+// K-Mod: I've moved the bulk of this function into AI_foundValue_bulk...
 short CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const
 {
 	CvFoundSettings kSet(*this, bStartingLoc);
 	kSet.iMinRivalRange = iMinRivalRange;
-	return AI_foundValueBulk(iX, iY, kSet);
+	return AI_foundValue_bulk(iX, iY, kSet);
 }
 
 CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bStartingLoc) : bStartingLoc(bStartingLoc)
@@ -2691,50 +2691,49 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 		bExpansive = false;
 	}
 
-    iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
-    iClaimThreshold = std::max(1, iClaimThreshold);
-	iClaimThreshold *= (bEasyCulture && kPlayer.getCurrentEra() < 2 ? 140 : 100);
-	iClaimThreshold *= (bAmbitious ? 140 : 100);
-	iClaimThreshold /= 200;
-	// note, plot culture is 100x city culture. So I've left a factor of 100 on iClaimThreshold.
+	iClaimThreshold = 100; // this will be converted into culture units at the end
+	if (!bStartingLoc)
+	{
+		int iCitiesTarget = std::max(1, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities());
+		iClaimThreshold = 100;
+		iClaimThreshold += 80 * std::max(0, iCitiesTarget - kPlayer.getNumCities()) / iCitiesTarget;
+
+		iClaimThreshold *= bEasyCulture ? (kPlayer.getCurrentEra() < 2 ? 180 : 140) : 100;
+		iClaimThreshold *= bAmbitious ? 140 : 100;
+		iClaimThreshold /= 10000;
+	}
+    iClaimThreshold *= 10 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)std::min(2, GC.getNumCultureLevelInfos() - 1));
+	// note, plot culture is roughly 1000x city culture. So I've left a factor of 1000 on iClaimThreshold. (cf. CvCity::doPlotCultureTimes100)
 }
 
 // Heavily edited for K-Mod (some changes marked, others not.)
 // note, this function is called for every revealed plot for every player at the start of every turn.
 // try to not make it too slow!
-short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const
+short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet) const
 {
 	PROFILE_FUNC();
 
 	CvCity* pNearestCity;
-	bool bHasGoodBonus;
-	int iOwnedTiles;
-	int iBadTile;
-	int iTakenTiles;
-	int iTeammateTakenTiles;
-	int iTeamAreaCities;
-	int iHealth;
-	int iValue;
 	int iResourceValue = 0;
 	int iSpecialFood = 0;
 	int iSpecialFoodPlus = 0;
 	int iSpecialFoodMinus = 0;
 	int iSpecialProduction = 0;
 	int iSpecialCommerce = 0;
-	
+
 	bool bNeutralTerritory = true;
 
-	
+
 	if (!canFound(iX, iY))
 	{
 		return 0;
 	}
-	
+
 	CvPlot* pPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 	CvArea* pArea = pPlot->area();
 	bool bIsCoastal = pPlot->isCoastalLand(GC.getMIN_WATER_SIZE_FOR_OCEAN());
 	int iNumAreaCities = pArea->getCitiesPerPlayer(getID());
-	
+
 	bool bAdvancedStart = (getAdvancedStartPoints() >= 0);
 
 	if (!kSet.bStartingLoc && !bAdvancedStart)
@@ -2744,7 +2743,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			return 0;
 		}
 	}
-	
+
 	if (bAdvancedStart)
 	{
 		//FAssert(!bStartingLoc);
@@ -2754,7 +2753,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			bAdvancedStart = false;
 		}
 	}
-	
+
 	// K-Mod. city site radius check used to be here. I've moved it down a bit.
 	// ... and also the bonus vector initializtion
 
@@ -2795,7 +2794,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 		}
 	}
 
-	iOwnedTiles = 0;
+	int iOwnedTiles = 0;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
@@ -2806,12 +2805,12 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			iOwnedTiles++;
 		}
 		else if (pLoopPlot->isOwned())
-        {
-            if (pLoopPlot->getTeam() != getTeam())
-            {
-                iOwnedTiles++;
-            }
-        }
+		{
+			if (pLoopPlot->getTeam() != getTeam())
+			{
+				iOwnedTiles++;
+			}
+		}
 	}
 
 	if (iOwnedTiles > (NUM_CITY_PLOTS / 3))
@@ -2893,7 +2892,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
     } */
 	std::vector<int> paiBonusCount(GC.getNumBonusInfos(), 0); // K-Mod
 
-	iBadTile = 0;
+	int iBadTile = 0;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
@@ -2959,7 +2958,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 	{
 		if ((iBadTile > (NUM_CITY_PLOTS / 2)) || (pArea->getNumTiles() <= 2))
 		{
-			bHasGoodBonus = false;
+			bool bHasGoodBonus = false;
 
 			for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 			{
@@ -2995,33 +2994,33 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 		}
 	}
 
-	iTakenTiles = 0;
-	iTeammateTakenTiles = 0;
-	iHealth = 0;
-	iValue = 800; // was 1000
+	int iTakenTiles = 0;
+	int iTeammateTakenTiles = 0;
+	int iHealth = 0;
+	int iValue = 800; // was 1000
 
 	/* original bts code
 	else if (!bStartingLoc)
-    {
-        for (iI = 0; iI < GC.getNumTraitInfos(); iI++)
-        {
-            if (hasTrait((TraitTypes)iI))
-            {
-                //Greedy founding means getting the best possible sites - fitting maximum
-                //resources into the fat cross.
-                iGreed += (GC.getTraitInfo((TraitTypes)iI).getUpkeepModifier() / 2);
-                iGreed += 20 * (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE));
-            }
-        }
-    } */
+	{
+		for (iI = 0; iI < GC.getNumTraitInfos(); iI++)
+		{
+			if (hasTrait((TraitTypes)iI))
+			{
+				//Greedy founding means getting the best possible sites - fitting maximum
+				//resources into the fat cross.
+				iGreed += (GC.getTraitInfo((TraitTypes)iI).getUpkeepModifier() / 2);
+				iGreed += 20 * (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE));
+			}
+		}
+	} */
 
-    //iClaimThreshold is the culture required to pop the 2nd borders.
-    /*int iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
-    iClaimThreshold = std::max(1, iClaimThreshold);
-    iClaimThreshold *= (std::max(100, iGreed));
+	//iClaimThreshold is the culture required to pop the 2nd borders.
+	/*int iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
+	iClaimThreshold = std::max(1, iClaimThreshold);
+	iClaimThreshold *= (std::max(100, iGreed));
 	iClaimThreshold /= 100;*/
-    
-    int iYieldLostHere = 0;
+
+	int iYieldLostHere = 0;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
@@ -3069,29 +3068,48 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			}
 			// K-Mod end
 
+			// K-Mod note: iClaimThreshold is bigger for bEasyCulture and bAmbitious civs.
 			int iCultureMultiplier;
-            if (!pLoopPlot->isOwned() || (pLoopPlot->getOwnerINLINE() == getID()))
-            {	
-                iCultureMultiplier = 100;    
-            }
-            else
-            {
-            	bNeutralTerritory = false;
-                int iOurCulture = pLoopPlot->getCulture(getID());
-                int iOtherCulture = std::max(1, pLoopPlot->getCulture(pLoopPlot->getOwnerINLINE()));
-                iCultureMultiplier = 100 * (iOurCulture + kSet.iClaimThreshold);
-                iCultureMultiplier /= (iOtherCulture + kSet.iClaimThreshold);
-                iCultureMultiplier = std::min(100, iCultureMultiplier);
-                //The multiplier is basically normalized...
-                //100% means we own (or rightfully own) the tile.
-                //50% means the hostile culture is fairly firmly entrenched.
-            }
-            
-            if (iCultureMultiplier < ((iNumAreaCities > 0) ? 25 : 50))
-            {
-                //discourage hopeless cases, especially on other continents.
-                iTakenTiles += (iNumAreaCities > 0) ? 1 : 2;
-            }
+			if (!pLoopPlot->isOwned() || pLoopPlot->getOwnerINLINE() == getID())
+			{
+				iCultureMultiplier = 100;
+				// The plot is not currently owned, but we should probably take a look at the cultural influence on it anyway.
+
+				int iTotalCulture = pLoopPlot->countTotalCulture();
+				int iOurCulture = pLoopPlot->getCulture(getID());
+				int iCultureDifference = iTotalCulture - 2 * iOurCulture; // the sum of everyone else's culture, minus ours.
+
+				if (iCultureDifference > 0)
+				{
+					if (kSet.bEasyCulture && kSet.bAmbitious && iCultureDifference < kSet.iClaimThreshold)
+					{
+						// encourage us to go here sooner rather than later, to block them off!
+						iCultureDifference *= -std::min(200, kSet.iGreed);
+						iCultureDifference /= 200;
+					}
+					// the devaluation should not be more than 50%
+					iCultureMultiplier *= (iTotalCulture + 2*kSet.iClaimThreshold + iOurCulture);
+					iCultureMultiplier /= (iTotalCulture + 2*kSet.iClaimThreshold + iCultureDifference + iOurCulture);
+				}
+			}
+			else
+			{
+				bNeutralTerritory = false;
+				int iOurCulture = pLoopPlot->getCulture(getID());
+				int iOtherCulture = std::max(1, pLoopPlot->getCulture(pLoopPlot->getOwnerINLINE()));
+				iCultureMultiplier = 100 * (iOurCulture + kSet.iClaimThreshold);
+				iCultureMultiplier /= (iOtherCulture + kSet.iClaimThreshold);
+				iCultureMultiplier = std::min(100, iCultureMultiplier);
+				//The multiplier is basically normalized...
+				//100% means we own (or rightfully own) the tile.
+				//50% means the hostile culture is fairly firmly entrenched.
+			}
+
+			if (iCultureMultiplier < ((iNumAreaCities > 0) ? 25 : 50))
+			{
+				//discourage hopeless cases, especially on other continents.
+				iTakenTiles += (iNumAreaCities > 0) ? 1 : 2;
+			}
 
 			if (eBonus != NO_BONUS)
 			{
@@ -3135,14 +3153,14 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 						int iBonusYieldChange = GC.getBonusInfo(eBonus).getYieldChange(eYield);
 						aiYield[eYield] += iBonusYieldChange;
 						iBasePlotYield += iBonusYieldChange;
-						
+
 						aiYield[eYield] = std::max(aiYield[eYield], GC.getYieldInfo(eYield).getMinCity());
 					}
-				
+
 					if (eBonusImprovement != NO_IMPROVEMENT)
 					{
 						iBasePlotYield += GC.getImprovementInfo(eBonusImprovement).getImprovementBonusYield(eBonus, eYield);
-						
+
 						if (iBasePlotYield > aiYield[eYield])
 						{
 							aiYield[eYield] -= 2 * (iBasePlotYield - aiYield[eYield]);
@@ -3390,7 +3408,8 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 			{
 				if (bNeutralTerritory)
 				{
-					iValue += (iResourceValue > 0) ? 800 : 100;
+					//iValue += (iResourceValue > 0) ? 800 : 100;
+					iValue += iResourceValue > 0 ? (kSet.bSeafaring ? 600 : 400) : 100; // K-Mod
 				}
 			}
 			else
@@ -3709,7 +3728,7 @@ short CvPlayerAI::AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet)
 	}
 	else
 	{
-		iTeamAreaCities = GET_TEAM(getTeam()).countNumCitiesByArea(pArea);
+		int iTeamAreaCities = GET_TEAM(getTeam()).countNumCitiesByArea(pArea);
 
 		if (pArea->getNumCities() == iTeamAreaCities)
 		{

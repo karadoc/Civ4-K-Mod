@@ -91,7 +91,7 @@ public:
 		bool bExpansive; // willing to place cities further apart. (not based on the expansive trait)
 		bool bAllSeeing; // doesn't need vision of a plot to know what's there.
 	};
-	short AI_foundValueBulk(int iX, int iY, const CvFoundSettings& kSet) const;
+	short AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet) const;
 	// K-Mod end
 
 	bool AI_isAreaAlone(CvArea* pArea) const;
