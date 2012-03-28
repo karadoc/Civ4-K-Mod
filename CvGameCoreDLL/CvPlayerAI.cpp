@@ -11920,7 +11920,7 @@ int CvPlayerAI::AI_unitCostPerMil() const
 	// If iUnitCostPercentage is calculated as above, decreasing maintenance will actually decrease the max units.
 	// If a builds a courthouse or switches to state property, it would then think it needs to get rid of units!
 	// It makes no sense, and civs with a surplus of cash still won't want to build units. So lets try it another way...
-	int iUnitCost = calculateUnitCost();
+	int iUnitCost = calculateUnitCost() * std::max(0, calculateInflationRate() + 100) / 100;
 	if (iUnitCost <= getNumCities()/2) // cf with the final line
 		return 0;
 
@@ -11949,25 +11949,25 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 	bool bTotalWar = GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_TOTAL, true);
 	bool bAggressiveAI = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
 
-	int iMaxUnitSpending = (bAggressiveAI ? 24 : 12) + iBuildProb;
+	int iMaxUnitSpending = (bAggressiveAI ? 30 : 20) + iBuildProb*4/3;
 
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4))
 	{
-		iMaxUnitSpending += 25;
+		iMaxUnitSpending += 30;
 	}
 	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION3))
 	{
-		iMaxUnitSpending += 15;
+		iMaxUnitSpending += 20;
 	}
 	else if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1))
 	{
-		iMaxUnitSpending += 5;
+		iMaxUnitSpending += 10;
 	}
 
 	if (!bTotalWar)
 	{
-		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 12 + iBuildProb / 4 : 0;
-		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 12 + iBuildProb / 4 : 0;
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 15 + iBuildProb / 3 : 0;
+		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 15 + iBuildProb / 3 : 0;
 		// note. the boost from alert1 + alert2 matches the boost from total war. (see below).
 	}
 
@@ -11977,34 +11977,34 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 	}
 	else
 	{
-		iMaxUnitSpending += bTotalWar ? 25 + iBuildProb / 2 : 0;
+		iMaxUnitSpending += bTotalWar ? 30 + iBuildProb*2/3 : 0;
 		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 10 + AI_getFlavorValue(FLAVOR_MILITARY) : 0;
 		if (pArea)
 		{
 			switch (pArea->getAreaAIType(getTeam()))
 			{
 			case AREAAI_OFFENSIVE:
-				iMaxUnitSpending += 25;
+				iMaxUnitSpending += 40;
 				break;
 
 			case AREAAI_DEFENSIVE:
-				iMaxUnitSpending += 45;
+				iMaxUnitSpending += 75;
 				break;
 
 			case AREAAI_MASSING:
-				iMaxUnitSpending += 45;
+				iMaxUnitSpending += 75;
 				break;
 
 			case AREAAI_ASSAULT:
-				iMaxUnitSpending += 25;
+				iMaxUnitSpending += 40;
 				break;
 
 			case AREAAI_ASSAULT_MASSING:
-				iMaxUnitSpending += 45;
+				iMaxUnitSpending += 70;
 				break;
 
 			case AREAAI_ASSAULT_ASSIST:
-				iMaxUnitSpending += 20;
+				iMaxUnitSpending += 35;
 				break;
 
 			case AREAAI_NEUTRAL:
@@ -12015,7 +12015,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 		}
 		else
 		{
-			iMaxUnitSpending += GET_TEAM(getTeam()).getAnyWarPlanCount(true) ? 35 : 0;
+			iMaxUnitSpending += GET_TEAM(getTeam()).getAnyWarPlanCount(true) ? 55 : 0;
 		}
 	}
 	return iMaxUnitSpending;
@@ -13197,6 +13197,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	// K-Mod note. max war rand is between 50 and 400, so I've renamed the above number from iWarmongerPercent to iWarmongerFactor.
 	// I don't know what it is meant to be a percentage of. It's a number roughly between 56 and 167.
 
+	int iMaintenanceFactor =  AI_commerceWeight(COMMERCE_GOLD) * std::max(0, calculateInflationRate() + 100) / 100; // K-Mod
+
 	int iValue = (iCities * 6);
 
 	iValue += (GC.getCivicInfo(eCivic).getAIWeight() * iCities);
@@ -13207,7 +13209,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	iValue += -(GC.getCivicInfo(eCivic).getAnarchyLength() * iCities);
 
 	//iValue += -(getSingleCivicUpkeep(eCivic, true)*80)/100;
-	iValue -= getSingleCivicUpkeep(eCivic, true) * AI_commerceWeight(COMMERCE_GOLD) / 100; // K-Mod. (note. upkeep modifiers are included in getSingleCivicUpkeep.)
+	iValue -= getSingleCivicUpkeep(eCivic, true) * iMaintenanceFactor / 100; // K-Mod. (note. upkeep modifiers are included in getSingleCivicUpkeep.)
 
 	CvCity* pCapital = getCapitalCity();
 	iValue += ((kCivic.getGreatPeopleRateModifier() * iCities) / 10);
@@ -13230,6 +13232,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		iTemp *= 100;
 		iTemp /= std::max(1, getNumCitiesMaintenanceModifier() + 100);
 
+		iTemp *= iMaintenanceFactor;
+		iTemp /= 100;
+
 		iValue -= iTemp * kCivic.getNumCitiesMaintenanceModifier() / 10000;
 	}
 	if (kCivic.getDistanceMaintenanceModifier() != 0)
@@ -13243,6 +13248,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 		iTemp *= 100;
 		iTemp /= std::max(1, getDistanceMaintenanceModifier() + 100);
+
+		iTemp *= iMaintenanceFactor;
+		iTemp /= 100;
 
 		iValue -= iTemp * kCivic.getDistanceMaintenanceModifier() / 10000;
 	}
@@ -13296,15 +13304,15 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		int iCostPerUnit = (getGoldPerUnit() + (iS > 0 ? kCivic.getGoldPerUnit() : 0)) * getUnitCostMultiplier() / 100;
 		int iFreeUnitDelta = iS * (std::min(iUnits, iFreeUnits + iS*(kCivic.getBaseFreeUnits() + kCivic.getFreeUnitsPopulationPercent() * getTotalPopulation()/100)) - std::min(iUnits, iFreeUnits));
 		FAssert(iFreeUnitDelta >= 0);
-		iTempValue += iFreeUnitDelta * iCostPerUnit * AI_commerceWeight(COMMERCE_GOLD) / 10000;
-		iTempValue -= (iPaidUnits-iFreeUnitDelta) * kCivic.getGoldPerUnit() * AI_commerceWeight(COMMERCE_GOLD) / 10000;
+		iTempValue += iFreeUnitDelta * iCostPerUnit * iMaintenanceFactor / 10000;
+		iTempValue -= (iPaidUnits-iFreeUnitDelta) * kCivic.getGoldPerUnit() * iMaintenanceFactor / 10000;
 
 		// military
 		iCostPerUnit = getGoldPerMilitaryUnit() + (iS > 0 ? kCivic.getGoldPerMilitaryUnit() : 0);
 		iFreeUnitDelta = iS * (std::min(iMilitaryUnits, iFreeMilitaryUnits + iS*(kCivic.getBaseFreeMilitaryUnits() + kCivic.getFreeMilitaryUnitsPopulationPercent() * getTotalPopulation()/100)) - std::min(iMilitaryUnits, iFreeMilitaryUnits));
 		FAssert(iFreeUnitDelta >= 0);
-		iTempValue += iFreeUnitDelta * iCostPerUnit * AI_commerceWeight(COMMERCE_GOLD) / 10000;
-		iTempValue -= (iPaidMilitaryUnits-iFreeUnitDelta) * kCivic.getGoldPerMilitaryUnit() * AI_commerceWeight(COMMERCE_GOLD) / 10000;
+		iTempValue += iFreeUnitDelta * iCostPerUnit * iMaintenanceFactor / 10000;
+		iTempValue -= (iPaidMilitaryUnits-iFreeUnitDelta) * kCivic.getGoldPerMilitaryUnit() * iMaintenanceFactor / 10000;
 
 		// adjust based on future expectations
 		if (iTempValue < 0)
@@ -13349,6 +13357,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				iTempValue /= iConscriptPop * GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST");
 				iTempValue *= std::min(iCities, iMaxConscript*3);
 				iTempValue /= iMaxConscript*3;
+				// reduce the value if unit spending is already high.
+				int iUnitSpending = AI_unitCostPerMil();
+				int iMaxSpending = AI_maxUnitCostPerMil() + 5 - iS*5; // increase max by 1% if we're already on this civic, just for a bit of inertia.
+				if (iUnitSpending > iMaxSpending)
+				{
+					iTempValue = std::max(0, iTempValue * (2 * iMaxSpending - iUnitSpending)/std::max(1, iMaxSpending));
+				}
 				// K-Mod end
 
 				iValue += iTempValue;
@@ -13659,10 +13674,11 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			iTempValue *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent();
 			iTempValue /= 10000;
 			iTempValue += iMaintenance;
-			// Inflation, population, and maintenance modifiers... lets just approximate them like this:
+			// population, and maintenance modifiers... lets just approximate them like this:
 			iTempValue *= 2;
 			iTempValue /= 3;
 
+			// (note, corp maintenance is not amplified by inflation, and so we don't use iMaintenanceFactor here.)
 			iTempValue *= AI_commerceWeight(COMMERCE_GOLD);
 			iTempValue /= 100;
 
