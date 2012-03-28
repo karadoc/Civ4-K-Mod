@@ -58,7 +58,8 @@
 		<Italian>[ICON_BULLET]%s1[ICON_CULTURE] dalla [ICON_TRADE]</Italian>
 		<Spanish>[ICON_BULLET]%s1[ICON_CULTURE] por [ICON_TRADE]</Spanish>
 	</TEXT>
-	<!-- replacements for standard game text -->
+	<!-- ** Replacements for standard game text ** -->
+	<!-- removed the word "to" at the end -->
 	<TEXT>
 		<Tag>TXT_KEY_TRANSFER_GAME_DATA_TITLE</Tag>
 		<English>Transferring Game Data</English>
@@ -67,10 +68,11 @@
 		<Italian>Trasferimento dati</Italian>
 		<Spanish>Transfiriendo datos de la partida</Spanish>
 	</TEXT>
+	<!-- a couple of minor language adjustments to the unit cost text -->
 	<TEXT>
 		<Tag>TXT_KEY_FINANCE_ADVISOR_UNIT_COST</Tag>
 		<English>[NEWLINE]%d3[ICON_GOLD]: Unit cost for %d1 [NUM1:unit:units] (free support for %d2)</English>
-		<French>[NEWLINE]%d3[ICON_GOLD] : Coût unitaire pour %d1 [NUM1:unité:unités] (gratuit pour les %d2)</French>
+		<French>[NEWLINE]%d3[ICON_GOLD] : Coût unitaire pour %d1 [NUM1:unité:unités] (gratuit pour %d2)</French>
 		<German>[NEWLINE]%d3[ICON_GOLD]: Einheitenkosten f&#252;r %d1 [NUM1:Einheit:Einheiten] (freier Unterhalt f&#252;r %d2)</German>
 		<Italian>[NEWLINE]%d3[ICON_GOLD]: Costo per %d1 unit&#224; (supporto gratuito per %d2)</Italian>
 		<Spanish>[NEWLINE]%d3 [ICON_GOLD]: coste unitario de %d1 [NUM1:unidad:unidades] (abastecimiento gratis para %d2)</Spanish>
@@ -99,7 +101,17 @@
 		<German>Unterhaltskosten pro Milit&#228;reinheit</German>
 		<Italian>Costo di supporto per le unit&#224; militari</Italian>
 		<Spanish>de coste de abastecimiento por cada unidad militar</Spanish>
-	</TEXT>	
+	</TEXT>
+	<!-- highlight leader name in the contact string -->
+	<TEXT>
+		<Tag>TXT_KEY_MISC_CONTACT_LEADER</Tag>
+		<English>Contact [COLOR_HIGHLIGHT_TEXT]%s1_PlyrName of %s2_CivName[COLOR_REVERT]</English>
+		<French>Contacter [COLOR_HIGHLIGHT_TEXT]%s1_PlyrName des %s2_CivName[COLOR_REVERT]</French>
+		<German>[COLOR_HIGHLIGHT_TEXT]%s1_PlyrName[COLOR_REVERT] von der Zivilisation [COLOR_HIGHLIGHT_TEXT]%s2_CivName[COLOR_REVERT] kontaktieren</German>
+		<Italian>Contatta il giocatore [COLOR_HIGHLIGHT_TEXT]%s1_PlyrName della civilt&#224; %s2:2_CivName[COLOR_REVERT]</Italian>
+		<Spanish>Contactar con [COLOR_HIGHLIGHT_TEXT]%s1_PlyrName del %s2_CivName[COLOR_REVERT]</Spanish>
+	</TEXT>
+
 	<!-- "-X% strength to opposing city defenders"?
 	<TEXT>
 		<Tag>TXT_KEY_PROMOTION_CITY_ATTACK_TEXT</Tag>

@@ -15030,22 +15030,74 @@ void CvGameTextMgr::parseLeaderHeadHelp(CvWStringBuffer &szBuffer, PlayerTypes e
 		return;
 	}
 
-	szBuffer.append(CvWString::format(L"%s", GET_PLAYER(eThisPlayer).getName()));
+	//szBuffer.append(CvWString::format(L"%s", GET_PLAYER(eThisPlayer).getName()));
+	szBuffer.append(CvWString::format(SETCOLR L"%s" ENDCOLR, TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), GET_PLAYER(eThisPlayer).getName())); // K-Mod
 
 	parsePlayerTraits(szBuffer, eThisPlayer);
+
+	// K-Mod. Some debug info: found-site traits, and AI flavours
+	if (gDLL->getChtLvl() > 0 && GC.altKey())
+	{
+		const CvPlayerAI& kPlayer = GET_PLAYER(eThisPlayer);
+		szBuffer.append(CvWString::format(SETCOLR SEPARATOR NEWLINE, TEXT_COLOR("COLOR_LIGHT_GREY")));
+		CvPlayerAI::CvFoundSettings kFoundSet(kPlayer, false);
+
+		bool bFirst = true;
+
+#define trait_info(x) do { \
+	if (kFoundSet.b##x) \
+	{ \
+		szBuffer.append(CvWString::format(L"%s"L#x, bFirst? L"" : L", ")); \
+		bFirst = false; \
+	} \
+} while (0)
+
+		trait_info(Ambitious);
+		trait_info(Defensive);
+		trait_info(EasyCulture);
+		trait_info(Expansive);
+		trait_info(Financial);
+		trait_info(Seafaring);
+
+#undef trait_info
+
+#define flavour_info(x) do { \
+	if (kPlayer.AI_getFlavorValue(FLAVOR_##x)) \
+	{ \
+		szBuffer.append(CvWString::format(L"%s"L#x L"=%d", bFirst? L"" : L", ", kPlayer.AI_getFlavorValue(FLAVOR_##x))); \
+		bFirst = false; \
+	} \
+} while (0)
+
+		flavour_info(MILITARY);
+		flavour_info(RELIGION);
+		flavour_info(PRODUCTION);
+		flavour_info(GOLD);
+		flavour_info(SCIENCE);
+		flavour_info(CULTURE);
+		flavour_info(GROWTH);
+
+#undef flavour_info
+
+		szBuffer.append(SEPARATOR ENDCOLR);
+	}
+	// K-Mod end
 
 	szBuffer.append(L"\n");
 
 	if (eOtherPlayer != NO_PLAYER)
 	{
 		CvTeam& kThisTeam = GET_TEAM(GET_PLAYER(eThisPlayer).getTeam());
-		if (eOtherPlayer != eThisPlayer && kThisTeam.isHasMet(GET_PLAYER(eOtherPlayer).getTeam()))
+		//if (eOtherPlayer != eThisPlayer && kThisTeam.isHasMet(GET_PLAYER(eOtherPlayer).getTeam()))
+		if (kThisTeam.isHasMet(GET_PLAYER(eOtherPlayer).getTeam())) // K-Mod. Allow the "other relations string" to display even if eOtherPlayer == eThisPlayer. It's useful info.
 		{
-			getEspionageString(szBuffer, eThisPlayer, eOtherPlayer);
+			//getEspionageString(szBuffer, eThisPlayer, eOtherPlayer); // disabled by K-Mod. (The player should not be told exactly how many espionage points everyone has.)
 
-			getAttitudeString(szBuffer, eThisPlayer, eOtherPlayer);
-
-			getActiveDealsString(szBuffer, eThisPlayer, eOtherPlayer);
+			if (eOtherPlayer != eThisPlayer) // K-Mod
+			{
+				getAttitudeString(szBuffer, eThisPlayer, eOtherPlayer);
+				getActiveDealsString(szBuffer, eThisPlayer, eOtherPlayer);
+			}
 
 			getOtherRelationsString(szBuffer, eThisPlayer, eOtherPlayer);
 		}

@@ -4251,8 +4251,12 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 					szBuffer.append(gDLL->getText("TXT_KEY_MISC_CANNOT_DECLARE_WAR"));
 				}
 
-				szBuffer.append(NEWLINE);
-				szBuffer.append(gDLL->getText("TXT_KEY_MISC_SHIFT_ALT_PREPARE_WAR"));
+				// K-Mod. The BBAI war plan control currently is not implemented for multiplayer, and it is only relevant for team games.
+				if (!GC.getGameINLINE().isGameMultiPlayer() && kActiveTeam.getAliveCount() > 1)
+				{
+					szBuffer.append(NEWLINE);
+					szBuffer.append(gDLL->getText("TXT_KEY_MISC_SHIFT_ALT_PREPARE_WAR"));
+				}
 			}
 		}
 	}
