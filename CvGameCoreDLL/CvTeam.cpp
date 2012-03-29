@@ -947,28 +947,26 @@ void CvTeam::doTurn()
 {
 	PROFILE("CvTeam::doTurn()")
 
-	int iCount;
-	int iPossibleCount;
-	int iI, iJ;
-
-	FAssertMsg(isAlive(), "isAlive is expected to be true");
+	FAssert(isAlive());
 
 	AI_doTurnPre();
 
 	if (isBarbarian())
 	{
-		for (iI = 0; iI < GC.getNumTechInfos(); iI++)
+		//for (int iI = 0; iI < GC.getNumTechInfos(); iI++)
+		for (TechTypes i = (TechTypes)0; i < GC.getNumTechInfos(); i = (TechTypes)(i+1)) // K-Mod (this helps me avoid casting mistakes)
 		{
-			if (!isHasTech((TechTypes)iI))
+			//if (!isHasTech((TechTypes)iI))
+			if (!isHasTech(i) && GET_PLAYER(getLeaderID()).canResearch(i, 0, true)) // K-Mod. Make no progress on techs until prereqs are researched.
 			{
-				iCount = 0;
-				iPossibleCount = 0;
+				int iCount = 0;
+				int iPossibleCount = 0;
 
-				for (iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
+				for (int iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
 				{
 					if (GET_TEAM((TeamTypes)iJ).isAlive())
 					{
-						if (GET_TEAM((TeamTypes)iJ).isHasTech((TechTypes)iI))
+						if (GET_TEAM((TeamTypes)iJ).isHasTech(i))
 						{
 							iCount++;
 						}
@@ -981,25 +979,16 @@ void CvTeam::doTurn()
 				{
 					FAssertMsg(iPossibleCount > 0, "iPossibleCount is expected to be greater than 0");
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       03/01/10                     Mongoose & jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-					changeResearchProgress(((TechTypes)iI), ((getResearchCost((TechTypes)iI) * ((GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount) / iPossibleCount)) / 100), getLeaderID());
-*/
-					// From Mongoose SDK, BarbarianPassiveTechFix
-					changeResearchProgress((TechTypes)iI, std::max((getResearchCost((TechTypes)iI) * GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount) / (100 * iPossibleCount), 1), getLeaderID());
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+					//changeResearchProgress(((TechTypes)iI), ((getResearchCost((TechTypes)iI) * ((GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount) / iPossibleCount)) / 100), getLeaderID());
+					// K-Mod. Adjust research rate for game-speed & world-size & start-era, and fix the rounding error.
+					changeResearchProgress(i, std::max(1, getResearchCost(i, false) * GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount / (100 * iPossibleCount)), getLeaderID());
+					// K-Mod end
 				}
 			}
 		}
 	}
 
-	for (iI = 0; iI < MAX_TEAMS; iI++)
+	for (int iI = 0; iI < MAX_TEAMS; iI++)
 	{
 		if (GET_TEAM((TeamTypes)iI).isAlive())
 		{
@@ -1022,7 +1011,7 @@ void CvTeam::doTurn()
 
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_BROKERING))
 	{
-		for (iI = 0; iI < GC.getNumTechInfos(); iI++)
+		for (int iI = 0; iI < GC.getNumTechInfos(); iI++)
 		{
 			setNoTradeTech(((TechTypes)iI), false);
 		}
@@ -2933,7 +2922,7 @@ int CvTeam::getTypicalUnitValue(UnitAITypes eUnitAI) const
 	return iMax;
 }
 
-int CvTeam::getResearchCost(TechTypes eTech) const
+int CvTeam::getResearchCost(TechTypes eTech, bool bGlobalModifiers) const // K-Mod added bGlobalModifiers
 {
 	int iCost;
 
@@ -2944,14 +2933,17 @@ int CvTeam::getResearchCost(TechTypes eTech) const
 	iCost *= GC.getHandicapInfo(getHandicapType()).getResearchPercent();
 	iCost /= 100;
 
-	iCost *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getResearchPercent();
-	iCost /= 100;
+	if (bGlobalModifiers) // K-Mod
+	{
+		iCost *= GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getResearchPercent();
+		iCost /= 100;
 
-	iCost *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
-	iCost /= 100;
+		iCost *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
+		iCost /= 100;
 
-	iCost *= GC.getEraInfo(GC.getGameINLINE().getStartEra()).getResearchPercent();
-	iCost /= 100;
+		iCost *= GC.getEraInfo(GC.getGameINLINE().getStartEra()).getResearchPercent();
+		iCost /= 100;
+	}
 
 	iCost *= std::max(0, ((GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (getNumMembers() - 1)) + 100));
 	iCost /= 100;
