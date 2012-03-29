@@ -953,36 +953,41 @@ void CvTeam::doTurn()
 
 	if (isBarbarian())
 	{
-		//for (int iI = 0; iI < GC.getNumTechInfos(); iI++)
-		for (TechTypes i = (TechTypes)0; i < GC.getNumTechInfos(); i = (TechTypes)(i+1)) // K-Mod (this helps me avoid casting mistakes)
+		// K-Mod. Delay the start of the barbarian research. (this is an experimental change, and is currently disabled)
+		const CvPlayerAI& kBarbPlayer = GET_PLAYER(getLeaderID());
+		const CvGame& kGame = GC.getGameINLINE();
+		//if (kGame.getElapsedGameTurns() >= GC.getHandicapInfo(kGame.getHandicapType()).getBarbarianCreationTurnsElapsed() * GC.getGameSpeedInfo(kGame.getGameSpeedType()).getBarbPercent() / 400)
 		{
-			//if (!isHasTech((TechTypes)iI))
-			if (!isHasTech(i) && GET_PLAYER(getLeaderID()).canResearch(i, 0, true)) // K-Mod. Make no progress on techs until prereqs are researched.
+			for (TechTypes i = (TechTypes)0; i < GC.getNumTechInfos(); i = (TechTypes)(i+1))
 			{
-				int iCount = 0;
-				int iPossibleCount = 0;
-
-				for (int iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
+				//if (!isHasTech((TechTypes)iI))
+				if (!isHasTech(i) && kBarbPlayer.canResearch(i, 0, true)) // K-Mod. Make no progress on techs until prereqs are researched.
 				{
-					if (GET_TEAM((TeamTypes)iJ).isAlive())
+					int iCount = 0;
+					int iPossibleCount = 0;
+
+					for (int iJ = 0; iJ < MAX_CIV_TEAMS; iJ++)
 					{
-						if (GET_TEAM((TeamTypes)iJ).isHasTech(i))
+						if (GET_TEAM((TeamTypes)iJ).isAlive())
 						{
-							iCount++;
+							if (GET_TEAM((TeamTypes)iJ).isHasTech(i))
+							{
+								iCount++;
+							}
+
+							iPossibleCount++;
 						}
-
-						iPossibleCount++;
 					}
-				}
 
-				if (iCount > 0)
-				{
-					FAssertMsg(iPossibleCount > 0, "iPossibleCount is expected to be greater than 0");
+					if (iCount > 0)
+					{
+						FAssertMsg(iPossibleCount > 0, "iPossibleCount is expected to be greater than 0");
 
-					//changeResearchProgress(((TechTypes)iI), ((getResearchCost((TechTypes)iI) * ((GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount) / iPossibleCount)) / 100), getLeaderID());
-					// K-Mod. Adjust research rate for game-speed & world-size & start-era, and fix the rounding error.
-					changeResearchProgress(i, std::max(1, getResearchCost(i, false) * GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount / (100 * iPossibleCount)), getLeaderID());
-					// K-Mod end
+						//changeResearchProgress(((TechTypes)iI), ((getResearchCost((TechTypes)iI) * ((GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount) / iPossibleCount)) / 100), getLeaderID());
+						// K-Mod. Adjust research rate for game-speed & world-size & start-era, and fix the rounding error.
+						changeResearchProgress(i, std::max(1, getResearchCost(i, false) * GC.getDefineINT("BARBARIAN_FREE_TECH_PERCENT") * iCount / (100 * iPossibleCount)), kBarbPlayer.getID());
+						// K-Mod end
+					}
 				}
 			}
 		}

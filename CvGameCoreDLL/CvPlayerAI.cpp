@@ -2702,8 +2702,8 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 		iClaimThreshold *= bAmbitious ? 150 : 100;
 		iClaimThreshold /= 10000;
 	}
-    iClaimThreshold *= GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)std::min(2, GC.getNumCultureLevelInfos() - 1)) / 10;
-	// note, plot culture is roughly 10x city culture. So I've left a factor of 10 on iClaimThreshold. (cf. CvCity::doPlotCultureTimes100)
+    iClaimThreshold *= 2 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)std::min(2, GC.getNumCultureLevelInfos() - 1));
+	// note, plot culture is roughly 10x city culture. (cf. CvCity::doPlotCultureTimes100)
 }
 
 // Heavily edited for K-Mod (some changes marked, others not.)
