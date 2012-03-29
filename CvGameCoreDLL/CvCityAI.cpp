@@ -6901,7 +6901,7 @@ int CvCityAI::AI_getTargetPopulation() const
 void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange ) const
 {
 	PROFILE_FUNC();
-	
+
 	int aiFinalYields[NUM_YIELD_TYPES];
 
 	int iBonusFoodSurplus = 0;
@@ -6918,15 +6918,15 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	iFoodMultiplier = 100;
 	iCommerceMultiplier = 100;
 	iProductionMultiplier = 100;
-	
+
 	//int iWorkedFood = 0;
 	int iWorkableFood = 0;
 	int iWorkableFoodPlotCount = 0;
-	
+
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
 	int iGoodTileCount = 0;
-	
+
 	int iSpecialistCount = getSpecialistPopulation() - totalFreeSpecialists();
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
@@ -7026,7 +7026,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 						}
 					}
 				}
-				
+
 				/* original code
 				if (pLoopPlot->isBeingWorked())
 				{
@@ -7039,9 +7039,8 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 						iWorkableFood += aiFinalYields[YIELD_FOOD];
 						iWorkableFoodPlotCount++;
 					}
-				} */
-				
-				/* original code
+				}
+
 				if (pLoopPlot->isBeingWorked() || (((aiFinalYields[YIELD_FOOD]*10) + (aiFinalYields[YIELD_PRODUCTION]*6) + (aiFinalYields[YIELD_COMMERCE]*4)) > 21))
 				{
 					iGoodTileCount++;
@@ -7053,11 +7052,11 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 					{
 						iFoodTotal += aiFinalYields[YIELD_FOOD] / 2;
 					}
-                    if (aiFinalYields[YIELD_PRODUCTION] > 1)
-                    {	
-                    	iProductionTotal += aiFinalYields[YIELD_PRODUCTION];
-                    }
-				}*/
+					if (aiFinalYields[YIELD_PRODUCTION] > 1)
+					{
+						iProductionTotal += aiFinalYields[YIELD_PRODUCTION];
+					}
+				} */
 				// K-Mod experimental changes.
 				if (!pLoopPlot->isBeingWorked() && aiFinalYields[YIELD_FOOD] > GC.getFOOD_CONSUMPTION_PER_POPULATION())
 				{
@@ -7080,9 +7079,9 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 
 				if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 				{
-                    int iNetFood = (aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION());
-                    iBonusFoodSurplus += std::max(0, iNetFood);
-                    iBonusFoodDeficit += std::max(0, -iNetFood);
+					int iNetFood = (aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION());
+					iBonusFoodSurplus += std::max(0, iNetFood);
+					iBonusFoodDeficit += std::max(0, -iNetFood);
 				}
 
 				if ((pLoopPlot->getFeatureType()) != NO_FEATURE)
@@ -7180,7 +7179,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	{
 		iFoodMultiplier +=  -iFoodDifference * 4;
 	}
-	
+
 	if (iFoodDifference > 4)
 	{
 		iFoodMultiplier -= 8 + 4 * iFoodDifference;
@@ -7188,14 +7187,14 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 
 	if (iProductionTotal < 10)
 	{
-	    iProductionMultiplier += (80 - 8 * iProductionTotal);
+		iProductionMultiplier += (80 - 8 * iProductionTotal);
 	}
 	//int iProductionTarget = 1 + (std::min(getPopulation(), (iTargetSize * 3) / 5));
 	int iProductionTarget = 1 + std::max(getPopulation(), iTargetSize * 3 / 5); // K-Mod
 
 	if (iProductionTotal < iProductionTarget)
 	{
-	    iProductionMultiplier += 8 * (iProductionTarget - iProductionTotal);
+		iProductionMultiplier += 8 * (iProductionTarget - iProductionTotal);
 	}
 
 	// K-mod
@@ -7215,8 +7214,8 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 			iCommerceMultiplier += (kPlayer.AI_isFinancialTrouble()) ? 0 : -40;
 		}
 	}
-	
-	
+
+
 	int iNetCommerce = 1 + kPlayer.getCommerceRate(COMMERCE_GOLD) + kPlayer.getCommerceRate(COMMERCE_RESEARCH) + std::max(0, kPlayer.getGoldPerTurn());
 /* original BTS code
 	int iNetExpenses = kPlayer.calculateInflatedCosts() + std::min(0, kPlayer.getGoldPerTurn());
@@ -7225,7 +7224,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	int iNetExpenses = kPlayer.calculateInflatedCosts() + std::max(0, -kPlayer.getGoldPerTurn());
 
 	int iRatio = (100 * iNetExpenses) / std::max(1, iNetCommerce);
-	
+
 	if (iRatio > 40)
 	{
 		//iCommerceMultiplier += (33 * (iRatio - 40)) / 60;
@@ -7233,13 +7232,8 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		iCommerceMultiplier += (50 * (iRatio - 40)) / 60;
 	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/06/09                                jdog5000      */
-/*                                                                                              */
-/* Worker AI                                                                                    */
-/************************************************************************************************/
-	// AI no longer uses emphasis except for short term boosts.
-	if( isHuman() )
+	// Note: the AI does not use emphasis for this.
+	if (isHuman())
 	{
 		if (AI_isEmphasizeYield(YIELD_FOOD))
 		{
@@ -7248,8 +7242,12 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		}
 		if (AI_isEmphasizeYield(YIELD_PRODUCTION))
 		{
-			iProductionMultiplier *= 140;
+			iProductionMultiplier *= 130; // was 140
 			iProductionMultiplier /= 100;
+			// K-Mod
+			iCommerceMultiplier *= 80;
+			iCommerceMultiplier /= 100;
+			// K-Mod end
 		}
 		if (AI_isEmphasizeYield(YIELD_COMMERCE))
 		{
@@ -7257,9 +7255,6 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 			iCommerceMultiplier /= 100;
 		}
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	int iProductionAdvantage = 100 * AI_yieldMultiplier(YIELD_PRODUCTION);
 	iProductionAdvantage /= kPlayer.AI_averageYieldMultiplier(YIELD_PRODUCTION);
