@@ -2169,47 +2169,15 @@ void CvUnitAI::AI_barbAttackMove()
 	return;
 }
 
-
+// This function has been heavily edited by K-Mod
 void CvUnitAI::AI_attackMove()
 {
 	PROFILE_FUNC();
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/14/10                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Settler AI, Efficiency                                                              */
-/************************************************************************************************/
 	bool bDanger = (kOwner.AI_getAnyPlotDanger(plot(), 3));
 
-	/* if( getGroup()->getNumUnits() > 2 )
-	{
-		UnitAITypes eGroupAI = getGroup()->getHeadUnitAI();
-		if( eGroupAI == AI_getUnitAIType() )
-		{
-			if( plot()->getOwnerINLINE() == getOwnerINLINE() && !bDanger )
-			{
-				// Shouldn't have groups of > 2 attack units
-				if( getGroup()->countNumUnitAIType(UNITAI_ATTACK) > 2 )
-				{
-					getGroup()->AI_separate(); // will change group
-
-					FAssert( eGroupAI == getGroup()->getHeadUnitAI() );
-				}
-
-				// Should never have attack city group lead by attack unit
-				if( getGroup()->countNumUnitAIType(UNITAI_ATTACK_CITY) > 0 )
-				{
-					getGroup()->AI_separateAI(UNITAI_ATTACK_CITY); // will change group
-
-					// Since ATTACK can try to joing ATTACK_CITY again, need these units to
-					// take a break to let ATTACK_CITY group move and avoid hang
-					getGroup()->pushMission(MISSION_SKIP);
-					return;
-				}
-			}
-		}
-	} */ // disabled by K-Mod. We'll split the group up later if we need to.
+	// K-Mod note. We'll split the group up later if we need to. (bbai group splitting code deleted.)
 	FAssert(getGroup()->countNumUnitAIType(UNITAI_ATTACK_CITY) == 0); // K-Mod. (I'm pretty sure this can't happen.)
 
 	// Attack choking units
@@ -2433,23 +2401,17 @@ void CvUnitAI::AI_attackMove()
 
 		if (bDanger)
 		{
-			// K-Mod - slightly more reckless than last time
+			// K-Mod. This block has been rewriten. (original code deleted)
+
+			// slightly more reckless than last time
 			if (getGroup()->getNumUnits() > 1 && AI_stackVsStack(3, 90, 40, 0))
 				return;
-			// K-Mod end
 
-			if (AI_pillageRange(1, 10)) // was 20
-			{
+			bool bAggressive = area()->getAreaAIType(getTeam()) != AREAAI_DEFENSIVE || getGroup()->getNumUnits() > 1 || plot()->getTeam() != getTeam();
+
+			if (bAggressive && AI_pillageRange(1, 10))
 				return;
-			}
 
-			/* original bts code
-			if (AI_cityAttack(1, 35))
-			{
-				return;
-			}*/
-
-			// K-Mod
 			if (plot()->getTeam() == getTeam())
 			{
 				if (AI_defendTeritory(55, 0, 2, true))
@@ -2457,20 +2419,17 @@ void CvUnitAI::AI_attackMove()
 					return;
 				}
 			}
-			else
-			// K-Mod end
-			if (AI_anyAttack(1, 45))
+			else if (AI_anyAttack(1, 45))
 			{
 				return;
 			}
 
-			if (AI_pillageRange(3, 10)) // was 20
+			if (bAggressive && AI_pillageRange(3, 10))
 			{
 				return;
 			}
 
-
-			if( getGroup()->getNumUnits() < 4 )
+			if (getGroup()->getNumUnits() < 4)
 			{
 				if (AI_choke(1))
 				{
@@ -2478,20 +2437,8 @@ void CvUnitAI::AI_attackMove()
 				}
 			}
 
-			/* original bts code
-			if (AI_cityAttack(4, 30))
-			{
+			if (bAggressive && AI_anyAttack(3, 40))
 				return;
-			}
-
-			if (AI_anyAttack(2, 40))
-			{
-				return;
-			} */
-			// K-Mod
-			if (AI_anyAttack(3, 40))
-				return;
-			// K-Mod end
 		}
 
 		if (!isEnemy(plot()->getTeam()))
@@ -2660,12 +2607,12 @@ void CvUnitAI::AI_attackMove()
 			return;
 		// K-Mod end
 
-		if( !bDanger && !isHuman() && plot()->isCoastalLand() && kOwner.AI_unitTargetMissionAIs(this, MISSIONAI_PICKUP) > 0 )
+		/* if( !bDanger && !isHuman() && plot()->isCoastalLand() && kOwner.AI_unitTargetMissionAIs(this, MISSIONAI_PICKUP) > 0 )
 		{
 			// If no other desireable actions, wait for pickup
 			getGroup()->pushMission(MISSION_SKIP);
 			return;
-		}
+		} */ // disabled by K-Mod. We don't need this.
 
 		if (AI_patrol())
 		{
@@ -2685,9 +2632,6 @@ void CvUnitAI::AI_attackMove()
 
 	getGroup()->pushMission(MISSION_SKIP);
 	return;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 }
 
 
@@ -15525,125 +15469,6 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 
 	return false;
 }
-
-// Returns true if a mission was pushed...
-/* K-Mod. I've disabled this function, because it's basically just duplicating the normal "goToTargetCity" code.
-bool CvUnitAI::AI_goToTargetBarbCity(int iMaxPathTurns)
-{
-	PROFILE_FUNC();
-
-	CvCity* pLoopCity;
-	CvCity* pBestCity;
-	CvPlot* pAdjacentPlot;
-	CvPlot* pBestPlot;
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iLoop;
-	int iI;
-
-	if (isBarbarian())
-	{
-		return false;
-	}
-
-	iBestValue = 0;
-	pBestCity = NULL;
-
-	for (pLoopCity = GET_PLAYER(BARBARIAN_PLAYER).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(BARBARIAN_PLAYER).nextCity(&iLoop))
-	{
-		if (AI_plotValid(pLoopCity->plot()))
-		{
-			// BBAI efficiency: check area for land units before generating path
-			if( (getDomainType() == DOMAIN_LAND) && (pLoopCity->area() != area()) && !(getGroup()->canMoveAllTerrain()) )
-			{
-				continue;
-			}
-			if (pLoopCity->isRevealed(getTeam(), false))
-			{
-				if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
-				{
-					if (iPathTurns < iMaxPathTurns)
-					{
-						iValue = GET_PLAYER(getOwnerINLINE()).AI_targetCityValue(pLoopCity, false);
-
-						iValue *= 1000;
-
-						iValue /= (iPathTurns + 1);
-
-						if (iValue > iBestValue)
-						{
-							iBestValue = iValue;
-							pBestCity = pLoopCity;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (pBestCity != NULL)
-	{
-		iBestValue = 0;
-		pBestPlot = NULL;
-
-		for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
-		{
-			pAdjacentPlot = plotDirection(pBestCity->getX_INLINE(), pBestCity->getY_INLINE(), ((DirectionTypes)iI));
-
-			if (pAdjacentPlot != NULL)
-			{
-				if (AI_plotValid(pAdjacentPlot))
-				{
-					if (!(pAdjacentPlot->isVisibleEnemyUnit(this)))
-					{
-						if (generatePath(pAdjacentPlot, 0, true, &iPathTurns))
-						{
-							if( iPathTurns <= iMaxPathTurns )
-							{
-								iValue = std::max(0, (pAdjacentPlot->defenseModifier(getTeam(), false) + 100));
-
-								if (!(pAdjacentPlot->isRiverCrossing(directionXY(pAdjacentPlot, pBestCity->plot()))))
-								{
-									iValue += (10 * -(GC.getRIVER_ATTACK_MODIFIER()));
-								}
-
-								iValue = std::max(1, iValue);
-
-								iValue *= 1000;
-
-								iValue /= (iPathTurns + 1);
-
-								if (iValue > iBestValue)
-								{
-									iBestValue = iValue;
-									pBestPlot = getPathEndTurnPlot();
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if (pBestPlot != NULL)
-		{
-			FAssert(!(pBestCity->at(pBestPlot))); // no suicide missions...
-			if (atPlot(pBestPlot))
-			{
-				getGroup()->pushMission(MISSION_SKIP);
-				return true;
-			}
-			else
-			{
-				getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
-				return true;
-			}
-		}
-	}
-
-	return false;
-}*/
 
 bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshold, int iFlags, int iMaxPathTurns)
 {

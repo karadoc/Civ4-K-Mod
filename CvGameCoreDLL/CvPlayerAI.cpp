@@ -20013,7 +20013,7 @@ void CvPlayerAI::AI_updateStrategyHash()
     {
 		const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
 		const CvTeamAI& kLoopTeam = GET_TEAM(kLoopPlayer.getTeam());
-		if (kLoopPlayer.isAlive() && !kLoopPlayer.isMinorCiv() && !kLoopPlayer.isBarbarian() )
+		if (kLoopPlayer.isAlive() && !kLoopPlayer.isMinorCiv())
 		{
 			if (kLoopPlayer.getTeam() != getTeam() && kTeam.isHasMet(kLoopPlayer.getTeam()))
 			{
