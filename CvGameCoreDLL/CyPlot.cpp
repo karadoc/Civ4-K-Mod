@@ -526,9 +526,10 @@ int CyPlot::getCityRadiusCount()
 	return m_pPlot ? m_pPlot->getCityRadiusCount() : -1;
 }
 
-int CyPlot::isCityRadius()
+bool CyPlot::isCityRadius()
 {
-	return m_pPlot ? m_pPlot->isCityRadius() : -1;
+	//return m_pPlot ? m_pPlot->isCityRadius() : -1;
+	return m_pPlot ? m_pPlot->isCityRadius() : false; // K-Mod. (-1? really?)
 }
 
 bool CyPlot::isStartingPlot()

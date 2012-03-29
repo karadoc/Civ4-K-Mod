@@ -12834,7 +12834,7 @@ void CvCity::doCulture()
 
 
 // This function has essentially been rewriten for K-Mod. (and it use to not be 'times 100')
-// A note about scale: the city plot itself gets roughly 10x the culture. The outer edges of the cultural influence get 1x the culture (ie. the influence that extends beyond the borders).
+// A note about scale: the city plot itself gets roughly 10x culture. The outer edges of the cultural influence get 1x culture (ie. the influence that extends beyond the borders).
 void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture)
 {
 	CultureLevelTypes eCultureLevel = (CultureLevelTypes)0;

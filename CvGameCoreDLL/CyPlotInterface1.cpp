@@ -147,7 +147,7 @@ void CyPlotPythonInterface1(python::class_<CyPlot>& x)
 		.def("changeForceUnownedTimer", &CyPlot::changeForceUnownedTimer, "void (int iChange)")
 
 		.def("getCityRadiusCount", &CyPlot::getCityRadiusCount, "int ()")
-		.def("isCityRadius", &CyPlot::isCityRadius, "int ()")
+		.def("isCityRadius", &CyPlot::isCityRadius, "bool ()")
 
 		.def("isStartingPlot", &CyPlot::isStartingPlot, "bool ()")
 		.def("setStartingPlot", &CyPlot::setStartingPlot, "void (bool bNewValue)")

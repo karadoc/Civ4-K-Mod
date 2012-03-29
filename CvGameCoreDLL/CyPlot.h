@@ -151,7 +151,7 @@ public:
 	void changeForceUnownedTimer(int iChange);
 
 	int getCityRadiusCount();
-	int isCityRadius();
+	bool isCityRadius();
 
 	bool isStartingPlot();
 	void setStartingPlot(bool bNewValue);

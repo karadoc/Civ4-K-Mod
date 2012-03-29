@@ -152,6 +152,12 @@ inline int plotDistance(int iX1, int iY1, int iX2, int iY2)													// Expos
 	return (std::max(iDX, iDY) + (std::min(iDX, iDY) / 2));
 }
 
+// K-Mod, for convenience:
+inline int plotDistance(const CvPlot* plot1, const CvPlot* plot2)
+{
+	return plotDistance(plot1->getX_INLINE(), plot1->getY_INLINE(), plot2->getX_INLINE(), plot2->getY_INLINE());
+}
+
 // 3 | 3 | 3 | 3 | 3 | 3 | 3
 // -------------------------
 // 3 | 2 | 2 | 2 | 2 | 2 | 3

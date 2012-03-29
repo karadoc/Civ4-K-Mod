@@ -4428,7 +4428,7 @@ int CvPlot::getCityRadiusCount() const
 }
 
 
-int CvPlot::isCityRadius() const
+bool CvPlot::isCityRadius() const
 {
 	return (getCityRadiusCount() > 0);
 }

@@ -279,7 +279,7 @@ public:
 	void changeForceUnownedTimer(int iChange);																												// Exposed to Python
 
 	int getCityRadiusCount() const;																																		// Exposed to Python
-	int isCityRadius() const;																																					// Exposed to Python
+	bool isCityRadius() const; // Exposed to Python (K-Mod changed to bool)
 	void changeCityRadiusCount(int iChange);
 
 	bool isStartingPlot() const;																																			// Exposed to Python

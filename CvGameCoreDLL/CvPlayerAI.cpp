@@ -2698,12 +2698,12 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 		iClaimThreshold = 100;
 		iClaimThreshold += 80 * std::max(0, iCitiesTarget - kPlayer.getNumCities()) / iCitiesTarget;
 
-		iClaimThreshold *= bEasyCulture ? (kPlayer.getCurrentEra() < 2 ? 180 : 140) : 100;
-		iClaimThreshold *= bAmbitious ? 140 : 100;
+		iClaimThreshold *= bEasyCulture ? (kPlayer.getCurrentEra() < 2 ? 200 : 150) : 100;
+		iClaimThreshold *= bAmbitious ? 150 : 100;
 		iClaimThreshold /= 10000;
 	}
-    iClaimThreshold *= 10 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)std::min(2, GC.getNumCultureLevelInfos() - 1));
-	// note, plot culture is roughly 1000x city culture. So I've left a factor of 1000 on iClaimThreshold. (cf. CvCity::doPlotCultureTimes100)
+    iClaimThreshold *= GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)std::min(2, GC.getNumCultureLevelInfos() - 1)) / 10;
+	// note, plot culture is roughly 10x city culture. So I've left a factor of 10 on iClaimThreshold. (cf. CvCity::doPlotCultureTimes100)
 }
 
 // Heavily edited for K-Mod (some changes marked, others not.)
@@ -2713,7 +2713,6 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 {
 	PROFILE_FUNC();
 
-	CvCity* pNearestCity;
 	int iResourceValue = 0;
 	int iSpecialFood = 0;
 	int iSpecialFoodPlus = 0;
@@ -2722,7 +2721,6 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 	int iSpecialCommerce = 0;
 
 	bool bNeutralTerritory = true;
-
 
 	if (!canFound(iX, iY))
 	{
@@ -2800,16 +2798,9 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 	{
 		CvPlot* pLoopPlot = plotCity(iX, iY, iI);
 
-		if (pLoopPlot == NULL)
+		if (pLoopPlot == NULL || (pLoopPlot->isOwned() && pLoopPlot->getTeam() != getTeam()))
 		{
 			iOwnedTiles++;
-		}
-		else if (pLoopPlot->isOwned())
-		{
-			if (pLoopPlot->getTeam() != getTeam())
-			{
-				iOwnedTiles++;
-			}
 		}
 	}
 
@@ -2999,27 +2990,6 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 	int iHealth = 0;
 	int iValue = 800; // was 1000
 
-	/* original bts code
-	else if (!bStartingLoc)
-	{
-		for (iI = 0; iI < GC.getNumTraitInfos(); iI++)
-		{
-			if (hasTrait((TraitTypes)iI))
-			{
-				//Greedy founding means getting the best possible sites - fitting maximum
-				//resources into the fat cross.
-				iGreed += (GC.getTraitInfo((TraitTypes)iI).getUpkeepModifier() / 2);
-				iGreed += 20 * (GC.getTraitInfo((TraitTypes)iI).getCommerceChange(COMMERCE_CULTURE));
-			}
-		}
-	} */
-
-	//iClaimThreshold is the culture required to pop the 2nd borders.
-	/*int iClaimThreshold = GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(std::min(2, (GC.getNumCultureLevelInfos() - 1))));
-	iClaimThreshold = std::max(1, iClaimThreshold);
-	iClaimThreshold *= (std::max(100, iGreed));
-	iClaimThreshold /= 100;*/
-
 	int iYieldLostHere = 0;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
@@ -3073,24 +3043,6 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			if (!pLoopPlot->isOwned() || pLoopPlot->getOwnerINLINE() == getID())
 			{
 				iCultureMultiplier = 100;
-				// The plot is not currently owned, but we should probably take a look at the cultural influence on it anyway.
-
-				int iTotalCulture = pLoopPlot->countTotalCulture();
-				int iOurCulture = pLoopPlot->getCulture(getID());
-				int iCultureDifference = iTotalCulture - 2 * iOurCulture; // the sum of everyone else's culture, minus ours.
-
-				if (iCultureDifference > 0)
-				{
-					if (kSet.bEasyCulture && kSet.bAmbitious && iCultureDifference < kSet.iClaimThreshold)
-					{
-						// encourage us to go here sooner rather than later, to block them off!
-						iCultureDifference *= -std::min(200, kSet.iGreed);
-						iCultureDifference /= 200;
-					}
-					// the devaluation should not be more than 50%
-					iCultureMultiplier *= (iTotalCulture + 2*kSet.iClaimThreshold + iOurCulture);
-					iCultureMultiplier /= (iTotalCulture + 2*kSet.iClaimThreshold + iCultureDifference + iOurCulture);
-				}
 			}
 			else
 			{
@@ -3117,7 +3069,8 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				{
 					CvImprovementInfo& kImprovement = GC.getImprovementInfo((ImprovementTypes)iImprovement);
 
-					if (kImprovement.isImprovementBonusMakesValid(eBonus))
+					//if (kImprovement.isImprovementBonusMakesValid(eBonus))
+					if (kImprovement.isImprovementBonusTrade(eBonus)) // K-Mod. (!!)
 					{
 						eBonusImprovement = (ImprovementTypes)iImprovement;
 						break;
@@ -3626,15 +3579,99 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		}
 	}
 
-	pNearestCity = GC.getMapINLINE().findCity(iX, iY, ((isBarbarian()) ? NO_PLAYER : getID()));
-
-	if (pNearestCity != NULL)
+	//CvCity* pNearestCity = GC.getMapINLINE().findCity(iX, iY, ((isBarbarian()) ? NO_PLAYER : getID()));
+	// K-Mod. Adjust based on proximity to other players, and the shape of our empire.
+	if (isBarbarian())
 	{
-		if (isBarbarian())
-		{
+		CvCity* pNearestCity = GC.getMapINLINE().findCity(iX, iY, NO_PLAYER);
+		if (pNearestCity)
 			iValue -= (std::max(0, (8 - plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE()))) * 200);
-		}
 		else
+		{
+			pNearestCity = GC.getMapINLINE().findCity(iX, iY, NO_PLAYER, NO_TEAM, false);
+			if (pNearestCity != NULL)
+			{
+				int iDistance = plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE());
+				iValue -= std::min(500 * iDistance, (8000 * iDistance) / GC.getMapINLINE().maxPlotDistance());
+			}
+		}
+	}
+	else if (!kSet.bStartingLoc)
+	{
+		int iForeignProximity = 0;
+		int iOurProximity = 0;
+		CvCity* pNearestCity = 0;
+		CvCity* pCapital = getCapitalCity();
+		int iMaxDistanceFromCapital = 0;
+
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i = (PlayerTypes)(i+1))
+		{
+			const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+			if (pArea->getCitiesPerPlayer(i) > 0 && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam()) && !GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
+			{
+				int iProximity = 0;
+
+				int iLoop;
+				for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+				{
+					if (i == getID())
+					{
+						if (pCapital)
+							iMaxDistanceFromCapital = std::max(iMaxDistanceFromCapital, plotDistance(pCapital->plot(), pLoopCity->plot()));
+					}
+
+					if (pLoopCity->getArea() == pArea->getID())
+					{
+						int iDistance = plotDistance(iX, iY, pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE());
+
+						if (i == getID())
+						{
+							if (!pNearestCity || iDistance < plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE()))
+								pNearestCity = pLoopCity;
+						}
+
+						int iCultureRange = pLoopCity->getCultureLevel() + 3;
+						if (iDistance <= iCultureRange && AI_deduceCitySite(pLoopCity))
+						{
+							// cf. culture distribution in CvCity::doPlotCultureTimes100
+							iProximity += 90*(iDistance-iCultureRange)*(iDistance-iCultureRange)/(iCultureRange*iCultureRange) + 10;
+						}
+					}
+				}
+				if (kLoopPlayer.getTeam() == getTeam())
+					iOurProximity = std::max(iOurProximity, iProximity);
+				else
+					iForeignProximity = std::max(iForeignProximity, iProximity);
+			}
+		}
+		// Reduce the value if we are going to get squeezed out by culture.
+		// Increase the value if we are hoping to block the other player!
+		if (iForeignProximity > 0)
+		{
+			// As a rough guide of scale, settling 3 steps from a level 2 city in isolation would give a proximity of 24.
+			// 4 steps from a level 2 city = 13
+			// 4 steps from a level 3 city = 20
+			int iDelta = iForeignProximity - iOurProximity;
+
+			if (iDelta > 50)
+				return 0; // we'd be crushed and eventually flipped if we settled here.
+
+			if (iDelta > -20 && iDelta <= (kSet.bAmbitious ? 10 : 0) * (kSet.bEasyCulture ? 2 : 1))
+			{
+				// we want to get this spot before our opponents do. The lower our advantage, the more urgent the site is.
+				iValue *= 120 + iDelta/2 + (kSet.bAmbitious ? 5 : 0);
+				iValue /= 100;
+			}
+			iDelta -= kSet.bEasyCulture ? 20 : 10;
+			if (iDelta > 0)
+			{
+				iValue *= 100 - iDelta*3/2;
+				iValue /= 100;
+			}
+		}
+	// K-Mod end (the rest of this block existed in the original code - but I've made some edits...)
+
+		if (pNearestCity != NULL)
 		{
 			int iDistance = plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE());
 			int iNumCities = getNumCities();
@@ -3666,52 +3703,40 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			iValue *= 8 + 4*iNumCities;
 			iValue /= 2 + 4*iNumCities + std::max(5, iDistance); // 5, not iTargetRange, because 5 is better.
 
-			if (!pNearestCity->isCapital() && getCapitalCity() != NULL)
+			if (!pNearestCity->isCapital() && pCapital)
 			// K-Mod end
 			{
 				//Provide up to a 50% boost to value (80% for adv.start)
 				//for city sites which are relatively close to the core
 				//compared with the most distance city from the core
 				//(having a boost rather than distance penalty avoids some distortion)
-				
+
 				//This is not primarly about maitenance but more about empire 
 				//shape as such forbidden palace/state property are not big deal.
-				CvCity* pLoopCity;
-				int iLoop;
-				int iMaxDistanceFromCapital = 0;
-				
-				int iCapitalX = getCapitalCity()->getX();
-				int iCapitalY = getCapitalCity()->getY();
+				int iDistanceToCapital = plotDistance(pCapital->plot(), pPlot);
 
-				for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
-				{
-					iMaxDistanceFromCapital = std::max(iMaxDistanceFromCapital, plotDistance(iCapitalX, iCapitalY, pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()));					
-				}
-				
-				int iDistanceToCapital = plotDistance(iCapitalX, iCapitalY, iX, iY);
-				
 				FAssert(iMaxDistanceFromCapital > 0);
 				/* original bts code
 				iValue *= 100 + (((bAdvancedStart ? 80 : 50) * std::max(0, (iMaxDistanceFromCapital - iDistance))) / iMaxDistanceFromCapital);
 				iValue /= 100; */
-				// K-Mod. just a touch of flavour
-				int iShapeWeight = bAdvancedStart ? 80 : (kSet.bAmbitious ? 30 : 50);
-				iValue *= 100 + iShapeWeight * std::max(0, (iMaxDistanceFromCapital - iDistance)) / iMaxDistanceFromCapital;
+				// K-Mod. just a touch of flavour. (note, for a long time this adjustment used iDistance instead of iDistanceToCaptial; and so I've reduced the scale to compensate)
+				int iShapeWeight = bAdvancedStart ? 50 : (kSet.bAmbitious ? 15 : 30);
+				iValue *= 100 + iShapeWeight * std::max(0, iMaxDistanceFromCapital - iDistanceToCapital) / iMaxDistanceFromCapital;
 				iValue /= 100 + iShapeWeight;
 				// K-Mod end
 			}
 		}
-	}
-	else
-	{
-		pNearestCity = GC.getMapINLINE().findCity(iX, iY, ((isBarbarian()) ? NO_PLAYER : getID()), ((isBarbarian()) ? NO_TEAM : getTeam()), false);
-		if (pNearestCity != NULL)
+		else
 		{
-			int iDistance = plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE());
-			iValue -= std::min(500 * iDistance, (8000 * iDistance) / GC.getMapINLINE().maxPlotDistance());
+			pNearestCity = GC.getMapINLINE().findCity(iX, iY, getID(), getTeam(), false);
+			if (pNearestCity != NULL)
+			{
+				int iDistance = plotDistance(iX, iY, pNearestCity->getX_INLINE(), pNearestCity->getY_INLINE());
+				iValue -= std::min(500 * iDistance, (8000 * iDistance) / GC.getMapINLINE().maxPlotDistance());
+			}
 		}
 	}
-	
+
 	if (iValue <= 0)
 	{
 		return 1;
@@ -3752,31 +3777,36 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		int iFoodSurplus = std::max(0, iSpecialFoodPlus - iSpecialFoodMinus);
 		int iFoodDeficit = std::max(0, iSpecialFoodMinus - iSpecialFoodPlus);
 
+		/* original bts code
 		iValue *= 100 + 20 * std::max(0, std::min(iFoodSurplus, 2 * GC.getFOOD_CONSUMPTION_PER_POPULATION()));
-		iValue /= 100 + 20 * std::max(0, iFoodDeficit);
+		iValue /= 100 + 20 * std::max(0, iFoodDeficit); */
+		// K-Mod. (note that iFoodSurplus and iFoodDeficit already have the "max(0, x)" built in.
+		iValue *= 100 + (kSet.bExpansive ? 20 : 15) * std::min(iFoodSurplus, 2 * GC.getFOOD_CONSUMPTION_PER_POPULATION());
+		iValue /= 100 + (kSet.bExpansive ? 20 : 15) * iFoodDeficit;
+		// K-Mod end
 	}
 
 	if (!kSet.bStartingLoc && getNumCities() > 0)
 	{
-	    int iBonusCount = 0;
-	    int iUniqueBonusCount = 0;
-	    for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
-	    {
-	        iBonusCount += paiBonusCount[iI];
-	        iUniqueBonusCount += (paiBonusCount[iI] > 0) ? 1 : 0;
-	    }
-	    if (iBonusCount > 4)
-	    {
-	        iValue *= 5;
-	        iValue /= (1 + iBonusCount);
-	    }
-	    else if (iUniqueBonusCount > 2)
-	    {
-	        iValue *= 5;
-	        iValue /= (3 + iUniqueBonusCount);	        
-	    }
+		int iBonusCount = 0;
+		int iUniqueBonusCount = 0;
+		for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
+		{
+			iBonusCount += paiBonusCount[iI];
+			iUniqueBonusCount += (paiBonusCount[iI] > 0) ? 1 : 0;
+		}
+		if (iBonusCount > 4)
+		{
+			iValue *= 5;
+			iValue /= (1 + iBonusCount);
+		}
+		else if (iUniqueBonusCount > 2)
+		{
+			iValue *= 5;
+			iValue /= (3 + iUniqueBonusCount);
+		}
 	}
-	
+
 	if (!kSet.bStartingLoc)
 	{
 		int iDeadLockCount = AI_countDeadlockedBonuses(pPlot);
@@ -3869,16 +3899,9 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 {
 	PROFILE_FUNC();
 
-	CvCity* pNearestCity;
-	CvPlot* pLoopPlot;
-	int iValue;
-	int iI;
-
 	FAssertMsg(pCity != NULL, "City is not assigned a valid value");
 
-	iValue = 1;
-
-	iValue += ((pCity->getPopulation() * (50 + pCity->calculateCulturePercent(getID()))) / 100);
+	int iValue = 1 + pCity->getPopulation() * (50 + pCity->calculateCulturePercent(getID())) / 100;
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      06/30/10                     Mongoose & jdog5000      */
@@ -3898,7 +3921,7 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 
 	iValue += 4*pCity->getNumActiveWorldWonders();
 
-	for (iI = 0; iI < GC.getNumReligionInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
 	{
 		if (pCity->isHolyCity((ReligionTypes)iI))
 		{
@@ -3930,9 +3953,9 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 		iValue += std::min( 8, (AI_adjacentPotentialAttackers(pCity->plot()) + 2)/3 );
 	}
 
-	for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
-		pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
+		CvPlot* pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
 
 		if (pLoopPlot != NULL)
 		{
@@ -3989,7 +4012,7 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 		}
 	}
 
-	pNearestCity = GC.getMapINLINE().findCity(pCity->getX_INLINE(), pCity->getY_INLINE(), getID());
+	CvCity* pNearestCity = GC.getMapINLINE().findCity(pCity->getX_INLINE(), pCity->getY_INLINE(), getID());
 
 	if (pNearestCity != NULL)
 	{
