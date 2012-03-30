@@ -15037,7 +15037,7 @@ bool CvPlayer::doEspionageMission(EspionageMissionTypes eMission, PlayerTypes eT
 				bSomethingHappened = true;
 				bShowExplosion = true;
 				// K-Mod
-				if (!isHuman() || pCity->isProductionAutomated())
+				if (!isHuman()) // not for automated cities
 					pCity->AI_setChooseProductionDirty(true);
 				// K-Mod end
 			}

@@ -938,6 +938,11 @@ bool CvDLLWidgetData::executeAltAction( CvWidgetDataStruct &widgetDataStruct )
 	case WIDGET_TECH_TREE:
 		doPediaTechJump(widgetDataStruct);
 		break;
+	// K-Mod
+	case WIDGET_CHANGE_PERCENT:
+		doChangePercentAlt(widgetDataStruct);
+		break;
+	// K-Mod end
 	case WIDGET_TRAIN:
 		doPediaTrainJump(widgetDataStruct);
 		break;
@@ -1285,6 +1290,13 @@ void CvDLLWidgetData::doChangePercent(CvWidgetDataStruct &widgetDataStruct)
 {
 	CvMessageControl::getInstance().sendPercentChange(((CommerceTypes)widgetDataStruct.m_iData1), widgetDataStruct.m_iData2);
 }
+
+// K-Mod. Right click on "change percent" buttons will set them to min / max.
+void CvDLLWidgetData::doChangePercentAlt(CvWidgetDataStruct &widgetDataStruct)
+{
+	CvMessageControl::getInstance().sendPercentChange((CommerceTypes)widgetDataStruct.m_iData1, widgetDataStruct.m_iData2 * 100);
+}
+// K-Mod end
 
 void CvDLLWidgetData::doCityTab(CvWidgetDataStruct &widgetDataStruct)
 {

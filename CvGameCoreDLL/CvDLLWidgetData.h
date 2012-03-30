@@ -41,6 +41,7 @@ public:
 	void doChangeSpecialist(CvWidgetDataStruct &widgetDataStruct);
 	void doResearch(CvWidgetDataStruct &widgetDataStruct);
 	void doChangePercent(CvWidgetDataStruct &widgetDataStruct);
+	void doChangePercentAlt(CvWidgetDataStruct &widgetDataStruct); // K-Mod (right-click)
 	void doCityTab(CvWidgetDataStruct &widgetDataStruct);
 	void doContactCiv(CvWidgetDataStruct &widgetDataStruct);
 	void doConvert(CvWidgetDataStruct &widgetDataStruct);

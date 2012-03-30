@@ -28,7 +28,7 @@
 #define PATH_DEFENSE_WEIGHT     (4) // K-Mod. ( * defence bonus)
 #define PATH_TERRITORY_WEIGHT   (5) // was 3
 #define PATH_STEP_WEIGHT        (4) // was 2
-#define PATH_STRAIGHT_WEIGHT    (3) // was 1
+#define PATH_STRAIGHT_WEIGHT    (2) // was 1
 //#define PATH_ASYMMETRY_WEIGHT   (1) // K-Mod
 
 // #define PATH_DAMAGE_WEIGHT      (500) // K-Mod (disabled because it isn't used)
@@ -1581,21 +1581,6 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 	iWorstCost += PATH_STEP_WEIGHT;
 
-	// K-Mod note: it's actually marginally better strategy to move diagonally - for mapping reasons.
-	// So let the AI prefer diagonal movement.
-	// However, diagonal zig-zags will probably seem unnatural and weird to humans who are just trying to move in a straight line.
-	// So let the pathfinding for human groups prefer cardinal movement.
-	if (pSelectionGroup->AI_isControlled())
-	{
-		if (pFromPlot->getX_INLINE() == pToPlot->getX_INLINE() || pFromPlot->getY_INLINE() == pToPlot->getY_INLINE())
-			iWorstCost += PATH_STRAIGHT_WEIGHT;
-	}
-	else
-	{
-		if ((pFromPlot->getX_INLINE() != pToPlot->getX_INLINE()) && (pFromPlot->getY_INLINE() != pToPlot->getY_INLINE()))
-			iWorstCost += PATH_STRAIGHT_WEIGHT;
-	}
-
 	// symmetry breaking. This is meant to prevent two paths from having equal cost.
 	// (If two paths have equal cost, sometimes the interface shows one path and the units follow the other. This is bad.)
 	/* original K-Mod symmetry breaking. (extra cost for turning a corner)
@@ -1636,11 +1621,27 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 	} */
 
 	// Unfortunately, the above code is not sufficient to fix the symmetry problem.
-	// Here's a new method:
-	iWorstCost += (node->m_iX + node->m_iY)%3;
+	// Here's a new method, which combines symmetry breaking with the old "straight path" effect.
+	// Note: symmetry breaking is not important for AI controlled units.
+
+	// It's actually marginally better strategy to move diagonally - for mapping reasons.
+	// So let the AI prefer diagonal movement.
+	// However, diagonal zig-zags will probably seem unnatural and weird to humans who are just trying to move in a straight line.
+	// So let the pathfinding for human groups prefer cardinal movement.
+	if (pSelectionGroup->AI_isControlled())
+	{
+		if (pFromPlot->getX_INLINE() == pToPlot->getX_INLINE() || pFromPlot->getY_INLINE() == pToPlot->getY_INLINE())
+			iWorstCost += PATH_STRAIGHT_WEIGHT;
+	}
+	else
+	{
+		if ((pFromPlot->getX_INLINE() != pToPlot->getX_INLINE()) && (pFromPlot->getY_INLINE() != pToPlot->getY_INLINE()))
+			iWorstCost += PATH_STRAIGHT_WEIGHT * (1+(node->m_iX + node->m_iY)%2);
+		iWorstCost += (node->m_iX + node->m_iY+1)%3;
+	}
 	// unfortunately, this simple method may have problems at the world-wrap boundries.
 	// It's difficult to tell when to correct for wrap effects and when not to, because as soon as the
-	// unit start moving, the start position of the path changes, and so it's no longer posible to tell
+	// unit starts moving, the start position of the path changes, and so it's no longer posible to tell
 	// whether or not the unit started on the other side of the boundry.  Drat.
 
 	// end symmetry breaking.

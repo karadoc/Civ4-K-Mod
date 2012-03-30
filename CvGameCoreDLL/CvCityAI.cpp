@@ -7237,7 +7237,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	{
 		if (AI_isEmphasizeYield(YIELD_FOOD))
 		{
-			iFoodMultiplier *= 130;
+			iFoodMultiplier *= 140; // was 130
 			iFoodMultiplier /= 100;
 		}
 		if (AI_isEmphasizeYield(YIELD_PRODUCTION))
@@ -7245,8 +7245,11 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 			iProductionMultiplier *= 130; // was 140
 			iProductionMultiplier /= 100;
 			// K-Mod
-			iCommerceMultiplier *= 80;
-			iCommerceMultiplier /= 100;
+			if (!AI_isEmphasizeYield(YIELD_COMMERCE))
+			{
+				iCommerceMultiplier *= 80;
+				iCommerceMultiplier /= 100;
+			}
 			// K-Mod end
 		}
 		if (AI_isEmphasizeYield(YIELD_COMMERCE))
