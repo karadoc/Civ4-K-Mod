@@ -4492,11 +4492,14 @@ void CvSelectionGroup::mergeIntoGroup(CvSelectionGroup* pSelectionGroup)
 
 // split this group into two new groups, one of iSplitSize, the other the remaining units
 // split up each unit AI type as evenly as possible
+// K-Mod. I've rewriten most of this function. The new version is faster, gives a more even split, and does not create a dummy group. (unless I've made a mistake.)
 CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadUnit, CvSelectionGroup** ppOtherGroup)
 {
-	FAssertMsg(iSplitSize > 0, "non-positive splitGroup size");
-	if (!(iSplitSize > 0))
+	FAssert(pNewHeadUnit == 0 || pNewHeadUnit->getGroup() == this);
+
+	if (iSplitSize <= 0)
 	{
+		FAssertMsg(false, "non-positive splitGroup size");
 		return NULL;
 	}
 
@@ -4506,161 +4509,109 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 		return this;
 	}
 	
-	CLLNode<IDInfo>* pUnitNode = headUnitNode();
-	CvUnit* pOldHeadUnit = ::getUnit(pUnitNode->m_data);
-	FAssertMsg(pOldHeadUnit != NULL, "non-zero group without head unit");
-	if (pOldHeadUnit == NULL)
-	{
-		return NULL;
-	}
-
-	UnitAITypes eOldHeadAI = pOldHeadUnit->AI_getUnitAIType();
+	CvUnit* pOldHeadUnit = getHeadUnit();
 
 	// if pNewHeadUnit NULL, then we will use our current head to head the new split group of target size
 	if (pNewHeadUnit == NULL)
-	{
 		pNewHeadUnit = pOldHeadUnit;
+
+	UnitAITypes eOldHeadAI = pOldHeadUnit->AI_getUnitAIType();
+	UnitAITypes eNewHeadAI = pNewHeadUnit->AI_getUnitAIType();
+
+	int iGroupSize = getNumUnits();
+
+	int aiUnitAIs[NUM_UNITAI_TYPES] = {};
+	FAssert(iGroupSize > 0);
+
+	// populate 'aiUnitAIs' with the number of each AI type in the remainer group.
+	CLLNode<IDInfo>* pUnitNode = headUnitNode();
+	while (pUnitNode)
+	{
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = nextUnitNode(pUnitNode);
+		aiUnitAIs[pLoopUnit->AI_getUnitAIType()]++;
 	}
 
-	// the AI of the new head (the remainder will get the AI of the old head)
-	// UnitAITypes eNewHeadAI = pNewHeadUnit->AI_getUnitAIType();
+	// next, from those numbers, work out how many of each unit type we need in new group.
+	// round evenly, and carry the rounding-error onto the next unit type so that we don't have an off-by-one error at the end.
+	int iCarry = 0;
 
-	// pRemainderHeadUnit is the head unit of the group that contains the remainder of units 
-	CvUnit* pRemainderHeadUnit = NULL;
+	// There are a couple of special cases that we need to do first (so that iCarry can work correctly at the end)
+	{
+		// reserve a unit of the old AI type to lead the remainder group
+		// and more importantly, reserve a unit of the new AI type to lead the new group!
 
-	// if the new head is not the old head, then make the old head the remainder head
-	bool bSplitingHead = (pOldHeadUnit == pNewHeadUnit);
-	if (!bSplitingHead)
-	{
-		pRemainderHeadUnit = pOldHeadUnit;
-	}
-	
-	// try to find remainder head with same AI as head, if we cannot find one, we will split the rest of the group up
-	if (pRemainderHeadUnit == NULL)
-	{
-		// loop over all the units
-		pUnitNode = headUnitNode();
-		while (pUnitNode != NULL && pRemainderHeadUnit == NULL)
+		int x = std::max(1, (aiUnitAIs[eNewHeadAI] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize);
+		if (eOldHeadAI == eNewHeadAI)
 		{
-			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-			pUnitNode = nextUnitNode(pUnitNode);
-			
-			if (pLoopUnit != NULL && pLoopUnit != pNewHeadUnit)
-			{
-				UnitAITypes eLoopUnitAI = pLoopUnit->AI_getUnitAIType();
-				if (eLoopUnitAI == eOldHeadAI)
-				{
-					pRemainderHeadUnit = pLoopUnit;
-				}
-			}
+			if (x > 1 && aiUnitAIs[eOldHeadAI] == x)
+				x--;
+
+			iCarry += aiUnitAIs[eNewHeadAI] * iSplitSize - x * iGroupSize;
+			aiUnitAIs[eNewHeadAI] = x;
+		}
+		else
+		{
+			iCarry += aiUnitAIs[eNewHeadAI] * iSplitSize - x * iGroupSize;
+			aiUnitAIs[eNewHeadAI] = x;
+
+			x = (aiUnitAIs[eOldHeadAI] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
+
+			if (x > 0 && aiUnitAIs[eOldHeadAI] == x)
+				x--;
+
+			iCarry += aiUnitAIs[eOldHeadAI] * iSplitSize - x * iGroupSize;
+			aiUnitAIs[eOldHeadAI] = x;
 		}
 	}
-	
-	CvSelectionGroup* pSplitGroup = NULL;
-	CvSelectionGroup* pRemainderGroup = NULL;
-	
+
+	for (UnitAITypes i = (UnitAITypes)0; i < NUM_UNITAI_TYPES; i = (UnitAITypes)(i+1))
+	{
+		if (aiUnitAIs[i] == 0 || i == eNewHeadAI || i == eOldHeadAI)
+			continue; // already done. (see above)
+
+		int x = (aiUnitAIs[i] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
+
+		FAssert(x >= 0 && x <= aiUnitAIs[i]);
+		iCarry += aiUnitAIs[i] * iSplitSize - x * iGroupSize;
+		aiUnitAIs[i] = x;
+		FAssert(iCarry >= -iGroupSize && iCarry <= iGroupSize);
+	}
+	FAssert(iCarry == 0);
+
 	// make the new group for the new head
-	pNewHeadUnit->joinGroup(NULL);
-	pSplitGroup = pNewHeadUnit->getGroup();
-	FAssertMsg(pSplitGroup != NULL, "join resulted in NULL group");
+	pNewHeadUnit->joinGroup(0);
+	CvSelectionGroup* pSplitGroup = pNewHeadUnit->getGroup();
+	aiUnitAIs[eNewHeadAI]--;
+	CvSelectionGroup* pRemainderGroup = this;
 
-	// make a new group for the remainder, if non-null
-	if (pRemainderHeadUnit != NULL)
+	pUnitNode = headUnitNode();
+	while (pUnitNode)
 	{
-		pRemainderHeadUnit->joinGroup(NULL);
-		pRemainderGroup = pRemainderHeadUnit->getGroup();
-		FAssertMsg(pRemainderGroup != NULL, "join resulted in NULL group");
-	}
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+		pUnitNode = nextUnitNode(pUnitNode);
 
-	// loop until this group is empty, trying to move different AI types each time
-	
-	
-	//Exhibit of why i HATE iustus code sometimes
-	//unsigned int unitAIBitField = 0;
-	//setBit(unitAIBitField, eNewHeadAI);
-	
-	bool abUnitAIField[NUM_UNITAI_TYPES];
-	for (int iI = 0; iI < NUM_UNITAI_TYPES; iI++)
-	{
-		abUnitAIField[iI] = false;
-	}
-	
-	while (getNumUnits())
-	{
-		UnitAITypes eTargetUnitAI = NO_UNITAI;
-	
-		// loop over all the units, find the next different UnitAI and move one of each
-		bool bDestinationSplit = (pSplitGroup->getNumUnits() < iSplitSize);
-		pUnitNode = headUnitNode();
-		while (pUnitNode != NULL)
+		UnitAITypes eAI = pLoopUnit->AI_getUnitAIType();
+		FAssert(eAI != NO_UNITAI);
+		if (aiUnitAIs[eAI] > 0)
 		{
-			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-			pUnitNode = nextUnitNode(pUnitNode);
-			
-			if (pLoopUnit != NULL)
-			{
-				UnitAITypes eLoopUnitAI = pLoopUnit->AI_getUnitAIType();
-				
-				// if we have not found a new type to move, is this a new unitai?
-				// note, if there eventually are unitAIs above 31, we will just always move those, which is fine
-				if (eTargetUnitAI == NO_UNITAI && !abUnitAIField[eLoopUnitAI])
-				{
-					eTargetUnitAI =  eLoopUnitAI;
-					abUnitAIField[eLoopUnitAI] = true;
-				}
-				
-				// is this the right UnitAI?
-				if (eLoopUnitAI == eTargetUnitAI)
-				{
-					// move this unit to the appropriate group 
-					if (bDestinationSplit)
-					{
-						pLoopUnit->joinGroup(pSplitGroup);
-					}
-					else
-					{
-						pLoopUnit->joinGroup(pRemainderGroup);
-						// (if pRemainderGroup NULL, it gets its own group)
-						pRemainderGroup = pLoopUnit->getGroup();
-					}
-					
-					// if we moved to remainder, try for next unit AI
-					if (!bDestinationSplit)
-					{
-						eTargetUnitAI = NO_UNITAI;
-
-						bDestinationSplit = (pSplitGroup->getNumUnits() < iSplitSize);
-					}
-					else
-					{
-						// next unit goes to the remainder group
-						bDestinationSplit = false;
-					}
-				}
-			}
-
-		}
-		
-		// clear bitfield, all types are valid again
-		for (int iI = 0; iI < NUM_UNITAI_TYPES; iI++)
-		{
-			abUnitAIField[iI] = false;
+			pLoopUnit->joinGroup(pSplitGroup);
+			aiUnitAIs[eAI]--;
 		}
 	}
 
-	FAssertMsg(pSplitGroup->getNumUnits() <= iSplitSize, "somehow our split group is too large");
+	FAssert(pSplitGroup->getNumUnits() == iSplitSize);
 
 	// K-Mod
-	// if the remainder group doesn't have the same unitAI, and didn't get loaded into a boat. Then tell it to split, so that we don't get any strange groups forming.
+	// if the remainder group doesn't have the same unitAI, then it should be split up, so that we don't get any strange groups forming.
 	// Note: the force split can be overridden by the calling function if need be.
-	if (pRemainderGroup && pRemainderGroup->getHeadUnitAI() != eOldHeadAI)
-		pRemainderGroup->AI_setForceSeparate();
+	/* if (pRemainderGroup && pRemainderGroup->getHeadUnitAI() != eOldHeadAI)
+		pRemainderGroup->AI_setForceSeparate(); */
+	FAssert(!pRemainderGroup || (pRemainderGroup->getHeadUnitAI() != eOldHeadAI) == pRemainderGroup->AI_isForceSeparate()); // this should now be automatic, because of my other edits.
 	// K-Mod end
 
 	if (ppOtherGroup != NULL)
-	{
 		*ppOtherGroup = pRemainderGroup;
-	}
 
 	return pSplitGroup;
 }
