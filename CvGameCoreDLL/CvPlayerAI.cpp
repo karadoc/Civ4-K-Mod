@@ -1446,9 +1446,11 @@ void CvPlayerAI::AI_unitUpdate()
 				// one last trick that might save us a bit of time...
 				// if the number of selection groups has increased, then lets try to take care of the new groups right away.
 				// (there might be a faster way to look for the new groups, but I don't know it.)
-				bRepeat = bRepeat && getNumSelectionGroups() > (int)groupList.size();
+				bRepeat = bRepeat && m_groupCycle.getLength() > (int)groupList.size();
 				// the repeat will do a stack of redundant checks,
 				// but I still expect it to be much faster than waiting for the next turnslice.
+				// Note: I use m_groupCycle rather than getNumSelectionGroups just in case there is a bug which causes the two to be out of sync.
+				// (otherwise, if getNumSelectionGroups is bigger, it could cause an infinite loop.)
 			} while (bRepeat);
 			// K-Mod end
 		}

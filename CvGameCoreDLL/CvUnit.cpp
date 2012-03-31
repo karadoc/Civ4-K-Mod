@@ -9497,110 +9497,93 @@ bool CvUnit::canJoinGroup(const CvPlot* pPlot, CvSelectionGroup* pSelectionGroup
 	return true;
 }
 
-
+// K-Mod has edited this function to increase readability and robustness
 void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, bool bRejoin)
 {
-	CvSelectionGroup* pOldSelectionGroup;
-	CvSelectionGroup* pNewSelectionGroup;
-	CvPlot* pPlot;
+	CvSelectionGroup* pOldSelectionGroup = GET_PLAYER(getOwnerINLINE()).getSelectionGroup(getGroupID());
 
-	pOldSelectionGroup = GET_PLAYER(getOwnerINLINE()).getSelectionGroup(getGroupID());
+	if (pOldSelectionGroup && pSelectionGroup == pOldSelectionGroup)
+		return; // attempting to join the group we are already in
 
-	if ((pSelectionGroup != pOldSelectionGroup) || (pOldSelectionGroup == NULL))
+	CvPlot* pPlot = plot();
+	CvSelectionGroup* pNewSelectionGroup = pSelectionGroup;
+
+	if (pNewSelectionGroup == NULL && bRejoin)
 	{
-		pPlot = plot();
+		pNewSelectionGroup = GET_PLAYER(getOwnerINLINE()).addSelectionGroup();
+		pNewSelectionGroup->init(pNewSelectionGroup->getID(), getOwnerINLINE());
+	}
 
-		if (pSelectionGroup != NULL)
+	if (pNewSelectionGroup == NULL || canJoinGroup(pPlot, pNewSelectionGroup))
+	{
+		if (pOldSelectionGroup != NULL)
 		{
-			pNewSelectionGroup = pSelectionGroup;
+			bool bWasHead = false;
+			if (!isHuman())
+			{
+				if (pOldSelectionGroup->getNumUnits() > 1)
+				{
+					if (pOldSelectionGroup->getHeadUnit() == this)
+					{
+						bWasHead = true;
+					}
+				}
+			}
+
+			pOldSelectionGroup->removeUnit(this);
+
+			// if we were the head, if the head unitAI changed, then force the group to separate (non-humans)
+			if (bWasHead)
+			{
+				FAssert(pOldSelectionGroup->getHeadUnit() != NULL);
+				if (pOldSelectionGroup->getHeadUnit()->AI_getUnitAIType() != AI_getUnitAIType())
+				{
+					pOldSelectionGroup->AI_setForceSeparate();
+				}
+			}
+		}
+
+		if ((pNewSelectionGroup != NULL) && pNewSelectionGroup->addUnit(this, false))
+		{
+			m_iGroupID = pNewSelectionGroup->getID();
 		}
 		else
 		{
-			if (bRejoin)
+			m_iGroupID = FFreeList::INVALID_INDEX;
+		}
+
+		if (getGroup() != NULL)
+		{
+			if (getGroup()->getNumUnits() > 1)
 			{
-				pNewSelectionGroup = GET_PLAYER(getOwnerINLINE()).addSelectionGroup();
-				pNewSelectionGroup->init(pNewSelectionGroup->getID(), getOwnerINLINE());
+				// K-Mod - to avoid AI deadlocks, where they just keep grouping and ungroup indefinitely...
+				if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
+				// K-Mod end
+					getGroup()->setActivityType(ACTIVITY_AWAKE);
 			}
 			else
 			{
-				pNewSelectionGroup = NULL;
+				GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
 			}
 		}
 
-		if ((pNewSelectionGroup == NULL) || canJoinGroup(pPlot, pNewSelectionGroup))
+		if (getTeam() == GC.getGameINLINE().getActiveTeam())
 		{
-			if (pOldSelectionGroup != NULL)
+			if (pPlot != NULL)
 			{
-				bool bWasHead = false;
-				if (!isHuman())
-				{
-					if (pOldSelectionGroup->getNumUnits() > 1)
-					{
-						if (pOldSelectionGroup->getHeadUnit() == this)
-						{
-							bWasHead = true;
-						}
-					}
-				}
-
-				pOldSelectionGroup->removeUnit(this);
-
-				// if we were the head, if the head unitAI changed, then force the group to separate (non-humans)
-				if (bWasHead)
-				{
-					FAssert(pOldSelectionGroup->getHeadUnit() != NULL);
-					if (pOldSelectionGroup->getHeadUnit()->AI_getUnitAIType() != AI_getUnitAIType())
-					{
-						pOldSelectionGroup->AI_setForceSeparate();
-					}
-				}
-			}
-
-			if ((pNewSelectionGroup != NULL) && pNewSelectionGroup->addUnit(this, false))
-			{
-				m_iGroupID = pNewSelectionGroup->getID();
-			}
-			else
-			{
-				m_iGroupID = FFreeList::INVALID_INDEX;
-			}
-
-			if (getGroup() != NULL)
-			{
-				if (getGroup()->getNumUnits() > 1)
-				{
-					// K-Mod - to avoid AI deadlocks, where they just keep grouping and ungroup indefinitely...
-					if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
-					// K-Mod end
-						getGroup()->setActivityType(ACTIVITY_AWAKE);
-				}
-				else
-				{
-					GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
-				}
-			}
-
-			if (getTeam() == GC.getGameINLINE().getActiveTeam())
-			{
-				if (pPlot != NULL)
-				{
-					pPlot->setFlagDirty(true);
-				}
-			}
-
-			if (pPlot == gDLL->getInterfaceIFace()->getSelectionPlot())
-			{
-				gDLL->getInterfaceIFace()->setDirty(PlotListButtons_DIRTY_BIT, true);
+				pPlot->setFlagDirty(true);
 			}
 		}
 
-		if (bRemoveSelected)
+		if (pPlot == gDLL->getInterfaceIFace()->getSelectionPlot())
 		{
-			if (IsSelected())
-			{
-				gDLL->getInterfaceIFace()->removeFromSelectionList(this);
-			}
+			gDLL->getInterfaceIFace()->setDirty(PlotListButtons_DIRTY_BIT, true);
 		}
+	}
+
+	if (bRemoveSelected && IsSelected())
+	{
+		gDLL->getInterfaceIFace()->removeFromSelectionList(this);
 	}
 }
 
@@ -9704,7 +9687,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	// K-Mod. I've adjusted the code to allow cargo units to stay in their groups when possible.
 	bShow = bShow && bGroup && !isCargo();
 	if (!bGroup)
-		joinGroup(NULL, true);
+		joinGroup(0, true);
 	// K-Mod end
 
 	pNewPlot = GC.getMapINLINE().plotINLINE(iX, iY);
@@ -9952,7 +9935,8 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 			GET_PLAYER(getOwnerINLINE()).changeNumOutsideUnits(1);
 		}
 
-		if (shouldLoadOnMove(pNewPlot))
+		//if (shouldLoadOnMove(pNewPlot))
+		if (pOldPlot && shouldLoadOnMove(pNewPlot)) // K-Mod. (don't load units during the unit initialization process.)
 		{
 			load();
 		}
