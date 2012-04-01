@@ -13775,13 +13775,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		iValue += (iCities * 6 * iS * AI_getHealthWeight(iS*kCivic.getExtraHealth(), 1)) / 100;
 
 	if (kCivic.getExtraHappiness() != 0) // New K-Mod effect
-		iValue += (iCities * 10 * iS * AI_getHappinessWeight(iS*kCivic.getExtraHappiness(), 1)) / 100;
+		iValue += (iCities * 10 * iS * AI_getHappinessWeight(iS*kCivic.getExtraHappiness(), 0)) / 100; // (zero extra citizens... as a kind of kludge to get the value closer to where I want it)
 
 	if (kCivic.getHappyPerMilitaryUnit() != 0)
 		iValue += (iCities * 9 * iS * AI_getHappinessWeight(iS*kCivic.getHappyPerMilitaryUnit() * 3, 1)) / 100;
 
 	if (kCivic.getLargestCityHappiness() != 0)
-		iValue += (14 * std::min(iCities, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()) * iS * AI_getHappinessWeight(iS*kCivic.getLargestCityHappiness(), 1)) / 100;
+		iValue += (16 * std::min(iCities, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()) * iS * AI_getHappinessWeight(iS*kCivic.getLargestCityHappiness(), 1)) / 100; // Higher weight, because it affects the best cities (was 14)
 
 	if (kCivic.getWarWearinessModifier() != 0) // K-Mod. (original code deleted)
 		iValue += (12 * iCities * iS * AI_getHappinessWeight(iS*ROUND_DIVIDE(getWarWearinessPercentAnger() * -getWarWearinessModifier(), GC.getPERCENT_ANGER_DIVISOR()), 1, true)) / 100;
@@ -14101,6 +14101,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	{
 		if (kCivic.isHurry(iI))
 		{
+			/* original bts code
 			int iTempValue = 0;
 
 			if (GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction() > 0)
@@ -14108,7 +14109,28 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				iTempValue += ((((AI_avoidScience()) ? 50 : 25) * iCities) / GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction());
 			}
 			iTempValue += (GC.getHurryInfo((HurryTypes)iI).getProductionPerPopulation() * iCities * (bWarPlan ? 2 : 1)) / 5;
-			iValue += iTempValue;
+
+			iValue += iTempValue; */
+
+			// K-Mod. I'm not attempting to made an accurate estimate of the value here - I just want to make it a little bit more nuanced than it was.
+			int iTempValue = 0;
+
+			if (GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction() > 0)
+			{
+				iTempValue = AI_averageCommerceMultiplier(COMMERCE_GOLD) * (AI_avoidScience() ? 2000 : 1000) * iCities / GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction();
+				iTempValue /= std::max(1, (getHurryModifier() + 100) * AI_commerceWeight(COMMERCE_GOLD));
+			}
+
+			iTempValue += (GC.getHurryInfo((HurryTypes)iI).getProductionPerPopulation() * iCities * (bWarPlan ? 2 : 1)) / 5; // unchanged so far.
+
+			if (iTempValue > 0)
+			{
+				if (GC.getHurryInfo((HurryTypes)iI).getProductionPerPopulation() && GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction())
+					iTempValue /= 2;
+
+				iValue += iTempValue;
+			}
+			// K-Mod end
 		}
 	}
 
@@ -14198,16 +14220,9 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 		return eBestReligion;
 	}
 
-	int iBestCount = getHasReligionCount(eBestReligion);
+	/* int iBestCount = getHasReligionCount(eBestReligion);
 	int iSpreadPercent = (iBestCount * 100) / std::max(1, getNumCities());
 	int iPurityPercent = (iBestCount * 100) / std::max(1, countTotalHasReligion());
-	// K-Mod. Don't instantly convert to the first religion avaiable, unless it is your own religion.
-	if (getStateReligion() == NO_RELIGION && iSpreadPercent < 29 - AI_getFlavorValue(FLAVOR_RELIGION)
-		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
-	{
-		return NO_RELIGION;
-	}
-	// K-Mod end
 
 	if (iPurityPercent < 49)
 	{
@@ -14219,7 +14234,15 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 			}
 		}
 		return NO_RELIGION;
+	} */ // disabled by K-Mod
+	// K-Mod. Don't instantly convert to the first religion avaiable, unless it is your own religion.
+	int iSpread = getHasReligionCount(eBestReligion) * 100 / std::max(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities(), getNumCities()+1);
+	if (getStateReligion() == NO_RELIGION && iSpread < 29 - AI_getFlavorValue(FLAVOR_RELIGION)
+		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
+	{
+		return NO_RELIGION;
 	}
+	// K-Mod end
 	
 	return eBestReligion;
 }
