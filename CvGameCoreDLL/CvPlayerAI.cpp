@@ -13774,6 +13774,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	if (kCivic.getExtraHealth() != 0)
 		iValue += (iCities * 6 * iS * AI_getHealthWeight(iS*kCivic.getExtraHealth(), 1)) / 100;
 
+	if (kCivic.getExtraHappiness() != 0) // New K-Mod effect
+		iValue += (iCities * 10 * iS * AI_getHappinessWeight(iS*kCivic.getExtraHappiness(), 1)) / 100;
+
 	if (kCivic.getHappyPerMilitaryUnit() != 0)
 		iValue += (iCities * 9 * iS * AI_getHappinessWeight(iS*kCivic.getHappyPerMilitaryUnit() * 3, 1)) / 100;
 

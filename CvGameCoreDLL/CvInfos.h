@@ -1321,6 +1321,7 @@ public:
 	int getNumCitiesMaintenanceModifier() const;				// Exposed to Python
 	int getCorporationMaintenanceModifier() const;				// Exposed to Python
 	int getExtraHealth() const;						// Exposed to Python
+	int getExtraHappiness() const { return m_iExtraHappiness; } // K-Mod, Exposed to Python
 	int getFreeExperience() const;				// Exposed to Python
 	int getWorkerSpeedModifier() const;				// Exposed to Python
 	int getImprovementUpgradeRateModifier() const;				// Exposed to Python
@@ -1404,6 +1405,7 @@ protected:
 	int m_iNumCitiesMaintenanceModifier;					
 	int m_iCorporationMaintenanceModifier;					
 	int m_iExtraHealth;
+	int m_iExtraHappiness; // K-Mod
 	int m_iFreeExperience;
 	int m_iWorkerSpeedModifier;
 	int m_iImprovementUpgradeRateModifier;

@@ -391,6 +391,7 @@ void CyInfoPythonInterface1()
 		.def("getNumCitiesMaintenanceModifier", &CvCivicInfo::getNumCitiesMaintenanceModifier, "int ()")
 		.def("getCorporationMaintenanceModifier", &CvCivicInfo::getCorporationMaintenanceModifier, "int ()")
 		.def("getExtraHealth", &CvCivicInfo::getExtraHealth, "int ()")
+		.def("getExtraHappiness", &CvCivicInfo::getExtraHappiness, "int ()") // K-Mod
 		.def("getFreeExperience", &CvCivicInfo::getFreeExperience, "int ()")
 		.def("getWorkerSpeedModifier", &CvCivicInfo::getWorkerSpeedModifier, "int ()")
 		.def("getImprovementUpgradeRateModifier", &CvCivicInfo::getImprovementUpgradeRateModifier, "int ()")
