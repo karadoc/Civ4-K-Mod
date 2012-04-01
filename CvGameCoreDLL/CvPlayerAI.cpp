@@ -13382,8 +13382,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			{
 				int iTempValue = iCities + ((bWarPlan) ? 30 : 10);
 
-				iTempValue *= range(kTeam.AI_getEnemyPowerPercent(), 50, 300);
-				iTempValue /= 100;
+				/* iTempValue *= range(kTeam.AI_getEnemyPowerPercent(), 50, 300);
+				iTempValue /= 100; */ // disabled by K-Mod
 
 				iTempValue *= iCombatValue;
 				iTempValue /= 75;
@@ -13394,11 +13394,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 					iTempValue *= 75 + range(-iWarSuccessRating, 25, 100);
 					iTempValue /= 100;
 				}
-				// K-Mod (maybe I'll do some more tweaking later)
+				// K-Mod. (What's with all the "losing means we need drafting" mentality in the BBAI code? It's... not the right way to look at it.)
 				// (NOTE: "conscript_population_per_cost" is actually "production_per_conscript_population". The developers didn't know what "per" means.)
 				int iConscriptPop = std::max(1, GC.getUnitInfo(eConscript).getProductionCost() / GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST"));
-				iTempValue *= GC.getUnitInfo(eConscript).getProductionCost();
-				iTempValue /= iConscriptPop * GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST");
+				int iProductionFactor = 100 * GC.getUnitInfo(eConscript).getProductionCost();
+				iProductionFactor /= iConscriptPop * GC.getDefineINT("CONSCRIPT_POPULATION_PER_COST");
+				iTempValue *= iProductionFactor;
+				iTempValue /= 100;
 				iTempValue *= std::min(iCities, iMaxConscript*3);
 				iTempValue /= iMaxConscript*3;
 				// reduce the value if unit spending is already high.
@@ -13408,6 +13410,12 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				{
 					iTempValue = std::max(0, iTempValue * (2 * iMaxSpending - iUnitSpending)/std::max(1, iMaxSpending));
 				}
+				else if (iProductionFactor >= 140) // cf. 'bGoodValue' in CvCityAI::AI_doDraft
+				{
+					iTempValue *= 2*iMaxSpending;
+					iTempValue /= std::max(1, iMaxSpending + iUnitSpending);
+				}
+				// todo. put in something to do with how much happiness we can afford to lose.. or something like that.
 				// K-Mod end
 
 				iValue += iTempValue;
