@@ -1391,21 +1391,13 @@ int changeIrrigated(FAStarNode* parent, FAStarNode* node, int data, const void* 
 	return 1;
 }
 
+// (edited by K-Mod)
 int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 {
 	PROFILE_FUNC();
 
-	CLLNode<IDInfo>* pUnitNode1;
-	CLLNode<IDInfo>* pUnitNode2;
-	//CvSelectionGroup* pSelectionGroup;
-	CvUnit* pLoopUnit1;
-	CvUnit* pLoopUnit2;
-	CvPlot* pToPlot;
-	bool bAIControl;
-	bool bValid;
-
-	pToPlot = GC.getMapINLINE().plotSorenINLINE(iToX, iToY);
-	FAssert(pToPlot != NULL);
+	CvPlot* pToPlot = GC.getMapINLINE().plotSorenINLINE(iToX, iToY);
+	FAssert(pToPlot);
 
 	//pSelectionGroup = ((CvSelectionGroup *)pointer);
 	// K-Mod
@@ -1414,16 +1406,12 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 	// K-Mod end
 
 	if (pSelectionGroup->atPlot(pToPlot))
-	{
 		return TRUE;
-	}
 
 	if (pSelectionGroup->getDomainType() == DOMAIN_IMMOBILE)
-	{
 		return FALSE;
-	}
 
-	bAIControl = pSelectionGroup->AI_isControlled();
+	bool bAIControl = pSelectionGroup->AI_isControlled();
 
 	if (bAIControl)
 	{
@@ -1468,22 +1456,22 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 	{
 		if (pSelectionGroup->isAmphibPlot(pToPlot))
 		{
-			pUnitNode1 = pSelectionGroup->headUnitNode();
+			CLLNode<IDInfo>* pUnitNode1 = pSelectionGroup->headUnitNode();
 
 			while (pUnitNode1 != NULL)
 			{
-				pLoopUnit1 = ::getUnit(pUnitNode1->m_data);
+				CvUnit* pLoopUnit1 = ::getUnit(pUnitNode1->m_data);
 				pUnitNode1 = pSelectionGroup->nextUnitNode(pUnitNode1);
 
 				if ((pLoopUnit1->getCargo() > 0) && (pLoopUnit1->domainCargo() == DOMAIN_LAND))
 				{
-					bValid = false;
+					bool bValid = false;
 
-					pUnitNode2 = pLoopUnit1->plot()->headUnitNode();
+					CLLNode<IDInfo>* pUnitNode2 = pLoopUnit1->plot()->headUnitNode();
 
 					while (pUnitNode2 != NULL)
 					{
-						pLoopUnit2 = ::getUnit(pUnitNode2->m_data);
+						CvUnit* pLoopUnit2 = ::getUnit(pUnitNode2->m_data);
 						pUnitNode2 = pLoopUnit1->plot()->nextUnitNode(pUnitNode2);
 
 						if (pLoopUnit2->getTransportUnit() == pLoopUnit1)
@@ -1491,7 +1479,7 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 							if (pLoopUnit2->isGroupHead())
 							{
 								//if (pLoopUnit2->getGroup()->canMoveOrAttackInto(pToPlot, (pSelectionGroup->AI_isDeclareWar(pToPlot) || (iFlags & MOVE_DECLARE_WAR))))
-								if (pLoopUnit2->getGroup()->canMoveOrAttackInto(pToPlot, iFlags & MOVE_DECLARE_WAR)) // K-Mod. The new AI must be explicit about declaring war.
+								if (pLoopUnit2->getGroup()->canMoveOrAttackInto(pToPlot, iFlags & MOVE_DECLARE_WAR, false, bAIControl)) // K-Mod. The new AI must be explicit about declaring war.
 								{
 									bValid = true;
 									break;
@@ -1512,7 +1500,7 @@ int pathDestValid(int iToX, int iToY, const void* pointer, FAStar* finder)
 		else
 		{
 			//if (!(pSelectionGroup->canMoveOrAttackInto(pToPlot, (pSelectionGroup->AI_isDeclareWar(pToPlot) || (iFlags & MOVE_DECLARE_WAR)))))
-			if (!pSelectionGroup->canMoveOrAttackInto(pToPlot, iFlags & MOVE_DECLARE_WAR)) // K-Mod. The new AI must be explicit about declaring war.
+			if (!pSelectionGroup->canMoveOrAttackInto(pToPlot, iFlags & MOVE_DECLARE_WAR, false, bAIControl)) // K-Mod. The new AI must be explicit about declaring war.
 			{
 				return FALSE;
 			}
