@@ -211,7 +211,7 @@ void CvSelectionGroup::doTurn()
 				}
 
 				//if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0)
-				if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) //bbai
+				if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2, true, AI_isControlled())) // K-Mod
 				{
 					clearMissionQueue();
 				}
