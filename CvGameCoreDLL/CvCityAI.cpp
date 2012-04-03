@@ -10445,8 +10445,9 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 	}
 
 	// K-Mod. Don't chop the feature if we need it for our best improvement!
-	if (eBestBuild == NO_BUILD || (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT
-		&& GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature()))
+	if (eBestBuild == NO_BUILD
+		? (pPlot->getImprovementType() == NO_IMPROVEMENT || GC.getImprovementInfo(pPlot->getImprovementType()).isRequiresFeature())
+		: (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT && GC.getImprovementInfo((ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement()).isRequiresFeature()))
 	{
 		bChop = false;
 	}

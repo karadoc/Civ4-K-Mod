@@ -4,8 +4,6 @@
 #include "KmodPathFinder.h"
 #include "FAStarNode.h"
 #include "CvGameCoreUtils.h"
-#include <boost/bind.hpp>
-#include <boost/lambda/lambda.hpp>
 
 int KmodPathFinder::admissible_scaled_weight = 1;
 int KmodPathFinder::admissible_base_weight = 1;

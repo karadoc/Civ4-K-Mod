@@ -10864,6 +10864,8 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 {
 	PROFILE_FUNC();
 
+	iFlags &= ~MOVE_DECLARE_WAR; // Don't consider war when we just want to group
+
 	if (isCargo())
 		return false;
 
@@ -10972,7 +10974,7 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 	{
 		if (!atPlot(pBestUnit->plot()))
 		{
-			if (!bMergeGroups)
+			if (!bMergeGroups && getGroup()->getNumUnits() > 1)
 				joinGroup(NULL); // might as well leave our current group behind, since they won't be merging anyway.
 			getGroup()->pushMission(MISSION_MOVE_TO_UNIT, pBestUnit->getOwnerINLINE(), pBestUnit->getID(), iFlags, false, false, MISSIONAI_GROUP, NULL, pBestUnit);
 		}

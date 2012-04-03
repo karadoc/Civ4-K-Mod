@@ -235,7 +235,7 @@ bool CvSelectionGroupAI::AI_update()
 				break;
 			}
 
-			resetPath();
+			//resetPath();
 
 			if (pHeadUnit->AI_update())
 			{

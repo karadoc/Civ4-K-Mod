@@ -3897,7 +3897,8 @@ bool CvTeamAI::AI_isSneakAttackPreparing(TeamTypes eIndex) const
 
 bool CvTeamAI::AI_isSneakAttackReady(TeamTypes eIndex) const
 {
-	return (AI_isChosenWar(eIndex) && !(AI_isSneakAttackPreparing(eIndex)));
+	//return (AI_isChosenWar(eIndex) && !(AI_isSneakAttackPreparing(eIndex)));
+	return !isAtWar(eIndex) && AI_isChosenWar(eIndex) && !AI_isSneakAttackPreparing(eIndex); // K-Mod
 }
 
 // K-Mod
