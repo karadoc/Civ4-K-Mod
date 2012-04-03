@@ -350,8 +350,8 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 
 int CvPlayerAI::AI_getFlavorValue(FlavorTypes eFlavor) const
 {
-	FAssertMsg((getPersonalityType() >= 0), "getPersonalityType() is less than zero");
-	FAssertMsg((eFlavor >= 0), "eFlavor is less than zero");
+	if (isHuman())
+		return 0; // K-Mod
 	return GC.getLeaderHeadInfo(getPersonalityType()).getFlavorValue(eFlavor);
 }
 
@@ -13472,6 +13472,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		{
 			iSpecialistValue += (getSpecialistExtraCommerce(i) + kCivic.getSpecialistExtraCommerce(i)) * AI_commerceWeight(i);
 		}
+		iSpecialistValue += 2*std::max(0, AI_averageGreatPeopleMultiplier()-100);
 		iValue += iCities * iSpecialistValue / 100;
 	}
 	// K-Mod end

@@ -1241,7 +1241,6 @@ void CvDLLWidgetData::doChangeSpecialist(CvWidgetDataStruct &widgetDataStruct)
 	GC.getGameINLINE().selectedCitiesGameNetMessage(GAMEMESSAGE_DO_TASK, TASK_CHANGE_SPECIALIST, widgetDataStruct.m_iData1, widgetDataStruct.m_iData2);
 }
 
-
 void CvDLLWidgetData::doResearch(CvWidgetDataStruct &widgetDataStruct)
 {
 	/* original bts code

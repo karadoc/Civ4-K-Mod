@@ -4297,6 +4297,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						{
 							iSpecialistValue += kOwner.getSpecialistExtraCommerce(i) * 4 * kOwner.AI_commerceWeight(i);
 						}
+						iSpecialistValue += 8*std::max(0, kOwner.AI_averageGreatPeopleMultiplier()-100);
+
 						iValue += iFreeSpecialists * iSpecialistValue / 100;
 					}
 				}
