@@ -449,7 +449,7 @@ void CyCityPythonInterface1(python::class_<CyCity>& x)
 		.def("setWallOverridePoints", &CyCity::setWallOverridePoints, "setWallOverridePoints(const python::tuple& kPoints)")
 		.def("getWallOverridePoints", &CyCity::getWallOverridePoints, "python::tuple getWallOverridePoints()")
 
-		.def("AI_avoidGrowth", &CyCity::AI_avoidGrowth, "bool ()")
+		//.def("AI_avoidGrowth", &CyCity::AI_avoidGrowth, "bool ()")
 		.def("AI_isEmphasize", &CyCity::AI_isEmphasize, "bool (int iEmphasizeType)")
 		.def("AI_countBestBuilds", &CyCity::AI_countBestBuilds, "int (CyArea* pArea)")
 		.def("AI_cityValue", &CyCity::AI_cityValue, "int ()")

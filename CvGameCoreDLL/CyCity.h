@@ -474,7 +474,7 @@ public:
 	int getLiberationPlayer(bool bConquest);
 	void liberate(bool bConquest);
 
-	bool AI_avoidGrowth();
+	//bool AI_avoidGrowth();
 	bool AI_isEmphasize(int iEmphasizeType);
 	int AI_countBestBuilds(CyArea* pArea);
 	int AI_cityValue();

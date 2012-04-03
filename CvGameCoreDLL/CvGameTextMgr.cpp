@@ -5122,14 +5122,15 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 			// some functions we want to call are not in CvCity, worse some are protected, so made us a friend
 			CvCityAI* pCityAI = static_cast<CvCityAI*>(pCity);
 
-			bool bAvoidGrowth = pCity->AI_avoidGrowth();
-			bool bIgnoreGrowth = pCityAI->AI_ignoreGrowth();
+			//bool bAvoidGrowth = pCity->AI_avoidGrowth();
+			//bool bIgnoreGrowth = pCityAI->AI_ignoreGrowth();
+			int iGrowthValue = pCityAI->AI_growthValuePerFood();
 
 			// if we over the city, then do an array of all the plots
 			if (pPlot->getPlotCity() != NULL)
 			{
 				// check avoid growth
-				if (bAvoidGrowth || bIgnoreGrowth)
+				/* if (bAvoidGrowth || bIgnoreGrowth)
 				{
 					// red color
 					szString.append(CvWString::format(SETCOLR, TEXT_COLOR("COLOR_NEGATIVE_TEXT")));
@@ -5147,47 +5148,47 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 
 					// end color
 					szString.append(CvWString::format( ENDCOLR L"\n" ));
-				}
+				} */
 
 				// if control key is down, ignore food
 				bool bIgnoreFood = GC.ctrlKey();
 
 				// line one is: blank, 20, 9, 10, blank
-				setCityPlotYieldValueString(szString, pCity, -1, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 20, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 9, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 10, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
+				setCityPlotYieldValueString(szString, pCity, -1, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 20, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 9, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 10, bIgnoreFood, iGrowthValue);
 				szString.append(L"\n");
 
 				// line two is: 19, 8, 1, 2, 11
-				setCityPlotYieldValueString(szString, pCity, 19, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 8, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 1, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 2, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 11, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
+				setCityPlotYieldValueString(szString, pCity, 19, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 8, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 1, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 2, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 11, bIgnoreFood, iGrowthValue);
 				szString.append(L"\n");
 
 				// line three is: 18, 7, 0, 3, 12
-				setCityPlotYieldValueString(szString, pCity, 18, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 7, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 0, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 3, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 12, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
+				setCityPlotYieldValueString(szString, pCity, 18, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 7, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 0, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 3, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 12, bIgnoreFood, iGrowthValue);
 				szString.append(L"\n");
 
 				// line four is: 17, 6, 5, 4, 13
-				setCityPlotYieldValueString(szString, pCity, 17, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 6, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 5, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 4, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 13, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
+				setCityPlotYieldValueString(szString, pCity, 17, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 6, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 5, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 4, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 13, bIgnoreFood, iGrowthValue);
 				szString.append(L"\n");
 
 				// line five is: blank, 16, 15, 14, blank
-				setCityPlotYieldValueString(szString, pCity, -1, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 16, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 15, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
-				setCityPlotYieldValueString(szString, pCity, 14, bAvoidGrowth, bIgnoreGrowth, bIgnoreFood);
+				setCityPlotYieldValueString(szString, pCity, -1, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 16, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 15, bIgnoreFood, iGrowthValue);
+				setCityPlotYieldValueString(szString, pCity, 14, bIgnoreFood, iGrowthValue);
 				
 				// show specialist values too
 				for (int iI = 0; iI < GC.getNumSpecialistInfos(); ++iI)
@@ -5207,7 +5208,7 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 							szString.append(CvWString::format(L"\n" SETCOLR, TEXT_COLOR("COLOR_ALT_HIGHLIGHT_TEXT")));
 						else
 							szString.append(CvWString::format(L"\n" SETCOLR, TEXT_COLOR("COLOR_HIGHLIGHT_TEXT")));
-						
+
 						// add name
 						szString.append(GC.getSpecialistInfo((SpecialistTypes) iI).getDescription());
 
@@ -5216,10 +5217,10 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 
 						// add usage
 						szString.append(CvWString::format(L": (%d/%d) ", iSpecialistCount, iMaxThisSpecialist));
-						
+
 						// add value
-						int iValue = pCityAI->AI_specialistValue(((SpecialistTypes) iI), bAvoidGrowth, /*bRemove*/ bUsingSpecialist);
-						setYieldValueString(szString, iValue, /*bActive*/ bUsingSpecialist);
+						int iValue = pCityAI->AI_specialistValue((SpecialistTypes)iI, bUsingSpecialist, false, iGrowthValue);
+						setYieldValueString(szString, iValue, bUsingSpecialist);
 					}
 				}
 				{
@@ -5303,11 +5304,11 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 					szTempBuffer.Format( SETCOLR L"%s not working" ENDCOLR, TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), pCity->getName().GetCString());
 				szString.append(szTempBuffer);
 
-				int iValue = pCityAI->AI_plotValue(pPlot, bAvoidGrowth, /*bRemove*/ bWorkingPlot, /*bIgnoreFood*/ false, bIgnoreGrowth);
-				int iJuggleValue = pCityAI->AI_plotValue(pPlot, bAvoidGrowth, /*bRemove*/ bWorkingPlot, false, bIgnoreGrowth, true);
+				int iValue = pCityAI->AI_plotValue(pPlot, bWorkingPlot, false, false, iGrowthValue);
+				int iRawValue = pCityAI->AI_plotValue(pPlot, bWorkingPlot, true, false, iGrowthValue);
 				int iMagicValue = pCityAI->AI_getPlotMagicValue(pPlot, pCityAI->healthRate() == 0);
 
-				szTempBuffer.Format(L"\nvalue = %d\njuggle value = %d\nmagic value = %d", iValue, iJuggleValue, iMagicValue);
+				szTempBuffer.Format(L"\nvalue = %d\nraw value = %d\nmagic value = %d", iValue, iRawValue, iMagicValue);
 				szString.append(szTempBuffer);
 			}
 		}
@@ -5711,21 +5712,21 @@ void CvGameTextMgr::setPlotHelp(CvWStringBuffer& szString, CvPlot* pPlot)
 }
 
 
-void CvGameTextMgr::setCityPlotYieldValueString(CvWStringBuffer &szString, CvCity* pCity, int iIndex, bool bAvoidGrowth, bool bIgnoreGrowth, bool bIgnoreFood)
+void CvGameTextMgr::setCityPlotYieldValueString(CvWStringBuffer &szString, CvCity* pCity, int iIndex, bool bIgnoreFood, int iGrowthValue)
 {
 	PROFILE_FUNC();
 
 	CvPlot* pPlot = NULL;
-	
+
 	if (iIndex >= 0 && iIndex < NUM_CITY_PLOTS)
 		pPlot = pCity->getCityIndexPlot(iIndex);
-	
+
 	if (pPlot != NULL && pPlot->getWorkingCity() == pCity)
 	{
 		CvCityAI* pCityAI = static_cast<CvCityAI*>(pCity);
 		bool bWorkingPlot = pCity->isWorkingPlot(iIndex);
 
-		int iValue = pCityAI->AI_plotValue(pPlot, bAvoidGrowth, /*bRemove*/ bWorkingPlot, bIgnoreFood, bIgnoreGrowth);
+		int iValue = pCityAI->AI_plotValue(pPlot, bWorkingPlot, bIgnoreFood, false, iGrowthValue);
 		
 		setYieldValueString(szString, iValue, /*bActive*/ bWorkingPlot);
 	}

@@ -2175,10 +2175,10 @@ python::tuple CyCity::getWallOverridePoints() const
 	return tup;
 }
 
-bool CyCity::AI_avoidGrowth()
+/*bool CyCity::AI_avoidGrowth()
 {
 	return m_pCity ? m_pCity->AI_avoidGrowth() : false;
-}
+}*/
 
 bool CyCity::AI_isEmphasize(int iEmphasizeType)
 {

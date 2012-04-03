@@ -418,63 +418,6 @@ void CvCityAI::AI_updateAssignWork()
 	}
 }
 
-
-bool CvCityAI::AI_avoidGrowth()
-{
-	//PROFILE_FUNC();
-
-	if (AI_isEmphasizeAvoidGrowth())
-	{
-		return true;
-	}
-
-	return false; // K-Mod. short-circuit all the other stuff. That's all taken into account in other places.
-
-	if (isFoodProduction())
-	{
-		return true;
-	}
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/14/10                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
-	//if (!AI_isEmphasizeYield(YIELD_FOOD) && !AI_isEmphasizeGreatPeople())
-	// AI should avoid growth when it has angry citizens, even if emphasizing great people
-	if( !(isHuman()) || (!AI_isEmphasizeYield(YIELD_FOOD) && !AI_isEmphasizeGreatPeople()) )
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-	{
-		int iExtra = (isHuman()) ? 0 : 1;
-		int iHappinessLevel = happyLevel() - unhappyLevel(iExtra);
-		
-		// ignore military unhappy, since we assume it will be fixed quickly, grow anyway
-		if (getMilitaryHappinessUnits() == 0)
-		{
-			iHappinessLevel += ((GC.getDefineINT("NO_MILITARY_PERCENT_ANGER") * (getPopulation() + 1)) / GC.getPERCENT_ANGER_DIVISOR());
-		}
-		
-
-		// if we can pop rush, we want to grow one over the cap
-		if (GET_PLAYER(getOwnerINLINE()).canPopRush())
-		{
-			iHappinessLevel++;
-		}
-
-		
-		// if we have angry citizens
-		if (iHappinessLevel < 0)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
 bool CvCityAI::AI_ignoreGrowth()
 {
 	PROFILE_FUNC();
@@ -491,7 +434,8 @@ bool CvCityAI::AI_ignoreGrowth()
 }
 
 // (this function has been edited heavily for K-Mod)
-int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) const
+// units of ~400x commerce
+int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bRemove, bool bIgnoreFood, int iGrowthValue) const
 {
 	PROFILE_FUNC();
 
@@ -499,22 +443,22 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 
 	short aiYields[NUM_YIELD_TYPES];
 	int iNumCities = kOwner.getNumCities();
-    
+
 	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
 		aiYields[iI] = kOwner.specialistYield(eSpecialist, ((YieldTypes)iI));
 	}
 
 	short int aiCommerceYields[NUM_COMMERCE_TYPES];
-	
+
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 	{
-		aiCommerceYields[iI] = kOwner.specialistCommerce(eSpecialist, ((CommerceTypes)iI));
+		aiCommerceYields[iI] = kOwner.specialistCommerce(eSpecialist, (CommerceTypes)iI);
 	}
-	
-	int iValue = AI_yieldValue(aiYields, aiCommerceYields, bAvoidGrowth, bRemove) * 100;
 
-	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange(); // note: this will get a factor of 100 in the next block
+	int iValue = AI_yieldValue(aiYields, aiCommerceYields, bRemove, bIgnoreFood, false, false, iGrowthValue) * 100;
+
+	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange(); // note: this will gain a factor of 100 in the next block
 
 	int iEmphasisCount = 0;
 	if (iGreatPeopleRate != 0)
@@ -523,30 +467,31 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		if (AI_isEmphasizeGreatPeople())
 		{
 			//iGPPValue = isHuman() ? 30 : 20;
-			iGPPValue = 12; // K-Mod. If the value is too high, it becomes worth more than city growth
+			iGPPValue = 12; // K-Mod
 		}
 		else
 		{
 			if (AI_isEmphasizeYield(YIELD_COMMERCE))
 			{
-				iGPPValue = 2;
+				iGPPValue = 3; // was 2
 				iEmphasisCount++;			
-			}
-			if (AI_isEmphasizeYield(YIELD_PRODUCTION))
-			{
-				iGPPValue = 1;
-				iEmphasisCount++;
 			}
 			if (AI_isEmphasizeYield(YIELD_FOOD))
 			{
-				iGPPValue = 1;
+				iGPPValue = 3; // was 1
 				iEmphasisCount++;
 			}
+			if (AI_isEmphasizeYield(YIELD_PRODUCTION))
+			{
+				iGPPValue = 1; // was 1
+				iEmphasisCount++;
+			}
+			// note: each point of iEmphasisCount reduces the value at the end.
 		}
-		
-		iGreatPeopleRate *= getTotalGreatPeopleRateModifier();
+
+		iGreatPeopleRate *= getTotalGreatPeopleRateModifier(); // O(100)
 		int iTempValue = iGreatPeopleRate * iGPPValue;
-		
+
 		if (!isHuman() || AI_isEmphasizeGreatPeople())
 		{
 			int iProgress = getGreatPeopleProgress();
@@ -562,7 +507,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 				// K-Mod end
 			}
 		}
-		
+
 		// K-Mod: I've replaced the above code with a new method for targeting particular great person types.
 		if (!isHuman())
 		{
@@ -597,8 +542,9 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth,
 		// K-Mod note: ultimately, I don't think the value should be divided by the average multiplier.
 		// because more great people points is always better, regardless of what the average multiplier is.
 		// However, because of the flawed way that food is currently evaluated, I need to dilute the value of GPP
-		// so that specialists don't get value more highly than food tiles. (I hope to correct this, later.)
-		iTempValue /= (200 + kOwner.AI_averageGreatPeopleMultiplier())/3;
+		// so that specialists don't get value more highly than food tiles. (I hope to correct this later.)
+		iTempValue *= 100;
+		iTempValue /= (300 + kOwner.AI_averageGreatPeopleMultiplier())/4;
 
 		iTempValue /= (1 + iEmphasisCount);
 		iValue += iTempValue;
@@ -7977,6 +7923,7 @@ void CvCityAI::AI_updateBestBuild()
 		int iBestUnworkedPlotValue = 0;
 		
 		int aiValues[NUM_CITY_PLOTS];
+		int iGrowthValue = AI_growthValuePerFood(); // K-Mod
 		
 		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
@@ -7992,8 +7939,8 @@ void CvCityAI::AI_updateBestBuild()
 						{
 							aiYields[iJ] = pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], (YieldTypes)iJ, true);
 						}
-						
-						iValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
+
+						iValue = AI_yieldValue(aiYields, 0, false, false, true, true, iGrowthValue);
 						aiValues[iI] = iValue;
 						/* original bts code
 						if ((iValue > 0) && (pLoopPlot->getRouteType() != NO_ROUTE))
@@ -8030,9 +7977,9 @@ void CvCityAI::AI_updateBestBuild()
 						{
 							aiYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
 						}
-						
-						iValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);					
-						
+
+						iValue = AI_yieldValue(aiYields, 0, false, false, true, true, iGrowthValue);
+
 						iBestUnworkedPlotValue = std::max(iBestUnworkedPlotValue, iValue);
 					}
 				}
@@ -8078,7 +8025,7 @@ void CvCityAI::AI_updateBestBuild()
 										aiYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
 									}
 
-									iValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
+									iValue = AI_yieldValue(aiYields, 0, false, false, true, true, iGrowthValue);
 									if (iValue > aiValues[iI])
 									{
 										m_aiBestBuildValue[iI] = 1;
@@ -8922,8 +8869,9 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 {
 	PROFILE_FUNC();
 
-	bool bAvoidGrowth = AI_avoidGrowth();
-	bool bIgnoreGrowth = AI_ignoreGrowth();
+	//bool bAvoidGrowth = AI_avoidGrowth();
+	//bool bIgnoreGrowth = AI_ignoreGrowth();
+	int iGrowthValue = AI_growthValuePerFood(); // K-Mod
 	bool bIsSpecialistForced = false;
 
 	int iBestSpecialistValue = 0;
@@ -8963,7 +8911,7 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 						int iForcedValue = ((iForcedSpecialistCount * 128) / iTotalForcedSpecialists) -  ((iSpecialistCount * 128) / iTotalSpecialists);
 						if (iForcedValue >= iBestForcedValue)
 						{
-							int iSpecialistValue = AI_specialistValue((SpecialistTypes)iI, bAvoidGrowth, false);
+							int iSpecialistValue = AI_specialistValue((SpecialistTypes)iI, false, false, iGrowthValue);
 							
 							// if forced value larger, or if equal, does this specialist have a higher value
 							if (iForcedValue > iBestForcedValue || iSpecialistValue > iBestSpecialistValue)
@@ -8986,7 +8934,7 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 			{
 				if (isSpecialistValid((SpecialistTypes)iI, 1))
 				{
-					int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, false);
+					int iValue = AI_specialistValue((SpecialistTypes)iI, false, false, iGrowthValue);
 					if (iValue >= iBestSpecialistValue)
 					{
 						iBestSpecialistValue = iValue;
@@ -9013,7 +8961,7 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 					{
 						if (canWork(pLoopPlot))
 						{
-							int iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, /*bRemove*/ false, /*bIgnoreFood*/ false, bIgnoreGrowth);
+							int iValue = AI_plotValue(pLoopPlot, false, false, false, iGrowthValue);
 
 							if (iValue > iBestPlotValue)
 							{
@@ -9069,15 +9017,6 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 // Returns true if a worker was removed from a plot...
 bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 {
-	CvPlot* pLoopPlot;
-	SpecialistTypes eWorstSpecialist;
-	bool bAvoidGrowth;
-	bool bIgnoreGrowth;
-	int iWorstPlot;
-	int iValue;
-	int iWorstValue;
-	int iI;
-	
 	// if we are using more specialists than the free ones we get
 	if (extraFreeSpecialists() < 0)
 	{
@@ -9098,23 +9037,24 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 		}
 	}
 
-	bAvoidGrowth = AI_avoidGrowth();
-	bIgnoreGrowth = AI_ignoreGrowth();
+	//bAvoidGrowth = AI_avoidGrowth();
+	//bIgnoreGrowth = AI_ignoreGrowth();
+	int iGrowthValue = AI_growthValuePerFood();
 
-	iWorstValue = MAX_INT;
-	eWorstSpecialist = NO_SPECIALIST;
-	iWorstPlot = -1;
+	int iWorstValue = MAX_INT;
+	SpecialistTypes eWorstSpecialist = NO_SPECIALIST;
+	int iWorstPlot = -1;
 
 	// if we are using more specialists than the free ones we get
 	if (extraFreeSpecialists() < 0)
 	{
-		for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+		for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 		{
 			if (eIgnoreSpecialist != iI)
 			{
 				if (getSpecialistCount((SpecialistTypes)iI) > getForceSpecialistCount((SpecialistTypes)iI))
 				{
-					iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, /*bRemove*/ true);
+					int iValue = AI_specialistValue((SpecialistTypes)iI, true, false, iGrowthValue);
 
 					if (iValue < iWorstValue)
 					{
@@ -9128,17 +9068,17 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 	}
 	
 	// check all the plots we working
-	for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
 		if (iI != CITY_HOME_PLOT)
 		{
 			if (isWorkingPlot(iI))
 			{
-				pLoopPlot = getCityIndexPlot(iI);
+				CvPlot* pLoopPlot = getCityIndexPlot(iI);
 
 				if (pLoopPlot != NULL)
 				{
-					iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, /*bRemove*/ true, /*bIgnoreFood*/ false, bIgnoreGrowth);
+					int iValue = AI_plotValue(pLoopPlot, true, false, false, iGrowthValue);
 
 					if (iValue < iWorstValue)
 					{
@@ -9165,11 +9105,11 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 	// if we still have not removed one, then try again, but do not ignore the one we were told to ignore
 	if (extraFreeSpecialists() < 0)
 	{
-		for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+		for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 		{
 			if (getSpecialistCount((SpecialistTypes)iI) > 0)
 			{
-				iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, /*bRemove*/ true);
+				int iValue = AI_specialistValue((SpecialistTypes)iI, true, false, iGrowthValue);
 
 				if (iValue < iWorstValue)
 				{
@@ -9193,8 +9133,8 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 // This function has been completely rewritten for K-Mod - original code deleted
 void CvCityAI::AI_juggleCitizens()
 {
-	bool bAvoidGrowth = AI_avoidGrowth();
-	bool bIgnoreGrowth = AI_ignoreGrowth();
+	//bool bAvoidGrowth = AI_avoidGrowth();
+	//bool bIgnoreGrowth = AI_ignoreGrowth();
 
 	int iTotalFreeSpecialists = totalFreeSpecialists();
 
@@ -9219,6 +9159,7 @@ void CvCityAI::AI_juggleCitizens()
 
 	do
 	{
+		int iGrowthValue = AI_growthValuePerFood(); // recalcuate on each cycle?
 		int iWorkedPlot = -1;
 		int iWorkedPlotValue = INT_MAX; // lowest value worked plot
 		SpecialistTypes eWorkedSpecialist = NO_SPECIALIST;
@@ -9230,56 +9171,53 @@ void CvCityAI::AI_juggleCitizens()
 		int iUnworkedSpecValue = 0; // highest value unworked specialist
 		int iUnworkedSpecForce = INT_MIN; // (force value can be negative)
 
-		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		for (int i = 1; i < NUM_CITY_PLOTS; i++)
 		{
-			if (iI != CITY_HOME_PLOT)
-			{
-				CvPlot* pLoopPlot = getCityIndexPlot(iI);
+			CvPlot* pLoopPlot = getCityIndexPlot(i);
 
-				if (pLoopPlot != NULL)
+			if (pLoopPlot == NULL)
+				continue;
+
+			if (isWorkingPlot(i))
+			{
+				int iValue = AI_plotValue(pLoopPlot, true, false, false, iGrowthValue);
+				if (iValue < iWorkedPlotValue)
 				{
-					if (isWorkingPlot(iI))
-					{
-						int iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, true, false, bIgnoreGrowth);
-						if (iValue < iWorkedPlotValue)
-						{
-							iWorkedPlot = iI;
-							iWorkedPlotValue = iValue;
-						}
-					}
-					else if (canWork(pLoopPlot))
-					{
-						int iValue = AI_plotValue(pLoopPlot, bAvoidGrowth, false, false, bIgnoreGrowth);
-						if (iValue > iUnworkedPlotValue)
-						{
-							iUnworkedPlot = iI;
-							iUnworkedPlotValue = iValue;
-						}
-					}
+					iWorkedPlot = i;
+					iWorkedPlotValue = iValue;
+				}
+			}
+			else if (canWork(pLoopPlot))
+			{
+				int iValue = AI_plotValue(pLoopPlot, false, false, false, iGrowthValue);
+				if (iValue > iUnworkedPlotValue)
+				{
+					iUnworkedPlot = i;
+					iUnworkedPlotValue = iValue;
 				}
 			}
 		}
 
 		FAssert(!bForcedSpecialists || iTotalForcedSpecialists > 0); // otherwise we will divide by zero soon...
 
-		for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
 		{
-			if (getSpecialistCount((SpecialistTypes)iI) > getForceSpecialistCount((SpecialistTypes)iI))
+			if (getSpecialistCount(i) > getForceSpecialistCount(i))
 			{
-				int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, true);
+				int iValue = AI_specialistValue(i, true, false, iGrowthValue);
 				if (iValue <= iWorkedSpecValue)
 				{
-					eWorkedSpecialist = (SpecialistTypes)iI;
+					eWorkedSpecialist = i;
 					iWorkedSpecValue = iValue;
 				}
 			}
-			if (isSpecialistValid((SpecialistTypes)iI, 1))
+			if (isSpecialistValid(i, 1))
 			{
-				int iValue = AI_specialistValue(((SpecialistTypes)iI), bAvoidGrowth, false);
-				int iForceValue = bForcedSpecialists ? getForceSpecialistCount((SpecialistTypes)iI) * 128 / iTotalForcedSpecialists - getSpecialistCount((SpecialistTypes)iI) * 128 / (getSpecialistPopulation()+1) : 0;
+				int iValue = AI_specialistValue(i, false, false, iGrowthValue);
+				int iForceValue = bForcedSpecialists ? getForceSpecialistCount(i) * 128 / iTotalForcedSpecialists - getSpecialistCount(i) * 128 / (getSpecialistPopulation()+1) : 0;
 				if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
 				{
-					eUnworkedSpecialist = (SpecialistTypes)iI;
+					eUnworkedSpecialist = i;
 					iUnworkedSpecValue = iValue;
 					iUnworkedSpecForce = iForceValue;
 				}
@@ -9667,7 +9605,7 @@ bool CvCityAI::AI_foodAvailable(int iExtra) const
 
 // K-Mod: I've rewritten large chunks of this function. I've deleted much of the original code, rather than commenting it; just to keep things a bit tidier and clearer.
 // Note. I've changed the scale to match the building evaluation code: ~4x commerce.
-int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation, bool bWorkerOptimization) const
+int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemove, bool bIgnoreFood, bool bIgnoreStarvation, bool bWorkerOptimization, int iGrowthValue) const
 {
 	PROFILE_FUNC();
 	const int iBaseProductionValue = 7;
@@ -9769,6 +9707,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 
 	if (!bIgnoreFood && iFoodYield > 0)
 	{
+		if (iGrowthValue < 0)
+			iGrowthValue = AI_growthValuePerFood();
+
 		// tiny food factor, to ensure that even when we don't want to grow, 
 		// we still prefer more food if everything else is equal
 		iValue += bFoodIsProduction ? 0 : (iFoodYieldTimes100+50)/100;
@@ -9790,7 +9731,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		if (!bIgnoreStarvation)
 		{
 			int iStarvingAllowance = 0;
-			if (bAvoidGrowth && !isHuman())
+			if (AI_isEmphasizeAvoidGrowth() && !isHuman())
 			{
 				iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((9 * iFoodToGrow) / 10))));
 			}
@@ -9832,13 +9773,14 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 		if (bWorkerOptimization || !bFoodIsProduction)
 		{
 			int iPopToGrow = 0;
-			if (!bAvoidGrowth)
+			if (!AI_isEmphasizeAvoidGrowth())
 			{
 				int iFutureHappy = 0; // K-Mod. Happiness boost we expect before we grow. (originally, the boost was added directly to iHappyLevel)
 
 				// only do relative checks on food if we want to grow AND we not emph food
 				// the emp food case will just give a big boost to all food under all circumstances
-				if (bWorkerOptimization || (!bIgnoreGrowth))// && !bEmphasizeFood))
+				//if (bWorkerOptimization || (!bIgnoreGrowth && !bEmphasizeFood))
+				if (iGrowthValue > 0)
 				{
 					// we have less than 10 extra happy, do some checks to see if we can increase it
 					//if (iHappinessLevel < 10)
@@ -9914,7 +9856,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					iFoodPerTurn += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
 					iAdjustedFoodDifference += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
 
-					bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
+					//bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
+					bool bBarFull = iFoodLevel + iFoodPerTurn > iFoodToGrow * 85 / 100;
 
 					int iPopToGrow = std::max(0, iHappinessLevel+iFutureHappy);
 					int iGoodTiles = AI_countGoodTiles(iHealthLevel > 0, true, 50, true);
@@ -9927,7 +9870,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
 					}
 
-					// if we have growth pontential, fill food bar to 85%
+					// if we have growth pontential, then get the food bar close to full
 					bool bFillingBar = false;
 					if (iPopToGrow == 0 && iHappinessLevel >= 0 && iGoodTiles >= 0 && iHealthLevel >= 0)
 					{
@@ -9950,18 +9893,11 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 					// don't count growth value for tiles with nothing else to contribute.
 					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 || iCommerceValue > 0))
 					{
-						// will multiply this by factors
-						iFoodGrowthValue = iFoodYield;
-						/*if (iHealthLevel < (bFillingBar ? 0 : 1))
-						{
-							iFoodGrowthValue--;
-						}*/ // moved lower.
-
+						/* original bts code
 						// (range 1-25) - we want to grow more if we have a lot of growth to do
 						// factor goes up like this: 0:1, 1:8, 2:9, 3:10, 4:11, 5:13, 6:14, 7:15, 8:16, 9:17, ... 17:25
 						int iFactorPopToGrow;
 
-						/* original bts code
 						if (iPopToGrow < 1 || bFillingBar)
 							iFactorPopToGrow = 20 - (10 * (iFoodLevel + iFoodPerTurn + aiYields[YIELD_FOOD])) / iFoodToGrow;
 						else if (iPopToGrow < 7)
@@ -9969,20 +9905,30 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 						else
 							iFactorPopToGrow = 41; */
 						// K-Mod, reduced the scale to match the building evaluation code.
-						if (bFillingBar)
+						/*if (bFillingBar)
 							iFactorPopToGrow = 11 * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn);
-						else if (iPopToGrow < 6)
+						else if (iPopToGrow < 5)
 							iFactorPopToGrow = 11 + 2 * iPopToGrow;
 						else
-							iFactorPopToGrow = 23;
+							iFactorPopToGrow = 21; */
+
+						// rescale iGrowthValue
+						if (bFillingBar)
+							iGrowthValue = iGrowthValue * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn);
+						else if (iPopToGrow < 5)
+							iGrowthValue = iGrowthValue * (15 + 2 * iPopToGrow)/25;
 
 						if (iHealthLevel < (bFillingBar ? 0 : 1))
-						{
-							iFactorPopToGrow = iFactorPopToGrow * iFoodYield / (iFoodYield + 1);
-						}
-						// K-Mod end
+							iGrowthValue = iGrowthValue * iFoodYield / (iFoodYield + 1);
 
-						iFoodGrowthValue *= iFactorPopToGrow;
+						//iFoodGrowthValue = iFoodYield * iFactorPopToGrow;
+						// K-Mod. think of the integral of (x * iGrowthValue * (100 - factor*(iFoodPerTurn+x))/100)
+						int iDevalueRate = bEmphasizeFood ? 0 : (bFillingBar ? 15 + 15 * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn) : 13 - std::min(5, iPopToGrow));
+						int iBestFoodYield = std::max(0, std::min(iFoodYield, 100/std::max(1, iDevalueRate) - iFoodPerTurn)); // maximum value for this amount of food.
+						iFoodGrowthValue = iBestFoodYield * iGrowthValue * (100 - iDevalueRate*iFoodPerTurn) / 100;
+						iFoodGrowthValue -= iBestFoodYield * iBestFoodYield * iDevalueRate * iGrowthValue / 200;
+						FAssert(iFoodGrowthValue >= 0);
+						// K-Mod end
 
 						//If we already grow somewhat fast, devalue further food
 						//Remember growth acceleration is not dependent on food eaten per 
@@ -10164,45 +10110,35 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bAvoi
 	return iValue;
 }
 
-int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool bIgnoreFood, bool bIgnoreGrowth, bool bIgnoreStarvation) const
+// units of 400x commerce
+int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool bIgnoreStarvation, int iGrowthValue) const
 {
 	PROFILE_FUNC();
 
 	short aiYields[NUM_YIELD_TYPES];
-	ImprovementTypes eCurrentImprovement;
-	ImprovementTypes eFinalImprovement;
-	int iYieldDiff;
-	int iValue;
-	int iI;
-	int iTotalDiff;
 
-	iValue = 0;
-	iTotalDiff = 0;
+	int iValue = 0;
+	int iTotalDiff = 0;
 
-	for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
 		aiYields[iI] = pPlot->getYield((YieldTypes)iI);
 	}
 
-	eCurrentImprovement = pPlot->getImprovementType();
-	eFinalImprovement = NO_IMPROVEMENT;
+	ImprovementTypes eCurrentImprovement = pPlot->getImprovementType();
+	ImprovementTypes eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
 
-	if (eCurrentImprovement != NO_IMPROVEMENT)
-	{
-		eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
-	}
-
-	int iYieldValue = (AI_yieldValue(aiYields, NULL, bAvoidGrowth, bRemove, bIgnoreFood, bIgnoreGrowth, bIgnoreStarvation) * 100);
+	int iYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
 
 	//if (eFinalImprovement != NO_IMPROVEMENT)
 	if (eFinalImprovement != NO_IMPROVEMENT && eFinalImprovement != eCurrentImprovement) // K-Mod
 	{
-		for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
 		{
-			iYieldDiff = (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iI), getOwnerINLINE()) - pPlot->calculateImprovementYieldChange(eCurrentImprovement, ((YieldTypes)iI), getOwnerINLINE()));
+			int iYieldDiff = (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iI), getOwnerINLINE()) - pPlot->calculateImprovementYieldChange(eCurrentImprovement, ((YieldTypes)iI), getOwnerINLINE()));
 			aiYields[iI] += iYieldDiff;
 		}
-		int iFinalYieldValue = (AI_yieldValue(aiYields, NULL, bAvoidGrowth, bRemove, bIgnoreFood, bIgnoreGrowth, bIgnoreStarvation) * 100);
+		int iFinalYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
 		
 		if (iFinalYieldValue > iYieldValue)
 		{
@@ -10214,18 +10150,18 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool 
 		}
 	}
 	// unless we are emph food (and also food not production)
-	if (!(AI_isEmphasizeYield(YIELD_FOOD) && !isFoodProduction()))
+	/* if (!(AI_isEmphasizeYield(YIELD_FOOD) && !isFoodProduction()))
 		// if this plot is super bad (less than 2 food and less than combined 2 prod/commerce
 		if (!AI_potentialPlot(aiYields))
 			// undervalue it even more!
-			iYieldValue /= 16;
+			iYieldValue /= 16; */ // disabled by K-Mod. (what is the point of this?)
 	iValue += iYieldValue;
 
 	if (eCurrentImprovement != NO_IMPROVEMENT)
 	{
 		if (pPlot->getBonusType(getTeam()) == NO_BONUS) // XXX double-check CvGame::doFeature that the checks are the same...
 		{
-			for (iI = 0; iI < GC.getNumBonusInfos(); iI++)
+			for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
 			{
 				if (GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes) iI).getTechReveal())))
 				{
@@ -10252,6 +10188,49 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bAvoidGrowth, bool bRemove, bool 
 
 	return iValue;
 }
+
+// K-Mod. Value of each unit of food for the purpose of population growth.
+// Units ~4x commerce. Note: the value here is at the high end.. it should be reduced based on things such as the happiness cap.
+int CvCityAI::AI_growthValuePerFood() const
+{
+	std::vector<int> jobs;
+	for (int i = 1; i < NUM_CITY_PLOTS; i++)
+	{
+		if (isWorkingPlot(i))
+			continue;
+
+		CvPlot* pLoopPlot = getCityIndexPlot(i);
+		if (pLoopPlot == 0)
+			continue;
+
+		int iValue = AI_plotValue(pLoopPlot, false, true, true, -1);
+		jobs.push_back(iValue);
+	}
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
+	{
+		int iAvailable = kOwner.isSpecialistValid(i) ? 3 : std::min(3, getMaxSpecialistCount(i) - getSpecialistCount(i));
+
+		if (iAvailable > 0)
+		{
+			FAssert(isSpecialistValid(i, iAvailable));
+			int iValue = AI_specialistValue(i, false, true, -1);
+
+			while (--iAvailable >= 0)
+				jobs.push_back(iValue);
+		}
+	}
+
+	// ok. we've surveyed the available jobs. Now, the growth value..
+	while (jobs.size() < 3)
+		jobs.push_back(0);
+	std::partial_sort(jobs.begin(), jobs.begin() + 3, jobs.end(), std::greater<int>());
+
+	return 2 + (jobs[0] * 4 + jobs[1] * 2 + jobs[2] * 1) * 2 / (600 * (GC.getFOOD_CONSUMPTION_PER_POPULATION()+1));
+}
+// K-Mod end
 
 
 int CvCityAI::AI_experienceWeight()
@@ -11456,11 +11435,13 @@ int CvCityAI::AI_countGoodSpecialists(bool bHealthy) const
 		
 		if (iValue >= (bHealthy ? 200 : 300))
 		{
+			//iCount += getMaxSpecialistCount(eSpecialist);
 			// K-Mod
-			if (isSpecialistValid(eSpecialist))
+			if (kPlayer.isSpecialistValid(eSpecialist))
 				return getPopulation(); // unlimited
+			iCount += getMaxSpecialistCount(eSpecialist) - getSpecialistCount(eSpecialist);
+			FAssert(getMaxSpecialistCount(eSpecialist) - getSpecialistCount(eSpecialist) >= 0);
 			// K-Mod end
-			iCount += getMaxSpecialistCount(eSpecialist);
 		}
 	}
 	//iCount -= getFreeSpecialist();
@@ -12138,23 +12119,23 @@ void CvCityAI::AI_updateWorkersNeededHere()
 	PROFILE_FUNC();
 
 	CvPlot* pLoopPlot;
-	
+
 	short aiYields[NUM_YIELD_TYPES];
-	
+
 	int iWorkersNeeded = 0;
 	int iWorkersHave = 0;
 	int iUnimprovedWorkedPlotCount = 0;
 	int iUnimprovedUnworkedPlotCount = 0;
 	int iWorkedUnimprovableCount = 0;
 	int iImprovedUnworkedPlotCount = 0;
-	
+
 	int iSpecialCount = 0;
-	
+
 	int iWorstWorkedPlotValue = MAX_INT;
 	int iBestUnworkedPlotValue = 0;
-	
-	iWorkersHave = 0;
-	
+
+	int iGrowthValue = AI_growthValuePerFood(); // K-Mod
+
 	if (getProductionUnit() != NO_UNIT)
 	{
 		if (getProductionUnitAI() == UNITAI_WORKER)
@@ -12219,12 +12200,12 @@ void CvCityAI::AI_updateWorkersNeededHere()
 
 					if (pLoopPlot->isBeingWorked())
 					{
-						int iPlotValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
+						int iPlotValue = AI_yieldValue(aiYields, NULL, false, false, true, true, iGrowthValue);
 						iWorstWorkedPlotValue = std::min(iWorstWorkedPlotValue, iPlotValue);					
 					}
 					else
 					{
-						int iPlotValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
+						int iPlotValue = AI_yieldValue(aiYields, NULL, false, false, true, true, iGrowthValue);
 						iBestUnworkedPlotValue = std::max(iBestUnworkedPlotValue, iPlotValue);
 					}
 				}
@@ -12250,7 +12231,7 @@ void CvCityAI::AI_updateWorkersNeededHere()
 		//Add an additional citizen to account for future growth.
 		int iBestPlot = -1;
 		SpecialistTypes eBestSpecialist = NO_SPECIALIST;
-		
+
 		if (angryPopulation() == 0)
 		{
 			AI_addBestCitizen(true, true, &iBestPlot, &eBestSpecialist);
@@ -12271,7 +12252,7 @@ void CvCityAI::AI_updateWorkersNeededHere()
 							aiYields[iJ] = pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], (YieldTypes)iJ, true);
 						}
 
-						int iPlotValue = AI_yieldValue(aiYields, NULL, false, false, false, false, true, true);
+						int iPlotValue = AI_yieldValue(aiYields, NULL, false, false, true, true, iGrowthValue);
 						ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(AI_getBestBuild(iI)).getImprovement();
 						if (eImprovement != NO_IMPROVEMENT)
 						{

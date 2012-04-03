@@ -1002,8 +1002,9 @@ public:
 	virtual void AI_doTurn() = 0;
 	virtual void AI_assignWorkingPlots() = 0;
 	virtual void AI_updateAssignWork() = 0;
-	virtual bool AI_avoidGrowth() = 0;											// Exposed to Python
-	virtual int AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) const = 0;
+	//virtual bool AI_avoidGrowth() = 0; // disabled by K-Mod (was exposed to python)
+	//virtual int AI_specialistValue(SpecialistTypes eSpecialist, bool bAvoidGrowth, bool bRemove) const = 0;
+	virtual int AI_specialistValue(SpecialistTypes eSpecialist, bool bRemove, bool bIgnoreFood, int iGrowthValue) const = 0; // K-Mod
 	virtual int AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const = 0; // K-Mod
 	virtual void AI_chooseProduction() = 0;
 	virtual UnitTypes AI_bestUnit(bool bAsync = false, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR, UnitAITypes* peBestUnitAI = NULL) = 0;
