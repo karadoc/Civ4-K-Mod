@@ -10061,6 +10061,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 				FAssert(pCargoGroup);
 				pUnitNode = pCargoGroup->headUnitNode();
 				ActivityTypes eOldActivityType = pCargoGroup->getActivityType();
+
 				while (pUnitNode)
 				{
 					pLoopUnit = ::getUnit(pUnitNode->m_data);
@@ -10075,6 +10076,9 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 							pLoopUnit->getGroup()->setActivityType(eOldActivityType);
 						}
 					}
+					// while we're here, update the air-circling animation for fighter-planes
+					else if (eOldActivityType == ACTIVITY_INTERCEPT)
+						pLoopUnit->airCircle(true);
 				}
 			}
 			// K-Mod end
@@ -11419,8 +11423,19 @@ void CvUnit::setTransportUnit(CvUnit* pTransportUnit)
 		{
 			FAssertMsg(pTransportUnit->cargoSpaceAvailable(getSpecialUnitType(), getDomainType()) > 0, "Cargo space is expected to be available");
 
-			if (getGroup()->getNumUnits() > 1) // K-Mod
-				joinGroup(NULL, true); // Because what if a group of 3 tries to get in a transport which can hold 2...
+			//joinGroup(NULL, true); // Because what if a group of 3 tries to get in a transport which can hold 2...
+
+			// K-Mod
+			if (getGroup()->getNumUnits() > 1) // we could use > cargoSpace, I suppose. But maybe some quirks of game mechanics rely on this group split.
+				joinGroup(NULL, true);
+			else
+			{
+				getGroup()->clearMissionQueue();
+				if (IsSelected())
+					gDLL->getInterfaceIFace()->removeFromSelectionList(this);
+			}
+			FAssert(getGroup()->headMissionQueueNode() == 0); // we don't want them jumping off the boat to complete some unfinished mission!
+			// K-Mod end
 
 			m_transportUnit = pTransportUnit->getIDInfo();
 

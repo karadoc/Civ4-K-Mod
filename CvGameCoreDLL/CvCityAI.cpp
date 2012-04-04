@@ -11429,24 +11429,24 @@ int CvCityAI::AI_countGoodSpecialists(bool bHealthy) const
 	for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 	{
 		SpecialistTypes eSpecialist = (SpecialistTypes)iI;
-		
+
 		int iValue = 0;
-		
+
 		iValue += 100 * kPlayer.specialistYield(eSpecialist, YIELD_FOOD);
 		iValue += 65 * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION);
 		iValue += 40 * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE);
-		
+
 		iValue += 40 * kPlayer.specialistCommerce(eSpecialist, COMMERCE_RESEARCH);
 		iValue += 40 * kPlayer.specialistCommerce(eSpecialist, COMMERCE_GOLD);
 		iValue += 20 * kPlayer.specialistCommerce(eSpecialist, COMMERCE_ESPIONAGE);
 		iValue += 15 * kPlayer.specialistCommerce(eSpecialist, COMMERCE_CULTURE);
 		iValue += 25 * GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange();
-		
+
 		if (iValue >= (bHealthy ? 200 : 300))
 		{
 			//iCount += getMaxSpecialistCount(eSpecialist);
 			// K-Mod
-			if (kPlayer.isSpecialistValid(eSpecialist))
+			if (kPlayer.isSpecialistValid(eSpecialist) || eSpecialist == GC.getDefineINT("DEFAULT_SPECIALIST"))
 				return getPopulation(); // unlimited
 			iCount += getMaxSpecialistCount(eSpecialist) - getSpecialistCount(eSpecialist);
 			FAssert(getMaxSpecialistCount(eSpecialist) - getSpecialistCount(eSpecialist) >= 0);
