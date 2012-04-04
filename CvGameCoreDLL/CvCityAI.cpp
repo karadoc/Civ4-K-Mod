@@ -9747,27 +9747,15 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 			if (iFoodPerTurn + (bRemove ? std::min(iFoodYield, iConsumtionPerPop) : 0) + iStarvingAllowance < 0)
 			{
 				// if working plots all like this one will save us from starving
-				if (((bReassign?1:0)+iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
+				//if (((bReassign?1:0)+iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
+				if ((iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
 				{
-					// if this is high food, then we want to pick it first, this will allow us to pick some great non-food later
-					/*int iHighFoodThreshold = std::min(getBestYieldAvailable(YIELD_FOOD), iConsumtionPerPop + 1);				
-					if (iFoodPerTurn <= (AI_isEmphasizeGreatPeople() ? 0 : -iHighFoodThreshold) && iFoodYield >= iHighFoodThreshold)
-					{
-						// value all the food that will contribute to not starving
-						iValue += 2048 * std::min(iFoodYield, -iFoodPerTurn);
-					}
-					else */
-					{
-						// give a huge boost to this plot, but not based on how much food it has
-						// ie, if working a bunch of 1f 7h plots will stop us from starving, then do not force working unimproved 2f plot
-						iValue += 2048;
-					}
+					iValue += 2048;
 				}
-				//else
-				{
-					// value food high, but not forced
-					iValue += 36 * std::min(iFoodYield, -iFoodPerTurn+(bReassign ? iConsumtionPerPop : 0));
-				}
+
+				// value food high, but not forced
+				//iValue += 36 * std::min(iFoodYield, -iFoodPerTurn+(bReassign ? iConsumtionPerPop : 0));
+				iValue += iGrowthValue * std::min(iFoodYield, -iFoodPerTurn);
 			}
 		}
 
@@ -9855,8 +9843,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					}
 
 					// approximate the food that can be gained by working other plots (and refund the food removed at the start)
-					iFoodPerTurn += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
-					iAdjustedFoodDifference += iExtraPopulationThatCanWork * std::min(iConsumtionPerPop, iFoodYield);
+					iFoodPerTurn += (iExtraPopulationThatCanWork - (bReassign?1:0)) * std::min(iConsumtionPerPop, iFoodYield);
+					iAdjustedFoodDifference += (iExtraPopulationThatCanWork - (bReassign?1:0)) * std::min(iConsumtionPerPop, iFoodYield);
 
 					//bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
 					bool bBarFull = iFoodLevel + iFoodPerTurn > iFoodToGrow * 85 / 100;
@@ -9935,6 +9923,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						int iBestFoodYield = std::max(0, std::min(iFoodYield, 100/std::max(1, iDevalueRate) - iFoodPerTurn)); // maximum value for this amount of food.
 						iFoodGrowthValue = iBestFoodYield * iGrowthValue * (100 - iDevalueRate*iFoodPerTurn) / 100;
 						iFoodGrowthValue -= iBestFoodYield * iBestFoodYield * iDevalueRate * iGrowthValue / 200;
+						//iFoodGrowthValue += (iFoodPerTurn <= 0 ? 50 : 0) * iGrowthValue / 100; // some growth is much better than no growth.
 						FAssert(iFoodGrowthValue >= 0);
 						// K-Mod end
 
@@ -10006,8 +9995,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 	}
 
 
-	int iMaxFoodValue = 3 * (eProcess == NO_PROCESS ? iBaseProductionValue : iBaseCommerceValue) - 1;
-	int iFoodValue = std::min(iFoodGrowthValue, iMaxFoodValue * iFoodYield);
+	//int iMaxFoodValue = 3 * (eProcess == NO_PROCESS ? iBaseProductionValue : iBaseCommerceValue) - 1;
+	//int iFoodValue = std::min(iFoodGrowthValue, iMaxFoodValue * iFoodYield);
+	int iFoodValue = iFoodGrowthValue;
 
 	//Slavery translation
 	if ((iSlaveryValue > 0) && (iSlaveryValue > iFoodValue))
@@ -10201,6 +10191,9 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool b
 // Units ~4x commerce. Note: the value here is at the high end.. it should be reduced based on things such as the happiness cap.
 int CvCityAI::AI_growthValuePerFood() const
 {
+	int iFoodMultiplier = getBaseYieldRateModifier(YIELD_FOOD);
+	int iConsumtionPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION();
+
 	std::vector<int> jobs;
 	for (int i = 1; i < NUM_CITY_PLOTS; i++)
 	{
@@ -10212,6 +10205,10 @@ int CvCityAI::AI_growthValuePerFood() const
 			continue;
 
 		int iValue = AI_plotValue(pLoopPlot, false, true, true, -1);
+
+		iValue *= 100 * iConsumtionPerPop + iFoodMultiplier * pLoopPlot->getYield(YIELD_FOOD);
+		iValue /= 100 * iConsumtionPerPop;
+
 		jobs.push_back(iValue);
 	}
 
@@ -10225,6 +10222,8 @@ int CvCityAI::AI_growthValuePerFood() const
 		{
 			FAssert(isSpecialistValid(i, iAvailable));
 			int iValue = AI_specialistValue(i, false, true, -1);
+			iValue *= 100 * iConsumtionPerPop + iFoodMultiplier * kOwner.specialistYield(i, YIELD_FOOD);
+			iValue /= 100 * iConsumtionPerPop;
 
 			while (--iAvailable >= 0)
 				jobs.push_back(iValue);
@@ -10236,7 +10235,7 @@ int CvCityAI::AI_growthValuePerFood() const
 		jobs.push_back(0);
 	std::partial_sort(jobs.begin(), jobs.begin() + 3, jobs.end(), std::greater<int>());
 
-	return 2 + (jobs[0] * 4 + jobs[1] * 2 + jobs[2] * 1) * 2 / (600 * (GC.getFOOD_CONSUMPTION_PER_POPULATION()+1));
+	return 2 + (jobs[0] * 4 + jobs[1] * 2 + jobs[2] * 1) * 2 / (750 * (iConsumtionPerPop+1));
 }
 // K-Mod end
 
