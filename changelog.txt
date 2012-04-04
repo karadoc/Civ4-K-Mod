@@ -1,6 +1,47 @@
-This is K-Mod version 1.25.
+This is K-Mod version 1.26.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.26 changelist
+
+Game
+
++ Changed Representation back to +3 science per specialist, and High upkeep.
++ Implemented support for global happiness modifiers in civics. ("iExtraHappiness") This includes a new line of xml in all the civics, a new item in the civics schema; dll code to load and save the new data and to display info for it in the civic help text and civilopedia, and for the AI to have some awareness of how the new happiness modifier works. -- And, of course, some code to actually make the new happiness modifier do what it is meant to do in terms of happiness!
++ Barbarians will now only be able to start making progress towards a tech when they have the prerequisites. (This may or may not significantly slow the barbarian tech rate. It'll need some more testing.)
++ The barbarian tech rate now scales with game speed and starting era using the same scaling that applies to everyone else. (Originally, their tech rate was constant regardless of game settings.)
+
+UI
+
++ Right clicking on the +/- commerce rate buttons will now set the commerce rate to 100% / 0% respectively.
++ Fixed an original BtS bug which caused the game to prefer to select air units and sea units when alt+clicking on a plot. This has been fixed so that it always selects the unit graphically shown at the top of the stack.
++ Human-controlled workers will no longer be interrupted by border danger.
++ Emphasise production now decreases the value of commerce for the purpose of choosing plot improvements. (This does not apply if emphasise commerce is also set.)
++ Blocked some AI leader flavour effects from affecting governor recommendations to human players.
++ At-war and worst-enemy information will now be displayed for the currently selected leader's mouse-over text in the foreign advisor screen.
++ Leader names are now highlighted in various mouse-over texts.
++ Removed the espionage points information from the foreign advisor mouse-over text.
++ Changed the symmetry breaking mechanism in the pathfinder, again.
+
+AI
+
++ Wrote a new section in AI_foundValue to discourage the AI from settling in amongst foreign cities, but to encourage them to settle near foreign borders.
++ Fixed an original BtS bug in AI_foundValue which prevented the 'shaping' modifier from working correctly.
++ Reduced the weight of the shaping modifier - to compensate for the fact that it actually works now!
++ Adjusted the expense estimations throughout the AI so that they now take 'inflation' into account.
++ Increased and adjusted the figures used to calculate how much the AI is willing to spend on military, to account for the fact that their military cost estimates are going to be a lot higher than now that inflation is being counted.
++ Made major changes to how food is evaluated in AI_plotValue, AI_yieldValue, and AI_specialistValue. The value of food now depends on the quality of the unworked plots and specialists.
++ Tweaked various numbers and formulas related to the evaluation of yields and specialists.
++ Fixed a bug which caused AI_bestPlotBuild to tell the AI not to chop jungles with camps on them.
++ Changed the conditions the AI requires to choose a "best religion" - it no longer cares about the "purity" of religion in the civilization.
++ Added some more nuance to the evaluation of rush-buying in AI_civicValue. It will no longer be so sought-after by the AI unless it is particularly suited to their situation.
++ Made some further adjustments to the value of drafting in AI_civicValue.
++ Added a little bit of extra value for global specialists from civics or buildings, based on average the great person multiplier.
++ Rewrote some parts of AI_attackMove. In particular, the AI will now be a bit less likely to send solo units into enemy territory.
++ Fixed an original BtS bug which caused air units to automatically load themselves into a carrier if they are upgraded in a city which is at full air capacity.
++ Fixed a problem in K-Mod which could potentially cause an infinite loop when the above bug was triggered by the AI!
++ Fixed a rare bug which could cause the AI to choose an impossible move when trying to group its units before a war. (The effect of this is that the AI would waste some time trying to do this impossible move, and then skip its turn in frustration.)
+
+--
 v1.25 changelist
 
 Game

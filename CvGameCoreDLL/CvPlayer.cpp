@@ -11928,14 +11928,24 @@ void CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue)
 
 		AI_makeAssignWorkDirty();
 
+		/* original bts code
 		if (getTeam() == GC.getGameINLINE().getActiveTeam())
 		{
 			gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true);
 			gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 			gDLL->getInterfaceIFace()->setDirty(CityScreen_DIRTY_BIT, true);
-			gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true); // K-Mod
+			gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
+		} */
+		// K-Mod
+		if (getTeam() == GC.getGameINLINE().getActiveTeam())
+			gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true); // research turns left?
+
+		if (getID() == GC.getGameINLINE().getActivePlayer())
+		{
+			gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true);
 			gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
 		}
+		// K-Mod end
 	}
 }
 
@@ -17267,6 +17277,10 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiCapitalCommerceRateModifier);
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiStateReligionBuildingCommerce);
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiSpecialistExtraCommerce);
+	// Temporary K-Mod hack, to move from version v1.25 to v1.26. (this will be deleted in the next version)
+	if (m_aiSpecialistExtraCommerce[COMMERCE_RESEARCH] == 2)
+		m_aiSpecialistExtraCommerce[COMMERCE_RESEARCH] = 3;
+	//
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiCommerceFlexibleCount);
 	pStream->Read(MAX_PLAYERS, m_aiGoldPerTurnByPlayer);
 	pStream->Read(MAX_TEAMS, m_aiEspionageSpendingWeightAgainstTeam);

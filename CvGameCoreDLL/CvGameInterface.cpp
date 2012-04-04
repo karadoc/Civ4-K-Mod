@@ -1102,6 +1102,7 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 
 				if (eMessage == GAMEMESSAGE_PUSH_MISSION)
 				{
+					// K-Mod todo: move the BUTTONPOPUP_DECLAREWARMOVE stuff to here, so that it can catch left-click moves as well as right-click moves.
 					CvMessageControl::getInstance().sendPushMission(pHeadSelectedUnit->getID(), ((MissionTypes)iData2), iData3, iData4, iFlags, bShift);
 				}
 				else
