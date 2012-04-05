@@ -128,4 +128,13 @@
 	<Italian>I Barbari possono apparire in un qualsiasi spazio oscurato dalla nebbia di guerra. Non essere mai certo che uno spazio non visibile sia sicuro, anche se hai controllato durante il turno precedente!</Italian>
 	<Spanish>Los b&#225;rbaros pueden aparecer en cualquier lugar en el que una casilla est&#233; oscurecida por la niebla de la guerra, as&#237; que no supong&#225;is que una casilla que no pod&#225;is ver es segura, aunque la hay&#225;is comprobado en el turno anterior.</Spanish>
 </TEXT>
+<!-- replacement text for the double-click tip, because I've changed the functionality of double-click -->
+<TEXT>
+	<Tag>TXT_KEY_HINT_INTERFACE_6</Tag>
+	<English>Double clicking on a stack of units will wake them all up.</English>
+	<French>Double clicking on a stack of units will wake them all up.</French>
+	<German>Double clicking on a stack of units will wake them all up.</German>
+	<Italian>Double clicking on a stack of units will wake them all up.</Italian>
+	<Spanish>Double clicking on a stack of units will wake them all up.</Spanish>
+</TEXT>
 </Civ4GameText>

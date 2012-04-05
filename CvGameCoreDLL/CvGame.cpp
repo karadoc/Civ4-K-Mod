@@ -2462,6 +2462,26 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 	PROFILE_FUNC();
 
 	FAssertMsg(pUnit != NULL, "pUnit == NULL unexpectedly");
+	// K-Mod. A hack to change the functionality of double-click from select all to wake all.
+	if (bAlt && !bShift && !bCtrl && !GC.altKey())
+	{
+		// the caller says alt is pressed, but the computer says otherwise. Lets assume this is a double-click.
+		CvPlot* pUnitPlot = pUnit->plot();
+		CLLNode<IDInfo>* pUnitNode = pUnitPlot->headUnitNode();
+		while (pUnitNode != NULL)
+		{
+			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+			pUnitNode = pUnitPlot->nextUnitNode(pUnitNode);
+
+			if (pLoopUnit->getOwnerINLINE() == getActivePlayer() && pLoopUnit->isGroupHead() && pLoopUnit->isWaiting())
+			{
+				CvMessageControl::getInstance().sendDoCommand(pLoopUnit->getID(), COMMAND_WAKE, -1, -1, false);
+			}
+		}
+		gDLL->getInterfaceIFace()->selectUnit(pUnit, true, false, true);
+		return;
+	}
+	// K-Mod end
 
 	if (bAlt || bCtrl)
 	{
