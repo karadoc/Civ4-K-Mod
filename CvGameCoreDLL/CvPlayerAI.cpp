@@ -13812,7 +13812,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		int iExperience = getTotalPopulation() * kCivic.getFreeExperience() + iBestReligionPopulation * kCivic.getStateReligionFreeExperience();
 		if (iExperience)
 		{
-			iExperience *= 8 * iWarmongerFactor;
+			iExperience *= 8 * std::max(iWarmongerFactor, (bWarPlan ? 100 : 0));
 			iExperience /= 100;
 			iExperience *= AI_averageYieldMultiplier(YIELD_PRODUCTION);
 			iExperience /= 100;
