@@ -33,11 +33,12 @@ void CvMessageControl::sendTurnComplete()
 	}
 }
 
-void CvMessageControl::sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bAlt, bool bShift, bool bCtrl)
+//void CvMessageControl::sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bAlt, bool bShift, bool bCtrl)
+void CvMessageControl::sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bSave, bool bPop, int iPosition)
 {
 	if (NO_PLAYER != GC.getGameINLINE().getActivePlayer())
 	{
-		gDLL->sendMessageData(new CvNetPushOrder(GC.getGameINLINE().getActivePlayer(), iCityID, eOrder, iData, bAlt, bShift, bCtrl));
+		gDLL->sendMessageData(new CvNetPushOrder(GC.getGameINLINE().getActivePlayer(), iCityID, eOrder, iData, bSave, bPop, iPosition));
 	}
 }
 

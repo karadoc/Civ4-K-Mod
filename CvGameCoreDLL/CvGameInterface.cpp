@@ -1142,11 +1142,32 @@ void CvGame::selectedCitiesGameNetMessage(int eMessage, int iData2, int iData3, 
 					break;
 
 				case GAMEMESSAGE_POP_ORDER:
-					//if (pSelectedCity->getOrderQueueLength() > 1)
-					if (pSelectedCity->getOrderQueueLength() > 1 || pSelectedCity->isProductionAutomated()) // K-Mod. (automated cities will choose their production at the end of the turn)
+					/* original bts code
+					if (pSelectedCity->getOrderQueueLength() > 1)
 					{
 						CvMessageControl::getInstance().sendPopOrder(pSelectedCity->getID(), iData2);
+					} */
+					// K-Mod. Some additional controls
+					if (bAlt || (bShift != bCtrl))
+					{
+						// bCtrl moves the order up, bShift moves the order down.
+						// bAlt toggles bSave (ie. repeat)
+						int iNewPos = iData2 + (bShift ? 1 : 0) + (bCtrl ? -1 : 0);
+						if (pSelectedCity->getOrderQueueLength() > iNewPos && iNewPos >= 0)
+						{
+							OrderData order = pSelectedCity->getOrderData(iData2);
+							if (order.eOrderType != NO_ORDER && (bShift || bCtrl || order.eOrderType == ORDER_TRAIN))
+							{
+								order.bSave = order.bSave != (bAlt && order.eOrderType == ORDER_TRAIN);
+								CvMessageControl::getInstance().sendPopOrder(pSelectedCity->getID(), iData2);
+								CvMessageControl::getInstance().sendPushOrder(pSelectedCity->getID(), order.eOrderType, order.iData1, order.bSave, false, iNewPos);
+							}
+						}
 					}
+					// Allow us to cancel the final order for automated cities. (The governor can choose production at the end of the turn.)
+					else if (pSelectedCity->getOrderQueueLength() > 1 || pSelectedCity->isProductionAutomated())
+						CvMessageControl::getInstance().sendPopOrder(pSelectedCity->getID(), iData2);
+					// K-Mod end
 					break;
 
 				case GAMEMESSAGE_DO_TASK:

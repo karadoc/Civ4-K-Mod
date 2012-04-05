@@ -929,7 +929,8 @@ public:
 	void updateTradeRoutes();
 
 	void clearOrderQueue();																														// Exposed to Python
-	void pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bool bPop, bool bAppend, bool bForce = false);		// Exposed to Python
+	//void pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bool bPop, bool bAppend, bool bForce = false);		// Exposed to Python
+	void pushOrder(OrderTypes eOrder, int iData1, int iData2 = -1, bool bSave = false, bool bPop = false, int iPosition = 0, bool bForce = false); // K-Mod. (the old version is still exposed to Python)
 	void popOrder(int iNum, bool bFinish = false, bool bChoose = false);		// Exposed to Python
 	void startHeadOrder();
 	void stopHeadOrder();

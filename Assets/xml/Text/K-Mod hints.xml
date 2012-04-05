@@ -111,6 +111,14 @@
 	<Italian>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Italian>
 	<Spanish>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Spanish>
 </TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_13</Tag>
+	<English>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</English>
+	<French>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</French>
+	<German>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</German>
+	<Italian>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</Italian>
+	<Spanish>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</Spanish>
+</TEXT>
 <!-- replacement text for the inaccurate barbarian tip (changed english only)-->
 <TEXT>
 	<Tag>TXT_KEY_HINT_12</Tag>

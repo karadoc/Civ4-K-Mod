@@ -161,13 +161,14 @@ void CvNetTurnComplete::SetFromBuffer(FDataStreamBase* pStream)
 	pStream->Read((int*)&m_ePlayer);
 }
 
+/* original bts code
 CvNetPushOrder::CvNetPushOrder() : CvMessageData(GAMEMESSAGE_PUSH_ORDER), m_ePlayer(NO_PLAYER), m_iCityID(-1), m_eOrder(NO_ORDER), m_iData(-1), m_bAlt(false), m_bShift(false), m_bCtrl(false)
 {
 }
 
 CvNetPushOrder::CvNetPushOrder(PlayerTypes ePlayer, int iCityID, OrderTypes eOrder, int iData, bool bAlt, bool bShift, bool bCtrl) : CvMessageData(GAMEMESSAGE_PUSH_ORDER), m_ePlayer(ePlayer), m_iCityID(iCityID), m_eOrder(eOrder), m_iData(iData), m_bAlt(bAlt), m_bShift(bShift), m_bCtrl(bCtrl)
 {
-}
+} */ // disabled by K-mod
 
 void CvNetPushOrder::Debug(char* szAddendum)
 {
@@ -181,7 +182,8 @@ void CvNetPushOrder::Execute()
 		CvCity* pCity = GET_PLAYER(m_ePlayer).getCity(m_iCityID);
 		if (pCity != NULL)
 		{
-			pCity->pushOrder(m_eOrder, m_iData, -1, m_bAlt, !(m_bShift || m_bCtrl), m_bShift);
+			//pCity->pushOrder(m_eOrder, m_iData, -1, m_bAlt, !(m_bShift || m_bCtrl), m_bShift);
+			pCity->pushOrder(m_eOrder, m_iData, -1, m_bSave, m_bPop, m_iPosition); // K-Mod
 			// K-Mod. We don't want automated cities to overrules our production choice.
 			if (pCity->isHuman())
 				pCity->AI_setChooseProductionDirty(false);
@@ -201,9 +203,14 @@ void CvNetPushOrder::PutInBuffer(FDataStreamBase* pStream)
 	pStream->Write(m_iCityID);
 	pStream->Write(m_eOrder);
 	pStream->Write(m_iData);
-	pStream->Write(m_bAlt);
+	/* pStream->Write(m_bAlt);
 	pStream->Write(m_bShift);
-	pStream->Write(m_bCtrl);
+	pStream->Write(m_bCtrl); */
+	// K-Mod
+	pStream->Write(m_bSave);
+	pStream->Write(m_bPop);
+	pStream->Write(m_iPosition);
+	// K-Mod end
 }
 
 void CvNetPushOrder::SetFromBuffer(FDataStreamBase* pStream)
@@ -212,9 +219,14 @@ void CvNetPushOrder::SetFromBuffer(FDataStreamBase* pStream)
 	pStream->Read(&m_iCityID);
 	pStream->Read((int*)&m_eOrder);
 	pStream->Read(&m_iData);
-	pStream->Read(&m_bAlt);
+	/* pStream->Read(&m_bAlt);
 	pStream->Read(&m_bShift);
-	pStream->Read(&m_bCtrl);
+	pStream->Read(&m_bCtrl); */
+	// K-Mod
+	pStream->Read(&m_bSave);
+	pStream->Read(&m_bPop);
+	pStream->Read(&m_iPosition);
+	// K-Mod end
 }
 
 CvNetPopOrder::CvNetPopOrder() : CvMessageData(GAMEMESSAGE_POP_ORDER), m_ePlayer(NO_PLAYER), m_iCityID(-1), m_iNum(0)

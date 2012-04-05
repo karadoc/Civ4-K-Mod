@@ -11982,7 +11982,7 @@ void CvCity::clearOrderQueue()
 }
 
 
-void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bool bPop, bool bAppend, bool bForce)
+void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bool bPop, int iPosition, bool bForce)
 {
 	OrderData order;
 	bool bValid;
@@ -12071,6 +12071,7 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 	order.iData2 = iData2;
 	order.bSave = bSave;
 
+	/* original bts code
 	if (bAppend)
 	{
 		m_orderQueue.insertAtEnd(order);
@@ -12084,7 +12085,19 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 	if (!bAppend || (getOrderQueueLength() == 1))
 	{
 		startHeadOrder();
+	} */
+	// K-Mod
+	if (iPosition == 0 || getOrderQueueLength() == 0)
+	{
+		stopHeadOrder();
+		m_orderQueue.insertAtBeginning(order);
+		startHeadOrder();
 	}
+	else if (iPosition < 0 || iPosition >= getOrderQueueLength())
+		m_orderQueue.insertAtEnd(order);
+	else
+		m_orderQueue.insertBefore(order, m_orderQueue.nodeNum(iPosition));
+	// K-Mod end
 
 	// Why does this cause a crash???
 
@@ -12161,7 +12174,8 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 
 	if (bFinish && pOrderNode->m_data.bSave)
 	{
-		pushOrder(pOrderNode->m_data.eOrderType, pOrderNode->m_data.iData1, pOrderNode->m_data.iData2, true, false, true);
+		//pushOrder(pOrderNode->m_data.eOrderType, pOrderNode->m_data.iData1, pOrderNode->m_data.iData2, true, false, true);
+		pushOrder(pOrderNode->m_data.eOrderType, pOrderNode->m_data.iData1, pOrderNode->m_data.iData2, true, false, -1);
 	}
 
 	eTrainUnit = NO_UNIT;

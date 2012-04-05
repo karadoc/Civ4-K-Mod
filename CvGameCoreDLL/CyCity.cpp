@@ -2118,7 +2118,7 @@ void CyCity::clearOrderQueue()
 void CyCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bool bPop, bool bAppend, bool bForce)
 {
 	if (m_pCity)
-		m_pCity->pushOrder(eOrder, iData1, iData2, bSave, bPop, bAppend, bForce);
+		m_pCity->pushOrder(eOrder, iData1, iData2, bSave, bPop, bAppend ? -1 : 0, bForce);
 }
 
 void CyCity::popOrder(int iNum, bool bFinish, bool bChoose)

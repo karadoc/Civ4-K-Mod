@@ -5715,7 +5715,7 @@ bool CvUnitAI::AI_greatPersonMove()
 							FAssert(pCity);
 
 							if (pCity->getProductionBuilding() != eBestBuilding)
-								pCity->pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+								pCity->pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 
 							if (pCity->getProductionBuilding() == eBestBuilding && canHurry(plot()))
 							{
@@ -13877,7 +13877,7 @@ bool CvUnitAI::AI_switchHurry()
 
 	if (eBestBuilding != NO_BUILDING)
 	{
-		pCity->pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+		pCity->pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 
 		if (pCity->getProductionBuilding() == eBestBuilding)
 		{

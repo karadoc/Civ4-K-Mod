@@ -969,7 +969,7 @@ void CvCityAI::AI_chooseProduction()
 			if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
 				&& (GC.getNumCultureLevelInfos() < 2 || getProductionTurnsLeft(eBestBuilding, 0) <= GC.getGame().getCultureThreshold((CultureLevelTypes)2)))
 			{
-				pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+				pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 				return;
 			}
 		}
@@ -1616,7 +1616,7 @@ void CvCityAI::AI_chooseProduction()
 			int iOdds = 100 * (iProjectValue - iBestBuildingValue) / (iProjectValue + iBestBuildingValue + iBuildUnitProb);
 			if (GC.getGameINLINE().getSorenRandNum(100, "Build Project chance 1") < iOdds)
 			{
-				pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
+				pushOrder(ORDER_CREATE, eBestProject);
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 1. (project value: %d, building value: %d, odds: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue, iOdds);
 				return;
 			}
@@ -2639,7 +2639,7 @@ void CvCityAI::AI_chooseProduction()
 	if (iProjectValue > iBestBuildingValue)
 	{
 		FAssert(eBestProject != NO_PROJECT);
-		pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
+		pushOrder(ORDER_CREATE, eBestProject);
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2. (project value: %d, building value: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue);
 		return;
 	}
@@ -2655,7 +2655,7 @@ void CvCityAI::AI_chooseProduction()
 		int iOdds = 100*(iProcessValue - iBestBuildingValue/2)/std::max(1, iBestBuildingValue/2);
 		if (iOdds > 0 && GC.getGameINLINE().getSorenRandNum(100, "AI choose process") < iOdds)
 		{
-			pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
+			pushOrder(ORDER_MAINTAIN, eBestProcess);
 			if (gCityLogLevel >= 2) logBBAI("      City %S uses choose process by value", getName().GetCString());
 			return;
 		}
@@ -2680,7 +2680,7 @@ void CvCityAI::AI_chooseProduction()
 	//if (AI_chooseProcess())
 	if (eBestProcess != NO_PROCESS)
 	{
-		pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
+		pushOrder(ORDER_MAINTAIN, eBestProcess);
 		if (gCityLogLevel >= 2) logBBAI("      City %S uses choose process by default", getName().GetCString());
 		return;
 	}
@@ -8530,7 +8530,7 @@ bool CvCityAI::AI_chooseUnit(UnitAITypes eUnitAI, int iOdds)
 			< iOdds + 100 * getUnitProduction(eBestUnit) / std::max(1, getProductionNeeded(eBestUnit)))
 		// K-Mod end
 		{
-			pushOrder(ORDER_TRAIN, eBestUnit, eUnitAI, false, false, false);
+			pushOrder(ORDER_TRAIN, eBestUnit, eUnitAI);
 			return true;
 		}
 	}
@@ -8542,7 +8542,7 @@ bool CvCityAI::AI_chooseUnit(UnitTypes eUnit, UnitAITypes eUnitAI)
 {
 	if (eUnit != NO_UNIT)
 	{
-		pushOrder(ORDER_TRAIN, eUnit, eUnitAI, false, false, false);
+		pushOrder(ORDER_TRAIN, eUnit, eUnitAI);
 		return true;
 	}
 	return false;	
@@ -8797,7 +8797,7 @@ bool CvCityAI::AI_chooseBuilding(int iFocusFlags, int iMaxTurns, int iMinThresho
 			getBuildingProduction(eBestBuilding) > 0 ||
 			GC.getGameINLINE().getSorenRandNum(100,"City AI choose building") < iOdds )
 		{
-			pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+			pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 			return true;
 		}
 	}
@@ -8817,7 +8817,7 @@ bool CvCityAI::AI_chooseProject()
 
 	if (eBestProject != NO_PROJECT)
 	{
-		pushOrder(ORDER_CREATE, eBestProject, -1, false, false, false);
+		pushOrder(ORDER_CREATE, eBestProject);
 		return true;
 	}
 
@@ -8833,7 +8833,7 @@ bool CvCityAI::AI_chooseProcess(CommerceTypes eCommerceType)
 
 	if (eBestProcess != NO_PROCESS)
 	{
-		pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
+		pushOrder(ORDER_MAINTAIN, eBestProcess);
 		return true;
 	}
 
@@ -10864,7 +10864,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 			if (kBestBuilding.getCommerceChange(COMMERCE_CULTURE) + kBestBuilding.getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0
 				&& (GC.getNumCultureLevelInfos() < 2 || getProductionTurnsLeft(eBestBuilding, 0) <= GC.getGame().getCultureThreshold((CultureLevelTypes)2)))
 			{
-				pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+				pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 				return;
 			}
 		}
@@ -10960,13 +10960,13 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 							{
 								// This building helps the unit we want
 								// ...so do the building first.
-								pushOrder(ORDER_CONSTRUCT, eBestBuilding, -1, false, false, false);
+								pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 								return;
 							}
 						}
 					}
 					// otherwise, we're ready to build the unit
-					pushOrder(ORDER_TRAIN, eBestUnit, eUnitAI, false, false, false);
+					pushOrder(ORDER_TRAIN, eBestUnit, eUnitAI);
 					return;
 				}
 			}
@@ -11027,7 +11027,7 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		int iOdds = 100*(iProcessValue - iBestBuildingValue/2)/std::max(1, iBestBuildingValue/2);
 		if (iOdds > 0 && GC.getGameINLINE().getSorenRandNum(100, "AI choose process") < iOdds)
 		{
-			pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
+			pushOrder(ORDER_MAINTAIN, eBestProcess);
 			return;
 		}
 	}
