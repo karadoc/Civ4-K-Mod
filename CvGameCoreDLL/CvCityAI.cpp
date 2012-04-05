@@ -2643,6 +2643,23 @@ void CvCityAI::AI_chooseProduction()
 		if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project 2. (project value: %d, building value: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue);
 		return;
 	}
+
+	ProcessTypes eBestProcess = AI_bestProcess();
+	if (eBestProcess != NO_PROCESS)
+	{
+		// unfortunately, the evaluation of eBestProcess is duplicated.
+		int iProcessValue = AI_processValue(eBestProcess);
+		// note: process value has units of 1x commerce; building value has units of 4x commerce.
+		// but building value is ongoing, whereas processes are temporary.
+		// Also, note that as soon as we start working the process, our citizens will rearrange in a way that is likely to devalue the process for the next turn.
+		int iOdds = 100*(iProcessValue - iBestBuildingValue/2)/std::max(1, iBestBuildingValue/2);
+		if (iOdds > 0 && GC.getGameINLINE().getSorenRandNum(100, "AI choose process") < iOdds)
+		{
+			pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
+			if (gCityLogLevel >= 2) logBBAI("      City %S uses choose process by value", getName().GetCString());
+			return;
+		}
+	}
 	// K-Mod end
 
 	if (AI_chooseBuilding())
@@ -2660,8 +2677,10 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	if (AI_chooseProcess())
+	//if (AI_chooseProcess())
+	if (eBestProcess != NO_PROCESS)
 	{
+		pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
 		if (gCityLogLevel >= 2) logBBAI("      City %S uses choose process by default", getName().GetCString());
 		return;
 	}
@@ -5832,27 +5851,16 @@ int CvCityAI::AI_projectValue(ProjectTypes eProject)
 	return iValue;
 }
 
-
-ProcessTypes CvCityAI::AI_bestProcess()
-{
-	return AI_bestProcess(NO_COMMERCE);
-}
-
 ProcessTypes CvCityAI::AI_bestProcess(CommerceTypes eCommerceType)
 {
-	ProcessTypes eBestProcess;
-	int iValue;
-	int iBestValue;
-	int iI;
+	int iBestValue = 0;
+	ProcessTypes eBestProcess = NO_PROCESS;
 
-	iBestValue = 0;
-	eBestProcess = NO_PROCESS;
-
-	for (iI = 0; iI < GC.getNumProcessInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumProcessInfos(); iI++)
 	{
 		if (canMaintain((ProcessTypes)iI))
 		{
-			iValue = AI_processValue((ProcessTypes)iI, eCommerceType);
+			int iValue = AI_processValue((ProcessTypes)iI, eCommerceType);
 
 			if (iValue > iBestValue)
 			{
@@ -5865,78 +5873,45 @@ ProcessTypes CvCityAI::AI_bestProcess(CommerceTypes eCommerceType)
 	return eBestProcess;
 }
 
-
-int CvCityAI::AI_processValue(ProcessTypes eProcess)
-{
-	return AI_processValue(eProcess, NO_COMMERCE);
-}
-
+// K-Mod. I've rearranged / rewriten most of this function.
+// units of ~1x commerce
 int CvCityAI::AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType)
 {
-	int iValue;
-	int iTempValue;
-	int iI;
 	bool bValid = (eCommerceType == NO_COMMERCE);
 	
-	iValue = 0;
+	int iValue = 0;
 
-	if (GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
+	if (GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_GOLD) && GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
 	{
 		iValue += GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_GOLD);
 	}
 
 	// if we own less than 50%, or we need to pop borders
-	if ((plot()->calculateCulturePercent(getOwnerINLINE()) < 50) || (getCultureLevel() <= (CultureLevelTypes) 1))
+	if (GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_CULTURE) && (plot()->calculateCulturePercent(getOwnerINLINE()) < 50 || getCultureLevel() <= 1))
 	{
 		iValue += GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_CULTURE);
 	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/30/09                                jdog5000      */
-/*                                                                                              */
-/* Cultural Victory AI                                                                          */
-/************************************************************************************************/
-	if ( GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) )
+	for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 	{
-		// Final city for cultural victory will build culture to speed up victory
-		if( findCommerceRateRank(COMMERCE_CULTURE) == GC.getGameINLINE().culturalVictoryNumCultureCities() )
+		int iTempValue = GC.getProcessInfo(eProcess).getProductionToCommerceModifier(i);
+		if (iTempValue != 0)
 		{
-			iValue += 2*GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_CULTURE);
+			if (!bValid && i == eCommerceType && iTempValue > 0)
+			{
+				bValid = true;
+				iTempValue *= 2;
+			}
+
+			// K-Mod. culture is local, the other commerce types are non-local.
+			// We don't want the non-local commerceWeights in this function, because maintaining a process is just a short-term arrangement.
+			iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_commerceWeight(i, i == COMMERCE_CULTURE ? this : 0);
+			iTempValue /= 100;
+			// K-Mod end
+
+			iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange(i);
+			iTempValue /= 60;
 		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-	for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
-	{
-		iTempValue = GC.getProcessInfo(eProcess).getProductionToCommerceModifier(iI);
-		if (!bValid && ((CommerceTypes)iI == eCommerceType) && (iTempValue > 0))
-		{
-			bValid = true;
-		    iTempValue *= 2;
-		}
-
-		/* original bts code
-		iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_commerceWeight(((CommerceTypes)iI), this);
-		iTempValue /= 100; */
-		// K-Mod. culture is local, the other commerce types are non-local.
-		// We don't want the non-local commerceWeights in this function, because maintaining a process is just a short-term arrangement.
-		iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_commerceWeight(((CommerceTypes)iI), iI == COMMERCE_CULTURE ? this : 0);
-		iTempValue /= 100;
-		// K-Mod end
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      07/08/09                                jdog5000      */
-/*                                                                                              */
-/* Gold AI                                                                                      */
-/************************************************************************************************/
-		iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange((CommerceTypes)iI);
-
-		iTempValue /= 60;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 		iValue += iTempValue;
 	}
@@ -11043,21 +11018,29 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		}
 	}
 
+	//process
+	ProcessTypes eBestProcess = AI_bestProcess();
+	if (eBestProcess != NO_PROCESS)
+	{
+		// same as in AI_chooseProduction. (as of the time of writing).
+		int iProcessValue = AI_processValue(eBestProcess);
+		int iOdds = 100*(iProcessValue - iBestBuildingValue/2)/std::max(1, iBestBuildingValue/2);
+		if (iOdds > 0 && GC.getGameINLINE().getSorenRandNum(100, "AI choose process") < iOdds)
+		{
+			pushOrder(ORDER_MAINTAIN, eBestProcess, -1, false, false, false);
+			return;
+		}
+	}
+
 	//default
 	if (AI_chooseBuilding())
-	{
 		return;
-	}
 
-	if (AI_chooseProcess())
-	{
-		return;
-	}
+	/*if (AI_chooseProcess())
+		return; */
 
     if (AI_chooseUnit())
-	{
 		return;
-	}
 }
 
 // K-Mod. This is a chunk of code that I moved out of AI_chooseProduction. The only reason I've moved it is to reduce clutter in the other function.

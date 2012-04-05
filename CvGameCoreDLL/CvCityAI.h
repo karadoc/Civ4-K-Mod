@@ -46,10 +46,9 @@ public:
 	ProjectTypes AI_bestProject(int* piBestValue = 0);
 	int AI_projectValue(ProjectTypes eProject);
 
-	ProcessTypes AI_bestProcess();
-	ProcessTypes AI_bestProcess(CommerceTypes eCommerceType);
-	int AI_processValue(ProcessTypes eProcess);
-	int AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType);
+	// K-Mod note, I've deleted the single-argument version of the following two functions. They were completely superfluous.
+	ProcessTypes AI_bestProcess(CommerceTypes eCommerceType = NO_COMMERCE);
+	int AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType = NO_COMMERCE);
 
 	int AI_neededSeaWorkers();
 

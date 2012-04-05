@@ -11984,7 +11984,7 @@ void CvCity::clearOrderQueue()
 
 void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bool bPop, bool bAppend, bool bForce)
 {
-  OrderData order;
+	OrderData order;
 	bool bValid;
 	bool bBuildingUnit = false;
 	bool bBuildingBuilding = false;
@@ -11996,8 +11996,8 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 
 	bValid = false;
 
-  switch (eOrder)
-  {
+	switch (eOrder)
+	{
 	case ORDER_TRAIN:
 		if (canTrain((UnitTypes)iData1) || bForce)
 		{
@@ -12014,22 +12014,14 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 			bValid = true;
 			bBuildingUnit = true;
 			CvEventReporter::getInstance().cityBuildingUnit(this, (UnitTypes)iData1);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gCityLogLevel >= 1 )
 			{
 				CvWString szString;
 				getUnitAIString(szString, (UnitAITypes)iData2);
 				logBBAI("    City %S pushes production of unit %S with UNITAI %S", getName().GetCString(), GC.getUnitInfo((UnitTypes) iData1).getDescription(), szString.GetCString() );
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		}
-    break;
+		break;
 
 	case ORDER_CONSTRUCT:
 		if (canConstruct((BuildingTypes)iData1) || bForce)
@@ -12039,18 +12031,8 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 			bValid = true;
 			bBuildingBuilding = true;
 			CvEventReporter::getInstance().cityBuildingBuilding(this, (BuildingTypes)iData1);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gCityLogLevel >= 1 )
-			{
 				logBBAI("    City %S pushes production of building %S", getName().GetCString(), GC.getBuildingInfo((BuildingTypes)iData1).getDescription() );
-			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		}
 		break;
 
@@ -12060,18 +12042,8 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 			GET_TEAM(getTeam()).changeProjectMaking(((ProjectTypes)iData1), 1);
 
 			bValid = true;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gCityLogLevel >= 1 )
-			{
 				logBBAI("    City %S pushes production of project %S", getName().GetCString(), GC.getProjectInfo((ProjectTypes)iData1).getDescription() );
-			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		}
 		break;
 
@@ -12079,32 +12051,22 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 		if (canMaintain((ProcessTypes)iData1) || bForce)
 		{
 			bValid = true;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 			if( gCityLogLevel >= 1 )
-			{
 				logBBAI("    City %S pushes production of process %S", getName().GetCString(), GC.getProcessInfo((ProcessTypes)iData1).getDescription() );
-			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		}
 		break;
 
-  default:
-    FAssertMsg(false, "iOrder did not match a valid option");
-    break;
-  }
+	default:
+		FAssertMsg(false, "iOrder did not match a valid option");
+		break;
+	}
 
 	if (!bValid)
 	{
 		return;
 	}
 
-  order.eOrderType = eOrder;
+	order.eOrderType = eOrder;
 	order.iData1 = iData1;
 	order.iData2 = iData2;
 	order.bSave = bSave;
