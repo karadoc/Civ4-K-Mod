@@ -1,4 +1,4 @@
-This is K-Mod version 1.26.
+This is K-Mod version 1.26b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
 v1.26 changelist
@@ -40,6 +40,10 @@ AI
 + Fixed an original BtS bug which caused air units to automatically load themselves into a carrier if they are upgraded in a city which is at full air capacity.
 + Fixed a problem in K-Mod which could potentially cause an infinite loop when the above bug was triggered by the AI!
 + Fixed a rare bug which could cause the AI to choose an impossible move when trying to group its units before a war. (The effect of this is that the AI would waste some time trying to do this impossible move, and then skip its turn in frustration.)
+
+v1.26b
+
++ Some bug fixes.
 
 --
 v1.25 changelist
