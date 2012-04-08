@@ -47,8 +47,8 @@ public:
 	int AI_projectValue(ProjectTypes eProject);
 
 	// K-Mod note, I've deleted the single-argument version of the following two functions. They were completely superfluous.
-	ProcessTypes AI_bestProcess(CommerceTypes eCommerceType = NO_COMMERCE);
-	int AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType = NO_COMMERCE);
+	ProcessTypes AI_bestProcess(CommerceTypes eCommerceType = NO_COMMERCE) const;
+	int AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType = NO_COMMERCE) const;
 
 	int AI_neededSeaWorkers();
 

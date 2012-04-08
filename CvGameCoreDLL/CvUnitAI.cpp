@@ -119,7 +119,7 @@ bool CvUnitAI::AI_update()
 				//if (pTransportUnit->getGroup()->hasMoved() || (pTransportUnit->getGroup()->headMissionQueueNode() != NULL))
 				// K-Mod. Note: transport units with cargo always have their turn before the cargo does - so... well... I've changed the skip condition.
 				if (pTransportUnit->getGroup()->headMissionQueueNode() != NULL ||
-					(pTransportUnit->getGroup()->AI_getMissionAIType() == MISSIONAI_ASSAULT && !atPlot(pTransportUnit->getGroup()->AI_getMissionAIPlot())))
+					(pTransportUnit->getGroup()->AI_getMissionAIPlot() && !atPlot(pTransportUnit->getGroup()->AI_getMissionAIPlot())))
 				// K-Mod end
 				{
 					getGroup()->pushMission(MISSION_SKIP);

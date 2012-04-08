@@ -2387,7 +2387,7 @@ void CvGame::cityPushOrder(CvCity* pCity, OrderTypes eOrder, int iData, bool bAl
 	else
 	{
 		//CvMessageControl::getInstance().sendPushOrder(pCity->getID(), eOrder, iData, bAlt, bShift, bCtrl);
-		CvMessageControl::getInstance().sendPushOrder(pCity->getID(), eOrder, iData, bAlt, !(bShift || bCtrl), bCtrl ? 0 : -1);
+		CvMessageControl::getInstance().sendPushOrder(pCity->getID(), eOrder, iData, bAlt, !(bShift || bCtrl), bShift ? -1 : 0);
 	}
 }
 

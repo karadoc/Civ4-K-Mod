@@ -762,7 +762,8 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	if (isHuman() && isProductionAutomated())
+	//if (isHuman() && isProductionAutomated())
+	if (isHuman())
 	{
 		AI_buildGovernorChooseProduction();
 		return;
@@ -2648,11 +2649,15 @@ void CvCityAI::AI_chooseProduction()
 	if (eBestProcess != NO_PROCESS)
 	{
 		// unfortunately, the evaluation of eBestProcess is duplicated.
-		int iProcessValue = AI_processValue(eBestProcess);
-		// note: process value has units of 1x commerce; building value has units of 4x commerce.
-		// but building value is ongoing, whereas processes are temporary.
-		// Also, note that as soon as we start working the process, our citizens will rearrange in a way that is likely to devalue the process for the next turn.
-		int iOdds = 100*(iProcessValue - iBestBuildingValue/2)/std::max(1, iBestBuildingValue/2);
+		// Here we calculate roughly how many turns it would take for the building to pay itself back, where the cost it the value we could have had from building a process.. 
+		// Note that as soon as we start working the process, our citizens will rearrange in a way that is likely to devalue the process for the next turn.
+		int iOdds = 100;
+		if (eBestBuilding != NO_BUILDING)
+		{
+			int iBuildingCost = AI_processValue(eBestProcess) * getProductionTurnsLeft(eBestBuilding, 0);
+			int iScaledTime = 10000 * iBuildingCost / (std::max(1, iBestBuildingValue) * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getConstructPercent());
+			iOdds = 100*(iScaledTime - 400)/(iScaledTime + 600); // <= 4 turns means 0%. 20 turns ~ 61%.
+		}
 		if (iOdds > 0 && GC.getGameINLINE().getSorenRandNum(100, "AI choose process") < iOdds)
 		{
 			pushOrder(ORDER_MAINTAIN, eBestProcess);
@@ -4485,17 +4490,19 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						}
 					}
 					//
-					for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+					for (BuildingClassTypes eLoopClass = (BuildingClassTypes)0; eLoopClass < GC.getNumBuildingClassInfos(); eLoopClass = (BuildingClassTypes)(eLoopClass+1))
 					{
-						BuildingTypes eLoopBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings((BuildingClassTypes)iI); // K-Mod
+						BuildingTypes eLoopBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(eLoopClass); // K-Mod
 
 						if (eLoopBuilding == NO_BUILDING)
 							continue;
 
 						int iPrereqBuildings = 0; // number of eBuilding required to build eLoopBuilding
 						const CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
+						int iLimitForLoopBuilding = limitedWonderClassLimit(eLoopClass);
 
 						if ((kLoopBuilding.getPrereqNumOfBuildingClass(eBuildingClass) <= 0 && !kLoopBuilding.isBuildingClassNeededInCity(kBuilding.getBuildingClassType())) ||
+							(iLimitForLoopBuilding > 0 && kOwner.getBuildingClassMaking(eLoopClass) >= iLimitForLoopBuilding) ||
 							!kOwner.canConstruct(eLoopBuilding, false, true, false))
 						{
 							// either we don't need eBuilding in order to build eLoopBuilding, or we can't construct eLoopBuilding anyway
@@ -4505,8 +4512,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 						if (kLoopBuilding.getPrereqNumOfBuildingClass(eBuildingClass) > 0)
 						{
-							BuildingClassTypes eLoopClass = (BuildingClassTypes)kLoopBuilding.getBuildingClassType();
-
 							// calculate how many more of eBuilding we actually need, given that we might be constructing some eLoopBuilding already.
 							iPrereqBuildings = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, eBuildingClass, kOwner.getBuildingClassMaking(eLoopClass));
 							FAssert(iPrereqBuildings > 0);
@@ -5851,7 +5856,7 @@ int CvCityAI::AI_projectValue(ProjectTypes eProject)
 	return iValue;
 }
 
-ProcessTypes CvCityAI::AI_bestProcess(CommerceTypes eCommerceType)
+ProcessTypes CvCityAI::AI_bestProcess(CommerceTypes eCommerceType) const
 {
 	int iBestValue = 0;
 	ProcessTypes eBestProcess = NO_PROCESS;
@@ -5874,49 +5879,69 @@ ProcessTypes CvCityAI::AI_bestProcess(CommerceTypes eCommerceType)
 }
 
 // K-Mod. I've rearranged / rewriten most of this function.
-// units of ~1x commerce
-int CvCityAI::AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType)
+// units of ~4x commerce
+int CvCityAI::AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType) const
 {
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 	bool bValid = (eCommerceType == NO_COMMERCE);
 	
 	int iValue = 0;
 
-	if (GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_GOLD) && GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
+	/* if (GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_GOLD) && GET_PLAYER(getOwnerINLINE()).AI_isFinancialTrouble())
 	{
 		iValue += GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_GOLD);
-	}
+	} */
 
-	// if we own less than 50%, or we need to pop borders
-	if (GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_CULTURE) && (plot()->calculateCulturePercent(getOwnerINLINE()) < 50 || getCultureLevel() <= 1))
+	// pop borders
+	if (getCultureLevel() <= 1)
 	{
 		iValue += GC.getProcessInfo(eProcess).getProductionToCommerceModifier(COMMERCE_CULTURE);
 	}
 
+	int iAdjustFactor = 0;
+	for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
+	{
+		iAdjustFactor += kOwner.getCommercePercent(i) * kOwner.AI_averageCommerceMultiplier(i);
+	}
+	iAdjustFactor /= 100;
+
 	for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 	{
 		int iTempValue = GC.getProcessInfo(eProcess).getProductionToCommerceModifier(i);
-		if (iTempValue != 0)
+
+		if (iTempValue == 0)
+			continue;
+
+		if (i == eCommerceType && iTempValue > 0)
 		{
-			if (!bValid && i == eCommerceType && iTempValue > 0)
-			{
-				bValid = true;
-				iTempValue *= 2;
-			}
-
-			// K-Mod. culture is local, the other commerce types are non-local.
-			// We don't want the non-local commerceWeights in this function, because maintaining a process is just a short-term arrangement.
-			iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_commerceWeight(i, i == COMMERCE_CULTURE ? this : 0);
-			iTempValue /= 100;
-			// K-Mod end
-
-			iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange(i);
-			iTempValue /= 60;
+			bValid = true;
+			iTempValue *= 2;
 		}
+
+		// K-Mod. Calculate the number of commerce produced.
+		iTempValue *= getYieldRate(YIELD_PRODUCTION);
+		//iTempValue /= 100; // keep this 100 for now.
+		// Culture is local, the other commerce types are non-local.
+		// We don't want the non-local commerceWeights in this function, because maintaining a process is just a short-term arrangement.
+		iTempValue *= kOwner.AI_commerceWeight(i, i == COMMERCE_CULTURE ? this : 0);
+		iTempValue /= 100;
+		// K-Mod end
+
+		/* iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange(i);
+		iTempValue /= 60; */
+		// K-Mod. Check this shit.
+		if (kOwner.isCommerceFlexible(i) && kOwner.getCommercePercent(i) > 0)
+		{
+			iTempValue *= 100 + kOwner.getCommercePercent(i) * (iAdjustFactor - 100) / 100;
+			iTempValue /= std::max(100, 100 + kOwner.getCommercePercent(i) * (kOwner.AI_averageCommerceMultiplier(i) - 100) / 100);
+		}
+		// K-Mod end
 
 		iValue += iTempValue;
 	}
 
-	return (bValid ? iValue : 0);
+	// note, currently iValue has units of 100x commerce. We want to return 4x commerce.
+	return (bValid ? iValue/25 : 0);
 }
 
 
@@ -11022,9 +11047,14 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 	ProcessTypes eBestProcess = AI_bestProcess();
 	if (eBestProcess != NO_PROCESS)
 	{
-		// same as in AI_chooseProduction. (as of the time of writing).
-		int iProcessValue = AI_processValue(eBestProcess);
-		int iOdds = 100*(iProcessValue - iBestBuildingValue/2)/std::max(1, iBestBuildingValue/2);
+		// similar to AI_chooseProduction
+		int iOdds = 100;
+		if (eBestBuilding != NO_BUILDING)
+		{
+			int iBuildingCost = AI_processValue(eBestProcess) * getProductionTurnsLeft(eBestBuilding, 0);
+			int iScaledTime = 10000 * iBuildingCost / (std::max(1, iBestBuildingValue) * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getConstructPercent());
+			iOdds = 100*(iScaledTime - 400)/(iScaledTime + 600); // <= 4 turns means 0%. 20 turns ~ 61%.
+		}
 		if (iOdds > 0 && GC.getGameINLINE().getSorenRandNum(100, "AI choose process") < iOdds)
 		{
 			pushOrder(ORDER_MAINTAIN, eBestProcess);

@@ -8147,10 +8147,10 @@ void CvCity::setProductionAutomated(bool bNewValue, bool bClear)
 				clearOrderQueue();
 			}
 		}
-		
+
 		if (!isProduction())
 		{
-		    AI_chooseProduction();		    
+			AI_chooseProduction();
 		}
 	}
 }
