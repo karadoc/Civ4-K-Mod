@@ -13344,7 +13344,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 		int iTempValue = 0;
 
-		// units costs
+		// units costs. (note goldPerUnit and goldPerMilitaryUnit are in units of 1/100 gold)
 		int iCostPerUnit = (getGoldPerUnit() + (iS > 0 ? kCivic.getGoldPerUnit() : 0)) * getUnitCostMultiplier() / 100;
 		int iFreeUnitDelta = iS * (std::min(iUnits, iFreeUnits + iS*(kCivic.getBaseFreeUnits() + kCivic.getFreeUnitsPopulationPercent() * getTotalPopulation()/100)) - std::min(iUnits, iFreeUnits));
 		FAssert(iFreeUnitDelta >= 0);
@@ -20346,7 +20346,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		// A leader dependant value. (MaxWarRand is roughly between 50 and 200. Gandi is 400.)
 		//iCrushValue += (iNonsense % 3000) / (400+GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarRand());
 	// On second thought, lets try this
-		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(FLAVOR_MILITARY)/2);
+		iCrushValue += AI_getStrategyRand(13) % (4 + AI_getFlavorValue(FLAVOR_MILITARY)/2 + (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 2 : 0));
 		iCrushValue += std::min(0, kTeam.AI_getWarSuccessRating()/15);
 		// note: flavor military is between 0 and 10
 		// K-Mod end
@@ -20358,10 +20358,6 @@ void CvPlayerAI::AI_updateStrategyHash()
 		if (m_iStrategyHash & AI_STRATEGY_DAGGER)
 		{
 			iCrushValue += 3;			
-		}
-		if (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI))
-		{
-			iCrushValue += 3;
 		}
 
 		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)

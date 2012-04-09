@@ -105,11 +105,11 @@
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_12</Tag>
-	<English>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</English>
-	<French>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</French>
-	<German>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</German>
-	<Italian>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Italian>
-	<Spanish>When a stack of units is attacked, the unit will the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Spanish>
+	<English>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</English>
+	<French>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</French>
+	<German>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</German>
+	<Italian>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Italian>
+	<Spanish>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_13</Tag>
