@@ -3094,18 +3094,21 @@ class CvInfoScreen:
 					self.zoomGraph(self.dropDownTurns[iSelected])
 					self.drawGraphs()
 
-				elif (szWidgetName == self.szGraphSmoothingDropdownWidget_1in1):
-					self.iGraph_Smoothing_1in1 = iSelected
-					self.drawGraphs()
-
-				elif (szWidgetName == self.szGraphSmoothingDropdownWidget_7in1):
-					self.iGraph_Smoothing_7in1 = iSelected
-					self.drawGraphs()
-
-				for i in range(3):
-					if (szWidgetName == self.szGraphDropdownWidget_3in1[i]):
-						self.iGraph_3in1[i] = iSelected
+				elif AdvisorOpt.isGraphs(): # K-Mod. (the xin1 widgets are only defined when isGraphs is true)
+					if (szWidgetName == self.szGraphSmoothingDropdownWidget_1in1):
+						self.iGraph_Smoothing_1in1 = iSelected
 						self.drawGraphs()
+
+					elif (szWidgetName == self.szGraphSmoothingDropdownWidget_7in1):
+						self.iGraph_Smoothing_7in1 = iSelected
+						self.drawGraphs()
+
+					else:
+						for i in range(3):
+							if (szWidgetName == self.szGraphDropdownWidget_3in1[i]):
+								self.iGraph_3in1[i] = iSelected
+								self.drawGraphs()
+								break
 
 		# Something Clicked
 		elif (inputClass.getNotifyCode() == NotifyCode.NOTIFY_CLICKED):
