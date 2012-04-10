@@ -10,10 +10,10 @@
 	<TEXT>
 		<Tag>TXT_KEY_BONUS_OBSOLETE</Tag>
 		<English>[COLOR_LIGHT_GREY][SPACE](Obsolete)[SPACE][COLOR_REVERT]</English>
-		<French>[SPACE](Obsolète)[SPACE]</French>
-		<German>[SPACE](Obsolet)[SPACE]</German>
-		<Italian>[SPACE](Obsoleto)[SPACE]</Italian>
-		<Spanish>[SPACE](Obsoleto)[SPACE]</Spanish>
+		<French>[COLOR_LIGHT_GREY][SPACE](Obsolète)[SPACE][COLOR_REVERT]</French>
+		<German>[COLOR_LIGHT_GREY][SPACE](Obsolet)[SPACE][COLOR_REVERT]</German>
+		<Italian>[COLOR_LIGHT_GREY][SPACE](Obsoleto)[SPACE][COLOR_REVERT]</Italian>
+		<Spanish>[COLOR_LIGHT_GREY][SPACE](Obsoleto)[SPACE][COLOR_REVERT]</Spanish>
 	</TEXT>
 	<!-- tag line for yield changes for bonuses -->
 	<TEXT>
@@ -178,6 +178,137 @@
 		<Italian>Finanza</Italian>
 		<Spanish>Finanzas</Spanish>
 	</TEXT>
+
+<!-- Text for the environmental advisor -->
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_DOMESTIC</Tag>
+		<English>Domestic</English>
+		<French>Domestic</French>
+		<German>Domestic</German>
+		<Italian>Domestic</Italian>
+		<Spanish>Domestic</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_GLOBAL</Tag>
+		<English>Global</English>
+		<French>Global</French>
+		<German>Global</German>
+		<Italian>Global</Italian>
+		<Spanish>Global</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_EFFECTS</Tag>
+		<English>Effects</English>
+		<French>Effects</French>
+		<German>Effects</German>
+		<Italian>Effects</Italian>
+		<Spanish>Effects</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_TOTAL</Tag>
+		<English>Total</English>
+		<French>Total</French>
+		<German>Total</German>
+		<Italian>Total</Italian>
+		<Spanish>Total</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_IMPACT</Tag>
+		<English>Total Impact</English>
+		<French>Total Impact</French>
+		<German>Total Impact</German>
+		<Italian>Total Impact</Italian>
+		<Spanish>Total Impact</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_THRESHOLD</Tag>
+		<English>Sustainability Threshold</English>
+		<French>Sustainability Threshold</French>
+		<German>Sustainability Threshold</German>
+		<Italian>Il limite di sostenibilità</Italian>
+		<Spanish>Sustainability Threshold</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_LOCAL_THRESHOLD</Tag>
+		<English>Local Sustainability Threshold</English>
+		<French>Local Sustainability Threshold</French>
+		<German>Local Sustainability Threshold</German>
+		<Italian>Local Sustainability Threshold</Italian>
+		<Spanish>Local Sustainability Threshold</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_POLLUTION</Tag>
+		<English>Total Pollution</English>
+		<French>Total Pollution</French>
+		<German>Total Pollution</German>
+		<Italian>Total Pollution</Italian>
+		<Spanish>Total Pollution</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_OFFSETS</Tag>
+		<English>Total Offsets</English>
+		<French>Total Offsets</French>
+		<German>Total Offsets</German>
+		<Italian>Total Offsets</Italian>
+		<Spanish>Total Offsets</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_GW_CHANGE_RATE</Tag>
+		<English>Change Rate of GW Index</English>
+		<French>Change Rate of GW Index</French>
+		<German>Change Rate of GW Index</German>
+		<Italian>Change Rate of GW Index</Italian>
+		<Spanish>Change Rate of GW Index</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_RELATIVE_CONTRIBUTION</Tag>
+		<English>Our Relative Contribution</English>
+		<French>Our Relative Contribution</French>
+		<German>Our Relative Contribution</German>
+		<Italian>Our Relative Contribution</Italian>
+		<Spanish>Our Relative Contribution</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_GW_INDEX</Tag>
+		<English>Global Warming Index</English>
+		<French>Global Warming Index</French>
+		<German>Global Warming Index</German>
+		<Italian>Global Warming Index</Italian>
+		<Spanish>Global Warming Index</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_EXPECTED_EVENTS</Tag>
+		<English>Expected Events per Turn</English>
+		<French>Expected Events per Turn</French>
+		<German>Expected Events per Turn</German>
+		<Italian>Expected Events per Turn</Italian>
+		<Spanish>Expected Events per Turn</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_EVENT_TALLY</Tag>
+		<English>Event Tally</English>
+		<French>Event Tally</French>
+		<German>Event Tally</German>
+		<Italian>Event Tally</Italian>
+		<Spanish>Event Tally</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_ENVIRONMENT_LOCAL_ANGER_LEVEL</Tag>
+		<English>Local Anger Level</English>
+		<French>Local Anger Level</French>
+		<German>Local Anger Level</German>
+		<Italian>Local Anger Level</Italian>
+		<Spanish>Local Anger Level</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_CHANCES</Tag>
+		<English>Chances</English>
+		<French>Chances</French>
+		<German>Chances</German>
+		<Italian>Chances</Italian>
+		<Spanish>Chances</Spanish>
+	</TEXT>
+
 	<TEXT>
 		<Tag>TXT_KEY_GW_INDEX_HELP</Tag>
 		<English>Total accumulated pollution above the sustainability threshold.</English>
