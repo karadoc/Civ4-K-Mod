@@ -102,6 +102,15 @@
 		<Italian>Costo di supporto per le unit&#224; militari</Italian>
 		<Spanish>de coste de abastecimiento por cada unidad militar</Spanish>
 	</TEXT>
+	<!-- similarly with war weariness, I've removed the number from the end so that I can change the way it is used in the DLL.-->
+	<TEXT>
+		<Tag>TXT_KEY_WAR_WEAR_HELP</Tag>
+		<English>War Weariness</English>
+		<French>Lassitude de la guerre</French>
+		<German>Kriegsm&#252;digkeit</German>
+		<Italian>Stanchezza della guerra</Italian>
+		<Spanish>Hast&#237;o b&#233;lico</Spanish>
+	</TEXT>
 	<!-- highlight leader name in the contact string -->
 	<TEXT>
 		<Tag>TXT_KEY_MISC_CONTACT_LEADER</Tag>

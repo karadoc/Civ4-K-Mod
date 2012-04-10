@@ -11689,7 +11689,7 @@ iNewAnger += (((iNewAngerPercent * city.getPopulation()) / GC.getPERCENT_ANGER_D
 		for (iI = 0; iI < GC.getNumCivicInfos(); ++iI)
 		{
 			iNewAngerPercent += GET_PLAYER(city.getOwnerINLINE()).getCivicPercentAnger((CivicTypes)iI);
-			iNewAnger += (((iNewAngerPercent * city.getPopulation()) / GC.getPERCENT_ANGER_DIVISOR()) - ((iOldAngerPercent * city.getPopulation()) / GC.getDefineINT("PERCENT_ANGER_DIVISOR")));
+			iNewAnger += (((iNewAngerPercent * city.getPopulation()) / GC.getPERCENT_ANGER_DIVISOR()) - ((iOldAngerPercent * city.getPopulation()) / GC.getPERCENT_ANGER_DIVISOR()));
 			iAnger = ((iNewAnger - iOldAnger) + std::min(0, iOldAnger));
 			if (iAnger > 0)
 			{
@@ -14032,8 +14032,8 @@ void CvGameTextMgr::getWarplanString(CvWStringBuffer& szString, WarPlanTypes eWa
 		case WARPLAN_LIMITED: szString.assign(L"limited war"); break;
 		case WARPLAN_TOTAL: szString.assign(L"total war"); break;
 		case WARPLAN_DOGPILE: szString.assign(L"dogpile war"); break;
-		case NO_WARPLAN: szString.assign(L"unplanned war"); break;
-		default:  szString.assign(L"unknown war"); break;
+		case NO_WARPLAN: szString.assign(L"no warplan"); break;
+		default:  szString.assign(L"unknown warplan"); break;
 	}
 }
 
@@ -14046,8 +14046,14 @@ void CvGameTextMgr::getAttitudeString(CvWStringBuffer& szBuffer, PlayerTypes ePl
 	CvPlayerAI& kPlayer = GET_PLAYER(ePlayer);
 	TeamTypes eTeam = (TeamTypes) kPlayer.getTeam();
 	CvTeamAI& kTeam = GET_TEAM(eTeam);
-		
-	szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_TOWARDS", GC.getAttitudeInfo(GET_PLAYER(ePlayer).AI_getAttitude(eTargetPlayer)).getTextKeyWide(), GET_PLAYER(eTargetPlayer).getNameKey()));
+
+	// K-Mod
+	if (kPlayer.isHuman())
+		return;
+	szBuffer.append(NEWLINE);
+	// K-Mod end
+
+	szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_TOWARDS", GC.getAttitudeInfo(kPlayer.AI_getAttitude(eTargetPlayer)).getTextKeyWide(), GET_PLAYER(eTargetPlayer).getNameKey()));
 
 	for (int iTeam = 0; iTeam < MAX_TEAMS; iTeam++)
 	{
@@ -14218,6 +14224,7 @@ void CvGameTextMgr::getAttitudeString(CvWStringBuffer& szBuffer, PlayerTypes ePl
 		}
 	}
 
+	/* original bts code
 	if (NO_PLAYER != eTargetPlayer)
 	{
 		int iWarWeariness = GET_PLAYER(eTargetPlayer).getModifiedWarWearinessPercentAnger(GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam()).getWarWeariness(eTeam) * std::max(0, 100 + kTeam.getEnemyWarWearinessModifier()));
@@ -14226,12 +14233,47 @@ void CvGameTextMgr::getAttitudeString(CvWStringBuffer& szBuffer, PlayerTypes ePl
 			szBuffer.append(NEWLINE);
 			szBuffer.append(gDLL->getText("TXT_KEY_WAR_WEAR_HELP", iWarWeariness / 10000));
 		}
+	}*/ // K-Mod, I've moved this to a new function
+}
+
+// K-Mod
+void CvGameTextMgr::getWarWearinessString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer, PlayerTypes eTargetPlayer) const
+{
+	FAssert(ePlayer != NO_PLAYER);
+	// Show ePlayer's war weariness towards eTargetPlayer.
+	// (note: this is the reverse of what was shown in the original code.)
+	// War weariness should be shown in it natural units - it's a percentage of population
+	const CvPlayer& kPlayer = GET_PLAYER(ePlayer);
+
+	int iWarWeariness = 0;
+	if (eTargetPlayer == NO_PLAYER || eTargetPlayer == ePlayer)
+	{
+		// If eTargetPlayer == NO_PLAYER, show ePlayer's total war weariness?
+		// There are a couple of problems with displaying the total war weariness: information leak, out-of-date information...
+		// lets do it only for the active player.
+		if (GC.getGameINLINE().getActivePlayer() == ePlayer)
+			iWarWeariness = kPlayer.getWarWearinessPercentAnger();
+	}
+	else
+	{
+		const CvPlayer& kTargetPlayer = GET_PLAYER(eTargetPlayer);
+		if (atWar(kPlayer.getTeam(), kTargetPlayer.getTeam()))
+		{
+			iWarWeariness = kPlayer.getModifiedWarWearinessPercentAnger(GET_TEAM(kPlayer.getTeam()).getWarWeariness(kTargetPlayer.getTeam()) * std::max(0, 100 + GET_TEAM(kTargetPlayer.getTeam()).getEnemyWarWearinessModifier())/10000);
+		}
 	}
 
+	iWarWeariness *= 100;
+	iWarWeariness /= GC.getPERCENT_ANGER_DIVISOR();
+
+	if (iWarWeariness != 0)
+		szBuffer.append(CvWString::format(L"\n%s: %d%%", gDLL->getText("TXT_KEY_WAR_WEAR_HELP").GetCString(), iWarWeariness));
 }
+// K-Mod end
 
 void CvGameTextMgr::getEspionageString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer, PlayerTypes eTargetPlayer)
 {
+	FAssertMsg(false, "obsolete function. (getEspionageString)"); // K-Mod
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 	{
 		CvPlayer& kPlayer = GET_PLAYER(ePlayer);
@@ -15032,22 +15074,21 @@ void CvGameTextMgr::parsePlayerTraits(CvWStringBuffer &szBuffer, PlayerTypes ePl
 	}
 }
 
+// K-Mod. I've rewritten most of this function.
 void CvGameTextMgr::parseLeaderHeadHelp(CvWStringBuffer &szBuffer, PlayerTypes eThisPlayer, PlayerTypes eOtherPlayer)
 {
-	if (NO_PLAYER == eThisPlayer)
-	{
+	if (eThisPlayer == NO_PLAYER)
 		return;
-	}
 
-	//szBuffer.append(CvWString::format(L"%s", GET_PLAYER(eThisPlayer).getName()));
-	szBuffer.append(CvWString::format(SETCOLR L"%s" ENDCOLR, TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), GET_PLAYER(eThisPlayer).getName())); // K-Mod
+	const CvPlayerAI& kPlayer = GET_PLAYER(eThisPlayer);
+
+	szBuffer.append(CvWString::format(SETCOLR L"%s" ENDCOLR, TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), kPlayer.getName()));
 
 	parsePlayerTraits(szBuffer, eThisPlayer);
 
-	// K-Mod. Some debug info: found-site traits, and AI flavours
+	// Some debug info: found-site traits, and AI flavours
 	if (gDLL->getChtLvl() > 0 && GC.altKey())
 	{
-		const CvPlayerAI& kPlayer = GET_PLAYER(eThisPlayer);
 		szBuffer.append(CvWString::format(SETCOLR SEPARATOR NEWLINE, TEXT_COLOR("COLOR_LIGHT_GREY")));
 		CvPlayerAI::CvFoundSettings kFoundSet(kPlayer, false);
 
@@ -15090,27 +15131,30 @@ void CvGameTextMgr::parseLeaderHeadHelp(CvWStringBuffer &szBuffer, PlayerTypes e
 
 		szBuffer.append(SEPARATOR ENDCOLR);
 	}
-	// K-Mod end
 
-	szBuffer.append(L"\n");
+	//szBuffer.append(L"\n");
 
 	if (eOtherPlayer != NO_PLAYER)
 	{
-		CvTeam& kThisTeam = GET_TEAM(GET_PLAYER(eThisPlayer).getTeam());
-		//if (eOtherPlayer != eThisPlayer && kThisTeam.isHasMet(GET_PLAYER(eOtherPlayer).getTeam()))
-		if (kThisTeam.isHasMet(GET_PLAYER(eOtherPlayer).getTeam())) // K-Mod. Allow the "other relations string" to display even if eOtherPlayer == eThisPlayer. It's useful info.
+		CvTeam& kThisTeam = GET_TEAM(kPlayer.getTeam());
+		TeamTypes eOtherTeam = GET_PLAYER(eOtherPlayer).getTeam();
+
+		if (kThisTeam.isHasMet(eOtherTeam)) // K-Mod. Allow the "other relations string" to display even if eOtherPlayer == eThisPlayer. It's useful info.
 		{
 			//getEspionageString(szBuffer, eThisPlayer, eOtherPlayer); // disabled by K-Mod. (The player should not be told exactly how many espionage points everyone has.)
 
-			if (eOtherPlayer != eThisPlayer) // K-Mod
+			if (eOtherPlayer != eThisPlayer)
 			{
 				getAttitudeString(szBuffer, eThisPlayer, eOtherPlayer);
 				getActiveDealsString(szBuffer, eThisPlayer, eOtherPlayer);
 			}
+			getWarWearinessString(szBuffer, eThisPlayer, eOtherPlayer);
 
 			getOtherRelationsString(szBuffer, eThisPlayer, eOtherPlayer);
 		}
 	}
+	else
+		getWarWearinessString(szBuffer, eThisPlayer, NO_PLAYER); // total war weariness
 }
 
 

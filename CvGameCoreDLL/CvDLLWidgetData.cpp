@@ -4165,7 +4165,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 
 	szBuffer.append(gDLL->getText("TXT_KEY_MISC_CONTACT_LEADER", kPlayer.getNameKey(), kPlayer.getCivilizationShortDescription()));
 	szBuffer.append(NEWLINE);
-	GAMETEXT.parsePlayerTraits(szBuffer, (PlayerTypes)widgetDataStruct.m_iData1);
+	GAMETEXT.parsePlayerTraits(szBuffer, ePlayer);
 
 	if (!(kActiveTeam.isHasMet(eTeam)))
 	{
@@ -4175,6 +4175,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 
 	if (kActiveTeam.isHasMet(eTeam) || GC.getGameINLINE().isDebugMode())
 	{
+		/* original bts code
 		if (!kPlayer.isHuman())
 		{
 			if (!kPlayer.AI_isWillingToTalk(eActivePlayer))
@@ -4189,8 +4190,7 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 				GAMETEXT.getAttitudeString(szBuffer, ePlayer, eActivePlayer);
 
 				szBuffer.append(NEWLINE);
-				//GAMETEXT.getEspionageString(szBuffer, ((PlayerTypes)widgetDataStruct.m_iData1), eActivePlayer); // Disabled by K-Mod
-
+				GAMETEXT.getEspionageString(szBuffer, ((PlayerTypes)widgetDataStruct.m_iData1), eActivePlayer);
 				szBuffer.append(gDLL->getText("TXT_KEY_MISC_CTRL_TRADE"));
 			}
 		}
@@ -4198,7 +4198,25 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 		{
 			szBuffer.append(NEWLINE);
 			GAMETEXT.getEspionageString(szBuffer, ((PlayerTypes)widgetDataStruct.m_iData1), eActivePlayer);
+		} */
+		// K-Mod
+		if (!kPlayer.AI_isWillingToTalk(eActivePlayer))
+		{
+			szBuffer.append(NEWLINE);
+			szBuffer.append(gDLL->getText("TXT_KEY_MISC_REFUSES_TO_TALK"));
 		}
+		if (!((GC.altKey() || GC.ctrlKey()) && gDLL->getChtLvl() > 0))
+		{
+			GAMETEXT.getAttitudeString(szBuffer, ePlayer, eActivePlayer);
+			GAMETEXT.getWarWearinessString(szBuffer, ePlayer, eActivePlayer); // K-Mod
+
+			if (!kPlayer.isHuman() && kPlayer.AI_isWillingToTalk(eActivePlayer))
+			{
+				szBuffer.append(NEWLINE);
+				szBuffer.append(gDLL->getText("TXT_KEY_MISC_CTRL_TRADE"));
+			}
+		}
+		// K-Mod end
 
 		if (eTeam != eActiveTeam )
 		{
@@ -4210,17 +4228,17 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
 			{
 				CvTeamAI& kTeam = GET_TEAM((TeamTypes) iTeam);
-				if (kTeam.isAlive() && !kTeam.isMinorCiv() && iTeam != eActiveTeam && iTeam != GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam())
+				if (kTeam.isAlive() && !kTeam.isMinorCiv() && iTeam != eActiveTeam && iTeam != GET_PLAYER(ePlayer).getTeam())
 				{
 					if (kActiveTeam.isHasMet(kTeam.getID()))
 					{
-						if (::atWar((TeamTypes) iTeam, GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam()))
+						if (::atWar((TeamTypes) iTeam, GET_PLAYER(ePlayer).getTeam()))
 						{
 							setListHelp(szWarWithString, L"", kTeam.getName().GetCString(), L", ", bFirst);
 							bFirst = false;
 						}
 
-						if (kTeam.AI_getWorstEnemy() == GET_PLAYER((PlayerTypes)widgetDataStruct.m_iData1).getTeam())
+						if (kTeam.AI_getWorstEnemy() == GET_PLAYER(ePlayer).getTeam())
 						{
 							setListHelp(szWorstEnemyString, L"", kTeam.getName().GetCString(), L", ", bFirst2);
 							bFirst2 = false;
