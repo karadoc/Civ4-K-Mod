@@ -1818,6 +1818,7 @@ bool CvSelectionGroup::continueMission_bulk(int iSteps)
 
 		if (bDone)
 		{
+			/* original bts code (roughly)
 			if (!isBusy())
 			{
 				if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer())
@@ -1828,16 +1829,31 @@ bool CvSelectionGroup::continueMission_bulk(int iSteps)
 							(headMissionQueueNode()->m_data.eMissionType == MISSION_ROUTE_TO) ||
 							(headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO_UNIT))
 						{
-							GC.getGameINLINE().cycleSelectionGroups_delayed(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES) ? 1 : 2, true, true); // K-Mod
+							GC.getGameINLINE().cycleSelectionGroups_delayed(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES) ? 1 : 2, true, true);
 						}
 					}
 				}
 
 				deleteMissionQueueNode(headMissionQueueNode());
-				// K-Mod Note: the "unofficial patch" had a condition for deleting the mission node equivalent to the following:
-				//if (!isHuman() || headMissionQueueNode()->m_data.eMissionType != MISSION_MOVE_TO || canAllMove() || nextMissionQueueNode(headMissionQueueNode()) == NULL)
-				// I didn't understand what good it did, and it was causing problems with Rapid Unit Cycling. So I removed it.
+			} */
+			// K-Mod. If rapid-unit-cycling is enabled, I want to cycle as soon a possible. Otherwise, I want to mimic the original behaviour.
+			if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer() && IsSelected())
+			{
+				if ((headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO ||
+					headMissionQueueNode()->m_data.eMissionType == MISSION_ROUTE_TO ||
+					headMissionQueueNode()->m_data.eMissionType == MISSION_MOVE_TO_UNIT) && !isBusy())
+				{
+					GC.getGameINLINE().cycleSelectionGroups_delayed(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_QUICK_MOVES) ? 1 : 2, true, canAnyMove());
+				}
+				else
+					GC.getGameINLINE().cycleSelectionGroups_delayed(0, true, canAnyMove()); // this should cycle if RUC is enabled, and do nothing if it isn't.
 			}
+
+			if (!isBusy())
+			{
+				deleteMissionQueueNode(headMissionQueueNode());
+			}
+			// K-Mod end
 		}
 		else
 		{
