@@ -13415,47 +13415,8 @@ void CvCity::doMeltdown()
 					{
 						setNumRealBuilding(((BuildingTypes)iI), 0);
 					}
-/**
-*** K-Mod, 31/08/10, karadoc
-*** Reduced damage from meltdowns
-**/
-					/* orginal bts code
-					plot()->nukeExplosion(1);
-					*/
-					// Instead of a full nuclear explosion, we'll just scatter some fallout.
-					int iDX, iDY;
-					const int iRange = 1;
-					CvPlot* pLoopPlot;
-
-					for (iDX = -(iRange); iDX <= iRange; iDX++)
-					{
-						for (iDY = -(iRange); iDY <= iRange; iDY++)
-						{
-							pLoopPlot	= plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
-
-							if (pLoopPlot != NULL)
-							{
-								// Skip the city square
-								if (pLoopPlot->getPlotCity() != NULL)
-									continue;
-
-								if (!(pLoopPlot->isWater()) && !(pLoopPlot->isImpassable()))
-								{
-									if (NO_FEATURE == pLoopPlot->getFeatureType() || !GC.getFeatureInfo(pLoopPlot->getFeatureType()).isNukeImmune())
-									{
-										if (GC.getGameINLINE().getSorenRandNum(100, "Nuke Fallout") < GC.getDefineINT("NUKE_FALLOUT_PROB"))
-										{
-											pLoopPlot->setImprovementType(NO_IMPROVEMENT);
-											pLoopPlot->setFeatureType((FeatureTypes)(GC.getDefineINT("NUKE_FEATURE")));
-										}
-									}
-								}
-							}
-						}// iDY loop
-					}// iDX loop
-/*
-** K-Mod END
-*/
+					//plot()->nukeExplosion(1);
+					plot()->nukeExplosion(1, 0, false); // K-Mod
 
 					szBuffer = gDLL->getText("TXT_KEY_MISC_MELTDOWN_CITY", getNameKey());
 					gDLL->getInterfaceIFace()->addHumanMessage(getOwnerINLINE(), false, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_MELTDOWN", MESSAGE_TYPE_MINOR_EVENT, ARTFILEMGR.getInterfaceArtInfo("INTERFACE_UNHEALTHY_PERSON")->getPath(), (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), getX_INLINE(), getY_INLINE(), true, true);

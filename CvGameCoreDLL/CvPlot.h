@@ -71,7 +71,7 @@ public:
 	void verifyUnitValidPlot();
 	void forceBumpUnits(); // K-Mod
 
-	void nukeExplosion(int iRange, CvUnit* pNukeUnit = NULL);																							// Exposed to Python
+	void nukeExplosion(int iRange, CvUnit* pNukeUnit = NULL, bool bBomb = true); //  K-Mod added bBomb, Exposed to Python
 
 	bool isConnectedTo( const CvCity* pCity) const;																												// Exposed to Python
 	bool isConnectedToCapital(PlayerTypes ePlayer = NO_PLAYER) const;																			// Exposed to Python
