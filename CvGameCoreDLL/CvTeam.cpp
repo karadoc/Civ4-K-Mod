@@ -953,10 +953,10 @@ void CvTeam::doTurn()
 
 	if (isBarbarian())
 	{
-		// K-Mod. Delay the start of the barbarian research. (this is an experimental change, and is currently disabled)
+		// K-Mod. Delay the start of the barbarian research. (This is an experimental change. It is currently compensated by an increase in the barbarian tech rate.)
 		const CvPlayerAI& kBarbPlayer = GET_PLAYER(getLeaderID());
 		const CvGame& kGame = GC.getGameINLINE();
-		//if (kGame.getElapsedGameTurns() >= GC.getHandicapInfo(kGame.getHandicapType()).getBarbarianCreationTurnsElapsed() * GC.getGameSpeedInfo(kGame.getGameSpeedType()).getBarbPercent() / 400)
+		if (kGame.getElapsedGameTurns() >= GC.getHandicapInfo(kGame.getHandicapType()).getBarbarianCreationTurnsElapsed() * GC.getGameSpeedInfo(kGame.getGameSpeedType()).getBarbPercent() / 200)
 		{
 			for (TechTypes i = (TechTypes)0; i < GC.getNumTechInfos(); i = (TechTypes)(i+1))
 			{

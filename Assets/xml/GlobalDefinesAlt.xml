@@ -15,11 +15,15 @@
 	</Define>
 	<Define>
 		<DefineName>BASE_REVOLT_OCCUPATION_TURNS</DefineName>
-		<iDefineIntVal>3</iDefineIntVal> <!-- increased from 2, because of changes that I've made to its useage -->
+		<iDefineIntVal>3</iDefineIntVal> <!-- increased from 2, because of changes that I've made to its usage -->
 	</Define>
 	<Define>
 		<DefineName>EVENT_MESSAGE_STAGGER_TIME</DefineName>
 		<iDefineIntVal>2</iDefineIntVal> <!-- decreased from 3 -->
+	</Define>
+	<Define>
+		<DefineName>BARBARIAN_FREE_TECH_PERCENT</DefineName>
+		<iDefineIntVal>4</iDefineIntVal> <!-- increased from 3, to compensate for other changes -->
 	</Define>
 	<Define>
 		<DefineName>FROZEN_TERRAIN</DefineName>
