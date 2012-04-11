@@ -6370,9 +6370,10 @@ int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bE
 	return iValue;
 }
 
-
-int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnablesUnitWonder ) const
+// This function has been mostly rewriten for K-Mod
+int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnablesUnitWonder) const
 {
+	PROFILE_FUNC();
 	const CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod
 
 	bool bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
@@ -6390,610 +6391,599 @@ int CvPlayerAI::AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnabl
 	int iCoastalCities = countNumCoastalCities();
 	CvCity* pCapitalCity = getCapitalCity();
 
-	UnitTypes eLoopUnit;
-	int iMilitaryValue = 0;
 	int iValue = 0;
 
 	bEnablesUnitWonder = false;
-	for (int iJ = 0; iJ < GC.getNumUnitClassInfos(); iJ++)
+	for (UnitClassTypes eLoopClass = (UnitClassTypes)0; eLoopClass < GC.getNumUnitClassInfos(); eLoopClass = (UnitClassTypes)(eLoopClass+1))
 	{
-		eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iJ)));
+		UnitTypes eLoopUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eLoopClass);
 
-		if (eLoopUnit != NO_UNIT)
+		if (eLoopUnit == NO_UNIT || !isTechRequiredForUnit(eTech, eLoopUnit))
+			continue;
+
+		CvUnitInfo& kLoopUnit = GC.getUnitInfo(eLoopUnit);
+		iValue += 200;
+		int iUnitValue = 0;
+		int iNavalValue = 0;
+		int iMilitaryValue = 0;
+
+		if (GC.getUnitClassInfo(eLoopClass).getDefaultUnitIndex() != GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eLoopClass))
 		{
-			if (isTechRequiredForUnit((eTech), eLoopUnit))
+			//UU
+			iUnitValue += 600;
+		}
+
+		if (kLoopUnit.getPrereqAndTech() == eTech || kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()) || canResearch((TechTypes)kLoopUnit.getPrereqAndTech()))
+		{
+			// (note, we already checked that this tech is required for the unit.)
+
+			for (UnitAITypes eAI = (UnitAITypes)0; eAI < NUM_UNITAI_TYPES; eAI = (UnitAITypes)(eAI+1))
 			{
-				CvUnitInfo& kLoopUnit = GC.getUnitInfo(eLoopUnit);
-				iValue += 200;
-				int iUnitValue = 0;
-				int iNavalValue = 0;
-				
-				if ((GC.getUnitClassInfo((UnitClassTypes)iJ).getDefaultUnitIndex()) != (GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iJ)))
-                {
-                    //UU
-                    iUnitValue += 600;
-                }
-
-				//if (kLoopUnit.getPrereqAndTech() == eTech)
-				if (kLoopUnit.getPrereqAndTech() == eTech || kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()) || canResearch((TechTypes)kLoopUnit.getPrereqAndTech())) // K-Mod
+				// Always score the default AI type at full weight.
+				int iWeight = 0;
+				if (eAI == kLoopUnit.getDefaultUnitAIType())
+					iWeight = 100;
+				else if (kLoopUnit.getUnitAIType(eAI)) // only consider other types which are flagged in the xml.
 				{
-					iMilitaryValue = 0;
-
-					// BBAI TODO: Change this to evaluating all unitai types defined in XML for unit?
-					// Without this change many unit types are hard to evaluate, like offensive value of rifles
-					// or defensive value of collateral seige
-					switch (kLoopUnit.getDefaultUnitAIType())
+					// score only the AI types for which we rate better than our current best unit.
+					int iTypeValue = AI_unitValue(eLoopUnit, eAI, 0);
+					if (iTypeValue > 0)
 					{
-					case UNITAI_UNKNOWN:
-					case UNITAI_ANIMAL:
-						break;
-
-					case UNITAI_SETTLE:
-						iUnitValue += 1200;
-						break;
-
-					case UNITAI_WORKER:
-						iUnitValue += 800;
-						break;
-
-					case UNITAI_ATTACK:
-						iMilitaryValue += ((bWarPlan) ? 600 : 300);
-						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 600 : 0); // was 800
-						iUnitValue += 100;
-						break;
-
-					case UNITAI_ATTACK_CITY:
-						iMilitaryValue += ((bWarPlan) ? 800 : 400);
-						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER ) ? 600 : 0); // was 800
-						//if (kLoopUnit.getBombardRate() > 0)
-						// ... moved out of the switch
-						iUnitValue += 100;
-						break;
-
-					case UNITAI_COLLATERAL:
-						iMilitaryValue += ((bWarPlan) ? 600 : 300);
-						break;
-
-					case UNITAI_PILLAGE:
-						iMilitaryValue += ((bWarPlan) ? 200 : 100);
-						break;
-
-					case UNITAI_RESERVE:
-						iMilitaryValue += ((bWarPlan) ? 200 : 100);
-						break;
-
-					case UNITAI_COUNTER:
-						iMilitaryValue += ((bWarPlan) ? 600 : 300);
-						iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 300 : 0); // was 600
-						break;
-
-					case UNITAI_PARADROP:
-						iMilitaryValue += ((bWarPlan) ? 600 : 300);
-						break;
-
-					case UNITAI_CITY_DEFENSE:
-						iMilitaryValue += ((bWarPlan) ? 800 : 500); // K-Mod :400 -> :500
-						iMilitaryValue += ((!bCapitalAlone) ? 400 : 200);
-						iUnitValue += ((iHasMetCount > 0) ? 800 : 200);
-						break;
-
-					case UNITAI_CITY_COUNTER:
-						iMilitaryValue += ((bWarPlan) ? 800 : 400);
-						break;
-
-					case UNITAI_CITY_SPECIAL:
-						iMilitaryValue += ((bWarPlan) ? 800 : 400);
-						break;
-
-					case UNITAI_EXPLORE:
-						iUnitValue += ((bCapitalAlone) ? 100 : 200);
-						break;
-
-					case UNITAI_MISSIONARY:
-						iUnitValue += ((getStateReligion() != NO_RELIGION) ? 600 : 300);
-						break;
-
-					case UNITAI_PROPHET:
-					case UNITAI_ARTIST:
-					case UNITAI_SCIENTIST:
-					case UNITAI_GENERAL:
-					case UNITAI_MERCHANT:
-					case UNITAI_ENGINEER:
-					case UNITAI_GREAT_SPY: // K-Mod
-						break;
-
-					case UNITAI_SPY:
-						iMilitaryValue += ((bWarPlan) ? 100 : 50);
-						break;
-
-					case UNITAI_ICBM:
-						//iMilitaryValue += ((bWarPlan) ? 200 : 100);
-						// K-Mod
-						if (!GC.getGameINLINE().isNoNukes())
+						int iOldValue = 0;
+						for (int i = 0; i < GC.getNumUnitClassInfos(); i++)
 						{
-							iMilitaryValue += ((bWarPlan) ? 200 : 100);
-							iMilitaryValue += GC.getGameINLINE().isNukesValid() ? 2*AI_nukeWeight() : 0;
-							FAssert(!GC.getGameINLINE().isNukesValid() || AI_nukeWeight() > 0);
-						}
-						// K-Mod end
-						break;
-
-					case UNITAI_WORKER_SEA:
-						if (iCoastalCities > 0)
-						{
-							// note, workboat improvements are already counted in the improvement section
-						}
-						break;
-
-					case UNITAI_ATTACK_SEA:
-						// BBAI TODO: Boost value for maps where Barb ships are pestering us
-						if (iCoastalCities > 0)
-						{
-							//iMilitaryValue += ((bWarPlan) ? 200 : 100);
-							iMilitaryValue += (bWarPlan ? 2 : 1) * (100 + kLoopUnit.getCollateralDamage()/2);// K-Mod
-						}
-						iNavalValue += 100;
-						break;
-
-					case UNITAI_RESERVE_SEA:
-						if (iCoastalCities > 0)
-						{
-							//iMilitaryValue += ((bWarPlan) ? 100 : 50);
-							iMilitaryValue += (bWarPlan ? 10 : 5) * (10 + kLoopUnit.getCollateralDamage()/20);// K-Mod
-							// K-Mod note: this naval value stuff seems a bit flakey...
-						}
-						iNavalValue += 100;
-						break;
-
-					case UNITAI_ESCORT_SEA:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += ((bWarPlan) ? 100 : 50);
-						}
-						iNavalValue += 100;
-						break;
-
-					case UNITAI_EXPLORE_SEA:
-						if (iCoastalCities > 0)
-						{
-							iUnitValue += ((bCapitalAlone) ? 1800 : 600);
-						}
-						break;
-
-					case UNITAI_ASSAULT_SEA:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += ((bWarPlan || bCapitalAlone) ? 400 : 200);
-						}
-						iNavalValue += 200;
-						break;
-
-					case UNITAI_SETTLER_SEA:
-						if (iCoastalCities > 0)
-						{
-							iUnitValue += ((bWarPlan || bCapitalAlone) ? 100 : 200);
-						}
-						iNavalValue += 200;
-						break;
-
-					case UNITAI_MISSIONARY_SEA:
-						if (iCoastalCities > 0)
-						{
-							iUnitValue += 100;
-						}
-						break;
-
-					case UNITAI_SPY_SEA:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += 100;
-						}
-						break;
-
-					case UNITAI_CARRIER_SEA:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += ((bWarPlan) ? 100 : 50);
-						}
-						break;
-
-					case UNITAI_MISSILE_CARRIER_SEA:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += ((bWarPlan) ? 100 : 50);
-						}
-						break;
-
-					case UNITAI_PIRATE_SEA:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += 100;
-						}
-						iNavalValue += 100;
-						break;
-
-					case UNITAI_ATTACK_AIR:
-						//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
-						// K-Mod, I've decreased the value here but added something extra a bit lower down.
-						iMilitaryValue += ((bWarPlan) ? 10 : 6) * (100 + kLoopUnit.getCollateralDamage()/2);
-						break;
-
-					case UNITAI_DEFENSE_AIR:
-						//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
-						iMilitaryValue += ((bWarPlan) ? 1000 : 600);
-						break;
-
-					case UNITAI_CARRIER_AIR:
-						if (iCoastalCities > 0)
-						{
-							iMilitaryValue += ((bWarPlan) ? 200 : 100);
-						}
-						iNavalValue += 400;
-						break;
-
-					case UNITAI_MISSILE_AIR:
-						iMilitaryValue += ((bWarPlan) ? 200 : 100);
-						break;
-
-					default:
-						FAssertMsg(false, "Missing UNITAI type in AI_techUnitValue");
-						break;
-					}
-
-					// K-Mod
-					if (kLoopUnit.getBombardRate() > 0) // block moved from UNITAI_ATTACK_CITY:
-					{
-						iMilitaryValue += 200;
-
-						if (AI_calculateTotalBombard(DOMAIN_LAND) == 0)
-						{
-							iMilitaryValue += 800;
-							if (AI_isDoStrategy(AI_STRATEGY_DAGGER))
+							UnitTypes eTestUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(i);
+							if (eTestUnit != NO_UNIT && canTrain(eTestUnit))
 							{
-								iMilitaryValue += 400; // was 1000
+								iOldValue = std::max(iOldValue, AI_unitValue(eTestUnit, eAI, 0));
+								if (iOldValue > iTypeValue)
+									break;
 							}
 						}
+						iWeight = 100 * (iTypeValue - iOldValue) / std::max(1, iTypeValue);
 					}
+				}
+				if (iWeight <= 0)
+					continue;
 
-					if (kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) && kLoopUnit.getCollateralDamage() > 0)
+				// temporary log, for testing.
+				if (gPlayerLogLevel >= 3)
+				{
+					CvWString sUnitAI;
+					getUnitAIString(sUnitAI, eAI);
+					logBBAI("      %S scored a %d%% for %S", kLoopUnit.getDescription(0), iWeight, sUnitAI.GetCString());
+				}
+
+				switch (kLoopUnit.getDefaultUnitAIType())
+				{
+				case UNITAI_UNKNOWN:
+				case UNITAI_ANIMAL:
+					break;
+
+				case UNITAI_SETTLE:
+					iUnitValue += 12*iWeight;
+					break;
+
+				case UNITAI_WORKER:
+					iUnitValue += 8*iWeight;
+					break;
+
+				case UNITAI_ATTACK:
+					iMilitaryValue += (bWarPlan ? 6 : 3)*iWeight;
+					iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0); // was 800
+					iUnitValue += 1*iWeight;
+					break;
+
+				case UNITAI_ATTACK_CITY:
+					iMilitaryValue += (bWarPlan ? 8 : 4)*iWeight;
+					iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0); // was 800
+					//if (kLoopUnit.getBombardRate() > 0)
+					// ... moved out of the switch
+					iUnitValue += 1*iWeight;
+					break;
+
+				case UNITAI_COLLATERAL:
+					iMilitaryValue += (bWarPlan ? 6 : 3)*iWeight;
+					break;
+
+				case UNITAI_PILLAGE:
+					iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					break;
+
+				case UNITAI_RESERVE:
+					iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					break;
+
+				case UNITAI_COUNTER:
+					iMilitaryValue += ((bWarPlan) ? 6*iWeight : 3*iWeight);
+					iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 3*iWeight : 0); // was 600
+					break;
+
+				case UNITAI_PARADROP:
+					iMilitaryValue += (bWarPlan ? 6 : 3)*iWeight;
+					break;
+
+				case UNITAI_CITY_DEFENSE:
+					iMilitaryValue += (bWarPlan ? 8 : 5)*iWeight; // K-Mod :400 -> :500
+					iMilitaryValue += (bCapitalAlone ? 2 : 4)*iWeight;
+					iUnitValue += (iHasMetCount > 0 ? 8 : 2)*iWeight;
+					break;
+
+				case UNITAI_CITY_COUNTER:
+					iMilitaryValue += (bWarPlan ? 8 : 4)*iWeight;
+					break;
+
+				case UNITAI_CITY_SPECIAL:
+					iMilitaryValue += (bWarPlan ? 8 : 4)*iWeight;
+					break;
+
+				case UNITAI_EXPLORE:
+					iUnitValue += (bCapitalAlone ? 1 : 2)*iWeight;
+					break;
+
+				case UNITAI_MISSIONARY:
+					iUnitValue += (getStateReligion() != NO_RELIGION ? 6 : 3)*iWeight;
+					break;
+
+				case UNITAI_PROPHET:
+				case UNITAI_ARTIST:
+				case UNITAI_SCIENTIST:
+				case UNITAI_GENERAL:
+				case UNITAI_MERCHANT:
+				case UNITAI_ENGINEER:
+				case UNITAI_GREAT_SPY: // K-Mod
+					break;
+
+				case UNITAI_SPY:
+					//iMilitaryValue += (bWarPlan ? 100 : 50);
+					// K-Mod
+					if (iHasMetCount > 0)
+						iMilitaryValue += (bCapitalAlone ? 1 : 2)*iWeight/2;
+					// K-Mod end
+					break;
+
+				case UNITAI_ICBM:
+					//iMilitaryValue += ((bWarPlan) ? 200 : 100);
+					// K-Mod
+					if (!GC.getGameINLINE().isNoNukes())
 					{
-						// note: the following boost is for land units only.
-						// Sea and air units get their collateral bonus in the switch section above.
-						int iOldValue = getTypicalUnitValue(UNITAI_COLLATERAL);
-						if (iOldValue > 0)
-						{
-							int iDelta = std::max(0, GC.getGameINLINE().AI_combatValue(eLoopUnit) - iOldValue);
-							iMilitaryValue += 150 * iDelta / iOldValue;
-							// this boost is a bit ad hoc. But so is the rest of the stuff in here!
-							// my goal with this component is to boost the value of canons.
-						}
-						else if (kLoopUnit.getDefaultUnitAIType() == getTypicalUnitValue(UNITAI_COLLATERAL))
-						{
-							// currently there are no units with this default AI; but anyway...
-							iMilitaryValue += 150;
-						}
+						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+						iMilitaryValue += (GC.getGameINLINE().isNukesValid() ? 2*AI_nukeWeight() : 0)*iWeight/100;
+						FAssert(!GC.getGameINLINE().isNukesValid() || AI_nukeWeight() > 0);
 					}
 					// K-Mod end
+					break;
 
-					/* original BBAI code (mostly). I've decided that most of this stuff is slightly bogus.
-					// So I've disabled it, and tried to reimplement the same concepts in a more flexible way. (further down)
-					if( AI_isDoStrategy(AI_STRATEGY_ALERT1) )
+				case UNITAI_WORKER_SEA:
+					if (iCoastalCities > 0)
 					{
-						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
-						{
-							//iUnitValue += 500;
-							iMilitaryValue += 500 * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100; // K-Mod
-						}
-
-						if( kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE) )
-						{
-							iMilitaryValue += (1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue +=
-						}
+						// note, workboat improvements are already counted in the improvement section
 					}
+					break;
 
-					if( AI_isDoStrategy(AI_STRATEGY_TURTLE) && iPathLength <= 1)
+				case UNITAI_ATTACK_SEA:
+					// BBAI TODO: Boost value for maps where Barb ships are pestering us
+					if (iCoastalCities > 0)
 					{
-						if( kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) )
-						{
-							//iUnitValue += 1000;
-							iMilitaryValue += 1000 * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100; // K-Mod
-						}
-
-						if( kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE) )
-						{
-							iMilitaryValue += (2000 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue +=
-						}
+						//iMilitaryValue += ((bWarPlan) ? 200 : 100);
+						iMilitaryValue += (bWarPlan ? 2 : 1) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100;// K-Mod
 					}
+					iNavalValue += 1*iWeight;
+					break;
 
-					if( AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3) )
+				case UNITAI_RESERVE_SEA:
+					if (iCoastalCities > 0)
 					{
-						if( kLoopUnit.getUnitAIType(UNITAI_ATTACK_CITY) )
-						{
-							iMilitaryValue += (1500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
-						}
+						//iMilitaryValue += ((bWarPlan) ? 100 : 50);
+						iMilitaryValue += (bWarPlan ? 10 : 5) * (10 + kLoopUnit.getCollateralDamage()/20) * iWeight / 100;// K-Mod
+						// K-Mod note: this naval value stuff seems a bit flakey...
 					}
-					else if( AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) )
+					iNavalValue += 1*iWeight;
+					break;
+
+				case UNITAI_ESCORT_SEA:
+					if (iCoastalCities > 0)
 					{
-						if( kLoopUnit.getUnitAIType(UNITAI_ATTACK_CITY) )
-						{
-							iMilitaryValue += (500 * GC.getGameINLINE().AI_combatValue(eLoopUnit))/100; // K-Mod, was iUnitValue
-						}
-					} */
-
-					if (kLoopUnit.getUnitAIType(UNITAI_ASSAULT_SEA) && iCoastalCities > 0)
-					{
-						int iAssaultValue = 0;
-						UnitTypes eExistingUnit = NO_UNIT;
-						if (AI_bestAreaUnitAIValue(UNITAI_ASSAULT_SEA, NULL, &eExistingUnit) == 0)
-						{
-							iAssaultValue += 250;
-						}
-						else if( eExistingUnit != NO_UNIT )
-						{
-							iAssaultValue += 1000 * std::max(0, AI_unitImpassableCount(eLoopUnit) - AI_unitImpassableCount(eExistingUnit));
-
-							int iNewCapacity = kLoopUnit.getMoves() * kLoopUnit.getCargoSpace();
-							int iOldCapacity = GC.getUnitInfo(eExistingUnit).getMoves() * GC.getUnitInfo(eExistingUnit).getCargoSpace();
-
-							iAssaultValue += (800 * (iNewCapacity - iOldCapacity)) / std::max(1, iOldCapacity);
-						}
-
-						if (iAssaultValue > 0)
-						{
-							int iLoop;
-							CvArea* pLoopArea;
-							bool bIsAnyAssault = false;
-							for(pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
-							{
-								if (AI_isPrimaryArea(pLoopArea))
-								{
-									if (pLoopArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT)
-									{
-										bIsAnyAssault = true;
-										break;
-									}
-								}
-							}
-							if (bIsAnyAssault)
-							{
-								iUnitValue += iAssaultValue * 4;
-							}
-							else
-							{
-								iUnitValue += iAssaultValue;
-							}
-						}
+						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight/2;
 					}
+					iNavalValue += 1*iWeight;
+					break;
 
-					// K-Mod
-					if (kLoopUnit.getDomainType() == DOMAIN_AIR)
+				case UNITAI_EXPLORE_SEA:
+					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += (bWarPlan? 600 : 400) * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100;
+						iUnitValue += (bCapitalAlone ? 18 : 6)*iWeight;
 					}
+					break;
 
-					if (iNavalValue > 0)
+				case UNITAI_ASSAULT_SEA:
+					if (iCoastalCities > 0)
 					{
-						if (getCapitalCity() != NULL)
-						{
-							// BBAI TODO: A little odd ... naval value is 0 if have no colonies.
-							iNavalValue *= 2 * (getNumCities() - getCapitalCity()->area()->getCitiesPerPlayer(getID()));
-							iNavalValue /= getNumCities();
-							
-							iUnitValue += iNavalValue;
-						}
+						iMilitaryValue += (bWarPlan || bCapitalAlone ? 4 : 2)*iWeight;
 					}
+					iNavalValue += 2*iWeight;
+					break;
 
-					if (AI_totalUnitAIs((UnitAITypes)(kLoopUnit.getDefaultUnitAIType())) == 0)
+				case UNITAI_SETTLER_SEA:
+					if (iCoastalCities > 0)
 					{
-						// do not give bonus to seagoing units if they are worthless
-						if (iUnitValue > 0)
-						{
-							iUnitValue *= 2;
-						}
-
-						if (kLoopUnit.getDefaultUnitAIType() == UNITAI_EXPLORE)
-						{
-							if (pCapitalCity != NULL)
-							{
-								iUnitValue += (AI_neededExplorers(pCapitalCity->area()) * 400);
-							}
-						}
-
-						if (kLoopUnit.getDefaultUnitAIType() == UNITAI_EXPLORE_SEA)
-						{
-							iUnitValue += 400;
-							iUnitValue += ((GC.getGameINLINE().countCivTeamsAlive() - iHasMetCount) * 200);
-						}
+						iUnitValue += (bWarPlan || bCapitalAlone ? 1 : 2)*iWeight;
 					}
+					iNavalValue += 2*iWeight;
+					break;
 
-					if (kLoopUnit.getUnitAIType(UNITAI_SETTLER_SEA))
+				case UNITAI_MISSIONARY_SEA:
+					if (iCoastalCities > 0)
 					{
-						if (getCapitalCity() != NULL)
-						{
-							UnitTypes eExistingUnit = NO_UNIT;
-							int iBestAreaValue = 0;
-							AI_getNumAreaCitySites(getCapitalCity()->getArea(), iBestAreaValue);
-
-							//Early Expansion by sea
-							if (AI_bestAreaUnitAIValue(UNITAI_SETTLER_SEA, NULL, &eExistingUnit) == 0)
-							{
-								CvArea* pWaterArea = getCapitalCity()->waterArea();
-								if (pWaterArea != NULL)
-								{
-									int iBestOtherValue = 0;
-									AI_getNumAdjacentAreaCitySites(pWaterArea->getID(), getCapitalCity()->getArea(), iBestOtherValue);
-									
-									if (iBestAreaValue == 0)
-									{
-										iUnitValue += 2000;
-									}
-									else if (iBestAreaValue < iBestOtherValue)
-									{
-										iUnitValue += 1000;
-									}
-									else if (iBestOtherValue > 0)
-									{
-										iUnitValue += 500;
-									}
-								}
-							}
-							// Landlocked expansion over ocean
-							else if( eExistingUnit != NO_UNIT )
-							{
-								if( AI_unitImpassableCount(eLoopUnit) < AI_unitImpassableCount(eExistingUnit) )
-								{
-									if( iBestAreaValue < AI_getMinFoundValue() )
-									{
-										iUnitValue += (AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION2) ? 2000 : 500);
-									}
-								}
-							}
-						}
+						iUnitValue += 1*iWeight;
 					}
+					break;
 
-					if( iMilitaryValue > 0 )
+				case UNITAI_SPY_SEA:
+					if (iCoastalCities > 0)
 					{
-						if (iHasMetCount == 0 || AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
-						{
-							iMilitaryValue /= 2;
-						}
-
-						// K-Mod
-						if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS) && kLoopUnit.getDomainType() == DOMAIN_LAND)
-						{
-							iMilitaryValue += 3 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
-							iMilitaryValue *= 3;
-							iMilitaryValue /= 2;
-						}
-
-						// This multiplier stuff is basically my version of the BBAI code I disabled further up.
-						int iMultiplier = 100;
-						if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
-						{
-							iMultiplier += 30;
-							if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3))
-							{
-								iMultiplier += 30;
-								if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
-								{
-									iMultiplier += 40;
-								}
-							}
-						}
-						if (AI_isDoStrategy(AI_STRATEGY_ALERT1 | AI_STRATEGY_TURTLE)
-							&& (kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE)
-							|| kLoopUnit.getUnitAIType(UNITAI_CITY_SPECIAL)
-							|| kLoopUnit.getUnitAIType(UNITAI_CITY_COUNTER)
-							|| kLoopUnit.getUnitAIType(UNITAI_COLLATERAL)))
-						{
-							iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 70 : 30;
-							if (iPathLength <= 1 && AI_isDoStrategy(AI_STRATEGY_TURTLE))
-							{
-								iMultiplier += 75;
-							}
-						}
-						iMilitaryValue *= iMultiplier;
-						iMilitaryValue /= 100;
-
-						if (bCapitalAlone && iMultiplier <= 100) // I've moved this block from above, and added the multiplier condition.
-						{
-							iMilitaryValue *= 2;
-							iMilitaryValue /= 3;
-						}
-						// K-Mod end
-
-						iUnitValue += iMilitaryValue;
+						iMilitaryValue += 1*iWeight;
 					}
+					break;
 
-					if (iPathLength <= 1)
+				case UNITAI_CARRIER_SEA:
+					if (iCoastalCities > 0)
 					{
-						if (getTotalPopulation() > 5)
-						{
-							if (isWorldUnitClass((UnitClassTypes)iJ))
-							{
-								if (!(GC.getGameINLINE().isUnitClassMaxedOut((UnitClassTypes)iJ)))
-								{
-									bEnablesUnitWonder = true;
-								}
-							}
-						}
+						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight/2;
 					}
-					// K-Mod
-					// Decrease the value if we are missing other prereqs.
-					{
-						int iMissingTechs = 0;
-						if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()))
-							iMissingTechs++;
+					break;
 
-						for (int iI = 0; iI < GC.getNUM_UNIT_AND_TECH_PREREQS(); iI++)
-						{
-							if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
-							{
-								iMissingTechs++;
-								if (!canResearch((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
-									iMissingTechs++;
-							}
-						}
-						FAssert(iMissingTechs > 0);
-						iUnitValue /= std::max(1, iMissingTechs);
+				case UNITAI_MISSILE_CARRIER_SEA:
+					if (iCoastalCities > 0)
+					{
+						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight/2;
 					}
+					break;
 
-					// Decrease the value if we don't have the resources
-					bool bMaybeMissing = false; // if we don't know if we have the bonus or not
-					bool bDefinitelyMissing = false; // if we can see the bonuses, and we know we don't have any.
-
-					for (int iI = 0; iI < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); ++iI)
+				case UNITAI_PIRATE_SEA:
+					if (iCoastalCities > 0)
 					{
-						BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqOrBonuses(iI);
-						if (ePrereqBonus != NO_BONUS)
+						iMilitaryValue += 1*iWeight;
+					}
+					iNavalValue += 1*iWeight;
+					break;
+
+				case UNITAI_ATTACK_AIR:
+					//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
+					// K-Mod, I've decreased the value here but added something extra a bit lower down.
+					iMilitaryValue += (bWarPlan ? 10 : 6) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100;
+					break;
+
+				case UNITAI_DEFENSE_AIR:
+					//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
+					iMilitaryValue += (bWarPlan ? 10 : 6)*iWeight;
+					break;
+
+				case UNITAI_CARRIER_AIR:
+					if (iCoastalCities > 0)
+					{
+						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					}
+					iNavalValue += 4*iWeight;
+					break;
+
+				case UNITAI_MISSILE_AIR:
+					iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					break;
+
+				default:
+					FAssertMsg(false, "Missing UNITAI type in AI_techUnitValue");
+					break;
+				}
+			}
+
+			// K-Mod
+			if (kLoopUnit.getBombardRate() > 0) // block moved from UNITAI_ATTACK_CITY:
+			{
+				iMilitaryValue += 200;
+
+				if (AI_calculateTotalBombard(DOMAIN_LAND) == 0)
+				{
+					iMilitaryValue += 800;
+					if (AI_isDoStrategy(AI_STRATEGY_DAGGER))
+					{
+						iMilitaryValue += 400; // was 1000
+					}
+				}
+			}
+
+			if (kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) && kLoopUnit.getCollateralDamage() > 0)
+			{
+				// note: the following boost is for land units only.
+				// Sea and air units get their collateral bonus in the switch section above.
+				int iOldValue = getTypicalUnitValue(UNITAI_COLLATERAL);
+				if (iOldValue > 0)
+				{
+					int iDelta = std::max(0, GC.getGameINLINE().AI_combatValue(eLoopUnit) - iOldValue);
+					iMilitaryValue += 150 * iDelta / iOldValue;
+					// this boost is a bit ad hoc. But so is the rest of the stuff in here!
+					// my goal with this component is to boost the value of canons.
+				}
+				else if (kLoopUnit.getDefaultUnitAIType() == getTypicalUnitValue(UNITAI_COLLATERAL))
+				{
+					// currently there are no units with this default AI; but anyway...
+					iMilitaryValue += 150;
+				}
+			}
+			// K-Mod end
+
+			if (kLoopUnit.getUnitAIType(UNITAI_ASSAULT_SEA) && iCoastalCities > 0)
+			{
+				int iAssaultValue = 0;
+				UnitTypes eExistingUnit = NO_UNIT;
+				if (AI_bestAreaUnitAIValue(UNITAI_ASSAULT_SEA, NULL, &eExistingUnit) == 0)
+				{
+					iAssaultValue += 250;
+				}
+				else if( eExistingUnit != NO_UNIT )
+				{
+					iAssaultValue += 1000 * std::max(0, AI_unitImpassableCount(eLoopUnit) - AI_unitImpassableCount(eExistingUnit));
+
+					int iNewCapacity = kLoopUnit.getMoves() * kLoopUnit.getCargoSpace();
+					int iOldCapacity = GC.getUnitInfo(eExistingUnit).getMoves() * GC.getUnitInfo(eExistingUnit).getCargoSpace();
+
+					iAssaultValue += (800 * (iNewCapacity - iOldCapacity)) / std::max(1, iOldCapacity);
+				}
+
+				if (iAssaultValue > 0)
+				{
+					int iLoop;
+					CvArea* pLoopArea;
+					bool bIsAnyAssault = false;
+					for(pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
+					{
+						if (AI_isPrimaryArea(pLoopArea))
 						{
-							if (hasBonus(ePrereqBonus))
+							if (pLoopArea->getAreaAIType(getTeam()) == AREAAI_ASSAULT)
 							{
-								bDefinitelyMissing = false;
-								bMaybeMissing = false;
+								bIsAnyAssault = true;
 								break;
 							}
-							else
+						}
+					}
+					if (bIsAnyAssault)
+					{
+						iUnitValue += iAssaultValue * 4;
+					}
+					else
+					{
+						iUnitValue += iAssaultValue;
+					}
+				}
+			}
+
+			// K-Mod
+			if (kLoopUnit.getDomainType() == DOMAIN_AIR)
+			{
+				iMilitaryValue += (bWarPlan? 600 : 400) * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100;
+			}
+
+			if (iNavalValue > 0)
+			{
+				if (getCapitalCity() != NULL)
+				{
+					// BBAI TODO: A little odd ... naval value is 0 if have no colonies.
+					iNavalValue *= 2 * (getNumCities() - getCapitalCity()->area()->getCitiesPerPlayer(getID()));
+					iNavalValue /= getNumCities();
+
+					iUnitValue += iNavalValue;
+				}
+			}
+
+			if (AI_totalUnitAIs((UnitAITypes)(kLoopUnit.getDefaultUnitAIType())) == 0)
+			{
+				// do not give bonus to seagoing units if they are worthless
+				if (iUnitValue > 0)
+				{
+					iUnitValue *= 2;
+				}
+
+				if (kLoopUnit.getDefaultUnitAIType() == UNITAI_EXPLORE)
+				{
+					if (pCapitalCity != NULL)
+					{
+						iUnitValue += (AI_neededExplorers(pCapitalCity->area()) * 400);
+					}
+				}
+
+				if (kLoopUnit.getDefaultUnitAIType() == UNITAI_EXPLORE_SEA)
+				{
+					iUnitValue += 400;
+					iUnitValue += ((GC.getGameINLINE().countCivTeamsAlive() - iHasMetCount) * 200);
+				}
+			}
+
+			if (kLoopUnit.getUnitAIType(UNITAI_SETTLER_SEA))
+			{
+				if (getCapitalCity() != NULL)
+				{
+					UnitTypes eExistingUnit = NO_UNIT;
+					int iBestAreaValue = 0;
+					AI_getNumAreaCitySites(getCapitalCity()->getArea(), iBestAreaValue);
+
+					//Early Expansion by sea
+					if (AI_bestAreaUnitAIValue(UNITAI_SETTLER_SEA, NULL, &eExistingUnit) == 0)
+					{
+						CvArea* pWaterArea = getCapitalCity()->waterArea();
+						if (pWaterArea != NULL)
+						{
+							int iBestOtherValue = 0;
+							AI_getNumAdjacentAreaCitySites(pWaterArea->getID(), getCapitalCity()->getArea(), iBestOtherValue);
+
+							if (iBestAreaValue == 0)
 							{
-								if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) && countOwnedBonuses(ePrereqBonus) == 0)
-								{
-									bDefinitelyMissing = true;
-								}
-								else
-								{
-									bMaybeMissing = true;
-								}
+								iUnitValue += 2000;
+							}
+							else if (iBestAreaValue < iBestOtherValue)
+							{
+								iUnitValue += 1000;
+							}
+							else if (iBestOtherValue > 0)
+							{
+								iUnitValue += 500;
 							}
 						}
 					}
-					BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqAndBonus();
-					if (ePrereqBonus != NO_BONUS && !hasBonus(ePrereqBonus))
+					// Landlocked expansion over ocean
+					else if( eExistingUnit != NO_UNIT )
 					{
-						if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) &&
-							countOwnedBonuses(ePrereqBonus) == 0)
-						{							
-							bDefinitelyMissing = true;
-						}
-						else
-						{							
-							bMaybeMissing = true;
+						if( AI_unitImpassableCount(eLoopUnit) < AI_unitImpassableCount(eExistingUnit) )
+						{
+							if( iBestAreaValue < AI_getMinFoundValue() )
+							{
+								iUnitValue += (AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION2) ? 2000 : 500);
+							}
 						}
 					}
-					if (bDefinitelyMissing)
-					{
-						iUnitValue /= 3;
-					}
-					else if (bMaybeMissing)
-					{
-						iUnitValue *= 2;
-						iUnitValue /= 3;
-					}
-					// K-Mod end
-
-					iValue += iUnitValue;
 				}
 			}
 		}
+
+		if( iMilitaryValue > 0 )
+		{
+			if (iHasMetCount == 0 || AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
+			{
+				iMilitaryValue /= 2;
+			}
+
+			// K-Mod
+			if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS) && kLoopUnit.getDomainType() == DOMAIN_LAND)
+			{
+				iMilitaryValue += 3 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
+				iMilitaryValue *= 3;
+				iMilitaryValue /= 2;
+			}
+
+			// This multiplier stuff is basically my version of the BBAI code I disabled further up.
+			int iMultiplier = 100;
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
+			{
+				iMultiplier += 30;
+				if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3))
+				{
+					iMultiplier += 30;
+					if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
+					{
+						iMultiplier += 40;
+					}
+				}
+			}
+			if (AI_isDoStrategy(AI_STRATEGY_ALERT1 | AI_STRATEGY_TURTLE)
+				&& (kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE)
+				|| kLoopUnit.getUnitAIType(UNITAI_CITY_SPECIAL)
+				|| kLoopUnit.getUnitAIType(UNITAI_CITY_COUNTER)
+				|| kLoopUnit.getUnitAIType(UNITAI_COLLATERAL)))
+			{
+				iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 70 : 30;
+				if (iPathLength <= 1 && AI_isDoStrategy(AI_STRATEGY_TURTLE))
+				{
+					iMultiplier += 75;
+				}
+			}
+			iMilitaryValue *= iMultiplier;
+			iMilitaryValue /= 100;
+
+			if (bCapitalAlone && iMultiplier <= 100) // I've moved this block from above, and added the multiplier condition.
+			{
+				iMilitaryValue *= 2;
+				iMilitaryValue /= 3;
+			}
+			// K-Mod end
+
+			iUnitValue += iMilitaryValue;
+		}
+
+		if (iPathLength <= 1)
+		{
+			if (getTotalPopulation() > 5)
+			{
+				if (isWorldUnitClass(eLoopClass))
+				{
+					if (!GC.getGameINLINE().isUnitClassMaxedOut(eLoopClass))
+					{
+						bEnablesUnitWonder = true;
+					}
+				}
+			}
+		}
+		// K-Mod
+		// Decrease the value if we are missing other prereqs.
+		{
+			int iMissingTechs = 0;
+			if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()))
+				iMissingTechs++;
+
+			for (int iI = 0; iI < GC.getNUM_UNIT_AND_TECH_PREREQS(); iI++)
+			{
+				if (!kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+				{
+					iMissingTechs++;
+					if (!canResearch((TechTypes)kLoopUnit.getPrereqAndTechs(iI)))
+						iMissingTechs++;
+				}
+			}
+			FAssert(iMissingTechs > 0);
+			iUnitValue /= std::max(1, iMissingTechs);
+		}
+
+		// Decrease the value if we don't have the resources
+		bool bMaybeMissing = false; // if we don't know if we have the bonus or not
+		bool bDefinitelyMissing = false; // if we can see the bonuses, and we know we don't have any.
+
+		for (int iI = 0; iI < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); ++iI)
+		{
+			BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqOrBonuses(iI);
+			if (ePrereqBonus != NO_BONUS)
+			{
+				if (hasBonus(ePrereqBonus))
+				{
+					bDefinitelyMissing = false;
+					bMaybeMissing = false;
+					break;
+				}
+				else
+				{
+					if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) && countOwnedBonuses(ePrereqBonus) == 0)
+					{
+						bDefinitelyMissing = true;
+					}
+					else
+					{
+						bMaybeMissing = true;
+					}
+				}
+			}
+		}
+		BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqAndBonus();
+		if (ePrereqBonus != NO_BONUS && !hasBonus(ePrereqBonus))
+		{
+			if ((kTeam.isHasTech((TechTypes)(GC.getBonusInfo(ePrereqBonus).getTechReveal())) || kTeam.isForceRevealedBonus(ePrereqBonus)) &&
+				countOwnedBonuses(ePrereqBonus) == 0)
+			{
+				bDefinitelyMissing = true;
+			}
+			else
+			{
+				bMaybeMissing = true;
+			}
+		}
+		if (bDefinitelyMissing)
+		{
+			iUnitValue /= 3;
+		}
+		else if (bMaybeMissing)
+		{
+			iUnitValue *= 2;
+			iUnitValue /= 3;
+		}
+		// K-Mod end
+
+		iValue += iUnitValue;
 	}
 
 	return iValue;
