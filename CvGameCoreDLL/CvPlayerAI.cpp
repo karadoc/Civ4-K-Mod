@@ -6403,14 +6403,18 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 
 		CvUnitInfo& kLoopUnit = GC.getUnitInfo(eLoopUnit);
 		iValue += 200;
-		int iUnitValue = 0;
+		int iTotalUnitValue = 0;
+
 		int iNavalValue = 0;
-		int iMilitaryValue = 0;
+		int iOffenceValue = 0;
+		int iDefenceValue = 0;
+		int iGeneralValue = 0;
+		// iMilitaryValue = iAttackValue + iDefenceValue;
 
 		if (GC.getUnitClassInfo(eLoopClass).getDefaultUnitIndex() != GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eLoopClass))
 		{
 			//UU
-			iUnitValue += 600;
+			iTotalUnitValue += 600;
 		}
 
 		if (kLoopUnit.getPrereqAndTech() == eTech || kTeam.isHasTech((TechTypes)kLoopUnit.getPrereqAndTech()) || canResearch((TechTypes)kLoopUnit.getPrereqAndTech()))
@@ -6429,17 +6433,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					int iTypeValue = AI_unitValue(eLoopUnit, eAI, 0);
 					if (iTypeValue > 0)
 					{
-						int iOldValue = 0;
-						for (int i = 0; i < GC.getNumUnitClassInfos(); i++)
-						{
-							UnitTypes eTestUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(i);
-							if (eTestUnit != NO_UNIT && canTrain(eTestUnit))
-							{
-								iOldValue = std::max(iOldValue, AI_unitValue(eTestUnit, eAI, 0));
-								if (iOldValue > iTypeValue)
-									break;
-							}
-						}
+						int iOldValue = AI_bestAreaUnitAIValue(eAI, 0);
 						iWeight = 100 * (iTypeValue - iOldValue) / std::max(1, iTypeValue);
 					}
 				}
@@ -6451,7 +6445,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				{
 					CvWString sUnitAI;
 					getUnitAIString(sUnitAI, eAI);
-					logBBAI("      %S scored a %d%% for %S", kLoopUnit.getDescription(0), iWeight, sUnitAI.GetCString());
+					logBBAI("      %S scored for %S with weight=%d", kLoopUnit.getDescription(0), sUnitAI.GetCString(), iWeight);
 				}
 
 				switch (kLoopUnit.getDefaultUnitAIType())
@@ -6461,68 +6455,64 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					break;
 
 				case UNITAI_SETTLE:
-					iUnitValue += 12*iWeight;
+					iGeneralValue = std::max(iGeneralValue, 12*iWeight);
 					break;
 
 				case UNITAI_WORKER:
-					iUnitValue += 8*iWeight;
+					iGeneralValue = std::max(iGeneralValue, 8*iWeight);
 					break;
 
 				case UNITAI_ATTACK:
-					iMilitaryValue += (bWarPlan ? 6 : 3)*iWeight;
-					iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0); // was 800
-					iUnitValue += 1*iWeight;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 6 : 3)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0));
+					iGeneralValue = std::max(iGeneralValue, 1*iWeight);
 					break;
 
 				case UNITAI_ATTACK_CITY:
-					iMilitaryValue += (bWarPlan ? 8 : 4)*iWeight;
-					iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0); // was 800
-					//if (kLoopUnit.getBombardRate() > 0)
-					// ... moved out of the switch
-					iUnitValue += 1*iWeight;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 8 : 4)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0));
+					iGeneralValue = std::max(iGeneralValue, 1*iWeight);
 					break;
 
 				case UNITAI_COLLATERAL:
-					iMilitaryValue += (bWarPlan ? 6 : 3)*iWeight;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight);
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 4 : 2)*iWeight);
 					break;
 
 				case UNITAI_PILLAGE:
-					iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight);
 					break;
 
 				case UNITAI_RESERVE:
-					iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 2 : 1)*iWeight);
 					break;
 
 				case UNITAI_COUNTER:
-					iMilitaryValue += ((bWarPlan) ? 6*iWeight : 3*iWeight);
-					iMilitaryValue += (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 3*iWeight : 0); // was 600
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 4 : 2)*iWeight);
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 3*iWeight : 0)); // was 600
 					break;
 
 				case UNITAI_PARADROP:
-					iMilitaryValue += (bWarPlan ? 6 : 3)*iWeight;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 6 : 3)*iWeight);
 					break;
 
 				case UNITAI_CITY_DEFENSE:
-					iMilitaryValue += (bWarPlan ? 8 : 5)*iWeight; // K-Mod :400 -> :500
-					iMilitaryValue += (bCapitalAlone ? 2 : 4)*iWeight;
-					iUnitValue += (iHasMetCount > 0 ? 8 : 2)*iWeight;
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 8 : 5)*iWeight + (bCapitalAlone ? 2 : 4)*iWeight);
+					iGeneralValue = std::max(iGeneralValue, (iHasMetCount > 0 ? 8 : 2)*iWeight);
 					break;
 
 				case UNITAI_CITY_COUNTER:
-					iMilitaryValue += (bWarPlan ? 8 : 4)*iWeight;
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 8 : 4)*iWeight);
 					break;
 
 				case UNITAI_CITY_SPECIAL:
-					iMilitaryValue += (bWarPlan ? 8 : 4)*iWeight;
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 8 : 4)*iWeight);
 					break;
 
 				case UNITAI_EXPLORE:
-					iUnitValue += (bCapitalAlone ? 1 : 2)*iWeight;
+					iGeneralValue = std::max(iGeneralValue, (bCapitalAlone ? 1 : 2)*iWeight);
 					break;
 
 				case UNITAI_MISSIONARY:
-					iUnitValue += (getStateReligion() != NO_RELIGION ? 6 : 3)*iWeight;
+					iGeneralValue = std::max(iGeneralValue, (getStateReligion() != NO_RELIGION ? 6 : 3)*iWeight);
 					break;
 
 				case UNITAI_PROPHET:
@@ -6538,7 +6528,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					//iMilitaryValue += (bWarPlan ? 100 : 50);
 					// K-Mod
 					if (iHasMetCount > 0)
-						iMilitaryValue += (bCapitalAlone ? 1 : 2)*iWeight/2;
+						iGeneralValue = std::max(iGeneralValue, (bCapitalAlone ? 1 : 2)*iWeight/2);
 					// K-Mod end
 					break;
 
@@ -6547,8 +6537,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					// K-Mod
 					if (!GC.getGameINLINE().isNoNukes())
 					{
-						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
-						iMilitaryValue += (GC.getGameINLINE().isNukesValid() ? 2*AI_nukeWeight() : 0)*iWeight/100;
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight + (GC.getGameINLINE().isNukesValid() ? 2*AI_nukeWeight() : 0)*iWeight/100);
 						FAssert(!GC.getGameINLINE().isNukesValid() || AI_nukeWeight() > 0);
 					}
 					// K-Mod end
@@ -6566,109 +6555,109 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					if (iCoastalCities > 0)
 					{
 						//iMilitaryValue += ((bWarPlan) ? 200 : 100);
-						iMilitaryValue += (bWarPlan ? 2 : 1) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100;// K-Mod
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100);// K-Mod
 					}
-					iNavalValue += 1*iWeight;
+					iNavalValue = std::max(iNavalValue, 1*iWeight);
 					break;
 
 				case UNITAI_RESERVE_SEA:
 					if (iCoastalCities > 0)
 					{
 						//iMilitaryValue += ((bWarPlan) ? 100 : 50);
-						iMilitaryValue += (bWarPlan ? 10 : 5) * (10 + kLoopUnit.getCollateralDamage()/20) * iWeight / 100;// K-Mod
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 10 : 5) * (10 + kLoopUnit.getCollateralDamage()/20) * iWeight / 100);// K-Mod
 						// K-Mod note: this naval value stuff seems a bit flakey...
 					}
-					iNavalValue += 1*iWeight;
+					iNavalValue = std::max(iNavalValue, 1*iWeight);
 					break;
 
 				case UNITAI_ESCORT_SEA:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight/2;
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight/2);
 					}
-					iNavalValue += 1*iWeight;
+					iNavalValue = std::max(iNavalValue, 1*iWeight);
 					break;
 
 				case UNITAI_EXPLORE_SEA:
 					if (iCoastalCities > 0)
 					{
-						iUnitValue += (bCapitalAlone ? 18 : 6)*iWeight;
+						iGeneralValue = std::max(iGeneralValue, (bCapitalAlone ? 18 : 6)*iWeight);
 					}
 					break;
 
 				case UNITAI_ASSAULT_SEA:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += (bWarPlan || bCapitalAlone ? 4 : 2)*iWeight;
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan || bCapitalAlone ? 4 : 2)*iWeight);
 					}
-					iNavalValue += 2*iWeight;
+					iNavalValue = std::max(iNavalValue, 2*iWeight);
 					break;
 
 				case UNITAI_SETTLER_SEA:
 					if (iCoastalCities > 0)
 					{
-						iUnitValue += (bWarPlan || bCapitalAlone ? 1 : 2)*iWeight;
+						iGeneralValue = std::max(iGeneralValue, (bWarPlan || bCapitalAlone ? 1 : 2)*iWeight);
 					}
-					iNavalValue += 2*iWeight;
+					iNavalValue = std::max(iNavalValue, 2*iWeight);
 					break;
 
 				case UNITAI_MISSIONARY_SEA:
 					if (iCoastalCities > 0)
 					{
-						iUnitValue += 1*iWeight;
+						iGeneralValue = std::max(iGeneralValue, 1*iWeight);
 					}
 					break;
 
 				case UNITAI_SPY_SEA:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += 1*iWeight;
+						iGeneralValue = std::max(iGeneralValue, 1*iWeight);
 					}
 					break;
 
 				case UNITAI_CARRIER_SEA:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight/2;
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight/2);
 					}
 					break;
 
 				case UNITAI_MISSILE_CARRIER_SEA:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight/2;
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight/2);
 					}
 					break;
 
 				case UNITAI_PIRATE_SEA:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += 1*iWeight;
+						iOffenceValue = std::max(iOffenceValue, 1*iWeight);
 					}
-					iNavalValue += 1*iWeight;
+					iNavalValue = std::max(iNavalValue, 1*iWeight);
 					break;
 
 				case UNITAI_ATTACK_AIR:
 					//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
 					// K-Mod, I've decreased the value here but added something extra a bit lower down.
-					iMilitaryValue += (bWarPlan ? 10 : 6) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 10 : 6) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100);
 					break;
 
 				case UNITAI_DEFENSE_AIR:
 					//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
-					iMilitaryValue += (bWarPlan ? 10 : 6)*iWeight;
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 10 : 6)*iWeight);
 					break;
 
 				case UNITAI_CARRIER_AIR:
 					if (iCoastalCities > 0)
 					{
-						iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+						iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight);
 					}
-					iNavalValue += 4*iWeight;
+					iNavalValue = std::max(iNavalValue, 4*iWeight);
 					break;
 
 				case UNITAI_MISSILE_AIR:
-					iMilitaryValue += (bWarPlan ? 2 : 1)*iWeight;
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight);
 					break;
 
 				default:
@@ -6678,6 +6667,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 			}
 
 			// K-Mod
+			int iMilitaryValue = iOffenceValue + iDefenceValue;
 			if (kLoopUnit.getBombardRate() > 0) // block moved from UNITAI_ATTACK_CITY:
 			{
 				iMilitaryValue += 200;
@@ -6692,7 +6682,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				}
 			}
 
-			if (kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) && kLoopUnit.getCollateralDamage() > 0)
+			/* if (kLoopUnit.getUnitAIType(UNITAI_COLLATERAL) && kLoopUnit.getCollateralDamage() > 0)
 			{
 				// note: the following boost is for land units only.
 				// Sea and air units get their collateral bonus in the switch section above.
@@ -6709,7 +6699,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					// currently there are no units with this default AI; but anyway...
 					iMilitaryValue += 150;
 				}
-			}
+			} */ // I don't think we'll need this anymore.
 			// K-Mod end
 
 			if (kLoopUnit.getUnitAIType(UNITAI_ASSAULT_SEA) && iCoastalCities > 0)
@@ -6748,11 +6738,11 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					}
 					if (bIsAnyAssault)
 					{
-						iUnitValue += iAssaultValue * 4;
+						iTotalUnitValue += iAssaultValue * 4;
 					}
 					else
 					{
-						iUnitValue += iAssaultValue;
+						iTotalUnitValue += iAssaultValue;
 					}
 				}
 			}
@@ -6771,30 +6761,30 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					iNavalValue *= 2 * (getNumCities() - getCapitalCity()->area()->getCitiesPerPlayer(getID()));
 					iNavalValue /= getNumCities();
 
-					iUnitValue += iNavalValue;
+					iTotalUnitValue += iNavalValue;
 				}
 			}
 
-			if (AI_totalUnitAIs((UnitAITypes)(kLoopUnit.getDefaultUnitAIType())) == 0)
+			if (AI_totalUnitAIs((UnitAITypes)kLoopUnit.getDefaultUnitAIType()) == 0)
 			{
 				// do not give bonus to seagoing units if they are worthless
-				if (iUnitValue > 0)
+				if (iTotalUnitValue > 0)
 				{
-					iUnitValue *= 2;
+					iTotalUnitValue *= 2;
 				}
 
 				if (kLoopUnit.getDefaultUnitAIType() == UNITAI_EXPLORE)
 				{
 					if (pCapitalCity != NULL)
 					{
-						iUnitValue += (AI_neededExplorers(pCapitalCity->area()) * 400);
+						iTotalUnitValue += (AI_neededExplorers(pCapitalCity->area()) * 400);
 					}
 				}
 
 				if (kLoopUnit.getDefaultUnitAIType() == UNITAI_EXPLORE_SEA)
 				{
-					iUnitValue += 400;
-					iUnitValue += ((GC.getGameINLINE().countCivTeamsAlive() - iHasMetCount) * 200);
+					iTotalUnitValue += 400;
+					iTotalUnitValue += ((GC.getGameINLINE().countCivTeamsAlive() - iHasMetCount) * 200);
 				}
 			}
 
@@ -6817,15 +6807,15 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 
 							if (iBestAreaValue == 0)
 							{
-								iUnitValue += 2000;
+								iTotalUnitValue += 2000;
 							}
 							else if (iBestAreaValue < iBestOtherValue)
 							{
-								iUnitValue += 1000;
+								iTotalUnitValue += 1000;
 							}
 							else if (iBestOtherValue > 0)
 							{
-								iUnitValue += 500;
+								iTotalUnitValue += 500;
 							}
 						}
 					}
@@ -6836,66 +6826,66 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 						{
 							if( iBestAreaValue < AI_getMinFoundValue() )
 							{
-								iUnitValue += (AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION2) ? 2000 : 500);
+								iTotalUnitValue += (AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION2) ? 2000 : 500);
 							}
 						}
 					}
 				}
 			}
-		}
 
-		if( iMilitaryValue > 0 )
-		{
-			if (iHasMetCount == 0 || AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
+			if (iMilitaryValue > 0)
 			{
-				iMilitaryValue /= 2;
-			}
+				if (iHasMetCount == 0 || AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
+				{
+					iMilitaryValue /= 2;
+				}
 
-			// K-Mod
-			if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS) && kLoopUnit.getDomainType() == DOMAIN_LAND)
-			{
-				iMilitaryValue += 3 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
-				iMilitaryValue *= 3;
-				iMilitaryValue /= 2;
-			}
+				// K-Mod
+				if (AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS) && kLoopUnit.getDomainType() == DOMAIN_LAND)
+				{
+					iMilitaryValue += 3 * GC.getGameINLINE().AI_combatValue(eLoopUnit);
+					iMilitaryValue *= 3;
+					iMilitaryValue /= 2;
+				}
 
-			// This multiplier stuff is basically my version of the BBAI code I disabled further up.
-			int iMultiplier = 100;
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
-			{
-				iMultiplier += 30;
-				if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3))
+				// This multiplier stuff is basically my version of the BBAI code I disabled further up.
+				int iMultiplier = 100;
+				if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
 				{
 					iMultiplier += 30;
-					if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
+					if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3))
 					{
-						iMultiplier += 40;
+						iMultiplier += 30;
+						if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
+						{
+							iMultiplier += 40;
+						}
 					}
 				}
-			}
-			if (AI_isDoStrategy(AI_STRATEGY_ALERT1 | AI_STRATEGY_TURTLE)
-				&& (kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE)
-				|| kLoopUnit.getUnitAIType(UNITAI_CITY_SPECIAL)
-				|| kLoopUnit.getUnitAIType(UNITAI_CITY_COUNTER)
-				|| kLoopUnit.getUnitAIType(UNITAI_COLLATERAL)))
-			{
-				iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 70 : 30;
-				if (iPathLength <= 1 && AI_isDoStrategy(AI_STRATEGY_TURTLE))
+				if (AI_isDoStrategy(AI_STRATEGY_ALERT1 | AI_STRATEGY_TURTLE)
+					&& (kLoopUnit.getUnitAIType(UNITAI_CITY_DEFENSE)
+					|| kLoopUnit.getUnitAIType(UNITAI_CITY_SPECIAL)
+					|| kLoopUnit.getUnitAIType(UNITAI_CITY_COUNTER)
+					|| kLoopUnit.getUnitAIType(UNITAI_COLLATERAL)))
 				{
-					iMultiplier += 75;
+					iMultiplier += AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 70 : 30;
+					if (iPathLength <= 1 && AI_isDoStrategy(AI_STRATEGY_TURTLE))
+					{
+						iMultiplier += 75;
+					}
 				}
-			}
-			iMilitaryValue *= iMultiplier;
-			iMilitaryValue /= 100;
+				iMilitaryValue *= iMultiplier;
+				iMilitaryValue /= 100;
 
-			if (bCapitalAlone && iMultiplier <= 100) // I've moved this block from above, and added the multiplier condition.
-			{
-				iMilitaryValue *= 2;
-				iMilitaryValue /= 3;
-			}
-			// K-Mod end
+				if (bCapitalAlone && iMultiplier <= 100) // I've moved this block from above, and added the multiplier condition.
+				{
+					iMilitaryValue *= 2;
+					iMilitaryValue /= 3;
+				}
+				// K-Mod end
 
-			iUnitValue += iMilitaryValue;
+				iTotalUnitValue += iMilitaryValue;
+			}
 		}
 
 		if (iPathLength <= 1)
@@ -6928,7 +6918,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				}
 			}
 			FAssert(iMissingTechs > 0);
-			iUnitValue /= std::max(1, iMissingTechs);
+			iTotalUnitValue /= std::max(1, iMissingTechs);
 		}
 
 		// Decrease the value if we don't have the resources
@@ -6974,16 +6964,16 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 		}
 		if (bDefinitelyMissing)
 		{
-			iUnitValue /= 3;
+			iTotalUnitValue /= 3;
 		}
 		else if (bMaybeMissing)
 		{
-			iUnitValue *= 2;
-			iUnitValue /= 3;
+			iTotalUnitValue *= 2;
+			iTotalUnitValue /= 3;
 		}
 		// K-Mod end
 
-		iValue += iUnitValue;
+		iValue += iTotalUnitValue;
 	}
 
 	return iValue;
@@ -14629,12 +14619,14 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 	return iValue;
 }
 
+// K-Mod
 bool CvPlayerAI::isMaliciousEspionageTarget(PlayerTypes eTarget) const
 {
 	if (GET_PLAYER(eTarget).getTeam() == getTeam())
 		return false;
 	return (AI_getAttitudeWeight(eTarget) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1) || GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(eTarget).getTeam()) != NO_WARPLAN);
 }
+// K-Mod end
 
 int CvPlayerAI::AI_getPeaceWeight() const
 {
@@ -20468,7 +20460,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 				iTheirVictoryCountdown = std::min(iTheirVictoryCountdown, kOtherTeam.AI_getLowestVictoryCountdown());
 			}
 		}
-		
+
 		if (MAX_INT == iTheirVictoryCountdown)
 		{
 			iTheirVictoryCountdown = -1;
@@ -20482,7 +20474,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 		{
 			if((iTheirVictoryCountdown < iOurVictoryCountdown))
 			{
-				m_iStrategyHash |= AI_STRATEGY_FINAL_WAR;			
+				m_iStrategyHash |= AI_STRATEGY_FINAL_WAR;
 			}
 			else if( GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) )
 			{
@@ -20493,7 +20485,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 				m_iStrategyHash |= AI_STRATEGY_FINAL_WAR;
 			}
 		}
-		
+
 		if (iOurVictoryCountdown < 0)
 		{
 			if (isCurrentResearchRepeat())
@@ -20566,7 +20558,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 							}
 						}
 					}
-						
+
 					if (iHigherCount > 0)
 					{
 						if (IWeakerCount == iHigherCount)
@@ -20635,7 +20627,7 @@ void CvPlayerAI::AI_updateStrategyHash()
 				}
 			}
 		}
-		
+
 		if (iAchieveVictories == 0)
 		{
 			if (iWarVictories > 0)
@@ -22940,7 +22932,7 @@ int CvPlayerAI::AI_bestCityUnitAIValue(UnitAITypes eUnitAI, CvCity* pCity, UnitT
 
 		if (eLoopUnit != NO_UNIT)
 		{
-			if (!isHuman() || (GC.getUnitInfo(eLoopUnit).getDefaultUnitAIType() == eUnitAI))
+			//if (!isHuman() || (GC.getUnitInfo(eLoopUnit).getDefaultUnitAIType() == eUnitAI)) // disabled by K-Mod
 			{
 				if (NULL == pCity ? canTrain(eLoopUnit) : pCity->canTrain(eLoopUnit))
 				{
