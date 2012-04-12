@@ -13849,11 +13849,15 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 			// K-Mod
 			FAssert(eBestReligion != NO_RELIGION);
-			iValue += (2 * iBestReligionPopulation - getTotalPopulation()) / 4;
+			iValue += (2 * iBestReligionPopulation - getTotalPopulation()) / 6;
 
-			if (isNoNonStateReligionSpread())
+			if (kCivic.isNoNonStateReligionSpread())
 			{
-				if (eBestReligion == GC.getLeaderHeadInfo(getLeaderType()).getFavoriteReligion() ||
+				if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+				{
+					iValue -= 3 * std::max(0, iCities + iBestReligionCities - iTotalReligonCount);
+				}
+				else if (eBestReligion == GC.getLeaderHeadInfo(getLeaderType()).getFavoriteReligion() ||
 					(hasHolyCity(eBestReligion) && countHolyCities() == 1))
 				{
 					iValue += iCities * 2; // protection vs espionage? depriving foreign civs of religion revenue?
@@ -14151,10 +14155,10 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 	}
 
-	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) && (GC.getCivicInfo(eCivic).isNoNonStateReligionSpread()))
+	/* if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) && (GC.getCivicInfo(eCivic).isNoNonStateReligionSpread()))
 	{
 		iValue /= 10;
-	}
+	} */ // what the lol...
 
 	return iValue;
 }

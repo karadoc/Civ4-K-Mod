@@ -4625,7 +4625,7 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 	// Note: the force split can be overridden by the calling function if need be.
 	/* if (pRemainderGroup && pRemainderGroup->getHeadUnitAI() != eOldHeadAI)
 		pRemainderGroup->AI_setForceSeparate(); */
-	FAssert(!pRemainderGroup || (pRemainderGroup->getHeadUnitAI() != eOldHeadAI) == pRemainderGroup->AI_isForceSeparate()); // this should now be automatic, because of my other edits.
+	FAssert(!pRemainderGroup || pRemainderGroup->getHeadUnitAI() == eOldHeadAI || pRemainderGroup->AI_isForceSeparate()); // this should now be automatic, because of my other edits.
 	// K-Mod end
 
 	if (ppOtherGroup != NULL)
