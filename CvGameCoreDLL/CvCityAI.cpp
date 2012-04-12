@@ -9685,7 +9685,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					{
 						iValue += 60 + iBaseProductionValue * iProductionTimes100 / 100;
 					}*/
-					int iCurrentProduction = getYieldRate(YIELD_PRODUCTION) - (bRemove ? iProductionTimes100/100 : 0);
+					int iCurrentProduction = getCurrentProductionDifference(true, false) - (bRemove ? iProductionTimes100/100 : 0);
 					if (iCurrentProduction < 1 + getPopulation()/3)
 					{
 						iValue += 5 * iBaseProductionValue * std::min(iProductionTimes100, (1 + getPopulation()/3 - iCurrentProduction)*100) / 100;
