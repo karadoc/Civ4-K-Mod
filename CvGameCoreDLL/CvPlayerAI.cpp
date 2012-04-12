@@ -6408,7 +6408,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 		int iNavalValue = 0;
 		int iOffenceValue = 0;
 		int iDefenceValue = 0;
-		int iGeneralValue = 0;
+		int iUtilityValue = 0;
 		// iMilitaryValue = iAttackValue + iDefenceValue;
 
 		if (GC.getUnitClassInfo(eLoopClass).getDefaultUnitIndex() != GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eLoopClass))
@@ -6427,54 +6427,45 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				int iWeight = 0;
 				if (eAI == kLoopUnit.getDefaultUnitAIType())
 					iWeight = 100;
-				else if (kLoopUnit.getUnitAIType(eAI)) // only consider other types which are flagged in the xml.
+				else if (kLoopUnit.getUnitAIType(eAI)) // only consider types which are flagged in the xml. (??)
 				{
 					// score only the AI types for which we rate better than our current best unit.
 					int iTypeValue = AI_unitValue(eLoopUnit, eAI, 0);
 					if (iTypeValue > 0)
 					{
 						int iOldValue = AI_bestAreaUnitAIValue(eAI, 0);
-						iWeight = 100 * (iTypeValue - iOldValue) / std::max(1, iTypeValue);
+						iWeight = std::min(100, 100 * (iTypeValue - iOldValue) / std::max(1, iOldValue));
 					}
 				}
 				if (iWeight <= 0)
 					continue;
 
-				// temporary log, for testing.
-				if (gPlayerLogLevel >= 3)
-				{
-					CvWString sUnitAI;
-					getUnitAIString(sUnitAI, eAI);
-					logBBAI("      %S scored for %S with weight=%d", kLoopUnit.getDescription(0), sUnitAI.GetCString(), iWeight);
-				}
-
-				switch (kLoopUnit.getDefaultUnitAIType())
+				switch (eAI)
 				{
 				case UNITAI_UNKNOWN:
 				case UNITAI_ANIMAL:
 					break;
 
 				case UNITAI_SETTLE:
-					iGeneralValue = std::max(iGeneralValue, 12*iWeight);
+					iUtilityValue = std::max(iUtilityValue, 12*iWeight);
 					break;
 
 				case UNITAI_WORKER:
-					iGeneralValue = std::max(iGeneralValue, 8*iWeight);
+					iUtilityValue = std::max(iUtilityValue, 8*iWeight);
 					break;
 
 				case UNITAI_ATTACK:
-					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 6 : 3)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0));
-					iGeneralValue = std::max(iGeneralValue, 1*iWeight);
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 7 : 4)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 5*iWeight : 0));
+					iTotalUnitValue += 1*iWeight;
 					break;
 
 				case UNITAI_ATTACK_CITY:
 					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 8 : 4)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 6*iWeight : 0));
-					iGeneralValue = std::max(iGeneralValue, 1*iWeight);
+					iTotalUnitValue += 1*iWeight;
 					break;
 
 				case UNITAI_COLLATERAL:
-					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight);
-					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 4 : 2)*iWeight);
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 6 : 4)*iWeight + (AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 2 : 0)*iWeight);
 					break;
 
 				case UNITAI_PILLAGE:
@@ -6486,8 +6477,8 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					break;
 
 				case UNITAI_COUNTER:
-					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 4 : 2)*iWeight);
-					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 3*iWeight : 0)); // was 600
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 5 : 3)*iWeight);
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 2 : 1)*iWeight + (AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 3*iWeight : 0));
 					break;
 
 				case UNITAI_PARADROP:
@@ -6495,8 +6486,8 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					break;
 
 				case UNITAI_CITY_DEFENSE:
-					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 8 : 5)*iWeight + (bCapitalAlone ? 2 : 4)*iWeight);
-					iGeneralValue = std::max(iGeneralValue, (iHasMetCount > 0 ? 8 : 2)*iWeight);
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 7 : 4)*iWeight + (bCapitalAlone ? 2 : 4)*iWeight);
+					iTotalUnitValue += (iHasMetCount > 0 ? 4 : 0)*iWeight;
 					break;
 
 				case UNITAI_CITY_COUNTER:
@@ -6508,11 +6499,22 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					break;
 
 				case UNITAI_EXPLORE:
-					iGeneralValue = std::max(iGeneralValue, (bCapitalAlone ? 1 : 2)*iWeight);
+					iUtilityValue = std::max(iUtilityValue, (bCapitalAlone ? 1 : 2)*iWeight);
 					break;
 
 				case UNITAI_MISSIONARY:
-					iGeneralValue = std::max(iGeneralValue, (getStateReligion() != NO_RELIGION ? 6 : 3)*iWeight);
+					//iTotalUnitValue += (getStateReligion() != NO_RELIGION ? 6 : 3)*iWeight;
+					// K-Mod. There might be one missionary for each religion. Be careful not to overvalue them!
+					{
+						for (ReligionTypes i = (ReligionTypes)0; i < GC.getNumReligionInfos(); i = (ReligionTypes)(i+1))
+						{
+							if (kLoopUnit.getReligionSpreads(i) && getHasReligionCount(i) > 0)
+							{
+								iUtilityValue = std::max(iUtilityValue, (getStateReligion() == i ? 6 : 3)*iWeight);
+							}
+						}
+					}
+					// K-Mod end
 					break;
 
 				case UNITAI_PROPHET:
@@ -6528,7 +6530,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					//iMilitaryValue += (bWarPlan ? 100 : 50);
 					// K-Mod
 					if (iHasMetCount > 0)
-						iGeneralValue = std::max(iGeneralValue, (bCapitalAlone ? 1 : 2)*iWeight/2);
+						iUtilityValue = std::max(iUtilityValue, (bCapitalAlone ? 1 : 2)*iWeight/2);
 					// K-Mod end
 					break;
 
@@ -6581,7 +6583,8 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				case UNITAI_EXPLORE_SEA:
 					if (iCoastalCities > 0)
 					{
-						iGeneralValue = std::max(iGeneralValue, (bCapitalAlone ? 18 : 6)*iWeight);
+						//iTotalUnitValue += (bCapitalAlone ? 18 : 6)*iWeight;
+						iUtilityValue = std::max(iUtilityValue, (6 + (bCapitalAlone ? 4 : 0) + (iHasMetCount > 0 ? 0 : 6))*iWeight);
 					}
 					break;
 
@@ -6596,7 +6599,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				case UNITAI_SETTLER_SEA:
 					if (iCoastalCities > 0)
 					{
-						iGeneralValue = std::max(iGeneralValue, (bWarPlan || bCapitalAlone ? 1 : 2)*iWeight);
+						iUtilityValue = std::max(iUtilityValue, (bWarPlan || bCapitalAlone ? 1 : 2)*iWeight);
 					}
 					iNavalValue = std::max(iNavalValue, 2*iWeight);
 					break;
@@ -6604,14 +6607,14 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				case UNITAI_MISSIONARY_SEA:
 					if (iCoastalCities > 0)
 					{
-						iGeneralValue = std::max(iGeneralValue, 1*iWeight);
+						iUtilityValue = std::max(iUtilityValue, 1*iWeight);
 					}
 					break;
 
 				case UNITAI_SPY_SEA:
 					if (iCoastalCities > 0)
 					{
-						iGeneralValue = std::max(iGeneralValue, 1*iWeight);
+						iUtilityValue = std::max(iUtilityValue, 1*iWeight);
 					}
 					break;
 
@@ -6665,8 +6668,8 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					break;
 				}
 			}
+			iTotalUnitValue += iUtilityValue;
 
-			// K-Mod
 			int iMilitaryValue = iOffenceValue + iDefenceValue;
 			if (kLoopUnit.getBombardRate() > 0) // block moved from UNITAI_ATTACK_CITY:
 			{
@@ -6700,7 +6703,6 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 					iMilitaryValue += 150;
 				}
 			} */ // I don't think we'll need this anymore.
-			// K-Mod end
 
 			if (kLoopUnit.getUnitAIType(UNITAI_ASSAULT_SEA) && iCoastalCities > 0)
 			{
@@ -11199,7 +11201,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 3 : 1;
 		
 		iValue += iCombatValue;
-		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 3); // K-Mod put in -1 !
+		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 5); // K-Mod put in -1, and changed from /3 to /5
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
@@ -11240,7 +11242,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		}		
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCityAttackModifier()) / 75);
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 200);
-		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 4); // K-Mod put in -1 !
+		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 6); // K-Mod put in -1, and changed /4 to /6
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 100);
 
 		if (!AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
@@ -11286,7 +11288,8 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 
 	case UNITAI_COLLATERAL:
 		iValue += iCombatValue;
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 50);
+		//iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 50);
+		iValue += iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage() * (1 + GC.getUnitInfo(eUnit).getCollateralDamageMaxUnits()) / 350; // K-Mod (max units is 6-8 in the current xml)
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves()) / 4);
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 25);
 		iValue -= ((iCombatValue * GC.getUnitInfo(eUnit).getCityAttackModifier()) / 100);
