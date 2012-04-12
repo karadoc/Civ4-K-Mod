@@ -36,6 +36,13 @@ struct DllExport IDInfo
 		return (eOwner == info.eOwner && iID == info.iID);
 	}
 
+	// K-Mod
+	bool operator< (const IDInfo& a) const
+	{
+		return eOwner < a.eOwner || (eOwner == a.eOwner && iID < a.iID);
+	}
+	// K-Mod end
+
 	void reset()
 	{
 		eOwner = NO_PLAYER;

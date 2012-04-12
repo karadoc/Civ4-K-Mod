@@ -12187,59 +12187,32 @@ bool CvUnit::canAdvance(const CvPlot* pPlot, int iThreshold) const
 	return true;
 }
 
-
+// K-Mod, I've rewritten this function just to make it a bit easier to understand, a bit more efficient, and a bit more robust.
+// For example, the original code used a std::map<CvUnit*, int>; if the random number in the map turned out to be the same, it could potentially have led to OOS.
+// The actual game mechanics are only very slightly changed. (I've removed the targets cap of "visible units - 1". That seemed like a silly limitation.)
 void CvUnit::collateralCombat(const CvPlot* pPlot, CvUnit* pSkipUnit)
 {
-	CLLNode<IDInfo>* pUnitNode;
-	CvUnit* pLoopUnit;
-	CvUnit* pBestUnit;
-	CvWString szBuffer;
-	int iTheirStrength;
-	int iStrengthFactor;
-	int iCollateralDamage;
-	int iUnitDamage;
-	int iDamageCount;
-	int iPossibleTargets;
-	int iCount;
-	int iValue;
-	int iBestValue;
-	std::map<CvUnit*, int> mapUnitDamage;
-	std::map<CvUnit*, int>::iterator it;
+	std::vector<std::pair<int, IDInfo> > targetUnits;
 
 	int iCollateralStrength = (getDomainType() == DOMAIN_AIR ? airBaseCombatStr() : baseCombatStr()) * collateralDamage() / 100;
-	// UNOFFICIAL_PATCH Start
-	// * Barrage promotions made working again on Tanks and other units with no base collateral ability
+
 	if (iCollateralStrength == 0 && getExtraCollateralDamage() == 0)
-	// UNOFFICIAL_PATCH End
-	{
 		return;
-	}
 
-	iPossibleTargets = std::min((pPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits());
-
-	pUnitNode = pPlot->headUnitNode();
+	CLLNode<IDInfo>* pUnitNode = pPlot->headUnitNode();
 
 	while (pUnitNode != NULL)
 	{
-		pLoopUnit = ::getUnit(pUnitNode->m_data);
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 		pUnitNode = pPlot->nextUnitNode(pUnitNode);
 
-		if (pLoopUnit != pSkipUnit)
+		if (pLoopUnit != pSkipUnit && isEnemy(pLoopUnit->getTeam(), pPlot) && pLoopUnit->canDefend() && !pLoopUnit->isInvisible(getTeam(), false))
 		{
-			if (isEnemy(pLoopUnit->getTeam(), pPlot))
-			{
-				if (!(pLoopUnit->isInvisible(getTeam(), false)))
-				{
-					if (pLoopUnit->canDefend())
-					{
-						iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "Collateral Damage"));
+			// This value thing is a bit bork. It's directly from the original code...
+			int iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "Collateral Damage"));
+			iValue *= pLoopUnit->currHitPoints();
 
-						iValue *= pLoopUnit->currHitPoints();
-
-						mapUnitDamage[pLoopUnit] = iValue;
-					}
-				}
-			}
+			targetUnits.push_back(std::make_pair(iValue, pLoopUnit->getIDInfo()));
 		}
 	}
 
@@ -12249,71 +12222,51 @@ void CvUnit::collateralCombat(const CvPlot* pPlot, CvUnit* pSkipUnit)
 		pCity = pPlot->getPlotCity();
 	}
 
-	iDamageCount = 0;
-	iCount = 0;
+	int iPossibleTargets = std::min((int)targetUnits.size(), collateralDamageMaxUnits());
+	std::partial_sort(targetUnits.begin(), targetUnits.begin() + iPossibleTargets, targetUnits.end(), std::greater<std::pair<int, IDInfo> >());
 
-	while (iCount < iPossibleTargets)
+	int iDamageCount = 0;
+
+	for (int i = 0; i < iPossibleTargets; i++)
 	{
-		iBestValue = 0;
-		pBestUnit = NULL;
+		CvUnit* pTargetUnit = ::getUnit(targetUnits[i].second);
+		FAssert(pTargetUnit);
 
-		for (it = mapUnitDamage.begin(); it != mapUnitDamage.end(); it++)
+		if (NO_UNITCOMBAT == getUnitCombatType() || !pTargetUnit->getUnitInfo().getUnitCombatCollateralImmune(getUnitCombatType()))
 		{
-			if (it->second > iBestValue)
+			int iTheirStrength = pTargetUnit->baseCombatStr();
+
+			int iStrengthFactor = ((iCollateralStrength + iTheirStrength + 1) / 2);
+
+			int iCollateralDamage = (GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE") * (iCollateralStrength + iStrengthFactor)) / (iTheirStrength + iStrengthFactor);
+
+			iCollateralDamage *= 100 + getExtraCollateralDamage();
+
+			iCollateralDamage *= std::max(0, 100 - pTargetUnit->getCollateralDamageProtection());
+			iCollateralDamage /= 100;
+
+			if (pCity != NULL)
 			{
-				iBestValue = it->second;
-				pBestUnit = it->first;
-			}
-		}
-
-		if (pBestUnit != NULL)
-		{
-			mapUnitDamage.erase(pBestUnit);
-
-			if (NO_UNITCOMBAT == getUnitCombatType() || !pBestUnit->getUnitInfo().getUnitCombatCollateralImmune(getUnitCombatType()))
-			{
-				iTheirStrength = pBestUnit->baseCombatStr();
-
-				iStrengthFactor = ((iCollateralStrength + iTheirStrength + 1) / 2);
-
-				iCollateralDamage = (GC.getDefineINT("COLLATERAL_COMBAT_DAMAGE") * (iCollateralStrength + iStrengthFactor)) / (iTheirStrength + iStrengthFactor);
-
-				iCollateralDamage *= 100 + getExtraCollateralDamage();
-
-				iCollateralDamage *= std::max(0, 100 - pBestUnit->getCollateralDamageProtection());
+				iCollateralDamage *= 100 + pCity->getAirModifier();
 				iCollateralDamage /= 100;
-
-				if (pCity != NULL)
-				{
-					iCollateralDamage *= 100 + pCity->getAirModifier();
-					iCollateralDamage /= 100;
-				}
-
-				iCollateralDamage /= 100;
-
-				iCollateralDamage = std::max(0, iCollateralDamage);
-
-				int iMaxDamage = std::min(collateralDamageLimit(), (collateralDamageLimit() * (iCollateralStrength + iStrengthFactor)) / (iTheirStrength + iStrengthFactor));
-				iUnitDamage = std::max(pBestUnit->getDamage(), std::min(pBestUnit->getDamage() + iCollateralDamage, iMaxDamage));
-
-				if (pBestUnit->getDamage() != iUnitDamage)
-				{
-					pBestUnit->setDamage(iUnitDamage, getOwnerINLINE());
-					iDamageCount++;
-				}
 			}
 
-			iCount++;
-		}
-		else
-		{
-			break;
+			iCollateralDamage = std::max(0, iCollateralDamage/100);
+
+			int iMaxDamage = std::min(collateralDamageLimit(), (collateralDamageLimit() * (iCollateralStrength + iStrengthFactor)) / (iTheirStrength + iStrengthFactor));
+			int iUnitDamage = std::max(pTargetUnit->getDamage(), std::min(pTargetUnit->getDamage() + iCollateralDamage, iMaxDamage));
+
+			if (pTargetUnit->getDamage() != iUnitDamage)
+			{
+				pTargetUnit->setDamage(iUnitDamage, getOwnerINLINE());
+				iDamageCount++;
+			}
 		}
 	}
 
 	if (iDamageCount > 0)
 	{
-		szBuffer = gDLL->getText("TXT_KEY_MISC_YOU_SUFFER_COL_DMG", iDamageCount);
+		CvWString szBuffer = gDLL->getText("TXT_KEY_MISC_YOU_SUFFER_COL_DMG", iDamageCount);
 		gDLL->getInterfaceIFace()->addHumanMessage(pSkipUnit->getOwnerINLINE(), (pSkipUnit->getDomainType() != DOMAIN_AIR), GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_COLLATERAL", MESSAGE_TYPE_INFO, getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_RED"), pSkipUnit->getX_INLINE(), pSkipUnit->getY_INLINE(), true, true);
 
 		szBuffer = gDLL->getText("TXT_KEY_MISC_YOU_INFLICT_COL_DMG", getNameKey(), iDamageCount);
