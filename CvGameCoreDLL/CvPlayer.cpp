@@ -9098,10 +9098,16 @@ void CvPlayer::changeAnarchyModifier(int iChange)
 {
 	if (0 != iChange)
 	{
-	m_iAnarchyModifier += iChange;
-
+		/* original bts code
 		setRevolutionTimer(std::max(0, ((100 + iChange) * getRevolutionTimer()) / 100));
-		setConversionTimer(std::max(0, ((100 + iChange) * getConversionTimer()) / 100));
+		setConversionTimer(std::max(0, ((100 + iChange) * getConversionTimer()) / 100)); */
+		// K-Mod. The original code is wrong, and it is missing the anarchy length change.
+		changeRevolutionTimer(getRevolutionTimer() * iChange / std::max(1, 100+getAnarchyModifier()));
+		changeConversionTimer(getConversionTimer() * iChange / std::max(1, 100+getAnarchyModifier()));
+		changeAnarchyTurns(getAnarchyTurns() * iChange / std::max(1, 100+getAnarchyModifier()));
+		// K-Mod end
+
+		m_iAnarchyModifier += iChange;
 	}
 }
 
@@ -9114,6 +9120,9 @@ int CvPlayer::getGoldenAgeModifier() const
 
 void CvPlayer::changeGoldenAgeModifier(int iChange)
 {
+	// K-Mod. If we are currently in a golden age, adjust its duration!
+	changeGoldenAgeTurns(getGoldenAgeTurns() * iChange / std::max(1, 100 + getGoldenAgeModifier()));
+	// K-Mod end
 	m_iGoldenAgeModifier += iChange;
 }
 
