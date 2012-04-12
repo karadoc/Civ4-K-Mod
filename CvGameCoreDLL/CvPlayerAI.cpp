@@ -6423,13 +6423,15 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 
 			for (UnitAITypes eAI = (UnitAITypes)0; eAI < NUM_UNITAI_TYPES; eAI = (UnitAITypes)(eAI+1))
 			{
-				// Always score the default AI type at full weight.
 				int iWeight = 0;
 				if (eAI == kLoopUnit.getDefaultUnitAIType())
-					iWeight = 100;
+				{
+					// Score the default AI type as a direct competitor to the current best.
+					iWeight = std::min(100, 100 * AI_unitValue(eLoopUnit, eAI, 0) / std::max(1, AI_bestAreaUnitAIValue(eAI, 0)));
+				}
 				else if (kLoopUnit.getUnitAIType(eAI)) // only consider types which are flagged in the xml. (??)
 				{
-					// score only the AI types for which we rate better than our current best unit.
+					// For the other AI types, only score based on the improvement over the current best.
 					int iTypeValue = AI_unitValue(eLoopUnit, eAI, 0);
 					if (iTypeValue > 0)
 					{
@@ -6439,6 +6441,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				}
 				if (iWeight <= 0)
 					continue;
+				FAssert(iWeight <= 100);
 
 				switch (eAI)
 				{
