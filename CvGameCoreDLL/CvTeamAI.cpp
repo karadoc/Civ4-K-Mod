@@ -4961,7 +4961,7 @@ void CvTeamAI::AI_doWar()
 
 	// if no war plans, consider starting one!
 	//if (getAnyWarPlanCount(true) == 0 || iEnemyPowerPercent < 45)
-	if (!bAnyWarPlan || (iEnemyPowerPercent < 45 && !(bLocalWarPlan && bTotalWarPlan))) // K-Mod
+	if (!bAnyWarPlan || (iEnemyPowerPercent < 45 && !(bLocalWarPlan && bTotalWarPlan) && AI_getWarSuccessRating() > (bTotalWarPlan ? 40 : 15))) // K-Mod
 	{
 		bool bAggressive = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
 
