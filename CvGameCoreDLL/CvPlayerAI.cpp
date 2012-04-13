@@ -4898,7 +4898,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	pCapitalCity = getCapitalCity();
 
-	const CvTeam& kTeam = GET_TEAM(getTeam());
+	const CvTeamAI& kTeam = GET_TEAM(getTeam());
 	const CvTechInfo& kTechInfo = GC.getTechInfo(eTech); // K-Mod
 
 	//bool bWarPlan = (kTeam.getAnyWarPlanCount(true) > 0);
@@ -6032,7 +6032,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	{
 		if (kTechInfo.isTechTrading() || kTeam.isTechTrading())
 		{
-			// K-Mod TODO: Consider changing this so that it is less random
+			/* original bts code
 			if (((bAsync) ? GC.getASyncRand().get(100, "AI Tech Whore ASYNC") : GC.getGameINLINE().getSorenRandNum(100, "AI Tech Whore")) < (GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_BROKERING) ? 20 : 10))
 			{
 				int iKnownCount = 0;
@@ -6063,7 +6063,33 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						iValue /= 100;
 					}
 				}
+			}*/
+			// K-Mod. We should either consider 'tech whoring' for all techs this turn, or none at all - otherwise it will just mess things up.
+			// Also, if the value adjustment isn't too big, it should be ok to do this most of the time.
+			if (AI_getStrategyRand(GC.getGameINLINE().getGameTurn()) % std::max(1, GC.getLeaderHeadInfo(getPersonalityType()).getContactRand(CONTACT_TRADE_TECH)) == 0)
+			{
+				int iAlreadyKnown = 0;
+				int iPotentialTrade = 0;
+				for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
+				{
+					const CvTeamAI& kLoopTeam = GET_TEAM(i);
+					if (kLoopTeam.isAlive() && kTeam.isHasMet(i))
+					{
+						if (kLoopTeam.isHasTech(eTech))
+							iAlreadyKnown++;
+						else if (!kTeam.isAtWar(i) && kLoopTeam.AI_techTrade(NO_TECH, getTeam()) == NO_DENIAL && kTeam.AI_techTrade(NO_TECH, i) == NO_DENIAL)
+							iPotentialTrade++;
+					}
+				}
+
+				int iTradeModifier = iPotentialTrade * (GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_BROKERING) ? 20 : 12);
+				iTradeModifier *= 200 - GC.getLeaderHeadInfo(getPersonalityType()).getTechTradeKnownPercent();
+				iTradeModifier /= 150;
+				iTradeModifier /= 1 + 2 * iAlreadyKnown;
+				iValue *= 100 + std::min(100, iTradeModifier);
+				iValue /= 100;
 			}
+			// K-Mod end
 		}
 	}
 
@@ -15556,7 +15582,7 @@ void CvPlayerAI::AI_doCommerce()
 		*/
 
 	// K-Mod, partially based on the changes made by BETTER_BTS_AI_MOD
-	if (isCommerceFlexible(COMMERCE_ESPIONAGE))
+	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && isCommerceFlexible(COMMERCE_ESPIONAGE))
 	{
 		int iEspionageTargetRate = 0;
 		int* aiTarget = new int[MAX_CIV_TEAMS];
@@ -17156,8 +17182,7 @@ void CvPlayerAI::AI_doDiplo()
 												iRand *= std::max(1, iTechPerc - 60);
 												iRand /= 30; */
 												// K-Mod. not so extreme.
-												iRand *= 10 + iTechPerc;
-												iRand /= 100;
+												iRand = (iRand * (10 + iTechPerc) + 50)/100;
 												// K-Mod end
 											}
 

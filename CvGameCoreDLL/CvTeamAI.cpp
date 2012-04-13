@@ -1635,6 +1635,11 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 		}
 	}
 
+	// K-Mod. Generic tech trade test
+	if (eTech == NO_TECH)
+		return NO_DENIAL;
+	// K-Mod end
+
 	if (eAttitude < ATTITUDE_FRIENDLY)
 	{
 		if ((GC.getGameINLINE().getTeamRank(getID()) < (GC.getGameINLINE().countCivTeamsEverAlive() / 2)) ||
