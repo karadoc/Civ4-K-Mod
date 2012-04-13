@@ -7891,6 +7891,56 @@ int CvPlayer::getResearchTurnsLeftTimes100(TechTypes eTech, bool bOverflow) cons
     
 }
 
+// K-Mod. Return true if this player can see what ePlayer is researching
+bool CvPlayer::canSeeResearch(PlayerTypes ePlayer) const
+{
+	FAssert(ePlayer >= 0 && ePlayer < MAX_PLAYERS);
+	const CvPlayer& kOther = GET_PLAYER(ePlayer);
+
+	if (kOther.getTeam() == getTeam() || GET_TEAM(kOther.getTeam()).isVassal(getTeam()))
+		return true;
+
+	if (!GET_TEAM(getTeam()).isHasMet(kOther.getTeam()))
+		return false;
+
+	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+	{
+		for (EspionageMissionTypes i = (EspionageMissionTypes)0; i < GC.getNumEspionageMissionInfos(); i = (EspionageMissionTypes)(i+1))
+		{
+			CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo(i);
+
+			if (kMissionInfo.isSeeResearch() && kMissionInfo.isPassive() && canDoEspionageMission(i, ePlayer, 0, 0, 0))
+				return true;
+		}
+	}
+	return false;
+}
+
+// return true if this player can see ePlayer's demographics (power graph, culture graph, etc.)
+bool CvPlayer::canSeeDemographics(PlayerTypes ePlayer) const
+{
+	FAssert(ePlayer >= 0 && ePlayer < MAX_PLAYERS);
+	const CvPlayer& kOther = GET_PLAYER(ePlayer);
+
+	if (kOther.getTeam() == getTeam() || GET_TEAM(kOther.getTeam()).isVassal(getTeam()))
+		return true;
+
+	if (!GET_TEAM(getTeam()).isHasMet(kOther.getTeam()))
+		return false;
+
+	if (GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+		return true;
+
+	for (EspionageMissionTypes i = (EspionageMissionTypes)0; i < GC.getNumEspionageMissionInfos(); i = (EspionageMissionTypes)(i+1))
+	{
+		CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo(i);
+
+		if (kMissionInfo.isSeeDemographics() && kMissionInfo.isPassive() && canDoEspionageMission(i, ePlayer, 0, 0, 0))
+			return true;
+	}
+	return false;
+}
+// K-Mod end
 
 bool CvPlayer::isCivic(CivicTypes eCivic) const
 {

@@ -3260,10 +3260,11 @@ class CvInfoScreen:
 			iLoopPlayerTeam = pLoopPlayer.getTeam()
 			if (gc.getTeam(iLoopPlayerTeam).isEverAlive()):
 				if (self.pActiveTeam.isHasMet(iLoopPlayerTeam) or CyGame().isDebugMode() or iEndGame != 0):
-					if (self.iDemographicsMission == -1
-					or self.pActivePlayer.canDoEspionageMission(self.iDemographicsMission, iLoopPlayer, None, -1)
-					or iEndGame != 0
-					or iLoopPlayerTeam == self.iActiveTeam):
+					# if (self.iDemographicsMission == -1
+					# or self.pActivePlayer.canDoEspionageMission(self.iDemographicsMission, iLoopPlayer, None, -1)
+					# or iEndGame != 0
+					# or iLoopPlayerTeam == self.iActiveTeam):
+					if self.pActivePlayer.canSeeDemographics(iLoopPlayer): # K-Mod
 						self.aiPlayersMet.append(iLoopPlayer)
 						self.iNumPlayersMet += 1
 					else:

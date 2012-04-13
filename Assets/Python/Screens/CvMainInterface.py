@@ -4876,15 +4876,6 @@ class CvMainInterface:
 					iPowerColor = ScoreOpt.getPowerColor()
 					iHighPowerColor = ScoreOpt.getHighPowerColor()
 					iLowPowerColor = ScoreOpt.getLowPowerColor()
-					
-					if (bEspionage):
-						iDemographicsMission = -1
-						for iMissionLoop in range(gc.getNumEspionageMissionInfos()):
-							if (gc.getEspionageMissionInfo(iMissionLoop).isSeeDemographics()):
-								iDemographicsMission = iMissionLoop
-								break
-						if (iDemographicsMission == -1):
-							bShowPower = False
 # BUG - Power Rating - end
 
 				i = gc.getMAX_CIV_TEAMS() - 1
@@ -5044,14 +5035,10 @@ class CvMainInterface:
 														if (bAlignIcons):
 															scores.setEspionage()
 												
-												bEspionageCanSeeResearch = False
-												if (bEspionage):
-													for iMissionLoop in range(gc.getNumEspionageMissionInfos()):
-														if (gc.getEspionageMissionInfo(iMissionLoop).isSeeResearch()):
-															bEspionageCanSeeResearch = gc.getActivePlayer().canDoEspionageMission(iMissionLoop, ePlayer, None, -1)
-															break
-												
-												if (((gc.getPlayer(ePlayer).getTeam() == gc.getGame().getActiveTeam()) and (gc.getTeam(gc.getGame().getActiveTeam()).getNumMembers() > 1)) or (gc.getTeam(gc.getPlayer(ePlayer).getTeam()).isVassal(gc.getGame().getActiveTeam())) or gc.getGame().isDebugMode() or bEspionageCanSeeResearch):
+												# K-Mod (original code deleted)
+												if gc.getGame().isDebugMode() or (gc.getActivePlayer().canSeeResearch(ePlayer) and
+												(gc.getPlayer(ePlayer).getTeam() != gc.getGame().getActiveTeam() or gc.getTeam(gc.getGame().getActiveTeam()).getNumMembers() > 1)):
+												# K-Mod end
 													if (gc.getPlayer(ePlayer).getCurrentResearch() != -1):
 														szTempBuffer = u"-%s (%d)" %(gc.getTechInfo(gc.getPlayer(ePlayer).getCurrentResearch()).getDescription(), gc.getPlayer(ePlayer).getResearchTurnsLeft(gc.getPlayer(ePlayer).getCurrentResearch(), True))
 														szBuffer = szBuffer + szTempBuffer
@@ -5061,9 +5048,7 @@ class CvMainInterface:
 # BUG - Dead Civs - end
 # BUG - Power Rating - start
 												# if on, show according to espionage "see demographics" mission
-												if (bShowPower 
-													and (gc.getGame().getActivePlayer() != ePlayer
-														 and (not bEspionage or gc.getActivePlayer().canDoEspionageMission(iDemographicsMission, ePlayer, None, -1)))):
+												if bShowPower and gc.getGame().getActivePlayer() != ePlayer and gc.getActivePlayer().canSeeDemographics(ePlayer): # K-Mod (original BUG condition deleted)
 													iPower = gc.getPlayer(ePlayer).getPower()
 													if (iPower > 0): # avoid divide by zero
 														fPowerRatio = float(iPlayerPower) / float(iPower)

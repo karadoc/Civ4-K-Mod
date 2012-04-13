@@ -163,6 +163,9 @@ public:
 	bool isNoResearchAvailable();
 	int getResearchTurnsLeft(int /*TechTypes*/ eTech, bool bOverflow);
 
+	bool canSeeResearch(int /*PlayerTypes*/ ePlayer) const; // K-Mod
+	bool canSeeDemographics(int /*PlayerTypes*/ ePlayer) const; // K-Mod
+
 	bool isCivic(int /*CivicTypes*/ eCivic);
 	bool canDoCivics(int /*CivicTypes*/ eCivic);
 	bool canRevolution(int /*CivicTypes**/ paeNewCivics);
