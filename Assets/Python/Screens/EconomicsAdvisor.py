@@ -103,6 +103,8 @@ class EconomicsAdvisor:
 
 	def drawContents(self):
 		screen = self.getScreen()
+		self.deleteAllWidgets()
+
 		# draw the current page
 		if (self.iPage >= 0 and self.iPage < len(self.PAGE_NAME_LIST)):
 			self.PAGE_DRAW_LIST[self.iPage]()
@@ -110,7 +112,7 @@ class EconomicsAdvisor:
 		# Link to other economics advisor pages...
 		# ... Only display links once global warming has been activated (currently this feature is disabled; ie. we always show the screen)
 		if (true or CyGame().getGwEventTally() >= 0 or CyGame().isDebugMode()):
-			xLink = self.DX_LINK / 2;
+			xLink = self.DX_LINK / 2
 
 			for i in range (len(self.PAGE_NAME_LIST)):
 				#szTextId = self.getNextWidgetName()
@@ -120,19 +122,17 @@ class EconomicsAdvisor:
 				else:
 					screen.setText (szTextId, "", u"<font=4>" + localText.getColorText (self.PAGE_NAME_LIST[i], (), gc.getInfoTypeForString ("COLOR_YELLOW")).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, xLink, self.Y_LINK, 0, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1)
 				xLink += self.DX_LINK
-		
-		
+
+
 	def drawFinance(self):
 		screen = self.getScreen()
 		# Header...
 		screen.setLabel(self.WIDGET_HEADER, "Background", u"<font=4b>" + localText.getText("TXT_KEY_ECONOMICS_ADVISOR_FINANCE_TAB", ()).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, self.X_SCREEN, self.Y_TITLE, self.Z_CONTROLS, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1)
-				
-		self.deleteAllWidgets()
 
 		player = gc.getPlayer(self.iActiveLeader)
-	
+
 		numCities = player.getNumCities()	
-					
+
 		totalUnitCost = player.calculateUnitCost()
 		totalUnitSupply = player.calculateUnitSupply()
 		totalMaintenance = player.getTotalMaintenance()
@@ -178,11 +178,11 @@ class EconomicsAdvisor:
 		szExpensePanel = self.getNextWidgetName()
 		screen.addPanel(szExpensePanel, u"", "", True, True, self.X_RIGHT_PANEL, self.Y_LOCATION, self.PANE_WIDTH, self.PANE_HEIGHT, PanelStyles.PANEL_STYLE_MAIN )
 		screen.setLabel(self.getNextWidgetName(), "Background",  u"<font=3>" + localText.getText("TXT_KEY_FINANCIAL_ADVISOR_EXPENSES_HEADER", ()).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH/2, self.Y_LOCATION + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
-		
+
 		# Commerce
 		yLocation  = self.Y_LOCATION
 		iCommerce = 0
-		
+
 		# sum all worked tiles' commerce yields for player
 		# move to MapUtil?
 		iWorkedTileCount = 0
@@ -195,15 +195,15 @@ class EconomicsAdvisor:
 						if city.isWorkingPlot(plot):
 							iWorkedTileCount += 1
 							iWorkedTiles += plot.getYield(YieldTypes.YIELD_COMMERCE)
-		
+
 		yLocation += 1.5 * self.Y_SPACING
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_CONCEPT_WORKED_TILES", (iWorkedTileCount,)) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_LEFT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iWorkedTiles) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		iCommerce += iWorkedTiles
-		
+
 		# trade
 		iDomesticTrade, _, iForeignTrade, _ = TradeUtil.calculateTradeRoutes(player)
-		
+
 		if iDomesticTrade > 0:
 			if TradeUtil.isFractionalTrade():
 				iDomesticTrade //= 100
@@ -213,7 +213,7 @@ class EconomicsAdvisor:
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iDomesticTrade) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, 
 							*BugDll.widget("WIDGET_HELP_FINANCE_DOMESTIC_TRADE", self.iActiveLeader, 1) )
 			iCommerce += iDomesticTrade
-		
+
 		if iForeignTrade > 0:
 			if TradeUtil.isFractionalTrade():
 				iForeignTrade //= 100
@@ -223,32 +223,32 @@ class EconomicsAdvisor:
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iForeignTrade) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT,  
 							*BugDll.widget("WIDGET_HELP_FINANCE_FOREIGN_TRADE", self.iActiveLeader, 1) )
 			iCommerce += iForeignTrade
-		
+
 		# corporations
 		iCorporations = 0
 		for city in PlayerUtil.playerCities(player):
 			if not city.isDisorder():
 				iCorporations += city.getCorporationYield(YieldTypes.YIELD_COMMERCE)
-		
+
 		if iCorporations > 0:
 			yLocation += self.Y_SPACING
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_CONCEPT_CORPORATIONS", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_LEFT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iCorporations) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			iCommerce += iCorporations
-		
+
 		# specialists
 		iSpecialists = 0
 		for city in PlayerUtil.playerCities(player):
 			if not city.isDisorder():
 				for eSpec in range(gc.getNumSpecialistInfos()):
 					iSpecialists += player.specialistYield(eSpec, YieldTypes.YIELD_COMMERCE) * (city.getSpecialistCount(eSpec) + city.getFreeSpecialistCount(eSpec))
-		
+
 		if iSpecialists > 0:
 			yLocation += self.Y_SPACING
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_CONCEPT_SPECIALISTS", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_LEFT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iSpecialists) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			iCommerce += iSpecialists
-		
+
 		# buildings
 		iTotalCommerce = player.calculateTotalYield(YieldTypes.YIELD_COMMERCE)
 		# buildings includes 50% capital bonus for Bureaucracy civic
@@ -258,13 +258,13 @@ class EconomicsAdvisor:
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_CONCEPT_BUILDINGS", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_LEFT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iBuildings) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 			iCommerce += iBuildings
-		
+
 		yLocation += 1.5 * self.Y_SPACING
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_BUG_FINANCIAL_ADVISOR_COMMERCE", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_LEFT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iCommerce) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_LEFT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
-		
+
 		# Slider percentages
-	
+
 		yLocation += 0.5 * self.Y_SPACING
 		for iI in range(CommerceTypes.NUM_COMMERCE_TYPES):
 			eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
@@ -470,31 +470,26 @@ class EconomicsAdvisor:
 
 	def drawEnvironment(self):
 		screen = self.getScreen()
-	# TODO: move all display text into localizable text keys
 		# Header...
 		screen.setLabel(self.WIDGET_HEADER, "Background", u"<font=4b>" + localText.getText("TXT_KEY_ECONOMICS_ADVISOR_ENVIRONMENT_TAB", ()).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, self.X_SCREEN, self.Y_TITLE, self.Z_CONTROLS, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1)
-	
-		self.deleteAllWidgets()
 
-		screen = self.getScreen()
-	
 		game = CyGame()
-		player = gc.getPlayer(self.iActiveLeader)	
-	
+		player = gc.getPlayer(self.iActiveLeader)
+
 		szTopPanel = self.getNextWidgetName()
 		screen.addPanel(szTopPanel, u"", "", True, True, self.X_LEFT_PANEL, self.Y_TOP_PANEL, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.X_LEFT_PANEL, self.H_TOP_PANEL, PanelStyles.PANEL_STYLE_MAIN )
 
-		
+
 		iGlobalWarmingIndex = game.getGlobalWarmingIndex()
 		iGlobalWarmingChances = game.getGlobalWarmingChances()
 		iGwEventTally = game.getGwEventTally()
 
 		# calculate expected number events per turn. Prob is out of 1000, so we divide by 1000 and multiply by 100 to get percent.
 		#fWarmingPercent = float(game.getGlobalWarmingChances() * gc.getDefineINT("GLOBAL_WARMING_PROB")) / (10.0*gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())
-		
+
 		# calculate the 'severity rating' as used in the GW unhappiness calculation
 		iSeverityRating = game.calculateGwSeverityRating()
-		
+
 		szText = localText.getText("TXT_KEY_GW_SEVERITY_RATING", ()).upper() + ": "
 
 		# hopefully the words for low, medium, and high for sealevel will be good enough for GW severity as well...
@@ -504,10 +499,10 @@ class EconomicsAdvisor:
 			szText += localText.getColorText("TXT_KEY_SEALEVEL_MEDIUM", (), gc.getInfoTypeForString ("COLOR_YELLOW")).upper()
 		else:
 			szText += localText.getColorText("TXT_KEY_SEALEVEL_HIGH", (), gc.getInfoTypeForString ("COLOR_RED")).upper()
-		
+
 		if (CyGame().isDebugMode()):
 			szText += u" (%d)" % iSeverityRating
-			
+
 		screen.setLabel(self.getNextWidgetName(), szTopPanel, u"<font=4>" + szText + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, (self.X_LEFT_PANEL + self.PANE_WIDTH + self.X_RIGHT_PANEL)/2, self.Y_TOP_PANEL + self.H_TOP_PANEL/2 - self.Y_SPACING/2, self.Z_CONTROLS + self.DZ, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 
 		szLeftPanel = self.getNextWidgetName()
