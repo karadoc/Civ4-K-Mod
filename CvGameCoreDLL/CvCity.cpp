@@ -485,16 +485,6 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_bLayoutDirty = false;
 	m_bPlundered = false;
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                         denev & jdog5000     */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	m_bPopProductionProcess = false;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-
 	m_eOwner = eOwner;
 	m_ePreviousOwner = NO_PLAYER;
 	m_eOriginalOwner = eOwner;
@@ -8353,36 +8343,14 @@ void CvCity::setCultureLevel(CultureLevelTypes eNewValue, bool bUpdatePlotGroups
 				CvEventReporter::getInstance().cultureExpansion(this, getOwnerINLINE());
 				
 				//Stop Build Culture
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                         denev & jdog5000     */
-/*                                                                                              */
-/* Bugfix, Odd behavior                                                                         */
-/************************************************************************************************/
-/* original BTS code
+				/* original BTS code
 				if (isProductionProcess())
 				{
 					if (GC.getProcessInfo(getProductionProcess()).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0)
 					{
 						popOrder(0, false, true);						
 					}
-				}
-*/
-				// For AI this is completely unnecessary.  Timing also appears to cause bug with overflow production, 
-				// giving extra hammers innappropriately.
-				if( isHuman() && !isProductionAutomated() )
-				{
-					if (isProductionProcess())
-					{
-						if (GC.getProcessInfo(getProductionProcess()).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0)
-						{
-							//popOrder(0, false, true);
-							m_bPopProductionProcess = true;
-						}
-					}
-				}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+				} */ // K-Mod does this in a different way, to avoid an overflow bug. (And a different way to the Unofficial Patch, to avoid OOS)
 			}
 		}
 	}
@@ -12051,6 +12019,14 @@ void CvCity::pushOrder(OrderTypes eOrder, int iData1, int iData2, bool bSave, bo
 		if (canMaintain((ProcessTypes)iData1) || bForce)
 		{
 			bValid = true;
+			// K-Mod. For culture processes, use iData2 to flag the current culture level so that we know when to stop.
+			// We could do a similar thing with research processes and tech... but lets not.
+			if (isHuman() && GC.getProcessInfo((ProcessTypes)iData1).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0)
+			{
+				FAssert(iData2 == -1);
+				iData2 = getCultureLevel();
+			}
+			// K-Mod end
 			if( gCityLogLevel >= 1 )
 				logBBAI("    City %S pushes production of process %S", getName().GetCString(), GC.getProcessInfo((ProcessTypes)iData1).getDescription() );
 		}
@@ -13074,19 +13050,14 @@ void CvCity::doProduction(bool bAllowNoProduction)
 
 	if (isProductionProcess())
 	{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                         denev & jdog5000     */
-/*                                                                                              */
-/* Bugfix, Odd behavior                                                                         */
-/************************************************************************************************/
-		if (m_bPopProductionProcess)
+		// K-Mod. End the culture process if our borders have expanded.
+		// (This function is called after "doResearch" etc.)
+		const OrderData& order = headOrderQueueNode()->m_data;
+		if (order.iData2 > 0 && GC.getProcessInfo((ProcessTypes)order.iData1).getProductionToCommerceModifier(COMMERCE_CULTURE) > 0 && getCultureLevel() > order.iData2)
 		{
 			popOrder(0, false, true);
-			m_bPopProductionProcess = false;
 		}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+		// K-Mod end
 		return;
 	}
 
