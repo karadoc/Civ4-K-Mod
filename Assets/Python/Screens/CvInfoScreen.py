@@ -61,7 +61,7 @@ class CvInfoScreen:
 		self.W_HELP_AREA = 200
 
 		# K-Mod
-		self.bTextInitialized = False
+		self.iLanguageLoaded = -1
 
 		#self.X_EXIT = 994
 		self.X_EXIT = self.W_SCREEN - 30
@@ -391,15 +391,16 @@ class CvInfoScreen:
 	def initText(self):
 		# K-Mod
 		# only execute this function once...
-		if self.bTextInitialized or not CyGame().isFinalInitialized():
+		if self.iLanguageLoaded == CyGame().getCurrentLanguage() or not CyGame().isFinalInitialized():
 			return
-		self.bTextInitialized = True
+		self.iLanguageLoaded = CyGame().getCurrentLanguage()
 
 		# Calculate width for the links.
+		self.PAGE_LINK_WIDTH[:] = []
 		width_list = []
 		for i in self.PAGE_NAME_LIST:
-			width_list.append(CyInterface().determineWidth(localText.getText(i, ()).upper()) + 10)
-		total_width = sum(width_list) + CyInterface().determineWidth(localText.getText("TXT_KEY_PEDIA_SCREEN_EXIT", ()).upper()) + 10;
+			width_list.append(CyInterface().determineWidth(localText.getText(i, ()).upper()) + 20)
+		total_width = sum(width_list) + CyInterface().determineWidth(localText.getText("TXT_KEY_PEDIA_SCREEN_EXIT", ()).upper()) + 20;
 
 		for i in width_list:
 			self.PAGE_LINK_WIDTH.append((self.X_EXIT * i + total_width/2) / total_width)
