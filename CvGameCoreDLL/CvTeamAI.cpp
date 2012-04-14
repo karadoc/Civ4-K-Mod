@@ -1573,20 +1573,12 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 {
 	PROFILE_FUNC();
 
-	AttitudeTypes eAttitude;
-	int iNoTechTradeThreshold;
-	int iTechTradeKnownPercent;
-	int iKnownCount;
-	int iPossibleKnownCount;
-	int iI, iJ;
-
 	FAssertMsg(eTeam != getID(), "shouldn't call this function on ourselves");
-	
-	
+
 	if (GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_BROKERING))
 	{
 		CvTeam& kTeam = GET_TEAM(eTeam);
-		
+
 		if (!kTeam.isHasTech(eTech))
 		{
 			if (!kTeam.isHuman())
@@ -1619,9 +1611,9 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 		return DENIAL_WORST_ENEMY;
 	}
 
-	eAttitude = AI_getAttitude(eTeam);
+	AttitudeTypes eAttitude = AI_getAttitude(eTeam);
 
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (int iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).isAlive())
 		{
@@ -1635,17 +1627,12 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 		}
 	}
 
-	// K-Mod. Generic tech trade test
-	if (eTech == NO_TECH)
-		return NO_DENIAL;
-	// K-Mod end
-
 	if (eAttitude < ATTITUDE_FRIENDLY)
 	{
 		if ((GC.getGameINLINE().getTeamRank(getID()) < (GC.getGameINLINE().countCivTeamsEverAlive() / 2)) ||
-			  (GC.getGameINLINE().getTeamRank(eTeam) < (GC.getGameINLINE().countCivTeamsEverAlive() / 2)))
+			(GC.getGameINLINE().getTeamRank(eTeam) < (GC.getGameINLINE().countCivTeamsEverAlive() / 2)))
 		{
-			iNoTechTradeThreshold = AI_noTechTradeThreshold();
+			int iNoTechTradeThreshold = AI_noTechTradeThreshold();
 
 			iNoTechTradeThreshold *= std::max(0, (GC.getHandicapInfo(GET_TEAM(eTeam).getHandicapType()).getNoTechTradeModifier() + 100));
 			iNoTechTradeThreshold /= 100;
@@ -1655,11 +1642,18 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 				return DENIAL_TECH_WHORE;
 			}
 		}
+	// K-Mod. Generic tech trade test
+	}
+	if (eTech == NO_TECH)
+		return NO_DENIAL;
 
-		iKnownCount = 0;
-		iPossibleKnownCount = 0;
+	if (eAttitude < ATTITUDE_FRIENDLY)
+	{
+	// K-Mod end
+		int iKnownCount = 0;
+		int iPossibleKnownCount = 0;
 
-		for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
+		for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{
 			if (GET_TEAM((TeamTypes)iI).isAlive())
 			{
@@ -1678,11 +1672,11 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 			}
 		}
 
-		iTechTradeKnownPercent = AI_techTradeKnownPercent();
+		int iTechTradeKnownPercent = AI_techTradeKnownPercent();
 
 		iTechTradeKnownPercent *= std::max(0, (GC.getHandicapInfo(GET_TEAM(eTeam).getHandicapType()).getTechTradeKnownModifier() + 100));
 		iTechTradeKnownPercent /= 100;
-		
+
 		iTechTradeKnownPercent *= AI_getTechMonopolyValue(eTech, eTeam);
 		iTechTradeKnownPercent /= 100;
 
@@ -1692,7 +1686,7 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 		}
 	}
 
-	for (iI = 0; iI < GC.getNumUnitInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumUnitInfos(); iI++)
 	{
 		if (isTechRequiredForUnit(eTech, ((UnitTypes)iI)))
 		{
@@ -1706,7 +1700,7 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 		}
 	}
 
-	for (iI = 0; iI < GC.getNumBuildingInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumBuildingInfos(); iI++)
 	{
 		if (isTechRequiredForBuilding(eTech, ((BuildingTypes)iI)))
 		{
@@ -1720,7 +1714,7 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 		}
 	}
 
-	for (iI = 0; iI < GC.getNumProjectInfos(); iI++)
+	for (int iI = 0; iI < GC.getNumProjectInfos(); iI++)
 	{
 		if (GC.getProjectInfo((ProjectTypes)iI).getTechPrereq() == eTech)
 		{
@@ -1732,7 +1726,7 @@ DenialTypes CvTeamAI::AI_techTrade(TechTypes eTech, TeamTypes eTeam) const
 				}
 			}
 
-			for (iJ = 0; iJ < GC.getNumVictoryInfos(); iJ++)
+			for (int iJ = 0; iJ < GC.getNumVictoryInfos(); iJ++)
 			{
 				if (GC.getGameINLINE().isVictoryValid((VictoryTypes)iJ))
 				{

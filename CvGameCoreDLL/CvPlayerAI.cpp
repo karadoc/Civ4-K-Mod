@@ -6073,9 +6073,9 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
 				{
 					const CvTeamAI& kLoopTeam = GET_TEAM(i);
-					if (kLoopTeam.isAlive() && kTeam.isHasMet(i))
+					if (i != getTeam() && kLoopTeam.isAlive() && kTeam.isHasMet(i))
 					{
-						if (kLoopTeam.isHasTech(eTech))
+						if (kLoopTeam.isHasTech(eTech) || (canSeeResearch(kLoopTeam.getLeaderID()) && GET_PLAYER(kLoopTeam.getLeaderID()).getCurrentResearch() == eTech))
 							iAlreadyKnown++;
 						else if (!kTeam.isAtWar(i) && kLoopTeam.AI_techTrade(NO_TECH, getTeam()) == NO_DENIAL && kTeam.AI_techTrade(NO_TECH, i) == NO_DENIAL)
 							iPotentialTrade++;
