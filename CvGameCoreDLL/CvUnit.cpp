@@ -454,11 +454,16 @@ void CvUnit::convert(CvUnit* pUnit)
 	setLeaderUnitType(pUnit->getLeaderUnitType());
 
 	CvUnit* pTransportUnit = pUnit->getTransportUnit();
-	if (pTransportUnit != NULL)
+	/* if (pTransportUnit != NULL)
 	{
 		pUnit->setTransportUnit(NULL);
 		setTransportUnit(pTransportUnit);
-	}
+	} */
+	// K-Mod
+	if (pTransportUnit != NULL)
+		pUnit->setTransportUnit(NULL);
+	setTransportUnit(pTransportUnit);
+	// K-Mod end
 
 	std::vector<CvUnit*> aCargoUnits;
 	pUnit->getCargoUnits(aCargoUnits);
@@ -7536,9 +7541,8 @@ CvUnit* CvUnit::upgrade(UnitTypes eUnit) // K-Mod: this now returns the new unit
 
 	FAssertMsg(pUpgradeUnit != NULL, "UpgradeUnit is not assigned a valid value");
 
-	pUpgradeUnit->joinGroup(getGroup());
-
 	pUpgradeUnit->convert(this);
+	pUpgradeUnit->joinGroup(getGroup()); // K-Mod, swapped order with convert. (otherwise units on boats would be ungrouped.)
 
 	pUpgradeUnit->finishMoves();
 
@@ -9935,8 +9939,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 			GET_PLAYER(getOwnerINLINE()).changeNumOutsideUnits(1);
 		}
 
-		//if (shouldLoadOnMove(pNewPlot))
-		if (pOldPlot && shouldLoadOnMove(pNewPlot)) // K-Mod. (don't load units during the unit initialization process.)
+		if (shouldLoadOnMove(pNewPlot))
 		{
 			load();
 		}
