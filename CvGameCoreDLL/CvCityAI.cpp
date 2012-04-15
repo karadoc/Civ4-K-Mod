@@ -6633,7 +6633,7 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 			iHealthValue /= 2;
 		} */
 		// K-Mod -
-		iHealthValue += (iHealth < 0 ? 100 : 200/(3+iHealth)) + 100 * pPlot->getPlayerCityRadiusCount(getOwnerINLINE());
+		iHealthValue += (iHealth < 0 ? 100 : 400/(4+iHealth)) + 100 * pPlot->getPlayerCityRadiusCount(getOwnerINLINE());
 		iHealthValue *= kFeatureInfo.getHealthPercent();
 		iHealthValue /= 100;
 		// note: health is not any more valuable when we aren't working it.

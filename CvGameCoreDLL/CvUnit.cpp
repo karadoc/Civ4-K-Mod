@@ -3132,7 +3132,7 @@ void CvUnit::automate(AutomateTypes eAutomate)
 
 	getGroup()->setAutomateType(eAutomate);
 	// K-Mod. I'd like for the unit to automate immediately after the command is given, just so that the UI seems responsive. But doing so is potentially problematic.
-	if (GET_PLAYER(getOwnerINLINE()).isTurnActive() && getGroup()->readyToMove())
+	if (isGroupHead() && GET_PLAYER(getOwnerINLINE()).isTurnActive() && getGroup()->readyToMove())
 	{
 		// unfortunately, CvSelectionGroup::AI_update can kill the unit, and CvUnit::automate currently isn't allowed to kill the unit.
 		// CvUnit::AI_update should be ok; but using it here makes me a bit uncomfortable because it doesn't include all the checks and conditions of the group update.

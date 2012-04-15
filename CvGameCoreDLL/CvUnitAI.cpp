@@ -924,76 +924,72 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 			CvPlot* pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
 
 			//if (pLoopPlot != NULL)
-			if (pLoopPlot != NULL && pLoopPlot->getWorkingCity() == pCity) // K-Mod
+			if (pLoopPlot && pLoopPlot != pIgnorePlot && pLoopPlot->getWorkingCity() == pCity && AI_plotValid(pLoopPlot)) // K-Mod
 			{
-				if (AI_plotValid(pLoopPlot))
+				if (pLoopPlot->getImprovementType() == NO_IMPROVEMENT ||
+					!GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION) ||
+					pLoopPlot->getImprovementType() == GC.getDefineINT("RUINS_IMPROVEMENT"))
 				{
-					if (pLoopPlot != pIgnorePlot)
+					int iValue = pCity->AI_getBestBuildValue(iI);
+
+					if (iValue > iBestValue)
 					{
-						if ((pLoopPlot->getImprovementType() == NO_IMPROVEMENT) || !(GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION) && !(pLoopPlot->getImprovementType() == (GC.getDefineINT("RUINS_IMPROVEMENT")))))
+						BuildTypes eBuild = pCity->AI_getBestBuild(iI);
+						FAssertMsg(eBuild < GC.getNumBuildInfos(), "Invalid Build");
+
+						//if (eBuild != NO_BUILD)
+						if (eBuild != NO_BUILD && canBuild(pLoopPlot, eBuild)) // K-Mod
 						{
-							int iValue = pCity->AI_getBestBuildValue(iI);
-
-							if (iValue > iBestValue)
+							if (0 == iPass)
 							{
-								BuildTypes eBuild = pCity->AI_getBestBuild(iI);
-								FAssertMsg(eBuild < GC.getNumBuildInfos(), "Invalid Build");
-
-								//if (eBuild != NO_BUILD)
-								if (eBuild != NO_BUILD && canBuild(pLoopPlot, eBuild)) // K-Mod
+								iBestValue = iValue;
+								pBestPlot = pLoopPlot;
+								eBestBuild = eBuild;
+							}
+							else //if (canBuild(pLoopPlot, eBuild))
+							{
+								if (!(pLoopPlot->isVisibleEnemyUnit(this)))
 								{
-									if (0 == iPass)
+									/* original bts code
+									int iPathTurns;
+									if (generatePath(pLoopPlot, 0, true, &iPathTurns))
 									{
-										iBestValue = iValue;
-										pBestPlot = pLoopPlot;
-										eBestBuild = eBuild;
-									}
-									else //if (canBuild(pLoopPlot, eBuild))
-									{
-										if (!(pLoopPlot->isVisibleEnemyUnit(this)))
+										// XXX take advantage of range (warning... this could lead to some units doing nothing...)
+										int iMaxWorkers = 1;
+										if (getPathLastNode()->m_iData1 == 0)
 										{
-											/* original bts code
-											int iPathTurns;
-											if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+											iPathTurns++;
+										}
+										else if (iPathTurns <= 1)
+										{
+											iMaxWorkers = AI_calculatePlotWorkersNeeded(pLoopPlot, eBuild);
+										}
+										if (pUnit != NULL)
+										{
+											if (pUnit->plot()->isCity() && iPathTurns == 1 && getPathLastNode()->m_iData1 > 0)
 											{
-												// XXX take advantage of range (warning... this could lead to some units doing nothing...)
-												int iMaxWorkers = 1;
-												if (getPathLastNode()->m_iData1 == 0)
-												{
-													iPathTurns++;
-												}
-												else if (iPathTurns <= 1)
-												{
-													iMaxWorkers = AI_calculatePlotWorkersNeeded(pLoopPlot, eBuild);
-												}
-												if (pUnit != NULL)
-												{
-													if (pUnit->plot()->isCity() && iPathTurns == 1 && getPathLastNode()->m_iData1 > 0)
-													{
-														iMaxWorkers += 10;
-													}
-												} */
-											// K-Mod. basically the same thing, but using pathFinder.
-											if (pathFinder.GeneratePath(pLoopPlot))
-											{
-												FAStarNode* pEndNode = pathFinder.GetEndNode();
-												int iPathTurns = pEndNode->m_iData2 + (pEndNode->m_iData1 == 0 ? 1 : 0);
-												int iMaxWorkers = iPathTurns > 1 ? 1 : AI_calculatePlotWorkersNeeded(pLoopPlot, eBuild);
-												if (pUnit && pUnit->plot()->isCity() && iPathTurns == 1)
-													iMaxWorkers += 10;
-											// K-Mod end
-												if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD, getGroup()) < iMaxWorkers)
-												{
-													//XXX this could be improved greatly by
-													//looking at the real build time and other factors
-													//when deciding whether to stack.
-													iValue /= iPathTurns;
-
-													iBestValue = iValue;
-													pBestPlot = pLoopPlot;
-													eBestBuild = eBuild;
-												}
+												iMaxWorkers += 10;
 											}
+										} */
+									// K-Mod. basically the same thing, but using pathFinder.
+									if (pathFinder.GeneratePath(pLoopPlot))
+									{
+										FAStarNode* pEndNode = pathFinder.GetEndNode();
+										int iPathTurns = pEndNode->m_iData2 + (pEndNode->m_iData1 == 0 ? 1 : 0);
+										int iMaxWorkers = iPathTurns > 1 ? 1 : AI_calculatePlotWorkersNeeded(pLoopPlot, eBuild);
+										if (pUnit && pUnit->plot()->isCity() && iPathTurns == 1)
+											iMaxWorkers += 10;
+									// K-Mod end
+										if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD, getGroup()) < iMaxWorkers)
+										{
+											//XXX this could be improved greatly by
+											//looking at the real build time and other factors
+											//when deciding whether to stack.
+											iValue /= iPathTurns;
+
+											iBestValue = iValue;
+											pBestPlot = pLoopPlot;
+											eBestBuild = eBuild;
 										}
 									}
 								}
@@ -19733,7 +19729,7 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 						BuildTypes eBestTempBuild = NO_BUILD; */
 
 						// K-Mod. Simplier, and better.
-						bool bDoImprove = false;
+						bool bDoImprove = true;
 						ImprovementTypes eImprovement = pLoopPlot->getImprovementType();
 						CvCity* pWorkingCity = pLoopPlot->getWorkingCity();
 						BuildTypes eBestTempBuild = NO_BUILD;
@@ -19747,11 +19743,10 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 								bDoImprove = true;
 								eBestTempBuild = eBuild;
 							}
+							else
+								bDoImprove = false;
 						}
-						else if (!kOwner.doesImprovementConnectBonus(eImprovement, eNonObsoleteBonus))
-						{
-							bDoImprove = !kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION) || eImprovement == NO_IMPROVEMENT || eImprovement == GC.getDefineINT("RUINS_IMPROVEMENT");
-						}
+						bDoImprove = bDoImprove && (!kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION) || eImprovement == NO_IMPROVEMENT || eImprovement == GC.getDefineINT("RUINS_IMPROVEMENT"));
 						// K-Mod end
 
 						//if (bDoImprove)

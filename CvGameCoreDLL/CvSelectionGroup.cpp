@@ -1396,6 +1396,7 @@ void CvSelectionGroup::startMission()
 						break;
 
 					case MISSION_BUILD:
+						pUnitNode = 0; // K-Mod. Nothing to do, so end the loop.
 						break;
 
 					case MISSION_LEAD:
@@ -1486,7 +1487,6 @@ void CvSelectionGroup::startMission()
 		}
 	}
 }
-
 // K-Mod. CvSelectionGroup::continueMission used to be a recursive function.
 // I've moved the bulk of the function into a new function, and turned continueMission into just a simple loop to remove the recursion.
 void CvSelectionGroup::continueMission()
@@ -3678,7 +3678,8 @@ bool CvSelectionGroup::groupBuild(BuildTypes eBuild)
 
 	pPlot = plot();
 
-    ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
+    /* original bts code
+	ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
 	if (eImprovement != NO_IMPROVEMENT)
 	{
 		if (AI_isControlled())
@@ -3688,40 +3689,27 @@ bool CvSelectionGroup::groupBuild(BuildTypes eBuild)
 				if ((pPlot->getImprovementType() != NO_IMPROVEMENT) && (pPlot->getImprovementType() != (ImprovementTypes)(GC.getDefineINT("RUINS_IMPROVEMENT"))))
 				{
 					BonusTypes eBonus = (BonusTypes)pPlot->getNonObsoleteBonusType(GET_PLAYER(getOwnerINLINE()).getTeam());
-				    /* original bts code
 					if ((eBonus == NO_BONUS) || !GC.getImprovementInfo(eImprovement).isImprovementBonusTrade(eBonus))
-				    {
-                         if (GC.getImprovementInfo(eImprovement).getImprovementPillage() != NO_IMPROVEMENT)
-                        {
-                            return false;
-                        }
-				    } */
-					// K-Mod
-					if (eBonus == NO_BONUS ||
-						GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(pPlot->getImprovementType(), eBonus) ||
-						!GET_PLAYER(getOwnerINLINE()).doesImprovementConnectBonus(eImprovement, eBonus))
 					{
-						// (I don't understand the point of checking "getImprovementPillage() != NO_IMPROVEMENT")
-						return false;
+						if (GC.getImprovementInfo(eImprovement).getImprovementPillage() != NO_IMPROVEMENT)
+						{
+							return false;
+						}
 					}
-					// K-Mod end.
-
 				}
 			}
-//
-//			if (AI_getMissionAIType() == MISSION_BUILD)
-//			{
-//                CvCity* pWorkingCity = pPlot->getWorkingCity();
-//                if ((pWorkingCity != NULL) && (AI_getMissionAIPlot() == pPlot))
-//                {
-//                    if (pWorkingCity->AI_getBestBuild(pWorkingCity->getCityPlotIndex(pPlot)) != eBuild)
-//                    {
-//                        return false;
-//                    }
-//                }
-//			}
 		}
+	} */
+	// K-Mod. Leave old improvements should mean _all_ improvements, not 'unless it will connect a resource'.
+	// Note. The only time this bit of code might matter is if the automated unit has orders queued. Ideally, the AI should never issue orders which violate the leave old improvements rule.
+	if (isAutomated() && GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION) &&
+		GC.getBuildInfo(eBuild).getImprovement() != NO_IMPROVEMENT && pPlot->getImprovementType() != NO_IMPROVEMENT &&
+		pPlot->getImprovementType() != GC.getDefineINT("RUINS_IMPROVEMENT"))
+	{
+		FAssertMsg(false, "AI has issued an order which violates PLAYEROPTION_SAFE_AUTOMATION"); 
+		return false;
 	}
+	// K-Mod end
 
 	pUnitNode = headUnitNode();
 
