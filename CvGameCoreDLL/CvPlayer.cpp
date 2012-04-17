@@ -17336,10 +17336,6 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiCapitalCommerceRateModifier);
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiStateReligionBuildingCommerce);
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiSpecialistExtraCommerce);
-	// Temporary K-Mod hack, to move from version v1.25 to v1.26. (this will be deleted in the next version)
-	if (m_aiSpecialistExtraCommerce[COMMERCE_RESEARCH] == 2 && GC.getNumCivicInfos() > 2 && GC.getCivicInfo((CivicTypes)2).getSpecialistExtraCommerce(COMMERCE_RESEARCH) == 3)
-		m_aiSpecialistExtraCommerce[COMMERCE_RESEARCH] = 3;
-	//
 	pStream->Read(NUM_COMMERCE_TYPES, m_aiCommerceFlexibleCount);
 	pStream->Read(MAX_PLAYERS, m_aiGoldPerTurnByPlayer);
 	pStream->Read(MAX_TEAMS, m_aiEspionageSpendingWeightAgainstTeam);

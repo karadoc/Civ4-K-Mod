@@ -1,6 +1,49 @@
-This is K-Mod version 1.26b.
+This is K-Mod version 1.27.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.27 changelist
+
+UI
+
++ Implemented new controls for the city build queue: ctrl+click moves the item up the list, shift+click moves it down, alt+click toggles 'repeat' for units.
++ Changed the functionality of double-clicking a stack of units. Double-click will now wake all of the units without changing their current groups.
++ Added new loading hints to describe the new double-click functionality and the new build queue commands.
++ Rapid-unit-cycling will now be even more rapid. (It will now cycle without waiting for the group to stop being busy.)
++ Previously, "automated workers leave old improvements" was implemented with inconsistent rules. It is now enforced so that automated workers will not replace existing improvements for any reason. (City ruins not included.)
++ Improved the spacing of the labels in the Foreign Advisor screen and the Info Screen. The spacing on these two screens will now automatically adjust if the game language is changed.
++ Fixed several bugs and style inconsistencies in the info screen. (Mostly problems caused by the BUG mod.)
++ Added some missing mouse-over information in the foreign advisor screen.
++ Changed the format of the war weariness mouse-over information.
++ Disabled a condition in the original BtS code which prevented city governors from considering units for any role other than their default AI type. (This only affects human players.)
++ Added all of the missing text tags for the environmental advisor screen. (The text is still only in english, but at least it is now in the right format to be translated.)
++ Corrected the colour of non-english versions of TXT_KEY_BONUS_OBSOLETE.
++ Plots with a best-replacement-improvement value of <= 1 will no longer be highlighted as recommended upgrade plots for workers. (But the best improvement will still be highlighted for workers standing on the plot.)
++ Fixed an original BtS bug which allowed players to wake or fortify units which they do not own by using the flyout menu.
+
+Game
+
++ Anarchy duration modifiers and golden age modifiers will now apply their respective adjustments to the existing anarchy / golden age at the time the modifier is applied. (eg. When the Mausoleum of Maussollos is built, it will now increase the remaining length of the current golden age by 50%.)
++ Changed the way culture processes are ended when a city's cultural borders expand. (The previous implementation, from the Unofficial Patch, could cause OOS in particular situations.)
++ Rewrote CvUnit::collateralCombat to remove a rare OOS bug, and to improve performance and readability. (I estimate that there was roughly a 1/10000 chance of getting OOS with collateral damage attack using the original code.)
++ Increased the barbarian's base tech rate from 3% per turn, to 4% per turn, but blocked this research completely for the first half of their pre-spawn turns. (This is a follow-up adjustment to the change in the previous version.)
++ Fixed a problem which prevented units from being created on a transport on the first turn of special scenarios.
++ Units on transports will now stay in their group when they are upgraded (so that the behaviour is consistent with units not on transports).
++ Added two new functions: CvPlayer::canSeeResearch and CvPlayer::canSeeDemographics. These functions are the definitive answers to the questions posed by their names. The functions consider game rules, diplomatic relationships, and espionage. They are exposed to python, and should be used instead of the current ad-hoc combinations of conditions that were used in the past.
+
+AI
+
++ When evaluating tech which enable new units, the AI will now consider the value of the unit in all the roles it is suited to, rather than only the default role.
++ Added new AI to evaluate and consider using a 'process' (eg. build wealth) instead of constructing a building. (This may need some future adjustments in the near future.)
++ Rewrote the section of AI_techValue which evaluates how much trade value the tech has. The new code should produce smarter and less erratic behaviour, and be more affected by leader personality and game situation. (There is still room for improvement...)
++ Fixed a couple of problems with the evaluation of isNoNonStateReligionSpread in AI_civicValue.
++ Reduced the effect of "aggressive AI" on the AI's decision to use the crush strategy.
++ Fixed a problem which would sometimes cause the AI to alternate between building a farm and building a fort on grain resources outside of city radii.
++ In AI_civicValue, increased the value of experience points for non-warmonger AI's who happen to be at war.
++ Fixed a minor bug which caused the city governor to mis-evaluate productivity when constructing particular buildings.
++ Slightly tightened the conditions on the AI starting multiple warplans.
++ Slightly increased how much the AI likes health from features (ie. forests).
+
+--
 v1.26 changelist
 
 Game

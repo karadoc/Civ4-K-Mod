@@ -6028,7 +6028,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	}
 	
 	//Tech Whore								
-	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
+	//if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
+	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING) && !isBarbarian()) // K-Mod
 	{
 		if (kTechInfo.isTechTrading() || kTeam.isTechTrading())
 		{

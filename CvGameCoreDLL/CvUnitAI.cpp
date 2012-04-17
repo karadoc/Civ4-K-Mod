@@ -19734,7 +19734,13 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 						CvCity* pWorkingCity = pLoopPlot->getWorkingCity();
 						BuildTypes eBestTempBuild = NO_BUILD;
 
-						if (pWorkingCity)
+						if (eImprovement != NO_IMPROVEMENT &&
+							((kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION) && eImprovement != GC.getDefineINT("RUINS_IMPROVEMENT")) ||
+							kOwner.doesImprovementConnectBonus(eImprovement, eNonObsoleteBonus)))
+						{
+							bDoImprove = false;
+						}
+						else if (pWorkingCity)
 						{
 							// Let "best build" handle improvement replacements near cities.
 							BuildTypes eBuild = pWorkingCity->AI_getBestBuild(plotCityXY(pWorkingCity, pLoopPlot));
@@ -19746,7 +19752,6 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 							else
 								bDoImprove = false;
 						}
-						bDoImprove = bDoImprove && (!kOwner.isOption(PLAYEROPTION_SAFE_AUTOMATION) || eImprovement == NO_IMPROVEMENT || eImprovement == GC.getDefineINT("RUINS_IMPROVEMENT"));
 						// K-Mod end
 
 						//if (bDoImprove)
