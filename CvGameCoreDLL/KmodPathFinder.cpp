@@ -212,6 +212,7 @@ void KmodPathFinder::AddStartNode()
 
 	node_map[GC.getMapINLINE().plotNumINLINE(start_x, start_y)] = start_node;
 	open_list.push_back(start_node);
+	start_node->m_eFAStarListType = FASTARLIST_OPEN;
 }
 
 void KmodPathFinder::RecalculateHeuristics()
@@ -250,6 +251,7 @@ bool KmodPathFinder::ProcessNode()
 	// erase the node from the open_list.
 	// Note: this needs to be done before pushing new entries, otherwise the iterator will be invalid.
 	open_list.erase(best_it);
+	parent_node->m_eFAStarListType = FASTARLIST_CLOSED;
 
 	FAssert(node_map[GC.getMapINLINE().plotNumINLINE(parent_node->m_iX, parent_node->m_iY)] == parent_node);
 
@@ -287,8 +289,6 @@ bool KmodPathFinder::ProcessNode()
 			if (pathValid_join(parent_node.get(), child_node.get(), settings.pGroup , settings.iFlags))
 			{
 				node_map[iPlotNum] = child_node;
-				if (pathValid_source(child_node.get(), settings.pGroup , settings.iFlags))
-					open_list.push_back(child_node);
 			}
 			else
 			{
@@ -309,7 +309,7 @@ bool KmodPathFinder::ProcessNode()
 		FAssert(node_map[iPlotNum] == child_node);
 
 		if (iPlotNum == GC.getMapINLINE().plotNumINLINE(dest_x, dest_y))
-			end_node = child_node;
+			end_node = child_node; // We've found our destination - but we still need to finish our calculations
 
 		if (parent_node->m_iKnownCost < child_node->m_iKnownCost)
 		{
@@ -360,9 +360,15 @@ bool KmodPathFinder::ProcessNode()
 				child_node->m_pParent = parent_node.get();
 
 				FAssert(child_node->m_iKnownCost > parent_node->m_iKnownCost);
+
+				if (child_node->m_eFAStarListType == NO_FASTARLIST && pathValid_source(child_node.get(), settings.pGroup , settings.iFlags))
+				{
+					open_list.push_back(child_node);
+					child_node->m_eFAStarListType = FASTARLIST_OPEN;
+				}
 			}
 		}
-		// else parent has higher cost. So there must already be a faster root to the child.
+		// else parent has higher cost. So there must already be a faster route to the child.
 	}
 	return true;
 }
