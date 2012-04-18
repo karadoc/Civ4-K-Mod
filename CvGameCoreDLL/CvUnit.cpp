@@ -4000,7 +4000,9 @@ bool CvUnit::airlift(int iX, int iY)
 
 	finishMoves();
 
+	AutomateTypes eAuto = getGroup()->getAutomateType(); // K-Mod
 	setXY(pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE());
+	getGroup()->setAutomateType(eAuto); // K-Mod. (automated workers sometimes airlift themselves. They should stay automated.)
 
 	return true;
 }
@@ -9560,10 +9562,20 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 		{
 			if (getGroup()->getNumUnits() > 1)
 			{
-				// K-Mod - to avoid AI deadlocks, where they just keep grouping and ungroup indefinitely...
-				if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
-				// K-Mod end
+				/* original bts code
+				getGroup()->setActivityType(ACTIVITY_AWAKE); */
+				// K-Mod. For human players, clear existing missions when new units are added to a group; otherwise the group might run away from us as soon as the units are added.
+				// For the AI, only wake the group in particular circumstances. This is to avoid AI deadlocks where they just keep grouping and ungroup indefinitely.
+				if (isHuman())
+				{
+					getGroup()->setAutomateType(NO_AUTOMATE);
+					// On second thought, I'm not going to clear the mission queue. I'm just going to change to rules so that "automoves" won't start while the group is selected.
+					//getGroup()->setActivityType(ACTIVITY_AWAKE);
+					//getGroup()->clearMissionQueue();
+				}
+				else if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
 					getGroup()->setActivityType(ACTIVITY_AWAKE);
+				// K-Mod end
 			}
 			else
 			{

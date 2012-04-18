@@ -496,7 +496,11 @@ void CvGame::updateTestEndTurn()
 				{
 					if (GET_PLAYER(getActivePlayer()).hasAutoUnit())
 					{
-						if (!(GC.shiftKey()))
+						//if (!(GC.shiftKey()))
+						// K-Mod. Don't start automoves if we currently have a group selected which would move.
+						CvUnit* pSelectedUnit = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
+						if (!GC.shiftKey() && (pSelectedUnit == NULL || !pSelectedUnit->getGroup()->readyToAuto()))
+						// K-Mod end
 						{
 							CvMessageControl::getInstance().sendAutoMoves();
 						}

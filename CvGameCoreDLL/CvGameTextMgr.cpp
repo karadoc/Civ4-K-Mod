@@ -14257,7 +14257,7 @@ void CvGameTextMgr::getWarWearinessString(CvWStringBuffer& szBuffer, PlayerTypes
 	else
 	{
 		const CvPlayer& kTargetPlayer = GET_PLAYER(eTargetPlayer);
-		if (atWar(kPlayer.getTeam(), kTargetPlayer.getTeam()))
+		if (atWar(kPlayer.getTeam(), kTargetPlayer.getTeam()) && (gDLL->getChtLvl() > 0 || GET_PLAYER(GC.getGameINLINE().getActivePlayer()).canSeeDemographics(ePlayer)))
 		{
 			iWarWeariness = kPlayer.getModifiedWarWearinessPercentAnger(GET_TEAM(kPlayer.getTeam()).getWarWeariness(kTargetPlayer.getTeam()) * std::max(0, 100 + GET_TEAM(kTargetPlayer.getTeam()).getEnemyWarWearinessModifier())/10000);
 		}
