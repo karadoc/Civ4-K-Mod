@@ -14316,11 +14316,26 @@ int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 		}
 	}
 
-	// up to +100% boost for liked civs having this has their state religion.
-	// less potential boost if we have aspirations of being a religious leader
-	iTotalCivs *= 10 + iReligionFlavor;
-	iTotalCivs /= 10;
-	iValue *= 100 + 100 * iLikedReligionCivs / std::max(1, iTotalCivs);
+	// * up to +100% boost for liked civs having this has their state religion. (depending on personality)
+	// * less potential boost if we have aspirations of being a religious leader
+	// * minimum boost for apostolic palace religion
+	const CvLeaderHeadInfo& kPersonality = GC.getLeaderHeadInfo(getPersonalityType());
+	int iDiplomaticBase = 50 + 5 * range(kPersonality.getSameReligionAttitudeChangeLimit() - kPersonality.getDifferentReligionAttitudeChange(), 0, 10);
+	// note. with the default xml, the highest the above number can get is 50 + 5*9 (Zara Yaqob). For most leaders its roughly 50 + 5*5. No one gets 100.
+	// also, most civs with a high base modifier also have iReligionFlavor > 0; and so their final modifier will be reduced.
+	int iDiplomaticModifier = 10 * iDiplomaticBase * iLikedReligionCivs / std::max(1, iTotalCivs);
+	iDiplomaticModifier /= 10 + iReligionFlavor;
+	if (iDiplomaticModifier < iDiplomaticBase/3)
+	{
+		for (VoteSourceTypes i = (VoteSourceTypes)0; i < GC.getNumVoteSourceInfos(); i = (VoteSourceTypes)(i+1))
+		{
+			if (isLoyalMember(i) && GC.getGameINLINE().isDiploVote(i) && GC.getGameINLINE().getVoteSourceReligion(i) == eReligion)
+			{
+				iDiplomaticModifier = iDiplomaticBase/3;
+			}
+		}
+	}
+	iValue *= 100 + iDiplomaticModifier;
 	iValue /= 100;
 
 	return iValue;
