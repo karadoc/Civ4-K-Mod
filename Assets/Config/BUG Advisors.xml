@@ -16,11 +16,6 @@
 	 
 	<options id="Advisors" file="BUG Advisors.ini">
 		<section id="Advisors">
-			<!-- Finance Advisor by EmperorFool -->
-			<option id="BugFinanceAdvisor" key="BUG Finance Advisor" 
-					type="boolean" default="False"
-					get="isBugFinanceAdvisor"/>
-
 			<!-- Exotic Foreign Advisor (F4) by Requies, Dresden, EmperorFool -->
 			<option id="EFAGlanceTab" key="EFA Glance" 
 					type="boolean" default="True" 
