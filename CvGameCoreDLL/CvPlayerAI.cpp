@@ -1248,6 +1248,7 @@ int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 		default:
 			break;
 		}
+		return iPriority;
 	}
 	/* old code
 		if (pHeadUnit->canFight())

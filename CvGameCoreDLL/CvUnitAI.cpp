@@ -15840,6 +15840,7 @@ bool CvUnitAI::AI_rangeAttack(int iRange)
 	return false;
 }
 
+// (heavily edited for K-Mod)
 bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThreshold)
 {
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
@@ -15888,31 +15889,27 @@ bool CvUnitAI::AI_leaveAttack(int iRange, int iOddsThreshold, int iStrengthThres
 		{
 			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
-			if (pLoopPlot != NULL)
-			{
-				if (AI_plotValid(pLoopPlot))
-				{
-					//if (pLoopPlot->isVisibleEnemyUnit(this) || (pLoopPlot->isCity() && AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot)))
-					if (pLoopPlot->isVisibleEnemyUnit(this) || (pLoopPlot->isCity() && isEnemy(pLoopPlot->getPlotCity()->getTeam()))) // K-Mod
-					{
-						if (pLoopPlot->getNumVisibleEnemyDefenders(this) > 0)
-						{
-							if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, 0, iRange))
-							{
-								//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
-								int iValue = AI_getWeightedOdds(pLoopPlot, false); // K-Mod
+			if (pLoopPlot == NULL || !AI_plotValid(pLoopPlot))
+				continue;
 
-								//if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
-								if (iValue >= iOddsThreshold) // K-mod
-								{
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										pBestPlot = getPathEndTurnPlot();
-										FAssert(!atPlot(pBestPlot));
-									}
-								}
-							}
+			/*if (pLoopPlot->isVisibleEnemyUnit(this) || (pLoopPlot->isCity() && AI_potentialEnemy(pLoopPlot->getTeam(), pLoopPlot)))
+			{
+				//if (pLoopPlot->getNumVisibleEnemyDefenders(this) > 0) */
+			if (pLoopPlot->isVisibleEnemyDefender(this)) // K-Mod
+			{
+				if (!atPlot(pLoopPlot) && generatePath(pLoopPlot, 0, true, 0, iRange))
+				{
+					//iValue = getGroup()->AI_attackOdds(pLoopPlot, true);
+					int iValue = AI_getWeightedOdds(pLoopPlot, false); // K-Mod
+
+					//if (iValue >= AI_finalOddsThreshold(pLoopPlot, iOddsThreshold))
+					if (iValue >= iOddsThreshold) // K-mod
+					{
+						if (iValue > iBestValue)
+						{
+							iBestValue = iValue;
+							pBestPlot = getPathEndTurnPlot();
+							FAssert(!atPlot(pBestPlot));
 						}
 					}
 				}
@@ -16085,7 +16082,7 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, 
 							FAssert(iBonus <= 100 - iOdds);
 
 							iValue += iBonus;*/
-							iValue += 100 * (iOdds+10) * (iOurAttack-iEnemyDefence)/((iThreshold+100) * iEnemyDefence);
+							iValue += 100 * (iOdds+15) * (iOurAttack-iEnemyDefence)/((iThreshold+100) * iEnemyDefence);
 						}
 					}
 
