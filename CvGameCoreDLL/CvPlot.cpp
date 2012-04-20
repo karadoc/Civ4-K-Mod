@@ -3712,6 +3712,12 @@ bool CvPlot::isVisibleEnemyUnit(PlayerTypes ePlayer) const
 	return (plotCheck(PUF_isEnemy, ePlayer, false, NO_PLAYER, NO_TEAM, PUF_isVisible, ePlayer) != NULL);
 }
 
+// K-Mod
+bool CvPlot::isVisiblePotentialEnemyUnit(PlayerTypes ePlayer) const
+{
+	return plotCheck(PUF_isPotentialEnemy, ePlayer, false, NO_PLAYER, NO_TEAM, PUF_isVisible, ePlayer) != NULL;
+}
+// K-Mod end
 int CvPlot::getNumVisibleUnits(PlayerTypes ePlayer) const
 {
 	return plotCount(PUF_isVisibleDebug, ePlayer);

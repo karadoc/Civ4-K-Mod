@@ -2639,7 +2639,8 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 						if (!bDeclareWar || (pPlot->isVisibleOtherUnit(getOwnerINLINE()) != bAttack && !(bAttack && pPlot->getPlotCity() && !isNoCapture()))) */
 						// K-Mod. I'm not entirely sure I understand what they were trying to do here. But I'm pretty sure it's wrong.
 						// I think the rule should be that bAttack means we have to actually fight an enemy unit. Capturing an undefended city doesn't not count.
-						if (!bAttack || !bDeclareWar || pPlot->getNumVisiblePotentialEnemyDefenders(this) == 0)
+						// (there is no "isVisiblePotentialEnemyUnit" function, so I just wrote the code directly.)
+						if (!bAttack || !bDeclareWar || !pPlot->isVisiblePotentialEnemyUnit(getOwnerINLINE()))
 						// K-Mod end
 						{
 							return false;

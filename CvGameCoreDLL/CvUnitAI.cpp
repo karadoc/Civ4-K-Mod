@@ -15702,7 +15702,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bF
 }
 
 // Returns true if a mission was pushed...
-// This function has been been heavily edited for K-Mod. (it started getting messy, so I deleted most of the old code)
+// This function has been been writen for K-Mod. (it started getting messy, so I deleted most of the old code)
 bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMinStack, bool bAllowCities, bool bFollow)
 {
 	PROFILE_FUNC();
@@ -15725,30 +15725,30 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 		{
 			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
-			if (pLoopPlot != NULL)
-			{
-				if (AI_plotValid(pLoopPlot))
-				{
-					if( (bAllowCities) || !(pLoopPlot->isCity(false)) )
-					{
-						int iEnemies = bDeclareWar
-							? pLoopPlot->getNumVisiblePotentialEnemyDefenders(this)
-							: pLoopPlot->getNumVisibleEnemyDefenders(this);
+			if (pLoopPlot == NULL || !AI_plotValid(pLoopPlot))
+				continue;
 
-						if ((iEnemies > 0 && iEnemies >= iMinStack) ||
-							(pLoopPlot->isCity() && (bDeclareWar ? AI_potentialEnemy(pLoopPlot->getPlotCity()->getTeam(), pLoopPlot) : isEnemy(pLoopPlot->getPlotCity()->getTeam()))))
-						{
-							if (!atPlot(pLoopPlot) && (bFollow ? canMoveOrAttackInto(pLoopPlot, bDeclareWar) : generatePath(pLoopPlot, iFlags, true, 0, iRange)))
-							{
-								int iOdds = iEnemies == 0 ? (pLoopPlot->isCity() ? 101 : 100) : AI_getWeightedOdds(pLoopPlot, false); // 101 for cities, because that's a better thing to capture.
-								if (iOdds >= iOddsThreshold)
-								{
-									iOddsThreshold = iOdds;
-									pBestPlot = bFollow ? pLoopPlot : getPathEndTurnPlot();
-								}
-							}
-						}
-					}
+			if (!bAllowCities && pLoopPlot->isCity())
+				continue;
+
+			if (bDeclareWar
+				? !pLoopPlot->isVisiblePotentialEnemyUnit(getOwnerINLINE()) && !(pLoopPlot->isCity() && AI_potentialEnemy(pLoopPlot->getPlotCity()->getTeam(), pLoopPlot))
+				: !pLoopPlot->isVisibleEnemyUnit(this) && !pLoopPlot->isEnemyCity(*this))
+			{
+				continue;
+			}
+
+			int iEnemyDefenders = bDeclareWar ? pLoopPlot->getNumVisiblePotentialEnemyDefenders(this) : pLoopPlot->getNumVisibleEnemyDefenders(this);
+			if (iEnemyDefenders < iMinStack)
+				continue;
+
+			if (!atPlot(pLoopPlot) && (bFollow ? canMoveOrAttackInto(pLoopPlot, bDeclareWar) : generatePath(pLoopPlot, iFlags, true, 0, iRange)))
+			{
+				int iOdds = iEnemyDefenders == 0 ? (pLoopPlot->isCity() ? 101 : 100) : AI_getWeightedOdds(pLoopPlot, false); // 101 for cities, because that's a better thing to capture.
+				if (iOdds >= iOddsThreshold)
+				{
+					iOddsThreshold = iOdds;
+					pBestPlot = bFollow ? pLoopPlot : getPathEndTurnPlot();
 				}
 			}
 		}
