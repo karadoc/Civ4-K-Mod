@@ -2292,9 +2292,6 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 
 	iWeight = GC.getCommerceInfo(eCommerce).getAIWeightPercent();
 
-	//sorry but the merchant descrimination must stop.
-	iWeight = std::min(110, iWeight);
-	
 	//XXX Add something for 100%/0% type situations
 	switch (eCommerce)
 	{

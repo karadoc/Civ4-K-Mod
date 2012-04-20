@@ -20,7 +20,7 @@
 			<Description>TXT_KEY_COMMERCE_RESEARCH</Description>
 			<iInitialPercent>100</iInitialPercent>
 			<iInitialHappiness>0</iInitialHappiness>
-			<iAIWeightPercent>125</iAIWeightPercent>
+			<iAIWeightPercent>105</iAIWeightPercent> <!-- was 125 -->
 			<bFlexiblePercent>1</bFlexiblePercent>
 			<Button>Art/Interface/Buttons/Process/ProcessResearch.dds</Button>
 		</CommerceInfo>

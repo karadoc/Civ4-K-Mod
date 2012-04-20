@@ -5916,9 +5916,9 @@ int CvCityAI::AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType
 			iTempValue *= 2;
 		}
 
-		// K-Mod. Calculate the number of commerce produced.
+		// K-Mod. Calculate the quantity of commerce produced.
 		iTempValue *= getYieldRate(YIELD_PRODUCTION);
-		//iTempValue /= 100; // keep this 100 for now.
+		//iTempValue /= 100; // keep this factor of 100 for now.
 		// Culture is local, the other commerce types are non-local.
 		// We don't want the non-local commerceWeights in this function, because maintaining a process is just a short-term arrangement.
 		iTempValue *= kOwner.AI_commerceWeight(i, i == COMMERCE_CULTURE ? this : 0);
@@ -5927,11 +5927,14 @@ int CvCityAI::AI_processValue(ProcessTypes eProcess, CommerceTypes eCommerceType
 
 		/* iTempValue *= GET_PLAYER(getOwnerINLINE()).AI_averageCommerceExchange(i);
 		iTempValue /= 60; */
-		// K-Mod. Check this shit.
+		// K-Mod. Amplify the value of commerce processes with low average multipliers, so that we can run higher percentages in commerce types with high average multipliers.
 		if (kOwner.isCommerceFlexible(i) && kOwner.getCommercePercent(i) > 0)
 		{
-			iTempValue *= 100 + kOwner.getCommercePercent(i) * (iAdjustFactor - 100) / 100;
-			iTempValue /= std::max(100, 100 + kOwner.getCommercePercent(i) * (kOwner.AI_averageCommerceMultiplier(i) - 100) / 100);
+			/* iTempValue *= 100 + kOwner.getCommercePercent(i) * (iAdjustFactor - 100) / 100;
+			iTempValue /= std::max(100, 100 + kOwner.getCommercePercent(i) * (kOwner.AI_averageCommerceMultiplier(i) - 100) / 100); */
+			// (that wasn't a strong enough effect)
+			iTempValue *= iAdjustFactor * std::max(100, 200 - 2*kOwner.getCommercePercent(i)) / 100;
+			iTempValue /= std::max(100, kOwner.AI_averageCommerceMultiplier(i) + iAdjustFactor * std::max(0, 100 - kOwner.getCommercePercent(i)) / 100);
 		}
 		// K-Mod end
 
