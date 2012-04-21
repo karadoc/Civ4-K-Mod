@@ -782,6 +782,8 @@ void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bD
 	{
 		if (!bDelayOnly)
 		{
+			if (GET_PLAYER(eActive).isOption(PLAYEROPTION_NO_UNIT_CYCLING)) // (for the non-rapid case, this option is handled elsewhere.)
+				return;
 			cycleSelectionGroups(true);
 		}
 	}
