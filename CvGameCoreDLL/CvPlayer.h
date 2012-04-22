@@ -160,17 +160,10 @@ public:
 	DllExport bool hasAutoUnit() const;
 	DllExport bool hasBusyUnit() const;
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	// Free Tech Popup Fix
-	bool isChoosingFreeTech() const;
-	void setChoosingFreeTech(bool bValue);
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+	// K-Mod
+	bool isChoosingFreeTech() const { return m_iChoosingFreeTechCount > 0; }
+	void changeChoosingFreeTechCount(int iChange) { m_iChoosingFreeTechCount += iChange; }
+	// K-Mod end
 
 	DllExport void chooseTech(int iDiscover = 0, CvWString szText = "", bool bFront = false);				// Exposed to Python
 
@@ -1248,16 +1241,7 @@ protected:
 /* AI_AUTO_PLAY_MOD                        END                                                  */
 /************************************************************************************************/
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	// Free Tech Popup Fix
-	bool m_bChoosingFreeTech;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+	int m_iChoosingFreeTechCount; // K-Mod (based on the 'Unofficial Patch'
 
 	PlayerTypes m_eID;
 	LeaderHeadTypes m_ePersonalityType;

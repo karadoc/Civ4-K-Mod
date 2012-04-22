@@ -1274,11 +1274,12 @@ void CvDLLWidgetData::doResearch(CvWidgetDataStruct &widgetDataStruct)
 		if (!kPlayer.isChoosingFreeTech())
 		{
 			gDLL->getInterfaceIFace()->addHumanMessage(GC.getGameINLINE().getActivePlayer(), true, GC.getEVENT_MESSAGE_TIME(), gDLL->getText("TXT_KEY_CHEATERS_NEVER_PROSPER"), NULL, MESSAGE_TYPE_MAJOR_EVENT);
+			FAssertMsg(false, "doResearch called for free tech when !isChoosingFreeTech()");
 			return;
 		}
 		else
 		{
-			kPlayer.setChoosingFreeTech(false);
+			kPlayer.changeChoosingFreeTechCount(-1);
 		}
 	}
 /************************************************************************************************/

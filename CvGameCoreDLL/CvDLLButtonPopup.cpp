@@ -90,6 +90,8 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 	int iExamineCityID;
 	int iI;
 
+	FAssert(GC.getGameINLINE().getActivePlayer() != NO_PLAYER); // K-Mod
+
 	switch (info.getButtonPopupType())
 	{
 	case BUTTONPOPUP_TEXT:
@@ -764,6 +766,8 @@ void CvDLLButtonPopup::OnFocus(CvPopup* pPopup, CvPopupInfo &info)
 		return;
 	}
 
+	FAssert(GC.getGameINLINE().getActivePlayer() != NO_PLAYER); // K-Mod
+
 	switch (info.getButtonPopupType())
 	{
 	case BUTTONPOPUP_CHOOSETECH:
@@ -774,6 +778,10 @@ void CvDLLButtonPopup::OnFocus(CvPopup* pPopup, CvPopupInfo &info)
 				gDLL->getInterfaceIFace()->popupSetAsCancelled(pPopup);
 			}
 		}
+		// K-Mod
+		else if (!GET_PLAYER(GC.getGameINLINE().getActivePlayer()).isChoosingFreeTech())
+			gDLL->getInterfaceIFace()->popupSetAsCancelled(pPopup);
+		// K-Mod end
 		break;
 
 	case BUTTONPOPUP_CHANGERELIGION:
@@ -867,6 +875,8 @@ void CvDLLButtonPopup::OnFocus(CvPopup* pPopup, CvPopupInfo &info)
 // returns false if popup is not launched
 bool CvDLLButtonPopup::launchButtonPopup(CvPopup* pPopup, CvPopupInfo &info)
 {
+	FAssert(GC.getGameINLINE().getActivePlayer() != NO_PLAYER); // K-Mod
+
 	bool bLaunched = false;
 
 	switch (info.getButtonPopupType())

@@ -101,26 +101,8 @@ CvPlayer::CvPlayer()
 	m_ppaaiSpecialistExtraYield = NULL;
 	m_ppaaiImprovementYieldChange = NULL;
 
-/************************************************************************************************/
-/* AI_AUTO_PLAY_MOD                        09/01/07                                MRGENIE      */
-/*                                                                                              */
-/*                                                                                              */
-/************************************************************************************************/
-	m_bDisableHuman = false;
-/************************************************************************************************/
-/* AI_AUTO_PLAY_MOD                        END                                                  */
-/************************************************************************************************/
-
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	// Free Tech Popup Fix
-	m_bChoosingFreeTech = false;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+	m_bDisableHuman = false; // bbai
+	m_iChoosingFreeTechCount = 0; // K-Mod
 
 	reset(NO_PLAYER, true);
 }
@@ -786,29 +768,8 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 	m_bExtendedGame = false;
 	m_bFoundedFirstCity = false;
 	m_bStrike = false;
-
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	// Free Tech Popup Fix
-	m_bChoosingFreeTech = false;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
-
-
-/************************************************************************************************/
-/* AI_AUTO_PLAY_MOD                        09/01/07                            MRGENIE          */
-/*                                                                                              */
-/*                                                                                              */
-/************************************************************************************************/
-	m_bDisableHuman = false;
-/************************************************************************************************/
-/* AI_AUTO_PLAY_MOD                        END                                                  */
-/************************************************************************************************/
-
+	m_bDisableHuman = false; // bbai
+	m_iChoosingFreeTechCount = 0; // K-Mod
 
 	m_eID = eID;
 	updateTeamType();
@@ -3899,40 +3860,13 @@ bool CvPlayer::hasBusyUnit() const
 
 	return false;
 }
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-// Free Tech Popup Fix
-bool CvPlayer::isChoosingFreeTech() const
-{
-	return m_bChoosingFreeTech;
-}
-
-void CvPlayer::setChoosingFreeTech(bool bValue)
-{
-	m_bChoosingFreeTech = bValue;
-}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 
 void CvPlayer::chooseTech(int iDiscover, CvWString szText, bool bFront)
 {
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       12/07/09                             EmperorFool      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-	// Free Tech Popup Fix
+	// K-mod
 	if (iDiscover > 0)
-	{
-		setChoosingFreeTech(true);
-	}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+		changeChoosingFreeTechCount(1); // note: if iDiscover is > 1, this function will be called again with iDiscover-=1
+	// K-Mod end
 
 	CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_CHOOSETECH);
 	if (NULL != pInfo)
@@ -17313,8 +17247,16 @@ void CvPlayer::read(FDataStreamBase* pStream)
 	pStream->Read(&m_bExtendedGame);
 	pStream->Read(&m_bFoundedFirstCity);
 	pStream->Read(&m_bStrike);
-	if (uiFlag >= 2)
-		pStream->Read(&m_bChoosingFreeTech); // K-Mod
+	// K-Mod
+	if (uiFlag >= 4)
+		pStream->Read(&m_iChoosingFreeTechCount);
+	else if (uiFlag >= 2)
+	{
+		bool bFreeTech = false;
+		pStream->Read(&bFreeTech);
+		m_iChoosingFreeTechCount = bFreeTech ? 1 : 0;
+	}
+	// K-Mod end
 
 	pStream->Read((int*)&m_eID);
 	pStream->Read((int*)&m_ePersonalityType);
@@ -17673,7 +17615,7 @@ void CvPlayer::write(FDataStreamBase* pStream)
 {
 	int iI;
 
-	uint uiFlag = 3;
+	uint uiFlag = 4;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iStartingX);
@@ -17780,7 +17722,7 @@ void CvPlayer::write(FDataStreamBase* pStream)
 	pStream->Write(m_bExtendedGame);
 	pStream->Write(m_bFoundedFirstCity);
 	pStream->Write(m_bStrike);
-	pStream->Write(m_bChoosingFreeTech); // K-Mod (uiFlag >= 2)
+	pStream->Write(m_iChoosingFreeTechCount); // K-Mod (bool for 2 <= uiFlag < 4. then int.)
 
 	pStream->Write(m_eID);
 	pStream->Write(m_ePersonalityType);
