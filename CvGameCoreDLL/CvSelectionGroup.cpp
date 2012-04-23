@@ -3504,7 +3504,10 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 		}
 		else
 		{
-			// pLoopUnit->joinGroup(NULL, true);
+			/* original bts code
+			pLoopUnit->joinGroup(NULL, true);
+			pLoopUnit->ExecuteMove(((float)(GC.getMissionInfo(MISSION_MOVE_TO).getTime() * gDLL->getMillisecsPerTurn())) / 1000.0f, false); */
+
 			// K-Mod. all units left behind should stay in the same group. (unless it would mean a change of group AI)
 			// (Note: it is important that units left behind are not in the original group.
 			// The later code assume that the original group has moved, and if it hasn't, there will be an infinite loop.)
@@ -3516,8 +3519,12 @@ void CvSelectionGroup::groupMove(CvPlot* pPlot, bool bCombat, CvUnit* pCombatUni
 				pStaticGroup = pLoopUnit->getGroup();
 			}
 			// K-Mod end
-			pLoopUnit->ExecuteMove(((float)(GC.getMissionInfo(MISSION_MOVE_TO).getTime() * gDLL->getMillisecsPerTurn())) / 1000.0f, false);
 		}
+		// K-Mod. If the unit is no longer in the original group; then display it's movement animation now.
+		// (this replaces the ExecuteMove line commented out in the above block, and it also handles the case of loading units onto boats.)
+		if (pLoopUnit->getGroupID() != getID())
+			pLoopUnit->ExecuteMove(((float)(GC.getMissionInfo(MISSION_MOVE_TO).getTime() * gDLL->getMillisecsPerTurn())) / 1000.0f, false);
+		// K-Mod end
 	}
 
 	//execute move
