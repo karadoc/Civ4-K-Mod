@@ -2457,12 +2457,15 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 }
 
 
+// K-Mod. I've made an ugly hack to change the functionality of double-click from select-all to wake-all. Here's how it works:
+// if this function is called with only bAlt == true, but without the alt key actually down, then wake-all is triggered rather than select-all.
+// To achieve the select-all functionality without the alt key, call the function with bCtrl && bAlt.
 void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) const
 {
 	PROFILE_FUNC();
 
 	FAssertMsg(pUnit != NULL, "pUnit == NULL unexpectedly");
-	// K-Mod. A hack to change the functionality of double-click from select all to wake all. 
+	// K-Mod. the hack (see above)
 	if (bAlt && !bShift && !bCtrl && !GC.altKey() && !gDLL->altKey()) // (using gDLL->altKey, to better match the state of bAlt)
 	{
 		// the caller says alt is pressed, but the computer says otherwise. Lets assume this is a double-click.
@@ -2553,7 +2556,8 @@ void CvGame::selectAll(CvPlot* pPlot) const
 
 	if (pSelectUnit != NULL)
 	{
-		gDLL->getInterfaceIFace()->selectGroup(pSelectUnit, false, false, true);
+		//gDLL->getInterfaceIFace()->selectGroup(pSelectUnit, false, false, true);
+		gDLL->getInterfaceIFace()->selectGroup(pSelectUnit, false, true, true); // K-Mod
 	}
 }
 

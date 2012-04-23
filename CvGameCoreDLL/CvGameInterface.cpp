@@ -988,7 +988,8 @@ void CvGame::selectionListMove(CvPlot* pPlot, bool bAlt, bool bShift, bool bCtrl
 
 	if (bAlt)
 	{
-		gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, false, true);
+		//gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, false, true);
+		gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, true, true); // K-Mod
 	}
 	else if (bCtrl)
 	{
@@ -1326,7 +1327,8 @@ void CvGame::handleAction(int iAction)
 		{
 			if (GC.getInterfaceModeInfo((InterfaceModeTypes)GC.getActionInfo(iAction).getInterfaceModeType()).getSelectAll())
 			{
-				gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, false, true);
+				//gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, false, true);
+				gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, true, true); // K-Mod
 			}
 			else if (GC.getInterfaceModeInfo((InterfaceModeTypes)GC.getActionInfo(iAction).getInterfaceModeType()).getSelectType())
 			{
@@ -1572,7 +1574,8 @@ void CvGame::doControl(ControlTypes eControl)
 		pHeadSelectedUnit = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
 		if (pHeadSelectedUnit != NULL)
 		{
-			gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, false, true);
+			//gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, false, true);
+			gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, true, true); // K-Mod
 		}
 		break;
 
