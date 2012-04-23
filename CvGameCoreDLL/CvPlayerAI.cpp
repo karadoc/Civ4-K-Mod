@@ -18649,20 +18649,14 @@ void CvPlayerAI::AI_doCheckFinancialTrouble()
 // K-Mod, deleted this function.
 
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/25/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
+// heavily edited by K-Mod and bbai
 int CvPlayerAI::AI_calculateCultureVictoryStage() const
 {
-    int iValue;
-
 	if( GC.getDefineINT("BBAI_VICTORY_STRATEGY_CULTURE") <= 0 )
 	{
 		return 0;
 	}
-	
+
     if (!GC.getGameINLINE().culturalVictoryValid())
     {
         return 0;
@@ -18728,22 +18722,21 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 		return 3;
 	}
 
-	if( iCloseToLegendaryCount >= iVictoryCities )
+	// K-Mod. Originally, the BBAI condition for culture4 was just "iCloseToLegendaryCount >= iVictoryCities".
+	// I think that is far too simplistic for the AI players; so I've removed that clause.
+	if (isHuman() && !GC.getGameINLINE().isDebugMode())
 	{
-		return 4;
-	}
-	else if( isHuman() )
-	{
-		if( getCommercePercent(COMMERCE_CULTURE) > 50 )
+		if (iCloseToLegendaryCount >= iVictoryCities)
+		{
+			return 4;
+		}
+		else if (getCommercePercent(COMMERCE_CULTURE) > 50)
 		{
 			return 3;
 		}
-	}
-
-	if( isHuman() && !(GC.getGameINLINE().isDebugMode()) )
-	{
 		return 0;
 	}
+	// K-Mod end
 
 	// K-Mod, disabling some stuff.
 	// It is still possible to get a cultural victory in advanced start games.
@@ -18764,62 +18757,66 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 		}
     } */
 
-    iValue = GC.getLeaderHeadInfo(getPersonalityType()).getCultureVictoryWeight();
+	// If we aren't already obviously close to a cultural victory, then we need to consider whether or not to aim for culture at all.
+	if (iCloseToLegendaryCount < iVictoryCities)
+	{
+		int iValue = GC.getLeaderHeadInfo(getPersonalityType()).getCultureVictoryWeight();
 
-	if (GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE))
-	{
-    	iValue += 30;
-	}
-	
-	iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
-	
-	// K-Mod
-	iValue += 30 * std::min(iCloseToLegendaryCount, iVictoryCities + 1);
-	iValue += 10 * std::min(iHighCultureCount, iVictoryCities + 1);
-	// K-Mod end
-	if( iValue > 20 && getNumCities() >= iVictoryCities )
-	{
-		iValue += 5*countHolyCities(); // was 10*
-		// K-Mod: be wary of going for a cultural victory if everyone hates us.
-		int iScore = 0;
-		int iTotalPop = 0;
-		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		if (GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE))
 		{
-			const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
-			if (iI != getID() && kLoopPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam())
-				&& !kLoopPlayer.isMinorCiv() && !GET_TEAM(kLoopPlayer.getTeam()).isAVassal())
+			iValue += 30;
+		}
+
+		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? -20 : 0);
+
+		// K-Mod
+		iValue += 30 * std::min(iCloseToLegendaryCount, iVictoryCities + 1);
+		iValue += 10 * std::min(iHighCultureCount, iVictoryCities + 1);
+		// K-Mod end
+		if( iValue > 20 && getNumCities() >= iVictoryCities )
+		{
+			iValue += 5*countHolyCities(); // was 10*
+			// K-Mod: be wary of going for a cultural victory if everyone hates us.
+			int iScore = 0;
+			int iTotalPop = 0;
+			for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 			{
-				iTotalPop += kLoopPlayer.getTotalPopulation();
-				if (AI_getAttitude((PlayerTypes)iI) <= ATTITUDE_ANNOYED)
-					iScore -= 20 * kLoopPlayer.getTotalPopulation();
-				else if (AI_getAttitude((PlayerTypes)iI) >= ATTITUDE_PLEASED)
-					iScore += 10 * kLoopPlayer.getTotalPopulation();
+				const CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+				if (iI != getID() && kLoopPlayer.isAlive() && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam())
+					&& !kLoopPlayer.isMinorCiv() && !GET_TEAM(kLoopPlayer.getTeam()).isAVassal())
+				{
+					iTotalPop += kLoopPlayer.getTotalPopulation();
+					if (AI_getAttitude((PlayerTypes)iI) <= ATTITUDE_ANNOYED)
+						iScore -= 20 * kLoopPlayer.getTotalPopulation();
+					else if (AI_getAttitude((PlayerTypes)iI) >= ATTITUDE_PLEASED)
+						iScore += 10 * kLoopPlayer.getTotalPopulation();
+				}
+			}
+			iValue += iScore / std::max(1, iTotalPop);
+			iValue -= AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) ? 20 : 0;
+			iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE2) ? 10 : 0;
+			iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) ? 20 : 0;
+			// K-Mod end
+		}
+		/*
+		if ((GET_TEAM(getTeam()).isAVassal()) && (getNumCities() > 5))
+		{
+			int iReligionCount = countTotalHasReligion();
+			if (((iReligionCount * 100) / getNumCities()) > 250)
+			{
+				iValue += 1;
+				iValue += ((2 * iReligionCount) + 1) / getNumCities();
 			}
 		}
-		iValue += iScore / std::max(1, iTotalPop);
-		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) ? 20 : 0;
-		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE2) ? 10 : 0;
-		iValue -= AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) ? 20 : 0;
-		// K-Mod end
-	}
-	/*
-	if ((GET_TEAM(getTeam()).isAVassal()) && (getNumCities() > 5))
-	{
-		int iReligionCount = countTotalHasReligion();
-		if (((iReligionCount * 100) / getNumCities()) > 250)
+		*/
+
+		//int iNonsense = AI_getStrategyRand() + 10;
+		iValue += (AI_getStrategyRand(0) % 100);
+
+		if (iValue < 100)
 		{
-			iValue += 1;
-			iValue += ((2 * iReligionCount) + 1) / getNumCities();
+			return 0;
 		}
-	}
-	*/
-
-	//int iNonsense = AI_getStrategyRand() + 10;
-	iValue += (AI_getStrategyRand(0) % 100);
-
-	if (iValue < 100)
-	{
-		return 0;
 	}
 
 	int iWinningCountdown = INT_MAX;
@@ -18828,7 +18825,7 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 		std::partial_sort(countdownList.begin(), countdownList.begin() + iVictoryCities, countdownList.end());
 		iWinningCountdown = countdownList[iVictoryCities-1];
 	}
-    if (getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
+    if (iCloseToLegendaryCount >= iVictoryCities || getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
     {
 		bool bAt3 = false;
         
@@ -18855,27 +18852,35 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 			{
 				return 4;
 			}*/
-			// K-Mod
+			// K-Mod. Do full culture if our winning countdown is below the countdown target.
 			int iCountdownTarget = 180;
 			{
+				// The countdown target depends on what other victory strategies we have in mind. The target is 180 turns * 100 / iDenominator.
+				// For example, if we're already at war, and going for conquest 4, the target countdown is then ~ 180 * 100 / 470 == 38 turns.
+				// Note: originally culture 4 was blocked completely by stage 4 of any other victory strategy. But this is no longer the case.
 				int iDemoninator = 100;
+				iDemoninator += 20 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION1);
 				iDemoninator += 50 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2);
 				iDemoninator += 50 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3);
 				iDemoninator += 80 * AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3);
 				iDemoninator += 70 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE2);
-				iDemoninator += 70 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE3);
+				iDemoninator += 80 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE3);
+				iDemoninator += 50 * AI_isDoVictoryStrategy(AI_VICTORY_SPACE4);
 				iDemoninator += AI_cultureVictoryTechValue(getCurrentResearch()) > 100 ? 80 : 0;
 				iDemoninator += AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS)? 80 : 0;
-				iDemoninator += GET_TEAM(getTeam()).getAnyWarPlanCount(true)>0 ? 30 : 0;
-				int iWarSuccessRating = GET_TEAM(getTeam()).AI_getWarSuccessRating();
-				iDemoninator += iWarSuccessRating < 0 ? -2*iWarSuccessRating : 0;
+				if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
+				{
+					iDemoninator += 50;
+					iDemoninator += 200 * AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4);
+					int iWarSuccessRating = GET_TEAM(getTeam()).AI_getWarSuccessRating();
+					iDemoninator += iWarSuccessRating < 0 ? 10 - 2*iWarSuccessRating : 0;
+				}
 				// and a little bit of personal variation.
 				iDemoninator += 50 - GC.getLeaderHeadInfo(getPersonalityType()).getCultureVictoryWeight();
 
 				iCountdownTarget *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
-				iCountdownTarget /= iDemoninator;
+				iCountdownTarget /= std::max(1, iDemoninator);
 			}
-			// Note: culture 4 is blocked completely by 4 in any of those other strategies.
 			if (iWinningCountdown < iCountdownTarget)
 			{
 				return 4;
@@ -19574,7 +19579,8 @@ void CvPlayerAI::AI_updateVictoryStrategyHash()
 				bStartedOtherLevel3 = true;
                 m_iVictoryStrategyHash |= AI_VICTORY_CULTURE3;
 
-				if (iVictoryStage > 3 && !bStartedOtherLevel4)
+				//if (iVictoryStage > 3 && !bStartedOtherLevel4)
+				if (iVictoryStage > 3) // K-Mod. If we're close to a cultural victory - then allow Culture4 even with other stage4 strategies already running.
 				{
 					bStartedOtherLevel4 = true;
                 	m_iVictoryStrategyHash |= AI_VICTORY_CULTURE4;
