@@ -4,7 +4,7 @@ K-Mod
 * Unzip into your mods directory. (eg. C:\games\Civilization 4 Complete\Beyond the Sword\Mods)
 * You should now have a directory called ...\Beyond the Sword\Mods\K-Mod, and the installation is complete!
 * To play the mod, start Beyond the Sword; choose Advanced, then Load a Mod, then K-Mod.
-* To load the mod automatically, create a shortcut to ["Civ4BeyondSword.exe" -mod= K-Mod].
+* To load the mod automatically, create a shortcut to ["Civ4BeyondSword.exe" mod="K-Mod"].
 
 == Uninstallation instructions ==
 * Delete the K-Mod directory.
