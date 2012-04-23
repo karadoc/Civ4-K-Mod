@@ -3640,6 +3640,7 @@ void CvPlayer::updateCommerce(CommerceTypes eCommerce)
 
 void CvPlayer::updateCommerce()
 {
+	PROFILE_FUNC(); // K-Mod
 	CvCity* pLoopCity;
 	int iLoop;
 
@@ -11876,29 +11877,23 @@ int CvPlayer::getCommercePercent(CommerceTypes eIndex) const
 
 void CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue)
 {
-	int iTotalCommercePercent;
-	int iOldValue;
-	int iI;
-
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < NUM_COMMERCE_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
 
-	PROFILE_FUNC(); // K-Mod - I suspect this function is slow
-
-	iOldValue = getCommercePercent(eIndex);
+	int iOldValue = getCommercePercent(eIndex);
 
 	m_aiCommercePercent[eIndex] = range(iNewValue, 0, 100);
 
 	if (iOldValue != getCommercePercent(eIndex))
 	{
-		iTotalCommercePercent = 0;
+		int iTotalCommercePercent = 0;
 
-		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
 			iTotalCommercePercent += getCommercePercent((CommerceTypes)iI);
 		}
 
-		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
 			if (iI != eIndex)
 			{

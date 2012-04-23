@@ -4642,34 +4642,39 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 	return false;
 }
 
-
+// This function has been heavily edited for K-Mod
 int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 {
 	int iGold = 0;
 
-	bool bAnyWar = GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0;
-
 	// K-Mod.
 	int iUpgradeBudget = AI_getGoldToUpgradeAllUnits();
 
-	if (!bAnyWar)
+	if (iUpgradeBudget > 0)
 	{
-		iUpgradeBudget /= AI_isFinancialTrouble() ? 10 : 4;
-	}
-	else
-	{
-		if (GET_TEAM(getTeam()).AI_getWarSuccessRating() < -10)
-			iUpgradeBudget *= 2; // cf. iTargetTurns in AI_doCommerce
-		else if (AI_isFinancialTrouble())
+		const CvTeamAI& kTeam = GET_TEAM(getTeam());
+		bool bAnyWar = kTeam.getAnyWarPlanCount(true) > 0;
+
+		if (!bAnyWar)
 		{
-			iUpgradeBudget /= 2;
+			iUpgradeBudget /= AI_isFinancialTrouble() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4) ? 10 : 4;
 		}
+		else
+		{
+			int iSuccessRating = kTeam.AI_getWarSuccessRating();
+			if (iSuccessRating < -10 || (iSuccessRating < 10 && kTeam.getWarPlanCount(WARPLAN_ATTACKED_RECENT, true) > 0))
+				iUpgradeBudget *= 2; // cf. iTargetTurns in AI_doCommerce
+			else if (iSuccessRating > 50 || AI_isFinancialTrouble())
+			{
+				iUpgradeBudget /= 2;
+			}
+		}
+
+		if (bUpgradeBudgetOnly)
+			return iUpgradeBudget;
+
+		iGold += iUpgradeBudget;
 	}
-
-	if (bUpgradeBudgetOnly)
-		return iUpgradeBudget;
-
-	iGold += iUpgradeBudget;
 	// K-Mod end
 
 /************************************************************************************************/
@@ -4697,15 +4702,18 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 		iGold += (GC.getGameINLINE().getElapsedGameTurns() / 2);*/
 		// K-mod. Does slower research mean we need to keep more gold? Does slower building?
 		// Surely the raw turn count is the one that needs to be adjusted for speed!
-		int iStockPile = 3*std::min(8, getNumCities()) + std::min(120, getTotalPopulation())/3;
-		iGold += 100*GC.getGameINLINE().getElapsedGameTurns() / (2*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent());
-		if (AI_getFlavorValue(FLAVOR_GOLD) > 0)
+		if (!AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
 		{
-			iStockPile *= 10 + AI_getFlavorValue(FLAVOR_GOLD);
-			iStockPile /= 8;
+			int iStockPile = 3*std::min(8, getNumCities()) + std::min(120, getTotalPopulation())/3;
+			iGold += 100*GC.getGameINLINE().getElapsedGameTurns() / (2*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent());
+			if (AI_getFlavorValue(FLAVOR_GOLD) > 0)
+			{
+				iStockPile *= 10 + AI_getFlavorValue(FLAVOR_GOLD);
+				iStockPile /= 8;
+			}
+			// note: currently the highest flavor_gold is 5.
+			iGold += iStockPile;
 		}
-		// note: currently the highest flavor_gold is 5.
-		iGold += iStockPile;
 		// K-Mod end
 
 		/*iGold *= iMultiplier;
@@ -4746,16 +4754,16 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 
 		if (!isNoCorporations())
 		{
-			for (int iI = 0; iI < GC.getNumCorporationInfos(); iI++)
+			for (CorporationTypes eCorp = (CorporationTypes)0; eCorp < GC.getNumCorporationInfos(); eCorp = (CorporationTypes)(eCorp+1))
 			{
-				if (getHasCorporationCount((CorporationTypes)iI) > 0)
+				if (getHasCorporationCount(eCorp) > 0)
 				{
-					int iExecs = countCorporationSpreadUnits(NULL, (CorporationTypes)iI, true);
+					int iExecs = countCorporationSpreadUnits(NULL, eCorp, true);
 					if (iExecs > 0)
 					{
-						int iTempCost = GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost();
+						int iTempCost = GC.getCorporationInfo(eCorp).getSpreadCost();
 						iTempCost *= iExecs + 1; // execs + 1 because actual spread cost can be higher than the base cost.
-						iSpreadCost = std::max(iTempCost, GC.getCorporationInfo((CorporationTypes)iI).getSpreadCost());
+						iSpreadCost = std::max(iSpreadCost, iTempCost);
 					}
 				}
 			}
@@ -12434,7 +12442,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 					else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
 						iAttitudeWeight = 50;
 					else
-						iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - (isHuman() ? 125 : 75);
+						iAttitudeWeight = AI_getAttitudeWeight((PlayerTypes)iPlayer) - (isHuman() ? 100 : 75);
 					// note: this is to discourage automated human units from spreading to the AI, not AI to human.
 
 					// a rough check to save us some time.
@@ -15373,7 +15381,7 @@ void CvPlayerAI::AI_doResearch()
 	}
 }
 
-
+// This function has been heavily edited for K-Mod. (Most changes are unmarked. Lots of code has been rearranged / deleted.
 void CvPlayerAI::AI_doCommerce()
 {
 	FAssertMsg(!isHuman(), "isHuman did not return false as expected");
@@ -15391,6 +15399,8 @@ void CvPlayerAI::AI_doCommerce()
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+	const int iCommerceIncrement = GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS");
+
 	int iGoldTarget = AI_goldTarget();
 	int iTargetTurns = 4 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
 	iTargetTurns /= 100;
@@ -15400,34 +15410,6 @@ void CvPlayerAI::AI_doCommerce()
 	if (!bFinancialTrouble && getGold() > iGoldTarget)
 		iTargetTurns = (iTargetTurns + 1)/2;
 	// K-Mod end
-
-    if (isCommerceFlexible(COMMERCE_RESEARCH) && !AI_avoidScience())
-	{
-        // set research rate to 100%
-		setCommercePercent(COMMERCE_RESEARCH, 100);
-		
-		// if the gold rate is under 0 at 90% research
-		int iGoldRate = calculateGoldRate();
-		if (iGoldRate < 0)
-		{
-			TechTypes eCurrentResearch = getCurrentResearch();
-			if (eCurrentResearch != NO_TECH)
-			{
-				int iResearchTurnsLeft = getResearchTurnsLeft(eCurrentResearch, true);
-				
-				// if we can finish the current research without running out of gold, let us spend 2/3rds of our gold 
-				/* original bts code
-				if (getGold() >= iResearchTurnsLeft * iGoldRate)
-				{
-					iGoldTarget /= 3;
-				} */
-				// K-Mod (what is the gold being stockpile for if not this?)
-				if (getGold() >= iResearchTurnsLeft * -iGoldRate)
-					iGoldTarget /= 5;
-				// K-Mod end
-			}
-		}
-	}
 
 	bool bReset = false;
 
@@ -15443,26 +15425,12 @@ void CvPlayerAI::AI_doCommerce()
 
 	if (isCommerceFlexible(COMMERCE_ESPIONAGE))
 	{
-		/* original BTS code
-		if (getCommercePercent(COMMERCE_ESPIONAGE) > 0)
-		{
-			setCommercePercent(COMMERCE_ESPIONAGE, 0);
-
-			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
-			{
-				setEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, 0);
-			}
-
-			bReset = true;
-		} */
-		//
 		if (getCommercePercent(COMMERCE_ESPIONAGE) > 0)
 		{
 			setCommercePercent(COMMERCE_ESPIONAGE, 0);
 
 			bReset = true;
 		}
-		//
 	}
 
 	if (bReset)
@@ -15470,10 +15438,16 @@ void CvPlayerAI::AI_doCommerce()
 		AI_assignWorkingPlots();
 	}
 
-	bool bFirstTech = AI_isFirstTech(getCurrentResearch());
+	const bool bFirstTech = AI_isFirstTech(getCurrentResearch());
+	const bool bNoResearch = isNoResearchAvailable();
+
 	if (isCommerceFlexible(COMMERCE_CULTURE))
 	{
-		if (getNumCities() > 0)
+		if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
+		{
+			setCommercePercent(COMMERCE_CULTURE, 100);
+		}
+		else if (getNumCities() > 0)
 		{
 			int iIdealPercent = 0;
 
@@ -15507,96 +15481,51 @@ void CvPlayerAI::AI_doCommerce()
 				iCap += 30;
 				iIdealPercent *= 2;
 			}
-			iIdealPercent -= iIdealPercent % GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS");
+			iIdealPercent -= iIdealPercent % iCommerceIncrement;
 			iIdealPercent = std::min(iIdealPercent, iCap);
 			// K-Mod end
-
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
-			{
-			    iIdealPercent = 100;
-			}
 
 			setCommercePercent(COMMERCE_CULTURE, iIdealPercent);
 		}
 	}
 
-	if (isCommerceFlexible(COMMERCE_RESEARCH))
+	if (isCommerceFlexible(COMMERCE_RESEARCH) && !bNoResearch)
 	{
-		if ((isNoResearchAvailable() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4)) && !bFirstTech)
+		setCommercePercent(COMMERCE_RESEARCH, 100-getCommercePercent(COMMERCE_CULTURE));
+
+		if (!AI_avoidScience() && !AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
 		{
-			setCommercePercent(COMMERCE_RESEARCH, 0);
-		}
-		else
-		{
-			/* while (calculateGoldRate() > 0)
+			// If we can afford to run full science for the rest of our current research,
+			// then reduce our gold target so that we can burn through our gold.
+			int iGoldRate = calculateGoldRate();
+			if (iGoldRate < 0)
 			{
-				changeCommercePercent(COMMERCE_RESEARCH, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
-
-				if (getCommercePercent(COMMERCE_RESEARCH) == 100)
+				TechTypes eCurrentResearch = getCurrentResearch();
+				if (eCurrentResearch != NO_TECH)
 				{
-					break;
+					int iResearchTurnsLeft = getResearchTurnsLeft(eCurrentResearch, true);
+
+					if (getGold() >= iResearchTurnsLeft * -iGoldRate)
+						iGoldTarget /= 5;
 				}
-			} */
-			// K-Mod disabled this!
-
-			if (getGold() + iTargetTurns * calculateGoldRate() < iGoldTarget)
-			{
-				while (getGold() + iTargetTurns * calculateGoldRate() <= iGoldTarget)
-				{
-					changeCommercePercent(COMMERCE_RESEARCH, -(GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS")));
-
-					if ((getCommercePercent(COMMERCE_RESEARCH) == 0))
-					{
-						break;
-					}
-				}
-			}
-			else
-			{
-				if (AI_avoidScience())
-				{
-					changeCommercePercent(COMMERCE_RESEARCH, -(GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS")));
-				}
-			}
-
-			if ((GET_TEAM(getTeam()).getChosenWarCount(true) > 0) || (GET_TEAM(getTeam()).getWarPlanCount(WARPLAN_ATTACKED_RECENT, true) > 0))
-			{
-				changeCommercePercent(COMMERCE_RESEARCH, -(GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS")));
-			}
-
-			if ((getCommercePercent(COMMERCE_RESEARCH) == 0) && (calculateGoldRate() > 0))
-			{
-				setCommercePercent(COMMERCE_RESEARCH, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
 			}
 		}
 	}
 
-	// original BTS code
-	/*
-	if (isCommerceFlexible(COMMERCE_ESPIONAGE) && !bFirstTech)
+	// if (isCommerceFlexible(COMMERCE_GOLD))
+	// Gold is special. The default xml has gold marked as not flexible, but it is effectly adjusted by changing the other commerce percentages.
+	// So I'm just going to allow the AI to behave as if gold actually is flexible.
 	{
-		int iEspionageTargetRate = 0;
-
-		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
+		// note: as we increase the gold rate, research will be reduced before culture.
+		// (The order defined in CommerceTypes is the order that the types will be decreased to accomdate changes.)
+		while (getCommercePercent(COMMERCE_GOLD) < 100 && getGold() + iTargetTurns * calculateGoldRate() <= iGoldTarget)
 		{
-			CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
-			if (kLoopTeam.isAlive() && iTeam != getTeam() && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
-			{
-				int iTarget = (kLoopTeam.getEspionagePointsAgainstTeam(getTeam()) - GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam)) / 8;
-
-				iTarget -= GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam);
-
-				if (iTarget > 0)
-				{
-					iEspionageTargetRate += iTarget;
-					changeEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam, iTarget);
-				}
-			}
+			changeCommercePercent(COMMERCE_GOLD, iCommerceIncrement);
 		}
-		*/
+	}
 
 	// K-Mod, partially based on the changes made by BETTER_BTS_AI_MOD
-	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && isCommerceFlexible(COMMERCE_ESPIONAGE))
+	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && (isCommerceFlexible(COMMERCE_ESPIONAGE) || getCommerceRate(COMMERCE_ESPIONAGE) > 0))
 	{
 		int iEspionageTargetRate = 0;
 		int* aiTarget = new int[MAX_CIV_TEAMS];
@@ -15616,7 +15545,7 @@ void CvPlayerAI::AI_doCommerce()
 		for (int iMission = 0; iMission < GC.getNumEspionageMissionInfos(); ++iMission)
 		{
 			CvEspionageMissionInfo& kMissionInfo = GC.getEspionageMissionInfo((EspionageMissionTypes)iMission);
-				
+
 			if (kMissionInfo.isSeeDemographics())
 				eSeeDemographicsMission = (EspionageMissionTypes)iMission;
 
@@ -15791,7 +15720,7 @@ void CvPlayerAI::AI_doCommerce()
 
 		// now, the big question is whether or not we can steal techs more easilly than we can research them.
 		bool bCheapTechSteal = false;
-		if (eMinModTeam != NO_TEAM && !AI_avoidScience() && !isNoResearchAvailable() && !AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
+		if (eMinModTeam != NO_TEAM && !AI_avoidScience() && !bNoResearch && !AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
 		{
 			if (eStealTechMission != NO_ESPIONAGEMISSION)
 			{
@@ -15849,7 +15778,7 @@ void CvPlayerAI::AI_doCommerce()
 
 		//if economy is weak, neglect espionage spending.
 		//instead invest hammers into espionage via spies/builds
-		if (bFinancialTrouble || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || bFirstTech) // K-Mod
+		if (bFinancialTrouble || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || bFirstTech || !isCommerceFlexible(COMMERCE_ESPIONAGE)) // K-Mod
 		{
 			//can still get trickle espionage income
 			iEspionageTargetRate = 0;
@@ -15865,9 +15794,6 @@ void CvPlayerAI::AI_doCommerce()
 			iEspionageTargetRate *= GC.getLeaderHeadInfo(getLeaderType()).getEspionageWeight();
 			iEspionageTargetRate /= 100;
 
-			int iInitialResearchPercent = getCommercePercent(COMMERCE_RESEARCH);
-
-			//while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < 20)
 			// K-Mod
 			int iCap = AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? 20 : 10;
 			iCap += bCheapTechSteal || AI_avoidScience() ? 50 : 0;
@@ -15877,21 +15803,17 @@ void CvPlayerAI::AI_doCommerce()
 
 			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
 			{
-				changeCommercePercent(COMMERCE_RESEARCH, -GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));			
-				changeCommercePercent(COMMERCE_ESPIONAGE, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+				changeCommercePercent(COMMERCE_RESEARCH, -iCommerceIncrement);			
+				changeCommercePercent(COMMERCE_ESPIONAGE, iCommerceIncrement);
 
 				if (getGold() + iTargetTurns * calculateGoldRate() < iGoldTarget)
 				{
 					break;
 				}
 
-				if (!AI_avoidScience() && !isNoResearchAvailable() && !bCheapTechSteal)
+				if (!AI_avoidScience() && !bCheapTechSteal)
 				{
-	//				if (2 * getCommercePercent(COMMERCE_RESEARCH) < iInitialResearchPercent)
-	//				{
-	//					break;
-	//				}
-					if (getCommercePercent(COMMERCE_RESEARCH) * 2 <= (getCommercePercent(COMMERCE_ESPIONAGE) + GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS")) * 3)
+					if (getCommercePercent(COMMERCE_RESEARCH) * 2 <= (getCommercePercent(COMMERCE_ESPIONAGE) + iCommerceIncrement) * 3)
 					{
 						break;
 					}
@@ -15905,18 +15827,18 @@ void CvPlayerAI::AI_doCommerce()
 		while (getCommercePercent(COMMERCE_GOLD) > 0 && getGold() + std::min(0, calculateGoldRate()) > iGoldTarget)
 		{
 			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) && isCommerceFlexible(COMMERCE_CULTURE))
-				changeCommercePercent(COMMERCE_CULTURE, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+				changeCommercePercent(COMMERCE_CULTURE, iCommerceIncrement);
 			else if (isCommerceFlexible(COMMERCE_ESPIONAGE))
-				changeCommercePercent(COMMERCE_ESPIONAGE, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
-			else if (isCommerceFlexible(COMMERCE_RESEARCH)) // better than nothing...
-				changeCommercePercent(COMMERCE_RESEARCH, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+				changeCommercePercent(COMMERCE_ESPIONAGE, iCommerceIncrement);
+			else if (isCommerceFlexible(COMMERCE_RESEARCH) && !bNoResearch) // better than nothing...
+				changeCommercePercent(COMMERCE_RESEARCH, iCommerceIncrement);
 			else
 				break;
 		}
 	}
 	// K-Mod end
 	
-	if (!bFirstTech && (getGold() < iGoldTarget) && (getCommercePercent(COMMERCE_RESEARCH) > 40))
+	if (!bFirstTech && (getGold() < iGoldTarget) && getCommercePercent(COMMERCE_RESEARCH) > 40)
 	{
 		bool bHurryGold = false;
 		for (int iHurry = 0; iHurry < GC.getNumHurryInfos(); iHurry++)
@@ -15929,15 +15851,15 @@ void CvPlayerAI::AI_doCommerce()
 		}
 		if (bHurryGold)
 		{
-			if (getCommercePercent(COMMERCE_ESPIONAGE) > 0)
+			if (getCommercePercent(COMMERCE_ESPIONAGE) > 0 && !AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) && isCommerceFlexible(COMMERCE_ESPIONAGE))
 			{
-				changeCommercePercent(COMMERCE_ESPIONAGE, -GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));			
+				changeCommercePercent(COMMERCE_ESPIONAGE, -iCommerceIncrement);			
 			}
-			else
+			else if (isCommerceFlexible(COMMERCE_RESEARCH))
 			{
-				changeCommercePercent(COMMERCE_RESEARCH, -GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));			
+				changeCommercePercent(COMMERCE_RESEARCH, -iCommerceIncrement);			
 			}
-			//changeCommercePercent(COMMERCE_GOLD, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
+			// note. gold is automatically increased when other types are decreased.
 		}
 	}
 	
