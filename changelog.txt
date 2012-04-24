@@ -1,6 +1,38 @@
-This is K-Mod version 1.27.
+This is K-Mod version 1.28.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.28 changelist
+
+Game / UI
+
++ Restored the functionality of 'select all' commands which do not use the alt key. (These commands were unintentional disabled when I changed the functionality of double-click from 'select all' to 'wake all'.)
++ Fixed a bug which caused the Numpad Help option to crash the game.
++ The new-era popup is centered rather than displayed on the left side of the screen.
++ War weariness in the foreign advisor screen will now only been shown if the activate player can see the demographics of the target player.
++ The No Unit Cycling option now overrules the Rapid Unit Cycling option (rather than the other way around).
++ The automoves phase for human players now will not automatically activate when one of the automoves units is selected.
++ Automated units which airlift themselves will now stay automated.
++ Adding units to a group will now disable the group's automation.
++ Fixed a bug in the Unofficial Patch which prevented players from getting two free techs on the same turn. (eg. if a player built the oracle on the same turn as discovering liberalism, they'd only get one tech instead of two.)
++ Fixed a problem which prevented the move animation from starting correctly when units become ungrouped while moving. (eg. when they are loaded into a boat. This problem is what caused units to sometimes appear running across the water and so on.)
+
+AI
+
++ The AI will now consider using 100% culture for a cultural victory even when also aiming for a conquest victory. (But only when close to winning.)
++ Removed a short-circuit condition from the cultural victory AI, so that the turns target is always respected. (Previously if the player had enough cities "close to legendary", it would run 100% culture regardless of how long it would take for victory.)
++ Fixed a problem which caused the AI to ignore its gold target when aiming for a cultural victory. This problem essentially prevented them from saving gold to upgrade units or spread corporations.
++ Fixed a couple of other minor problems related to the AI's use of the commerce percentage slider.
++ Change the way the AI prioritises which cities to spread corporations to. (Note: automated execs will prefer to spread to whichever team owns the land the exec is standing in.)
++ Fixed a bug which scrambled the AI's priority order for moving land units.
++ Reformatted CvUnitAI::AI_anyAttack to fix a bug which prevented non-combat from being recognised as valid targets.
++ Slightly increased the AI's tendency for defensive attacks in their own territory.
++ Removed the weight cap in AI_commerceWeight (there was a cap of 110 on the base weight, for no apparent reason.)
++ Reduced the AI weight of science from 125 to 105. (Although it was 125 in the xml, it was effectively only 110 because of the cap.)
++ Redesigned part of the evaluation for city processes. (So that the AI would be more likely to build wealth if doing so would earn them more net research.)
++ Added some more personality and nuance to the diplomatic part of AI_religionValue.
++ Fixed a minor bug in the pathfinder which sometimes caused inaccurate results for the AI's non-combat units.
+
+--
 v1.27 changelist
 
 UI
