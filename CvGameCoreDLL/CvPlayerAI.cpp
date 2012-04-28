@@ -4552,23 +4552,14 @@ int CvPlayerAI::AI_getWaterDanger(CvPlot* pPlot, int iRange, bool bTestMoves) co
 	return iCount;
 }
 
-
+// rewritten for K-Mod
 bool CvPlayerAI::AI_avoidScience() const
 {
-	/* original bts / BBAI code
-	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
-    {
-        return true;
-    } */ // K-Mod. going for culture does not mean avoiding science.
-	if (isCurrentResearchRepeat())
-	{
+	if (isCurrentResearchRepeat() && (!isHuman() || getCommercePercent(COMMERCE_RESEARCH) <= 20))
 		return true;
-	}
 
 	if (isNoResearchAvailable())
-	{
 		return true;
-	}
 
 	return false;
 }
