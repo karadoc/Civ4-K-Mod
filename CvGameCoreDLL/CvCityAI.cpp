@@ -9727,7 +9727,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		int iPopulation = getPopulation();
 		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
 		int iExtraPopulationThatCanWork = std::min(NUM_CITY_PLOTS-1 - getWorkingPopulation(), std::max(0, extraPopulation()+(bRemove?1:0)));
-		bool bReassign = extraPopulation() <= 0;
+		//bool bReassign = extraPopulation() <= 0;
+		bool bReassign = extraPopulation()+(bRemove?1:0) == 0; // K-Mod
 
 		int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 
@@ -9750,14 +9751,15 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 			{
 				// if working plots all like this one will save us from starving
 				//if (((bReassign?1:0)+iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
-				if ((iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
+				if ((iExtraPopulationThatCanWork+std::max(bReassign?1:0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn + bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0)
 				{
 					iValue += 2048;
 				}
 
 				// value food high, but not forced
 				//iValue += 36 * std::min(iFoodYield, -iFoodPerTurn+(bReassign ? iConsumtionPerPop : 0));
-				iValue += iGrowthValue * std::min(iFoodYield, -iFoodPerTurn);
+				iValue += std::max(iGrowthValue, iBaseProductionValue*3) * std::min(iFoodYield, -iFoodPerTurn + bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0);
+				// note. iGrowthValue only counts unworked plots - so it isn't entirely suitable for this. Hence the arbitrary minimum value.
 			}
 		}
 
@@ -9860,6 +9862,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					{
 						//iPopToGrow = std::min(iPopToGrow, iGoodTiles + ((bRemove) ? 1 : 0));
 						iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
+						if (AI_isEmphasizeYield(YIELD_COMMERCE) || AI_isEmphasizeYield(YIELD_PRODUCTION))
+							iPopToGrow = std::min(iPopToGrow, 3); // K-Mod (replacing the food devaluation in the original code)
 					}
 
 					// if we have growth pontential, then get the food bar close to full
@@ -9915,13 +9919,16 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 						//iFoodGrowthValue = iFoodYield * iFactorPopToGrow;
 						// K-Mod. think of the integral of (x * iGrowthValue * (100 - iDevalueRate*(iFoodPerTurn+x))/100)
-						int iDevalueRate = bEmphasizeFood
-							? 0
-							: (bFillingBar
-								? 15 + 15 * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn)
-								: (AI_isEmphasizeGreatPeople()
-									? 15
-									: 13 - std::min(5, iPopToGrow)));
+						int iDevalueRate = 0;
+						if (!bEmphasizeFood)
+						{
+							if (bFillingBar)
+								iDevalueRate = 15 + 15 * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn);
+							else if (AI_isEmphasizeGreatPeople())
+								iDevalueRate = 15;
+							else
+								iDevalueRate = 13 - std::min(5, iPopToGrow) + (AI_isEmphasizeYield(YIELD_COMMERCE) || AI_isEmphasizeYield(YIELD_PRODUCTION) ? 2 : 0);
+						}
 						int iBestFoodYield = std::max(0, std::min(iFoodYield, 100/std::max(1, iDevalueRate) - iFoodPerTurn)); // maximum value for this amount of food.
 						iFoodGrowthValue = iBestFoodYield * iGrowthValue * (100 - iDevalueRate*iFoodPerTurn) / 100;
 						iFoodGrowthValue -= iBestFoodYield * iBestFoodYield * iDevalueRate * iGrowthValue / 200;
@@ -10053,12 +10060,12 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 			iSlaveryValue /= 100;
 		}
 	}
-	else if (iFoodValue > 0 && (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeYield(YIELD_COMMERCE)))
+	/* else if (iFoodValue > 0 && (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeYield(YIELD_COMMERCE)))
 	{
 		iFoodValue *= 75; // was 75 for production, and 80 for commerce. (now same for both.)
 		iFoodValue /= 100;
 		iFoodValue = std::max(1, iFoodValue);
-	}
+	} */ // K-Mod. Food value is now scaled elsewhere.
 
 	if (AI_isEmphasizeYield(YIELD_COMMERCE))
 	{
