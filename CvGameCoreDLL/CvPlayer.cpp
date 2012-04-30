@@ -3417,7 +3417,15 @@ void CvPlayer::doTurnUnits()
 
 	for(pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 	{
-		pLoopSelectionGroup->doDelayedDeath();
+		//pLoopSelectionGroup->doDelayedDeath();
+		// K-Mod
+		if (!pLoopSelectionGroup->doDelayedDeath())
+		{
+			FAssert(pLoopSelectionGroup->getHeadUnit()); // otherwise doDelayedDeath would have returned true.
+			if (pLoopSelectionGroup->getHeadUnit()->hasMoved())
+				updateGroupCycle(pLoopSelectionGroup);
+		}
+		// K-Mod end
 	}
 
 	for (int iPass = 0; iPass < 4; iPass++)
@@ -13105,45 +13113,35 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 }
 
 
-// XXX should pUnit be a CvSelectionGroup???
-void CvPlayer::updateGroupCycle(CvUnit* pUnit)
+// K-Mod. I've changed this function from using pUnit to using pGroup.
+// I've also rearranged the code to be more robust and readable.
+void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 {
 	PROFILE_FUNC();
+	FAssert(pGroup);
 
-	CLLNode<IDInfo>* pUnitNode;
-	CLLNode<int>* pSelectionGroupNode;
-	CLLNode<int>* pBestSelectionGroupNode;
-	CvSelectionGroup* pLoopSelectionGroup;
-	CvUnit* pHeadUnit;
-	CvUnit* pBeforeUnit;
-	CvUnit* pAfterUnit;
-	CvUnit* pLoopUnit;
-	CvPlot* pPlot;
-	int iValue;
-	int iBestValue;
+	CvPlot* pPlot = pGroup->plot();
 
-	if (!(pUnit->onMap()))
-	{
+	if (!pPlot)
 		return;
-	}
 
-	FAssertMsg(pUnit->getGroup() != NULL, "Unit->getGroup() is not assigned a valid value");
+	CvUnit* pUnit = pGroup->getHeadUnit();
+	FAssert(pUnit);
 
-	removeGroupCycle(pUnit->getGroupID());
+	removeGroupCycle(pGroup->getID());
 
-	pPlot = pUnit->plot();
+	CvUnit* pBeforeUnit = NULL;
+	CvUnit* pAfterUnit = NULL;
 
-	pBeforeUnit = NULL;
-	pAfterUnit = NULL;
-
-	pUnitNode = pPlot->headUnitNode();
+	CLLNode<IDInfo>* pUnitNode = pPlot->headUnitNode();
 
 	while (pUnitNode != NULL)
 	{
-		pLoopUnit = ::getUnit(pUnitNode->m_data);
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 		pUnitNode = pPlot->nextUnitNode(pUnitNode);
 
-		if (pLoopUnit->isGroupHead())
+		//if (pLoopUnit->isGroupHead())
+		if (pLoopUnit->getOwnerINLINE() == getID() && pLoopUnit->isGroupHead()) // K-Mod
 		{
 			if (pLoopUnit != pUnit)
 			{
@@ -13160,50 +13158,53 @@ void CvPlayer::updateGroupCycle(CvUnit* pUnit)
 		}
 	}
 
-	pSelectionGroupNode = headGroupCycleNode();
+	int iBestValue = MAX_INT;
+	CLLNode<int>* pBestSelectionGroupNode = NULL;
 
-	iBestValue = MAX_INT;
-	pBestSelectionGroupNode = NULL;
-
-	while (pSelectionGroupNode != NULL)
+	for (CLLNode<int>* pSelectionGroupNode = headGroupCycleNode(); pSelectionGroupNode; pSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode))
 	{
-		pLoopSelectionGroup = getSelectionGroup(pSelectionGroupNode->m_data);
-		FAssertMsg(pLoopSelectionGroup != NULL, "LoopSelectionGroup is not assigned a valid value");
+		CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pSelectionGroupNode->m_data);
+		FAssert(pLoopSelectionGroup);
 
-		pHeadUnit = pLoopSelectionGroup->getHeadUnit();
+		CvUnit* pLoopHead = pLoopSelectionGroup->getHeadUnit();
+		if (!pLoopHead)
+			continue;
 
-		if (pHeadUnit != NULL)
+		if (pBeforeUnit)
 		{
-			if (pBeforeUnit != NULL)
+			if (pBeforeUnit == pLoopHead)
 			{
-				if (pBeforeUnit == pHeadUnit)
-				{
-					pBestSelectionGroupNode = pSelectionGroupNode;
-					break;
-				}
-			}
-			else if (pAfterUnit != NULL)
-			{
-				if (pAfterUnit == pHeadUnit)
-				{
-					pBestSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
-					break;
-				}
-			}
-			else
-			{
-				iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pHeadUnit->getX_INLINE(), pHeadUnit->getY_INLINE());
-
-				if (iValue < iBestValue)
-				{
-					iBestValue = iValue;
-					pBestSelectionGroupNode = pSelectionGroupNode;
-				}
+				pBestSelectionGroupNode = pSelectionGroupNode;
+				break;
 			}
 		}
+		else if (pAfterUnit)
+		{
+			if (pAfterUnit == pLoopHead)
+			{
+				pBestSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
+				break;
+			}
+		}
+		else
+		{
+			int iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
+			// K-Mod. Show some bias towards units of the same type / purpose
+			if (pUnit->getUnitCombatType() != pLoopHead->getUnitCombatType())
+			{
+				iValue += 2;
+				if (pUnit->canFight() != pLoopHead->canFight())
+					iValue += 2;
+			}
 
-		pSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
+			if (iValue < iBestValue)
+			{
+				iBestValue = iValue;
+				pBestSelectionGroupNode = pSelectionGroupNode;
+			}
+		}
 	}
+	FAssertMsg(pSelectionGroupNode || (!pBeforeUnit && !pAfterUnit), "Reached end of group cycle list without finding other groups on the plot.");
 
 	if (pBestSelectionGroupNode != NULL)
 	{

@@ -158,7 +158,7 @@ void CvSelectionGroup::doTurn()
 	if (getNumUnits() > 0)
 	{
 		bool bHurt = false;
-		
+
 		// do unit's turns (checking for damage)
 		pUnitNode = headUnitNode();
 		while (pUnitNode != NULL)
@@ -4073,16 +4073,6 @@ void CvSelectionGroup::setActivityType(ActivityTypes eNewValue)
 	CvPlot* pPlot;
 
 	FAssert(getOwnerINLINE() != NO_PLAYER);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/28/10                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
-	// For debugging activities, but can cause crashes very occasionally times
-	//FAssert(isHuman() || getHeadUnit()->isCargo() || eNewValue != ACTIVITY_SLEEP);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	ActivityTypes eOldActivity = getActivityType();
 

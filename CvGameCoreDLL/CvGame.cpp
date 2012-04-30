@@ -7246,6 +7246,13 @@ void CvGame::updateMoves()
 					{
 						for (pLoopSelectionGroup = player.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = player.nextSelectionGroup(&iLoop))
 						{
+							// While we're here, update the group cycle order
+							// (Ideally this would be done after AI_update rather than before. But again, that would cause problems if AI_update gets the group killed.)
+							CvUnit* pHeadUnit = pLoopSelectionGroup->getHeadUnit();
+							if (pHeadUnit && pHeadUnit->hasMoved() && pHeadUnit->canMove())
+								player.updateGroupCycle(pLoopSelectionGroup);
+							//
+
 							if (pLoopSelectionGroup->AI_update())
 							{
 								FAssert(player.hasBusyUnit());

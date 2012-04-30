@@ -9561,6 +9561,10 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 
 		if (getGroup() != NULL)
 		{
+			// K-Mod
+			if (isGroupHead())
+				GET_PLAYER(getOwnerINLINE()).updateGroupCycle(getGroup());
+			// K-Mod end
 			if (getGroup()->getNumUnits() > 1)
 			{
 				/* original bts code
@@ -9578,10 +9582,11 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 					getGroup()->setActivityType(ACTIVITY_AWAKE);
 				// K-Mod end
 			}
+			/* original bts code
 			else
 			{
 				GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
-			}
+			} */
 		}
 
 		if (getTeam() == GC.getGameINLINE().getActiveTeam())
@@ -10117,7 +10122,11 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	}
 
 	FAssert(pOldPlot != pNewPlot);
-	GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
+	//GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
+	// K-Mod. Only update the group cycle here if we are placing this unit on the map for the first time.
+	if (!pOldPlot)
+		GET_PLAYER(getOwnerINLINE()).updateGroupCycle(getGroup());
+	// K-Mod end
 
 	setInfoBarDirty(true);
 
@@ -11433,6 +11442,10 @@ void CvUnit::setTransportUnit(CvUnit* pTransportUnit)
 		if (pOldTransportUnit != NULL)
 		{
 			pOldTransportUnit->changeCargo(-1);
+			// K-Mod
+			if (isGroupHead())
+				GET_PLAYER(getOwnerINLINE()).updateGroupCycle(getGroup());
+			// K-Mod end
 		}
 
 		if (pTransportUnit != NULL)

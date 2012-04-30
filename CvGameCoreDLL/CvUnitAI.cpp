@@ -13028,8 +13028,8 @@ bool CvUnitAI::AI_spreadCorporation()
 					for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 					{
 						if (AI_plotValid(pLoopCity->plot()) &&
+							pLoopCity->getArea() == getArea() &&
 							kOwner.AI_deduceCitySite(pLoopCity) &&
-							pLoopCity->area() == area() &&
 							canSpreadCorporation(pLoopCity->plot(), eCorporation) &&
 							!pLoopCity->plot()->isVisibleEnemyUnit(this) &&
 							kOwner.AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_SPREAD_CORPORATION, getGroup()) == 0)

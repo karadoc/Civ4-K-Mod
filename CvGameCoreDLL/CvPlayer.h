@@ -871,7 +871,8 @@ public:
 	int getImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2) const;								// Exposed to Python
 	void changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2, int iChange);
 
-	void updateGroupCycle(CvUnit* pUnit);
+	//void updateGroupCycle(CvUnit* pUnit);
+	void updateGroupCycle(CvSelectionGroup* pGroup); // K-Mod
 	void removeGroupCycle(int iID);
 	CLLNode<int>* deleteGroupCycleNode(CLLNode<int>* pNode);
 	CLLNode<int>* nextGroupCycleNode(CLLNode<int>* pNode) const;
