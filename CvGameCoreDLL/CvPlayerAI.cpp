@@ -2349,15 +2349,14 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 	case COMMERCE_CULTURE:
 		// COMMERCE_CULTURE AIWeightPercent is 25% in default xml
 		// (significantly changed by bbai & K-Mod)
-		// Adjustments for human player going for cultural victory (who won't have AI strategy set) 
-		// so that governors do smart things
 		if (pCity != NULL)
 		{
-			int iPressureWeight = iWeight * pCity->culturePressureFactor() / 100; // K-Mod
+			int iPressureFactor = pCity->culturePressureFactor(); // K-Mod
+			int iPressureWeight = iWeight * (iPressureFactor-100) / 100; // K-Mod
 
 			if (pCity->getCultureTimes100(getID()) >= 100 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1)))
 			{
-				iWeight /= 50;
+				iWeight /= 10; // was 50
 			}
 			// Slider check works for detection of whether human player is going for cultural victory
 			// (all weights changed for K-Mod)
@@ -2397,7 +2396,33 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			{
 				iWeight *= 2;
 			}
-			
+			// K-Mod. Devalue culture in cities which really have no use for it.
+			else if (iPressureFactor < 110)
+			{
+				// if we're not running a culture victory strategy
+				// and if we're well into the game, and this city has ample culture, and we don't have any culture pressure...
+				// then culture probably isn't worth much to us at all.
+
+				// don't reduce the value if we are still on-track for a potential cultural victory.
+				if (getCurrentEra() > GC.getNumEraInfos()/2 && pCity->getCultureLevel() >= 3)
+				{
+					int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
+					int iCultureProgress = pCity->getCultureTimes100(getID()) / std::max(1, iLegendaryCulture);
+					int iTimeProgress = 100*GC.getGameINLINE().getGameTurn() / GC.getGameINLINE().getEstimateEndTurn();
+					iTimeProgress *= iTimeProgress;
+					iTimeProgress /= 100;
+
+					if (iTimeProgress > iCultureProgress)
+					{
+						int iReductionFactor = 100 + std::min(10, 110 - iPressureFactor) * (iTimeProgress - iCultureProgress) / 2;
+						FAssert(iReductionFactor >= 100 && iReductionFactor <= 100 + 10 * 100/2);
+						iWeight *= 100;
+						iWeight /= iReductionFactor;
+					}
+				}
+			}
+			// K-Mod end
+
 			// K-Mod
 			//iWeight += (100 - pCity->plot()->calculateCulturePercent(getID()));
 			iWeight += iPressureWeight;

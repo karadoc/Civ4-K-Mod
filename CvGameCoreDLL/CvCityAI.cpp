@@ -3992,6 +3992,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 			if ((iFocusFlags & BUILDINGFOCUS_SPECIALIST) || (iPass > 0))
 			{
+				/* original bts code
 				int iSpecialistsValue = 0;
 				int iCurrentSpecialistsRunnable = 0;
 				SpecialistTypes eDefaultSpecialist = (SpecialistTypes)GC.getDefineINT("DEFAULT_SPECIALIST");
@@ -4024,21 +4025,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 								iTempValue *= (20 + (40 * kBuilding.getSpecialistCount(iI)));
 								iTempValue /= 100;
 
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       01/09/10                                jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-								if (iFoodDifference < 2)
-								{
-									iValue /= 4;
-								}
-								if (iRunnable > 0)
-								{
-									iValue /= 1 + iRunnable;
-								}
-*/
 								if (iFoodDifference < 2)
 								{
 									iTempValue /= 4;
@@ -4047,9 +4033,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 								{
 									iTempValue /= 1 + iRunnable;
 								}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 
 								iSpecialistsValue += std::max(12, (iTempValue / 100));
 							}
@@ -4060,9 +4043,40 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				if (iSpecialistsValue > 0)
 				{
 					iValue += iSpecialistsValue / std::max(2, iCurrentSpecialistsRunnable);
+				} */
+				// K-Mod
+				int iSpecialistsValue = 0;
+				//int iUnusedSpecialists = 0;
+				SpecialistTypes eDefaultSpecialist = (SpecialistTypes)GC.getDefineINT("DEFAULT_SPECIALIST");
+				int iAvailableWorkers = iFoodDifference/2 + (eDefaultSpecialist == NO_SPECIALIST ? 0 : getSpecialistCount(eDefaultSpecialist));
+				for (SpecialistTypes eLoopSpec = (SpecialistTypes)0; eLoopSpec < GC.getNumSpecialistInfos(); eLoopSpec = (SpecialistTypes)(eLoopSpec+1))
+				{
+					if (eLoopSpec == eDefaultSpecialist)
+						continue;
+
+					int iLimit = kOwner.isSpecialistValid(eLoopSpec) ? getPopulation() : getMaxSpecialistCount(eLoopSpec) - getSpecialistCount(eLoopSpec);
+					FAssert(iLimit >= 0);
+					//iUnusedSpecialists += iLimit;
+
+					if (kBuilding.getSpecialistCount(eLoopSpec) > 0 && iLimit <= 2)
+					{
+						int iTempValue = AI_specialistValue(eLoopSpec, false, false);
+
+						iTempValue *= (iLimit == 0 ? 60 : 0) + 40 * std::min(iAvailableWorkers, kBuilding.getSpecialistCount(eLoopSpec));
+						// I'm choosing not to reduce 'iAvailableWorkers'... It's a tough call. Either way, the answer is going to be wrong!
+						iTempValue /= 100 + 200 * iLimit;
+
+						iSpecialistsValue += iTempValue / 100;
+					}
 				}
+
+				if (iSpecialistsValue > 0)
+				{
+					iValue += iSpecialistsValue;
+				}
+				// K-Mod end
 			}
-			
+
 			if ((iFocusFlags & (BUILDINGFOCUS_GOLD | BUILDINGFOCUS_RESEARCH)) || iPass > 0)
 			{
 				// trade routes
@@ -4673,7 +4687,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 			{
 
 				// K-Mod, I've moved this from inside the yield types loop; and I've increased the value to compensate.
-				if (iFoodDifference > 0)
+				if (iFoodDifference > 0 && kBuilding.getFoodKept() != 0)
 				{
 					//iValue += kBuilding.getFoodKept() / 2;
 					iValue += std::max(0, 2*(std::max(4, AI_getTargetPopulation()) - getPopulation())+(bCanPopRush ?3 :1)) * kBuilding.getFoodKept() / 4;
@@ -4687,19 +4701,20 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					/*iTempValue += ((kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / 10);
 					iTempValue += ((kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI)) / ((bProvidesPower || isPower()) ? 12 : 15));*/
 					// K-Mod
-					iTempValue += kBuilding.getYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / 20;
-					iTempValue += kBuilding.getPowerYieldModifier(iI) * getBaseYieldRate((YieldTypes)iI) / (bProvidesPower || isPower() ? 21 : 32);
+					int iBaseRate = getBaseYieldRate((YieldTypes)iI) + 2; // +2 just to represent potential growth.
+					iTempValue += kBuilding.getYieldModifier(iI) * iBaseRate / 25;
+					iTempValue += kBuilding.getPowerYieldModifier(iI) * iBaseRate / (bProvidesPower || isPower() ? 27 : 50);
 
 					if (bProvidesPower && !isPower())
 					{
-						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * getBaseYieldRate((YieldTypes)iI)) / 21); // originally 12
+						iTempValue += ((getPowerYieldRateModifier((YieldTypes)iI) * iBaseRate) / 27); // originally 12
 					}
 
 					for (int iJ = 0; iJ < GC.getNumBonusInfos(); iJ++)
 					{
 						if (hasBonus((BonusTypes)iJ))
 						{
-							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * getBaseYieldRate((YieldTypes)iI)) / 21); // originally 12
+							iTempValue += ((kBuilding.getBonusYieldModifier(iJ, iI) * iBaseRate) / 27); // originally 12
 						}
 					}
 
@@ -4714,11 +4729,11 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 					// (K-Mod)...and now the things that should not depend on whether or not we have a good yield rank
 					int iRawYieldValue = 0;
-					iRawYieldValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 21); // originally 12 (and 'iValue')
+					iRawYieldValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 26); // originally 12 (and 'iValue')
 					//if (bForeignTrade)
 					if (bForeignTrade && !kOwner.isNoForeignTrade()) // K-Mod
 					{
-						iRawYieldValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 30); // originally 12 (and 'iValue')
+						iRawYieldValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 35); // originally 12 (and 'iValue')
 					}
 
 					/* original bts code (We're inside a yield types loop. This would be triple counted here!)
@@ -4761,7 +4776,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						if (iI == YIELD_PRODUCTION)
 						{
 							// priority += 2.8% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 280)*iTempValue/std::max(1, 5*getYieldRate(YIELD_PRODUCTION)));
+							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 280)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
 						}
 						// K-Mod end
 
@@ -7522,7 +7537,8 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 				}
 				if (iDesiredFoodChange > 0)
 				{
-					iValue += (10 * (1 + aiDiffYields[YIELD_FOOD]) * (1 + aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()) * iDesiredFoodChange * iCorrectedFoodPriority) / 100;
+					//iValue += (10 * (1 + aiDiffYields[YIELD_FOOD]) * (1 + aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()) * iDesiredFoodChange * iCorrectedFoodPriority) / 100;
+					iValue += 10 * (1 + aiDiffYields[YIELD_FOOD]) * (1 + aiFinalYields[YIELD_FOOD] - GC.getFOOD_CONSUMPTION_PER_POPULATION()) * std::min(1 + iDesiredFoodChange/3, 4) * iCorrectedFoodPriority / 100; // K-Mod
 				}
 				if (iCommercePriority > 100)
 				{
