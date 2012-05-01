@@ -11442,10 +11442,6 @@ void CvUnit::setTransportUnit(CvUnit* pTransportUnit)
 		if (pOldTransportUnit != NULL)
 		{
 			pOldTransportUnit->changeCargo(-1);
-			// K-Mod
-			if (isGroupHead())
-				GET_PLAYER(getOwnerINLINE()).updateGroupCycle(getGroup());
-			// K-Mod end
 		}
 
 		if (pTransportUnit != NULL)

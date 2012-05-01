@@ -3417,15 +3417,7 @@ void CvPlayer::doTurnUnits()
 
 	for(pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 	{
-		//pLoopSelectionGroup->doDelayedDeath();
-		// K-Mod
-		if (!pLoopSelectionGroup->doDelayedDeath())
-		{
-			FAssert(pLoopSelectionGroup->getHeadUnit()); // otherwise doDelayedDeath would have returned true.
-			if (pLoopSelectionGroup->getHeadUnit()->hasMoved())
-				updateGroupCycle(pLoopSelectionGroup);
-		}
-		// K-Mod end
+		pLoopSelectionGroup->doDelayedDeath();
 	}
 
 	for (int iPass = 0; iPass < 4; iPass++)
@@ -3469,6 +3461,13 @@ void CvPlayer::doTurnUnits()
 			}
 		}
 	}
+
+	// K-Mod. This is the primary update for the group cycle ordering. (it use to be done inside CvUnit::setXY, but now it isn't.)
+	for (pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
+	{
+		updateGroupCycle(pLoopSelectionGroup);
+	}
+	// K-Mod end
 
 	if (getID() == GC.getGameINLINE().getActivePlayer())
 	{
@@ -13114,7 +13113,7 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 
 
 // K-Mod. I've changed this function from using pUnit to using pGroup.
-// I've also rearranged the code to be more robust and readable.
+// I've also rearranged the code to be more robust and readable, and adjusted the group ordering method
 void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 {
 	PROFILE_FUNC();
@@ -13188,14 +13187,20 @@ void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 		}
 		else
 		{
-			int iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
-			// K-Mod. Show some bias towards units of the same type / purpose
+			//int iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
+			// K-Mod. Show some bias towards units of the same type / purpose / status
+			int iValue = 4;
 			if (pUnit->getUnitCombatType() != pLoopHead->getUnitCombatType())
 			{
 				iValue += 2;
 				if (pUnit->canFight() != pLoopHead->canFight())
 					iValue += 2;
 			}
+			if ((pLoopSelectionGroup->getActivityType() == ACTIVITY_AWAKE) != (pGroup->getActivityType() == ACTIVITY_AWAKE))
+				iValue += 8;
+
+			iValue *= plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
+			// K-Mod end
 
 			if (iValue < iBestValue)
 			{

@@ -4108,6 +4108,11 @@ void CvSelectionGroup::setActivityType(ActivityTypes eNewValue)
 
 					pLoopUnit->NotifyEntity(MISSION_IDLE);
 				}
+
+				// K-Mod
+				if (eOldActivity == ACTIVITY_SLEEP && getActivityType() == ACTIVITY_AWAKE)
+					GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
+				// K-Mod end
 			}
 
 			if (getTeam() == GC.getGameINLINE().getActiveTeam())
