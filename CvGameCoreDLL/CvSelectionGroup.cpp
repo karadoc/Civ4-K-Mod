@@ -2398,13 +2398,17 @@ int CvSelectionGroup::movesLeft() const
 
 bool CvSelectionGroup::isWaiting() const
 {
+	/* original bts code
 	return ((getActivityType() == ACTIVITY_HOLD) ||
 		      (getActivityType() == ACTIVITY_SLEEP) ||
 					(getActivityType() == ACTIVITY_HEAL) ||
 					(getActivityType() == ACTIVITY_SENTRY) ||
 					(getActivityType() == ACTIVITY_PATROL) ||
 					(getActivityType() == ACTIVITY_PLUNDER) ||
-					(getActivityType() == ACTIVITY_INTERCEPT));
+					(getActivityType() == ACTIVITY_INTERCEPT)); */
+	// K-Mod. (same functionality)
+	return !(getActivityType() == ACTIVITY_AWAKE || getActivityType() == ACTIVITY_MISSION);
+	// K-Mod end
 }
 
 
@@ -4087,7 +4091,14 @@ void CvSelectionGroup::setActivityType(ActivityTypes eNewValue)
 
 		setBlockading(false);
 
+		bool bWasWaiting = isWaiting(); // K-Mod
+
 		m_eActivityType = eNewValue;
+
+		// K-Mod
+		if (bWasWaiting != isWaiting())
+			GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
+		// K-Mod end
 
 		if (getActivityType() == ACTIVITY_INTERCEPT)
 		{
@@ -4108,11 +4119,6 @@ void CvSelectionGroup::setActivityType(ActivityTypes eNewValue)
 
 					pLoopUnit->NotifyEntity(MISSION_IDLE);
 				}
-
-				// K-Mod
-				if (eOldActivity == ACTIVITY_SLEEP && getActivityType() == ACTIVITY_AWAKE)
-					GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
-				// K-Mod end
 			}
 
 			if (getTeam() == GC.getGameINLINE().getActiveTeam())

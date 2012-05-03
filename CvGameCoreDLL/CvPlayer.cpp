@@ -13113,7 +13113,7 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 
 
 // K-Mod. I've changed this function from using pUnit to using pGroup.
-// I've also rearranged the code to be more robust and readable, and adjusted the group ordering method
+// I've also rearranged the code to be more robust and readable, and rewritten the group ordering method
 void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 {
 	PROFILE_FUNC();
@@ -13140,7 +13140,7 @@ void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 		pUnitNode = pPlot->nextUnitNode(pUnitNode);
 
 		//if (pLoopUnit->isGroupHead())
-		if (pLoopUnit->getOwnerINLINE() == getID() && pLoopUnit->isGroupHead()) // K-Mod
+		if (pLoopUnit->getOwnerINLINE() == getID() && pLoopUnit->isGroupHead() && pLoopUnit->getGroup()->isWaiting() == pGroup->isWaiting()) // K-Mod
 		{
 			if (pLoopUnit != pUnit)
 			{
@@ -13185,28 +13185,57 @@ void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 				break;
 			}
 		}
-		else
+		//else
+		else if (pLoopSelectionGroup->isWaiting() == pGroup->isWaiting()) // K-Mod
 		{
-			//int iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
-			// K-Mod. Show some bias towards units of the same type / purpose / status
-			int iValue = 4;
-			if (pUnit->getUnitCombatType() != pLoopHead->getUnitCombatType())
-			{
-				iValue += 2;
-				if (pUnit->canFight() != pLoopHead->canFight())
-					iValue += 2;
-			}
-			if ((pLoopSelectionGroup->getActivityType() == ACTIVITY_AWAKE) != (pGroup->getActivityType() == ACTIVITY_AWAKE))
-				iValue += 8;
-
-			iValue *= plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
-			// K-Mod end
+			/* original bts code
+			int iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
 
 			if (iValue < iBestValue)
 			{
 				iBestValue = iValue;
 				pBestSelectionGroupNode = pSelectionGroupNode;
+			} */
+
+			// K-Mod. Show some bias towards units of the same type / purpose / status
+			int iValue = 4;
+			if (pUnit->getUnitType() != pLoopHead->getUnitType())
+			{
+				if (pUnit->canFight() != pLoopHead->canFight())
+					iValue += 4;
+				else
+				{
+					if (pUnit->canFight())
+					{
+						if (pUnit->getUnitCombatType() != pLoopHead->getUnitCombatType())
+							iValue += 2;
+						if (pUnit->canAttack() != pLoopHead->canAttack())
+							iValue += 1;
+					}
+					else
+						iValue += 2;
+				}
 			}
+
+			iValue *= plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
+
+			if (iValue < iBestValue)
+			{
+				iBestValue = iValue;
+
+				// We want to insert this group either at the start, or at the end of the groups on the plot - not in the middle.
+				bool bBefore = isBeforeUnitCycle(pUnit, pLoopHead);
+
+				CLLNode<int>* pTempNode = pSelectionGroupNode;
+				do
+				{
+					pBestSelectionGroupNode = pTempNode;
+					pTempNode = bBefore ? previousGroupCycleNode(pTempNode) : nextGroupCycleNode(pTempNode);
+				} while (pTempNode && getSelectionGroup(pTempNode->m_data)->plot() == pLoopHead->plot());
+				if (!bBefore)
+					pBestSelectionGroupNode = pTempNode;
+			}
+			// K-Mod end
 		}
 	}
 	FAssertMsg(pSelectionGroupNode || (!pBeforeUnit && !pAfterUnit), "Reached end of group cycle list without finding other groups on the plot.");
