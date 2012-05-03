@@ -825,7 +825,7 @@ public:
 
 	int getHurryCount(HurryTypes eIndex) const;																												// Exposed to Python
 	DllExport bool canHurry(HurryTypes eIndex) const;																									// Exposed to Python
-	bool canPopRush();
+	bool canPopRush() const;
 	void changeHurryCount(HurryTypes eIndex, int iChange);
 
 	int getSpecialBuildingNotRequiredCount(SpecialBuildingTypes eIndex) const;												// Exposed to Python

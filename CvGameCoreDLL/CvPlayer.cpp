@@ -12562,7 +12562,7 @@ bool CvPlayer::canHurry(HurryTypes eIndex) const
 }
 
 
-bool CvPlayer::canPopRush()
+bool CvPlayer::canPopRush() const
 {
 	return (m_iPopRushHurryCount > 0);
 }
