@@ -3244,7 +3244,7 @@ class CvInfoScreen:
 			iLoopPlayerTeam = pLoopPlayer.getTeam()
 			if (gc.getTeam(iLoopPlayerTeam).isEverAlive()):
 				if (self.pActiveTeam.isHasMet(iLoopPlayerTeam) or CyGame().isDebugMode() or iEndGame != 0):
-					if self.pActivePlayer.canSeeDemographics(iLoopPlayer): # K-Mod
+					if self.pActivePlayer.canSeeDemographics(iLoopPlayer) or CyGame().isDebugMode() or iEndGame != 0: # K-Mod
 						self.aiPlayersMet.append(iLoopPlayer)
 						self.iNumPlayersMet += 1
 					else:
