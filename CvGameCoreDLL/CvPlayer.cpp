@@ -2909,10 +2909,18 @@ CvSelectionGroup* CvPlayer::cycleSelectionGroups(CvUnit* pUnit, bool bForward, b
 	CLLNode<int>* pFirstSelectionGroupNode;
 	CvSelectionGroup* pLoopSelectionGroup;
 
-	if (pbWrap != NULL)
+	// K-Mod
+	FAssert(GC.getGameINLINE().getActivePlayer() == getID());
+	bool bDummy;
+	bool &bWrap = pbWrap ? *pbWrap : bDummy; // this means we can just use bWrap directly and it will update *pbWrap if need be.
+	std::set<int>& cycled_groups = GC.getGameINLINE().m_ActivePlayerCycledGroups; // for convenience
+	// K-Mod end
+
+	/* if (pbWrap != NULL)
 	{
 		*pbWrap = false;
-	}
+	} */
+	bWrap = false;
 
 	pSelectionGroupNode = headGroupCycleNode();
 
@@ -2922,6 +2930,10 @@ CvSelectionGroup* CvPlayer::cycleSelectionGroups(CvUnit* pUnit, bool bForward, b
 		{
 			if (getSelectionGroup(pSelectionGroupNode->m_data) == pUnit->getGroup())
 			{
+				// K-Mod
+				if (isTurnActive())
+					cycled_groups.insert(pSelectionGroupNode->m_data);
+				//
 				if (bForward)
 				{
 					pSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
@@ -2948,10 +2960,10 @@ CvSelectionGroup* CvPlayer::cycleSelectionGroups(CvUnit* pUnit, bool bForward, b
 			pSelectionGroupNode = tailGroupCycleNode();
 		}
 
-		if (pbWrap != NULL)
+		/* if (pbWrap != NULL)
 		{
 			*pbWrap = true;
-		}
+		} */ // disabled by K-Mod
 	}
 
 	if (pSelectionGroupNode != NULL)
@@ -2963,17 +2975,18 @@ CvSelectionGroup* CvPlayer::cycleSelectionGroups(CvUnit* pUnit, bool bForward, b
 			pLoopSelectionGroup = getSelectionGroup(pSelectionGroupNode->m_data);
 			FAssertMsg(pLoopSelectionGroup != NULL, "LoopSelectionGroup is not assigned a valid value");
 
-			if (pLoopSelectionGroup->readyToSelect())
+			//if (pLoopSelectionGroup->readyToSelect())
+			if (pLoopSelectionGroup->readyToSelect() && cycled_groups.count(pSelectionGroupNode->m_data) == 0) // K-Mod
 			{
 				if (!bWorkers || pLoopSelectionGroup->hasWorker())
 				{
-					if (pUnit && pLoopSelectionGroup == pUnit->getGroup())
+					/* if (pUnit && pLoopSelectionGroup == pUnit->getGroup())
 					{
 						if (pbWrap != NULL)
 						{
 							*pbWrap = true;
 						}
-					}
+					} */
 
 					return pLoopSelectionGroup;
 				}
@@ -2987,10 +3000,10 @@ CvSelectionGroup* CvPlayer::cycleSelectionGroups(CvUnit* pUnit, bool bForward, b
 				{
 					pSelectionGroupNode = headGroupCycleNode();
 
-					if (pbWrap != NULL)
+					/* if (pbWrap != NULL)
 					{
 						*pbWrap = true;
-					}
+					} */
 				}
 			}
 			else
@@ -3001,18 +3014,27 @@ CvSelectionGroup* CvPlayer::cycleSelectionGroups(CvUnit* pUnit, bool bForward, b
 				{
 					pSelectionGroupNode = tailGroupCycleNode();
 
-					if (pbWrap != NULL)
+					/* if (pbWrap != NULL)
 					{
 						*pbWrap = true;
-					}
+					} */
 				}
 			}
 
 			if (pSelectionGroupNode == pFirstSelectionGroupNode)
 			{
-				break;
+				// break;
+				// K-Mod
+				if (bWrap)
+					break;
+				else
+				{
+					cycled_groups.clear();
+					bWrap = true;
+				}
+				// K-Mod end
 			}
-		}
+		} //
 	}
 
 	return NULL;
@@ -3410,19 +3432,18 @@ void CvPlayer::doTurnUnits()
 {
 	PROFILE_FUNC();
 
-	CvSelectionGroup* pLoopSelectionGroup;
 	int iLoop;
 
 	AI_doTurnUnitsPre();
 
-	for(pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
+	for(CvSelectionGroup* pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 	{
 		pLoopSelectionGroup->doDelayedDeath();
 	}
 
 	for (int iPass = 0; iPass < 4; iPass++)
 	{
-		for(pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
+		for (CvSelectionGroup* pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 		{
 			switch (pLoopSelectionGroup->getDomainType())
 			{
@@ -3462,11 +3483,11 @@ void CvPlayer::doTurnUnits()
 		}
 	}
 
-	// K-Mod. This is the primary update for the group cycle ordering. (it use to be done inside CvUnit::setXY, but now it isn't.)
-	for (pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
+	// K-Mod. (currently unused)
+	/*for (CvSelectionGroup* pLoopSelectionGroup = firstSelectionGroup(&iLoop); pLoopSelectionGroup != NULL; pLoopSelectionGroup = nextSelectionGroup(&iLoop))
 	{
 		updateGroupCycle(pLoopSelectionGroup);
-	}
+	}*/
 	// K-Mod end
 
 	if (getID() == GC.getGameINLINE().getActivePlayer())
@@ -13113,7 +13134,7 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 
 
 // K-Mod. I've changed this function from using pUnit to using pGroup.
-// I've also rearranged the code to be more robust and readable, and rewritten the group ordering method
+// I've also rewriten most of the code, to give more natural ordering, and to be more robust and readable code.
 void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 {
 	PROFILE_FUNC();
@@ -13121,126 +13142,59 @@ void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 
 	CvPlot* pPlot = pGroup->plot();
 
-	if (!pPlot)
+	if (!pPlot || !isCycleGroup(pGroup))
 		return;
 
 	CvUnit* pUnit = pGroup->getHeadUnit();
 	FAssert(pUnit);
 
-	removeGroupCycle(pGroup->getID());
+	//removeGroupCycle(pGroup->getID()); // will be removed while we reposition it
 
-	CvUnit* pBeforeUnit = NULL;
-	CvUnit* pAfterUnit = NULL;
-
-	CLLNode<IDInfo>* pUnitNode = pPlot->headUnitNode();
-
-	while (pUnitNode != NULL)
-	{
-		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-		pUnitNode = pPlot->nextUnitNode(pUnitNode);
-
-		//if (pLoopUnit->isGroupHead())
-		if (pLoopUnit->getOwnerINLINE() == getID() && pLoopUnit->isGroupHead() && pLoopUnit->getGroup()->isWaiting() == pGroup->isWaiting()) // K-Mod
-		{
-			if (pLoopUnit != pUnit)
-			{
-				if (!isBeforeUnitCycle(pLoopUnit, pUnit))
-				{
-					pBeforeUnit = pLoopUnit;
-					break;
-				}
-				else
-				{
-					pAfterUnit = pLoopUnit;
-				}
-			}
-		}
-	}
-
-	int iBestValue = MAX_INT;
 	CLLNode<int>* pBestSelectionGroupNode = NULL;
+	int iBestCost = MAX_INT;
 
-	for (CLLNode<int>* pSelectionGroupNode = headGroupCycleNode(); pSelectionGroupNode; pSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode))
+	CvSelectionGroup* pPreviousGroup = NULL;
+
+	CLLNode<int>* pSelectionGroupNode = headGroupCycleNode();
+
+	while (pSelectionGroupNode)
 	{
-		CvSelectionGroup* pLoopSelectionGroup = getSelectionGroup(pSelectionGroupNode->m_data);
-		FAssert(pLoopSelectionGroup);
+		CvSelectionGroup* pNextGroup = getSelectionGroup(pSelectionGroupNode->m_data);
+		FAssert(pNextGroup);
 
-		CvUnit* pLoopHead = pLoopSelectionGroup->getHeadUnit();
-		if (!pLoopHead)
-			continue;
-
-		if (pBeforeUnit)
+		// if we find our group in the list, remove it.
+		if (pNextGroup == pGroup)
 		{
-			if (pBeforeUnit == pLoopHead)
-			{
-				pBestSelectionGroupNode = pSelectionGroupNode;
-				break;
-			}
+			pSelectionGroupNode = deleteGroupCycleNode(pSelectionGroupNode);
 		}
-		else if (pAfterUnit)
+		else if (isCycleGroup(pNextGroup) && pNextGroup->canAllMove())
 		{
-			if (pAfterUnit == pLoopHead)
+			//int iCost = groupCycleDistance(pPreviousGroup, pGroup) + groupCycleDistance(pGroup, pNextGroup) - groupCycleDistance(pPreviousGroup, pNextGroup);
+			int iCost = groupCycleDistance(pGroup, pNextGroup) + (pPreviousGroup ? groupCycleDistance(pPreviousGroup, pGroup) - groupCycleDistance(pPreviousGroup, pNextGroup) : 0);
+			if (iCost < iBestCost)
 			{
-				pBestSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
-				break;
-			}
-		}
-		//else
-		else if (pLoopSelectionGroup->isWaiting() == pGroup->isWaiting()) // K-Mod
-		{
-			/* original bts code
-			int iValue = plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
-
-			if (iValue < iBestValue)
-			{
-				iBestValue = iValue;
+				iBestCost = iCost;
 				pBestSelectionGroupNode = pSelectionGroupNode;
-			} */
-
-			// K-Mod. Show some bias towards units of the same type / purpose / status
-			int iValue = 4;
-			if (pUnit->getUnitType() != pLoopHead->getUnitType())
-			{
-				if (pUnit->canFight() != pLoopHead->canFight())
-					iValue += 4;
-				else
-				{
-					if (pUnit->canFight())
-					{
-						if (pUnit->getUnitCombatType() != pLoopHead->getUnitCombatType())
-							iValue += 2;
-						if (pUnit->canAttack() != pLoopHead->canAttack())
-							iValue += 1;
-					}
-					else
-						iValue += 2;
-				}
 			}
-
-			iValue *= plotDistance(pUnit->getX_INLINE(), pUnit->getY_INLINE(), pLoopHead->getX_INLINE(), pLoopHead->getY_INLINE());
-
-			if (iValue < iBestValue)
-			{
-				iBestValue = iValue;
-
-				// We want to insert this group either at the start, or at the end of the groups on the plot - not in the middle.
-				bool bBefore = isBeforeUnitCycle(pUnit, pLoopHead);
-
-				CLLNode<int>* pTempNode = pSelectionGroupNode;
-				do
-				{
-					pBestSelectionGroupNode = pTempNode;
-					pTempNode = bBefore ? previousGroupCycleNode(pTempNode) : nextGroupCycleNode(pTempNode);
-				} while (pTempNode && getSelectionGroup(pTempNode->m_data)->plot() == pLoopHead->plot());
-				if (!bBefore)
-					pBestSelectionGroupNode = pTempNode;
-			}
-			// K-Mod end
+			pPreviousGroup = pNextGroup;
+			pSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
+		}
+		else
+		{
+			pSelectionGroupNode = nextGroupCycleNode(pSelectionGroupNode);
 		}
 	}
-	FAssertMsg(pSelectionGroupNode || (!pBeforeUnit && !pAfterUnit), "Reached end of group cycle list without finding other groups on the plot.");
+	if (pPreviousGroup)
+	{
+		FAssert(isCycleGroup(pPreviousGroup) && pPreviousGroup->canAllMove());
+		int iCost = groupCycleDistance(pPreviousGroup, pGroup); // cost for being at the end of the list.
+		if (iCost < iBestCost)
+		{
+			pBestSelectionGroupNode = 0;
+		}
+	}
 
-	if (pBestSelectionGroupNode != NULL)
+	if (pBestSelectionGroupNode)
 	{
 		m_groupCycle.insertBefore(pUnit->getGroupID(), pBestSelectionGroupNode);
 	}
@@ -13271,6 +13225,31 @@ void CvPlayer::removeGroupCycle(int iID)
 	}
 }
 
+// K-Mod
+void CvPlayer::refreshGroupCycleList()
+{
+	std::vector<CvSelectionGroup*> update_list;
+
+	CLLNode<int>* pNode = headGroupCycleNode();
+	while (pNode)
+	{
+		CvSelectionGroup* pLoopGroup = getSelectionGroup(pNode->m_data);
+		CvUnit* pLoopHead = pLoopGroup->getHeadUnit();
+		if (pLoopHead && isCycleGroup(pLoopGroup) && pLoopGroup->canAllMove() && (pLoopHead->hasMoved() || (pLoopHead->isCargo() && pLoopHead->getTransportUnit()->hasMoved())))
+		{
+			update_list.push_back(pLoopGroup);
+			pNode = deleteGroupCycleNode(pNode);
+		}
+		else
+			pNode = nextGroupCycleNode(pNode);
+	}
+
+	for (size_t i = 0; i < update_list.size(); i++)
+	{
+		updateGroupCycle(update_list[i]);
+	}
+}
+// K-Mod end
 
 CLLNode<int>* CvPlayer::deleteGroupCycleNode(CLLNode<int>* pNode)
 {

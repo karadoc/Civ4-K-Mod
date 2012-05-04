@@ -4054,8 +4054,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					if (eLoopSpec == eDefaultSpecialist)
 						continue;
 
-					int iLimit = kOwner.isSpecialistValid(eLoopSpec) ? getPopulation() : getMaxSpecialistCount(eLoopSpec) - getSpecialistCount(eLoopSpec);
-					FAssert(iLimit >= 0);
+					int iLimit = kOwner.isSpecialistValid(eLoopSpec) ? getPopulation() : std::max(0, getMaxSpecialistCount(eLoopSpec) - getSpecialistCount(eLoopSpec));
+					FAssert(iLimit >= 0); // in rare situations, this function can be called while citizens are incorrectly assigned. So I've forced the min condition in the line above.
 					//iUnusedSpecialists += iLimit;
 
 					if (kBuilding.getSpecialistCount(eLoopSpec) > 0 && iLimit <= 2)

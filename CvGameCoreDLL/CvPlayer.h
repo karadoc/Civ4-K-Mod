@@ -874,6 +874,7 @@ public:
 	//void updateGroupCycle(CvUnit* pUnit);
 	void updateGroupCycle(CvSelectionGroup* pGroup); // K-Mod
 	void removeGroupCycle(int iID);
+	void refreshGroupCycleList(); // K-Mod
 	CLLNode<int>* deleteGroupCycleNode(CLLNode<int>* pNode);
 	CLLNode<int>* nextGroupCycleNode(CLLNode<int>* pNode) const;
 	CLLNode<int>* previousGroupCycleNode(CLLNode<int>* pNode) const;

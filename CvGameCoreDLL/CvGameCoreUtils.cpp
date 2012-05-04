@@ -231,6 +231,45 @@ bool isBeforeUnitCycle(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit)
 	return (pFirstUnit->getID() < pSecondUnit->getID());
 }
 
+// K-Mod
+int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGroup* pSecondGroup)
+{
+	FAssert(pFirstGroup && pSecondGroup && pFirstGroup != pSecondGroup);
+
+	CvUnit* pFirstHead = pFirstGroup->getHeadUnit();
+	CvUnit* pSecondHead = pSecondGroup->getHeadUnit();
+
+	FAssert(pFirstHead && pSecondHead);
+
+	const int iBaseScale = 4;
+	int iPenalty = 0;
+	if (pFirstHead->getUnitType() != pSecondHead->getUnitType())
+	{
+		if (pFirstHead->canFight() != pSecondHead->canFight())
+			iPenalty += 4;
+		else
+		{
+			if (pFirstHead->canFight())
+			{
+				if (pFirstHead->getUnitCombatType() != pSecondHead->getUnitCombatType())
+					iPenalty += 2;
+				if (pFirstHead->canAttack() != pSecondHead->canAttack())
+					iPenalty += 1;
+			}
+			else
+				iPenalty += 2;
+		}
+	}
+
+	int iDistance = plotDistance(pFirstHead->getX_INLINE(), pFirstHead->getY_INLINE(), pSecondHead->getX_INLINE(), pSecondHead->getY_INLINE());
+	iPenalty = std::min(5, iPenalty * (1+iDistance) / iBaseScale);
+	if (iDistance == 0 && !isBeforeUnitCycle(pFirstHead, pSecondHead))
+		iPenalty += iPenalty > 0 ? 1 : 5;
+
+	return iDistance + iPenalty;
+}
+// K-Mod end
+
 bool isPromotionValid(PromotionTypes ePromotion, UnitTypes eUnit, bool bLeader)
 {
 	CvUnitInfo& kUnit = GC.getUnitInfo(eUnit);

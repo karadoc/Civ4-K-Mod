@@ -628,6 +628,7 @@ void CvGame::reset(HandicapTypes eHandicap, bool bConstructorCall)
 	{
 		AI_reset();
 	}
+	m_ActivePlayerCycledGroups.clear(); // K-Mod
 }
 
 
@@ -5980,6 +5981,7 @@ void CvGame::doTurn()
 	doUpdateCacheOnTurn();
 
 	CvSelectionGroup::path_finder.Reset(); // K-Mod. (one of the few manual resets we need)
+	m_ActivePlayerCycledGroups.clear(); // K-Mod
 	// K-Mod - fixing a problem from the CAR mod.
 	// (CvTeamAI::AI_doCounter has a couple of things which invalidate the cache without clearing it. So I'm clearing the cache here to avoid OOS errors.)
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
@@ -7246,13 +7248,6 @@ void CvGame::updateMoves()
 					{
 						for (pLoopSelectionGroup = player.firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = player.nextSelectionGroup(&iLoop))
 						{
-							// While we're here, update the group cycle order
-							// (Ideally this would be done after AI_update rather than before. But again, that would cause problems if AI_update gets the group killed.)
-							CvUnit* pHeadUnit = pLoopSelectionGroup->getHeadUnit();
-							if (pHeadUnit && pHeadUnit->hasMoved() && pHeadUnit->canMove() && !pLoopSelectionGroup->isWaiting())
-								player.updateGroupCycle(pLoopSelectionGroup);
-							//
-
 							if (pLoopSelectionGroup->AI_update())
 							{
 								FAssert(player.hasBusyUnit());
@@ -7260,6 +7255,7 @@ void CvGame::updateMoves()
 							}
 						}
 					}
+					player.refreshGroupCycleList(); // This is the primary update for the group cycle ordering. (it use to be done inside CvUnit::setXY, but now it isn't.)
 					// K-Mod end
 
 					if (!(player.hasBusyUnit()))

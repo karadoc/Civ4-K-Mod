@@ -30,6 +30,7 @@
 #include <map>
 #include <hash_map>
 // K-Mod
+#include <set>
 #include <utility>
 #include <algorithm>
 // K-Mod end

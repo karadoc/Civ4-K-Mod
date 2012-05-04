@@ -161,7 +161,7 @@ public:
 	void setActivityType(ActivityTypes eNewValue);																											// Exposed to Python
 
 	AutomateTypes getAutomateType() const;																																		// Exposed to Python
-	bool isAutomated();																																									// Exposed to Python
+	bool isAutomated() const; // Exposed to Python
 	void setAutomateType(AutomateTypes eNewValue);																											// Exposed to Python
 
 	FAStarNode* getPathLastNode() const;

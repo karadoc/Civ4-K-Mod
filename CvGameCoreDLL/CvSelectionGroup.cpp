@@ -157,6 +157,8 @@ void CvSelectionGroup::doTurn()
 
 	if (getNumUnits() > 0)
 	{
+		bool bCouldAllMove = canAllMove(); // K-Mod
+
 		bool bHurt = false;
 
 		// do unit's turns (checking for damage)
@@ -252,6 +254,10 @@ void CvSelectionGroup::doTurn()
 				}
 			}
 		}
+		// K-Mod
+		if (!bCouldAllMove && isCycleGroup(this))
+			GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
+		// K-Mod end
 	}
 
 	doDelayedDeath();
@@ -4096,7 +4102,7 @@ void CvSelectionGroup::setActivityType(ActivityTypes eNewValue)
 		m_eActivityType = eNewValue;
 
 		// K-Mod
-		if (bWasWaiting != isWaiting())
+		if (bWasWaiting && !isWaiting())
 			GET_PLAYER(getOwnerINLINE()).updateGroupCycle(this);
 		// K-Mod end
 
@@ -4145,7 +4151,7 @@ AutomateTypes CvSelectionGroup::getAutomateType() const
 }
 
 
-bool CvSelectionGroup::isAutomated()
+bool CvSelectionGroup::isAutomated() const
 {
 	return (getAutomateType() != NO_AUTOMATE);
 }
