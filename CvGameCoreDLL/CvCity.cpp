@@ -937,7 +937,7 @@ void CvCity::doTurn()
 	doCulture();
 
 	//doPlotCulture(false, getOwnerINLINE(), getCommerceRate(COMMERCE_CULTURE));
-	doPlotCultureTimes100(false, getOwnerINLINE(), getCommerceRateTimes100(COMMERCE_CULTURE)); // K-Mod
+	doPlotCultureTimes100(false, getOwnerINLINE(), getCommerceRateTimes100(COMMERCE_CULTURE), true); // K-Mod
 
 	doProduction(bAllowNoProduction);
 
@@ -9993,7 +9993,7 @@ void CvCity::setCultureTimes100(PlayerTypes eIndex, int iNewValue, bool bPlots, 
 	*/
 	int iOldValue = getCultureTimes100(eIndex);
 
-	if (iNewValue > iOldValue)
+	if (iNewValue != iOldValue)
 	{
 		m_aiCulture[eIndex] = iNewValue;
 		FAssert(getCultureTimes100(eIndex) >= 0);
@@ -10008,6 +10008,8 @@ void CvCity::setCultureTimes100(PlayerTypes eIndex, int iNewValue, bool bPlots, 
 			//doPlotCulture(true, eIndex, (iNewValue-iOldValue)/100);
 			doPlotCultureTimes100(true, eIndex, (iNewValue-iOldValue), false);
 			// note: this function no longer applies free city culture.
+			// also, note that if a city's culture is decreased to zero, there will probably still be some residual plot culture around the city
+			// this is because the culture level on the way up will be higher than it is on the way down.
 		}
 	}
 /*
@@ -12842,10 +12844,10 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 	//const double iB = log((double)iOuterRatio)/iCultureRange;
 
 	// free culture bonus for cities
-	iCultureRateTimes100+=(bCityCulture)?600 :0;
+	iCultureRateTimes100+=(bCityCulture && iCultureRateTimes100 > 0)?600 :0;
 
 	// note, original code had "if (getCultureTimes100(ePlayer) > 0)". I took that part out.
-	if (eCultureLevel != NO_CULTURELEVEL &&	(iCultureRateTimes100*iScale >= 100 || bCityCulture))
+	if (eCultureLevel != NO_CULTURELEVEL &&	(std::abs(iCultureRateTimes100*iScale) >= 100 || bCityCulture))
 	{
 		for (int iDX = -iCultureRange; iDX <= iCultureRange; iDX++)
 		{

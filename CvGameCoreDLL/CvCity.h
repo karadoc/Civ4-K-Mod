@@ -1266,16 +1266,14 @@ protected:
 
 	void doGrowth();
 	void doCulture();
-	/* K-Mod, 26/sep/10, Karadoc - added bCityCulture parameter for use with trade route culture */
-	/* K-Mod, 31/oct/10, Karadoc - replaced doPlotCulture with doPlotCultureTimes100 */
 	//void doPlotCulture(bool bUpdate, PlayerTypes ePlayer, int iCultureRate, bool bCityCulture = true);
-	void doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture = true);
+	void doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture); // K-Mod
+	bool doCheckProduction();
 	void doProduction(bool bAllowNoProduction);
 	void doDecay();
 	void doReligion();
 	void doGreatPeople();
 	void doMeltdown();
-	bool doCheckProduction();
 
 	int getExtraProductionDifference(int iExtra, UnitTypes eUnit) const;
 	int getExtraProductionDifference(int iExtra, BuildingTypes eBuilding) const;
