@@ -17505,6 +17505,7 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 			}
 
 			// City's culture affects cost
+			/* original bts code
 			iTempModifier = - (pCity->getCultureTimes100(kPlayer.getID()) * GC.getDefineINT("ESPIONAGE_CULTURE_MULTIPLIER_MOD")) / std::max(1, pCity->getCultureTimes100(eTargetPlayer) + pCity->getCultureTimes100(kPlayer.getID()));
 			if (0 != iTempModifier)
 			{
@@ -17512,7 +17513,7 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 				szBuffer.append(gDLL->getText("TXT_KEY_ESPIONAGE_CULTURE_MOD", iTempModifier));
 				iModifier *= 100 + iTempModifier;
 				iModifier /= 100;
-			}
+			} */ // (moved and changed by K-Mod)
 
 			iTempModifier = pCity->getEspionageDefenseModifier();
 			if (0 != iTempModifier)
@@ -17524,9 +17525,23 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 			}
 		}
 
-		// Distance mod
 		if (pPlot != NULL)
 		{
+			// K-Mod. Culture Mod. (Based on plot culture rather than city culture.)
+			if (eMission == NO_ESPIONAGEMISSION || GC.getEspionageMissionInfo(eMission).isSelectPlot() || GC.getEspionageMissionInfo(eMission).isTargetsCity())
+			{
+				iTempModifier = - (pPlot->getCulture(kPlayer.getID()) * GC.getDefineINT("ESPIONAGE_CULTURE_MULTIPLIER_MOD")) / std::max(1, pPlot->getCulture(eTargetPlayer) + pPlot->getCulture(kPlayer.getID()));
+				if (0 != iTempModifier)
+				{
+					szBuffer.append(NEWLINE);
+					szBuffer.append(gDLL->getText("TXT_KEY_ESPIONAGE_CULTURE_MOD", iTempModifier));
+					iModifier *= 100 + iTempModifier;
+					iModifier /= 100;
+				}
+			}
+			// K-Mod end
+
+			// Distance mod
 			int iDistance = GC.getMap().maxPlotDistance();
 
 			CvCity* pOurCapital = kPlayer.getCapitalCity();

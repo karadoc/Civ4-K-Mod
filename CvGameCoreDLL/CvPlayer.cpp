@@ -14897,16 +14897,25 @@ int CvPlayer::getEspionageMissionCostModifier(EspionageMissionTypes eMission, Pl
 		}
 
 		// City's culture affects cost
+		/* original bts code
 		iModifier *= 100 - (pCity->getCultureTimes100(getID()) * GC.getDefineINT("ESPIONAGE_CULTURE_MULTIPLIER_MOD")) / std::max(1, pCity->getCultureTimes100(eTargetPlayer) + pCity->getCultureTimes100(getID()));
-		iModifier /= 100;
+		iModifier /= 100; */
 
 		iModifier *= 100 + pCity->getEspionageDefenseModifier();
 		iModifier /= 100;
 	}
 
-	// Distance mod
 	if (pPlot != NULL)
 	{
+		// K-Mod. Culture Mod. (Based on plot culture rather than city culture.)
+		if (eMission == NO_ESPIONAGEMISSION || GC.getEspionageMissionInfo(eMission).isSelectPlot() || GC.getEspionageMissionInfo(eMission).isTargetsCity())
+		{
+			iModifier *= 100 - (pPlot->getCulture(getID()) * GC.getDefineINT("ESPIONAGE_CULTURE_MULTIPLIER_MOD")) / std::max(1, pPlot->getCulture(eTargetPlayer) + pPlot->getCulture(getID()));
+			iModifier /= 100;
+		}
+		// K-Mod end
+
+		// Distance mod
 		int iDistance = GC.getMap().maxPlotDistance();
 
 		CvCity* pOurCapital = getCapitalCity();
@@ -15169,15 +15178,11 @@ bool CvPlayer::doEspionageMission(EspionageMissionTypes eMission, PlayerTypes eT
 			{
 				szBuffer = gDLL->getText("TXT_KEY_ESPIONAGE_TARGET_CITY_CULTURE_INSERTED", pCity->getNameKey()).GetCString();				
 
+				/* original bts code
 				int iCultureAmount = kMission.getCityInsertCultureAmountFactor() * pCity->countTotalCultureTimes100();
 				iCultureAmount /= 10000;
 				iCultureAmount = std::max(1, iCultureAmount);
-				
-/**
-*** K-Mod, 6/dec/10, Karadoc
-*** apply culture in one hit. We don't need fake 'free city culture' anymore.
-**/
-				/* original bts code
+
 				int iNumTurnsApplied = (GC.getDefineINT("GREAT_WORKS_CULTURE_TURNS") * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getUnitGreatWorkPercent()) / 100;
 
 				for (int i = 0; i < iNumTurnsApplied; ++i)
@@ -15188,12 +15193,14 @@ bool CvPlayer::doEspionageMission(EspionageMissionTypes eMission, PlayerTypes eT
 				if (iNumTurnsApplied > 0)
 				{
 					pCity->changeCulture(getID(), iCultureAmount % iNumTurnsApplied, false, true);
-				}
-				*/
-				pCity->changeCulture(getID(), iCultureAmount, true, true);
-/**
-*** K-Mod end
-**/
+				} */
+
+				// K-Mod. apply culture in one hit. We don't need fake 'free city culture' anymore.
+				int iCultureTimes100 = std::max(1, kMission.getCityInsertCultureAmountFactor() * pCity->countTotalCultureTimes100() / 100);
+
+				//pCity->changeCultureTimes100(getID(), iCultureTimes100, true, true);
+				pCity->doPlotCultureTimes100(true, getID(), iCultureTimes100, false); // plot culture only.
+				// K-Mod end
 
 				bSomethingHappened = true;
 			}

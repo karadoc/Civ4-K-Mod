@@ -1267,7 +1267,11 @@ protected:
 	void doGrowth();
 	void doCulture();
 	//void doPlotCulture(bool bUpdate, PlayerTypes ePlayer, int iCultureRate, bool bCityCulture = true);
-	void doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture); // K-Mod
+	// K-Mod. I've made this function public so that I can use it for the "insert culture" espionage mission. (I've also changed the functionality of it quite a bit.)
+public:
+	void doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultureRateTimes100, bool bCityCulture);
+protected:
+	// K-Mod end
 	bool doCheckProduction();
 	void doProduction(bool bAllowNoProduction);
 	void doDecay();
