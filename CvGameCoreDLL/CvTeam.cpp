@@ -47,6 +47,7 @@ CvTeam::CvTeam()
 
 	m_abAtWar = new bool[MAX_TEAMS];
 	m_abHasMet = new bool[MAX_TEAMS];
+	m_abHasSeen = new bool[MAX_TEAMS]; // K-Mod
 	m_abPermanentWarPeace = new bool[MAX_TEAMS];
 	m_abOpenBorders = new bool[MAX_TEAMS];
 	m_abDefensivePact = new bool[MAX_TEAMS];
@@ -91,6 +92,7 @@ CvTeam::~CvTeam()
 	SAFE_DELETE_ARRAY(m_aiCounterespionageModAgainstTeam);
 	SAFE_DELETE_ARRAY(m_abAtWar);
 	SAFE_DELETE_ARRAY(m_abHasMet);
+	SAFE_DELETE_ARRAY(m_abHasSeen); // K-Mod
 	SAFE_DELETE_ARRAY(m_abPermanentWarPeace);
 	SAFE_DELETE_ARRAY(m_abOpenBorders);
 	SAFE_DELETE_ARRAY(m_abDefensivePact);
@@ -223,6 +225,7 @@ void CvTeam::reset(TeamTypes eID, bool bConstructorCall)
 		m_aiCounterespionageTurnsLeftAgainstTeam[iI] = 0;
 		m_aiCounterespionageModAgainstTeam[iI] = 0;
 		m_abHasMet[iI] = false;
+		m_abHasSeen[iI] = false; // K-Mod
 		m_abAtWar[iI] = false;
 		m_abPermanentWarPeace[iI] = false;
 		m_abOpenBorders[iI] = false;
@@ -240,6 +243,7 @@ void CvTeam::reset(TeamTypes eID, bool bConstructorCall)
 			kLoopTeam.m_aiCounterespionageTurnsLeftAgainstTeam[getID()] = 0;
 			kLoopTeam.m_aiCounterespionageModAgainstTeam[getID()] = 0;
 			kLoopTeam.m_abHasMet[getID()] = false;
+			kLoopTeam.m_abHasSeen[getID()] = false; // K-Mod
 			kLoopTeam.m_abAtWar[getID()] = false;
 			kLoopTeam.m_abPermanentWarPeace[getID()] = false;
 			kLoopTeam.m_abOpenBorders[getID()] = false;
@@ -3871,6 +3875,7 @@ void CvTeam::makeHasMet(TeamTypes eIndex, bool bNewDiplo)
 
 	if (!isHasMet(eIndex))
 	{
+		makeHasSeen(eIndex); // K-mod
 		m_abHasMet[eIndex] = true;
 
 		updateTechShare();
@@ -6628,6 +6633,12 @@ void CvTeam::read(FDataStreamBase* pStream)
 	pStream->Read(GC.getNumVoteSourceInfos(), m_aiForceTeamVoteEligibilityCount);
 
 	pStream->Read(MAX_TEAMS, m_abHasMet);
+	// K-mod
+	if (uiFlag >= 1)
+		pStream->Read(MAX_TEAMS, m_abHasSeen);
+	else
+		memcpy(m_abHasSeen, m_abHasMet, sizeof(*m_abHasSeen)*MAX_TEAMS);
+	// K-Mod end
 	pStream->Read(MAX_TEAMS, m_abAtWar);
 	pStream->Read(MAX_TEAMS, m_abPermanentWarPeace);
 	pStream->Read(MAX_TEAMS, m_abOpenBorders);
@@ -6684,7 +6695,7 @@ void CvTeam::write(FDataStreamBase* pStream)
 {
 	int iI;
 
-	uint uiFlag = 0;
+	uint uiFlag = 1;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iNumMembers);
@@ -6728,6 +6739,7 @@ void CvTeam::write(FDataStreamBase* pStream)
 	pStream->Write(GC.getNumVoteSourceInfos(), m_aiForceTeamVoteEligibilityCount);
 
 	pStream->Write(MAX_TEAMS, m_abHasMet);
+	pStream->Write(MAX_TEAMS, m_abHasSeen); // K-Mod. uiFlag >= 1
 	pStream->Write(MAX_TEAMS, m_abAtWar);
 	pStream->Write(MAX_TEAMS, m_abPermanentWarPeace);
 	pStream->Write(MAX_TEAMS, m_abOpenBorders);

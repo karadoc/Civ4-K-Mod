@@ -4914,7 +4914,8 @@ class CvMainInterface:
 														scores.setWaiting()
 	
 # BUG - Dead Civs - start
-											if (ScoreOpt.isUsePlayerName()):
+											#if (ScoreOpt.isUsePlayerName()):
+											if ScoreOpt.isUsePlayerName() or (not gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(eTeam) and not gc.getGame().isDebugMode()): # K-Mod
 												szPlayerName = gc.getPlayer(ePlayer).getName()
 											else:
 												szPlayerName = gc.getLeaderHeadInfo(gc.getPlayer(ePlayer).getLeaderType()).getDescription()
@@ -4987,11 +4988,18 @@ class CvMainInterface:
 												if (bAlignIcons):
 													scores.setAlive()
 												# BUG: Rest of Dead Civs change is merely indentation by 1 level ...
-												if (gc.getTeam(eTeam).isAlive()):
-													if ( not (gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(eTeam)) ):
-														szBuffer = szBuffer + (" ?")
-														if (bAlignIcons):
-															scores.setNotMet()
+												#if (gc.getTeam(eTeam).isAlive()):
+													# if ( not (gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(eTeam)) ):
+														# szBuffer = szBuffer + (" ?")
+														# if (bAlignIcons):
+															# scores.setNotMet()
+												# K-Mod
+												if gc.getTeam(eTeam).isAlive() and not gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(eTeam):
+													szBuffer = szBuffer + (" ?")
+													if (bAlignIcons):
+														scores.setNotMet()
+												if gc.getTeam(eTeam).isAlive() and (gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(eTeam) or gc.getGame().isDebugMode()):
+												# K-Mod end
 													if (gc.getTeam(eTeam).isAtWar(gc.getGame().getActiveTeam())):
 														szBuffer = szBuffer + "("  + localText.getColorText("TXT_KEY_CONCEPT_WAR", (), gc.getInfoTypeForString("COLOR_RED")).upper() + ")"
 														if (bAlignIcons):

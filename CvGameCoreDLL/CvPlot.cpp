@@ -7311,6 +7311,10 @@ void CvPlot::setRevealedOwner(TeamTypes eTeam, PlayerTypes eNewValue)
 		}
 
 		m_aiRevealedOwner[eTeam] = eNewValue;
+		// K-Mod
+		if (eNewValue != NO_PLAYER)
+			GET_TEAM(eTeam).makeHasSeen(GET_PLAYER(eNewValue).getTeam());
+		// K-Mod end
 
 		if (eTeam == GC.getGameINLINE().getActiveTeam())
 		{

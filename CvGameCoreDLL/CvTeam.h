@@ -255,6 +255,11 @@ public:
 	bool isHasMet(TeamTypes eIndex) const;																		// Exposed to Python
 	void makeHasMet(TeamTypes eIndex, bool bNewDiplo);
 
+	// K-Mod
+	bool isHasSeen(TeamTypes eIndex) const { return m_abHasSeen[eIndex]; };
+	void makeHasSeen(TeamTypes eIndex) { m_abHasSeen[eIndex] = true; };
+	// K-Mod end
+
 	DllExport bool isAtWar(TeamTypes eIndex) const;																			// Exposed to Python
 	DllExport void setAtWar(TeamTypes eIndex, bool bNewValue);
 
@@ -464,6 +469,7 @@ protected:
 
 	bool* m_abAtWar;
 	bool* m_abHasMet;
+	bool* m_abHasSeen; // K-Mod
 	bool* m_abPermanentWarPeace;
 	bool* m_abOpenBorders;
 	bool* m_abDefensivePact;

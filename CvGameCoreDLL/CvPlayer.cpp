@@ -3109,10 +3109,18 @@ bool CvPlayer::isBarbarian() const
 
 const wchar* CvPlayer::getName(uint uiForm) const
 {
-
 	if (GC.getInitCore().getLeaderName(getID(), uiForm).empty() || (GC.getGameINLINE().isMPOption(MPOPTION_ANONYMOUS) && isAlive() && GC.getGameINLINE().getGameState() == GAMESTATE_ON))
 	{
-		return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
+		//return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
+		// K-Mod. Conceal the leader name of unmet players.
+		if (gDLL->getChtLvl() > 0 || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+			return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
+		else
+		{
+			static CvWString string = gDLL->getText("TXT_KEY_UNKNOWN"); // hack to stop the string from going out of scope.
+			return string;
+		}
+		// K-Mod end
 	}
 	else
 	{
@@ -3136,6 +3144,14 @@ const wchar* CvPlayer::getNameKey() const
 
 const wchar* CvPlayer::getCivilizationDescription(uint uiForm) const
 {
+	// K-Mod. Conceal the civilization of unmet players.
+	if (gDLL->getChtLvl() == 0 && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	{
+		static CvWString string = gDLL->getText("TXT_KEY_TOPCIVS_UNKNOWN"); // hack to stop the string from going out of scope.
+		return string;
+	}
+	// K-Mod end
+
 	if (GC.getInitCore().getCivDescription(getID(), uiForm).empty())
 	{
 		return GC.getCivilizationInfo(getCivilizationType()).getDescription(uiForm);
@@ -3162,6 +3178,14 @@ const wchar* CvPlayer::getCivilizationDescriptionKey() const
 
 const wchar* CvPlayer::getCivilizationShortDescription(uint uiForm) const
 {
+	// K-Mod. Conceal the civilization of unmet players.
+	if (!GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	{
+		static CvWString string = gDLL->getText("TXT_KEY_UNKNOWN"); // hack to stop the string from going out of scope.
+		return string;
+	}
+	// K-Mod end
+
 	if (GC.getInitCore().getCivShortDesc(getID(), uiForm).empty())
 	{
 		return GC.getCivilizationInfo(getCivilizationType()).getShortDescription(uiForm);
@@ -11678,7 +11702,13 @@ void CvPlayer::setTeam(TeamTypes eTeam)
 
 PlayerColorTypes CvPlayer::getPlayerColor() const
 {
-	return GC.getInitCore().getColor(getID());
+	//return GC.getInitCore().getColor(getID());
+	// K-Mod. Conceal the player colour of unmet players.
+	if (gDLL->getChtLvl() > 0 || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+		return GC.getInitCore().getColor(getID());
+	else
+		return GC.getInitCore().getColor(BARBARIAN_PLAYER);
+	// K-Mod end
 }
 
 
