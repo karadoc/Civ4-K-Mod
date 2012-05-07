@@ -4165,15 +4165,27 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 		return;
 	}
 
+	/* original bts code
 	szBuffer.append(gDLL->getText("TXT_KEY_MISC_CONTACT_LEADER", kPlayer.getNameKey(), kPlayer.getCivilizationShortDescription()));
 	szBuffer.append(NEWLINE);
-	GAMETEXT.parsePlayerTraits(szBuffer, ePlayer);
+	GAMETEXT.parsePlayerTraits(szBuffer, ePlayer); */
 
-	if (!(kActiveTeam.isHasMet(eTeam)))
+	if (!kActiveTeam.isHasMet(eTeam))
 	{
+		// K-Mod. If we haven't met the player yet - don't say "contact". Because we can't actually contact them!
+		szBuffer.append(CvWString::format(SETCOLR L"%s" ENDCOLR, TEXT_COLOR("COLOR_HIGHLIGHT_TEXT"), kPlayer.getName()));
+		// K-Mod end
 		szBuffer.append(NEWLINE);
 		szBuffer.append(gDLL->getText("TXT_KEY_MISC_HAVENT_MET_CIV"));
 	}
+	// K-Mod
+	else
+	{
+		szBuffer.append(gDLL->getText("TXT_KEY_MISC_CONTACT_LEADER", kPlayer.getNameKey(), kPlayer.getCivilizationShortDescription()));
+		szBuffer.append(NEWLINE);
+		GAMETEXT.parsePlayerTraits(szBuffer, ePlayer);
+	}
+	// K-Mod end
 
 	if (kActiveTeam.isHasMet(eTeam) || GC.getGameINLINE().isDebugMode())
 	{

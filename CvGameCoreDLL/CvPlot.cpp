@@ -7077,7 +7077,10 @@ void CvPlot::changeVisibilityCount(TeamTypes eTeam, int iChange, InvisibleTypes 
 
 					if (pAdjacentPlot != NULL)
 					{
-						pAdjacentPlot->updateRevealedOwner(eTeam);
+						//pAdjacentPlot->updateRevealedOwner(eTeam);
+						// K-Mod. updateRevealedOwner simply checks to see if there is a visible adjacent plot. But we've already checked that, so lets go right to the punch.
+						pAdjacentPlot->setRevealedOwner(eTeam, pAdjacentPlot->getOwnerINLINE());
+						// K-Mod end
 					}
 				}
 
@@ -7085,6 +7088,22 @@ void CvPlot::changeVisibilityCount(TeamTypes eTeam, int iChange, InvisibleTypes 
 				{
 					GET_TEAM(getTeam()).meet(eTeam, true);
 				}
+				// K-Mod. Meet the owner of any units you can see.
+				{
+					PROFILE("CvPlot::changeVisibility -- meet units"); // (this is new, so I want to time it.)
+					CvTeam& kTeam = GET_TEAM(eTeam);
+
+					CLLNode<IDInfo>* pUnitNode = headUnitNode();
+					while (pUnitNode)
+					{
+						CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+
+						kTeam.meet(GET_PLAYER(pLoopUnit->getVisualOwner(eTeam)).getTeam(), true);
+
+						pUnitNode = nextUnitNode(pUnitNode);
+					}
+				}
+				// K-Mod end
 			}
 
 			pCity = getPlotCity();

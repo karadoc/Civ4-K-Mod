@@ -9962,15 +9962,18 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 			load();
 		}
 
-		for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
+		if (!alwaysInvisible() && !m_pUnitInfo->isHiddenNationality()) // K-Mod (just this condition)
 		{
-			if (GET_TEAM((TeamTypes)iI).isAlive())
+			for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
 			{
-				if (!isInvisible(((TeamTypes)iI), false))
+				if (GET_TEAM((TeamTypes)iI).isAlive())
 				{
-					if (pNewPlot->isVisible((TeamTypes)iI, false))
+					if (!isInvisible(((TeamTypes)iI), false))
 					{
-						GET_TEAM((TeamTypes)iI).meet(getTeam(), true);
+						if (pNewPlot->isVisible((TeamTypes)iI, false))
+						{
+							GET_TEAM((TeamTypes)iI).meet(getTeam(), true);
+						}
 					}
 				}
 			}
