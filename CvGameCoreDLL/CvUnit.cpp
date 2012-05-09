@@ -9544,17 +9544,20 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 			{
 				/* original bts code
 				getGroup()->setActivityType(ACTIVITY_AWAKE); */
-				// K-Mod. For human players, clear existing missions when new units are added to a group; otherwise the group might run away from us as soon as the units are added.
+				// K-Mod
 				// For the AI, only wake the group in particular circumstances. This is to avoid AI deadlocks where they just keep grouping and ungroup indefinitely.
+				// If the activity type is not changed at all, then that would enable exploits such as adding new units to air patrol groups to bypass the movement conditions.
 				if (isHuman())
 				{
 					getGroup()->setAutomateType(NO_AUTOMATE);
-					// On second thought, I'm not going to clear the mission queue. I'm just going to change to rules so that "automoves" won't start while the group is selected.
-					//getGroup()->setActivityType(ACTIVITY_AWAKE);
+					getGroup()->setActivityType(ACTIVITY_AWAKE);
+					// I'm not going to clear the mission queue. I'm just going to change to rules so that "automoves" won't start while the group is selected.
 					//getGroup()->clearMissionQueue();
 				}
 				else if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
 					getGroup()->setActivityType(ACTIVITY_AWAKE);
+				else if (getGroup()->getActivityType() != ACTIVITY_AWAKE)
+					getGroup()->setActivityType(ACTIVITY_HOLD); // don't let them cheat.
 				// K-Mod end
 			}
 			/* original bts code
