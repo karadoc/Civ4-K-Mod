@@ -133,8 +133,12 @@ public:
 	bool groupAmphibMove(CvPlot* pPlot, int iFlags);
 
 	DllExport bool readyToSelect(bool bAny = false);																										// Exposed to Python
-	bool readyToMove(bool bAny = false);																																// Exposed to Python
-	bool readyToAuto();																																									// Exposed to Python 
+	bool readyToMove(bool bAny = false); // Exposed to Python
+	bool readyToAuto(); // Exposed to Python
+	// K-Mod. (note: I'd make these function const, but it would conflict with some dllexport functions)
+	bool readyForMission();
+	bool canDoMission(int iMission, int iData1, int iData2, CvPlot* pPlot, bool bTestVisible, bool bCheckMoves);
+	// K-Mod end
 
 	int getID() const;																																												// Exposed to Python
 	void setID(int iID);																			
