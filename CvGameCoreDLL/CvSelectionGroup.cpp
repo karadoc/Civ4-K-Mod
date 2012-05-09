@@ -4358,6 +4358,11 @@ bool CvSelectionGroup::addUnit(CvUnit* pUnit, bool bMinimalChange)
 
 	bAdded = false;
 
+	// K-Mod. Start the air circling animation if required. (CvSelectionGroup::joinGroup will interupt the air patrol mission anyway.)
+	/* if (getActivityType() == ACTIVITY_INTERCEPT)
+		pUnit->airCircle(true); */ // disabled for now, because it results in jerky animations.
+	// K-Mod end
+
 	pUnitNode = headUnitNode();
 
 	while (pUnitNode != NULL)
@@ -4412,6 +4417,10 @@ void CvSelectionGroup::removeUnit(CvUnit* pUnit)
 	{
 		if (::getUnit(pUnitNode->m_data) == pUnit)
 		{
+			// K-Mod. Cancel the air circling animation.
+			if (getActivityType() == ACTIVITY_INTERCEPT)
+				pUnit->airCircle(false);
+			// K-Mod end
 			deleteUnitNode(pUnitNode);
 			break;
 		}

@@ -3880,6 +3880,7 @@ void CvTeam::makeHasMet(TeamTypes eIndex, bool bNewDiplo)
 
 		updateTechShare();
 
+		/* original bts code
 		if (GET_TEAM(eIndex).isHuman())
 		{
 			for (iI = 0; iI < MAX_PLAYERS; iI++)
@@ -3896,7 +3897,7 @@ void CvTeam::makeHasMet(TeamTypes eIndex, bool bNewDiplo)
 					}
 				}
 			}
-		}
+		} */ // disabled by K-Mod (wtf did they hope to achieve with this?)
 
 		for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
 		{

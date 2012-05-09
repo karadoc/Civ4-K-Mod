@@ -3692,34 +3692,13 @@ void CvUnit::airCircle(bool bStart)
 bool CvUnit::canHeal(const CvPlot* pPlot) const
 {
 	if (!isHurt())
-	{
 		return false;
-	}
 
 	if (isWaiting())
-	{
 		return false;
-	}
 
-/*************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/30/10                           LunarMongoose       */
-/*                                                                                               */
-/* Bugfix                                                                                        */
-/*************************************************************************************************/
-/* original bts code
-	if (healRate(pPlot) <= 0)
-	{
-		return false;
-	}
-*/
-	// Mongoose FeatureDamageFix
 	if (healTurns(pPlot) == MAX_INT)
-	{
 		return false;
-	}
-/*************************************************************************************************/
-/* UNOFFICIAL_PATCH                         END                                                  */
-/*************************************************************************************************/
 
 	return true;
 }
@@ -3850,15 +3829,10 @@ int CvUnit::healRate(const CvPlot* pPlot, bool bLocation, bool bUnits) const
 
 int CvUnit::healTurns(const CvPlot* pPlot) const
 {
-	int iHeal;
-	int iTurns;
-
 	if (!isHurt())
-	{
 		return 0;
-	}
 
-	iHeal = healRate(pPlot);
+	int iHeal = healRate(pPlot);
 
 /*************************************************************************************************/
 /* UNOFFICIAL_PATCH                       06/02/10                           LunarMongoose       */
@@ -3877,14 +3851,15 @@ int CvUnit::healTurns(const CvPlot* pPlot) const
 
 	if (iHeal > 0)
 	{
-		iTurns = (getDamage() / iHeal);
+		/*iTurns = (getDamage() / iHeal);
 
 		if ((getDamage() % iHeal) != 0)
 		{
 			iTurns++;
 		}
 
-		return iTurns;
+		return iTurns; */
+		return (getDamage() + iHeal-1) / iHeal; // K-Mod (same, but faster)
 	}
 	else
 	{

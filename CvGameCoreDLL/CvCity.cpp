@@ -5001,7 +5001,7 @@ int CvCity::cultureGarrison(PlayerTypes ePlayer) const
 int CvCity::culturePressureFactor() const
 {
 	int iAnswer = 0;
-	const int iDivisor = 62;
+	const int iDivisor = 60;
 
 	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
@@ -5027,10 +5027,12 @@ int CvCity::culturePressureFactor() const
 		}
 	}
 	// dull the effects in the late-game.
-	iAnswer *= GC.getNumEraInfos();
-	iAnswer /= GET_PLAYER(getOwnerINLINE()).getCurrentEra() + GC.getNumEraInfos();
+	/*iAnswer *= GC.getNumEraInfos();
+	iAnswer /= GET_PLAYER(getOwnerINLINE()).getCurrentEra() + GC.getNumEraInfos();*/
+	iAnswer *= GC.getGameINLINE().getEstimateEndTurn();
+	iAnswer /= GC.getGameINLINE().getGameTurn() + GC.getGameINLINE().getEstimateEndTurn();
 
-	return std::min(400, 100 + iAnswer / iDivisor); // capped to avoid overly distorting the value of buildings and great people points.
+	return std::min(500, 100 + iAnswer / iDivisor); // capped to avoid overly distorting the value of buildings and great people points.
 }
 
 int CvCity::getNumBuilding(BuildingTypes eIndex) const

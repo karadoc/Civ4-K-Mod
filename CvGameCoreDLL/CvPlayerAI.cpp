@@ -2351,8 +2351,12 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		// (significantly changed by bbai & K-Mod)
 		if (pCity != NULL)
 		{
-			int iPressureFactor = pCity->culturePressureFactor(); // K-Mod
-			int iPressureWeight = iWeight * (iPressureFactor-100) / 100; // K-Mod
+			// K-Mod
+			int iPressureFactor = pCity->culturePressureFactor();
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+				iPressureFactor = std::min(300, iPressureFactor); // don't let culture pressure dominate our decision making about where to put our culture.
+			int iPressureWeight = iWeight * (iPressureFactor-100) / 100;
+			// K-Mod end
 
 			if (pCity->getCultureTimes100(getID()) >= 100 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1)))
 			{
