@@ -6628,13 +6628,13 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 	// ... except the bit about keeping good features on top of bonuses
 	int iValue = 0;
 	BonusTypes eBonus = pPlot->getNonObsoleteBonusType(getTeam());
-	if (eBonus != NO_BONUS)
+	if (eBonus != NO_BONUS && !GET_TEAM(getTeam()).isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechCityTrade()))
 	{
 		iValue += kFeatureInfo.getYieldChange(YIELD_FOOD) * 100;
-		iValue += kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 70; // was 60
+		iValue += kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 80; // was 60
 		iValue += kFeatureInfo.getYieldChange(YIELD_COMMERCE) * 40;
 		iValue *= 2;
-		// that should be enough incentive to keep good features
+		// that should be enough incentive to keep good features until we have the tech to decide on the best improvement.
 	}
 	// K-Mod end
 	
@@ -7500,9 +7500,9 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		// This corrected priority isn't perfect, but I think it will be better than nothing.
 		// K-Mod end
 
-		iValue += (aiDiffYields[YIELD_FOOD] * ((100 * iCorrectedFoodPriority) / 100));
-		iValue += (aiDiffYields[YIELD_PRODUCTION] * ((80 * iProductionPriority) / 100)); // was 60
-		iValue += (aiDiffYields[YIELD_COMMERCE] * ((40 * iCommercePriority) / 100));
+		iValue += aiDiffYields[YIELD_FOOD] * 100 * iCorrectedFoodPriority / 100;
+		iValue += aiDiffYields[YIELD_PRODUCTION] * 80 * iProductionPriority / 100; // was 60
+		iValue += aiDiffYields[YIELD_COMMERCE] * 40 * iCommercePriority / 100;
 
 		iValue /= 2;
 
@@ -7653,6 +7653,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 				iValue /= 4;
 			}
 
+			/* original bts code
 			if (eBestTempBuild != NO_BUILD)
 			{
 				if (pPlot->getFeatureType() != NO_FEATURE)
@@ -7666,7 +7667,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 						iValue += iClearFeatureValue;
 					}
 				}
-			}
+			} */ // K-Mod. I've moved this out of the if statement, because it should apply regardless of whether their is already an improvement on the plot.
 		}
 		else
 		{
@@ -7702,6 +7703,15 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 				iValue /= 4;	//Greatly prefer builds which are legal.
 			}
 		}
+		// K-Mod. Feature value. (moved from the 'no improvement' block above.)
+		if (pPlot->getFeatureType() != NO_FEATURE && eBestTempBuild != NO_BUILD && GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType()))
+		{
+			CvCity* pCity;
+			iValue += pPlot->getFeatureProduction(eBestTempBuild, getTeam(), &pCity) * 2;
+			FAssert(pCity == this);
+			iValue += iClearFeatureValue;
+		}
+		// K-Mod end
 	}
 	if (peBestBuild != NULL)
 		*peBestBuild = eBestTempBuild;
@@ -10327,7 +10337,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 		const CvFeatureInfo& kFeatureInfo = GC.getFeatureInfo(pPlot->getFeatureType());
 		iClearValue_wYield = iClearFeatureValue;
 		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_FOOD) * 100 * iFoodPriority / 100;
-		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 70 * iProductionPriority / 100; // was 60
+		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_PRODUCTION) * 80 * iProductionPriority / 100; // was 60
 		iClearValue_wYield -= kFeatureInfo.getYieldChange(YIELD_COMMERCE) * 40 * iCommercePriority / 100;
 	}
 
@@ -10553,7 +10563,7 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 				if ((eOldRoute == NO_ROUTE) || (GC.getRouteInfo(eRoute).getValue() > GC.getRouteInfo(eOldRoute).getValue()))
 				{
 					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_FOOD)) * 100);
-					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_PRODUCTION)) * 70); // was 60
+					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_PRODUCTION)) * 80); // was 60
 					iTempValue += ((GC.getImprovementInfo(pPlot->getImprovementType()).getRouteYieldChanges(eRoute, YIELD_COMMERCE)) * 40);
 				}
 
