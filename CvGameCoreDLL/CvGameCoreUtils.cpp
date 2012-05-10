@@ -208,10 +208,10 @@ bool isBeforeUnitCycle(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit)
 		return (pFirstUnit->getDomainType() < pSecondUnit->getDomainType());
 	}
 
-	if (pFirstUnit->baseCombatStr() != pSecondUnit->baseCombatStr())
+	/* if (pFirstUnit->baseCombatStr() != pSecondUnit->baseCombatStr())
 	{
 		return (pFirstUnit->baseCombatStr() > pSecondUnit->baseCombatStr());
-	}
+	} */ // disabled by K-Mod
 
 	if (pFirstUnit->getUnitType() != pSecondUnit->getUnitType())
 	{
@@ -232,6 +232,28 @@ bool isBeforeUnitCycle(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit)
 }
 
 // K-Mod
+bool isBeforeUnitOnPlot(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit)
+{
+	FAssert(pFirstUnit && pSecondUnit);
+	FAssert(pFirstUnit != pSecondUnit);
+	FAssert(pFirstUnit->plot() == pSecondUnit->plot());
+
+	CvPlot* pPlot = pFirstUnit->plot();
+
+	CLLNode<IDInfo>* pUnitNode = pPlot->headUnitNode();
+	while (pUnitNode)
+	{
+		if (pFirstUnit->getIDInfo() == pUnitNode->m_data)
+			return true;
+		if (pSecondUnit->getIDInfo() == pUnitNode->m_data)
+			return false;
+		pUnitNode = pPlot->nextUnitNode(pUnitNode);
+	}
+
+	FAssertMsg(false, "neither unit found on plot in isBeforeUnitOnPlot");
+	return false;
+}
+
 int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGroup* pSecondGroup)
 {
 	FAssert(pFirstGroup && pSecondGroup && pFirstGroup != pSecondGroup);
@@ -263,7 +285,9 @@ int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGro
 
 	int iDistance = plotDistance(pFirstHead->getX_INLINE(), pFirstHead->getY_INLINE(), pSecondHead->getX_INLINE(), pSecondHead->getY_INLINE());
 	iPenalty = std::min(5, iPenalty * (1+iDistance) / iBaseScale);
-	if (iDistance == 0 && !isBeforeUnitCycle(pFirstHead, pSecondHead))
+
+	//if (iDistance == 0 && !isBeforeUnitCycle(pFirstHead, pSecondHead))
+	if (iDistance == 0 && !isBeforeUnitOnPlot(pFirstHead, pSecondHead))	// use the unit order that the plot actually has, not the order it _should_ have. (unfortunately, this is a bit slower.)
 		iPenalty += iPenalty > 0 ? 1 : 5;
 
 	return iDistance + iPenalty;
