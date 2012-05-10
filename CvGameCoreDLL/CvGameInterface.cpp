@@ -784,7 +784,11 @@ void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bD
 		{
 			if (GET_PLAYER(eActive).isOption(PLAYEROPTION_NO_UNIT_CYCLING)) // (for the non-rapid case, this option is handled elsewhere.)
 				return;
-			cycleSelectionGroups(true);
+
+			if (gDLL->getEngineIFace()->isCameraLocked())
+				gDLL->getInterfaceIFace()->setCycleSelectionCounter(1); // immediate cycling might violate the camera lock. :(
+			else
+				cycleSelectionGroups(true);
 		}
 	}
 	else
