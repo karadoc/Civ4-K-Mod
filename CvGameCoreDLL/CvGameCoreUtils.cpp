@@ -286,8 +286,9 @@ int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGro
 	int iDistance = plotDistance(pFirstHead->getX_INLINE(), pFirstHead->getY_INLINE(), pSecondHead->getX_INLINE(), pSecondHead->getY_INLINE());
 	iPenalty = std::min(5, iPenalty * (1+iDistance) / iBaseScale);
 
-	//if (iDistance == 0 && !isBeforeUnitCycle(pFirstHead, pSecondHead))
-	if (iDistance == 0 && !isBeforeUnitOnPlot(pFirstHead, pSecondHead))	// use the unit order that the plot actually has, not the order it _should_ have. (unfortunately, this is a bit slower.)
+	// For human players, use the unit order that the plot actually has, not the order it _should_ have.
+	// For AI players, use the preferred ordering, because it's slightly faster.
+	if (iDistance == 0 && !(pFirstHead->isHuman() ? isBeforeUnitOnPlot(pFirstHead, pSecondHead) : isBeforeUnitCycle(pFirstHead, pSecondHead)))
 		iPenalty += iPenalty > 0 ? 1 : 5;
 
 	return iDistance + iPenalty;

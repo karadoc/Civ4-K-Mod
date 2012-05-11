@@ -7254,8 +7254,10 @@ void CvGame::updateMoves()
 								break;
 							}
 						}
+						// Refresh the gorup cycle for human players.
+						// Non-human players can wait for their units to wake up, or regain moves - group cycle isn't very important for them anyway.
+						player.refreshGroupCycleList();
 					}
-					player.refreshGroupCycleList(); // This is the primary update for the group cycle ordering. (it use to be done inside CvUnit::setXY, but now it isn't.)
 					// K-Mod end
 
 					if (!(player.hasBusyUnit()))

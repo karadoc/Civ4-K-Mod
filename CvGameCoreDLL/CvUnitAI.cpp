@@ -25019,7 +25019,7 @@ void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bo
 	}
 
 	// Compare our adjusted value with the current best
-	if (iValue >= iAttackerValue)
+	if (iValue > iAttackerValue)
 	{
 		(*ppAttacker) = pThis;
 		iAIAttackOdds = iAIOdds;

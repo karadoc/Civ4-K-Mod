@@ -13407,12 +13407,13 @@ bool CvUnit::LFBisBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAtt
 		iTheirRanking = pDefender->LFBgetDefenderRank(pAttacker);
 
 	// In case of equal value, fall back on unit cycle order
+	// (K-Mod. _reversed_ unit cycle order, so that inexperienced units defend first.)
 	if (iOurRanking == iTheirRanking)
 	{
 		if (isBeforeUnitCycle(this, pDefender))
-			iTheirRanking--;
-		else
 			iTheirRanking++;
+		else
+			iTheirRanking--;
 	}
 
 	// Retain the basic rank (before value adjustment) for the best defender
