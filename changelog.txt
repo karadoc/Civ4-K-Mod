@@ -1,6 +1,58 @@
-This is K-Mod version 1.28.
+This is K-Mod version 1.29.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.29 changelist
+
+Game
+
++ Reduced the upkeep of Mercantilism from 'medium' to 'low'.
++ The culture-based espionage discount is now calculated using plot culture rather than city culture. (This will make the discount apply far more often than it use to. It will need some more balance testing...)
++ The spread culture espionage mission now adds plot culture only, not city culture. (This means it will not cause border pops, and it will not have exponential growth when repeating the spread espionage mission.)
++ German Panzers now start with the Flanking I promotion. (a sign of greater things to come?)
+
+UI
+
++ Relaxed many of the conditions for executing group missions. For example, fortify, sentry, and heal can now be immediately executed by units without any movement points; bombard and airstrike missions will be executed immediately by those who can move, rather than waiting for the whole group to be able to move; groups which are given the "air patrol" mission will automatically separate into those who can do the mission and those who cannot; and so on.
++ The pillage command will now cause the whole group to pillage rather than just one unit. (This is the original functionality. It was changed by BBAI.)
++ Completely redesigned and rewrote the system for determining the order that groups are cycled through. Cycle ordering is no longer updated when a unit moves. Instead, it is updated at the end of the turn for units which have moved, and at various other times. The new system includes a bias so that units of similar types will be more likely to be ordered next to each other. Hopefully the cycling will feel a bit more natural and less jarring.
++ Implemented a new system for tracking which groups have been selected so that the group cycle wrap condition will only be triggered once all group have been cycled through rather than just triggering at some arbitrary point in the cycle.
++ Corrected some inconsitencies and mistakes in some of the triggers for unit cycling. For example, the game will now cycle groups when an order is issued to a group which is not ready to move, just as it cycles when the order is to a group which can move; fixed problem which triggered cycling when forming a group in certain situations; and so on.
++ Rapid Unit Cycling will no longer cause the game to cycle away from attack combat animations.
++ Fixed a problem with Rapid Unit Cycling which caused it not to cycle for some particular missions, including air patrol and sea patrol.
++ Units will once again wake up when forming a group. (This prevents an exploit which could allow players to bypass the movement check on air patrol and sea patrol missions.)
++ In multiplayer games, the leader and civilization of unmet players will now be concealed. ie. Unmet human players will appear with grey text in the chat and in the scoreboard, and the mouseover text will not display their leader traits. (Note: this was done by changing the functionality of CvPlayer::getPlayerColor, ::getName, and so on. By doing this, I risk creating a bunch of new bugs. But these functions are used outside of the dll and so I couldn't implement the desired functionality without changing them directly.)
++ The word "contact" is no longer shown in the scoreboard mouseover text for unmet players (because they can't actually be contacted!).
++ Changed the scoreboard mouseover text so that will include the player's own civ in the "at war" list when appropriate.
++ Implemented min/max right-click functionality to the +/- weight buttons in the espionage screen.
++ The air circling animation for fighter units will now be stopped if they leave their group. (This fixes the problem of 'phantom fighters' apparently circling long after the actual fighter has left the area.)
+
+General
+
++ Combat animations are now orchestrated to roughly correspond to the events from the actual combat mechanics. (It still isn't a blow-for-blow representation of the actual battle, but events in the animation will at least occur in the same order as the events in the combat log.)
++ Tweaked the combat rank conditions so that when two defenders have equal rank, the second one will fight; but when two attackers have the same rank, the first one will fight. (It use to be the other way around.)
++ Fixed a bug in the volcano event which sometimes caused the game message to be given to the wrong player. (The messages were always sent to the owner of the volcano plot, rather than the owner of the affected plot.)
++ Corrected a couple of fringe cases in which new civilizations could be seen without meeting their leader.
++ Made some changes to CvCity::doPlotCultureTimes100 and CvCity::setCultureTimes100 so that it these functions can apply negative culture changes.
++ Repeat research no longer triggers "avoid research" for human players unless they have their research percentage set <= 20%. (This effect caused cities to shun scientists when researching future tech.)
++ Fixed a bug in the end-of-game info screen which sometimes prevented the player from seeing the graphs of some civs. (This bug was introduced by a recent K-Mod change.)
+
+AI
+
++ Made some changes to the way AI_yieldValue handles starvation and emphasis. This should fix the behaviour in some situations which previously let the city starve.
++ Made some adjustments to the growth evaluation in AI_yieldValue.
++ Made several signficant changes to the way the AI evaluates plot yields (ie. food, production, and commerce) so as to remove a scaling problem which caused the AI to overvalue artists, among other problems.
++ Reduced the effect of high values of iDesiredFoodChange in AI_improvementValue.
++ Fixed a mistake in AI_commerceWeight which caused culture to be valued more highly than intended.
++ Added some new adjustments to AI_commerceWeight to reduce the value of culture in particular circumstances.
++ Tweaked the way culture pressure affects the value of culture for the AI.
++ Fixed a problem in AI_updateBestBuild which sometimes caused the AI to prefer to replace improvements rather than build new ones on unimproved plots.
++ Corrected some inconsistencies in the AI's evaluation of features when evaluating plot improvements. (Hopefully this will reduce the AI's tendency to replace newly built forts with plantations.)
++ Rewrote the evaluation of specialist slots in AI_buildingValue.
++ Reduced the value of conditional yield multipliers in AI_buildingValue.
++ Disabled a clause from the original AI which caused the AI to cancel everything it was building and researching when it first met a human player.
+
+
+--
 v1.28 changelist
 
 Game / UI
