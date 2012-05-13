@@ -22693,7 +22693,8 @@ void CvPlayer::markTradeOffers(CLinkList<TradeData>& ourInventory, const CLinkLi
 {
 	for (CLLNode<TradeData>* pOfferNode = ourOffer.head(); pOfferNode != NULL; pOfferNode = ourOffer.next(pOfferNode))
 	{
-		for (CLLNode<TradeData>* pInvNode = ourInventory.head(); pInvNode != NULL; pInvNode = ourInventory.next(pInvNode))
+		CLLNode<TradeData>* pInvNode; // (defined here just for the assertion at the end)
+		for (pInvNode = ourInventory.head(); pInvNode != NULL; pInvNode = ourInventory.next(pInvNode))
 		{
 			if (pInvNode->m_data.m_eItemType == pOfferNode->m_data.m_eItemType &&
 				pInvNode->m_data.m_iData == pOfferNode->m_data.m_iData)

@@ -5651,7 +5651,7 @@ bool CvUnitAI::AI_greatPersonMove()
 				int iMinTurns = INT_MAX;
 				//int iPercentOther; // chance of it being a different GP.
 				// unfortunately, it's non-trivial to calculate the GP type probabilies. So I'm leaving it out.
-				for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+				for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
 				{
 					int iGpRate = pLoopCity->getGreatPeopleRate();
 					if (iGpRate > 0)
@@ -12976,7 +12976,7 @@ bool CvUnitAI::AI_spreadCorporation()
 	{
 		return false;
 	}
-	bool bHasHQ = (GET_TEAM(getTeam()).hasHeadquarters((CorporationTypes)iI));
+	bool bHasHQ = GET_TEAM(getTeam()).hasHeadquarters(eCorporation);
 
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
@@ -14477,9 +14477,10 @@ bool CvUnitAI::AI_safety()
 	int iBestValue = 0;
 	CvPlot* pBestPlot = 0;
 	bool bEnemyTerritory = isEnemy(plot()->getTeam());
+	bool bIgnoreDanger = false;
 
 	//for (iPass = 0; iPass < 2; iPass++)
-	for (int iPass = 0; !pBestPlot && iPass < 2; iPass++)// K-Mod. What's the point of the first pass if it is just ignored?
+	do // K-Mod. What's the point of the first pass if it is just ignored? (see break condition at the end)
 	{
 		for (int iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 		{
@@ -14490,7 +14491,7 @@ bool CvUnitAI::AI_safety()
 				if (pLoopPlot && AI_plotValid(pLoopPlot) && !pLoopPlot->isVisibleEnemyUnit(this))
 				{
 					int iPathTurns;
-					if (generatePath(pLoopPlot, ((iPass > 0) ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, 1))
+					if (generatePath(pLoopPlot, bIgnoreDanger ? MOVE_IGNORE_DANGER : 0, true, &iPathTurns, 1))
 					{
 						int iCount = 0;
 
@@ -14549,7 +14550,16 @@ bool CvUnitAI::AI_safety()
 				}
 			}
 		}
-	}
+		// K-Mod
+		if (!pBestPlot)
+		{
+			if (bIgnoreDanger)
+				break; // no suitable plot, even when ignoring danger
+			else
+				bIgnoreDanger = true; // try harder next time
+		}
+		// K-Mod end
+	} while (!pBestPlot);
 
 	if (pBestPlot != NULL)
 	{
@@ -14560,7 +14570,7 @@ bool CvUnitAI::AI_safety()
 		}
 		else
 		{
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), ((iPass > 0) ? MOVE_IGNORE_DANGER : 0));
+			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), bIgnoreDanger ? MOVE_IGNORE_DANGER : 0);
 			return true;
 		}
 	}

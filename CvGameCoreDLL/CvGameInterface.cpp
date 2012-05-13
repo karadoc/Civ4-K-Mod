@@ -734,7 +734,11 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 
 		if (bWrap)
 		{
-			//if (GET_PLAYER(getActivePlayer()).hasAutoUnit()) // condition disabled by K-Mod (so that the group cycle order can be refreshed by automoves.)
+			//if (GET_PLAYER(getActivePlayer()).hasAutoUnit())
+			// K-Mod. I've weakend this condition so that the group cycle order can be refreshed by automoves.
+			// (Maybe I should create & use "sendCycleRefresh" instead.)
+			if (pNextSelectionGroup || GET_PLAYER(getActivePlayer()).hasAutoUnit())
+			// K-Mod end
 			{
 				CvMessageControl::getInstance().sendAutoMoves();
 			}

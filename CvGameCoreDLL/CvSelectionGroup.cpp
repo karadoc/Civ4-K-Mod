@@ -1271,6 +1271,9 @@ bool CvSelectionGroup::continueMission_bulk(int iSteps)
 	if (headMissionQueueNode() == NULL)
 	{
 		setActivityType(ACTIVITY_AWAKE);
+		// K-Mod. Since I removed the cycle trigger from deactivateHeadMission, we need it here.
+		if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer() && IsSelected())
+			GC.getGameINLINE().cycleSelectionGroups_delayed(1, true, canAnyMove());
 		return false;
 	}
 
