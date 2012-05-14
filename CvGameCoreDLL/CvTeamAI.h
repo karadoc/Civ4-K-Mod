@@ -112,7 +112,7 @@ public:
 	int AI_getRivalAirPower( ) const;
 	bool AI_refusePeace(TeamTypes ePeaceTeam) const; // K-Mod. (refuse peace when we need war for conquest victory.)
 	bool AI_acceptSurrender( TeamTypes eSurrenderTeam ) const;
-	bool AI_isOkayVassalTarget( TeamTypes eTeam );
+	bool AI_isOkayVassalTarget( TeamTypes eTeam ) const;
 
 	void AI_getWarRands( int &iMaxWarRand, int &iLimitedWarRand, int &iDogpileWarRand ) const;
 	void AI_getWarThresholds( int &iMaxWarThreshold, int &iLimitedWarThreshold, int &iDogpileWarThreshold ) const;

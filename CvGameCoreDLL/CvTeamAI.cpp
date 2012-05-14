@@ -4490,7 +4490,7 @@ void CvTeamAI::AI_doCounter()
 /* War Strategy AI                                                                              */
 /************************************************************************************************/
 // Block AI from declaring war on a distant vassal if it shares an area with the master
-bool CvTeamAI::AI_isOkayVassalTarget( TeamTypes eTeam )
+bool CvTeamAI::AI_isOkayVassalTarget( TeamTypes eTeam ) const
 {
 	if( GET_TEAM(eTeam).isAVassal() )
 	{
