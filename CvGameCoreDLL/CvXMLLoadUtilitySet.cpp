@@ -603,8 +603,18 @@ bool CvXMLLoadUtility::LoadGlobalText()
 		}
 
 		// Remove duplicate files. (Both will be loaded from the mod folder anyway, so this will save us some time.)
-		std::sort(aszFiles.begin(), aszFiles.end());
-		aszFiles.erase(std::unique(aszFiles.begin(), aszFiles.end()), aszFiles.end());
+		// However, we must not disturb the order of the list, because it is important that the modded files overrule the unmodded files.
+		for(std::vector<CvString>::iterator it = aszFiles.begin(); it != aszFiles.end(); ++it)
+		{
+			std::vector<CvString>::iterator jt = it+1;
+			while (jt != aszFiles.end())
+			{
+				if (it->CompareNoCase(*jt) == 0)
+					jt = aszFiles.erase(jt);
+				else
+					++jt;
+			}
+		}
 		// K-Mod end
 
 		if (gDLL->isModularXMLLoading())

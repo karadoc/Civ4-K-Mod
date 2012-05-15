@@ -5189,7 +5189,7 @@ void CvTeamAI::AI_doWar()
 
 												if (iValue > iBestValue)
 												{
-													FAssert(!AI_shareWar((TeamTypes)iI));
+													//FAssert(!AI_shareWar((TeamTypes)iI)); // disabled by K-Mod. (It isn't always true.)
 													iBestValue = iValue;
 													eBestTeam = ((TeamTypes)iI);
 												}

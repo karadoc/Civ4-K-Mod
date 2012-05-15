@@ -1,6 +1,15 @@
-This is K-Mod version 1.29.
+This is K-Mod version 1.29b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.29b changelist
+
++ Rewrote some of the code for loading of the game text xml. The new loading routines treat the xml in a more intuitive and less rigid way. In particular, the language names used to tag the xml values are now what determines the text for any given language. (Previously this was determined by the order of the tags.) The order of the languages is no longer important. If there is a missing language, the first text will be used instead (this is English for all of the current text files.)
++ Fixed a problem which sometimes blocked unit cycling after an attack command.
++ Restored missing "at war" mouseover text on the scoreboard.
++ Tightened the conditions on the triggering of automoves - hopefully this will reduce the chance of getting an unintended automoves trigger at the start of the turn.
++ Deleted the tech infos xml. (it is no longer used by K-Mod)
+
+--
 v1.29 changelist
 
 Game
