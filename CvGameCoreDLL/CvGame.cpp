@@ -7058,7 +7058,20 @@ void CvGame::createBarbarianUnits()
 
 							if (eBestUnit != NO_UNIT)
 							{
-								GET_PLAYER(BARBARIAN_PLAYER).initUnit(eBestUnit, pPlot->getX_INLINE(), pPlot->getY_INLINE(), eBarbUnitAI);
+								CvUnit* pNewUnit = GET_PLAYER(BARBARIAN_PLAYER).initUnit(eBestUnit, pPlot->getX_INLINE(), pPlot->getY_INLINE(), eBarbUnitAI);
+								// K-Mod. Give a combat penalty to barbarian boats.
+								if (pNewUnit && pPlot->isWater())
+								{
+									// find the "disorganized" promotion. (is there a better way to do this?)
+									PromotionTypes eDisorganized = (PromotionTypes)GC.getInfoTypeForString("PROMOTION_DISORGANIZED", true);
+
+									if (eDisorganized != NO_PROMOTION)
+									{
+										// sorry, barbarians. Free boats are just too dangerous for real civilizations to defend against.
+										pNewUnit->setHasPromotion(eDisorganized, true);
+									}
+								}
+								// K-Mod end
 							}
 						}
 					}

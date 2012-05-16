@@ -450,6 +450,12 @@
 		<Spanish>[ICON_BULLET]%D1_Mod%% [ICON_UNHEALTHY] por poblaci&#243;n</Spanish>		
 	</TEXT>
 
+	<!-- penalty promotion (for barbarian ships) -->
+	<TEXT>
+		<Tag>TXT_KEY_PROMOTION_DISORGANIZED</Tag>
+		<English>Disorganized</English>
+	</TEXT>
+
 	<!-- new volcano text-->
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_VOLCANO_FERTILITY</Tag>
