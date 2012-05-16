@@ -24191,10 +24191,10 @@ int CvUnitAI::AI_stackOfDoomExtra() const
 	//return ((AI_getBirthmark() % (1 + GET_PLAYER(getOwnerINLINE()).getCurrentEra())) + 4);
 	// K-Mod
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
-	int iMilitaryFlavour = kOwner.AI_getFlavorValue(FLAVOR_MILITARY);
+	int iFlavourExtra = kOwner.AI_getFlavorValue(FLAVOR_MILITARY)/2 + (kOwner.AI_getFlavorValue(FLAVOR_MILITARY) > 0 ? 8 : 4);
 	int iEra = kOwner.getCurrentEra();
 	// 4 base. then rand between 0 and ... (1 or 2 + iEra + flavour * era ratio)
-	return AI_getBirthmark() % ((kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH) ? 2 : 1) + iEra + (iEra+1)*iMilitaryFlavour/std::max(1, GC.getNumEraInfos())) + 4;
+	return AI_getBirthmark() % ((kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH) ? 2 : 1) + iEra + (iEra+1)*iFlavourExtra/std::max(1, GC.getNumEraInfos())) + 4;
 	// K-Mod end
 }
 

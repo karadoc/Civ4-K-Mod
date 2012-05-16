@@ -5611,10 +5611,10 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE2))
 					{
 						iValue += 1000;
-					}
-					if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
-					{
-						iValue += 800; // (additional)
+						if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
+						{
+							iValue += 1000; // (additional)
+						}
 					}
 				}
 			}
