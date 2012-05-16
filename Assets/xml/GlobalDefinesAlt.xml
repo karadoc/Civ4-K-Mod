@@ -157,4 +157,8 @@
 		<DefineName>WARLORD_MAXIMUM_EXTRA_EXPERIENCE_PERCENT</DefineName>
 		<iDefineIntVal>100</iDefineIntVal> <!-- introduced by K-Mod -->
 	</Define>
+	<Define>
+		<DefineName>STANDARD_BATTLE_ANIMATION_ROUNDS</DefineName>
+		<iDefineIntVal>6</iDefineIntVal> <!-- introduced by K-Mod -->
+	</Define>
 </Civ4Defines>

@@ -12737,9 +12737,16 @@ int CvUnit::planBattle(CvBattleDefinition& kBattle, const std::vector<int>& comb
 	// int iFirstStrikeRounds = kBattle.getFirstStrikes(BATTLE_UNIT_ATTACKER) + kBattle.getFirstStrikes(BATTLE_UNIT_DEFENDER);
 	bool bRanged = true;
 
+	const static int iStandardNumRounds = GC.getDefineINT("STANDARD_BATTLE_ANIMATION_ROUNDS", 6);
+
+	int iTotalBattleRounds = (iStandardNumRounds * (int)combat_log.size() * GC.getCOMBAT_DAMAGE() + GC.getMAX_HIT_POINTS()) / (2*GC.getMAX_HIT_POINTS());
+
+	// Reduce number of rounds if both units have groupSize == 1, because nothing much happens in those battles.
+	if (pAttackUnit->getGroupSize() == 1 && pDefenceUnit->getGroupSize() == 1)
+		iTotalBattleRounds = (2*iTotalBattleRounds+1)/3;
+
 	// apparently, there is a hardcoded minimum of 2 rounds. (game will crash if there less than 2 rounds.)
-	const int iStandardNumRounds = 5; // make this into an xml value?
-	int iTotalBattleRounds = range((iStandardNumRounds * (int)combat_log.size() * GC.getCOMBAT_DAMAGE() + 2*GC.getMAX_HIT_POINTS() -1 ) / (2*GC.getMAX_HIT_POINTS()), 2, 10);
+	iTotalBattleRounds = range(iTotalBattleRounds, 2, 10);
 
 	int iBattleRound = 0;
 	for (int i = 0; i < (int)combat_log.size(); i++)
