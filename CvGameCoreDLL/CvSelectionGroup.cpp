@@ -1193,6 +1193,10 @@ void CvSelectionGroup::startMission()
 			if (bDelete)
 			{
 				deleteMissionQueueNode(headMissionQueueNode());
+				// K-Mod
+				if (headMissionQueueNode())
+					activateHeadMission();
+				// K-Mod end
 
 				if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer() && IsSelected())
 				{
@@ -1583,7 +1587,32 @@ bool CvSelectionGroup::continueMission_bulk(int iSteps)
 
 			if (!isBusy())
 			{
-				deleteMissionQueueNode(headMissionQueueNode());
+				// If this was a build mission, end the mission for all of our workers groups with the same job.
+				// (this isn't strictly neccessary, because the workers will know to end their own mission anyway, but ending it now helps give a better unit cycling order.)
+				if (headMissionQueueNode()->m_data.eMissionType == MISSION_BUILD)
+				{
+					BuildTypes eBuildType = (BuildTypes)headMissionQueueNode()->m_data.iData1; // (the head mission will be deleted soon)
+					CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
+
+					while (pUnitNode)
+					{
+						CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+						pUnitNode = nextUnitNode(pUnitNode);
+
+						if (pLoopUnit->isGroupHead() && pLoopUnit->getOwnerINLINE() == getHeadOwner())
+						{
+							CvSelectionGroup* pLoopGroup = pLoopUnit->getGroup();
+							if (pLoopGroup->getMissionType(0) == MISSION_BUILD && pLoopGroup->getMissionData1(0) == eBuildType)
+								pLoopGroup->deleteMissionQueueNode(pLoopGroup->headMissionQueueNode());
+						}
+					}
+				}
+				else
+					deleteMissionQueueNode(headMissionQueueNode());
+
+				// start the next mission
+				if (headMissionQueueNode())
+					activateHeadMission();
 			}
 			// K-Mod end
 		}
@@ -4888,8 +4917,6 @@ void CvSelectionGroup::insertAtEndMissionQueue(MissionData mission, bool bStart)
 
 CLLNode<MissionData>* CvSelectionGroup::deleteMissionQueueNode(CLLNode<MissionData>* pNode)
 {
-	CLLNode<MissionData>* pNextMissionNode;
-
 	FAssertMsg(pNode != NULL, "Node is not assigned a valid value");
 	FAssert(getOwnerINLINE() != NO_PLAYER);
 
@@ -4898,12 +4925,13 @@ CLLNode<MissionData>* CvSelectionGroup::deleteMissionQueueNode(CLLNode<MissionDa
 		deactivateHeadMission();
 	}
 
-	pNextMissionNode = m_missionQueue.deleteNode(pNode);
+	CLLNode<MissionData>* pNextMissionNode = m_missionQueue.deleteNode(pNode);
 
+	/* original bts code
 	if (pNextMissionNode == headMissionQueueNode())
 	{
 		activateHeadMission();
-	}
+	} */ // Disabled by K-Mod. It should be possible to delete the head mission without immediately starting the next one!
 
 	if ((getOwnerINLINE() == GC.getGameINLINE().getActivePlayer()) && IsSelected())
 	{
