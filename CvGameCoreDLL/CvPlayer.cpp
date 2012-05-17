@@ -7422,7 +7422,7 @@ int CvPlayer::calculateInflatedCosts() const
 }
 
 
-int CvPlayer::calculateBaseNetGold() const
+/* int CvPlayer::calculateBaseNetGold() const
 {
 	int iNetGold;
 
@@ -7431,7 +7431,7 @@ int CvPlayer::calculateBaseNetGold() const
 	iNetGold -= calculateInflatedCosts();
 	
 	return iNetGold;
-}
+} */
 
 int CvPlayer::calculateResearchModifier(TechTypes eTech) const
 {
@@ -7554,7 +7554,7 @@ int CvPlayer::calculateResearchModifier(TechTypes eTech) const
 /************************************************************************************************/
 }
 
-int CvPlayer::calculateBaseNetResearch(TechTypes eTech) const
+/* int CvPlayer::calculateBaseNetResearch(TechTypes eTech) const
 {
 	TechTypes eResearchTech;
 
@@ -7568,11 +7568,12 @@ int CvPlayer::calculateBaseNetResearch(TechTypes eTech) const
 	}
 
 	return (((GC.getDefineINT("BASE_RESEARCH_RATE") + getCommerceRate(COMMERCE_RESEARCH)) * calculateResearchModifier(eResearchTech)) / 100);
-}
+} */
 
 
 int CvPlayer::calculateGoldRate() const
 {
+	/* original bts code
 	int iRate = 0;
 
 	if (isCommerceFlexible(COMMERCE_RESEARCH))
@@ -7584,12 +7585,22 @@ int CvPlayer::calculateGoldRate() const
 		iRate = std::min(0, (calculateBaseNetResearch() + calculateBaseNetGold()));
 	}
 
-	return iRate;
+	return iRate; */
+	// K-Mod. (Just moved from calculateBaseNetGold.)
+	int iNetGold;
+
+	iNetGold = (getCommerceRate(COMMERCE_GOLD) + getGoldPerTurn());
+
+	iNetGold -= calculateInflatedCosts();
+	
+	return iNetGold;
+	// K-Mod end
 }
 
 
 int CvPlayer::calculateResearchRate(TechTypes eTech) const
 {
+	/* original bts code
 	int iRate = 0;
 
 	if (isCommerceFlexible(COMMERCE_RESEARCH))
@@ -7601,12 +7612,28 @@ int CvPlayer::calculateResearchRate(TechTypes eTech) const
 		iRate = std::max(1, (calculateBaseNetResearch(eTech) + calculateBaseNetGold()));
 	}
 
-	return iRate;
+	return iRate; */
+	// K-Mod. (Just moved from calculateBaseNetResearch.)
+	// Note: the original code had a floor of 1. This version does not.
+	TechTypes eResearchTech;
+
+	if (eTech != NO_TECH)
+	{
+		eResearchTech = eTech;
+	}
+	else
+	{
+		eResearchTech = getCurrentResearch();
+	}
+
+	return (((GC.getDefineINT("BASE_RESEARCH_RATE") + getCommerceRate(COMMERCE_RESEARCH)) * calculateResearchModifier(eResearchTech)) / 100);
+	// K-Mod end
 }
 
 int CvPlayer::calculateTotalCommerce() const
 {
-	int iTotalCommerce = calculateBaseNetGold() + calculateBaseNetResearch();
+	//int iTotalCommerce = calculateBaseNetGold() + calculateBaseNetResearch();
+	int iTotalCommerce = calculateGoldRate() + calculateResearchRate(); // K-Mod
 
 	for (int i = 0; i < NUM_COMMERCE_TYPES; ++i)
 	{

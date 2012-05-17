@@ -140,8 +140,8 @@ class EconomicsAdvisor:
 		totalPreInflatedCosts = player.calculatePreInflatedCosts()
 		totalInflatedCosts = player.calculateInflatedCosts()
 		goldCommerce = player.getCommerceRate(CommerceTypes.COMMERCE_GOLD)
-		if (not player.isCommerceFlexible(CommerceTypes.COMMERCE_RESEARCH)):
-			goldCommerce += player.calculateBaseNetResearch()
+		# if (not player.isCommerceFlexible(CommerceTypes.COMMERCE_RESEARCH)):
+			# goldCommerce += player.calculateBaseNetResearch()
 		gold = player.getGold()
 		goldFromCivs = player.getGoldPerTurn()
 		goldPerTurn = player.calculateGoldRate()

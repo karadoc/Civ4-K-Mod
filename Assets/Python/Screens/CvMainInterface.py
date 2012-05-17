@@ -1302,7 +1302,10 @@ class CvMainInterface:
 					# Intentional offset...
 					eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
 										
-					if (gc.getActivePlayer().isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
+					#if (gc.getActivePlayer().isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
+					# K-Mod. In K-Mod, gold is flexible - but we still don't want to show it outside of the city screen. (Unless there's a BUG option or something.)
+					if (eCommerce != CommerceTypes.COMMERCE_GOLD and gc.getActivePlayer().isCommerceFlexible(eCommerce)) or (eCommerce == CommerceTypes.COMMERCE_GOLD and CyInterface().isCityScreenUp()):
+					# K-Mod end
 # BUG - Min/Max Sliders - start
 						bEnable = gc.getActivePlayer().isCommerceFlexible(eCommerce)
 						if MainOpt.isShowMinMaxCommerceButtons() and not CyInterface().isCityScreenUp():
@@ -3008,7 +3011,10 @@ class CvMainInterface:
 				iCount = 0
 				for iI in range( CommerceTypes.NUM_COMMERCE_TYPES ):
 					eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
-					if (gc.getPlayer(ePlayer).isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
+					#if (gc.getPlayer(ePlayer).isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
+					# K-Mod. In K-Mod, gold is flexible - but we still don't want to show it outside of the city screen
+					if (eCommerce != CommerceTypes.COMMERCE_GOLD and gc.getPlayer(ePlayer).isCommerceFlexible(eCommerce)) or (eCommerce == CommerceTypes.COMMERCE_GOLD and CyInterface().isCityScreenUp()):
+					# K-Mod end
 						szOutText = u"<font=2>%c:%d%%</font>" %(gc.getCommerceInfo(eCommerce).getChar(), gc.getPlayer(ePlayer).getCommercePercent(eCommerce))
 						szString = "PercentText" + str(iI)
 						screen.setLabel( szString, "Background", szOutText, CvUtil.FONT_LEFT_JUSTIFY, 14, 50 + (iCount * 19), -0.1, FontTypes.SMALL_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )

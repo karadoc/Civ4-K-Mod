@@ -12,7 +12,7 @@
 			<iInitialPercent>0</iInitialPercent>
 			<iInitialHappiness>0</iInitialHappiness>
 			<iAIWeightPercent>100</iAIWeightPercent>
-			<bFlexiblePercent>0</bFlexiblePercent>
+			<bFlexiblePercent>1</bFlexiblePercent>
 			<Button>Art/Interface/Buttons/Process/ProcessWealth.dds</Button>
 		</CommerceInfo>
 		<CommerceInfo>

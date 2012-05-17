@@ -276,8 +276,8 @@ public:
 	int calculateInflationRate() const;																																		// Exposed to Python
 	int calculateInflatedCosts() const;																																		// Exposed to Python
 
-	int calculateBaseNetGold() const;
-	int calculateBaseNetResearch(TechTypes eTech = NO_TECH) const;   // Exposed to Python
+	//int calculateBaseNetGold() const; // disabled by K-Mod
+	//int calculateBaseNetResearch(TechTypes eTech = NO_TECH) const;   // disabled by K-Mod (was exposed to Python)
 	int calculateResearchModifier(TechTypes eTech) const;   // Exposed to Python
 	int calculateGoldRate() const;																																				// Exposed to Python
 	int calculateResearchRate(TechTypes eTech = NO_TECH) const;																						// Exposed to Python
@@ -285,8 +285,7 @@ public:
 
 	bool isResearch() const;																																							// Exposed to Python
 	DllExport bool canEverResearch(TechTypes eTech) const;																								// Exposed to Python
-	// K-Mod, added "bFree" argument
-	DllExport bool canResearch(TechTypes eTech, bool bTrade = false, bool bFree = false) const;																// Exposed to Python
+	DllExport bool canResearch(TechTypes eTech, bool bTrade = false, bool bFree = false) const; // (K-Mod, added bFree. Does this break DllExport?) Exposed to Python
 	DllExport TechTypes getCurrentResearch() const;																												// Exposed to Python
 	bool isCurrentResearchRepeat() const;																																	// Exposed to Python
 	bool isNoResearchAvailable() const;																																		// Exposed to Python

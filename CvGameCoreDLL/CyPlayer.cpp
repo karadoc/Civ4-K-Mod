@@ -567,10 +567,10 @@ int CyPlayer::getGwPercentAnger() const
 ** K-Mod end
 */
 
-int CyPlayer::calculateBaseNetResearch()
+/* int CyPlayer::calculateBaseNetResearch()
 {
 	return m_pPlayer ? m_pPlayer->calculateBaseNetResearch() : -1;
-}
+} */
 
 bool CyPlayer::isResearch()
 {

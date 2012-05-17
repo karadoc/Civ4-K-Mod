@@ -141,7 +141,7 @@ void CyPlayerPythonInterface1(python::class_<CyPlayer>& x)
 		.def("calculateResearchRate", &CyPlayer::calculateResearchRate, "int (int /*TechTypes*/ eTech)")
 		.def("calculatePollution", &CyPlayer::calculatePollution, "int (int /*PollutionFlags*/ iTypes)") // K-Mod
 		.def("getGwPercentAnger", &CyPlayer::getGwPercentAnger, "int ()") // K-Mod
-		.def("calculateBaseNetResearch", &CyPlayer::calculateBaseNetResearch, "int ()")
+		//.def("calculateBaseNetResearch", &CyPlayer::calculateBaseNetResearch, "int ()")
 		.def("calculateResearchModifier", &CyPlayer::calculateResearchModifier, "int (int /*TechTypes*/ eTech)")
 		.def("isResearch", &CyPlayer::isResearch, "bool ()")
 		.def("canEverResearch", &CyPlayer::canEverResearch, "bool (int /*TechTypes*/ iIndex)")
