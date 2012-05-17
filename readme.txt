@@ -21,7 +21,7 @@ Bitcoin: 15kzyE5fvQvicfg2rtXppqKYD63t4rFCSt
 == Introduction ==
 I originally intended for this mod to be extremely minimalistic, and for personal use only. My original intended changes were just to buff serfdom, protective, and aggressive, and to introduce some features to make automated workers a bit more friendly. The plan was that my mod would be basically the same as the unmodded game, but with a few of the obviously game elements improved. But as I read the game code to learn how to implement my changes, and as I browsed the change-lists of other mods (such as the PIG mod) to see what other minor changes I could make, I started to realise that unmodded BtS isn't anywhere near as planned and polished as I had thought. I use to think that all the mechanics and numbers were a result of careful calculations and thinking and testing, but I learnt that many of the features in the game are completely arbitrary and sometimes obviously unfinished. So the scope of my mod widened dramatically to include pretty much everything that I thought was not as it should be.
 
-I now think of K-Mod as an kind of _unofficial content & balance patch_. The mod is intended to be played as a replacement for standard BtS. Many of the changes are 'under-the-hood' things that a casual player probably wouldn't notice, but I think the changes will enhance their enjoyment of the game nonetheless.
+I now think of K-Mod as an kind of 'unofficial content & balance patch'. The mod is intended to be played as a replacement for standard BtS. Many of the changes are 'under-the-hood' things that a casual player probably wouldn't notice, but I think the changes will enhance their enjoyment of the game nonetheless.
 
 Here I'll list a few significant features. See changelog.txt for a more complete list.
 
@@ -36,7 +36,7 @@ Here I'll list a few significant features. See changelog.txt for a more complete
  + K-Mod includes many bug fixes to the controls and user-interface of the game. For example, units will no longer automatically attack when they are ordered into an unseen enemy unit in the fog-of-war; and using the diplomacy screen to suggest peace will now bring up possible peace-trade deal rather than simply ending the war without negotiations. There are many other such minor improvements.
 
 == Better AI ==
-The BBAI mod was used as the starting point for the AI in K-Mod, but each new version of K-Mod comes with further AI improvements which are gradually replacing all of the old AI. The AI in K-Mod is now noticeably stronger than the AI in the BBAI mod, and the standard BtS AI. The obvious improvements are that AI civilizations will research faster, fight smarter, and place cities more thoughtfully. But there are also some "flavour" changes as well - different AI leaders like to pursue different kinds of strategies, with different areas of emphasis. It's also worth noting that the AI in K-Mod actually cheats /less/ than the standard AI; not more. (For those who don't know; the standard AI 'cheats' by sometimes knowing what is on certain plots without actually seeing them. This still sometimes happens in K-Mod, but it happens far less.)
+The BBAI mod was used as the starting point for the AI in K-Mod, but each new version of K-Mod comes with further AI improvements which are gradually replacing all of the old AI. The AI in K-Mod is now noticeably stronger than the AI in the BBAI mod, and the standard BtS AI. The obvious improvements are that AI civilizations will research faster, fight smarter, and place cities more thoughtfully, and so on. But there are also some "flavour" changes as well - different AI leaders like to pursue different kinds of strategies, with different areas of emphasis based on their individual personalities. It's also worth noting that the AI in K-Mod actually cheats /less/ than the standard AI; not more. (For those who don't know; the standard AI 'cheats' by sometimes knowing what is on certain plots without actually seeing them. This still sometimes happens in K-Mod, but it happens far less.)
 
 == New global warming system ==
 In standard BtS, global warming is a bit of a joke. It is triggered by the wrong things, you can't really do much to prevent it, and it hits the world in a harsh and unintuitive way. I've completely changed it.
@@ -75,4 +75,4 @@ I hope you enjoy the mod.
 
  - Karadoc
  
- (The full source-code for this mod is available at [https://github.com/karadoc/Civ4-K-Mod].)
+(The full source-code for this mod is available at [https://github.com/karadoc/Civ4-K-Mod]. You can contact me at [karadoc@gmail.com].)

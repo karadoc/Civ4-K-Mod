@@ -819,7 +819,7 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 
 	for (iI = 0; iI < MAX_TEAMS; iI++)
 	{
-		m_aiEspionageSpendingWeightAgainstTeam[iI] = 0;
+		m_aiEspionageSpendingWeightAgainstTeam[iI] = 1;
 
 		if (!bConstructorCall && getTeam() != NO_TEAM)
 		{
@@ -827,7 +827,7 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 			{
 				if (GET_PLAYER((PlayerTypes) iJ).getTeam() == iI)
 				{
-					GET_PLAYER((PlayerTypes) iJ).setEspionageSpendingWeightAgainstTeam(getTeam(), 0);
+					GET_PLAYER((PlayerTypes) iJ).setEspionageSpendingWeightAgainstTeam(getTeam(), 1);
 				}
 			}
 		}

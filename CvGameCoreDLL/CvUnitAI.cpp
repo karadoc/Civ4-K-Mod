@@ -6293,11 +6293,6 @@ void CvUnitAI::AI_barbAttackSeaMove()
 {
 	PROFILE_FUNC();
 
-	/********************************************************************************/
-	/* 	BETTER_BTS_AI_MOD						9/25/08				jdog5000	*/
-	/* 																			*/
-	/* 	Barbarian AI															*/
-	/********************************************************************************/
 	/* original BTS code
 	if (GC.getGameINLINE().getSorenRandNum(2, "AI Barb") == 0)
 	{
@@ -6322,35 +6317,27 @@ void CvUnitAI::AI_barbAttackSeaMove()
 		return;
 	}
 	*/
-	// Less suicide, always chase good targets
-	if( AI_anyAttack(2,51) )
-	{
+	// K-Mod
+	if (AI_anyAttack(1, 51)) // safe attack
 		return;
-	}
 
-	if (AI_pillageRange(1))
-	{
+	if (AI_pillageRange(1)) // near pillage
 		return;
-	}
 
-	if( AI_anyAttack(1,34) )
-	{
-		return;
-	}
-
-	// We're easy to take out if wounded
 	if (AI_heal())
-	{
 		return;
-	}
 
-	if (AI_pillageRange(3))
-	{
+	if (AI_anyAttack(1, 30)) // reckless attack
 		return;
-	}
 
-	// Barb ships will often hang out for a little while blockading before moving on
-	if( (GC.getGame().getGameTurn() + getID())%12 > 5 )
+	if (GC.getGameINLINE().getSorenRandNum(10, "AI barb attack sea pillage") < 4 && AI_pillageRange(3)) // long pillage
+		return;
+
+	if (GC.getGameINLINE().getSorenRandNum(16, "AI barb attack sea chase") < 15 && AI_anyAttack(2, 45)) // chase
+		return;
+
+	// Barb ships will often hang out for a little while blockading before moving on (BBAI)
+	if( (GC.getGame().getGameTurn() + AI_getBirthmark())%12 > 5 )
 	{
 		if( AI_pirateBlockade())
 		{
@@ -6358,6 +6345,7 @@ void CvUnitAI::AI_barbAttackSeaMove()
 		}
 	}
 
+	// (trap checking from BBAI)
 	if( GC.getGameINLINE().getSorenRandNum(3, "AI Check trapped") == 0 )
 	{
 		// If trapped in small hole in ice or around tiny island, disband to allow other units to be generated
@@ -6391,9 +6379,7 @@ void CvUnitAI::AI_barbAttackSeaMove()
 			scrap();
 		}
 	}
-	/********************************************************************************/
-	/* 	BETTER_BTS_AI_MOD						END								*/
-	/********************************************************************************/
+	// K-Mod / BBAI end
 
 	if (AI_patrol())
 	{
