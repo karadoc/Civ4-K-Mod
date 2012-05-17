@@ -805,7 +805,10 @@ def applyVolcano1(argsList):
 			szBuffer = localText.getText("TXT_KEY_EVENT_CITY_IMPROVEMENT_DESTROYED", (gc.getImprovementInfo(iImprovement).getTextKey(), ))
 			#CyInterface().addMessage(kTriggeredData.ePlayer, false, gc.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_BOMBARDED", InterfaceMessageTypes.MESSAGE_TYPE_INFO, gc.getImprovementInfo(iImprovement).getButton(), gc.getInfoTypeForString("COLOR_RED"), plot.getX(), plot.getY(), true, true)
 			# K-Mod
-			plot_owner = plot.getOwner() != PlayerTypes.NO_PLAYER and plot.getOwner() or kTriggeredData.ePlayer
+			if plot.getOwner() != PlayerTypes.NO_PLAYER:
+				plot_owner = plot.getOwner()
+			else:
+				plot_owner = kTriggeredData.ePlayer
 			if (gc.getPlayer(plot_owner).isHuman()):
 				CyInterface().addMessage(plot_owner, false, gc.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_BOMBARDED", InterfaceMessageTypes.MESSAGE_TYPE_INFO, gc.getImprovementInfo(iImprovement).getButton(), gc.getInfoTypeForString("COLOR_RED"), plot.getX(), plot.getY(), true, true)
 			# K-Mod end
@@ -838,7 +841,10 @@ def applyVolcano1(argsList):
 			break
 		plot = listPlots[gc.getGame().getSorenRandNum(len(listPlots), "Volcano event increased yield")]
 		gc.getGame().setPlotExtraYield(plot.getX(), plot.getY(), YieldTypes.YIELD_FOOD, 1)
-		plot_owner = plot.getOwner() != PlayerTypes.NO_PLAYER and plot.getOwner() or kTriggeredData.ePlayer
+		if plot.getOwner() != PlayerTypes.NO_PLAYER:
+			plot_owner = plot.getOwner()
+		else:
+			plot_owner = kTriggeredData.ePlayer
 		if (gc.getPlayer(plot_owner).isHuman()):
 			CyInterface().addMessage(plot_owner, false, gc.getEVENT_MESSAGE_TIME(), localText.getText("TXT_KEY_EVENT_VOLCANO_FERTILITY", ()), "", InterfaceMessageTypes.MESSAGE_TYPE_INFO, None, gc.getInfoTypeForString("COLOR_WHITE"), plot.getX(), plot.getY(), true, true)
 		listPlots.remove(plot)
