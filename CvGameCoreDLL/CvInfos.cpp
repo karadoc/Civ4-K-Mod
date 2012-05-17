@@ -4450,7 +4450,11 @@ void CvUnitInfo::read(FDataStreamBase* stream)
 
 	SAFE_DELETE_ARRAY(m_pbFreePromotions);
 	m_pbFreePromotions = new bool[GC.getNumPromotionInfos()];
-	stream->Read(GC.getNumPromotionInfos(), m_pbFreePromotions);
+	// K-Mod. Temporary compatibilty fix for the adding of the "disorganized" promotion
+	//stream->Read(GC.getNumPromotionInfos(), m_pbFreePromotions);
+	stream->Read(GC.getNumPromotionInfos() - (uiFlag < 1 ? 1 : 0), m_pbFreePromotions);
+	m_pbFreePromotions[GC.getNumPromotionInfos()-1] = false;
+	// K-Mod end
 
 	stream->Read(&m_iLeaderPromotion);
 	stream->Read(&m_iLeaderExperience);
@@ -4480,7 +4484,7 @@ void CvUnitInfo::write(FDataStreamBase* stream)
 {
 	CvHotkeyInfo::write(stream);
 
-	uint uiFlag=0;
+	uint uiFlag=1;
 	stream->Write(uiFlag);		// flag for expansion
 
 	stream->Write(m_iAIWeight);

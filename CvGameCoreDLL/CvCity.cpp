@@ -13573,7 +13573,10 @@ void CvCity::read(FDataStreamBase* pStream)
 	pStream->Read(GC.getNumReligionInfos(), m_paiReligionInfluence);
 	pStream->Read(GC.getNumReligionInfos(), m_paiStateReligionHappiness);
 	pStream->Read(GC.getNumUnitCombatInfos(), m_paiUnitCombatFreeExperience);
-	pStream->Read(GC.getNumPromotionInfos(), m_paiFreePromotionCount);
+	// K-Mod. Temporary compatibilty fix for the adding of the "disorganized" promotion
+	//pStream->Read(GC.getNumPromotionInfos(), m_paiFreePromotionCount);
+	pStream->Read(GC.getNumPromotionInfos() - (uiFlag < 1 ? 1 : 0), m_paiFreePromotionCount);
+	// K-Mod end
 	pStream->Read(GC.getNumBuildingInfos(), m_paiNumRealBuilding);
 	pStream->Read(GC.getNumBuildingInfos(), m_paiNumFreeBuilding);
 
@@ -13652,7 +13655,7 @@ void CvCity::write(FDataStreamBase* pStream)
 {
 	int iI;
 
-	uint uiFlag=0;
+	uint uiFlag=1;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iID);

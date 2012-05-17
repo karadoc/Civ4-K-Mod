@@ -12077,7 +12077,10 @@ void CvUnit::read(FDataStreamBase* pStream)
 	pStream->ReadString(m_szName);
 	pStream->ReadString(m_szScriptData);
 
-	pStream->Read(GC.getNumPromotionInfos(), m_pabHasPromotion);
+	// K-Mod. Temporary compatibilty fix for the adding of the "disorganized" promotion
+	//pStream->Read(GC.getNumPromotionInfos(), m_pabHasPromotion);
+	pStream->Read(GC.getNumPromotionInfos() - (uiFlag < 3 ? 1 : 0), m_pabHasPromotion);
+	// K-Mod end
 
 	pStream->Read(GC.getNumTerrainInfos(), m_paiTerrainDoubleMoveCount);
 	pStream->Read(GC.getNumFeatureInfos(), m_paiFeatureDoubleMoveCount);
@@ -12091,7 +12094,7 @@ void CvUnit::read(FDataStreamBase* pStream)
 
 void CvUnit::write(FDataStreamBase* pStream)
 {
-	uint uiFlag=2;
+	uint uiFlag=3;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iID);
