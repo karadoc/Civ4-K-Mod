@@ -12249,11 +12249,6 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 	int iSpreadInternalValue = 100;
 	int iSpreadExternalValue = 0;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 	// Obvious copy & paste bug
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
 	{
@@ -12267,9 +12262,6 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 			}
 		}
 	}			
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      10/03/09                                jdog5000      */
@@ -12416,6 +12408,7 @@ int CvPlayerAI::AI_missionaryValue(CvArea* pArea, ReligionTypes eReligion, Playe
 // -- which is bad news since the results are compared directly.
 // I've rewritten most of this function so that it is more sane and more compariable to the missionary value.
 // The original code is deleted.
+// Currently, the return value has units of roughly (and somewhat arbitrarily) 1000 * commerce per turn.
 int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, PlayerTypes* peBestPlayer, bool bSpreadOnly) const
 {
 	PROFILE_FUNC();
@@ -12526,57 +12519,10 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	return 10 * iBestValue;
 }
 
+// This function has been completely rewriten for K-Mod. The original code has been deleted. (it was junk)
 //Returns approximately 100 x gpt value of the corporation.
 int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity* pCity) const
 {
-	/* original bts code
-	if (pCity == NULL)
-	{
-		if (getCapitalCity() != NULL)
-		{
-			pCity = getCapitalCity();
-		}
-	}
-	if (NULL == pCity)
-	{
-		return 0;
-	}
-	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
-	int iBonusValue = 0;
-	
-	for (int iBonus = 0; iBonus < GC.getNumBonusInfos(); iBonus++)
-	{
-		BonusTypes eBonus = (BonusTypes)iBonus;
-		int iBonusCount = pCity->getNumBonuses(eBonus);
-		if (iBonusCount > 0)
-		{
-			for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES(); ++i)
-			{
-				if (eBonus == kCorp.getPrereqBonus(i))
-				{
-					iBonusValue += (100 * kCorp.getYieldProduced(YIELD_FOOD) * iBonusCount);
-					iBonusValue += (100 * kCorp.getYieldProduced(YIELD_PRODUCTION) * iBonusCount);
-					iBonusValue += (60 * kCorp.getYieldProduced(YIELD_COMMERCE) * iBonusCount);
-
-					iBonusValue += (60 * kCorp.getCommerceProduced(COMMERCE_GOLD) * iBonusCount);
-					iBonusValue += (60 * kCorp.getCommerceProduced(COMMERCE_RESEARCH) * iBonusCount);
-					iBonusValue += (25 * kCorp.getCommerceProduced(COMMERCE_CULTURE) * iBonusCount);
-					iBonusValue += (40 * kCorp.getCommerceProduced(COMMERCE_ESPIONAGE) * iBonusCount);
-
-					if (NO_BONUS != kCorp.getBonusProduced())
-					{
-						int iBonuses = getNumAvailableBonuses((BonusTypes)kCorp.getBonusProduced());
-						iBonusValue += (AI_baseBonusVal((BonusTypes)kCorp.getBonusProduced()) * 1000) / (1 + 3 * iBonuses * iBonuses);						
-					}
-				}
-			}
-		}
-	}
-	iBonusValue *= 3;
-		
-	return iBonusValue; */
-
-	// K-Mod. Well that was a load of bullshit... lets try to do it better.
 	const CvTeamAI& kTeam = GET_TEAM(getTeam());
 	CvCorporationInfo& kCorp = GC.getCorporationInfo(eCorporation);
 	int iValue = 0;
@@ -12675,7 +12621,6 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	}
 
 	return iValue;
-	// K-Mod end
 }
 
 int CvPlayerAI::AI_areaMissionAIs(CvArea* pArea, MissionAITypes eMissionAI, CvSelectionGroup* pSkipSelectionGroup) const

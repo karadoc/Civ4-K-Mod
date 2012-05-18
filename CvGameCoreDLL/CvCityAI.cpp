@@ -8677,25 +8677,17 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 					iRoll *= (kPlayer.getStateReligion() == eReligion) ? 170 : 65;
 					iRoll /= 100;
 				}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
 				if (kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 				{
 					iRoll += 25;
 				}
 				else if (!kTeam.hasHolyCity(eReligion) && !(kPlayer.getStateReligion() == eReligion))
 				{
 					iRoll /= 2;
-					if (kPlayer.isNoNonStateReligionSpread())
+					/* if (kPlayer.isNoNonStateReligionSpread())
 					{
 						iRoll /= 2;
-					}
+					} */ // disabled by K-mod
 				}
 
 				if (iRoll > kGame.getSorenRandNum(100, "AI choose missionary"))
@@ -8743,10 +8735,17 @@ bool CvCityAI::AI_bestSpreadUnit(bool bMissionary, bool bExecutive, int iBaseCha
 				int iHasCount = kPlayer.getHasCorporationCount(eCorporation);
 				FAssert(iHasCount > 0);
 				int iRoll = (iHasCount > 4) ? iBaseChance : (((100 - iBaseChance) / iHasCount) + iBaseChance);
+				/* original bts code
 				if (!kTeam.hasHeadquarters(eCorporation))
 				{
-					iRoll /= 3; // was 8
-				}
+					iRoll /= 8;
+				} */
+				// K-Mod
+				if (kTeam.hasHeadquarters(eCorporation))
+					iRoll += 10;
+				else
+					iRoll /= 2;
+				// K-Mod end
 				
 				if (iRoll > kGame.getSorenRandNum(100, "AI choose executive"))
 				{

@@ -8894,6 +8894,11 @@ void CvGame::changeHumanPlayer( PlayerTypes eNewHuman )
 
 bool CvGame::isCompetingCorporation(CorporationTypes eCorporation1, CorporationTypes eCorporation2) const
 {
+	// K-Mod
+	if (eCorporation1 == eCorporation2)
+		return false;
+	// K-Mod end
+
 	bool bShareResources = false;
 
 	for (int i = 0; i < GC.getNUM_CORPORATION_PREREQ_BONUSES() && !bShareResources; ++i)

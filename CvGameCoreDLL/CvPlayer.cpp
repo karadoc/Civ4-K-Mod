@@ -8596,7 +8596,7 @@ int CvPlayer::unitsGoldenAgeCapable() const
 	return iCount;
 }
 
-// Rewriten for K-Mod. (Essentially the functionality, but far more efficient. The only functionality difference is that unit class is now used rather unit type.)
+// Rewriten for K-Mod. (The only functionality difference is that unit class is now used rather unit type. But this version is far more efficient.)
 int CvPlayer::unitsGoldenAgeReady() const
 {
 	PROFILE_FUNC();
