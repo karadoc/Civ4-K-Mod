@@ -178,6 +178,8 @@ void CvTeamAI::AI_doTurnPre()
 
 void CvTeamAI::AI_doTurnPost()
 {
+	AI_updateStrengthMemory(); // K-Mod
+
 	AI_updateWorstEnemy();
 
 	AI_updateAreaStragies(false);
@@ -4062,14 +4064,22 @@ void CvTeamAI::AI_setStrengthMemory(int x, int y, int value)
 
 void CvTeamAI::AI_updateStrengthMemory()
 {
+	PROFILE_FUNC();
+
+	if (!isAlive() || isHuman() || isMinorCiv() || isBarbarian())
+		return;
+
 	FAssert(m_aiStrengthMemory.size() == GC.getMapINLINE().numPlotsINLINE());
 	for (int i = 0; i < GC.getMapINLINE().numPlotsINLINE(); i++)
 	{
+		if (m_aiStrengthMemory[i] == 0)
+			continue;
+
 		CvPlot* kLoopPlot = GC.getMapINLINE().plotByIndexINLINE(i);
 		if (kLoopPlot->isVisible(getID(), false) && !kLoopPlot->isVisibleEnemyUnit(getLeaderID()))
 			m_aiStrengthMemory[i] = 0;
 		else
-			m_aiStrengthMemory[i] = 92 * m_aiStrengthMemory[i] / 100; // reduce by 8%, rounding down. (arbitrary number)
+			m_aiStrengthMemory[i] = 96 * m_aiStrengthMemory[i] / 100; // reduce by 4%, rounding down. (arbitrary number)
 	}
 }
 // K-Mod end

@@ -199,7 +199,6 @@ public:
 	virtual void write(FDataStreamBase* pStream);
 
 	// K-Mod. Strength Memory - a very basic and rough reminder-map of how strong the enemy presence is on each plot.
-	// Currently it is only used and set during pathfinding, with the MOVE_ATTACK_STACK flag.
 public:
 	int AI_getStrengthMemory(int x, int y) const;
 	inline int AI_getStrengthMemory(const CvPlot* pPlot) { return AI_getStrengthMemory(pPlot->getX_INLINE(), pPlot->getY_INLINE()); }
