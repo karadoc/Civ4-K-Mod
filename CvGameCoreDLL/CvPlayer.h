@@ -752,8 +752,12 @@ public:
 	void changeFreeCityCommerce(CommerceTypes eIndex, int iChange);
 
 	int getCommercePercent(CommerceTypes eIndex) const;																								// Exposed to Python
-	void setCommercePercent(CommerceTypes eIndex, int iNewValue);																// Exposed to Python
-	DllExport void changeCommercePercent(CommerceTypes eIndex, int iChange);										// Exposed to Python
+	/* void setCommercePercent(CommerceTypes eIndex, int iNewValue); // Exposed to Python
+	DllExport void changeCommercePercent(CommerceTypes eIndex, int iChange); */ // Exposed to Python
+	// K-Mod. these functions now return false if the value is not changed.
+	bool setCommercePercent(CommerceTypes eIndex, int iNewValue, bool bForce = false); // Exposed to Python
+	bool changeCommercePercent(CommerceTypes eIndex, int iChange); // Exposed to Python
+	// K-Mod end
 
 	int getCommerceRate(CommerceTypes eIndex) const;																									// Exposed to Python
 	void changeCommerceRate(CommerceTypes eIndex, int iChange);

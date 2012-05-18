@@ -1294,7 +1294,8 @@ class CvMainInterface:
 
 		pHeadSelectedCity = CyInterface().getHeadSelectedCity()
 
-		if ( not CyInterface().isCityScreenUp() or ( pHeadSelectedCity.getOwner() == gc.getGame().getActivePlayer() ) or gc.getGame().isDebugMode() ):
+		#if ( not CyInterface().isCityScreenUp() or ( pHeadSelectedCity.getOwner() == gc.getGame().getActivePlayer() ) or gc.getGame().isDebugMode() ):
+		if (not CyInterface().isCityScreenUp() or pHeadSelectedCity.getOwner() == gc.getGame().getActivePlayer()): # K-Mod. (debug mode still doesn't allow us to use the buttons.)
 			iCount = 0
 
 			if ( CyInterface().getShowInterface() != InterfaceVisibility.INTERFACE_HIDE_ALL and CyInterface().getShowInterface() != InterfaceVisibility.INTERFACE_MINIMAP_ONLY and CyInterface().getShowInterface() != InterfaceVisibility.INTERFACE_ADVANCED_START):

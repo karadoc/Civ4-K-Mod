@@ -223,7 +223,7 @@ void CvPlayer::init(PlayerTypes eID)
 
 		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
-			setCommercePercent(((CommerceTypes)iI), GC.getCommerceInfo((CommerceTypes)iI).getInitialPercent());
+			setCommercePercent((CommerceTypes)iI, GC.getCommerceInfo((CommerceTypes)iI).getInitialPercent(), true);
 		}
 
 		FAssertMsg((GC.getNumTraitInfos() > 0), "GC.getNumTraitInfos() is less than or equal to zero but is expected to be larger than zero in CvPlayer::init");
@@ -433,7 +433,7 @@ void CvPlayer::initInGame(PlayerTypes eID)
 
 		for (iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 		{
-			setCommercePercent(((CommerceTypes)iI), GC.getCommerceInfo((CommerceTypes)iI).getInitialPercent());
+			setCommercePercent((CommerceTypes)iI, GC.getCommerceInfo((CommerceTypes)iI).getInitialPercent(), true);
 		}
 
 		FAssertMsg((GC.getNumTraitInfos() > 0), "GC.getNumTraitInfos() is less than or equal to zero but is expected to be larger than zero in CvPlayer::init");
@@ -3385,7 +3385,7 @@ void CvPlayer::doTurn()
 
 	if (0 == GET_TEAM(getTeam()).getHasMetCivCount(true) || GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
 	{
-		setCommercePercent(COMMERCE_ESPIONAGE, 0);
+		setCommercePercent(COMMERCE_ESPIONAGE, 0); // (note: not forced)
 	}
 
 	verifyGoldCommercePercent();
@@ -7592,7 +7592,7 @@ int CvPlayer::calculateGoldRate() const
 	iNetGold = (getCommerceRate(COMMERCE_GOLD) + getGoldPerTurn());
 
 	iNetGold -= calculateInflatedCosts();
-	
+
 	return iNetGold;
 	// K-Mod end
 }
@@ -7863,7 +7863,8 @@ int CvPlayer::getResearchTurnsLeftTimes100(TechTypes eTech, bool bOverflow) cons
 			{
 				if ((iI == getID()) || (GET_PLAYER((PlayerTypes)iI).getCurrentResearch() == eTech))
 				{
-					iResearchRate += GET_PLAYER((PlayerTypes)iI).calculateResearchRate(eTech);
+					//iResearchRate += GET_PLAYER((PlayerTypes)iI).calculateResearchRate(eTech);
+					iResearchRate += std::max(1, GET_PLAYER((PlayerTypes)iI).calculateResearchRate(eTech)); // K-Mod (replacing the minimum which use to be in calculateResearchRate)
 					iOverflow += (GET_PLAYER((PlayerTypes)iI).getOverflowResearch() * calculateResearchModifier(eTech)) / 100;
 				}
 			}
@@ -11959,73 +11960,93 @@ int CvPlayer::getCommercePercent(CommerceTypes eIndex) const
 	return m_aiCommercePercent[eIndex];
 }
 
-
-void CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue)
+// K-Mod. This function has been rewritten to enforce the rules of flexible / inflexible commerce types.
+// (not all changes marked)
+bool CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue, bool bForce)
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < NUM_COMMERCE_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
 
-	int iOldValue = getCommercePercent(eIndex);
-
-	m_aiCommercePercent[eIndex] = range(iNewValue, 0, 100);
-
-	if (iOldValue != getCommercePercent(eIndex))
+	if (!bForce && !isCommerceFlexible(eIndex))
 	{
-		int iTotalCommercePercent = 0;
+		FAssertMsg(false, "setCommercePercent called without permission.");
+		return false; // can't change percent
+	}
 
-		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+	int iOldValue = getCommercePercent(eIndex);
+	iNewValue = range(iNewValue, 0, 100);
+
+	if (iOldValue == iNewValue)
+		return false;
+
+	m_aiCommercePercent[eIndex] = iNewValue;
+
+	int iTotalCommercePercent = 0;
+
+	for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
+	{
+		iTotalCommercePercent += getCommercePercent(i);
+	}
+
+	for (CommerceTypes i = (CommerceTypes)0; iTotalCommercePercent != 100 && i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
+	{
+		if (i != eIndex && isCommerceFlexible(i))
 		{
-			iTotalCommercePercent += getCommercePercent((CommerceTypes)iI);
+			FAssert(bForce || isCommerceFlexible(i));
+			int iAdjustment = std::min(m_aiCommercePercent[i], iTotalCommercePercent - 100);
+			m_aiCommercePercent[i] -= iAdjustment;
+			iTotalCommercePercent -= iAdjustment;
 		}
-
-		for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
+	}
+	// if we couldn't balance the books, we need to do a second pass, with fewer restrictions
+	if (iTotalCommercePercent != 100)
+	{
+		for (CommerceTypes i = (CommerceTypes)0; iTotalCommercePercent != 100 && i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 		{
-			if (iI != eIndex)
+			if (bForce ? i != eIndex : isCommerceFlexible(i))
 			{
-				if (100 != iTotalCommercePercent)
-				{
-					int iAdjustment = std::min(m_aiCommercePercent[iI], iTotalCommercePercent - 100);
-					m_aiCommercePercent[iI] -= iAdjustment;
-					iTotalCommercePercent -= iAdjustment;
-				}
-				else
-				{
-					break;
-				}
+				FAssert(bForce || isCommerceFlexible(i));
+				int iAdjustment = std::min(m_aiCommercePercent[i], iTotalCommercePercent - 100);
+				m_aiCommercePercent[i] -= iAdjustment;
+				iTotalCommercePercent -= iAdjustment;
 			}
 		}
-
-		FAssert(100 == iTotalCommercePercent);
-
-		updateCommerce();
-
-		AI_makeAssignWorkDirty();
-
-		/* original bts code
-		if (getTeam() == GC.getGameINLINE().getActiveTeam())
-		{
-			gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true);
-			gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
-			gDLL->getInterfaceIFace()->setDirty(CityScreen_DIRTY_BIT, true);
-			gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
-		} */
-		// K-Mod
-		if (getTeam() == GC.getGameINLINE().getActiveTeam())
-			gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true); // research turns left?
-
-		if (getID() == GC.getGameINLINE().getActivePlayer())
-		{
-			gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true);
-			gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
-		}
-		// K-Mod end
 	}
+	FAssert(100 == iTotalCommercePercent);
+
+	if (iOldValue == getCommercePercent(eIndex))
+		return false;
+
+	updateCommerce();
+
+	AI_makeAssignWorkDirty();
+
+	/* original bts code
+	if (getTeam() == GC.getGameINLINE().getActiveTeam())
+	{
+		gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true);
+		gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
+		gDLL->getInterfaceIFace()->setDirty(CityScreen_DIRTY_BIT, true);
+		gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
+	} */
+	// K-Mod
+	if (getTeam() == GC.getGameINLINE().getActiveTeam())
+		gDLL->getInterfaceIFace()->setDirty(GameData_DIRTY_BIT, true); // research turns left?
+
+	if (getID() == GC.getGameINLINE().getActivePlayer())
+	{
+		gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true);
+		gDLL->getInterfaceIFace()->setDirty(Financial_Screen_DIRTY_BIT, true);
+	}
+	// K-Mod end
+
+	return true;
 }
 
 
-void CvPlayer::changeCommercePercent(CommerceTypes eIndex, int iChange)								
+bool CvPlayer::changeCommercePercent(CommerceTypes eIndex, int iChange)
 {
-	setCommercePercent(eIndex, (getCommercePercent(eIndex) + iChange));
+	return setCommercePercent(eIndex, (getCommercePercent(eIndex) + iChange));
 }
 
 
@@ -12213,7 +12234,8 @@ void CvPlayer::changeCommerceFlexibleCount(CommerceTypes eIndex, int iChange)
 
 		if (!isCommerceFlexible(eIndex))
 		{
-			setCommercePercent(eIndex, 0);
+			//setCommercePercent(eIndex, 0);
+			setCommercePercent(eIndex, GC.getCommerceInfo(eIndex).getInitialPercent(), true); // K-Mod
 		}
 
 		if (getID() == GC.getGameINLINE().getActivePlayer())
@@ -14229,7 +14251,8 @@ void CvPlayer::doResearch()
 		{
 			iOverflowResearch = (getOverflowResearch() * calculateResearchModifier(eCurrentTech)) / 100;
 			setOverflowResearch(0);
-			GET_TEAM(getTeam()).changeResearchProgress(eCurrentTech, (calculateResearchRate() + iOverflowResearch), getID());
+			//GET_TEAM(getTeam()).changeResearchProgress(eCurrentTech, (calculateResearchRate() + iOverflowResearch), getID());
+			GET_TEAM(getTeam()).changeResearchProgress(eCurrentTech, std::max(1, calculateResearchRate()) + iOverflowResearch, getID()); // K-Mod (replacing the minimum which use to be in calculateResearchRate)
 		}
 
 		if (bForceResearchChoice)
@@ -17058,6 +17081,7 @@ void CvPlayer::doWarnings()
 
 void CvPlayer::verifyGoldCommercePercent()
 {
+	/* original bts code
 	while ((getGold() + calculateGoldRate()) < 0)
 	{
 		changeCommercePercent(COMMERCE_GOLD, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
@@ -17066,7 +17090,14 @@ void CvPlayer::verifyGoldCommercePercent()
 		{
 			break;
 		}
+	} */
+	// K-Mod
+	bool bValid = isCommerceFlexible(COMMERCE_GOLD);
+	while (bValid && getCommercePercent(COMMERCE_GOLD) < 100 && getGold() + calculateGoldRate() < 0)
+	{
+		bValid = changeCommercePercent(COMMERCE_GOLD, GC.getDefineINT("COMMERCE_PERCENT_CHANGE_INCREMENTS"));
 	}
+	// K-Mod end
 }
 
 

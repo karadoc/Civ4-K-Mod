@@ -15532,15 +15532,15 @@ void CvPlayerAI::AI_doCommerce()
 		}
 	}
 
-	// if (isCommerceFlexible(COMMERCE_GOLD))
-	// Gold is special. The default xml has gold marked as not flexible, but it is effectly adjusted by changing the other commerce percentages.
-	// So I'm just going to allow the AI to behave as if gold actually is flexible.
+	// Note, in the original code has gold marked as inflexible, but was effectly adjusted by changing the other commerce percentages. This is no longer the case.
+	if (isCommerceFlexible(COMMERCE_GOLD))
 	{
 		// note: as we increase the gold rate, research will be reduced before culture.
 		// (The order defined in CommerceTypes is the order that the types will be decreased to accomdate changes.)
-		while (getCommercePercent(COMMERCE_GOLD) < 100 && getGold() + iTargetTurns * calculateGoldRate() <= iGoldTarget)
+		bool bValid = true;
+		while (bValid && getCommercePercent(COMMERCE_GOLD) < 100 && getGold() + iTargetTurns * calculateGoldRate() <= iGoldTarget)
 		{
-			changeCommercePercent(COMMERCE_GOLD, iCommerceIncrement);
+			bValid = changeCommercePercent(COMMERCE_GOLD, iCommerceIncrement);
 		}
 	}
 
@@ -15821,10 +15821,11 @@ void CvPlayerAI::AI_doCommerce()
 			FAssert(iCap <= 100);
 			iCap = std::min(iCap, 100); // just in case.
 
-			while (getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
+			bool bValid = true;
+			while (bValid && getCommerceRate(COMMERCE_ESPIONAGE) < iEspionageTargetRate && getCommercePercent(COMMERCE_ESPIONAGE) < iCap)
 			{
-				changeCommercePercent(COMMERCE_RESEARCH, -iCommerceIncrement);			
-				changeCommercePercent(COMMERCE_ESPIONAGE, iCommerceIncrement);
+				changeCommercePercent(COMMERCE_RESEARCH, -iCommerceIncrement);
+				bValid = changeCommercePercent(COMMERCE_ESPIONAGE, iCommerceIncrement);
 
 				if (getGold() + iTargetTurns * calculateGoldRate() < iGoldTarget)
 				{
@@ -15842,7 +15843,7 @@ void CvPlayerAI::AI_doCommerce()
 		}
 	}
 	// K-Mod. prevent the AI from stockpiling excessive amounts of gold while in avoidScience.
-	if (AI_avoidScience())
+	if (AI_avoidScience() && isCommerceFlexible(COMMERCE_GOLD))
 	{
 		while (getCommercePercent(COMMERCE_GOLD) > 0 && getGold() + std::min(0, calculateGoldRate()) > iGoldTarget)
 		{
@@ -15858,7 +15859,8 @@ void CvPlayerAI::AI_doCommerce()
 	}
 	// K-Mod end
 	
-	if (!bFirstTech && (getGold() < iGoldTarget) && getCommercePercent(COMMERCE_RESEARCH) > 40)
+	//if (!bFirstTech && (getGold() < iGoldTarget) && getCommercePercent(COMMERCE_RESEARCH) > 40)
+	if (!bFirstTech && isCommerceFlexible(COMMERCE_GOLD) && (getGold() < iGoldTarget) && getCommercePercent(COMMERCE_GOLD) < 50) // K-Mod
 	{
 		bool bHurryGold = false;
 		for (int iHurry = 0; iHurry < GC.getNumHurryInfos(); iHurry++)
