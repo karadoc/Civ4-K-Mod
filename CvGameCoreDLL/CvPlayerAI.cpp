@@ -4725,7 +4725,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 		if (!AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
 		{
 			int iStockPile = 3*std::min(8, getNumCities()) + std::min(120, getTotalPopulation())/3;
-			iGold += 100*GC.getGameINLINE().getElapsedGameTurns() / (2*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent());
+			iStockPile += 100*GC.getGameINLINE().getElapsedGameTurns() / (2*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent());
 			if (AI_getFlavorValue(FLAVOR_GOLD) > 0)
 			{
 				iStockPile *= 10 + AI_getFlavorValue(FLAVOR_GOLD);
@@ -15175,27 +15175,27 @@ int CvPlayerAI::AI_calculateGoldenAgeValue(bool bConsiderRevolution) const
 	// Note: this first "if" isn't necessary. It just saves us checking civics when we don't need to.
 	if (bConsiderRevolution && getMaxAnarchyTurns() != 0 && !isGoldenAge() && getAnarchyModifier() + 100 > 0)
 	{
-		CivicTypes* paeBestCivic = new CivicTypes[GC.getNumCivicOptionInfos()];
+		std::vector<CivicTypes> aeBestCivics(GC.getNumCivicOptionInfos());
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 		{
-			paeBestCivic[iI] = getCivics((CivicOptionTypes)iI);
+			aeBestCivics[iI] = getCivics((CivicOptionTypes)iI);
 		}
 
 		for (int iI = 0; iI < GC.getNumCivicOptionInfos(); iI++)
 		{
-			int iCurrentValue = AI_civicValue(paeBestCivic[iI]);
+			int iCurrentValue = AI_civicValue(aeBestCivics[iI]);
 			int iBestValue;
 			CivicTypes eNewCivic = AI_bestCivic((CivicOptionTypes)iI, &iBestValue);
 			
 			// using a 10 percent thresold. (cf the higher threshold used in AI_doCivics)
-			if (paeBestCivic[iI] != NO_CIVIC && 100*iBestValue > 110*iCurrentValue)
+			if (aeBestCivics[iI] != NO_CIVIC && 100*iBestValue > 110*iCurrentValue)
 			{
-				paeBestCivic[iI] = eNewCivic;
+				aeBestCivics[iI] = eNewCivic;
 				if (gPlayerLogLevel > 0) logBBAI("      %S wants a golden age to switch to %S (value: %d vs %d)", getCivilizationDescription(0), GC.getCivicInfo(eNewCivic).getDescription(0), iBestValue, iCurrentValue);
 			}
 		}
 
-		int iAnarchyLength = getCivicAnarchyLength(paeBestCivic);
+		int iAnarchyLength = getCivicAnarchyLength(&aeBestCivics[0]);
 		if (iAnarchyLength > 0)
 		{
 			// we would switch; so what is the negation of anarchy worth?
@@ -15210,7 +15210,6 @@ int CvPlayerAI::AI_calculateGoldenAgeValue(bool bConsiderRevolution) const
 			iValue += getTotalPopulation() * iAnarchyLength;
 			// On the other hand, I'm ignoring the negation of maintenance cost.
 		}
-		SAFE_DELETE_ARRAY(paeBestCivic);
 	}
 	// K-Mod end
 
@@ -15531,7 +15530,7 @@ void CvPlayerAI::AI_doCommerce()
 		// note: as we increase the gold rate, research will be reduced before culture.
 		// (The order defined in CommerceTypes is the order that the types will be decreased to accomdate changes.)
 		bool bValid = true;
-		while (bValid && getCommercePercent(COMMERCE_GOLD) < 100 && getGold() + iTargetTurns * calculateGoldRate() <= iGoldTarget)
+		while (bValid && getCommercePercent(COMMERCE_GOLD) < 100 && getGold() + iTargetTurns * calculateGoldRate() < iGoldTarget)
 		{
 			bValid = changeCommercePercent(COMMERCE_GOLD, iCommerceIncrement);
 		}
@@ -15541,8 +15540,8 @@ void CvPlayerAI::AI_doCommerce()
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && kTeam.getHasMetCivCount(true) > 0 && (isCommerceFlexible(COMMERCE_ESPIONAGE) || getCommerceRate(COMMERCE_ESPIONAGE) > 0))
 	{
 		int iEspionageTargetRate = 0;
-		int* aiTarget = new int[MAX_CIV_TEAMS];
-		int* aiWeight = new int[MAX_CIV_TEAMS];
+		std::vector<int> aiTarget(MAX_CIV_TEAMS, 0);
+		std::vector<int> aiWeight(MAX_CIV_TEAMS, 0);
 		int iHighestTarget = 0;
 		int iMinModifier = INT_MAX;
 		int iApproxTechCost = 0;
@@ -15570,12 +15569,6 @@ void CvPlayerAI::AI_doCommerce()
 
 			if (kMissionInfo.getCityRevoltCounter() > 0)
 				eCityRevoltMission = (EspionageMissionTypes)iMission;
-		}
-
-		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
-		{
-			aiTarget[iTeam] = 0;
-			aiWeight[iTeam] = 0;
 		}
 
 		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
@@ -15785,8 +15778,6 @@ void CvPlayerAI::AI_doCommerce()
 			if (aiWeight[iTeam] <= 0 && aiTarget[iTeam] > 0)
 				iEspionageTargetRate -= aiTarget[iTeam];
 		}
-		SAFE_DELETE_ARRAY(aiTarget);
-		SAFE_DELETE_ARRAY(aiWeight);
 		// K-Mod end
 
 		//if economy is weak, neglect espionage spending.
