@@ -1275,6 +1275,26 @@ class CvMainInterface:
 
 		return 0
 
+	# K-Mod. There are some special rules for which buttons should be shown and when. I'd rather have all those rules in one place. ie. here.
+	def showCommercePercent(self, eCommerce, ePlayer):
+		player = gc.getPlayer(ePlayer)
+		if not player.isFoundedFirstCity():
+			return False
+
+		if eCommerce == CommerceTypes.COMMERCE_GOLD and not CyInterface().isCityScreenUp():
+			return False
+
+		if player.getCommercePercent(eCommerce) > 0:
+			return True
+
+		if eCommerce == CommerceTypes.COMMERCE_ESPIONAGE and gc.getTeam(player.getTeam()).getHasMetCivCount(True) == 0:
+			return False
+
+		if player.isCommerceFlexible(eCommerce):
+			return True
+		return False
+	# K-Mod end
+
 	# Will update the percent buttons
 	def updatePercentButtons( self ):
 
@@ -1304,8 +1324,8 @@ class CvMainInterface:
 					eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
 										
 					#if (gc.getActivePlayer().isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
-					# K-Mod. In K-Mod, gold is flexible - but we still don't want to show it outside of the city screen. (Unless there's a BUG option or something.)
-					if (eCommerce != CommerceTypes.COMMERCE_GOLD and gc.getActivePlayer().isCommerceFlexible(eCommerce)) or (eCommerce == CommerceTypes.COMMERCE_GOLD and CyInterface().isCityScreenUp()):
+					# K-Mod
+					if self.showCommercePercent(eCommerce, gc.getGame().getActivePlayer()):
 					# K-Mod end
 # BUG - Min/Max Sliders - start
 						bEnable = gc.getActivePlayer().isCommerceFlexible(eCommerce)
@@ -3013,8 +3033,8 @@ class CvMainInterface:
 				for iI in range( CommerceTypes.NUM_COMMERCE_TYPES ):
 					eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
 					#if (gc.getPlayer(ePlayer).isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
-					# K-Mod. In K-Mod, gold is flexible - but we still don't want to show it outside of the city screen
-					if (eCommerce != CommerceTypes.COMMERCE_GOLD and gc.getPlayer(ePlayer).isCommerceFlexible(eCommerce)) or (eCommerce == CommerceTypes.COMMERCE_GOLD and CyInterface().isCityScreenUp()):
+					# K-Mod
+					if self.showCommercePercent(eCommerce, ePlayer):
 					# K-Mod end
 						szOutText = u"<font=2>%c:%d%%</font>" %(gc.getCommerceInfo(eCommerce).getChar(), gc.getPlayer(ePlayer).getCommercePercent(eCommerce))
 						szString = "PercentText" + str(iI)

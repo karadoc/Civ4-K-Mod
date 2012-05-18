@@ -3383,7 +3383,8 @@ void CvPlayer::doTurn()
 
 	AI_assignWorkingPlots();
 
-	if (0 == GET_TEAM(getTeam()).getHasMetCivCount(true) || GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+	//if (0 == GET_TEAM(getTeam()).getHasMetCivCount(true) || GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))
+	if (isCommerceFlexible(COMMERCE_ESPIONAGE) && (GET_TEAM(getTeam()).getHasMetCivCount(true) == 0 || GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE))) // K-Mod
 	{
 		setCommercePercent(COMMERCE_ESPIONAGE, 0); // (note: not forced)
 	}
@@ -12205,7 +12206,7 @@ bool CvPlayer::isCommerceFlexible(CommerceTypes eIndex) const
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < NUM_COMMERCE_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
 
-	if (!isFoundedFirstCity())
+	/* if (!isFoundedFirstCity())
 	{
 		return false;
 	}
@@ -12216,7 +12217,7 @@ bool CvPlayer::isCommerceFlexible(CommerceTypes eIndex) const
 		{
 			return false;
 		}
-	}
+	} */ // Disabled by K-Mod. (I don't want to enforce these conditions in such a fundamental way.)
 
 	return (GC.getCommerceInfo(eIndex).isFlexiblePercent() || (getCommerceFlexibleCount(eIndex) > 0) || GET_TEAM(getTeam()).isCommerceFlexible(eIndex));
 }
