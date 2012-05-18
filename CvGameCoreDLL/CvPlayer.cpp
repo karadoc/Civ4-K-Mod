@@ -8596,41 +8596,23 @@ int CvPlayer::unitsGoldenAgeCapable() const
 	return iCount;
 }
 
-
+// Rewriten for K-Mod. (Essentially the functionality, but far more efficient. The only functionality difference is that unit class is now used rather unit type.)
 int CvPlayer::unitsGoldenAgeReady() const
 {
 	PROFILE_FUNC();
 
-	CvUnit* pLoopUnit;
-	bool* pabUnitUsed;
-	int iCount;
+	std::set<UnitClassTypes> golden_age_units;
+
 	int iLoop;
-	int iI;
-
-	pabUnitUsed = new bool[GC.getNumUnitInfos()];
-
-	for (iI = 0; iI < GC.getNumUnitInfos(); iI++)
+	for (CvUnit* pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
 	{
-		pabUnitUsed[iI] = false;
-	}
-
-	iCount = 0;
-
-	for(pLoopUnit = firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoop))
-	{
-		if (!(pabUnitUsed[pLoopUnit->getUnitType()]))
+		if (pLoopUnit->isGoldenAge() && golden_age_units.count(pLoopUnit->getUnitClassType()) == 0)
 		{
-			if (pLoopUnit->isGoldenAge())
-			{
-				pabUnitUsed[pLoopUnit->getUnitType()] = true;
-				iCount++;
-			}
+			golden_age_units.insert(pLoopUnit->getUnitClassType());
 		}
 	}
 
-	SAFE_DELETE_ARRAY(pabUnitUsed);
-
-	return iCount;
+	return golden_age_units.size();
 }
 
 
