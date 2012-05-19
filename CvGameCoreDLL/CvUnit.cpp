@@ -1189,6 +1189,7 @@ void CvUnit::resolveCombat(CvUnit* pDefender, CvPlot* pPlot, bool bVisible)
 					flankingStrikeCombat(pPlot, iAttackerStrength, iAttackerFirepower, iAttackerKillOdds, iDefenderDamage, pDefender);
 
 					changeExperience(GC.getDefineINT("EXPERIENCE_FROM_WITHDRAWL"), pDefender->maxXPValue(), true, pPlot->getOwnerINLINE() == getOwnerINLINE(), !pDefender->isBarbarian());
+					combat_log.push_back(0); // K-Mod
 					break;
 				}
 
@@ -12711,7 +12712,7 @@ bool CvUnit::rangeStrike(int iX, int iY)
 //------------------------------------------------------------------------------------------------
 
 // Rewriten for K-Mod!
-int CvUnit::planBattle(CvBattleDefinition& kBattle, const std::vector<int>& combat_log) const
+int CvUnit::planBattle(CvBattleDefinition& kBattle, const std::vector<int>& combat_log_argument) const
 {
 	const int BATTLE_TURNS_SETUP = 4;
 	const int BATTLE_TURNS_ENDING = 4;
@@ -12729,6 +12730,12 @@ int CvUnit::planBattle(CvBattleDefinition& kBattle, const std::vector<int>& comb
 	int iDefenderUnits = pDefenceUnit->getSubUnitsAlive(iDefenderDamage);
 	int iAttackerUnitsKilled = 0;
 	int iDefenderUnitsKilled = 0;
+
+	// some hackery to ensure that we don't have to deal with an empty combat log...
+	const std::vector<int> dummy_log(1, 0);
+	const std::vector<int>& combat_log = combat_log_argument.size() == 0 ? dummy_log : combat_log_argument;
+	FAssert(combat_log.size() > 0);
+	// now we can just use 'combat_log' without having to worry about it being empty.
 
 	//
 	kBattle.setNumRangedRounds(0);
@@ -12830,6 +12837,7 @@ int CvUnit::planBattle(CvBattleDefinition& kBattle, const std::vector<int>& comb
 	FAssert(iAttackerDamage == kBattle.getDamage(BATTLE_UNIT_ATTACKER, BATTLE_TIME_END));
 	FAssert(iDefenderDamage == kBattle.getDamage(BATTLE_UNIT_DEFENDER, BATTLE_TIME_END));
 
+	FAssert(kBattle.getNumBattleRounds() >= 2);
 	FAssert(verifyRoundsValid(kBattle));
 
 	int extraTime = 0;

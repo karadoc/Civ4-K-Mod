@@ -3326,7 +3326,8 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	CvPlot* pDestPlot = GC.getMapINLINE().plotINLINE(iX, iY);
 	FAssertMsg(pDestPlot != NULL, "DestPlot is not assigned a valid value");
 
-	FAssertMsg(canAllMove(), "canAllMove is expected to be true");
+	//FAssertMsg(canAllMove(), "canAllMove is expected to be true");
+	FAssert(getDomainType() == DOMAIN_AIR ? canAnyMove() : canAllMove()); // K-Mod
 
 	CvPlot* pPathPlot;
 
@@ -3744,7 +3745,10 @@ bool CvSelectionGroup::canDoMission(int iMission, int iData1, int iData2, CvPlot
 				if (!bCheckMoves)
 					return true;
 
-				bValid = true;
+				if (pLoopUnit->getDomainType() != DOMAIN_AIR)
+					bValid = true; // need to check 'canMove' for all units.
+				else if (pLoopUnit->canMove())
+					return true; // air units don't have to move as a group
 			}
 
 			if (!pLoopUnit->canMove())
@@ -3968,7 +3972,7 @@ bool CvSelectionGroup::canDoMission(int iMission, int iData1, int iData2, CvPlot
 
 		case MISSION_BEGIN_COMBAT:
 		case MISSION_END_COMBAT:
-		case MISSION_AIRSTRIKE:
+		case MISSION_AIRSTRIKE: // note: airstrike missions are actually done using MISSION_MOVE_TO. This mission is apparently only used for graphics.
 		case MISSION_SURRENDER:
 		case MISSION_IDLE:
 		case MISSION_DIE:
