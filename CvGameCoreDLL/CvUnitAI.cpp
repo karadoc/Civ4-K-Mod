@@ -4720,6 +4720,28 @@ void CvUnitAI::AI_missionaryMove()
 {
 	PROFILE_FUNC();
 
+	// K-Mod. Split up groups of automated missionaries - automate them individually.
+	if (getGroup()->getNumUnits() > 1)
+	{
+		AutomateTypes eAutomate = getGroup()->getAutomateType();
+		FAssert(isHuman() && eAutomate != NO_AUTOMATE);
+
+		CLLNode<IDInfo>* pEntityNode = getGroup()->headUnitNode();
+		while (pEntityNode)
+		{
+			CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
+			pEntityNode = getGroup()->nextUnitNode(pEntityNode);
+
+			if (pLoopUnit->canAutomate(eAutomate))
+			{
+				pLoopUnit->joinGroup(0, true);
+				pLoopUnit->automate(eAutomate);
+			}
+		}
+		return;
+	}
+	// K-Mod end
+
 	if (AI_spreadReligion())
 	{
 		return;

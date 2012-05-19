@@ -236,7 +236,7 @@ DllExport CvUnit* getUnit(IDInfo unit);	// Exposed to Python
 
 inline bool isCycleGroup(const CvSelectionGroup* pGroup) { return pGroup->getNumUnits() > 0 && !pGroup->isWaiting() && !pGroup->isAutomated(); } // K-Mod
 bool isBeforeUnitCycle(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit);
-bool isBeforeUnitOnPlot(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit); // K-Mod
+bool isBeforeGroupOnPlot(const CvSelectionGroup* pFirstGroup, const CvSelectionGroup* pSecondGroup); // K-Mod
 int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGroup* pSecondGroup); // K-Mod
 bool isPromotionValid(PromotionTypes ePromotion, UnitTypes eUnit, bool bLeader);	// Exposed to Python
 

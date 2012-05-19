@@ -232,28 +232,36 @@ bool isBeforeUnitCycle(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit)
 }
 
 // K-Mod
-bool isBeforeUnitOnPlot(const CvUnit* pFirstUnit, const CvUnit* pSecondUnit)
+// return true if the first unit in the first group comes before the first unit in the second group.
+// (note: the purpose of this function is to return _false_ when the groupCycleDistance should include a pentalty.)
+bool isBeforeGroupOnPlot(const CvSelectionGroup* pFirstGroup, const CvSelectionGroup* pSecondGroup)
 {
-	FAssert(pFirstUnit && pSecondUnit);
-	FAssert(pFirstUnit != pSecondUnit);
-	FAssert(pFirstUnit->plot() == pSecondUnit->plot());
+	FAssert(pFirstGroup && pSecondGroup);
+	FAssert(pFirstGroup != pSecondGroup);
+	FAssert(pFirstGroup->plot() == pSecondGroup->plot());
 
-	CvPlot* pPlot = pFirstUnit->plot();
+	CvPlot* pPlot = pFirstGroup->plot();
+	//int iGroup2Units = pSecondGroup->getNumUnits();
 
 	CLLNode<IDInfo>* pUnitNode = pPlot->headUnitNode();
-	while (pUnitNode)
+	while (pUnitNode)// && iGroup2Units > 0)
 	{
-		if (pFirstUnit->getIDInfo() == pUnitNode->m_data)
+		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+
+		if (pLoopUnit->getGroup() == pFirstGroup)
 			return true;
-		if (pSecondUnit->getIDInfo() == pUnitNode->m_data)
+		if (pLoopUnit->getGroup() == pSecondGroup)
 			return false;
+			//iGroup2Units--;
+
 		pUnitNode = pPlot->nextUnitNode(pUnitNode);
 	}
 
-	FAssertMsg(false, "neither unit found on plot in isBeforeUnitOnPlot");
+	FAssert(false);
 	return false;
 }
 
+// return the 'cost' of cycling from pFirstGroup to pSecondGroup. (eg. a big jump to a differnet type of unit, then it should be a high cost.)
 int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGroup* pSecondGroup)
 {
 	FAssert(pFirstGroup && pSecondGroup && pFirstGroup != pSecondGroup);
@@ -288,7 +296,7 @@ int groupCycleDistance(const CvSelectionGroup* pFirstGroup, const CvSelectionGro
 
 	// For human players, use the unit order that the plot actually has, not the order it _should_ have.
 	// For AI players, use the preferred ordering, because it's slightly faster.
-	if (iDistance == 0 && !(pFirstHead->isHuman() ? isBeforeUnitOnPlot(pFirstHead, pSecondHead) : isBeforeUnitCycle(pFirstHead, pSecondHead)))
+	if (iDistance == 0 && !(pFirstHead->isHuman() ? isBeforeGroupOnPlot(pFirstGroup, pSecondGroup) : isBeforeUnitCycle(pFirstHead, pSecondHead)))
 		iPenalty += iPenalty > 0 ? 1 : 5;
 
 	return iDistance + iPenalty;

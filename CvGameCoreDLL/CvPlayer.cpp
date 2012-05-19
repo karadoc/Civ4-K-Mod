@@ -13232,7 +13232,7 @@ void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 		else if (isCycleGroup(pNextGroup) && pNextGroup->canAllMove())
 		{
 			//int iCost = groupCycleDistance(pPreviousGroup, pGroup) + groupCycleDistance(pGroup, pNextGroup) - groupCycleDistance(pPreviousGroup, pNextGroup);
-			int iCost = groupCycleDistance(pGroup, pNextGroup) + (pPreviousGroup ? groupCycleDistance(pPreviousGroup, pGroup) - groupCycleDistance(pPreviousGroup, pNextGroup) : 1);
+			int iCost = groupCycleDistance(pGroup, pNextGroup) + (pPreviousGroup ? groupCycleDistance(pPreviousGroup, pGroup) - groupCycleDistance(pPreviousGroup, pNextGroup) : 3);
 			if (iCost < iBestCost)
 			{
 				iBestCost = iCost;
@@ -13249,7 +13249,7 @@ void CvPlayer::updateGroupCycle(CvSelectionGroup* pGroup)
 	if (pPreviousGroup)
 	{
 		FAssert(isCycleGroup(pPreviousGroup) && pPreviousGroup->canAllMove());
-		int iCost = groupCycleDistance(pPreviousGroup, pGroup) + 1; // cost for being at the end of the list.
+		int iCost = groupCycleDistance(pPreviousGroup, pGroup) + 3; // cost for being at the end of the list.
 		if (iCost < iBestCost)
 		{
 			pBestSelectionGroupNode = 0;
