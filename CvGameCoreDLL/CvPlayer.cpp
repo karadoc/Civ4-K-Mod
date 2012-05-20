@@ -3113,7 +3113,7 @@ const wchar* CvPlayer::getName(uint uiForm) const
 	{
 		//return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
 		// K-Mod. Conceal the leader name of unmet players.
-		if (gDLL->getChtLvl() > 0 || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+		if (gDLL->getChtLvl() > 0 || gDLL->GetWorldBuilderMode() || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 			return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
 		else
 		{
@@ -3145,7 +3145,7 @@ const wchar* CvPlayer::getNameKey() const
 const wchar* CvPlayer::getCivilizationDescription(uint uiForm) const
 {
 	// K-Mod. Conceal the civilization of unmet players.
-	if (gDLL->getChtLvl() == 0 && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	if (gDLL->getChtLvl() == 0 && !gDLL->GetWorldBuilderMode() && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 	{
 		static CvWString string = gDLL->getText("TXT_KEY_TOPCIVS_UNKNOWN"); // hack to stop the string from going out of scope.
 		return string;
@@ -3179,7 +3179,7 @@ const wchar* CvPlayer::getCivilizationDescriptionKey() const
 const wchar* CvPlayer::getCivilizationShortDescription(uint uiForm) const
 {
 	// K-Mod. Conceal the civilization of unmet players.
-	if (!GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	if (gDLL->getChtLvl() == 0 && !gDLL->GetWorldBuilderMode() && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 	{
 		static CvWString string = gDLL->getText("TXT_KEY_UNKNOWN"); // hack to stop the string from going out of scope.
 		return string;
@@ -11715,7 +11715,7 @@ PlayerColorTypes CvPlayer::getPlayerColor() const
 {
 	//return GC.getInitCore().getColor(getID());
 	// K-Mod. Conceal the player colour of unmet players.
-	if (gDLL->getChtLvl() > 0 || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	if (gDLL->getChtLvl() > 0 || gDLL->GetWorldBuilderMode() || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 		return GC.getInitCore().getColor(getID());
 	else
 		return GC.getInitCore().getColor(BARBARIAN_PLAYER);
