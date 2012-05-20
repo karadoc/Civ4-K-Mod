@@ -1082,7 +1082,7 @@ public:
 	virtual TechTypes AI_bestTech(int iMaxPathLength = 1, bool bIgnoreCost = false, bool bAsync = false, TechTypes eIgnoreTech = NO_TECH, AdvisorTypes eIgnoreAdvisor = NO_ADVISOR) const = 0;
 	virtual void AI_chooseFreeTech() = 0;
 	virtual void AI_chooseResearch() = 0;
-	virtual bool AI_isWillingToTalk(PlayerTypes ePlayer) const = 0;
+	virtual bool AI_isWillingToTalk(PlayerTypes ePlayer) const = 0; // Exposed to Python
 	virtual bool AI_demandRebukedSneak(PlayerTypes ePlayer) const = 0;
 	virtual bool AI_demandRebukedWar(PlayerTypes ePlayer) const = 0;																		// Exposed to Python
 	virtual AttitudeTypes AI_getAttitude(PlayerTypes ePlayer, bool bForced = true) const = 0;																// Exposed to Python

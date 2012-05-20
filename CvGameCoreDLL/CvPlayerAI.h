@@ -141,7 +141,7 @@ public:
 	void AI_chooseResearch();
 
 	DllExport DiploCommentTypes AI_getGreeting(PlayerTypes ePlayer) const;
-	bool AI_isWillingToTalk(PlayerTypes ePlayer) const;
+	bool AI_isWillingToTalk(PlayerTypes ePlayer) const; // Exposed to Python
 	bool AI_demandRebukedSneak(PlayerTypes ePlayer) const;
 	bool AI_demandRebukedWar(PlayerTypes ePlayer) const;
 	bool AI_hasTradedWithTeam(TeamTypes eTeam) const;

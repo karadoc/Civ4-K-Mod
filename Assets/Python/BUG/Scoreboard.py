@@ -110,7 +110,7 @@ def init():
 	columns.append(Column('D', PACT, FIXED, smallSymbol(FontSymbols.DEFENSIVE_PACT_CHAR)))
 	columns.append(Column('R', RELIGION, DYNAMIC))
 	columns.append(Column('A', ATTITUDE, DYNAMIC))
-	columns.append(Column('F', WONT_TALK, FIXED, smallText("!")))
+	columns.append(Column('!', WONT_TALK, FIXED, smallText("!"))) #K-Mod changed this from 'F'
 	columns.append(Column('H', WORST_ENEMY, FIXED, smallSymbol(FontSymbols.ANGRY_POP_CHAR)))
 	columns.append(Column('M', WHEOOH, FIXED, smallSymbol(FontSymbols.OCCUPATION_CHAR)))
 	columns.append(Column('Q', CITIES, DYNAMIC))
@@ -380,7 +380,7 @@ class Scoreboard:
 			column = columnsByKey[k]
 			c = column.id
 			if (not self._anyHas[c]):
-				spacing = defaultSpacing
+				#spacing = defaultSpacing # disabled by K-Mod
 				continue
 			type = column.type
 			if (c == RESEARCH and not ScoreOpt.isShowResearchIcons()):

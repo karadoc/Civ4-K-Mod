@@ -477,6 +477,7 @@ public:
 	void AI_updateFoundValues(bool bStartingLoc);
 	int AI_foundValue(int iX, int iY, int iMinUnitRange/* = -1*/, bool bStartingLoc/* = false*/);
 	bool AI_isFinancialTrouble();
+	bool AI_isWillingToTalk(int /*PlayerTypes*/ ePlayer) { return m_pPlayer ? m_pPlayer->AI_isWillingToTalk((PlayerTypes)ePlayer) : false; } // K-Mod
 	bool AI_demandRebukedWar(int /*PlayerTypes*/ ePlayer);
 	AttitudeTypes AI_getAttitude(int /*PlayerTypes*/ ePlayer);
 	int AI_unitValue(int /*UnitTypes*/ eUnit, int /*UnitAITypes*/ eUnitAI, CyArea* pArea);

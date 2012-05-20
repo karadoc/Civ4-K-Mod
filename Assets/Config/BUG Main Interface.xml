@@ -23,7 +23,7 @@
 			
 			<!-- Options Screen Button -->
 			<option id="OptionsButton" key="Options Button" 
-					type="boolean" default="True" 
+					type="boolean" default="False"
 					get="isShowOptionsButton" set="setShowOptionsButton" dirtyBit="GameData"/>
 
 			<!-- Gold Rate Warning -->

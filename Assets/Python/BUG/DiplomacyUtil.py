@@ -76,19 +76,22 @@ def isWillingToTalk(playerOrID, toPlayerOrID):
 	"""
 	playerID, player = PlayerUtil.getPlayerAndID(playerOrID)
 	toPlayerID = PlayerUtil.getPlayerID(toPlayerOrID)
-	if playerID == toPlayerID or player.isHuman():
-		# all players talk to themselves, and all humans talk
-		return True
-	if BugDll.isPresent():
-		return player.AI_isWillingToTalk(toPlayerID)
-	else:
-		hover = AttitudeUtil.getAttitudeString(playerID, toPlayerID)
-		if hover:
-			return (hover.find(BugUtil.getPlainText("TXT_KEY_MISC_REFUSES_TO_TALK")) == -1)
-		else:
-			# haven't met yet
-			return False
-
+	# if playerID == toPlayerID or player.isHuman():
+		# # all players talk to themselves, and all humans talk
+		# return True
+	# if BugDll.isPresent():
+		# return player.AI_isWillingToTalk(toPlayerID)
+	# else:
+		# hover = AttitudeUtil.getAttitudeString(playerID, toPlayerID)
+		# if hover:
+			# return (hover.find(BugUtil.getPlainText("TXT_KEY_MISC_REFUSES_TO_TALK")) == -1)
+		# else:
+			# # haven't met yet
+			# return False
+	# K-Mod
+	return playerID == toPlayerID or player.AI_isWillingToTalk(toPlayerID)
+	# Note: the player == player check isn't strictly necessary, but it allows me to bypass an assert in the DLL which I don't currently want to remove.
+	# K-Mod end
 
 ## Event Initialization
 
