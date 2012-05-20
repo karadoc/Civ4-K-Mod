@@ -184,9 +184,11 @@ class BugEventManager(CvEventManager.CvEventManager):
 			self.setEventHandler(eventType, eventHandler)
 		
 		# --------- Better BTS AI (2/2) -------------
-		AIAutoPlay.AIAutoPlay(self)
-		ChangePlayer.ChangePlayer(self)
-		Tester.Tester(self)
+		# K-Mod, only enable these feature if the cheat mode is enabled.
+		if getChtLvl():
+			AIAutoPlay.AIAutoPlay(self)
+			ChangePlayer.ChangePlayer(self)
+			Tester.Tester(self)
 		# --
 		
 		# add new core events; see unused sample handlers below for argument lists

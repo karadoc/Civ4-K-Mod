@@ -22878,7 +22878,7 @@ void CvPlayer::getUnitLayerColors(GlobeLayerUnitOptionTypes eOption, std::vector
 						CvUnit* pUnit = ::getUnit(pUnitNode->m_data);
 						pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
 
-						if (pUnit->getVisualOwner() == iPlayer && !pUnit->isInvisible(getTeam(), GC.getGameINLINE().isDebugMode()))
+						if (pUnit->getVisualOwner() == iPlayer && !pUnit->isInvisible(getTeam(), true))
 						{
 							// now, is this unit of interest?
 							bool bIsMilitary = pUnit->baseCombatStr() > 0;
