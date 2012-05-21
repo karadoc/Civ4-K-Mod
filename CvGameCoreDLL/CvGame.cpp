@@ -9370,7 +9370,8 @@ VoteSelectionData* CvGame::addVoteSelection(VoteSourceTypes eVoteSource)
 							kData.szText += gDLL->getText("TXT_KEY_POPUP_PASSED");
 						}
 
-						if (canDoResolution(eVoteSource, kData))
+						//if (canDoResolution(eVoteSource, kData))
+						if (isValidVoteSelection(eVoteSource, kData)) // K-Mod (zomg!)
 						{
 							pData->aVoteOptions.push_back(kData);
 						}
