@@ -10130,6 +10130,11 @@ void CvCity::setRevealed(TeamTypes eIndex, bool bNewValue)
 	{
 		m_abRevealed[eIndex] = bNewValue;
 
+		// K-Mod
+		if (bNewValue)
+			GET_TEAM(eIndex).makeHasSeen(getTeam());
+		// K-Mod end
+
 		updateVisibility();
 
 		if (eIndex == GC.getGameINLINE().getActiveTeam())

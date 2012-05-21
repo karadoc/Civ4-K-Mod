@@ -3746,13 +3746,11 @@ bool CvSelectionGroup::canDoMission(int iMission, int iData1, int iData2, CvPlot
 					return true;
 
 				if (pLoopUnit->getDomainType() != DOMAIN_AIR)
-					bValid = true; // need to check 'canMove' for all units.
-				else if (pLoopUnit->canMove())
-					return true; // air units don't have to move as a group
+					bValid = true; // air units don't have to move as a group
 			}
 
-			if (!pLoopUnit->canMove())
-				return false;
+			if (pLoopUnit->canMove() != bValid)
+				return !bValid; // huh?
 			break;
 
 		case MISSION_ROUTE_TO:
