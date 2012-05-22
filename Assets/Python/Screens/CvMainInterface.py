@@ -195,7 +195,7 @@ RAW_YIELD_HELP = ( "TXT_KEY_RAW_YIELD_VIEW_TRADE",
 # BUG - Raw Yields - end
 
 # BUG - field of view slider - start
-DEFAULT_FIELD_OF_VIEW = 42
+#DEFAULT_FIELD_OF_VIEW = 42 # disabled (replaced) by K-Mod
 # BUG - field of view slider - end
 
 HELP_TEXT_MINIMUM_WIDTH = 300
@@ -363,10 +363,15 @@ class CvMainInterface:
 		self.iX_FoVSlider = self.xResolution - 120
 		self.iY_FoVSlider = iBtnY + 30
 		self.sFieldOfView_Text = localText.getText("TXT_KEY_BUG_OPT_MAININTERFACE__FIELDOFVIEW_TEXT", ())
+		self.DEFAULT_FIELD_OF_VIEW = max(40, min(80, self.xResolution / 30)) # K-Mod (bigger FoW for bigger monitors. They'll appreciate it. Trust me.)
 		if MainOpt.isRememberFieldOfView():
 			self.iField_View = int(MainOpt.getFieldOfView())
+			# K-Mod
+			if self.iField_View < 0:
+				self.iField_View = self.DEFAULT_FIELD_OF_VIEW
+			# K-Mod end
 		else:
-			self.iField_View = DEFAULT_FIELD_OF_VIEW
+			self.iField_View = self.DEFAULT_FIELD_OF_VIEW
 # BUG - field of view slider - end
 
 
@@ -1202,7 +1207,8 @@ class CvMainInterface:
 		screen = CyGInterfaceScreen( "MainInterface", CvScreenEnums.MAIN_INTERFACE )
 
 # BUG - Field of View - start
-		self.setFieldofView(screen, CyInterface().isCityScreenUp())
+		#self.setFieldofView(screen, CyInterface().isCityScreenUp())
+		self.setFieldofView(screen, False) # K-Mod. (using the default for the city screen is an ok idea, but it doesn't work properly because the screen is drawn before the value is changed.)
 # BUG - Field of View - end
 
 		# Check Dirty Bits, see what we need to redraw...
@@ -5591,7 +5597,7 @@ class CvMainInterface:
 	def setFieldofView(self, screen, bDefault):
 		#if bDefault or not MainOpt.isShowFieldOfView():
 		if bDefault or (not MainOpt.isShowFieldOfView() and not MainOpt.isRememberFieldOfView()): # K-Mod
-			self._setFieldofView(screen, DEFAULT_FIELD_OF_VIEW)
+			self._setFieldofView(screen, self.DEFAULT_FIELD_OF_VIEW)
 		else:
 			self._setFieldofView(screen, self.iField_View)
 
