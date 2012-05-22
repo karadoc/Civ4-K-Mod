@@ -9967,7 +9967,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					{
 						if (kOwner.canHurry(eHurry))
 						{
-							iProductionPerPop = std::max(iProductionPerPop, GC.getHurryInfo(eHurry).getProductionPerPopulation() * iBaseProductionModifier / 100);
+							iProductionPerPop = std::max(iProductionPerPop, GC.getGameINLINE().getProductionPerPopulation(eHurry) * iBaseProductionModifier / 100);
 						}
 					}
 					FAssert(iProductionPerPop > 0);

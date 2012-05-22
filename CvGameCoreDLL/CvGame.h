@@ -94,7 +94,7 @@ public:
 
 	DllExport int getSymbolID(int iSymbol);																	// Exposed to Python
 
-	int getProductionPerPopulation(HurryTypes eHurry);											// Exposed to Python
+	int getProductionPerPopulation(HurryTypes eHurry) const; // Exposed to Python
 
 	int getAdjustedPopulationPercent(VictoryTypes eVictory) const;								// Exposed to Python
 	int getAdjustedLandPercent(VictoryTypes eVictory) const;											// Exposed to Python

@@ -2704,7 +2704,7 @@ int CvGame::getAdjustedPopulationPercent(VictoryTypes eVictory) const
 }
 
 
-int CvGame::getProductionPerPopulation(HurryTypes eHurry)
+int CvGame::getProductionPerPopulation(HurryTypes eHurry) const
 {
 	if (NO_HURRY == eHurry)
 	{

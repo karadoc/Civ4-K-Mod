@@ -14090,9 +14090,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 	}
 
-	for (int iI = 0; iI < GC.getNumHurryInfos(); iI++)
+	for (HurryTypes i = (HurryTypes)0; i < GC.getNumHurryInfos(); i=(HurryTypes)(i+1))
 	{
-		if (kCivic.isHurry(iI))
+		if (kCivic.isHurry(i))
 		{
 			/* original bts code
 			int iTempValue = 0;
@@ -14107,18 +14107,23 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 			// K-Mod. I'm not attempting to made an accurate estimate of the value here - I just want to make it a little bit more nuanced than it was.
 			int iTempValue = 0;
+			const CvHurryInfo& kHurryInfo = GC.getHurryInfo(i);
 
-			if (GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction() > 0)
+			if (kHurryInfo.getGoldPerProduction() > 0)
 			{
-				iTempValue = AI_averageCommerceMultiplier(COMMERCE_GOLD) * (AI_avoidScience() ? 2000 : 1000) * iCities / GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction();
+				iTempValue = AI_averageCommerceMultiplier(COMMERCE_GOLD) * (AI_avoidScience() ? 2000 : 1000) * iCities / kHurryInfo.getGoldPerProduction();
 				iTempValue /= std::max(1, (getHurryModifier() + 100) * AI_commerceWeight(COMMERCE_GOLD));
 			}
 
-			iTempValue += (GC.getHurryInfo((HurryTypes)iI).getProductionPerPopulation() * iCities * (bWarPlan ? 2 : 1)) / 5; // unchanged so far.
+			if (kHurryInfo.getProductionPerPopulation() > 0)
+			{
+				// if we had easy access to averages for getMaxFoodKeptPercent and getHurryAngerModifier, then I'd use them. - but I don't want to calculate them here.
+				iTempValue += (bWarPlan ? 8 : 5) * iCities * kGame.getProductionPerPopulation(i) / std::max(1, getGrowthThreshold(getAveragePopulation()));
+			}
 
 			if (iTempValue > 0)
 			{
-				if (GC.getHurryInfo((HurryTypes)iI).getProductionPerPopulation() && GC.getHurryInfo((HurryTypes)iI).getGoldPerProduction())
+				if (kHurryInfo.getProductionPerPopulation() && kHurryInfo.getGoldPerProduction())
 					iTempValue /= 2;
 
 				iValue += iTempValue;
