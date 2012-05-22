@@ -9736,6 +9736,7 @@ int CvPlayerAI::AI_goldPerTurnTradeVal(int iGoldPerTurn) const
 	return iValue;
 }
 
+// (very roughly 4x gold / turn / city)
 int CvPlayerAI::AI_bonusVal(BonusTypes eBonus, int iChange, bool bAssumeEnabled) const
 {
 	int iValue = 0;
@@ -9769,6 +9770,7 @@ int CvPlayerAI::AI_bonusVal(BonusTypes eBonus, int iChange, bool bAssumeEnabled)
 }
 
 //Value sans corporation
+// (K-Mod note: very vague units. roughly 4x gold / turn / city.)
 int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 {
 	PROFILE_FUNC();
@@ -10149,7 +10151,7 @@ int CvPlayerAI::AI_bonusTradeVal(BonusTypes eBonus, PlayerTypes ePlayer, int iCh
 
 	iValue = AI_bonusVal(eBonus, iChange);
 
-	iValue *= ((std::min(getNumCities(), GET_PLAYER(ePlayer).getNumCities()) + 3) * 30);
+	iValue *= ((std::min(getNumCities(), GET_PLAYER(ePlayer).getNumCities()) + 3) * 25); // was * 30
 	iValue /= 100;
 
 	iValue *= std::max(0, (GC.getBonusInfo(eBonus).getAITradeModifier() + 100));
@@ -12612,12 +12614,14 @@ int CvPlayerAI::AI_corporationValue(CorporationTypes eCorporation, const CvCity*
 	iValue -= iTempValue;
 
 	// bonus produced by the corp
-	if (kCorp.getBonusProduced() != NO_BONUS)
+	BonusTypes eBonusProduced = (BonusTypes)kCorp.getBonusProduced();
+	if (eBonusProduced != NO_BONUS)
 	{
-		int iBonuses = getNumAvailableBonuses((BonusTypes)kCorp.getBonusProduced());
+		//int iBonuses = getNumAvailableBonuses((BonusTypes)kCorp.getBonusProduced());
+		int iBonuses = pCity ? pCity->getNumBonuses(eBonusProduced) : countOwnedBonuses(eBonusProduced);
 		// pretend we have 1 bonus if it is not yet revealed. (so that we don't overvalue the corp before the resource gets revealed)
-		iBonuses += !kTeam.isHasTech((TechTypes)GC.getBonusInfo((BonusTypes)kCorp.getBonusProduced()).getTechReveal()) ? 1 : 0;
-		iValue += AI_baseBonusVal((BonusTypes)kCorp.getBonusProduced()) * 100 / (1 + 3 * iBonuses * iBonuses);
+		iBonuses += !kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonusProduced).getTechReveal()) ? 1 : 0;
+		iValue += AI_baseBonusVal(eBonusProduced) * 25 / (1 + 2 * iBonuses * (iBonuses+3));
 	}
 
 	return iValue;
@@ -13702,7 +13706,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 				// loss of corp resource
 				if (kCorpInfo.getBonusProduced() != NO_BONUS)
 				{
-					iCorpValue -= AI_bonusVal((BonusTypes)kCorpInfo.getBonusProduced(), 1, false);
+					iCorpValue -= AI_bonusVal((BonusTypes)kCorpInfo.getBonusProduced(), 1, false) / 4;
 				}
 			}
 
