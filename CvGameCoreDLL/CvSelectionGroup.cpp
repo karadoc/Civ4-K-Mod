@@ -199,7 +199,8 @@ void CvSelectionGroup::doTurn()
 		}
 		else
 		{
-			if (getActivityType() == ACTIVITY_MISSION)
+			//if (getActivityType() == ACTIVITY_MISSION)
+			if (getActivityType() == ACTIVITY_MISSION && headMissionQueueNode() && !(headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER)) // K-Mod
 			{
 				bool bNonSpy = false;
 				for (CLLNode<IDInfo>* pUnitNode = headUnitNode(); pUnitNode != NULL; pUnitNode = nextUnitNode(pUnitNode))
@@ -213,7 +214,7 @@ void CvSelectionGroup::doTurn()
 				}
 
 				//if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0)
-				if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2, true, AI_isControlled())) // K-Mod
+				if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2, true, false)) // K-Mod
 				{
 					clearMissionQueue();
 				}
@@ -517,7 +518,8 @@ bool CvSelectionGroup::autoMission() // K-Mod changed this from void to bool.
 
 				//if (bVisibleHuman && GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 1) > 0)
 				// K-Mod. I want to allow players to queue actions when in danger without being overruled by this clause.
-				if (bVisibleHuman && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 1) && headMissionQueueNode()->m_data.iPushTurn != GC.getGameINLINE().getGameTurn())
+				if (bVisibleHuman && headMissionQueueNode()->m_data.iPushTurn != GC.getGameINLINE().getGameTurn() && !(headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER) &&
+					GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 1, true, false))
 				// K-Mod end
 				{
 					clearMissionQueue();
@@ -801,7 +803,16 @@ void CvSelectionGroup::startMission()
 		case MISSION_GREAT_WORK:
 		case MISSION_INFILTRATE:
 		case MISSION_GOLDEN_AGE:
+			break;
+		// K-Mod. If the worker is already in danger when the command is issued, use the MOVE_IGNORE_DANGER flag.
 		case MISSION_BUILD:
+			if (!AI_isControlled() && headMissionQueueNode()->m_data.iPushTurn == GC.getGameINLINE().getGameTurn() &&
+				GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2, true, false)) // cf. condition used in CvSelectionGroup::doTurn.
+			{
+				headMissionQueueNode()->m_data.iFlags |= MOVE_IGNORE_DANGER;
+			}
+			break;
+		// K-Mod end
 		case MISSION_LEAD:
 		case MISSION_ESPIONAGE:
 		case MISSION_DIE_ANIMATION:

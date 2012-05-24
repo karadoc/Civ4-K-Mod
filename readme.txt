@@ -75,4 +75,4 @@ I hope you enjoy the mod.
 
  - Karadoc
  
-(The full source-code for this mod is available at [https://github.com/karadoc/Civ4-K-Mod]. You can contact me at [karadoc@gmail.com].)
+(The full source-code for this mod is available at [https://github.com/karadoc/Civ4-K-Mod]. You can contact me at [karadoc+K-Mod@gmail.com].)
