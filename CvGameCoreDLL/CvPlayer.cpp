@@ -31,24 +31,10 @@
 #include "CvDLLEngineIFaceBase.h"
 #include "CvDLLFAStarIFaceBase.h"
 #include "CvDLLPythonIFaceBase.h"
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/09/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
+//bbai
 #include "CvDLLFlagEntityIFaceBase.h"
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
 #include "BetterBTSAI.h"
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+//bbai end
 
 // Public Functions...
 
@@ -3106,6 +3092,7 @@ bool CvPlayer::isBarbarian() const
 	return (getID() == BARBARIAN_PLAYER);
 }
 
+static bool concealUnknownCivs() { return !gDLL->IsPitbossHost() && gDLL->getChtLvl() == 0 && !gDLL->GetWorldBuilderMode(); } // K-Mod
 
 const wchar* CvPlayer::getName(uint uiForm) const
 {
@@ -3113,7 +3100,7 @@ const wchar* CvPlayer::getName(uint uiForm) const
 	{
 		//return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
 		// K-Mod. Conceal the leader name of unmet players.
-		if (gDLL->getChtLvl() > 0 || gDLL->GetWorldBuilderMode() || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+		if (!concealUnknownCivs() || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 			return GC.getLeaderHeadInfo(getLeaderType()).getDescription(uiForm);
 		else
 		{
@@ -3145,7 +3132,7 @@ const wchar* CvPlayer::getNameKey() const
 const wchar* CvPlayer::getCivilizationDescription(uint uiForm) const
 {
 	// K-Mod. Conceal the civilization of unmet players.
-	if (gDLL->getChtLvl() == 0 && !gDLL->GetWorldBuilderMode() && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	if (concealUnknownCivs() && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 	{
 		static CvWString string = gDLL->getText("TXT_KEY_TOPCIVS_UNKNOWN"); // hack to stop the string from going out of scope.
 		return string;
@@ -3179,7 +3166,7 @@ const wchar* CvPlayer::getCivilizationDescriptionKey() const
 const wchar* CvPlayer::getCivilizationShortDescription(uint uiForm) const
 {
 	// K-Mod. Conceal the civilization of unmet players.
-	if (gDLL->getChtLvl() == 0 && !gDLL->GetWorldBuilderMode() && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	if (concealUnknownCivs() && !GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 	{
 		static CvWString string = gDLL->getText("TXT_KEY_UNKNOWN"); // hack to stop the string from going out of scope.
 		return string;
@@ -11715,7 +11702,7 @@ PlayerColorTypes CvPlayer::getPlayerColor() const
 {
 	//return GC.getInitCore().getColor(getID());
 	// K-Mod. Conceal the player colour of unmet players.
-	if (gDLL->getChtLvl() > 0 || gDLL->GetWorldBuilderMode() || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
+	if (!concealUnknownCivs() || GET_TEAM(GC.getGameINLINE().getActiveTeam()).isHasSeen(getTeam()))
 		return GC.getInitCore().getColor(getID());
 	else
 		return GC.getInitCore().getColor(BARBARIAN_PLAYER);

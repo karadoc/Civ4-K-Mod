@@ -183,6 +183,12 @@ class BugEventManager(CvEventManager.CvEventManager):
 		for eventType, eventHandler in self.EventHandlerMap.iteritems():
 			self.setEventHandler(eventType, eventHandler)
 		
+		# K-Mod. Don't use register BUG events for PitBoss host.
+		if CyGame().isPitbossHost():
+			BugUtil.debug("BugEventManager - skipping event registration for PitBoss host")
+			return
+		# K-Mod end
+
 		# --------- Better BTS AI (2/2) -------------
 		# K-Mod, only enable these feature if the cheat mode is enabled.
 		if getChtLvl():
@@ -190,7 +196,7 @@ class BugEventManager(CvEventManager.CvEventManager):
 			ChangePlayer.ChangePlayer(self)
 			Tester.Tester(self)
 		# --
-		
+
 		# add new core events; see unused sample handlers below for argument lists
 		self.addEvent("PreGameStart")
 		self.addEvent("BeginActivePlayerTurn")

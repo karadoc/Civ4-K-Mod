@@ -28,6 +28,11 @@ def init():
 	if not CyGame().isFinalInitialized():
 		BugUtil.debug("BugInit - game not fully initialized")
 		return
+	# K-Mod. Don't use any BUG features if this is a PitBoss server.
+	if CyGame().isPitbossHost():
+		BugUtil.debug("BugInit - BUG disabled for PitBoss host")
+		return
+	# K-Mod end
 	global g_initRunning
 	if g_initRunning:
 		BugUtil.warn("BugInit - init() already running")
