@@ -182,20 +182,6 @@ class BugEventManager(CvEventManager.CvEventManager):
 		# map the initial EventHandlerMap values into the new data structure
 		for eventType, eventHandler in self.EventHandlerMap.iteritems():
 			self.setEventHandler(eventType, eventHandler)
-		
-		# K-Mod. Don't use register BUG events for PitBoss host.
-		if CyGame().isPitbossHost():
-			BugUtil.debug("BugEventManager - skipping event registration for PitBoss host")
-			return
-		# K-Mod end
-
-		# --------- Better BTS AI (2/2) -------------
-		# K-Mod, only enable these feature if the cheat mode is enabled.
-		if getChtLvl():
-			AIAutoPlay.AIAutoPlay(self)
-			ChangePlayer.ChangePlayer(self)
-			Tester.Tester(self)
-		# --
 
 		# add new core events; see unused sample handlers below for argument lists
 		self.addEvent("PreGameStart")
@@ -204,13 +190,10 @@ class BugEventManager(CvEventManager.CvEventManager):
 		self.addEvent("LanguageChanged")
 		self.addEvent("ResolutionChanged")
 		self.addEvent("PythonReloaded")
-		
+
 		# add events used by this event manager
-		self.addEventHandler("kbdEvent", self.onKbdEvent)
-		self.addEventHandler("OnLoad", self.resetActiveTurn)
-		self.addEventHandler("GameStart", self.resetActiveTurn)
-		self.addEventHandler("gameUpdate", self.onGameUpdate)
-		
+		# (K-Mod has moved these into the "configure" fucntion)
+
 		# BULL events
 		self.addEvent("unitUpgraded")
 		self.addEvent("unitCaptured")
@@ -575,12 +558,42 @@ EVENT_FUNCTION_MAP = {
 ## Initialization
 
 def configure(logging=None, noLogEvents=None):
-	"""Sets the global event manager's logging options."""
-	if g_eventManager:
-		g_eventManager.setLogging(logging)
-		g_eventManager.setNoLogEvents(noLogEvents)
-	else:
+	# """Sets the global event manager's logging options."""
+	# if g_eventManager:
+		# g_eventManager.setLogging(logging)
+		# g_eventManager.setNoLogEvents(noLogEvents)
+	# else:
+		# BugUtil.error("BugEventManager - BugEventManager not setup before configure()")
+	# K-Mod. I've expanded the purpose of this function.
+	"""Sets the global event manager's logging options. And registers some BUG events handlers."""
+
+	if not g_eventManager:
 		BugUtil.error("BugEventManager - BugEventManager not setup before configure()")
+		return
+
+	g_eventManager.setLogging(logging)
+	g_eventManager.setNoLogEvents(noLogEvents)
+
+	# K-Mod. Don't use register BUG events for PitBoss host.
+	# (Note: actually, if this is a PitBoss host, this function won't even be called
+	#  because the BUG core will not initialize any mod components in PitBoss mode.)
+	if CyGame().isPitbossHost():
+		BugUtil.debug("BugEventManager - skipping event registration for PitBoss host")
+		return
+	# K-Mod end
+
+	# --------- Better BTS AI (2/2) (moved by K-Mod) -------------
+	# K-Mod, only enable these feature if the cheat mode is enabled.
+	if getChtLvl():
+		AIAutoPlay.AIAutoPlay(g_eventManager)
+		ChangePlayer.ChangePlayer(g_eventManager)
+		Tester.Tester(g_eventManager)
+
+	g_eventManager.addEventHandler("kbdEvent", g_eventManager.onKbdEvent)
+	g_eventManager.addEventHandler("OnLoad", g_eventManager.resetActiveTurn)
+	g_eventManager.addEventHandler("GameStart", g_eventManager.resetActiveTurn)
+	g_eventManager.addEventHandler("gameUpdate", g_eventManager.onGameUpdate)
+	# --
 
 def hookupPreGameStartEvent():
 	BugUtil.extend(preGameStart, "CvAppInterface", "preGameStart")
