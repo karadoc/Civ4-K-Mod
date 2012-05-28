@@ -11370,11 +11370,13 @@ void CvUnit::setCombatUnit(CvUnit* pCombatUnit, bool bAttacking)
 				}
 			}
 
+			/* original bts code
 			if (getDomainType() == DOMAIN_LAND
 				&& !m_pUnitInfo->isIgnoreBuildingDefense()
 				&& pCombatUnit->plot()->getPlotCity() 
 				&& pCombatUnit->plot()->getPlotCity()->getBuildingDefense() > 0 
-				&& cityAttackModifier() >= GC.getDefineINT("MIN_CITY_ATTACK_MODIFIER_FOR_SIEGE_TOWER"))
+				&& cityAttackModifier() >= GC.getDefineINT("MIN_CITY_ATTACK_MODIFIER_FOR_SIEGE_TOWER")) */
+			if (showSeigeTower(pCombatUnit)) // K-Mod
 			{
 				CvDLLEntity::SetSiegeTower(true);
 			}
@@ -11419,6 +11421,17 @@ void CvUnit::setCombatUnit(CvUnit* pCombatUnit, bool bAttacking)
 	}
 }
 
+// K-Mod. Return true if the combat animation should include a seige tower
+// (code copied from setCombatUnit, above)
+bool CvUnit::showSeigeTower(CvUnit* pDefender) const
+{
+	return getDomainType() == DOMAIN_LAND
+		&& !m_pUnitInfo->isIgnoreBuildingDefense()
+		&& pDefender->plot()->getPlotCity()
+		&& pDefender->plot()->getPlotCity()->getBuildingDefense() > 0
+		&& cityAttackModifier() >= GC.getDefineINT("MIN_CITY_ATTACK_MODIFIER_FOR_SIEGE_TOWER");
+}
+// K-Mod end
 
 CvUnit* CvUnit::getTransportUnit() const
 {
@@ -12845,10 +12858,14 @@ int CvUnit::planBattle(CvBattleDefinition& kBattle, const std::vector<int>& comb
 	// extra time for seige towers and surrendering leaders.
 	if ((pAttackUnit->getLeaderUnitType() != NO_UNIT && pAttackUnit->isDead()) ||
 		(pDefenceUnit->getLeaderUnitType() != NO_UNIT && pDefenceUnit->isDead()) ||
-		gDLL->getEntityIFace()->GetSiegeTower(pAttackUnit->getUnitEntity()) || gDLL->getEntityIFace()->GetSiegeTower(pDefenceUnit->getUnitEntity()) )
+		pAttackUnit->showSeigeTower(pDefenceUnit))
 	{
 		extraTime = BATTLE_TURNS_MELEE;
 	}
+
+	// K-Mod note: the original code used:
+	//   gDLL->getEntityIFace()->GetSiegeTower(pAttackUnit->getUnitEntity()) || gDLL->getEntityIFace()->GetSiegeTower(pDefenceUnit->getUnitEntity())
+	// I've changed that to use showSeigeTower, because GetSiegeTower does not work for the Pitboss host, and therefore can cause OOS errors.
 
 	return BATTLE_TURNS_SETUP + BATTLE_TURNS_ENDING + kBattle.getNumMeleeRounds() * BATTLE_TURNS_MELEE + kBattle.getNumRangedRounds() * BATTLE_TURNS_MELEE + extraTime;
 }
