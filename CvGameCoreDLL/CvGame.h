@@ -354,19 +354,19 @@ public:
 	DllExport bool isForcedControl(ForceControlTypes eIndex) const;												// Exposed to Python
 	DllExport void setForceControl(ForceControlTypes eIndex, bool bEnabled);
 
-	int getUnitCreatedCount(UnitTypes eIndex);																	// Exposed to Python
+	int getUnitCreatedCount(UnitTypes eIndex) const; // Exposed to Python
 	void incrementUnitCreatedCount(UnitTypes eIndex);
 
-	int getUnitClassCreatedCount(UnitClassTypes eIndex);												// Exposed to Python
-	bool isUnitClassMaxedOut(UnitClassTypes eIndex, int iExtra = 0);						// Exposed to Python
+	int getUnitClassCreatedCount(UnitClassTypes eIndex) const; // Exposed to Python
+	bool isUnitClassMaxedOut(UnitClassTypes eIndex, int iExtra = 0) const; // Exposed to Python
 	void incrementUnitClassCreatedCount(UnitClassTypes eIndex);
 
-	int getBuildingClassCreatedCount(BuildingClassTypes eIndex);								// Exposed to Python
-	bool isBuildingClassMaxedOut(BuildingClassTypes eIndex, int iExtra = 0);		// Exposed to Python
+	int getBuildingClassCreatedCount(BuildingClassTypes eIndex) const; // Exposed to Python
+	bool isBuildingClassMaxedOut(BuildingClassTypes eIndex, int iExtra = 0) const; // Exposed to Python
 	void incrementBuildingClassCreatedCount(BuildingClassTypes eIndex);
 
-	int getProjectCreatedCount(ProjectTypes eIndex);														// Exposed to Python
-	bool isProjectMaxedOut(ProjectTypes eIndex, int iExtra = 0);								// Exposed to Python
+	int getProjectCreatedCount(ProjectTypes eIndex) const; // Exposed to Python
+	bool isProjectMaxedOut(ProjectTypes eIndex, int iExtra = 0) const; // Exposed to Python
 	void incrementProjectCreatedCount(ProjectTypes eIndex, int iExtra = 1);
 
 	int getForceCivicCount(CivicTypes eIndex) const;														// Exposed to Python

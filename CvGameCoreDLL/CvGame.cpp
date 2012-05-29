@@ -5210,68 +5210,35 @@ void CvGame::setForceControl(ForceControlTypes eIndex, bool bEnabled)
 }
 
 
-int CvGame::getUnitCreatedCount(UnitTypes eIndex)
+int CvGame::getUnitCreatedCount(UnitTypes eIndex) const
 {
-/*
-** K-Mod, 8/dec/10
-** standardizing error messages
-*/
-	/* original bts code
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < GC.getNumUnitInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getNumUnitInfos(), eIndex, "CvGame::setUnitCreatedCount");
-/*
-** K-Mod end
-*/
 	return m_paiUnitCreatedCount[eIndex];
 }
 
 
 void CvGame::incrementUnitCreatedCount(UnitTypes eIndex)
 {
-// K-Mod
-	/* original bts code
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < GC.getNumUnitInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getNumUnitInfos(), eIndex, "CvGame::incrementUnitCreatedCount");
-// K-Mod end
 	m_paiUnitCreatedCount[eIndex]++;
 }
 
 
-int CvGame::getUnitClassCreatedCount(UnitClassTypes eIndex)
+int CvGame::getUnitClassCreatedCount(UnitClassTypes eIndex) const
 {
-// K-Mod
-	/* original bts code
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < GC.getNumUnitClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getNumUnitInfos(), eIndex, "CvGame::getUnitCreatedCount");
-// K-Mod end
 	return m_paiUnitClassCreatedCount[eIndex];
 }
 
 
-bool CvGame::isUnitClassMaxedOut(UnitClassTypes eIndex, int iExtra)
+bool CvGame::isUnitClassMaxedOut(UnitClassTypes eIndex, int iExtra) const
 {
-// K-Mod
-	/* original bts code
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < GC.getNumUnitClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getNumUnitClassInfos(), eIndex, "CvGame::isUnitClassMaxedOut");
-// K-Mod end
 
 	if (!isWorldUnitClass(eIndex))
 	{
 		return false;
 	}
-// K-Mod
-	/* original bts code
-	FAssertMsg(getUnitClassCreatedCount(eIndex) <= GC.getUnitClassInfo(eIndex).getMaxGlobalInstances(), "Index is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getUnitClassInfo(eIndex).getMaxGlobalInstances(), getUnitClassCreatedCount(eIndex), "CvGame::isUnitClassMaxedOut");
 
 
@@ -5281,18 +5248,12 @@ bool CvGame::isUnitClassMaxedOut(UnitClassTypes eIndex, int iExtra)
 
 void CvGame::incrementUnitClassCreatedCount(UnitClassTypes eIndex)
 {
-// K-Mod
-	/* original bts code
-	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	FAssertMsg(eIndex < GC.getNumUnitClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
-	*/
 	FASSERT_BOUNDS(0, GC.getNumUnitClassInfos(), eIndex, "CvGame::incrementUnitClassCreatedCount");
-// K-Mod end
 	m_paiUnitClassCreatedCount[eIndex]++;
 }
 
 
-int CvGame::getBuildingClassCreatedCount(BuildingClassTypes eIndex)
+int CvGame::getBuildingClassCreatedCount(BuildingClassTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumBuildingClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -5300,7 +5261,7 @@ int CvGame::getBuildingClassCreatedCount(BuildingClassTypes eIndex)
 }
 
 
-bool CvGame::isBuildingClassMaxedOut(BuildingClassTypes eIndex, int iExtra)
+bool CvGame::isBuildingClassMaxedOut(BuildingClassTypes eIndex, int iExtra) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumBuildingClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -5324,7 +5285,7 @@ void CvGame::incrementBuildingClassCreatedCount(BuildingClassTypes eIndex)
 }
 
 
-int CvGame::getProjectCreatedCount(ProjectTypes eIndex)
+int CvGame::getProjectCreatedCount(ProjectTypes eIndex) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumProjectInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
@@ -5332,7 +5293,7 @@ int CvGame::getProjectCreatedCount(ProjectTypes eIndex)
 }
 
 
-bool CvGame::isProjectMaxedOut(ProjectTypes eIndex, int iExtra)
+bool CvGame::isProjectMaxedOut(ProjectTypes eIndex, int iExtra) const
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < GC.getNumProjectInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
