@@ -201,6 +201,7 @@ public:
 	int getVictoryDelay(int /*VictoryTypes*/ eVictory);
 	bool canLaunch(int /*VictoryTypes*/ eVictory);
 	int getLaunchSuccessRate(int /*VictoryTypes*/ eVictory);
+	bool hasSpaceshipArrived() { return (m_pTeam ? m_pTeam->hasSpaceshipArrived() : false); } // K-Mod
 
 	int getEspionagePointsAgainstTeam(int /*TeamTypes*/ eIndex);
 	void setEspionagePointsAgainstTeam(int /*TeamTypes*/ eIndex, int iValue);

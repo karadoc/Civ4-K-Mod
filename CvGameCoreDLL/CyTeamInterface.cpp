@@ -194,6 +194,7 @@ void CyTeamPythonInterface()
 		.def("getVictoryDelay", &CyTeam::getVictoryDelay, "int (int /*VictoryTypes*/)")
 		.def("canLaunch", &CyTeam::canLaunch, "bool ()")
 		.def("getLaunchSuccessRate", &CyTeam::getLaunchSuccessRate, "int (int /*VictoryTypes*/)")
+		.def("hasSpaceshipArrived", &CyTeam::hasSpaceshipArrived, "bool ()") // K-Mod
 
 		.def("getEspionagePointsAgainstTeam", &CyTeam::getEspionagePointsAgainstTeam, "int (TeamTypes eIndex)")
 		.def("setEspionagePointsAgainstTeam", &CyTeam::setEspionagePointsAgainstTeam, "void (TeamTypes eIndex, int iValue)")

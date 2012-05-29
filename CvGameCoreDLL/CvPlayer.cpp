@@ -23209,17 +23209,8 @@ const CvArtInfoUnit* CvPlayer::getUnitArtInfo(UnitTypes eUnit, int iMeshGroup) c
 	return GC.getUnitInfo(eUnit).getArtInfo(iMeshGroup, eEra, eStyle);
 }
 
+// K-Mod. I've moved the original code to a new function: CvTeam::hasSpaceshipArrived
 bool CvPlayer::hasSpaceshipArrived() const
 {
-	VictoryTypes eSpaceVictory = GC.getGameINLINE().getSpaceVictory();
-	if (eSpaceVictory != NO_VICTORY)
-	{
-		int iVictoryCountdown = GET_TEAM(getTeam()).getVictoryCountdown(eSpaceVictory);
-		if (((GC.getGameINLINE().getGameState() == GAMESTATE_EXTENDED) && (iVictoryCountdown > 0)) || (iVictoryCountdown == 0))
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return GET_TEAM(getTeam()).hasSpaceshipArrived();
 }

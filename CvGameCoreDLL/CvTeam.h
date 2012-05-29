@@ -105,7 +105,7 @@ public:
 	int getHasReligionCount(ReligionTypes eReligion) const;															// Exposed to Python
 	int getHasCorporationCount(CorporationTypes eCorporation) const;															// Exposed to Python
 
-	int countTotalCulture();																											// Exposed to Python
+	int countTotalCulture() const; // Exposed to Python
 
 	int countNumUnitsByArea(CvArea* pArea) const;																				// Exposed to Python
 	int countNumCitiesByArea(CvArea* pArea) const;																			// Exposed to Python
@@ -344,8 +344,9 @@ public:
 	void setCanLaunch(VictoryTypes eVictory, bool bCan);
 	int getLaunchSuccessRate(VictoryTypes eVictory) const;		// Exposed to Python
 	void resetVictoryProgress();
+	bool hasSpaceshipArrived() const; // K-Mod, Exposed to Python
 
-	bool isParent(TeamTypes eTeam) const;		// Exposed to Python 
+	bool isParent(TeamTypes eTeam) const;
 
 	bool isHasTech(TechTypes eIndex) const;																																			// Exposed to Python
 	void setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, bool bFirst, bool bAnnounce);	// Exposed to Python

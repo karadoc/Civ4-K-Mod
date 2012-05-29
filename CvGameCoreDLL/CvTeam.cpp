@@ -2676,7 +2676,7 @@ int CvTeam::getHasCorporationCount(CorporationTypes eCorporation) const
 }
 
 
-int CvTeam::countTotalCulture()
+int CvTeam::countTotalCulture() const
 {
 	int iCount;
 	int iI;
@@ -5251,6 +5251,23 @@ void CvTeam::resetVictoryProgress()
 		}
 	}
 }
+
+// K-Mod, code mvoed from CvPlayer::hasSpaceshipArrived. (it makes more sense to be here)
+bool CvTeam::hasSpaceshipArrived() const
+{
+	VictoryTypes eSpaceVictory = GC.getGameINLINE().getSpaceVictory();
+	if (eSpaceVictory != NO_VICTORY)
+	{
+		int iVictoryCountdown = getVictoryCountdown(eSpaceVictory);
+		if (iVictoryCountdown == 0 || (iVictoryCountdown > 0 && GC.getGameINLINE().getGameState() == GAMESTATE_EXTENDED))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+// K-Mod end
 
 bool CvTeam::isParent(TeamTypes eTeam) const
 {
