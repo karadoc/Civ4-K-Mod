@@ -13047,7 +13047,20 @@ bool CvUnitAI::AI_spreadCorporation()
 							{
 								int iValue = 10 + pLoopCity->getPopulation() * 2;
 								iValue += bHasHQ ? 1000 : 0; // we should probably calculate the true HqValue, but I couldn't be bothered right now.
-								iValue += pLoopCity->getTeam() == getTeam() ? kOwner.AI_corporationValue(eCorporation, pLoopCity) : 0;
+								if (pLoopCity->getTeam() == getTeam())
+								{
+									const CvPlayerAI& kCityOwner = GET_PLAYER(pLoopCity->getOwnerINLINE());
+									iValue += kCityOwner.AI_corporationValue(eCorporation, pLoopCity);
+
+									for (CorporationTypes i = (CorporationTypes)0; i < GC.getNumCorporationInfos(); i=(CorporationTypes)(i+1))
+									{
+										if (pLoopCity->isHasCorporation(i) && GC.getGameINLINE().isCompetingCorporation(i, eCorporation))
+										{
+											iValue -= kCityOwner.AI_corporationValue(i, pLoopCity) + (GET_TEAM(getTeam()).hasHeadquarters(i) ? 1100 : 100);
+											// cf. iValue before AI_corporationValue is added.
+										}
+									}
+								}
 
 								/* if (iI == eTargetPlayer)
 									iValue *= 15;

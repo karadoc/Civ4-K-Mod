@@ -2866,9 +2866,9 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 				if (iSuccessRatio > 0)
 				{
 					aiUnitAIVal[UNITAI_ATTACK] += iSuccessRatio * iMilitaryWeight / 800;
-					aiUnitAIVal[UNITAI_ATTACK_CITY] += iSuccessRatio * iMilitaryWeight / 800;
-					aiUnitAIVal[UNITAI_COUNTER] += iSuccessRatio * iMilitaryWeight / 1200;
-					aiUnitAIVal[UNITAI_PARADROP] += iSuccessRatio * iMilitaryWeight / 800;
+					aiUnitAIVal[UNITAI_ATTACK_CITY] += iSuccessRatio * iMilitaryWeight / 1000;
+					aiUnitAIVal[UNITAI_COUNTER] += iSuccessRatio * iMilitaryWeight / 1400;
+					aiUnitAIVal[UNITAI_PARADROP] += iSuccessRatio * iMilitaryWeight / 1000;
 				}
 			}
 			// K-Mod end
@@ -2881,6 +2881,9 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	{
 		aiUnitAIVal[UNITAI_SETTLE] = 0;
 		aiUnitAIVal[UNITAI_WORKER] = 0;
+		aiUnitAIVal[UNITAI_EXPLORE] = 0;
+		aiUnitAIVal[UNITAI_ATTACK_CITY] /= 3;
+		aiUnitAIVal[UNITAI_COLLATERAL] /= 2;
 	}
 	else
 	// K-Mod end
