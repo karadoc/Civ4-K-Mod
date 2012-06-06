@@ -192,13 +192,8 @@ class CvReligionScreen:
 			self.Y_RELIGION_AREA = 84
 			self.W_RELIGION_AREA = 934
 			self.H_RELIGION_AREA = 175
-			##
-			# K-Mod, 8/dec/10, karadoc
-			# fixed a bug. (wtf were the BUG guys thinking with this?)
-			##
-			# self.RELIGIONS = ReligionUtil.getAllReligions() + list((ReligionUtil.getNumReligions(),))# I may have changed this from something worse.
-			self.RELIGIONS = ReligionUtil.getAllReligions()
-			# K-Mod end
+			# self.RELIGIONS = ReligionUtil.getAllReligions() + (ReligionUtil.getNumReligions(),)
+			self.RELIGIONS = range(gc.getNumReligionInfos()) # K-Mod. (the original BUG code simply doesn't run.)
 
 		# Make the scrollable area for the religions list...
 		screen.addPanel(self.RELIGION_PANEL_ID, "", "", False, True, self.X_RELIGION_AREA, self.Y_RELIGION_AREA, self.W_RELIGION_AREA, self.H_RELIGION_AREA+5, PanelStyles.PANEL_STYLE_MAIN)
@@ -222,7 +217,7 @@ class CvReligionScreen:
 
 		# Religion buttons at the top
 		xLoop = self.X_RELIGION_START
-		for iRel in range(gc.getNumReligionInfos()):
+		for iRel in self.RELIGIONS:
 			szButtonName = self.getReligionButtonName(iRel)
 			if gc.getGame().getReligionGameTurnFounded(iRel) >= 0:
 				screen.addCheckBoxGFCAt(szArea, szButtonName, gc.getReligionInfo(iRel).getButton(), ArtFileMgr.getInterfaceArtInfo("BUTTON_HILITE_SQUARE").getPath(), self.X_SCROLLABLE_RELIGION_AREA + xLoop - 25, self.Y_SCROLLABLE_RELIGION_AREA + 5, self.BUTTON_SIZE, self.BUTTON_SIZE, WidgetTypes.WIDGET_GENERAL, -1, -1, ButtonStyles.BUTTON_STYLE_LABEL, False)
