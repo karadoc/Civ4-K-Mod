@@ -22582,7 +22582,18 @@ void CvPlayerAI::AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites)
 	std::vector<int>::iterator it;
 	int iValue;
 	int iI;
-	
+
+	// K-Mod. Always recommend the starting location on the first turn.
+	// (because we don't have enough information to overrule what the game has cooked for us.)
+	if (getNumCities() == 0 && iMaxSites > 0 && GC.getGameINLINE().getElapsedGameTurns() == 0 &&
+		m_iStartingX != INVALID_PLOT_COORD && m_iStartingY != INVALID_PLOT_COORD)
+	{
+		m_aiAICitySites.push_back(GC.getMapINLINE().plotNum(m_iStartingX, m_iStartingY));
+		//AI_recalculateFoundValues(m_iStartingX, m_iStartingY, CITY_PLOTS_RADIUS, 2 * CITY_PLOTS_RADIUS);
+		return; // don't bother trying to pick a secondary spot
+	}
+	// K-Mod end
+
 	int iPass = 0;
 	while (iPass < iMaxSites)
 	{
