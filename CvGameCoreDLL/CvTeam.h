@@ -142,6 +142,7 @@ public:
 	PlayerTypes getSecretaryID() const;																									// Exposed to Python
 	HandicapTypes getHandicapType() const;																							// Exposed to Python
 	DllExport CvWString getName() const;																								// Exposed to Python
+	CvWString getReplayName() const; // K-Mod
 
 	DllExport int getNumMembers() const;																								// Exposed to Python
 	void changeNumMembers(int iChange);
