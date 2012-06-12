@@ -1144,28 +1144,12 @@ bool CvTeam::canChangeWarPeace(TeamTypes eTeam, bool bAllowVassal) const
 	return true;
 }
 
-
+// K-Mod, I've removed the bulk of this function and replaced it with just a call to "canEventuallyDeclareWar",
+// which contains all of the original checks. I've done this to reduce code dupliation.
 bool CvTeam::canDeclareWar(TeamTypes eTeam) const
 {
-	if (eTeam == getID())
-	{
+	if (!canEventuallyDeclareWar(eTeam))
 		return false;
-	}
-
-	if (!(isAlive()) || !(GET_TEAM(eTeam).isAlive()))
-	{
-		return false;
-	}
-
-	if (isAtWar(eTeam))
-	{
-		return false;
-	}
-
-	if (!isHasMet(eTeam))
-	{
-		return false;
-	}
 
 	if (isForcePeace(eTeam))
 	{
@@ -1183,47 +1167,10 @@ bool CvTeam::canDeclareWar(TeamTypes eTeam) const
 		}
 	}
 
-	if (!canChangeWarPeace(eTeam, true))
-	{
-		return false;
-	}
-
-	if (GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE))
-	{
-		return false;
-	}
-
-	if(GC.getUSE_CAN_DECLARE_WAR_CALLBACK())
-	{
-		CyArgsList argsList;
-		argsList.add(getID());	// Team ID
-		argsList.add(eTeam);	// pass in city class
-		long lResult=0;
-		gDLL->getPythonIFace()->callFunction(PYGameModule, "canDeclareWar", argsList.makeFunctionArgs(), &lResult);
-
-		if (lResult == 0)
-		{
-			return false;
-		}
-	}
-
 	return true;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/16/10                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-/// \brief Version of canDeclareWar which ignores temporary peace treaties.
-///
-/// This function is for AIs considering who to start war preparations against, so they're future
-/// plans aren't unnecessarily affected by current conditions.
-///
-/// Could not change definition of canDeclareWar, some sporadic crash-inducing compatibility issue
-/// with the DLL it seems.  Lost a lot of time tracking down the source of the crash, it really is 
-/// just from adding bool bWhatever = false to canDeclareWar in CvTeam.h.  So, that's why there's 
-/// this overlapping second function.
+// bbai
 bool CvTeam::canEventuallyDeclareWar(TeamTypes eTeam) const
 {
 	if (eTeam == getID())
@@ -1272,12 +1219,9 @@ bool CvTeam::canEventuallyDeclareWar(TeamTypes eTeam) const
 
 	return true;
 }
-
+// bbai end
 
 void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, bool bCancelPacts)
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 {
 	PROFILE_FUNC();
 
@@ -3757,6 +3701,7 @@ void CvTeam::changeStolenVisibilityTimer(TeamTypes eIndex, int iChange)
 }
 
 
+// (K-Mod note: units are unhappiness per 100,000 population. ie. 1000 * percent unhappiness.)
 int CvTeam::getWarWeariness(TeamTypes eIndex) const								 
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");

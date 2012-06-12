@@ -3920,7 +3920,12 @@ bool CvPlayerAI::AI_isPrimaryArea(CvArea* pArea) const
 
 int CvPlayerAI::AI_militaryWeight(CvArea* pArea) const
 {
-	return (pArea->getPopulationPerPlayer(getID()) + pArea->getCitiesPerPlayer(getID()) + 1);
+	//return (pArea->getPopulationPerPlayer(getID()) + pArea->getCitiesPerPlayer(getID()) + 1);
+	// K-Mod. If pArea == NULL, count all areas.
+	return pArea
+		? pArea->getPopulationPerPlayer(getID()) + pArea->getCitiesPerPlayer(getID()) + 1
+		: getTotalPopulation() + getNumCities() + 1;
+	// K-Mod end
 }
 
 
@@ -22712,6 +22717,24 @@ int CvPlayerAI::AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeAre
 	return iCount;
 }
 
+// K-Mod. Return the number of city sites that are in a primary area.
+int CvPlayerAI::AI_getNumPrimaryAreaCitySites() const
+{
+	int iCount = 0;
+
+	std::vector<int>::const_iterator it;
+	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
+	{
+		CvPlot* pCitySitePlot = GC.getMapINLINE().plotByIndex((*it));
+		if (AI_isPrimaryArea(pCitySitePlot->area()))
+		{
+			iCount++;
+		}
+	}
+	return iCount;
+}
+// K-Mod end
+
 CvPlot* CvPlayerAI::AI_getCitySite(int iIndex) const
 {
 	FAssert(iIndex < (int)m_aiAICitySites.size());
@@ -22719,41 +22742,9 @@ CvPlot* CvPlayerAI::AI_getCitySite(int iIndex) const
 }
 
 // K-Mod
-// return true if is fair enough for the AI to know there is a city here
-bool CvPlayerAI::AI_deduceCitySite(CvCity* pCity) const
+bool CvPlayerAI::AI_deduceCitySite(const CvCity* pCity) const
 {
-	PROFILE_FUNC();
-
-	if (pCity->isRevealed(getTeam(), false))
-		return true;
-
-	// The rule is this:
-	// if we can see more than n plots of the nth culture ring, we can deduce where the city is.
-
-	int iPoints = 0;
-	int iLevel = pCity->getCultureLevel();
-
-	for (int iDX = -iLevel; iDX <= iLevel; iDX++)
-	{
-		for (int iDY = -iLevel; iDY <= iLevel; iDY++)
-		{
-			int iDist = pCity->cultureDistance(iDX, iDY);
-			if (iDist > iLevel)
-				continue;
-
-			CvPlot* pLoopPlot = plotXY(pCity->getX_INLINE(), pCity->getY_INLINE(), iDX, iDY);
-
-			if (pLoopPlot && pLoopPlot->getRevealedOwner(getTeam(), false) == pCity->getOwnerINLINE())
-			{
-				// if multiple cities have their plot in their range, then that will make it harder to deduce the precise city location.
-				iPoints += 1 + std::max(0, iLevel - iDist - pLoopPlot->getNumCultureRangeCities(pCity->getOwnerINLINE())+1);
-
-				if (iPoints > iLevel)
-					return true;
-			}
-		}
-	}
-	return false;
+	return GET_TEAM(getTeam()).AI_deduceCitySite(pCity);
 }
 
 // K-Mod. This function is essentially a merged version of two original bts functions: CvPlayer::countPotentialForeignTradeCities and CvPlayer::countPotentialForeignTradeCitiesConnected.

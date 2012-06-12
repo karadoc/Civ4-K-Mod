@@ -306,6 +306,44 @@ int CvTeamAI::AI_countMilitaryWeight(CvArea* pArea) const
 	return iCount;
 }
 
+// K-Mod end
+// return true if is fair enough for the AI to know there is a city here
+bool CvTeamAI::AI_deduceCitySite(const CvCity* pCity) const
+{
+	PROFILE_FUNC();
+
+	if (pCity->isRevealed(getID(), false))
+		return true;
+
+	// The rule is this:
+	// if we can see more than n plots of the nth culture ring, we can deduce where the city is.
+
+	int iPoints = 0;
+	int iLevel = pCity->getCultureLevel();
+
+	for (int iDX = -iLevel; iDX <= iLevel; iDX++)
+	{
+		for (int iDY = -iLevel; iDY <= iLevel; iDY++)
+		{
+			int iDist = pCity->cultureDistance(iDX, iDY);
+			if (iDist > iLevel)
+				continue;
+
+			CvPlot* pLoopPlot = plotXY(pCity->getX_INLINE(), pCity->getY_INLINE(), iDX, iDY);
+
+			if (pLoopPlot && pLoopPlot->getRevealedOwner(getID(), false) == pCity->getOwnerINLINE())
+			{
+				// if multiple cities have their plot in their range, then that will make it harder to deduce the precise city location.
+				iPoints += 1 + std::max(0, iLevel - iDist - pLoopPlot->getNumCultureRangeCities(pCity->getOwnerINLINE())+1);
+
+				if (iPoints > iLevel)
+					return true;
+			}
+		}
+	}
+	return false;
+}
+// K-Mod end
 
 bool CvTeamAI::AI_isAnyCapitalAreaAlone() const
 {
@@ -372,6 +410,22 @@ bool CvTeamAI::AI_hasCitiesInPrimaryArea(TeamTypes eTeam) const
 	return false;
 }
 
+// K-Mod. Return true if this team and eTeam have at least one primary area in common.
+bool CvTeamAI::AI_hasSharedPrimaryArea(TeamTypes eTeam) const
+{
+	FAssert(eTeam != getID());
+
+	const CvTeamAI& kTeam = GET_TEAM(eTeam);
+
+	int iLoop;
+	for(CvArea* pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
+	{
+		if (AI_isPrimaryArea(pLoopArea) && kTeam.AI_isPrimaryArea(pLoopArea))
+			return true;
+	}
+	return false;
+}
+// K-Mod end
 
 AreaAITypes CvTeamAI::AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal) const
 {
@@ -828,6 +882,32 @@ int CvTeamAI::AI_calculateCapitalProximity(TeamTypes eTeam) const
 	return 0;
 }
 
+// K-Mod. Return true if we can deduce the location of at least 'iMiniumum' cities belonging to eTeam.
+bool CvTeamAI::AI_haveSeenCities(TeamTypes eTeam, bool bPrimaryAreaOnly, int iMinimum) const
+{
+	int iCount = 0;
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	{
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
+		if (kLoopPlayer.getTeam() == eTeam)
+		{
+			int iLoop;
+			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
+			{
+				if (AI_deduceCitySite(pLoopCity))
+				{
+					if (!bPrimaryAreaOnly || AI_isPrimaryArea(pLoopCity->area()))
+					{
+						if (++iCount >= iMinimum)
+							return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+// K-Mod end
 
 bool CvTeamAI::AI_isWarPossible() const
 {

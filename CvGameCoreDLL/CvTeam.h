@@ -49,16 +49,9 @@ public:
 
 	bool canChangeWarPeace(TeamTypes eTeam, bool bAllowVassal = false) const;																			// Exposed to Python
 	DllExport bool canDeclareWar(TeamTypes eTeam) const;																// Exposed to Python
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/16/10                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-	bool canEventuallyDeclareWar(TeamTypes eTeam) const;
-	DllExport void declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, bool bCancelPacts = true);										// Exposed to Python
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	bool canEventuallyDeclareWar(TeamTypes eTeam) const; // bbai
+	//DllExport void declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan); // Exposed to Python
+	void declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, bool bCancelPacts = true); // bbai, Exposed to Python
 	DllExport void makePeace(TeamTypes eTeam, bool bBumpUnits = true);																		// Exposed to Python
 	//bool canContact(TeamTypes eTeam) const; // Exposed to Python
 	bool canContact(TeamTypes eTeam, bool bCheckWillingness = false) const; // K-Mod, Exposed to Python

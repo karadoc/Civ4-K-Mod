@@ -392,14 +392,15 @@ public:
 
 	void AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites);
 	void AI_invalidateCitySites(int iMinFoundValueThreshold);
+
+	int AI_getNumCitySites() const;
 	bool AI_isPlotCitySite(CvPlot* pPlot) const;
 	int AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const;
 	int AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeArea, int& iBestValue) const;
-
-	int AI_getNumCitySites() const;
+	int AI_getNumPrimaryAreaCitySites() const; // K-Mod
 	CvPlot* AI_getCitySite(int iIndex) const;
 
-	bool AI_deduceCitySite(CvCity* pCity) const; // K-Mod
+	bool AI_deduceCitySite(const CvCity* pCity) const; // K-Mod
 	int AI_countPotentialForeignTradeCities(bool bCheckConnected = true, bool bCheckForeignTradePolicy = true, CvArea* pIgnoreArea = 0) const; // K-Mod
 
 	int AI_bestAreaUnitAIValue(UnitAITypes eUnitAI, CvArea* pArea, UnitTypes* peBestUnitType = NULL) const;
@@ -422,6 +423,9 @@ public:
 
 	int AI_getPlotAirbaseValue(CvPlot* pPlot) const;
 	int AI_getPlotCanalValue(CvPlot* pPlot) const;
+
+	int AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent=false) const;
+	int AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent=false) const;
 
 	bool AI_isPlotThreatened(CvPlot* pPlot, int iRange = -1, bool bTestMoves = true) const;
 
@@ -542,9 +546,6 @@ protected:
 	inline int AI_getStrategyHash() const { return m_iStrategyHash; }
 	void AI_updateStrategyHash();
 	void AI_calculateAverages();
-
-	int AI_getHappinessWeight(int iHappy, int iExtraPop, bool bPercent=false) const;
-	int AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent=false) const;
 
 	void AI_convertUnitAITypesForCrush();
 	int AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTriggeredData) const;

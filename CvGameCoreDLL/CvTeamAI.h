@@ -45,9 +45,12 @@ public:
 	int AI_countFinancialTrouble() const;
 	int AI_countMilitaryWeight(CvArea* pArea) const;
 
+	bool AI_deduceCitySite(const CvCity* pCity) const; // K-Mod
+
 	bool AI_isAnyCapitalAreaAlone() const;
 	bool AI_isPrimaryArea(CvArea* pArea) const;
 	bool AI_hasCitiesInPrimaryArea(TeamTypes eTeam) const;
+	bool AI_hasSharedPrimaryArea(TeamTypes eTeam) const; // K-Mod
 	AreaAITypes AI_calculateAreaAIType(CvArea* pArea, bool bPreparingTotal = false) const;
 
 	int AI_calculateAdjacentLandPlots(TeamTypes eTeam) const;
@@ -63,16 +66,10 @@ public:
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
+	bool AI_haveSeenCities(TeamTypes eTeam, bool bPrimaryAreaOnly = false, int iMinimum = 1) const; // K-Mod
 	bool AI_isWarPossible() const;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/12/10                         Fuyu & jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-	bool AI_isLandTarget(TeamTypes eTeam, bool bNeighborsOnly = false) const;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	//bool AI_isLandTarget(TeamTypes eTeam) const;
+	bool AI_isLandTarget(TeamTypes eTeam, bool bNeighborsOnly = false) const; // bbai
 	bool AI_isAllyLandTarget(TeamTypes eTeam) const;
 	bool AI_shareWar(TeamTypes eTeam) const;
 
