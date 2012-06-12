@@ -129,6 +129,7 @@ public:
 	int AI_countNumImprovableBonuses( bool bIncludeNeutral, TechTypes eExtraTech = NO_TECH, bool bLand = true, bool bWater = false ); // BBAI
 
 	int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance);
+	int AI_highestTeamCloseness(TeamTypes eTeam); // K-Mod
 	bool AI_isFrontlineCity() const; // K-Mod
 	int AI_cityThreat(bool bDangerPercent = false);
 

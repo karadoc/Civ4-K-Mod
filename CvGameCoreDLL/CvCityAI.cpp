@@ -11878,6 +11878,22 @@ int CvCityAI::AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance)
 	return m_aiPlayerCloseness[eIndex];	
 }
 
+// K-Mod
+int CvCityAI::AI_highestTeamCloseness(TeamTypes eTeam)
+{
+	int iCloseness = -1;
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		if (GET_PLAYER(i).getTeam() == eTeam)
+		{
+			iCloseness = std::max(iCloseness, AI_playerCloseness(i, DEFAULT_PLAYER_CLOSENESS));
+		}
+	}
+
+	return iCloseness;
+}
+// K-Mod end
+
 void CvCityAI::AI_cachePlayerCloseness(int iMaxDistance)
 {
 	PROFILE_FUNC();

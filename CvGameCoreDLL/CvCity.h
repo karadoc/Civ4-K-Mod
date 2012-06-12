@@ -1059,6 +1059,7 @@ public:
 	virtual int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true) = 0;
 	virtual int AI_yieldMultiplier(YieldTypes eYield) const = 0;
 	virtual int AI_playerCloseness(PlayerTypes eIndex, int iMaxDistance = 7) = 0;
+	virtual int AI_highestTeamCloseness(TeamTypes eTeam) = 0; // K-Mod
 	virtual int AI_cityThreat(bool bDangerPercent = false) = 0;
 	virtual BuildingTypes AI_bestAdvancedStartBuilding(int iPass) = 0;
 	
