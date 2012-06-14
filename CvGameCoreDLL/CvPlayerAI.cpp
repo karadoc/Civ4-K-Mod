@@ -7582,35 +7582,35 @@ int CvPlayerAI::AI_calculateStolenCityRadiusPlots(PlayerTypes ePlayer) const
 
 int CvPlayerAI::AI_getCloseBordersAttitude(PlayerTypes ePlayer) const
 {
+	const CvTeamAI& kOurTeam = GET_TEAM(getTeam()); // K-Mod
+	TeamTypes eTheirTeam = GET_PLAYER(ePlayer).getTeam(); // K-Mod
+
 	if (m_aiCloseBordersAttitudeCache[ePlayer] == MAX_INT)
 	{
 		PROFILE_FUNC();
 		int iPercent;
 
-		if (getTeam() == GET_PLAYER(ePlayer).getTeam() || GET_TEAM(getTeam()).isVassal(GET_PLAYER(ePlayer).getTeam()) || GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isVassal(getTeam()))
+		if (getTeam() == eTheirTeam || kOurTeam.isVassal(eTheirTeam) || GET_TEAM(eTheirTeam).isVassal(getTeam()))
 		{
 			return 0;
 		}
 
 		iPercent = std::min(60, (AI_calculateStolenCityRadiusPlots(ePlayer) * 3));
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/12/10                                jdog5000      */
-/*                                                                                              */
-/* Bugfix, Victory Strategy AI                                                                  */
-/************************************************************************************************/
-		if (GET_TEAM(getTeam()).AI_isLandTarget(GET_PLAYER(ePlayer).getTeam(), true))
+		//if (GET_TEAM(getTeam()).AI_isLandTarget(GET_PLAYER(ePlayer).getTeam()))
+		// K-Mod. I've rewritten AI_isLandTarget. The condition I'm using here is equivalent to the original function.
+		if (kOurTeam.AI_hasCitiesInPrimaryArea(eTheirTeam) && kOurTeam.AI_calculateAdjacentLandPlots(eTheirTeam) >= 8)
+		// K-Mod end
 		{
 			iPercent += 40;
 		}
 
+		// bbai
 		if( AI_isDoStrategy(AI_VICTORY_CONQUEST3) )
 		{
 			iPercent = std::min( 120, (3 * iPercent)/2 );
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		// bbai end
 
 		m_aiCloseBordersAttitudeCache[ePlayer] = ((GC.getLeaderHeadInfo(getPersonalityType()).getCloseBordersAttitudeChange() * iPercent) / 100);
 	}

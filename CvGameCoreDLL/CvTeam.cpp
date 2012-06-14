@@ -4537,7 +4537,8 @@ void CvTeam::freeVassal(TeamTypes eVassal) const
 
 bool CvTeam::isCapitulated() const
 {
-	FAssert(isAVassal());
+	//FAssert(isAVassal());
+	FAssert(!m_bCapitulated || isAVassal()); // K-Mod
 
 	return m_bCapitulated;
 }

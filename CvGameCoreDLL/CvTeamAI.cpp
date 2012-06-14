@@ -15,15 +15,8 @@
 #include "CyArgsList.h"
 #include "CvDLLPythonIFaceBase.h"
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
-#include "BetterBTSAI.h"
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+#include "BetterBTSAI.h" // bbai
+#include "CvDLLFAStarIFaceBase.h" // K-Mod (currently used in AI_isLandTarget)
 
 // statics
 
@@ -306,8 +299,7 @@ int CvTeamAI::AI_countMilitaryWeight(CvArea* pArea) const
 	return iCount;
 }
 
-// K-Mod end
-// return true if is fair enough for the AI to know there is a city here
+// K-Mod. return true if is fair enough for the AI to know there is a city here
 bool CvTeamAI::AI_deduceCitySite(const CvCity* pCity) const
 {
 	PROFILE_FUNC();
@@ -929,49 +921,64 @@ bool CvTeamAI::AI_isWarPossible() const
 	return false;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/12/10                         Fuyu & jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-bool CvTeamAI::AI_isLandTarget(TeamTypes eTeam, bool bNeighborsOnly) const
+// This function has been completely rewritten for K-Mod. The original BtS code, and the BBAI code have been deleted.
+bool CvTeamAI::AI_isLandTarget(TeamTypes eTeam) const
 {
-	if (!AI_hasCitiesInPrimaryArea(eTeam))
+	PROFILE_FUNC();
+	const CvTeamAI& kOtherTeam = GET_TEAM(eTeam);
+
+	int iLoop;
+	for(CvArea* pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
-		return false;
+		if (AI_isPrimaryArea(pLoopArea) && kOtherTeam.AI_isPrimaryArea(pLoopArea))
+			return true;
 	}
 
-	// If shared capital area is largely unclaimed, then we can reach over land
-	int iModifier = 100;
-
-	if( !bNeighborsOnly )
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
 	{
-		for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
+		const CvPlayerAI& kOurPlayer = GET_PLAYER(i);
+		if (kOurPlayer.getTeam() != getID() || !kOurPlayer.isAlive())
+			continue;
+
+		int iL1;
+		for (CvCity* pOurCity = kOurPlayer.firstCity(&iL1); pOurCity; pOurCity = kOurPlayer.nextCity(&iL1))
 		{
-			if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID() && GET_PLAYER((PlayerTypes)iPlayer).getNumCities() > 0 )
+			if (!kOurPlayer.AI_isPrimaryArea(pOurCity->area()))
+				continue;
+			// city in a primary area.
+			for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
 			{
-				CvCity* pCapital = GET_PLAYER((PlayerTypes)iPlayer).getCapitalCity();
-				if( pCapital != NULL )
+				const CvPlayerAI& kTheirPlayer = GET_PLAYER(j);
+				if (kTheirPlayer.getTeam() != eTeam || !kTheirPlayer.isAlive() || !kTheirPlayer.AI_isPrimaryArea(pOurCity->area()))
+					continue;
+
+				std::vector<TeamTypes> teamVec;
+				teamVec.push_back(getID());
+				teamVec.push_back(eTeam);
+				FAStar* pTeamStepFinder = gDLL->getFAStarIFace()->create();
+				gDLL->getFAStarIFace()->Initialize(pTeamStepFinder, GC.getMapINLINE().getGridWidthINLINE(), GC.getMapINLINE().getGridHeightINLINE(), GC.getMapINLINE().isWrapXINLINE(), GC.getMapINLINE().isWrapYINLINE(), stepDestValid, stepHeuristic, stepCost, teamStepValid, stepAdd, NULL, NULL);
+				gDLL->getFAStarIFace()->SetData(pTeamStepFinder, &teamVec);
+
+				int iL2;
+				for (CvCity* pTheirCity = kTheirPlayer.firstCity(&iL2); pTheirCity; pTheirCity = kTheirPlayer.nextCity(&iL2))
 				{
-					if( GET_TEAM(eTeam).AI_isPrimaryArea(pCapital->area()) )
+					if (pTheirCity->area() != pOurCity->area())
+						continue;
+
+
+					if (gDLL->getFAStarIFace()->GeneratePath(pTeamStepFinder, pOurCity->getX_INLINE(), pOurCity->getY_INLINE(), pTheirCity->getX_INLINE(), pTheirCity->getY_INLINE(), false, 0, true))
 					{
-						iModifier *= pCapital->area()->getNumOwnedTiles();
-						iModifier /= pCapital->area()->getNumTiles();
+						// good.
+						gDLL->getFAStarIFace()->destroy(pTeamStepFinder);
+						return true;
 					}
 				}
+				gDLL->getFAStarIFace()->destroy(pTeamStepFinder);
 			}
 		}
 	}
 
-	if (AI_calculateAdjacentLandPlots(eTeam) < range((8 * (iModifier - 40))/40, 0, 8))
-	{
-		return false;
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-	return true;
+	return false;
 }
 
 // this determines if eTeam or any of its allies are land targets of us
@@ -1044,28 +1051,12 @@ AttitudeTypes CvTeamAI::AI_getAttitude(TeamTypes eTeam, bool bForced) const
 					if (GET_PLAYER((PlayerTypes)iJ).isAlive() && iI != iJ)
 					{
 						TeamTypes eTeamLoop = GET_PLAYER((PlayerTypes)iJ).getTeam();
-/*
-** K-Mod, 16/dec/10, karadoc
-** removed attitude averaging between vassals and masters
-*/
-						/* original code
-						if (eTeamLoop == eTeam || GET_TEAM(eTeamLoop).isVassal(eTeam) || GET_TEAM(eTeam).isVassal(eTeamLoop))
-						*/
-						if (eTeamLoop == eTeam)
-// K-Mod end
+
+						//if (eTeamLoop == eTeam || GET_TEAM(eTeamLoop).isVassal(eTeam) || GET_TEAM(eTeam).isVassal(eTeamLoop))
+						if (eTeamLoop == eTeam) // K-Mod. Removed attitude averaging between vassals and masters
 						{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/25/09                                jdog5000      */
-/*                                                                                              */
-/* Diplomacy AI                                                                                 */
-/************************************************************************************************/
-/*
-							iAttitude += GET_PLAYER((PlayerTypes)iI).AI_getAttitude((PlayerTypes)iJ, bForced);
-*/
-							iAttitude += GET_PLAYER((PlayerTypes)iI).AI_getAttitudeVal((PlayerTypes)iJ, bForced);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+							//iAttitude += GET_PLAYER((PlayerTypes)iI).AI_getAttitude((PlayerTypes)iJ, bForced);
+							iAttitude += GET_PLAYER((PlayerTypes)iI).AI_getAttitudeVal((PlayerTypes)iJ, bForced); // bbai. Average values rather than attitudes directly.
 							iCount++;
 						}
 					}
@@ -1076,20 +1067,8 @@ AttitudeTypes CvTeamAI::AI_getAttitude(TeamTypes eTeam, bool bForced) const
 
 	if (iCount > 0)
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/25/09                                jdog5000      */
-/*                                                                                              */
-/* Diplomacy AI                                                                                 */
-/************************************************************************************************/
-/*
-		return ((AttitudeTypes)(iAttitude / iCount));
-*/
-		// This function is the same for all players, regardless of leader or whatever
-		// so it's fine to use it for the team's attitude
-		return GET_PLAYER(getLeaderID()).AI_getAttitudeFromValue(iAttitude/iCount);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		// return ((AttitudeTypes)(iAttitude / iCount));
+		return CvPlayerAI::AI_getAttitudeFromValue(iAttitude/iCount); // bbai / K-Mod
 	}
 
 	return ATTITUDE_CAUTIOUS;
@@ -1981,7 +1960,7 @@ DenialTypes CvTeamAI::AI_vassalTrade(TeamTypes eTeam) const
 		}
 	}
 
-	// K-Mod. code moded from AI_surrenderTrade. (see the comments there)
+	// K-Mod. code moved from AI_surrenderTrade. (see the comments there)
 	for (int iLoopTeam = 0; iLoopTeam < MAX_TEAMS; iLoopTeam++)
 	{
 		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iLoopTeam);
@@ -2063,18 +2042,10 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 		}
 	} */
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      12/07/09                                jdog5000      */
-/*                                                                                              */
-/* Diplomacy                                                                                    */
-/************************************************************************************************/
 	if (isHuman() && kMasterTeam.isHuman())
 	{
 		return NO_DENIAL;
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	int iAttitudeModifier = 0;
 
@@ -2111,7 +2082,7 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 			CvTeam& kTeam = GET_TEAM((TeamTypes) iI);
 			if (kTeam.isAlive() && !(kTeam.isMinorCiv()))
 			{
-				if( kTeam.isAVassal() && kTeam.isCapitulated() )
+				if (kTeam.isCapitulated())
 				{
 					// Count capitulated vassals as a fractional add to their master's power
 					iTotalPower += (2*kTeam.getPower(false))/5;
