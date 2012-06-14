@@ -12068,7 +12068,6 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 	else
 	{
 		iMaxUnitSpending += bTotalWar ? 30 + iBuildProb*2/3 : 0;
-		iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 10 + AI_getFlavorValue(FLAVOR_MILITARY) : 0;
 		if (pArea)
 		{
 			switch (pArea->getAreaAIType(getTeam()))
@@ -12098,6 +12097,9 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 				break;
 
 			case AREAAI_NEUTRAL:
+				// think of 'dagger' as being prep for total war.
+				FAssert(!bTotalWar);
+				iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 30 + iBuildProb*2/3 : 0;
 				break;
 			default:
 				FAssert(false);
@@ -12105,7 +12107,13 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 		}
 		else
 		{
-			iMaxUnitSpending += GET_TEAM(getTeam()).getAnyWarPlanCount(true) ? 55 : 0;
+			if (GET_TEAM(getTeam()).getAnyWarPlanCount(true))
+				iMaxUnitSpending += 55;
+			else
+			{
+				FAssert(!bTotalWar);
+				iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 30 + iBuildProb*2/3 : 0;
+			}
 		}
 	}
 	return iMaxUnitSpending;

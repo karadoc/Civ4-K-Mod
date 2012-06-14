@@ -2841,7 +2841,7 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 				iWarWearinessPercentAnger = GET_PLAYER((PlayerTypes)iI).getModifiedWarWearinessPercentAnger(iWarWearinessPercentAnger);
 
 				// Significant war weariness from eSurrenderTeam, 1000 = 100%
-				if( iWarWearinessPercentAnger > 50 )
+				if( iWarWearinessPercentAnger > 100 ) // was 50 (K-Mod. And note, this isn't really "percent")
 				{
 					if( GET_PLAYER((PlayerTypes)iI).getWarWearinessPercentAnger() > iWearinessThreshold )
 					{
