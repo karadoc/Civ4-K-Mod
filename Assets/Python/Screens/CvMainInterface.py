@@ -5089,7 +5089,7 @@ class CvMainInterface:
 # BUG - Dead Civs - end
 # BUG - Power Rating - start
 												# if on, show according to espionage "see demographics" mission
-												if bShowPower and gc.getGame().getActivePlayer() != ePlayer and gc.getActivePlayer().canSeeDemographics(ePlayer): # K-Mod (original BUG condition deleted)
+												if bShowPower and gc.getGame().getActivePlayer() != ePlayer and (gc.getGame().isDebugMode() or gc.getActivePlayer().canSeeDemographics(ePlayer)): # K-Mod (original BUG condition deleted)
 													iPower = gc.getPlayer(ePlayer).getPower()
 													if (iPower > 0): # avoid divide by zero
 														fPowerRatio = float(iPlayerPower) / float(iPower)
@@ -5150,7 +5150,10 @@ class CvMainInterface:
 													# else:
 														# szTempBuffer = BugUtil.colorText(u"%d" % PlayerUtil.getNumRevealedCities(ePlayer), "COLOR_CYAN")
 													# K-Mod. count revealed cities only.
-													szTempBuffer = u"%d" % PlayerUtil.getNumRevealedCities(ePlayer)
+													if gc.getGame().isDebugMode():
+														szTempBuffer = u"%d" % gc.getPlayer(ePlayer).getNumCities()
+													else:
+														szTempBuffer = u"%d" % PlayerUtil.getNumRevealedCities(ePlayer)
 													# K-Mod end
 													szBuffer = szBuffer + " " + szTempBuffer
 													if (bAlignIcons):
