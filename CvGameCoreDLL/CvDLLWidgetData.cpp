@@ -3816,7 +3816,7 @@ void CvDLLWidgetData::parseScoreboardCheatText(CvWidgetDataStruct &widgetDataStr
 				GAMETEXT.getWarplanString(szWarplan, eWarPlan);
 				szBuffer.append(CvWString::format(SETCOLR L" %s (%d) with %s\n" ENDCOLR, TEXT_COLOR("COLOR_NEGATIVE_TEXT"),
 					szWarplan.getCString(), 
-					kTeam.AI_startWarVal(eLoopTeam), 
+					kTeam.AI_startWarVal(eLoopTeam, eWarPlan), 
 					kLoopTeam.getName().GetCString()));
 
 			}
@@ -4089,7 +4089,7 @@ void CvDLLWidgetData::parseScoreboardCheatText(CvWidgetDataStruct &widgetDataStr
 					aStartWarInfo[iTeamIndex].iStartWarValue = 0;
 					if (aStartWarInfo[iTeamIndex].iPossibleMaxWarPass < MAX_INT || aStartWarInfo[iTeamIndex].bPossibleLimitedWar || aStartWarInfo[iTeamIndex].bPossibleDogpileWar)
 					{
-						aStartWarInfo[iTeamIndex].iStartWarValue = kTeam.AI_startWarVal(eLoopTeam);
+						aStartWarInfo[iTeamIndex].iStartWarValue = kTeam.AI_startWarVal(eLoopTeam, WARPLAN_TOTAL);
 					}
 				}
 			}

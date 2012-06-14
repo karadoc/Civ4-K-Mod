@@ -78,7 +78,14 @@ public:
 
 	int AI_chooseElection(const VoteSelectionData& kVoteSelectionData) const;
 
-	int AI_startWarVal(TeamTypes eTeam) const;
+	// K-Mod
+	int AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const;
+	int AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) const;
+	int AI_warDiplomacyCost(TeamTypes eTarget) const;
+	// K-Mod end
+
+	//int AI_startWarVal(TeamTypes eTeam) const;
+	int AI_startWarVal(TeamTypes eTarget, WarPlanTypes ePlan) const; // K-Mod
 	int AI_endWarVal(TeamTypes eTeam) const;
 
 	int CvTeamAI::AI_knownTechValModifier(TechTypes eTech) const; // K-Mod
