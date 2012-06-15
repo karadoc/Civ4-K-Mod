@@ -9597,7 +9597,7 @@ bool CvPlot::shouldUsePlotBuilder()
 	return false;
 }
 
-
+/* This function has been disabled by K-Mod, because it doesn't work correctly and so using it is just a magnet for bugs.
 int CvPlot::calculateMaxYield(YieldTypes eYield) const
 {
 	if (getTerrainType() == NO_TERRAIN)
@@ -9655,7 +9655,7 @@ int CvPlot::calculateMaxYield(YieldTypes eYield) const
 	}
 
 	return iMaxYield;
-}
+} */
 
 int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUpgrade) const
 {

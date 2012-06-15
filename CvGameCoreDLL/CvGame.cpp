@@ -1489,11 +1489,25 @@ void CvGame::normalizeAddFoodBonuses()
 									else
 									{
 										//iFoodBonus += 3;
+
 										// K-Mod. Bonus which only give 3 food with their improvement should not be worth 3 points. (ie. plains-cow should not be the only food resource.)
+										/* first attempt - this doesn't work, because "max yield" essentially means +2 food on any plot. That isn't what we want.
 										if (pLoopPlot->calculateMaxYield(YIELD_FOOD) >= 2*iFoodPerPop) // ie. >= 4
 											iFoodBonus += 3;
 										else
-											iFoodBonus += 2;
+											iFoodBonus += 2; */
+										int iNaturalFood = pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam());
+										int iHighFoodThreshold = 2*iFoodPerPop; // ie. 4 food.
+										bool bHighFood = iNaturalFood + 1 >= iHighFoodThreshold; // (+1 just as a shortcut to save time for obvious cases.)
+
+										for (ImprovementTypes eImp = (ImprovementTypes)0; !bHighFood && eImp < GC.getNumImprovementInfos(); eImp=(ImprovementTypes)(eImp+1))
+										{
+											if (GC.getImprovementInfo(eImp).isImprovementBonusTrade(eBonus))
+											{
+												bHighFood = iNaturalFood + pLoopPlot->calculateImprovementYieldChange(eImp, YIELD_FOOD, (PlayerTypes)iI, false, false) >= iHighFoodThreshold;
+											}
+										}
+										iFoodBonus += bHighFood ? 3 : 2;
 										// K-Mod end
 									}
 								}
