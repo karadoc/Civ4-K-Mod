@@ -17,6 +17,7 @@
 
 #include "BetterBTSAI.h" // bbai
 #include "CvDLLFAStarIFaceBase.h" // K-Mod (currently used in AI_isLandTarget)
+#include <numeric> // K-Mod. used in AI_warSpoilsValue
 
 // statics
 
@@ -298,6 +299,54 @@ int CvTeamAI::AI_countMilitaryWeight(CvArea* pArea) const
 
 	return iCount;
 }
+
+// K-Mod. return the total production of the team, estimated by averaging over the last few turns of the productivity graph.
+int CvTeamAI::AI_estimateTotalYieldRate(YieldTypes eYield) const
+{
+	PROFILE_FUNC();
+	const int iSampleSize = 5;
+	// number of turns to use in weighted average.
+	// Ignore turns with 0 production, because they are probably a revolt. Bias towards most recent turns.
+	const int iTurn = GC.getGameINLINE().getGameTurn();
+
+	int iTotal = 0;
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	{
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
+		if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
+		{
+			int iSubTotal = 0;
+			int iBase = 0;
+			for (int i = 0; i < iSampleSize; i++)
+			{
+				int p = 0;
+				switch (eYield)
+				{
+				case YIELD_PRODUCTION:
+					p = kLoopPlayer.getIndustryHistory(iTurn - (i+1));
+					break;
+				case YIELD_COMMERCE:
+					p = kLoopPlayer.getEconomyHistory(iTurn - (i+1));
+					break;
+				case YIELD_FOOD:
+					p = kLoopPlayer.getAgricultureHistory(iTurn - (i+1));
+					break;
+				default:
+					FAssertMsg(false, "invalid yield type in AI_estimateTotalYieldRate");
+					break;
+				}
+				if (p > 0)
+				{
+					iSubTotal += (iSampleSize - i) * p;
+					iBase += iSampleSize - i;
+				}
+			}
+			iTotal += iSubTotal / std::max(1, iBase);
+		}
+	}
+	return iTotal;
+}
+// K-Mod end
 
 // K-Mod. return true if is fair enough for the AI to know there is a city here
 bool CvTeamAI::AI_deduceCitySite(const CvCity* pCity) const
@@ -1269,6 +1318,19 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 	int iDeniedValue = 0;
 
 	// Cities & Land
+	int iPopCap = 2 + getTotalPopulation(false) / std::max(1, getNumCities()); // max number of plots to consider the value of.
+	int iYieldMultiplier = 0; // multiplier for the value of plot yields.
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	{
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
+		if (kLoopPlayer.getTeam() != getID() || !kLoopPlayer.isAlive())
+			continue;
+		int iFoodMulti = kLoopPlayer.AI_averageYieldMultiplier(YIELD_FOOD);
+		iYieldMultiplier += kLoopPlayer.AI_averageYieldMultiplier(YIELD_PRODUCTION) * iFoodMulti / 100;
+		iYieldMultiplier += kLoopPlayer.AI_averageYieldMultiplier(YIELD_COMMERCE) * iFoodMulti / 100;
+	}
+	iYieldMultiplier /= std::max(1, 2 * getAliveCount());
+
 	std::set<int> close_areas; // set of area IDs for which the enemy has cities close to ours.
 	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 	{
@@ -1282,13 +1344,14 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 			if (!AI_deduceCitySite(pLoopCity))
 				continue;
 
-			int iCityValue = 2 * pLoopCity->getPopulation();
+			int iCityValue = pLoopCity->getPopulation();
 
 			bool bCoastal = pLoopCity->isCoastal(GC.getMIN_WATER_SIZE_FOR_OCEAN());
 			iCityValue += bCoastal ? 2 : 0;
 
 			// plots
-			for (int i = 0; i < NUM_CITY_PLOTS; i++)
+			std::vector<int> plot_values;
+			for (int i = 1; i < NUM_CITY_PLOTS; i++) // don't count city plot
 			{
 				CvPlot* pLoopPlot = pLoopCity->getCityIndexPlot(i);
 				if (!pLoopPlot || !pLoopPlot->isRevealed(getID(), false) || pLoopPlot->getWorkingCity() != pLoopCity)
@@ -1297,14 +1360,22 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 				if (pLoopPlot->isWater() && !(bCoastal && pLoopPlot->calculateNatureYield(YIELD_FOOD, getID()) >= GC.getFOOD_CONSUMPTION_PER_POPULATION()))
 					continue;
 
-				// very rough, but maybe even this is too slow? We'll see.
-				iCityValue += 1;
-				iCityValue += 2 * pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getID()); // don't ignore floodplains
-				iCityValue += 1 * pLoopPlot->calculateNatureYield(YIELD_PRODUCTION, getID(), true); // ignore forest
-				iCityValue += pLoopPlot->getYield(YIELD_COMMERCE) / 2; // include some value for towns.
+				// This is a very rough estimate of the value of the plot. It's a bit ad-hoc. I'm sorry about that, but I want it to be fast.
+				//BonusTypes eBonus = pLoopPlot->getBonusType(getID());
+				int iPlotValue = 0;
+				iPlotValue += 3 * pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getID()); // don't ignore floodplains
+				iPlotValue += 2 * pLoopPlot->calculateNatureYield(YIELD_PRODUCTION, getID(), true); // ignore forest
+				iPlotValue += GC.getTerrainInfo(pLoopPlot->getTerrainType()).getYield(YIELD_FOOD) >= GC.getFOOD_CONSUMPTION_PER_POPULATION() ? 1 : 0; // bonus for grassland
+				iPlotValue += pLoopPlot->isRiver() ? 1 : 0;
+				if (pLoopPlot->getBonusType(getID()) != NO_BONUS)
+					iPlotValue = iPlotValue * 3/2;
+				iPlotValue += pLoopPlot->getYield(YIELD_COMMERCE) / 2; // include some value for existing towns.
 
-				// consider bonuses later.
+				plot_values.push_back(iPlotValue);
 			}
+			std::partial_sort(plot_values.begin(), plot_values.begin() + std::min(iPopCap, (int)plot_values.size()), plot_values.end(), std::greater<int>());
+			iCityValue = std::accumulate(plot_values.begin(), plot_values.begin() + std::min(iPopCap, (int)plot_values.size()), iCityValue);
+			iCityValue = iCityValue * iYieldMultiplier / 100;
 
 			// holy city value
 			for (ReligionTypes i = (ReligionTypes)0; i < GC.getNumReligionInfos(); i=(ReligionTypes)(i+1))
@@ -1320,7 +1391,8 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 					iCityValue += 2 * GC.getGameINLINE().countCorporationLevels(i);
 			}
 
-			// wonders? (maybe later)
+			// wonders
+			iCityValue += 4 * pLoopCity->getNumActiveWorldWonders();
 
 			// denied
 			iDeniedValue += iCityValue * iDenyFactor / 100;
@@ -1382,7 +1454,8 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 						iMissing++;
 				}
 			}
-			iBonusValue = iBonusValue * getNumCities() * (std::min(100*iMissing, bonuses[i]) + std::max(0, bonuses[i] - 100*iMissing)/10) / std::max(1, 400 * getAliveCount());
+			iBonusValue += GC.getBonusInfo(i).getAIObjective(); // (support for mods.)
+			iBonusValue = iBonusValue * getNumCities() * (std::min(100*iMissing, bonuses[i]) + std::max(0, bonuses[i] - 100*iMissing)/8) / std::max(1, 400 * getAliveCount());
 			//
 			iGainedValue += iBonusValue;
 			// ignore denied value.
@@ -1407,6 +1480,10 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 	iGainedValue *= 75 + 50 * iCloseCities / std::max(1, kTargetTeam.getNumCities());
 	iGainedValue /= 100;
 
+	// amplify the gained value if we are aiming for a conquest or domination victory
+	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION2))
+		iGainedValue = iGainedValue * 4/3;
+
 	// reduce the gained value based on how many other teams are at war with the target
 	// similar to the way the target's strength estimate is reduced.
 	iGainedValue *= 2;
@@ -1417,6 +1494,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 
 int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 {
+	PROFILE_FUNC();
 	// Things to consider:
 	//
 	// risk of losing cities
@@ -1435,76 +1513,93 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 	int iTotalCost = 0;
 
 	// Estimate of military production costs
-	// cf. with code in AI_calculateAreaAIType
 	{
-		int iWarSuccessRating = AI_getWarSuccessRating();
-		int iOurRelativeStrength = 100 * getPower(false) / (AI_countMilitaryWeight(0) + 20);
-		// Sum the relative strength for all enemies, including existing wars and wars with civs attached to the target team.
-		int iEnemyRelativeStrength = 0;
-		int iFreePowerBonus = GC.getUnitInfo(GC.getGameINLINE().getBestLandUnit()).getPowerValue() * 3/2;
-		for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
-		{
-			const CvTeamAI& kLoopTeam = GET_TEAM(i);
-			if (!kLoopTeam.isAlive() || i == getID() || kLoopTeam.isVassal(getID()))
-				continue;
+		// Base commitment for a war of this type.
+		int iCommitmentPerMil = bTotalWar ? 600 : 300;
 
-			// note: this still doesn't count vassal siblings. (ie. if the target is a vassal, this will not count the master's other vassals.)
-			if (isAtWar(i) || i == eTarget || kLoopTeam.isDefensivePact(eTarget) || kLoopTeam.isVassal(eTarget) || kTargetTeam.isVassal(i))
+		// scale based on our current strength relative to our enemies.
+		// cf. with code in AI_calculateAreaAIType
+		{
+			int iWarSuccessRating = isAtWar(eTarget) ? AI_getWarSuccessRating() : 0;
+			int iOurRelativeStrength = 100 * getPower(false) / (AI_countMilitaryWeight(0) + 20);
+			// Sum the relative strength for all enemies, including existing wars and wars with civs attached to the target team.
+			int iEnemyRelativeStrength = 0;
+			int iFreePowerBonus = GC.getUnitInfo(GC.getGameINLINE().getBestLandUnit()).getPowerValue() * 2;
+			for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 			{
-				// the + power is meant to account for the fact that the target may get stronger while we are planning for war - especially early in the game.
-				iEnemyRelativeStrength += 100 * ((isAtWar(i) ? 0 : iFreePowerBonus) + kLoopTeam.getPower(false)) / (((isAtWar(i) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true))*kLoopTeam.AI_countMilitaryWeight(0)/2 + 20);
+				const CvTeamAI& kLoopTeam = GET_TEAM(i);
+				if (!kLoopTeam.isAlive() || i == getID() || kLoopTeam.isVassal(getID()))
+					continue;
+
+				// note: this still doesn't count vassal siblings. (ie. if the target is a vassal, this will not count the master's other vassals.)
+				if (isAtWar(i) || i == eTarget || kLoopTeam.isDefensivePact(eTarget) || kLoopTeam.isVassal(eTarget) || kTargetTeam.isVassal(i))
+				{
+					// the + power is meant to account for the fact that the target may get stronger while we are planning for war - especially early in the game.
+					iEnemyRelativeStrength += 100 * ((isAtWar(i) ? 0 : iFreePowerBonus) + kLoopTeam.getPower(false)) / (((isAtWar(i) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true))*kLoopTeam.AI_countMilitaryWeight(0)/2 + 20);
+				}
 			}
+			//
+
+			iCommitmentPerMil = iCommitmentPerMil * (100 * iEnemyRelativeStrength) / std::max(1, iOurRelativeStrength * (100+iWarSuccessRating/2));
 		}
-		//
 
-		int iDeficitPerMil = (bTotalWar ? 140 : 110) * iEnemyRelativeStrength - (100+iWarSuccessRating/2) * iOurRelativeStrength;
-		iDeficitPerMil = 4 * 20 * iDeficitPerMil / (iOurRelativeStrength + iEnemyRelativeStrength);
-		iDeficitPerMil += bTotalWar ? 250 : 150;
-		if (iDeficitPerMil > 0)
+		// scale based on the relative size of our civilizations.
+		int iOurProduction = AI_estimateTotalYieldRate(YIELD_PRODUCTION);
+		int iTheirProduction = kTargetTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION);
+		iCommitmentPerMil *= 5 * iTheirProduction + iOurProduction;
+		iCommitmentPerMil /= std::max(1, iTheirProduction + 5 * iOurProduction);
+
+		// scale based on the relative strengths of our units
+		int iEnemyScale = 30 + std::max(30, std::max(kTargetTeam.getTypicalUnitValue(UNITAI_ATTACK), kTargetTeam.getTypicalUnitValue(UNITAI_CITY_DEFENSE)));
+		int iOurAttackUnit = std::max(30, getTypicalUnitValue(UNITAI_ATTACK));
+		int iOurDefenceUnit = std::max(30, getTypicalUnitValue(UNITAI_CITY_DEFENSE));
+		int iHighScale = 40 + std::max(iOurAttackUnit, iOurDefenceUnit);
+		int iLowScale = 30 + std::min(iOurAttackUnit, iOurDefenceUnit);
+
+		iCommitmentPerMil = std::min(iCommitmentPerMil, 300) * iEnemyScale / iHighScale + std::max(0, iCommitmentPerMil - 300) * iEnemyScale / iLowScale;
+
+		// Scale up for distant wars
+		if (bTotalWar && !AI_hasSharedPrimaryArea(eTarget))
+			iCommitmentPerMil = iCommitmentPerMil * 4/3;
+
+		if (AI_teamCloseness(eTarget) == 0)
 		{
-			// Scale the deficit by the relative strengths of our units
-			int iEnemyScale = 40 + std::max(30, std::max(kTargetTeam.getTypicalUnitValue(UNITAI_ATTACK), kTargetTeam.getTypicalUnitValue(UNITAI_CITY_DEFENSE)));
-			int iOurAttackUnit = std::max(30, getTypicalUnitValue(UNITAI_ATTACK));
-			int iOurDefenceUnit = std::max(30, getTypicalUnitValue(UNITAI_CITY_DEFENSE));
-			int iHighScale = 60 + std::max(iOurAttackUnit, iOurDefenceUnit);
-			int iLowScale = 40 + std::min(iOurAttackUnit, iOurDefenceUnit);
+			// especially in the early game.
+			if (getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() * getAliveCount())
+				iCommitmentPerMil *= 2;
+			else
+				iCommitmentPerMil = iCommitmentPerMil * 5/4;
+		}
 
-			iDeficitPerMil = std::min(iDeficitPerMil, 300) * iEnemyScale / iHighScale + std::max(0, iDeficitPerMil - 300) * iEnemyScale / iLowScale;
+		// iCommitmentPerMil will be multiplied by a rough estimate of the total resources this team could devote to war.
+		int iCommitmentPool = iOurProduction * 5/2 + AI_estimateTotalYieldRate(YIELD_COMMERCE); // cf. AI_yieldWeight
+		// Note: it would probably be good to take into account the expected increase in unit spending - but that's a bit tricky.
 
-			// Scale the deficit by the relative size of our civilizations.
-			iDeficitPerMil = iDeficitPerMil * (kTargetTeam.AI_countMilitaryWeight(0) + 20) / (AI_countMilitaryWeight(0) + 20);
-
-			// Scale up for distant wars
-			if (bTotalWar && !AI_hasSharedPrimaryArea(eTarget))
-				iDeficitPerMil = iDeficitPerMil * 4/3;
-
-			if (AI_teamCloseness(eTarget) == 0)
-				iDeficitPerMil = iDeficitPerMil * 5/4;
-
-			// deficit will be multiplied by a (very rough and somewhat arbitary) estimate of what our citizen's time is worth.
-			int iCitizenValue = 0;
+		// sometimes are resources are more in demand than other times...
+		{
+			int iPoolMultiplier = 0;
 			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 			{
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 				if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
 				{
+					iPoolMultiplier += 100;
 					// increase value if we are still trying to expand peacefully
-					iCitizenValue += 8;
 					int iSites = kLoopPlayer.AI_getNumPrimaryAreaCitySites(); // note, there's a small cap on the number of sites, around 3.
 					if (iSites > 0)
 					{
-						iCitizenValue += (6 + 4 * range(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() - kLoopPlayer.getNumCities(), 0, iSites))/(bTotalWar ? 2 : 1);
+						iPoolMultiplier += (50 + 50 * range(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() - kLoopPlayer.getNumCities(), 0, iSites))/(bTotalWar ? 2 : 1);
 					}
 				}
 			}
-			iCitizenValue /= std::max(1, getAliveCount());
-			//
-
-			if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4) || AI_getLowestVictoryCountdown() >= 0)
-				iCitizenValue *= 2;
-
-			iTotalCost += iDeficitPerMil * getTotalPopulation(false) * iCitizenValue / 1000;
+			iPoolMultiplier /= std::max(1, getAliveCount());
+			iCommitmentPool = iCommitmentPool * iPoolMultiplier / 100;
 		}
+
+		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4) || AI_getLowestVictoryCountdown() >= 0)
+			iCommitmentPool *= 2;
+
+		iTotalCost += iCommitmentPerMil * iCommitmentPool / 1000;
 	}
 
 	// war weariness
@@ -1584,13 +1679,15 @@ int CvTeamAI::AI_warDiplomacyCost(TeamTypes eTarget) const
 			iDiploWeight /= 2;
 		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3))
 			iDiploWeight /= 2;
+		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_DIPLOMACY4))
+			iDiploWeight += 50;
 
 		iDiploCost *= iDiploWeight;
 		iDiploCost /= 100;
 	}
 
 	// finally, some strange rescaling so that this diplomacy stuff doesn't get huge on huge maps.
-	iDiploCost *= getTotalPopulation() + kTargetTeam.getTotalPopulation();
+	iDiploCost *= getTotalPopulation(false) + kTargetTeam.getTotalPopulation(false);
 	iDiploCost /= std::max(1, iDiploPopulation);
 
 	return iDiploCost;

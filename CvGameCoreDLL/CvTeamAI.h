@@ -45,6 +45,8 @@ public:
 	int AI_countFinancialTrouble() const;
 	int AI_countMilitaryWeight(CvArea* pArea) const;
 
+	int AI_estimateTotalYieldRate(YieldTypes eYield) const; // K-Mod
+
 	bool AI_deduceCitySite(const CvCity* pCity) const; // K-Mod
 
 	bool AI_isAnyCapitalAreaAlone() const;
