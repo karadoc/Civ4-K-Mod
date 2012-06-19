@@ -1,6 +1,37 @@
-This is K-Mod version 1.30.
+This is K-Mod version 1.31.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.31 changelist
+
+Game / UI
+
++ Fixed an original BtS bug which caused pitboss servers to crash whenever a player launched a spaceship.
++ Fixed an original BtS pitboss OOS bug which was triggered when an attack animation included a siege tower.
++ Fixed several bugs which caused the pitboss server to attempt to access unallocated memory. (There were bugs like this in the original BtS code, and K-Mod code, and BUG code.)
++ Changed the default Field of View settings so a dynamic value which scales with the size of the player's monitor.
++ Removed the city-screen field of view switching. It didn't work correctly, and I don't think we need it anyway.
++ Fixed a bug which essentially negated my previous bugfix for the 'plains cow' problem with starting positions.
++ The starting site will now always be recommended on the first turn.
++ Fixed some bugs in the BUG religion advisor which prevented the sub-options from working correctly.
++ Fixed some bugs which sometimes caused civilizations to be described as "unknown" in replays.
++ Adjusted some of the weights used for automated cities choosing military units.
++ Workers will no longer be interrupted by nearby danger if they were already in danger when they started their build.
+
+AI
+
++ Rewrote the AI evaluation of war targets. The new version will consider things such as relative unit strength, diplomatic impact, and relative productivity; as well as things which were already considered in the old version such as proximity, attitude score, and power rating.
++ Redesigned and rewrote the AI's code for deciding whether or not a potential enemy civ is a "land target". It should be far more accurate now.
++ The AI will no longer consider starting a war against civs for which no city sites have been revealed.
++ The AI's 'dagger' strategy will now more strongly encourage the AI to build units, and will significantly increase their unit spending limit.
++ Increased the war weariness threshold in AI_acceptSurrender.
++ Fixed a bug in the executive AI which caused them to evaluate corporations for themselves rather than for the player they are spreading to.
++ The AI will now take into account the cost of removing an old corp when spreading a new corp.
++ Adjusted the AI civic value for slavery pop-rushing.
++ Corrected a game-speed scaling problem in the AI for pop-rushing.
++ Greatly reduced the AI's perceived value of bonuses produced by corporations.
++ Slightly reduced the trade value of bonuses in general.
+
+--
 v1.30 changelist
 
 Game

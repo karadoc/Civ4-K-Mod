@@ -3942,10 +3942,10 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 /*                                                                                              */
 /* War strategy AI                                                                              */
 /************************************************************************************************/
-	if (pCity->getDefenseDamage() > 0)
+	/* if (pCity->getDefenseDamage() > 0)
 	{
 		iValue += ((pCity->getDefenseDamage() / 30) + 1);
-	}
+	} */ // disabled by K-Mod
 
 	// Significant amounting of borrowing/adapting from Mongoose AITargetCityValueFix
 	if (pCity->isCoastal(GC.getMIN_WATER_SIZE_FOR_OCEAN()))

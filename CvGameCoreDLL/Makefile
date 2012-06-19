@@ -263,7 +263,9 @@ Profile\$(BLACKLIST).obj: $(BLACKLIST).cpp
 !IF [$(FD) --objectextension=pch -q -O Debug CvGameCoreDLL.cpp > depends] != 0 || \
     [$(FD) --objectextension=obj -q -O Debug $(SOURCES) >> depends] != 0 || \
     [$(FD) --objectextension=pch -q -O Release CvGameCoreDLL.cpp >> depends] != 0 || \
-    [$(FD) --objectextension=obj -q -O Release $(SOURCES) >> depends] != 0
+    [$(FD) --objectextension=obj -q -O Release $(SOURCES) >> depends] != 0 || \
+    [$(FD) --objectextension=pch -q -O Profile CvGameCoreDLL.cpp >> depends] != 0 || \
+    [$(FD) --objectextension=obj -q -O Profile $(SOURCES) >> depends] != 0
 !MESSAGE Error running fastdep.
 !ENDIF
 !ELSE

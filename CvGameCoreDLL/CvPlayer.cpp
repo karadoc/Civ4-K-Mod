@@ -7023,6 +7023,7 @@ int CvPlayer::getImprovementUpgradeRate() const
 
 int CvPlayer::calculateTotalYield(YieldTypes eYield) const
 {
+	PROFILE_FUNC();
 	CvCity* pLoopCity;
 	int iTotalCommerce = 0;
 	int iLoop = 0;
