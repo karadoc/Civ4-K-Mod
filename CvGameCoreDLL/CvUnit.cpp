@@ -1372,7 +1372,8 @@ void CvUnit::updateCombat(bool bQuick)
 		setAttackPlot(NULL, false);
 		setCombatUnit(NULL);
 
-		getGroup()->groupMove(pPlot, true, ((canAdvance(pPlot, 0)) ? this : NULL));
+		//getGroup()->groupMove(pPlot, true, ((canAdvance(pPlot, 0)) ? this : NULL));
+		getGroup()->groupMove(pPlot, true, canAdvance(pPlot, 0) ? this : NULL, true); // K-Mod
 
 		getGroup()->clearMissionQueue();
 
@@ -1596,7 +1597,8 @@ void CvUnit::updateCombat(bool bQuick)
 
 			if (pPlot->getNumVisibleEnemyDefenders(this) == 0)
 			{
-				getGroup()->groupMove(pPlot, true, ((bAdvance) ? this : NULL));
+				//getGroup()->groupMove(pPlot, true, ((bAdvance) ? this : NULL));
+				getGroup()->groupMove(pPlot, true, bAdvance ? this : NULL, true); // K-Mod
 			}
 
 			// This is is put before the plot advancement, the unit will always try to walk back

@@ -21273,7 +21273,7 @@ void CvPlayer::launch(VictoryTypes eVictory)
 
 	//gDLL->getEngineIFace()->AddLaunch(getID());
 	// K-Mod. The spaceship launch causes pitboss to crash
-	if (!gDLL->IsPitbossHost())
+	if (GC.IsGraphicsInitialized())
 		gDLL->getEngineIFace()->AddLaunch(getID());
 	// K-Mod end.
 
