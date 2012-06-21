@@ -154,6 +154,8 @@ public:
 	static AttitudeTypes AI_getAttitudeFromValue(int iAttitudeVal);
 
 	int AI_calculateStolenCityRadiusPlots(PlayerTypes ePlayer) const;
+	void AI_updateCloseBorderAttitudeCache(); // K-Mod
+	void AI_updateCloseBorderAttitudeCache(PlayerTypes ePlayer); // K-Mod
 	int AI_getCloseBordersAttitude(PlayerTypes ePlayer) const;
 
 	int AI_getWarAttitude(PlayerTypes ePlayer) const;
@@ -500,7 +502,8 @@ protected:
 	int* m_aiUnitCombatWeights;
 	std::map<UnitClassTypes, int> m_GreatPersonWeights; // K-Mod
 
-	mutable int* m_aiCloseBordersAttitudeCache;
+	//mutable int* m_aiCloseBordersAttitudeCache;
+	std::vector<int> m_aiCloseBordersAttitudeCache; // K-Mod. (the original system was prone to mistakes.)
 
 	std::vector<int> m_aiAttitudeCache; // K-Mod
 
@@ -532,7 +535,7 @@ protected:
 	int AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTriggeredData) const;
 
 	void AI_doEnemyUnitData();
-	void AI_invalidateCloseBordersAttitudeCache();
+	//void AI_invalidateCloseBordersAttitudeCache(); // disabled by K-Mod
 
 	friend class CvGameTextMgr;
 };

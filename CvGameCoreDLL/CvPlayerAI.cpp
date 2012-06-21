@@ -100,7 +100,8 @@ CvPlayerAI::CvPlayerAI()
 	m_aiBonusValue = NULL;
 	m_aiUnitClassWeights = NULL;
 	m_aiUnitCombatWeights = NULL;
-	m_aiCloseBordersAttitudeCache = new int[MAX_PLAYERS];
+	//m_aiCloseBordersAttitudeCache = new int[MAX_PLAYERS];
+	m_aiCloseBordersAttitudeCache.resize(MAX_PLAYERS); // K-Mod
 
 	m_aiAttitudeCache.resize(MAX_PLAYERS); // K-Mod
 
@@ -138,7 +139,7 @@ CvPlayerAI::~CvPlayerAI()
 	SAFE_DELETE_ARRAY(m_aiAverageYieldMultiplier);
 	SAFE_DELETE_ARRAY(m_aiAverageCommerceMultiplier);
 	SAFE_DELETE_ARRAY(m_aiAverageCommerceExchange);
-	SAFE_DELETE_ARRAY(m_aiCloseBordersAttitudeCache);
+	//SAFE_DELETE_ARRAY(m_aiCloseBordersAttitudeCache); // disabled by K-Mod
 }
 
 
@@ -296,6 +297,7 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 		m_aiUnitCombatWeights[iI] = 0;		
 	}
 
+	/* original bts code
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		m_aiCloseBordersAttitudeCache[iI] = 0;
@@ -304,8 +306,9 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 		{
 			GET_PLAYER((PlayerTypes) iI).m_aiCloseBordersAttitudeCache[getID()] = 0;
 		}
-	}
+	} */
 	// K-Mod
+	m_aiCloseBordersAttitudeCache.assign(MAX_PLAYERS, 0);
 	m_aiAttitudeCache.assign(MAX_PLAYERS, 0);
 	// K-Mod end
 }
@@ -345,7 +348,7 @@ void CvPlayerAI::AI_doTurnPre()
 	FAssertMsg(getLeaderType() != NO_LEADER, "getLeaderType() is not expected to be equal with NO_LEADER");
 	FAssertMsg(getCivilizationType() != NO_CIVILIZATION, "getCivilizationType() is not expected to be equal with NO_CIVILIZATION");
 
-	AI_invalidateCloseBordersAttitudeCache();
+	//AI_invalidateCloseBordersAttitudeCache();
 
 	AI_doCounter();
 
@@ -7536,42 +7539,53 @@ int CvPlayerAI::AI_calculateStolenCityRadiusPlots(PlayerTypes ePlayer) const
 	return iCount;
 }
 
-
-int CvPlayerAI::AI_getCloseBordersAttitude(PlayerTypes ePlayer) const
+// K-Mod
+void CvPlayerAI::AI_updateCloseBorderAttitudeCache()
 {
-	const CvTeamAI& kOurTeam = GET_TEAM(getTeam()); // K-Mod
-	TeamTypes eTheirTeam = GET_PLAYER(ePlayer).getTeam(); // K-Mod
-
-	if (m_aiCloseBordersAttitudeCache[ePlayer] == MAX_INT)
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 	{
-		PROFILE_FUNC();
-		int iPercent;
+		AI_updateCloseBorderAttitudeCache(i);
+	}
+}
 
-		if (getTeam() == eTheirTeam || kOurTeam.isVassal(eTheirTeam) || GET_TEAM(eTheirTeam).isVassal(getTeam()))
-		{
-			return 0;
-		}
+// Most of this function has been moved directly from AI_getCloseBorderAttitude
+void CvPlayerAI::AI_updateCloseBorderAttitudeCache(PlayerTypes ePlayer)
+{
+	PROFILE_FUNC();
 
-		iPercent = std::min(60, (AI_calculateStolenCityRadiusPlots(ePlayer) * 3));
+	const CvTeamAI& kOurTeam = GET_TEAM(getTeam());
+	TeamTypes eTheirTeam = GET_PLAYER(ePlayer).getTeam();
 
-		//if (GET_TEAM(getTeam()).AI_isLandTarget(GET_PLAYER(ePlayer).getTeam()))
-		// K-Mod. I've rewritten AI_isLandTarget. The condition I'm using here is equivalent to the original function.
-		if (kOurTeam.AI_hasCitiesInPrimaryArea(eTheirTeam) && kOurTeam.AI_calculateAdjacentLandPlots(eTheirTeam) >= 8)
-		// K-Mod end
-		{
-			iPercent += 40;
-		}
-
-		// bbai
-		if( AI_isDoStrategy(AI_VICTORY_CONQUEST3) )
-		{
-			iPercent = std::min( 120, (3 * iPercent)/2 );
-		}
-		// bbai end
-
-		m_aiCloseBordersAttitudeCache[ePlayer] = ((GC.getLeaderHeadInfo(getPersonalityType()).getCloseBordersAttitudeChange() * iPercent) / 100);
+	if (getTeam() == eTheirTeam || kOurTeam.isVassal(eTheirTeam) || GET_TEAM(eTheirTeam).isVassal(getTeam()))
+	{
+		m_aiCloseBordersAttitudeCache[ePlayer] = 0;
+		return;
 	}
 
+	int iPercent = std::min(60, (AI_calculateStolenCityRadiusPlots(ePlayer) * 3));
+
+	//if (GET_TEAM(getTeam()).AI_isLandTarget(GET_PLAYER(ePlayer).getTeam()))
+	// K-Mod. I've rewritten AI_isLandTarget. The condition I'm using here is equivalent to the original function.
+	if (kOurTeam.AI_hasCitiesInPrimaryArea(eTheirTeam) && kOurTeam.AI_calculateAdjacentLandPlots(eTheirTeam) >= 8)
+	// K-Mod end
+	{
+		iPercent += 40;
+	}
+
+	// bbai
+	if( AI_isDoStrategy(AI_VICTORY_CONQUEST3) )
+	{
+		iPercent = std::min( 120, (3 * iPercent)/2 );
+	}
+	// bbai end
+
+	m_aiCloseBordersAttitudeCache[ePlayer] = ((GC.getLeaderHeadInfo(getPersonalityType()).getCloseBordersAttitudeChange() * iPercent) / 100);
+}
+// K-Mod end
+
+// K-Mod note: the bulk of this function has been moved to AI_updateCloseBorderAttitudeCache
+int CvPlayerAI::AI_getCloseBordersAttitude(PlayerTypes ePlayer) const
+{
 	return m_aiCloseBordersAttitudeCache[ePlayer];
 }
 
@@ -17675,7 +17689,8 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 		}
 	}
 	// K-Mod end
-	pStream->Read(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
+	//pStream->Read(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
+	pStream->Read(MAX_PLAYERS, &m_aiCloseBordersAttitudeCache[0]); // K-Mod
 }
 
 
@@ -17771,7 +17786,8 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 		}
 	}
 	// K-Mod end
-	pStream->Write(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
+	//pStream->Write(MAX_PLAYERS, m_aiCloseBordersAttitudeCache);
+	pStream->Write(MAX_PLAYERS, &m_aiCloseBordersAttitudeCache[0]); // K-Mod
 }
 
 
@@ -23613,13 +23629,13 @@ int CvPlayerAI::AI_getHealthWeight(int iHealth, int iExtraPop, bool bPercent) co
 /************************************************************************************************/
 }
 	
-void CvPlayerAI::AI_invalidateCloseBordersAttitudeCache()
+/* void CvPlayerAI::AI_invalidateCloseBordersAttitudeCache()
 {
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		m_aiCloseBordersAttitudeCache[i] = MAX_INT;
 	}
-}
+} */ // disabled by K-Mod
 
 bool CvPlayerAI::AI_isPlotThreatened(CvPlot* pPlot, int iRange, bool bTestMoves) const
 {

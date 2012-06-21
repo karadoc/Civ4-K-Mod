@@ -9159,9 +9159,13 @@ void CvGame::doUpdateCacheOnTurn()
 	CvSelectionGroup::path_finder.Reset(); // (one of the few manual resets we need)
 	m_ActivePlayerCycledGroups.clear();
 	// Attitude cache. (Note: CvTeamAI::AI_doCounter has some things which affect attitude, so this update should be done after that function is called.)
-	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	if (GC.getGameINLINE().isFinalInitialized())
 	{
-		GET_PLAYER(i).AI_updateAttitudeCache();
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+		{
+			GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
+			GET_PLAYER(i).AI_updateAttitudeCache();
+		}
 	}
 	// K-Mod end
 }
