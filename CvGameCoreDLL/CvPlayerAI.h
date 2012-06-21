@@ -146,6 +146,9 @@ public:
 	bool AI_demandRebukedWar(PlayerTypes ePlayer) const;
 	bool AI_hasTradedWithTeam(TeamTypes eTeam) const;
 
+	void AI_updateAttitudeCache(); // K-Mod (for all players)
+	void AI_updateAttitudeCache(PlayerTypes ePlayer); // K-Mod
+	void AI_changeCachedAttitude(PlayerTypes ePlayer, int iChange); // K-Mod
 	AttitudeTypes AI_getAttitude(PlayerTypes ePlayer, bool bForced = true) const;
 	int AI_getAttitudeVal(PlayerTypes ePlayer, bool bForced = true) const;
 	static AttitudeTypes AI_getAttitudeFromValue(int iAttitudeVal);
@@ -431,23 +434,11 @@ public:
 
 	bool AI_isFirstTech(TechTypes eTech) const;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	void AI_invalidateAttitudeCache(PlayerTypes ePlayer) const;
-	void AI_invalidateAttitudeCache() const;
 	void AI_ClearConstructionValueCache(); // K-Mod
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	// for serialization
-  virtual void read(FDataStreamBase* pStream);
-  virtual void write(FDataStreamBase* pStream);
+	virtual void read(FDataStreamBase* pStream);
+	virtual void write(FDataStreamBase* pStream);
 
 protected:
 
@@ -511,17 +502,7 @@ protected:
 
 	mutable int* m_aiCloseBordersAttitudeCache;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	mutable int* m_aiAttitudeCache;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	std::vector<int> m_aiAttitudeCache; // K-Mod
 
 	bool* m_abFirstContact;
 

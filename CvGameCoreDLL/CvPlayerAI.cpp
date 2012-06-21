@@ -102,17 +102,7 @@ CvPlayerAI::CvPlayerAI()
 	m_aiUnitCombatWeights = NULL;
 	m_aiCloseBordersAttitudeCache = new int[MAX_PLAYERS];
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	m_aiAttitudeCache = new int[MAX_PLAYERS];
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	m_aiAttitudeCache.resize(MAX_PLAYERS); // K-Mod
 
 	AI_reset(true);
 }
@@ -149,19 +139,6 @@ CvPlayerAI::~CvPlayerAI()
 	SAFE_DELETE_ARRAY(m_aiAverageCommerceMultiplier);
 	SAFE_DELETE_ARRAY(m_aiAverageCommerceExchange);
 	SAFE_DELETE_ARRAY(m_aiCloseBordersAttitudeCache);
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	SAFE_DELETE_ARRAY(m_aiAttitudeCache);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 }
 
 
@@ -327,24 +304,10 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 		{
 			GET_PLAYER((PlayerTypes) iI).m_aiCloseBordersAttitudeCache[getID()] = 0;
 		}
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-		// From Sanguo Mod Performance, ie the CAR Mod
-		// Attitude cache
-		m_aiAttitudeCache[iI] = MAX_INT;
-
-		if (!bConstructor && getID() != NO_PLAYER)
-		{
-			GET_PLAYER((PlayerTypes) iI).m_aiAttitudeCache[getID()] = MAX_INT;
-		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	}
+	// K-Mod
+	m_aiAttitudeCache.assign(MAX_PLAYERS, 0);
+	// K-Mod end
 }
 
 
@@ -386,7 +349,7 @@ void CvPlayerAI::AI_doTurnPre()
 
 	AI_doCounter();
 
-	// AI_invalidateAttitudeCache(); // (Moved by K-Mod to avoid a particular OOS problem)
+	// K-Mod note: attitude cache is not refreshed here because there are still some attitude-affecting changes to come, in CvTeamAI::AI_doCounter
 
 	AI_updateBonusValue();
 	// K-Mod. GP weights can take a little bit of time, so lets only do it once every 3 turns.
@@ -7422,75 +7385,44 @@ AttitudeTypes CvPlayerAI::AI_getAttitudeFromValue(int iAttitudeVal)
 	}
 }
 
-AttitudeTypes CvPlayerAI::AI_getAttitude(PlayerTypes ePlayer, bool bForced) const
+// K-Mod
+void CvPlayerAI::AI_updateAttitudeCache()
 {
-	PROFILE_FUNC();
-
-	FAssertMsg(ePlayer != getID(), "shouldn't call this function on ourselves");
-
-	return (AI_getAttitudeFromValue(AI_getAttitudeVal(ePlayer, bForced)));
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		AI_updateAttitudeCache(i);
+	}
 }
 
-
-int CvPlayerAI::AI_getAttitudeVal(PlayerTypes ePlayer, bool bForced) const
+// note: most of this function has been moved from CvPlayerAI::AI_getAttitudeVal
+void CvPlayerAI::AI_updateAttitudeCache(PlayerTypes ePlayer)
 {
 	PROFILE_FUNC();
 
-	int iRankDifference;
-	int iAttitude;
-	int iI;
+	FAssert(ePlayer >= 0 && ePlayer < MAX_PLAYERS);
 
-	FAssertMsg(ePlayer != getID(), "shouldn't call this function on ourselves");
+	const CvPlayerAI& kPlayer = GET_PLAYER(ePlayer);
 
-	if (bForced)
+	if (!GC.getGameINLINE().isFinalInitialized() || ePlayer == getID() ||
+		!isAlive() || !kPlayer.isAlive() || !GET_TEAM(getTeam()).isHasMet(kPlayer.getTeam()))
 	{
-		if (getTeam() == GET_PLAYER(ePlayer).getTeam() || (GET_TEAM(getTeam()).isVassal(GET_PLAYER(ePlayer).getTeam()) && !GET_TEAM(getTeam()).isCapitulated()))
-		{
-			return 100;
-		}
-
-		if (isBarbarian() || GET_PLAYER(ePlayer).isBarbarian())
-		{
-			return -100;
-		}
+		m_aiAttitudeCache[ePlayer] = 0;
+		return;
 	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	if (m_aiAttitudeCache[ePlayer] != MAX_INT)
+	int iAttitude = GC.getLeaderHeadInfo(getPersonalityType()).getBaseAttitude();
+
+	iAttitude += GC.getHandicapInfo(kPlayer.getHandicapType()).getAttitudeChange();
+
+	if (!(kPlayer.isHuman()))
 	{
-		return m_aiAttitudeCache[ePlayer];
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-	iAttitude = GC.getLeaderHeadInfo(getPersonalityType()).getBaseAttitude();
-
-	iAttitude += GC.getHandicapInfo(GET_PLAYER(ePlayer).getHandicapType()).getAttitudeChange();
-
-//	if (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI))
-//	{
-//		if (GET_PLAYER(ePlayer).isHuman())
-//		{
-//			iAttitude -= 2;
-//		}
-//	}
-
-	if (!(GET_PLAYER(ePlayer).isHuman()))
-	{
-		iAttitude += (4 - abs(AI_getPeaceWeight() - GET_PLAYER(ePlayer).AI_getPeaceWeight()));
-		iAttitude += std::min(GC.getLeaderHeadInfo(getPersonalityType()).getWarmongerRespect(), GC.getLeaderHeadInfo(GET_PLAYER(ePlayer).getPersonalityType()).getWarmongerRespect());
+		iAttitude += (4 - abs(AI_getPeaceWeight() - kPlayer.AI_getPeaceWeight()));
+		iAttitude += std::min(GC.getLeaderHeadInfo(getPersonalityType()).getWarmongerRespect(), GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getWarmongerRespect());
 	}
 
-	iAttitude -= std::max(0, (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getNumMembers() - GET_TEAM(getTeam()).getNumMembers()));
+	iAttitude -= std::max(0, (GET_TEAM(kPlayer.getTeam()).getNumMembers() - GET_TEAM(getTeam()).getNumMembers()));
 
-	iRankDifference = (GC.getGameINLINE().getPlayerRank(getID()) - GC.getGameINLINE().getPlayerRank(ePlayer));
+	int iRankDifference = (GC.getGameINLINE().getPlayerRank(getID()) - GC.getGameINLINE().getPlayerRank(ePlayer));
 
 	if (iRankDifference > 0)
 	{
@@ -7507,7 +7439,7 @@ int CvPlayerAI::AI_getAttitudeVal(PlayerTypes ePlayer, bool bForced) const
 		iAttitude++;
 	}
 
-	if (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_getWarSuccess(getTeam()) > GET_TEAM(getTeam()).AI_getWarSuccess(GET_PLAYER(ePlayer).getTeam()))
+	if (GET_TEAM(kPlayer.getTeam()).AI_getWarSuccess(getTeam()) > GET_TEAM(getTeam()).AI_getWarSuccess(kPlayer.getTeam()))
 	{
 		iAttitude += GC.getLeaderHeadInfo(getPersonalityType()).getLostWarAttitudeChange();
 	}
@@ -7527,7 +7459,7 @@ int CvPlayerAI::AI_getAttitudeVal(PlayerTypes ePlayer, bool bForced) const
 	iAttitude += AI_getTradeAttitude(ePlayer);
 	iAttitude += AI_getRivalTradeAttitude(ePlayer);
 
-	for (iI = 0; iI < NUM_MEMORY_TYPES; iI++)
+	for (int iI = 0; iI < NUM_MEMORY_TYPES; iI++)
 	{
 		iAttitude += AI_getMemoryAttitude(ePlayer, ((MemoryTypes)iI));
 	}
@@ -7535,19 +7467,44 @@ int CvPlayerAI::AI_getAttitudeVal(PlayerTypes ePlayer, bool bForced) const
 	iAttitude += AI_getColonyAttitude(ePlayer);
 	iAttitude += AI_getAttitudeExtra(ePlayer);
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
 	m_aiAttitudeCache[ePlayer] = range(iAttitude, -100, 100);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+}
 
-	return range(iAttitude, -100, 100);
+// for making minor adjustments
+void CvPlayerAI::AI_changeCachedAttitude(PlayerTypes ePlayer, int iChange)
+{
+	FAssert(ePlayer >= 0 && ePlayer < MAX_PLAYERS);
+	m_aiAttitudeCache[ePlayer] += iChange;
+}
+// K-Mod end
+
+AttitudeTypes CvPlayerAI::AI_getAttitude(PlayerTypes ePlayer, bool bForced) const
+{
+	PROFILE_FUNC();
+
+	FAssertMsg(ePlayer != getID(), "shouldn't call this function on ourselves");
+
+	return (AI_getAttitudeFromValue(AI_getAttitudeVal(ePlayer, bForced)));
+}
+
+
+// K-Mod note: the bulk of this function has been moved into CvPlayerAI::AI_updateAttitudeCache.
+int CvPlayerAI::AI_getAttitudeVal(PlayerTypes ePlayer, bool bForced) const
+{
+	if (bForced)
+	{
+		if (getTeam() == GET_PLAYER(ePlayer).getTeam() || (GET_TEAM(getTeam()).isVassal(GET_PLAYER(ePlayer).getTeam()) && !GET_TEAM(getTeam()).isCapitulated()))
+		{
+			return 100;
+		}
+
+		if (isBarbarian() || GET_PLAYER(ePlayer).isBarbarian())
+		{
+			return -100;
+		}
+	}
+
+	return m_aiAttitudeCache[ePlayer];
 }
 
 
@@ -14879,18 +14836,10 @@ void CvPlayerAI::AI_changePeacetimeTradeValue(PlayerTypes eIndex, int iChange)
 
 	if (iChange != 0)
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-		// From Sanguo Mod Performance, ie the CAR Mod
-		// Attitude cache
-		AI_invalidateAttitudeCache(eIndex);
-		GET_PLAYER(eIndex).AI_invalidateAttitudeCache(getID());
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		// K-Mod
+		AI_updateAttitudeCache(eIndex);
+		GET_PLAYER(eIndex).AI_updateAttitudeCache(getID());
+		// K-Mod end
 
 		m_aiPeacetimeTradeValue[eIndex] = (m_aiPeacetimeTradeValue[eIndex] + iChange);
 		FAssert(AI_getPeacetimeTradeValue(eIndex) >= 0);
@@ -14907,25 +14856,10 @@ void CvPlayerAI::AI_changePeacetimeTradeValue(PlayerTypes eIndex, int iChange)
 					{
 						if (GET_TEAM((TeamTypes)iI).AI_getWorstEnemy() == getTeam())
 						{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       03/02/10                                Sephi         */
-/*                                                                                              */
-/* Bug fix                                                                                      */
-/************************************************************************************************/
-/* orig bts code
-							GET_TEAM((TeamTypes)iI).AI_changeEnemyPeacetimeTradeValue(GET_PLAYER(eIndex).getTeam(), iChange);
-*/
-                            //make sure that if A trades with B and A is C's worst enemy, C is only mad at B if C has met B before
-                            //A = this
-                            //B = eIndex
-                            //C = (TeamTypes)iI
-                            if (GET_TEAM((TeamTypes)iI).isHasMet(GET_PLAYER(eIndex).getTeam()))
+                            if (GET_TEAM((TeamTypes)iI).isHasMet(GET_PLAYER(eIndex).getTeam())) // unofficial patch bugfix, by Sephi.
                             {
 								GET_TEAM((TeamTypes)iI).AI_changeEnemyPeacetimeTradeValue(GET_PLAYER(eIndex).getTeam(), iChange);
 							}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 						}
 					}
 				}
@@ -14957,7 +14891,7 @@ void CvPlayerAI::AI_changePeacetimeGrantValue(PlayerTypes eIndex, int iChange)
 		m_aiPeacetimeGrantValue[eIndex] = (m_aiPeacetimeGrantValue[eIndex] + iChange);
 		FAssert(AI_getPeacetimeGrantValue(eIndex) >= 0);
 
-		AI_invalidateAttitudeCache(eIndex); // K-Mod. (missing from CAR mod)
+		AI_updateAttitudeCache(eIndex); // K-Mod
 
 		FAssert(iChange > 0);
 
@@ -14971,25 +14905,10 @@ void CvPlayerAI::AI_changePeacetimeGrantValue(PlayerTypes eIndex, int iChange)
 					{
 						if (GET_TEAM((TeamTypes)iI).AI_getWorstEnemy() == getTeam())
 						{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       03/02/10                                Sephi         */
-/*                                                                                              */
-/* Bug fix                                                                                      */
-/************************************************************************************************/
-/* orig bts code
-							GET_TEAM((TeamTypes)iI).AI_changeEnemyPeacetimeGrantValue(GET_PLAYER(eIndex).getTeam(), iChange);
-*/
-                            //make sure that if A trades with B and A is C's worst enemy, C is only mad at B if C has met B before
-                            //A = this
-                            //B = eIndex
-                            //C = (TeamTypes)iI
-                            if (GET_TEAM((TeamTypes)iI).isHasMet(GET_PLAYER(eIndex).getTeam()))
+                            if (GET_TEAM((TeamTypes)iI).isHasMet(GET_PLAYER(eIndex).getTeam())) // unoffical patch bugfix, by Sephi.
                             {
 								GET_TEAM((TeamTypes)iI).AI_changeEnemyPeacetimeGrantValue(GET_PLAYER(eIndex).getTeam(), iChange);
 							}
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 						}
 					}
 				}
@@ -15028,21 +14947,12 @@ void CvPlayerAI::AI_setAttitudeExtra(PlayerTypes eIndex, int iNewValue)
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < MAX_PLAYERS, "eIndex is expected to be within maximum bounds (invalid Index)");
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	if (m_aiAttitudeExtra[eIndex] != iNewValue)
-	{
-		GET_PLAYER(getID()).AI_invalidateAttitudeCache(eIndex);
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	int iChange = iNewValue - m_aiAttitudeExtra[eIndex]; // K-Mod
 	m_aiAttitudeExtra[eIndex] = iNewValue;
+	// K-Mod
+	if (iChange)
+		AI_changeCachedAttitude(eIndex, iChange);
+	// K-Mod end
 }
 
 
@@ -15105,9 +15015,11 @@ void CvPlayerAI::AI_changeMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2, 
 	FAssertMsg(eIndex1 < MAX_PLAYERS, "eIndex1 is expected to be within maximum bounds (invalid Index)");
 	FAssertMsg(eIndex2 >= 0, "eIndex2 is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex2 < NUM_MEMORY_TYPES, "eIndex2 is expected to be within maximum bounds (invalid Index)");
+
+	int iAttitude = AI_getMemoryAttitude(eIndex1, eIndex2); // K-Mod
 	m_aaiMemoryCount[eIndex1][eIndex2] += iChange;
 	FAssert(AI_getMemoryCount(eIndex1, eIndex2) >= 0);
-	AI_invalidateAttitudeCache(eIndex1); // K-Mod. (missing from CAR mod)
+	AI_changeCachedAttitude(eIndex1, AI_getMemoryAttitude(eIndex1, eIndex2) - iAttitude); // K-Mod
 }
 
 int CvPlayerAI::AI_calculateGoldenAgeValue(bool bConsiderRevolution) const
@@ -17717,9 +17629,7 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	// K-Mod. Load the attitude cache. (originally, in BBAI and the CAR Mod, this was not saved.
 	// But there are rare situations in which it needs to be saved/read to avoid OOS errors.)
 	if (uiFlag >= 4)
-		pStream->Read(MAX_PLAYERS, m_aiAttitudeCache);
-	else
-		AI_invalidateAttitudeCache();
+		pStream->Read(MAX_PLAYERS, &m_aiAttitudeCache[0]);
 	// K-Mod end
 	pStream->Read(MAX_PLAYERS, m_abFirstContact);
 
@@ -17820,7 +17730,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(MAX_PLAYERS, m_aiGoldTradedTo);
 	pStream->Write(MAX_PLAYERS, m_aiAttitudeExtra);
 	// K-Mod. save the attitude cache. (to avoid OOS problems)
-	pStream->Write(MAX_PLAYERS, m_aiAttitudeCache); // uiFlag >= 4
+	pStream->Write(MAX_PLAYERS, &m_aiAttitudeCache[0]); // uiFlag >= 4
 	// K-Mod end
 	pStream->Write(MAX_PLAYERS, m_abFirstContact);
 
@@ -23708,10 +23618,6 @@ void CvPlayerAI::AI_invalidateCloseBordersAttitudeCache()
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		m_aiCloseBordersAttitudeCache[i] = MAX_INT;
-		// From Sanguo Mod Performance, ie the CAR Mod
-		// Attitude cache
-		AI_invalidateAttitudeCache((PlayerTypes)i);
-		//
 	}
 }
 
@@ -23803,26 +23709,6 @@ bool CvPlayerAI::AI_isFirstTech(TechTypes eTech) const
 	return false;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-// From Sanguo Mod Performance, ie the CAR Mod
-// Attitude cache
-void CvPlayerAI::AI_invalidateAttitudeCache(PlayerTypes ePlayer) const
-{
-	m_aiAttitudeCache[ePlayer] = MAX_INT;
-}
-
-void CvPlayerAI::AI_invalidateAttitudeCache() const
-{
-	for( int iI = 0; iI < MAX_PLAYERS; iI++ )
-	{
-		AI_invalidateAttitudeCache((PlayerTypes)iI);
-	}
-}
-
 // K-Mod
 void CvPlayerAI::AI_ClearConstructionValueCache()
 {
@@ -23834,8 +23720,4 @@ void CvPlayerAI::AI_ClearConstructionValueCache()
 		static_cast<CvCityAI*>(pLoopCity)->AI_ClearConstructionValueCache();
 	}
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-
+// K-Mod end

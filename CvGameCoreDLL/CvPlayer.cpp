@@ -10806,21 +10806,13 @@ void CvPlayer::setAlive(bool bNewValue)
 
 			gDLL->openSlot(getID());
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-			// From Sanguo Mod Performance, ie the CAR Mod
-			// Attitude cache
-			for( int iI = 0; iI < MAX_PLAYERS; iI++ )
+			// K-Mod. Attitude cache
+			for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 			{
-				GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache(getID());
-				GET_PLAYER(getID()).AI_invalidateAttitudeCache((PlayerTypes)iI);
+				GET_PLAYER(i).AI_updateAttitudeCache(getID());
+				AI_updateAttitudeCache(i);
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+			// K-Mod end
 		}
 		else
 		{
@@ -11573,24 +11565,16 @@ void CvPlayer::setLastStateReligion(ReligionTypes eNewValue)
 
 			// Python Event
 			CvEventReporter::getInstance().playerChangeStateReligion(getID(), eNewValue, eOldReligion);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-			// From Sanguo Mod Performance, ie the CAR Mod
-			// Attitude cache
+			// K-Mod. Attitude cache
 			for (int iI = 0; iI < GC.getMAX_PLAYERS(); iI++)
 			{
 				if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).getStateReligion() != NO_RELIGION)
 				{
-					GET_PLAYER(getID()).AI_invalidateAttitudeCache((PlayerTypes)iI);
-					GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache(getID());
+					AI_updateAttitudeCache((PlayerTypes)iI);
+					GET_PLAYER((PlayerTypes)iI).AI_updateAttitudeCache(getID());
 				}
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+			// K-Mod end
 		}
 	}
 }
@@ -11602,20 +11586,6 @@ PlayerTypes CvPlayer::getParent() const
 
 void CvPlayer::setParent(PlayerTypes eParent)
 {
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	if (m_eParent != eParent)
-	{
-		GET_PLAYER(getID()).AI_invalidateAttitudeCache(eParent);
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	m_eParent = eParent;
 }
 
@@ -11669,27 +11639,16 @@ void CvPlayer::setTeam(TeamTypes eTeam)
 	GET_TEAM(getTeam()).changeTotalPopulation(getTotalPopulation());
 	GET_TEAM(getTeam()).changeTotalLand(getTotalLand());
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
+	// K-Mod Attitude cache
 	if (GC.getGameINLINE().isFinalInitialized())
 	{
-		for (int iI = 0; iI < MAX_PLAYERS; iI++)
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 		{
-			if( GET_PLAYER((PlayerTypes)iI).isAlive() )
-			{
-				GET_PLAYER(getID()).AI_invalidateAttitudeCache((PlayerTypes)iI);
-				GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache(getID());
-			}
+			AI_updateAttitudeCache(i);
+			GET_PLAYER(i).AI_updateAttitudeCache(getID());
 		}
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	// K-Mod end
 }
 
 
@@ -13101,22 +13060,13 @@ void CvPlayer::setCivics(CivicOptionTypes eIndex, CivicTypes eNewValue)
 			GC.getGameINLINE().updateGwPercentAnger(); // K-Mod. (environmentalism can change this. It's nice to see the effects immediately.)
 		}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-		// From Sanguo Mod Performance, ie the CAR Mod
-		// Attitude cache
-		for (int iI = 0; iI < MAX_PLAYERS; iI++)
+		// K-Mod. Attitude cache.
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 		{
-			GET_PLAYER(getID()).AI_invalidateAttitudeCache((PlayerTypes)iI);
-			GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache(getID());
+			AI_updateAttitudeCache(i);
+			GET_PLAYER(i).AI_updateAttitudeCache(getID());
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
+		// K-Mod end
 	}
 }
 
@@ -21143,6 +21093,11 @@ bool CvPlayer::splitEmpire(int iAreaId)
 
 
 	GC.getGameINLINE().updatePlotGroups();
+
+	// K-Mod
+	GET_PLAYER(eNewPlayer).AI_updateAttitudeCache(getID());
+	AI_updateAttitudeCache(eNewPlayer);
+	// K-Mod end
 
 	return true;
 }

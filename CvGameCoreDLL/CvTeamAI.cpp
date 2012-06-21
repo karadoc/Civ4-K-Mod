@@ -4301,39 +4301,6 @@ void CvTeamAI::AI_setWarSuccess(TeamTypes eIndex, int iNewValue)
 {
 	FAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	if (m_aiWarSuccess[eIndex] != iNewValue)
-	{
-		for (int iI = 0; iI < MAX_PLAYERS; iI++)
-		{
-			if( GET_PLAYER((PlayerTypes)iI).isAlive() )
-			{
-				if( GET_PLAYER((PlayerTypes)iI).getTeam() == getID() || GET_PLAYER((PlayerTypes)iI).getTeam() == eIndex )
-				{
-					for (int iJ = 0; iJ < MAX_PLAYERS; iJ++)
-					{
-						if( GET_PLAYER((PlayerTypes)iJ).isAlive() && GET_PLAYER((PlayerTypes)iJ).getTeam() != GET_PLAYER((PlayerTypes)iI).getTeam() )
-						{
-							if( GET_PLAYER((PlayerTypes)iJ).getTeam() == getID() || GET_PLAYER((PlayerTypes)iJ).getTeam() == eIndex )
-							{
-								GET_PLAYER((PlayerTypes)iJ).AI_invalidateAttitudeCache((PlayerTypes)iI);
-								GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache((PlayerTypes)iJ);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	m_aiWarSuccess[eIndex] = iNewValue;
 	FAssert(AI_getWarSuccess(eIndex) >= 0);
 }
@@ -4359,18 +4326,17 @@ void CvTeamAI::AI_setEnemyPeacetimeTradeValue(TeamTypes eIndex, int iNewValue)
 	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
 	m_aiEnemyPeacetimeTradeValue[eIndex] = iNewValue;
 	FAssert(AI_getEnemyPeacetimeTradeValue(eIndex) >= 0);
-	// K-Mod. bug fix for the CAR mod. (a mod which makes me sad, let me just say once.)
-	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	// K-Mod. update attitude
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
 	{
-		CvPlayerAI& kIPlayer = GET_PLAYER((PlayerTypes)iI);
-		if (kIPlayer.getTeam() == getID())
+		CvPlayerAI& kPlayer_i = GET_PLAYER(i);
+		if (kPlayer_i.getTeam() == getID())
 		{
-			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
+			for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
 			{
-				CvPlayer& kJPlayer = GET_PLAYER((PlayerTypes)iJ);
-				if (kJPlayer.getTeam() == eIndex)
+				if (GET_PLAYER(j).getTeam() == eIndex)
 				{
-					kIPlayer.AI_invalidateAttitudeCache((PlayerTypes)iJ);
+					kPlayer_i.AI_updateAttitudeCache(j);
 				}
 			}
 		}
@@ -4399,18 +4365,17 @@ void CvTeamAI::AI_setEnemyPeacetimeGrantValue(TeamTypes eIndex, int iNewValue)
 	FAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
 	m_aiEnemyPeacetimeGrantValue[eIndex] = iNewValue;
 	FAssert(AI_getEnemyPeacetimeGrantValue(eIndex) >= 0);
-	// K-Mod. bug fix for the CAR mod. (a mod which makes me sad, let me just say once.)
-	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	// K-Mod. update attitude
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
 	{
-		CvPlayerAI& kIPlayer = GET_PLAYER((PlayerTypes)iI);
-		if (kIPlayer.getTeam() == getID())
+		CvPlayerAI& kPlayer_i = GET_PLAYER(i);
+		if (kPlayer_i.getTeam() == getID())
 		{
-			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
+			for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
 			{
-				CvPlayer& kJPlayer = GET_PLAYER((PlayerTypes)iJ);
-				if (kJPlayer.getTeam() == eIndex)
+				if (GET_PLAYER(j).getTeam() == eIndex)
 				{
-					kIPlayer.AI_invalidateAttitudeCache((PlayerTypes)iJ);
+					kPlayer_i.AI_updateAttitudeCache(j);
 				}
 			}
 		}

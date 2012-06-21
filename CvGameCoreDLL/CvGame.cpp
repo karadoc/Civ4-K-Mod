@@ -5083,27 +5083,6 @@ void CvGame::setPlayerRank(PlayerTypes ePlayer, int iRank)
 {
 	FAssertMsg(ePlayer >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	FAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be within maximum bounds (invalid Index)");
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/03/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// From Sanguo Mod Performance, ie the CAR Mod
-	// Attitude cache
-	if (iRank != m_aiPlayerRank[ePlayer])
-	{
-		for (int iI = 0; iI < MAX_PLAYERS; iI++)
-		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
-			{
-				GET_PLAYER(ePlayer).AI_invalidateAttitudeCache((PlayerTypes)iI);
-				GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache(ePlayer);
-			}
-		}
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	m_aiPlayerRank[ePlayer] = iRank;
 	FAssert(getPlayerRank(ePlayer) >= 0);
 }
@@ -5701,37 +5680,6 @@ void CvGame::setHolyCity(ReligionTypes eIndex, CvCity* pNewValue, bool bAnnounce
 		}
 
 		AI_makeAssignWorkDirty();
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      09/26/09                       poyuzhe & jdog5000     */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-		// From Sanguo Mod Performance, ie the CAR Mod
-		// Attitude cache
-		if (GC.getGameINLINE().isFinalInitialized())
-		{
-			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
-			{
-				if (GET_PLAYER((PlayerTypes)iJ).isAlive() && GET_PLAYER((PlayerTypes)iJ).getStateReligion() == eIndex)
-				{
-					if( pNewValue != NULL )
-					{
-						GET_PLAYER(pNewValue->getOwnerINLINE()).AI_invalidateAttitudeCache((PlayerTypes)iJ);
-						GET_PLAYER((PlayerTypes)iJ).AI_invalidateAttitudeCache(pNewValue->getOwnerINLINE());
-					}
-					
-					if( pOldValue != NULL )
-					{
-						GET_PLAYER(pOldValue->getOwnerINLINE()).AI_invalidateAttitudeCache((PlayerTypes)iJ);
-						GET_PLAYER((PlayerTypes)iJ).AI_invalidateAttitudeCache(pOldValue->getOwnerINLINE());
-					}
-				}
-			}
-		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	}
 }
 
@@ -5955,16 +5903,6 @@ void CvGame::doTurn()
 	CvEventReporter::getInstance().beginGameTurn( getGameTurn() );
 
 	doUpdateCacheOnTurn();
-
-	CvSelectionGroup::path_finder.Reset(); // K-Mod. (one of the few manual resets we need)
-	m_ActivePlayerCycledGroups.clear(); // K-Mod
-	// K-Mod - fixing a problem from the CAR mod.
-	// (CvTeamAI::AI_doCounter has a couple of things which invalidate the cache without clearing it. So I'm clearing the cache here to avoid OOS errors.)
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
-	{
-		GET_PLAYER((PlayerTypes)iI).AI_invalidateAttitudeCache();
-	}
-	// K-Mod end
 
 	updateScore();
 
@@ -9216,6 +9154,16 @@ void CvGame::doUpdateCacheOnTurn()
 			}
 		}
 	}
+
+	// K-Mod. (todo: move all of that stuff above somewhere else. That doesn't need to be updated every turn!)
+	CvSelectionGroup::path_finder.Reset(); // (one of the few manual resets we need)
+	m_ActivePlayerCycledGroups.clear();
+	// Attitude cache. (Note: CvTeamAI::AI_doCounter has some things which affect attitude, so this update should be done after that function is called.)
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		GET_PLAYER(i).AI_updateAttitudeCache();
+	}
+	// K-Mod end
 }
 
 VoteSelectionData* CvGame::getVoteSelection(int iID) const
