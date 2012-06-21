@@ -10810,7 +10810,7 @@ void CvPlayer::setAlive(bool bNewValue)
 			for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 			{
 				GET_PLAYER(i).AI_updateAttitudeCache(getID());
-				AI_updateAttitudeCache(i);
+				GET_PLAYER(getID()).AI_updateAttitudeCache(i);
 			}
 			// K-Mod end
 		}
@@ -11570,7 +11570,7 @@ void CvPlayer::setLastStateReligion(ReligionTypes eNewValue)
 			{
 				if (GET_PLAYER((PlayerTypes)iI).isAlive() && GET_PLAYER((PlayerTypes)iI).getStateReligion() != NO_RELIGION)
 				{
-					AI_updateAttitudeCache((PlayerTypes)iI);
+					GET_PLAYER(getID()).AI_updateAttitudeCache((PlayerTypes)iI);
 					GET_PLAYER((PlayerTypes)iI).AI_updateAttitudeCache(getID());
 				}
 			}
@@ -11644,7 +11644,7 @@ void CvPlayer::setTeam(TeamTypes eTeam)
 	{
 		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 		{
-			AI_updateAttitudeCache(i);
+			GET_PLAYER(getID()).AI_updateAttitudeCache(i);
 			GET_PLAYER(i).AI_updateAttitudeCache(getID());
 		}
 	}
@@ -13063,7 +13063,7 @@ void CvPlayer::setCivics(CivicOptionTypes eIndex, CivicTypes eNewValue)
 		// K-Mod. Attitude cache.
 		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 		{
-			AI_updateAttitudeCache(i);
+			GET_PLAYER(getID()).AI_updateAttitudeCache(i);
 			GET_PLAYER(i).AI_updateAttitudeCache(getID());
 		}
 		// K-Mod end
@@ -21096,7 +21096,7 @@ bool CvPlayer::splitEmpire(int iAreaId)
 
 	// K-Mod
 	GET_PLAYER(eNewPlayer).AI_updateAttitudeCache(getID());
-	AI_updateAttitudeCache(eNewPlayer);
+	GET_PLAYER(getID()).AI_updateAttitudeCache(eNewPlayer);
 	// K-Mod end
 
 	return true;
