@@ -5157,11 +5157,23 @@ void CvTeamAI::AI_doWar()
 
 					if (AI_getWarPlanStateCounter((TeamTypes)iI) > ((5 * iTimeModifier) / (bEnemyVictoryLevel4 ? 400 : 100)))
 					{
-						if( gTeamLogLevel >= 1 )
+						if (AI_startWarVal((TeamTypes)iI, WARPLAN_LIMITED) > 0) // K-Mod. Last chance to change our mind if circumstances have changed
 						{
-							logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from PREPARING_LIMITED to LIMITED after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
+							if( gTeamLogLevel >= 1 )
+							{
+								logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from PREPARING_LIMITED to LIMITED after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
+							}
+							AI_setWarPlan(((TeamTypes)iI), WARPLAN_LIMITED);
 						}
-						AI_setWarPlan(((TeamTypes)iI), WARPLAN_LIMITED);
+						// K-Mod
+						else
+						{
+							if (gTeamLogLevel >= 1)
+							{
+								logBBAI("      Team %d (%S) abandoning WARPLAN_LIMITED against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
+							}
+						}
+						// K-Mod end
 					}
 				}
 				else if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_LIMITED || AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE)
@@ -5252,7 +5264,8 @@ void CvTeamAI::AI_doWar()
 							}
 						}
 
-						if ( (bAreaValid && (iEnemyPowerPercent < 140)) || (!bShareValid && (iEnemyPowerPercent < 110)) || (GET_TEAM((TeamTypes)iI).AI_getLowestVictoryCountdown() >= 0) )
+						if (((bAreaValid && iEnemyPowerPercent < 140) || (!bShareValid && iEnemyPowerPercent < 110) || GET_TEAM((TeamTypes)iI).AI_getLowestVictoryCountdown() >= 0) &&
+							AI_startWarVal((TeamTypes)iI, WARPLAN_TOTAL) > 0) // K-Mod. Last chance to change our mind if circumstances have changed
 						{
 							if( gTeamLogLevel >= 1 )
 							{
@@ -5598,7 +5611,7 @@ void CvTeamAI::AI_doWar()
 				int iNoWarRoll = GC.getGameINLINE().getSorenRandNum(100, "AI No War");
 				iNoWarRoll = range(iNoWarRoll + (bAggressive ? 10 : 0) + (bFinancesProTotalWar ? 10 : 0) - (20*iGetBetterUnitsCount)/iNumMembers, 0, 99);
 
-				int iBestValue = 0;
+				int iBestValue = 10; // K-Mod. I've set the starting value above zero just as a buffer against close-calls which end up being negative value in the near future.
 				TeamTypes eBestTeam = NO_TEAM;
 
 				for (int iPass = 0; iPass < 3; iPass++)
