@@ -5915,6 +5915,13 @@ void CvGame::doTurn()
 			GET_TEAM((TeamTypes)iI).doTurn();
 		}
 	}
+	// K-Mod. Attitude cache. (Note: CvTeamAI::AI_doCounter has some things which affect attitude, so this update should be done after that function is called.)
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
+		GET_PLAYER(i).AI_updateAttitudeCache();
+	}
+	//
 
 	GC.getMapINLINE().doTurn();
 
@@ -9158,15 +9165,6 @@ void CvGame::doUpdateCacheOnTurn()
 	// K-Mod. (todo: move all of that stuff above somewhere else. That doesn't need to be updated every turn!)
 	CvSelectionGroup::path_finder.Reset(); // (one of the few manual resets we need)
 	m_ActivePlayerCycledGroups.clear();
-	// Attitude cache. (Note: CvTeamAI::AI_doCounter has some things which affect attitude, so this update should be done after that function is called.)
-	if (GC.getGameINLINE().isFinalInitialized())
-	{
-		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
-		{
-			GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
-			GET_PLAYER(i).AI_updateAttitudeCache();
-		}
-	}
 	// K-Mod end
 }
 

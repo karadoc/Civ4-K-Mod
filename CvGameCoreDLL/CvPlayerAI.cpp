@@ -326,6 +326,8 @@ void CvPlayerAI::updateCacheData()
 {
 	if (isAlive())
 	{
+		// AI_updateCloseBorderAttitudeCache();
+		// AI_updateAttitudeCache(); // attitude of this player is relevant to other players too, so this needs to be done elsewhere.
 		AI_calculateAverages();
 		AI_updateVictoryStrategyHash();
 		if (!isHuman())
@@ -14851,11 +14853,6 @@ void CvPlayerAI::AI_changePeacetimeTradeValue(PlayerTypes eIndex, int iChange)
 
 	if (iChange != 0)
 	{
-		// K-Mod
-		AI_updateAttitudeCache(eIndex);
-		GET_PLAYER(eIndex).AI_updateAttitudeCache(getID());
-		// K-Mod end
-
 		m_aiPeacetimeTradeValue[eIndex] = (m_aiPeacetimeTradeValue[eIndex] + iChange);
 		FAssert(AI_getPeacetimeTradeValue(eIndex) >= 0);
 
@@ -14905,8 +14902,6 @@ void CvPlayerAI::AI_changePeacetimeGrantValue(PlayerTypes eIndex, int iChange)
 	{
 		m_aiPeacetimeGrantValue[eIndex] = (m_aiPeacetimeGrantValue[eIndex] + iChange);
 		FAssert(AI_getPeacetimeGrantValue(eIndex) >= 0);
-
-		AI_updateAttitudeCache(eIndex); // K-Mod
 
 		FAssert(iChange > 0);
 

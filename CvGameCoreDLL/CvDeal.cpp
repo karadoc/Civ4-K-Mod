@@ -233,6 +233,10 @@ void CvDeal::addTrades(CLinkList<TradeData>* pFirstList, CLinkList<TradeData>* p
 					GET_PLAYER(getSecondPlayer()).AI_changePeacetimeGrantValue(getFirstPlayer(), iValue);
 				}
 			}
+			// K-Mod
+			GET_PLAYER(getFirstPlayer()).AI_updateAttitudeCache(getSecondPlayer());
+			GET_PLAYER(getSecondPlayer()).AI_updateAttitudeCache(getFirstPlayer());
+			// K-Mod end
 		}
 	}
 
@@ -342,6 +346,7 @@ void CvDeal::doTurn()
 				GET_PLAYER(getSecondPlayer()).AI_changePeacetimeGrantValue(getFirstPlayer(), iValue);
 			}
 		}
+		// K-Mod note: no need to update attitude here, because this does not happen mid-turn.
 	}
 }
 
