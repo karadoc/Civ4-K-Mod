@@ -2756,7 +2756,7 @@ int CvTeam::countEnemyDangerByArea(CvArea* pArea, TeamTypes eEnemyTeam ) const
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 // K-Mod
-int CvTeam::getTypicalUnitValue(UnitAITypes eUnitAI) const
+int CvTeam::getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain) const
 {
 	int iMax = 0;
 	for (int iI = 0; iI < MAX_PLAYERS; ++iI)

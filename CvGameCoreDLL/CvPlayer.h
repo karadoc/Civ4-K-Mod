@@ -482,7 +482,7 @@ public:
 	int getFreeMilitaryUnitsPopulationPercent() const;																										// Exposed to Python
 	void changeFreeMilitaryUnitsPopulationPercent(int iChange);											
 
-	int getTypicalUnitValue(UnitAITypes eUnitAI) const; // K-Mod
+	int getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain = NO_DOMAIN) const; // K-Mod
 
 	// K-Mod note: GoldPerUnit and GoldPerMilitaryUnit are now in units of 1/100 gold.
 	int getGoldPerUnit() const;																																								// Exposed to Python

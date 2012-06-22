@@ -9497,7 +9497,7 @@ void CvPlayer::changeFreeMilitaryUnitsPopulationPercent(int iChange)
 }
 
 // K-Mod
-int CvPlayer::getTypicalUnitValue(UnitAITypes eUnitAI) const
+int CvPlayer::getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain) const
 {
 	//UnitTypes eBestUnit = NO_UNIT;
 	int iHighestValue = 0;
@@ -9506,7 +9506,10 @@ int CvPlayer::getTypicalUnitValue(UnitAITypes eUnitAI) const
 	{
 		UnitTypes eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
 
-		if (eLoopUnit != NO_UNIT && GC.getUnitInfo(eLoopUnit).getUnitAIType(eUnitAI) && canTrain(eLoopUnit))
+		if (eLoopUnit != NO_UNIT &&
+			(eUnitAI == NO_UNITAI || GC.getUnitInfo(eLoopUnit).getUnitAIType(eUnitAI)) &&
+			(eDomain == NO_DOMAIN || GC.getUnitInfo(eLoopUnit).getDomainType() == eDomain) &&
+			canTrain(eLoopUnit))
 		{
 			int iValue = GC.getGameINLINE().AI_combatValue(eLoopUnit);
 			if (iValue > iHighestValue)

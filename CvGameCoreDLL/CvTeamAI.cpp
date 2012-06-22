@@ -1540,7 +1540,8 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			}
 			//
 
-			iCommitmentPerMil = iCommitmentPerMil * (100 * iEnemyRelativeStrength) / std::max(1, iOurRelativeStrength * (100+iWarSuccessRating/2));
+			//iCommitmentPerMil = iCommitmentPerMil * (100 * iEnemyRelativeStrength) / std::max(1, iOurRelativeStrength * (100+iWarSuccessRating/2));
+			iCommitmentPerMil = iCommitmentPerMil * iEnemyRelativeStrength / std::max(1, iOurRelativeStrength);
 		}
 
 		// scale based on the relative size of our civilizations.
@@ -1549,25 +1550,50 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 		iCommitmentPerMil *= 5 * iTheirProduction + iOurProduction;
 		iCommitmentPerMil /= std::max(1, iTheirProduction + 5 * iOurProduction);
 
+		// Adjust for overseas wars
+		if (!AI_hasSharedPrimaryArea(eTarget))
+		{
+			int iOurNavy = getTypicalUnitValue(NO_UNITAI, DOMAIN_SEA);
+			int iEnemyNavy = kTargetTeam.getTypicalUnitValue(NO_UNITAI, DOMAIN_SEA);
+
+			// rescale (unused)
+			/* {
+				int x = std::max(2, iOurNavy + iEnemyNavy) / 2;
+				iOurNavy = iOurNavy * 100 / x;
+				iEnemyNavy = iEnemyNavy * 100 / x;
+			} */
+
+			if (bTotalWar)
+			{
+				iCommitmentPerMil = iCommitmentPerMil * (4*iOurNavy + 5*iEnemyNavy) / (8*iOurNavy + 1*iEnemyNavy);
+				iCommitmentPerMil = iCommitmentPerMil * 5/4;
+			}
+			else
+				iCommitmentPerMil = iCommitmentPerMil * (1*iOurNavy + 4*iEnemyNavy) / (4*iOurNavy + 1*iEnemyNavy);
+		}
+
 		// scale based on the relative strengths of our units
-		int iEnemyScale = 30 + std::max(30, std::max(kTargetTeam.getTypicalUnitValue(UNITAI_ATTACK), kTargetTeam.getTypicalUnitValue(UNITAI_CITY_DEFENSE)));
-		int iOurAttackUnit = std::max(30, getTypicalUnitValue(UNITAI_ATTACK));
-		int iOurDefenceUnit = std::max(30, getTypicalUnitValue(UNITAI_CITY_DEFENSE));
-		int iHighScale = 40 + std::max(iOurAttackUnit, iOurDefenceUnit);
-		int iLowScale = 30 + std::min(iOurAttackUnit, iOurDefenceUnit);
+		{
+			int iEnemyUnit = std::max(30, kTargetTeam.getTypicalUnitValue(NO_UNITAI, DOMAIN_LAND));
+			int iOurAttackUnit = std::max(30, getTypicalUnitValue(UNITAI_ATTACK, DOMAIN_LAND));
+			int iOurDefenceUnit = std::max(30, getTypicalUnitValue(UNITAI_CITY_DEFENSE, DOMAIN_LAND));
+			int iHighScale = 30 + 70 * std::max(iOurAttackUnit, iOurDefenceUnit) / iEnemyUnit;
+			int iLowScale = 10 + 90 * std::min(iOurAttackUnit, iOurDefenceUnit) / iEnemyUnit;
 
-		iCommitmentPerMil = std::min(iCommitmentPerMil, 300) * iEnemyScale / iHighScale + std::max(0, iCommitmentPerMil - 300) * iEnemyScale / iLowScale;
+			iCommitmentPerMil = std::min(iCommitmentPerMil, 300) * 100 / iHighScale + std::max(0, iCommitmentPerMil - 300) * 100 / iLowScale;
+		}
 
-		// Scale up for distant wars
-		if (bTotalWar && !AI_hasSharedPrimaryArea(eTarget))
-			iCommitmentPerMil = iCommitmentPerMil * 4/3;
-
+		// increase the cost for distant targets...
 		if (AI_teamCloseness(eTarget) == 0)
 		{
-			// especially in the early game.
+			// ... in the early game.
 			if (getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() * getAliveCount())
-				iCommitmentPerMil *= 2;
-			else
+				iCommitmentPerMil = iCommitmentPerMil * 3/2;
+			/* else
+				iCommitmentPerMil = iCommitmentPerMil * 5/4; */
+
+			// ... and for total war
+			if (bTotalWar)
 				iCommitmentPerMil = iCommitmentPerMil * 5/4;
 		}
 
