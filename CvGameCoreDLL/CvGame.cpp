@@ -5918,8 +5918,12 @@ void CvGame::doTurn()
 	// K-Mod. Attitude cache. (Note: CvTeamAI::AI_doCounter has some things which affect attitude, so this update should be done after that function is called.)
 	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 	{
-		GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
-		GET_PLAYER(i).AI_updateAttitudeCache();
+		CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+		if (kLoopPlayer.isAlive())
+		{
+			GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
+			GET_PLAYER(i).AI_updateAttitudeCache();
+		}
 	}
 	//
 

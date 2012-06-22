@@ -7559,7 +7559,8 @@ void CvPlayerAI::AI_updateCloseBorderAttitudeCache(PlayerTypes ePlayer)
 	const CvTeamAI& kOurTeam = GET_TEAM(getTeam());
 	TeamTypes eTheirTeam = GET_PLAYER(ePlayer).getTeam();
 
-	if (getTeam() == eTheirTeam || kOurTeam.isVassal(eTheirTeam) || GET_TEAM(eTheirTeam).isVassal(getTeam()))
+	if (!isAlive() || !GET_PLAYER(ePlayer).isAlive() ||
+		getTeam() == eTheirTeam || kOurTeam.isVassal(eTheirTeam) || GET_TEAM(eTheirTeam).isVassal(getTeam()))
 	{
 		m_aiCloseBordersAttitudeCache[ePlayer] = 0;
 		return;
