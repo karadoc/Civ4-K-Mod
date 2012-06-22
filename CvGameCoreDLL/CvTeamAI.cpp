@@ -1631,7 +1631,7 @@ int CvTeamAI::AI_warDiplomacyCost(TeamTypes eTarget) const
 {
 	if (isAtWar(eTarget))
 	{
-		FAssertMsg(false, "AI_warDiplomacyCost called when already at war.");
+		//FAssertMsg(false, "AI_warDiplomacyCost called when already at war."); // sometimes we call this function for debug purposes.
 		return 0;
 	}
 

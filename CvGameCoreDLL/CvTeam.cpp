@@ -1221,180 +1221,159 @@ bool CvTeam::canEventuallyDeclareWar(TeamTypes eTeam) const
 }
 // bbai end
 
-void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, bool bCancelPacts)
+// K-Mod note: I've shuffled things around a bit in this function.
+void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, bool bPrimaryDoW)
 {
 	PROFILE_FUNC();
 
-	//CLLNode<TradeData>* pNode;
-	CvDiploParameters* pDiplo;
-	CvDeal* pLoopDeal;
-	CvWString szBuffer;
-	//bool bCancelDeal;
 	int iLoop;
 	int iI, iJ;
 
 	FAssertMsg(eTeam != NO_TEAM, "eTeam is not assigned a valid value");
 	FAssertMsg(eTeam != getID(), "eTeam is not expected to be equal with getID()");
 
-	if (!isAtWar(eTeam))
+	if (isAtWar(eTeam))
+		return;
+
+	if( gTeamLogLevel >= 1 )
 	{
-		//FAssertMsg((isHuman() || isMinorCiv() || GET_TEAM(eTeam).isMinorCiv() || isBarbarian() || GET_TEAM(eTeam).isBarbarian() || AI_isSneakAttackReady(eTeam) || (GET_TEAM(eTeam).getAtWarCount(true) > 0) || !(GC.getGameINLINE().isFinalInitialized()) || gDLL->GetWorldBuilderMode() || getVassalCount() > 0  || isAVassal() || GET_TEAM(eTeam).getVassalCount() > 0  || GET_TEAM(eTeam).isAVassal() || getDefensivePactCount() > 0), "Possibly accidental AI war!!!");
+		logBBAI("  Team %d (%S) declares war on team %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eTeam);
+	}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
-		if( gTeamLogLevel >= 1 )
+	for (CvDeal* pLoopDeal = GC.getGameINLINE().firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = GC.getGameINLINE().nextDeal(&iLoop))
+	{
+		if (((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == getID()) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == eTeam)) ||
+				((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == eTeam) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == getID())))
 		{
-			logBBAI("  Team %d (%S) declares war on team %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eTeam);
+			pLoopDeal->kill();
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	}
 
-		for (pLoopDeal = GC.getGameINLINE().firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = GC.getGameINLINE().nextDeal(&iLoop))
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
 		{
-			if (((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == getID()) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == eTeam)) ||
-					((GET_PLAYER(pLoopDeal->getFirstPlayer()).getTeam() == eTeam) && (GET_PLAYER(pLoopDeal->getSecondPlayer()).getTeam() == getID())))
+			GET_PLAYER((PlayerTypes)iI).updatePlunder(-1, false);
+		}
+	}
+
+	FAssertMsg(eTeam != getID(), "eTeam is not expected to be equal with getID()");
+	setAtWar(eTeam, true);
+	GET_TEAM(eTeam).setAtWar(getID(), true);
+
+	// Plot danger cache (bbai)
+	GC.getMapINLINE().invalidateBorderDangerCache(eTeam);
+	GC.getMapINLINE().invalidateBorderDangerCache(getID());
+	//
+
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
+		{
+			GET_PLAYER((PlayerTypes)iI).updatePlunder(1, false);
+		}
+	}
+
+	meet(eTeam, false);
+
+	AI_setAtPeaceCounter(eTeam, 0);
+	GET_TEAM(eTeam).AI_setAtPeaceCounter(getID(), 0);
+
+	AI_setShareWarCounter(eTeam, 0);
+	GET_TEAM(eTeam).AI_setShareWarCounter(getID(), 0);
+
+	GET_TEAM(eTeam).AI_setWarPlan(getID(), ((isBarbarian() || isMinorCiv()) ? WARPLAN_ATTACKED : WARPLAN_ATTACKED_RECENT));
+
+	for (iI = 0; iI < MAX_TEAMS; iI++)
+	{
+		if (GET_TEAM((TeamTypes)iI).isAlive())
+		{
+			if (!GET_TEAM(eTeam).isAtWar((TeamTypes)iI) && GET_TEAM(eTeam).AI_isChosenWar((TeamTypes)iI))
 			{
-				pLoopDeal->kill();
+				GET_TEAM(eTeam).AI_setWarPlan(((TeamTypes)iI), NO_WARPLAN);
 			}
 		}
+	}
 
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+	if (NO_WARPLAN != eWarPlan)
+	{
+		AI_setWarPlan(eTeam, eWarPlan);
+	}
+
+	FAssert(!(AI_isSneakAttackPreparing(eTeam)));
+	if ((AI_getWarPlan(eTeam) == NO_WARPLAN) || AI_isSneakAttackPreparing(eTeam))
+	{
+		if (isHuman())
 		{
-			if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
-			{
-				GET_PLAYER((PlayerTypes)iI).updatePlunder(-1, false);
-			}
+			AI_setWarPlan(eTeam, WARPLAN_TOTAL);
 		}
-
-		FAssertMsg(eTeam != getID(), "eTeam is not expected to be equal with getID()");
-		setAtWar(eTeam, true);
-		GET_TEAM(eTeam).setAtWar(getID(), true);
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/21/09                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-		// Plot danger cache
-		GC.getMapINLINE().invalidateBorderDangerCache(eTeam);
-		GC.getMapINLINE().invalidateBorderDangerCache(getID());
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		else if (isMinorCiv() || isBarbarian() || (GET_TEAM(eTeam).getAtWarCount(true) == 1))
 		{
-			if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
-			{
-				GET_PLAYER((PlayerTypes)iI).updatePlunder(1, false);
-			}
+			AI_setWarPlan(eTeam, WARPLAN_LIMITED);
 		}
-
-		meet(eTeam, false);
-
-		AI_setAtPeaceCounter(eTeam, 0);
-		GET_TEAM(eTeam).AI_setAtPeaceCounter(getID(), 0);
-
-		AI_setShareWarCounter(eTeam, 0);
-		GET_TEAM(eTeam).AI_setShareWarCounter(getID(), 0);
-
-		GET_TEAM(eTeam).AI_setWarPlan(getID(), ((isBarbarian() || isMinorCiv()) ? WARPLAN_ATTACKED : WARPLAN_ATTACKED_RECENT));
-
-		for (iI = 0; iI < MAX_TEAMS; iI++)
+		else
 		{
-			if (GET_TEAM((TeamTypes)iI).isAlive())
+			AI_setWarPlan(eTeam, WARPLAN_DOGPILE);
+		}
+	}
+
+	GC.getMapINLINE().verifyUnitValidPlot();
+
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+		{
+			GET_PLAYER((PlayerTypes)iI).verifyUnitStacksValid();
+		}
+	}
+
+	GC.getGameINLINE().AI_makeAssignWorkDirty();
+
+	if ((getID() == GC.getGameINLINE().getActiveTeam()) || (eTeam == GC.getGameINLINE().getActiveTeam()))
+	{
+		gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
+		gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true);
+	}
+
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		{
+			for (iJ = 0; iJ < MAX_PLAYERS; iJ++)
 			{
-				if (!GET_TEAM(eTeam).isAtWar((TeamTypes)iI) && GET_TEAM(eTeam).AI_isChosenWar((TeamTypes)iI))
+				if (GET_PLAYER((PlayerTypes)iJ).isAlive())
 				{
-					GET_TEAM(eTeam).AI_setWarPlan(((TeamTypes)iI), NO_WARPLAN);
-				}
-			}
-		}
-
-		if (NO_WARPLAN != eWarPlan)
-		{
-			AI_setWarPlan(eTeam, eWarPlan);
-		}
-
-		FAssert(!(AI_isSneakAttackPreparing(eTeam)));
-		if ((AI_getWarPlan(eTeam) == NO_WARPLAN) || AI_isSneakAttackPreparing(eTeam))
-		{
-			if (isHuman())
-			{
-				AI_setWarPlan(eTeam, WARPLAN_TOTAL);
-			}
-			else if (isMinorCiv() || isBarbarian() || (GET_TEAM(eTeam).getAtWarCount(true) == 1))
-			{
-				AI_setWarPlan(eTeam, WARPLAN_LIMITED);
-			}
-			else
-			{
-				AI_setWarPlan(eTeam, WARPLAN_DOGPILE);
-			}
-		}
-
-		GC.getMapINLINE().verifyUnitValidPlot();
-
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
-		{
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
-			{
-				GET_PLAYER((PlayerTypes)iI).verifyUnitStacksValid();
-			}
-		}
-
-		GC.getGameINLINE().AI_makeAssignWorkDirty();
-
-		if ((getID() == GC.getGameINLINE().getActiveTeam()) || (eTeam == GC.getGameINLINE().getActiveTeam()))
-		{
-			gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
-			gDLL->getInterfaceIFace()->setDirty(CityInfo_DIRTY_BIT, true);
-		}
-
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
-		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
-			{
-				for (iJ = 0; iJ < MAX_PLAYERS; iJ++)
-				{
-					if (GET_PLAYER((PlayerTypes)iJ).isAlive())
+					if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) && (GET_PLAYER((PlayerTypes)iJ).getTeam() == eTeam))
 					{
-						if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) && (GET_PLAYER((PlayerTypes)iJ).getTeam() == eTeam))
-						{
-							GET_PLAYER((PlayerTypes)iI).AI_setFirstContact(((PlayerTypes)iJ), true);
-							GET_PLAYER((PlayerTypes)iJ).AI_setFirstContact(((PlayerTypes)iI), true);
-						}
+						GET_PLAYER((PlayerTypes)iI).AI_setFirstContact(((PlayerTypes)iJ), true);
+						GET_PLAYER((PlayerTypes)iJ).AI_setFirstContact(((PlayerTypes)iI), true);
 					}
 				}
 			}
 		}
+	}
 
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
+			for (iJ = 0; iJ < MAX_PLAYERS; iJ++)
 			{
-				for (iJ = 0; iJ < MAX_PLAYERS; iJ++)
+				if (GET_PLAYER((PlayerTypes)iJ).isAlive())
 				{
-					if (GET_PLAYER((PlayerTypes)iJ).isAlive())
+					if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
 					{
-						if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+						if (GET_PLAYER((PlayerTypes)iJ).getTeam() == eTeam)
 						{
-							if (GET_PLAYER((PlayerTypes)iJ).getTeam() == eTeam)
+							GET_PLAYER((PlayerTypes)iJ).AI_changeMemoryCount(((PlayerTypes)iI), MEMORY_DECLARED_WAR, 1);
+						}
+						else if (GET_PLAYER((PlayerTypes)iJ).getTeam() != getID())
+						{
+							if (GET_TEAM(GET_PLAYER((PlayerTypes)iJ).getTeam()).isHasMet(eTeam))
 							{
-								GET_PLAYER((PlayerTypes)iJ).AI_changeMemoryCount(((PlayerTypes)iI), MEMORY_DECLARED_WAR, 1);
-							}
-							else if (GET_PLAYER((PlayerTypes)iJ).getTeam() != getID())
-							{
-								if (GET_TEAM(GET_PLAYER((PlayerTypes)iJ).getTeam()).isHasMet(eTeam))
+								if ((GET_TEAM(GET_PLAYER((PlayerTypes)iJ).getTeam()).AI_getAttitude(eTeam) >= ATTITUDE_PLEASED) && !(GET_TEAM(GET_PLAYER((PlayerTypes)iJ).getTeam()).isAtWar(eTeam)))
 								{
-									if ((GET_TEAM(GET_PLAYER((PlayerTypes)iJ).getTeam()).AI_getAttitude(eTeam) >= ATTITUDE_PLEASED) && !(GET_TEAM(GET_PLAYER((PlayerTypes)iJ).getTeam()).isAtWar(eTeam)))
-									{
-										GET_PLAYER((PlayerTypes)iJ).AI_changeMemoryCount(((PlayerTypes)iI), MEMORY_DECLARED_WAR_ON_FRIEND, 1);
-									}
+									GET_PLAYER((PlayerTypes)iJ).AI_changeMemoryCount(((PlayerTypes)iI), MEMORY_DECLARED_WAR_ON_FRIEND, 1);
 								}
 							}
 						}
@@ -1402,207 +1381,160 @@ void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, 
 				}
 			}
 		}
+	}
 
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
+			if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
 			{
-				if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
-				{
-					GET_PLAYER((PlayerTypes)iI).updateWarWearinessPercentAnger();
-				}
+				GET_PLAYER((PlayerTypes)iI).updateWarWearinessPercentAnger();
 			}
 		}
+	}
 
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
+			if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
 			{
-				if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
-				{
-					GET_PLAYER((PlayerTypes)iI).updatePlotGroups();
-				}
+				GET_PLAYER((PlayerTypes)iI).updatePlotGroups();
 			}
 		}
+	}
 
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
+			if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
 			{
-				if ((GET_PLAYER((PlayerTypes)iI).getTeam() == getID()) || (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam))
-				{
-					GET_PLAYER((PlayerTypes)iI).updateTradeRoutes();
-				}
+				GET_PLAYER((PlayerTypes)iI).updateTradeRoutes();
 			}
 		}
+	}
 
-		// K-Mod. update attitude
-		if (GC.getGameINLINE().isFinalInitialized())
+	if (GC.getGameINLINE().isFinalInitialized() && !(gDLL->GetWorldBuilderMode()))
+	{
+		if (bNewDiplo)
 		{
-			for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
-			{
-				GET_PLAYER(i).AI_updateAttitudeCache();
-			}
-		}
-		// K-Mod end
-
-		if (GC.getGameINLINE().isFinalInitialized() && !(gDLL->GetWorldBuilderMode()))
-		{
-			if (bNewDiplo)
-			{
-				if (!isHuman())
-				{
-					for (iI = 0; iI < MAX_PLAYERS; iI++)
-					{
-						if (GET_PLAYER((PlayerTypes)iI).isAlive())
-						{
-							if (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam)
-							{
-								if (GET_PLAYER(getLeaderID()).canContact((PlayerTypes)iI))
-								{
-									if (GET_PLAYER((PlayerTypes)iI).isHuman())
-									{
-										pDiplo = new CvDiploParameters(getLeaderID());
-										FAssertMsg(pDiplo != NULL, "pDiplo must be valid");
-										pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_DECLARE_WAR"));
-										pDiplo->setAIContact(true);
-										gDLL->beginDiplomacy(pDiplo, ((PlayerTypes)iI));
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (!isBarbarian() && !(GET_TEAM(eTeam).isBarbarian()) &&
-				  !isMinorCiv() && !(GET_TEAM(eTeam).isMinorCiv()))
+			if (!isHuman())
 			{
 				for (iI = 0; iI < MAX_PLAYERS; iI++)
 				{
 					if (GET_PLAYER((PlayerTypes)iI).isAlive())
 					{
-						if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+						if (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam)
 						{
-							szBuffer = gDLL->getText("TXT_KEY_MISC_YOU_DECLARED_WAR_ON", GET_TEAM(eTeam).getName().GetCString());
-							gDLL->getInterfaceIFace()->addHumanMessage(((PlayerTypes)iI), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_DECLAREWAR", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
-						}
-						else if (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam)
-						{
-							szBuffer = gDLL->getText("TXT_KEY_MISC_DECLARED_WAR_ON_YOU", getName().GetCString());
-							gDLL->getInterfaceIFace()->addHumanMessage(((PlayerTypes)iI), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_DECLAREWAR", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
-						}
-						else if (GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isHasMet(getID()) && GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isHasMet(eTeam))
-						{
-							szBuffer = gDLL->getText("TXT_KEY_MISC_SOMEONE_DECLARED_WAR", getName().GetCString(), GET_TEAM(eTeam).getName().GetCString());
-							gDLL->getInterfaceIFace()->addHumanMessage(((PlayerTypes)iI), false, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_THEIRDECLAREWAR", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
+							if (GET_PLAYER(getLeaderID()).canContact((PlayerTypes)iI))
+							{
+								if (GET_PLAYER((PlayerTypes)iI).isHuman())
+								{
+									CvDiploParameters* pDiplo = new CvDiploParameters(getLeaderID());
+									FAssertMsg(pDiplo != NULL, "pDiplo must be valid");
+									pDiplo->setDiploComment((DiploCommentTypes)GC.getInfoTypeForString("AI_DIPLOCOMMENT_DECLARE_WAR"));
+									pDiplo->setAIContact(true);
+									gDLL->beginDiplomacy(pDiplo, ((PlayerTypes)iI));
+								}
+							}
 						}
 					}
 				}
-
-				szBuffer = gDLL->getText("TXT_KEY_MISC_SOMEONE_DECLARES_WAR", getReplayName().GetCString(), GET_TEAM(eTeam).getReplayName().GetCString());
-				GC.getGameINLINE().addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, getLeaderID(), szBuffer, -1, -1, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
 			}
 		}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      12/06/09                                jdog5000      */
-/*                                                                                              */
-/* Diplomacy, Customization                                                                     */
-/************************************************************************************************/
-		// This block is entirely redundant with the cancelDefensivePacts function, better implemented there
-/*
-		if (!(GET_TEAM(eTeam).isMinorCiv()))
+		if (!isBarbarian() && !(GET_TEAM(eTeam).isBarbarian()) &&
+			  !isMinorCiv() && !(GET_TEAM(eTeam).isMinorCiv()))
 		{
+			CvWString szBuffer;
 			for (iI = 0; iI < MAX_PLAYERS; iI++)
 			{
 				if (GET_PLAYER((PlayerTypes)iI).isAlive())
 				{
 					if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
 					{
-						for (pLoopDeal = GC.getGameINLINE().firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = GC.getGameINLINE().nextDeal(&iLoop))
-						{
-							bCancelDeal = false;
-
-							if ((pLoopDeal->getFirstPlayer() == ((PlayerTypes)iI)) || (pLoopDeal->getSecondPlayer() == ((PlayerTypes)iI)))
-							{
-								for (pNode = pLoopDeal->headFirstTradesNode(); (pNode != NULL); pNode = pLoopDeal->nextFirstTradesNode(pNode))
-								{
-									if (pNode->m_data.m_eItemType == TRADE_DEFENSIVE_PACT)
-									{
-										bCancelDeal = true;
-									}
-								}
-
-								for (pNode = pLoopDeal->headSecondTradesNode(); (pNode != NULL); pNode = pLoopDeal->nextSecondTradesNode(pNode))
-								{
-									if (pNode->m_data.m_eItemType == TRADE_DEFENSIVE_PACT)
-									{
-										bCancelDeal = true;
-									}
-								}
-							}
-
-							if (bCancelDeal)
-							{
-								pLoopDeal->kill();
-							}
-						}
+						szBuffer = gDLL->getText("TXT_KEY_MISC_YOU_DECLARED_WAR_ON", GET_TEAM(eTeam).getName().GetCString());
+						gDLL->getInterfaceIFace()->addHumanMessage(((PlayerTypes)iI), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_DECLAREWAR", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
+					}
+					else if (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam)
+					{
+						szBuffer = gDLL->getText("TXT_KEY_MISC_DECLARED_WAR_ON_YOU", getName().GetCString());
+						gDLL->getInterfaceIFace()->addHumanMessage(((PlayerTypes)iI), true, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_DECLAREWAR", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
+					}
+					else if (GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isHasMet(getID()) && GET_TEAM(GET_PLAYER((PlayerTypes)iI).getTeam()).isHasMet(eTeam))
+					{
+						szBuffer = gDLL->getText("TXT_KEY_MISC_SOMEONE_DECLARED_WAR", getName().GetCString(), GET_TEAM(eTeam).getName().GetCString());
+						gDLL->getInterfaceIFace()->addHumanMessage(((PlayerTypes)iI), false, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_THEIRDECLAREWAR", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
 					}
 				}
 			}
+
+			szBuffer = gDLL->getText("TXT_KEY_MISC_SOMEONE_DECLARES_WAR", getReplayName().GetCString(), GET_TEAM(eTeam).getReplayName().GetCString());
+			GC.getGameINLINE().addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, getLeaderID(), szBuffer, -1, -1, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
 		}
-*/
+	}
 
-		CvEventReporter::getInstance().changeWar(true, getID(), eTeam);
+	// K-Mod / BBAI.
+	// This section includes some customization options from BBAI.
+	// The code has been modified for K-Mod, so that it uses "bPrimaryDoW" rather than the BBAI parameter.
+	// The original BtS code has been deleted.
+	CvEventReporter::getInstance().changeWar(true, getID(), eTeam);
 
-		if( GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() <= 1 )
+	if( GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() <= 1 )
+	{
+		cancelDefensivePacts();
+	}
+
+	for (iI = 0; iI < MAX_TEAMS; iI++)
+	{
+		if (iI != getID() && iI != eTeam && GET_TEAM((TeamTypes)iI).isAlive())
 		{
-			cancelDefensivePacts();
-		}
-
-		for (iI = 0; iI < MAX_TEAMS; iI++)
-		{
-			if (iI != getID() && iI != eTeam && GET_TEAM((TeamTypes)iI).isAlive())
+			if (GET_TEAM((TeamTypes)iI).isDefensivePact(eTeam))
 			{
-				if (GET_TEAM((TeamTypes)iI).isDefensivePact(eTeam))
-				{
-					GET_TEAM((TeamTypes)iI).declareWar(getID(), bNewDiplo, WARPLAN_DOGPILE, (GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() == 0));
-				}
-				else if( (GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() > 1) && GET_TEAM((TeamTypes)iI).isDefensivePact(getID()))
-				{
-					// For alliance option.  This teams pacts are canceled above if not using alliance option.
-					GET_TEAM((TeamTypes)iI).declareWar(eTeam, bNewDiplo, WARPLAN_DOGPILE);
-				}
+				GET_TEAM((TeamTypes)iI).declareWar(getID(), bNewDiplo, WARPLAN_DOGPILE, false);
+			}
+			else if( (GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() > 1) && GET_TEAM((TeamTypes)iI).isDefensivePact(getID()))
+			{
+				// For alliance option.  This teams pacts are canceled above if not using alliance option.
+				GET_TEAM((TeamTypes)iI).declareWar(eTeam, bNewDiplo, WARPLAN_DOGPILE, false);
 			}
 		}
+	}
 
-		if( GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() == 0 || (GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() == 1 && bCancelPacts))
-		{
-			GET_TEAM(eTeam).cancelDefensivePacts();
-		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	if( GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() == 0 || (GC.getBBAI_DEFENSIVE_PACT_BEHAVIOR() == 1 && bPrimaryDoW))
+	{
+		GET_TEAM(eTeam).cancelDefensivePacts();
+	}
+	// K-Mod / BBAI end.
 
-		for (iI = 0; iI < MAX_TEAMS; iI++)
+	for (iI = 0; iI < MAX_TEAMS; iI++)
+	{
+		if (iI != getID() && iI != eTeam)
 		{
-			if (iI != getID() && iI != eTeam)
+			if (GET_TEAM((TeamTypes)iI).isAlive())
 			{
-				if (GET_TEAM((TeamTypes)iI).isAlive())
+				if (GET_TEAM((TeamTypes)iI).isVassal(eTeam) || GET_TEAM(eTeam).isVassal((TeamTypes)iI))
 				{
-					if (GET_TEAM((TeamTypes)iI).isVassal(eTeam) || GET_TEAM(eTeam).isVassal((TeamTypes)iI))
-					{
-						declareWar((TeamTypes)iI, bNewDiplo, AI_getWarPlan(eTeam));
-					}
-					else if (GET_TEAM((TeamTypes)iI).isVassal(getID()) || isVassal((TeamTypes)iI))
-					{
-						GET_TEAM((TeamTypes)iI).declareWar(eTeam, bNewDiplo, WARPLAN_DOGPILE);
-					}
+					declareWar((TeamTypes)iI, bNewDiplo, AI_getWarPlan(eTeam), false);
+				}
+				else if (GET_TEAM((TeamTypes)iI).isVassal(getID()) || isVassal((TeamTypes)iI))
+				{
+					GET_TEAM((TeamTypes)iI).declareWar(eTeam, bNewDiplo, WARPLAN_DOGPILE, false);
 				}
 			}
 		}
 	}
+	// K-Mod. update attitude
+	if (bPrimaryDoW)
+	{
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+		{
+			GET_PLAYER(i).AI_updateAttitudeCache();
+		}
+	}
+	// K-Mod end
 }
 
 void CvTeam::makePeace(TeamTypes eTeam, bool bBumpUnits)
