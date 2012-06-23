@@ -127,7 +127,8 @@ void CvReplayInfo::createInfo(PlayerTypes ePlayer)
 
 			PlayerInfo playerInfo;
 			playerInfo.m_eLeader = player.getLeaderType();
-			playerInfo.m_eColor = (ColorTypes)GC.getPlayerColorInfo(player.getPlayerColor()).getColorTypePrimary();
+			//playerInfo.m_eColor = (ColorTypes)GC.getPlayerColorInfo(player.getPlayerColor()).getColorTypePrimary();
+			playerInfo.m_eColor = (ColorTypes)GC.getPlayerColorInfo(GC.getInitCore().getColor((PlayerTypes)iPlayer)).getColorTypePrimary(); // K-Mod. (bypass the conceal colour check.)
 			for (int iTurn = m_iInitialTurn; iTurn <= m_iFinalTurn; iTurn++)
 			{
 				TurnData score;
