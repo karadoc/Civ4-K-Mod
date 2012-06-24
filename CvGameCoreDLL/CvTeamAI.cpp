@@ -310,7 +310,7 @@ int CvTeamAI::AI_estimateTotalYieldRate(YieldTypes eYield) const
 	const int iTurn = GC.getGameINLINE().getGameTurn();
 
 	int iTotal = 0;
-	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 	{
 		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 		if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
@@ -927,7 +927,7 @@ int CvTeamAI::AI_calculateCapitalProximity(TeamTypes eTeam) const
 bool CvTeamAI::AI_haveSeenCities(TeamTypes eTeam, bool bPrimaryAreaOnly, int iMinimum) const
 {
 	int iCount = 0;
-	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 	{
 		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 		if (kLoopPlayer.getTeam() == eTeam)
@@ -983,7 +983,7 @@ bool CvTeamAI::AI_isLandTarget(TeamTypes eTeam) const
 			return true;
 	}
 
-	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 	{
 		const CvPlayerAI& kOurPlayer = GET_PLAYER(i);
 		if (kOurPlayer.getTeam() != getID() || !kOurPlayer.isAlive())
@@ -995,7 +995,7 @@ bool CvTeamAI::AI_isLandTarget(TeamTypes eTeam) const
 			if (!kOurPlayer.AI_isPrimaryArea(pOurCity->area()))
 				continue;
 			// city in a primary area.
-			for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
+			for (PlayerTypes j = (PlayerTypes)0; j < MAX_PLAYERS; j=(PlayerTypes)(j+1))
 			{
 				const CvPlayerAI& kTheirPlayer = GET_PLAYER(j);
 				if (kTheirPlayer.getTeam() != eTeam || !kTheirPlayer.isAlive() || !kTheirPlayer.AI_isPrimaryArea(pOurCity->area()))
@@ -1320,7 +1320,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 	// Cities & Land
 	int iPopCap = 2 + getTotalPopulation(false) / std::max(1, getNumCities()); // max number of plots to consider the value of.
 	int iYieldMultiplier = 0; // multiplier for the value of plot yields.
-	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 	{
 		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 		if (kLoopPlayer.getTeam() != getID() || !kLoopPlayer.isAlive())
@@ -1332,7 +1332,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 	iYieldMultiplier /= std::max(1, 2 * getAliveCount());
 
 	std::set<int> close_areas; // set of area IDs for which the enemy has cities close to ours.
-	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 	{
 		const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 		if (kLoopPlayer.getTeam() != eTarget || !kLoopPlayer.isAlive())
@@ -1444,7 +1444,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 		{
 			int iBonusValue = 0;
 			int iMissing = 0;
-			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 			{
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 				if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
@@ -1469,7 +1469,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 		CvArea* pLoopArea = GC.getMapINLINE().getArea(*it);
 		if (AI_isPrimaryArea(pLoopArea))
 		{
-			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 			{
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 				if (kLoopPlayer.getTeam() == eTarget)
@@ -1604,7 +1604,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 		// sometimes are resources are more in demand than other times...
 		{
 			int iPoolMultiplier = 0;
-			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_CIV_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
+			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 			{
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 				if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
