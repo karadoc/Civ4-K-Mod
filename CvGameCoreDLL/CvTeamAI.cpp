@@ -172,7 +172,21 @@ void CvTeamAI::AI_doTurnPre()
 
 void CvTeamAI::AI_doTurnPost()
 {
-	AI_updateStrengthMemory(); // K-Mod
+	// K-Mod
+	AI_updateStrengthMemory();
+
+	// update the attitude cache for all team members.
+	// (Note: attitude use to be updated near the start of CvGame::doTurn. I've moved it here for various reasons.)
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+		if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
+		{
+			GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
+			GET_PLAYER(i).AI_updateAttitudeCache();
+		}
+	}
+	// K-Mod end
 
 	AI_updateWorstEnemy();
 

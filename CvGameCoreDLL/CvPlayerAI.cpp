@@ -355,6 +355,7 @@ void CvPlayerAI::AI_doTurnPre()
 	AI_doCounter();
 
 	// K-Mod note: attitude cache is not refreshed here because there are still some attitude-affecting changes to come, in CvTeamAI::AI_doCounter
+	//   for efficiency, I've put AI_updateCloseBorderAttitudeCache in CvTeam::doTurn rather than here.
 
 	AI_updateBonusValue();
 	// K-Mod. GP weights can take a little bit of time, so lets only do it once every 3 turns.

@@ -346,7 +346,9 @@ void CvDeal::doTurn()
 				GET_PLAYER(getSecondPlayer()).AI_changePeacetimeGrantValue(getFirstPlayer(), iValue);
 			}
 		}
-		// K-Mod note: no need to update attitude here, because this does not happen mid-turn.
+		// K-Mod note: for balance reasons this function should probably be called at the boundry of some particular player's turn,
+		// rather than at the turn boundry of the game itself. -- Unfortunately, the game currently doesn't work like this.
+		// Also, note that we do not update attitudes of particular players here, but instead update all of them at the game turn boundry.
 	}
 }
 

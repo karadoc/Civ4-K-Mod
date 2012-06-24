@@ -11126,6 +11126,10 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 					{
 						if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 						{
+							// K-Mod. Call CvTeam::doTurn at the start of this team's turn. ie. when the leader's turn is activated.
+							if (GET_TEAM(getTeam()).getLeaderID() == getID())
+								GET_TEAM(getTeam()).doTurn();
+							// K-Mod end
 							doTurn();
 						}
 
@@ -11192,6 +11196,25 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 					if (isAlive())
 					{
 						doTurn();
+						// K-Mod. Call CvTeam::doTurn when all members of this team have finished their turn.
+						if (GC.getGameINLINE().isSimultaneousTeamTurns())
+						{
+							if (!GET_TEAM(getTeam()).isTurnActive())
+								GET_TEAM(getTeam()).doTurn();
+						}
+						else
+						{
+							bool bMoreTeammates = false;
+							for (PlayerTypes i = (PlayerTypes)(getID() + 1); !bMoreTeammates && i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+							{
+								const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+								if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() == getTeam())
+									bMoreTeammates = true;
+							}
+							if (!bMoreTeammates)
+								GET_TEAM(getTeam()).doTurn();
+						}
+						// K-Mod end
 					}
 
 					if ((GC.getGameINLINE().isPbem() || GC.getGameINLINE().isHotSeat()) && isHuman() && GC.getGameINLINE().countHumanPlayersAlive() > 1)

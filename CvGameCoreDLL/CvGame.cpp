@@ -5908,24 +5908,14 @@ void CvGame::doTurn()
 
 	doDeals();
 
+	/* original bts code
 	for (iI = 0; iI < MAX_TEAMS; iI++)
 	{
 		if (GET_TEAM((TeamTypes)iI).isAlive())
 		{
 			GET_TEAM((TeamTypes)iI).doTurn();
 		}
-	}
-	// K-Mod. Attitude cache. (Note: CvTeamAI::AI_doCounter has some things which affect attitude, so this update should be done after that function is called.)
-	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
-	{
-		CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
-		if (kLoopPlayer.isAlive())
-		{
-			GET_PLAYER(i).AI_updateCloseBorderAttitudeCache();
-			GET_PLAYER(i).AI_updateAttitudeCache();
-		}
-	}
-	//
+	} */ // disabled by K-Mod. CvTeam::doTurn is now called at the the same time as CvPlayer::doTurn, to fix certain turn-order imbalances.
 
 	GC.getMapINLINE().doTurn();
 
@@ -5982,22 +5972,8 @@ void CvGame::doTurn()
 			{
 				kTeam.setTurnActive(true);
 				FAssert(getNumGameTurnActive() == kTeam.getAliveCount());
-/*************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/10/10                       snarko & jdog5000       */
-/*                                                                                               */
-/* Bugfix                                                                                        */
-/*************************************************************************************************/
-/* original bts code
-			}
-
-			break;
-*/
-				// Break only after first found alive player
 				break;
 			}
-/*************************************************************************************************/
-/* UNOFFICIAL_PATCH                         END                                                  */
-/*************************************************************************************************/
 		}
 	}
 	else
@@ -6050,10 +6026,23 @@ void CvGame::doDeals()
 
 	verifyDeals();
 
+	std::set<PlayerTypes> trade_players; // K-Mod. List of players involved in trades.
 	for(pLoopDeal = firstDeal(&iLoop); pLoopDeal != NULL; pLoopDeal = nextDeal(&iLoop))
 	{
+		// K-Mod
+		trade_players.insert(pLoopDeal->getFirstPlayer());
+		trade_players.insert(pLoopDeal->getSecondPlayer());
+		// K-Mod end
 		pLoopDeal->doTurn();
 	}
+
+	// K-Mod. Update the attitude cache for all trade players
+	for (std::set<PlayerTypes>::iterator it = trade_players.begin(); it != trade_players.end(); ++it)
+	{
+		FAssert(*it != NO_PLAYER);
+		GET_PLAYER(*it).AI_updateAttitudeCache();
+	}
+	// K-Mod end
 }
 
 /*
