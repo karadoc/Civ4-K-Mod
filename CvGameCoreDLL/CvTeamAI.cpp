@@ -1610,8 +1610,8 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 				if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
 				{
 					iPoolMultiplier += 100;
-					// increase value if we are still trying to expand peacefully
-					int iSites = kLoopPlayer.AI_getNumPrimaryAreaCitySites(); // note, there's a small cap on the number of sites, around 3.
+					// increase value if we are still trying to expand peacefully. Now, the minimum site value is pretty arbitrary...
+					int iSites = kLoopPlayer.AI_getNumPrimaryAreaCitySites(kLoopPlayer.AI_getMinFoundValue()*2); // note, there's a small cap on the number of sites, around 3.
 					if (iSites > 0)
 					{
 						iPoolMultiplier += (50 + 50 * range(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() - kLoopPlayer.getNumCities(), 0, iSites))/(bTotalWar ? 2 : 1);

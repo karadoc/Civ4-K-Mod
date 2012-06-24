@@ -402,7 +402,7 @@ public:
 	bool AI_isPlotCitySite(CvPlot* pPlot) const;
 	int AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const;
 	int AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeArea, int& iBestValue) const;
-	int AI_getNumPrimaryAreaCitySites() const; // K-Mod
+	int AI_getNumPrimaryAreaCitySites(int iMinimumValue = 0) const; // K-Mod
 	CvPlot* AI_getCitySite(int iIndex) const;
 
 	bool AI_deduceCitySite(const CvCity* pCity) const; // K-Mod

@@ -22465,21 +22465,11 @@ void CvPlayerAI::AI_recalculateFoundValues(int iX, int iY, int iInnerRadius, int
 	
 int CvPlayerAI::AI_getMinFoundValue() const
 {
+	PROFILE_FUNC();
 	//int iValue = 600;
 	int iValue = GC.getDefineINT("BBAI_MINIMUM_FOUND_VALUE"); // K-Mod
 	int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn());
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original BTS code
-	int iNetExpenses = calculateInflatedCosts() + std::min(0, getGoldPerTurn());
-*/
 	int iNetExpenses = calculateInflatedCosts() + std::max(0, -getGoldPerTurn());
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 
 	iValue *= iNetCommerce;
 	iValue /= std::max(std::max(1, iNetCommerce / 4), iNetCommerce - iNetExpenses);
@@ -22648,8 +22638,8 @@ int CvPlayerAI::AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeAre
 	return iCount;
 }
 
-// K-Mod. Return the number of city sites that are in a primary area.
-int CvPlayerAI::AI_getNumPrimaryAreaCitySites() const
+// K-Mod. Return the number of city sites that are in a primary area, with a site value above the minimum
+int CvPlayerAI::AI_getNumPrimaryAreaCitySites(int iMinimumValue) const
 {
 	int iCount = 0;
 
@@ -22657,7 +22647,7 @@ int CvPlayerAI::AI_getNumPrimaryAreaCitySites() const
 	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
 	{
 		CvPlot* pCitySitePlot = GC.getMapINLINE().plotByIndex((*it));
-		if (AI_isPrimaryArea(pCitySitePlot->area()))
+		if (AI_isPrimaryArea(pCitySitePlot->area()) && pCitySitePlot->getFoundValue(getID()) >= iMinimumValue)
 		{
 			iCount++;
 		}
