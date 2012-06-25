@@ -796,8 +796,7 @@ int CvUnitAI::AI_attackOdds(const CvPlot* pPlot, bool bPotentialEnemy) const
 	if (GC.getLFBEnable() && GC.getLFBUseCombatOdds())
 	{
 		// Combat odds are out of 1000 - we need odds out of 100
-		CvUnit* pThis = (CvUnit*)this;
-		int iOdds = (getCombatOdds(pThis, pDefender) + 5) / 10;
+		int iOdds = (getCombatOdds(this, pDefender) + 5) / 10;
 		iOdds += GET_PLAYER(getOwnerINLINE()).AI_getAttackOddsChange();
 
 		return std::max(1, std::min(iOdds, 99));
@@ -25010,28 +25009,23 @@ void CvUnitAI::write(FDataStreamBase* pStream)
 // Private Functions...
 
 // Lead From Behind, by UncutDragon, edited for K-Mod
-void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) const
+void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue)
 {
-	CvUnit* pThis = (CvUnit*)this;
-	CvUnit* pAttacker = (*ppAttacker);
-	CvUnit* pDefender;
-	int iOdds;
-	int iValue;
-	int iAIOdds;
+	CvUnit* pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, !bPotentialEnemy, bPotentialEnemy);
 
-	pDefender = pPlot->getBestDefender(NO_PLAYER, getOwnerINLINE(), this, !bPotentialEnemy, bPotentialEnemy);
-	iValue = LFBgetAttackerRank(pDefender, iOdds);
+	int iOdds;
+	int iValue = LFBgetAttackerRank(pDefender, iOdds);
 
 	// Combat odds are out of 1000, but the AI routines need odds out of 100, and when called from AI_getBestGroupAttacker
 	// we return this value. Note that I'm not entirely sure if/how that return value is actually used ... but just in case I
 	// want to make sure I'm returning something consistent with what was there before
-	iAIOdds = (iOdds + 5) / 10;
+	int iAIOdds = (iOdds + 5) / 10;
 	iAIOdds += GET_PLAYER(getOwnerINLINE()).AI_getAttackOddsChange();
 	iAIOdds = std::max(1, std::min(iAIOdds, 99));
 
 	if (collateralDamage() > 0)
 	{
-		int iPossibleTargets = std::min((pPlot->getNumVisibleEnemyDefenders(pThis) - 1), collateralDamageMaxUnits());
+		int iPossibleTargets = std::min((pPlot->getNumVisibleEnemyDefenders(this) - 1), collateralDamageMaxUnits());
 
 		if (iPossibleTargets > 0)
 		{
@@ -25041,9 +25035,9 @@ void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bo
 	}
 
 	// Nothing to compare against - we're obviously better
-	if (!pAttacker)
+	if (!(*ppAttacker))
 	{
-		(*ppAttacker) = pThis;
+		(*ppAttacker) = this;
 		iAIAttackOdds = iAIOdds;
 		iAttackerValue = iValue;
 		return;
@@ -25052,7 +25046,7 @@ void CvUnitAI::LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bo
 	// Compare our adjusted value with the current best
 	if (iValue > iAttackerValue)
 	{
-		(*ppAttacker) = pThis;
+		(*ppAttacker) = this;
 		iAIAttackOdds = iAIOdds;
 		iAttackerValue = iValue;
 	}

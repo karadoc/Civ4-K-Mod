@@ -906,7 +906,7 @@ protected:
 // Lead From Behind by UncutDragon. Edited for K-Mod
 public:
 	bool isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttacker, int* pBestDefenderRank) const;
-	virtual void LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) const = 0;
+	virtual void LFBgetBetterAttacker(CvUnit** ppAttacker, const CvPlot* pPlot, bool bPotentialEnemy, int& iAIAttackOdds, int& iAttackerValue) = 0;
 	int LFBgetAttackerRank(const CvUnit* pDefender, int& iUnadjustedRank) const;
 	int LFBgetDefenderRank(const CvUnit* pAttacker) const;
 //protected: // unprotected by K-Mod. (I want to use the LFB value for some AI stuff)

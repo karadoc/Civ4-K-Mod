@@ -720,7 +720,7 @@ __int64 getBinomialCoefficient(int iN, int iK)
 // Calculates combat odds, given two units
 // Returns value from 0-1000
 // Written by DeepO
-int getCombatOdds(CvUnit* pAttacker, CvUnit* pDefender)
+int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 {
 	float fOddsEvent;
 	float fOddsAfterEvent;
