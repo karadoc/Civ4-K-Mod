@@ -1395,7 +1395,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 			for (ReligionTypes i = (ReligionTypes)0; i < GC.getNumReligionInfos(); i=(ReligionTypes)(i+1))
 			{
 				if (pLoopCity->isHolyCity(i))
-					iCityValue += GC.getGameINLINE().countReligionLevels(i);
+					iCityValue += GC.getGameINLINE().countReligionLevels(i) / (pLoopCity->hasShrine(i) ? 1 : 2);
 			}
 
 			// corp HQ value

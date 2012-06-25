@@ -12075,7 +12075,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 			case AREAAI_NEUTRAL:
 				// think of 'dagger' as being prep for total war.
 				FAssert(!bTotalWar);
-				iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 30 + iBuildProb*2/3 : 0;
+				iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 20 + iBuildProb*2/3 : 0;
 				break;
 			default:
 				FAssert(false);
@@ -12088,7 +12088,7 @@ int CvPlayerAI::AI_maxUnitCostPerMil(CvArea* pArea, int iBuildProb) const
 			else
 			{
 				FAssert(!bTotalWar);
-				iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 30 + iBuildProb*2/3 : 0;
+				iMaxUnitSpending += AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 20 + iBuildProb*2/3 : 0;
 			}
 		}
 	}
