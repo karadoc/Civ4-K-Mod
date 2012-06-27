@@ -22406,57 +22406,87 @@ void CvUnitAI::AI_exploreAirMove()
 
 
 // Returns true if a mission was pushed...
+// This function has been completely rewritten for K-Mod.
 bool CvUnitAI::AI_nuke()
 {
 	PROFILE_FUNC();
 
-	CvCity* pLoopCity;
-	CvCity* pBestCity;
-	int iValue;
-	int iBestValue;
-	int iLoop;
-	int iI;
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+	const CvTeamAI& kTeam = GET_TEAM(kOwner.getTeam());
 
-	pBestCity = NULL;
+	bool bDanger = kOwner.AI_getAnyPlotDanger(plot(), 2); // consider changing this to something smarter
+	int iWarRating = kTeam.AI_getWarSuccessRating();
+	// iBaseWeight is the civ-independant part of the weight for civilian damage evaluation
+	int iBaseWeight = 10;
+	iBaseWeight += kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3) || GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0;
+	iBaseWeight += kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) ? 20 : 0;
+	iBaseWeight += std::max(0, -iWarRating);
+	iBaseWeight -= std::max(0, iWarRating - 50); // don't completely destroy them if we want to keep their land.
 
-	iBestValue = 0;
+	CvPlot* pBestTarget = 0;
+	// the initial value of iBestValue is the threshold for action. (cf. units of AI_nukeValue)
+	int iBestValue = std::max(0, 3 * getUnitInfo().getProductionCost());
+	iBestValue += bDanger || kOwner.AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 20 : 100;
+	iBestValue *= std::max(1, kOwner.getNumNukeUnits() + 2 * kOwner.getNumCities());
+	iBestValue /= std::max(1, 2 * kOwner.getNumNukeUnits() + (bDanger ? 2 : 1) * kOwner.getNumCities());
+	iBestValue *= 150 + iWarRating;
+	iBestValue /= 150;
 
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i = (PlayerTypes)(i+1))
 	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive() && !GET_PLAYER((PlayerTypes)iI).isBarbarian())
+		const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+		if (kLoopPlayer.isAlive() && !kLoopPlayer.isBarbarian() && isEnemy(kLoopPlayer.getTeam()))
 		{
-			if (isEnemy(GET_PLAYER((PlayerTypes)iI).getTeam()))
+			int iDestructionWeight = iBaseWeight + kOwner.AI_getAttitudeWeight(i) / 2;
+			int iLoop;
+			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 			{
-				if (GET_PLAYER(getOwnerINLINE()).AI_getAttitude((PlayerTypes)iI) == ATTITUDE_FURIOUS)
+				if (canNukeAt(plot(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()))
 				{
-					for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
-					{
-						if (canNukeAt(plot(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()))
-						{
-							iValue = AI_nukeValue(pLoopCity);
+					CvPlot* pTarget;
+					int iValue = AI_nukeValue(pLoopCity->plot(), nukeRange(), pTarget, 100);
+					iValue /= (kTeam.AI_getWarPlan(pLoopCity->getTeam()) == WARPLAN_LIMITED && iWarRating > -10) ? 2 : 1;
 
-							if (iValue > iBestValue)
-							{
-								iBestValue = iValue;
-								pBestCity = pLoopCity;
-								FAssert(pBestCity->getTeam() != getTeam());
-							}
-						}
+					if (iValue > iBestValue)
+					{
+						iBestValue = iValue;
+						pBestTarget = pTarget;
 					}
 				}
 			}
 		}
 	}
 
-	if (pBestCity != NULL)
+	if (pBestTarget)
 	{
-		getGroup()->pushMission(MISSION_NUKE, pBestCity->getX_INLINE(), pBestCity->getY_INLINE());
+		FAssert(canNukeAt(plot(), pBestTarget->getX_INLINE(), pBestTarget->getY_INLINE()));
+		getGroup()->pushMission(MISSION_NUKE, pBestTarget->getX_INLINE(), pBestTarget->getY_INLINE());
 		return true;
 	}
 
 	return false;
 }
 
+// this function has been completely rewritten for K-Mod
+bool CvUnitAI::AI_nukeRange(int iRange)
+{
+	PROFILE_FUNC();
+
+	int iThresholdValue = 60 + std::max(0, 3 * getUnitInfo().getProductionCost());
+	if (!GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), DANGER_RANGE))
+		iThresholdValue = iThresholdValue * 3/2;
+
+	CvPlot* pTargetPlot = 0;
+	int iNukeValue = AI_nukeValue(plot(), iRange, pTargetPlot);
+	if (iNukeValue > iThresholdValue)
+	{
+		FAssert(pTargetPlot && canNukeAt(plot(), pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE()));
+		getGroup()->pushMission(MISSION_NUKE, pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE());
+		return true;
+	}
+}
+
+#if 0 // old code disabled by K-Mod
 bool CvUnitAI::AI_nukeRange(int iRange)
 {
 	CvPlot* pBestPlot = NULL;
@@ -22588,6 +22618,7 @@ bool CvUnitAI::AI_nukeRange(int iRange)
 	
 	return false;
 }
+#endif // end old AI_nukeRnage code.
 
 bool CvUnitAI::AI_trade(int iValueThreshold)
 {
@@ -23903,85 +23934,171 @@ int CvUnitAI::AI_pillageValue(CvPlot* pPlot, int iBonusValueThreshold)
 	return iValue;
 }
 
-
-int CvUnitAI::AI_nukeValue(CvCity* pCity)
+// K-Mod.
+// Return the value of the best nuke target in the range specified, and set pBestTarget to be the specific target plot.
+// The return value is roughly in units of production.
+int CvUnitAI::AI_nukeValue(CvPlot* pCenterPlot, int iSearchRange, CvPlot*& pBestTarget, int iCivilianTargetWeight) const
 {
 	PROFILE_FUNC();
-	FAssertMsg(pCity != NULL, "City is not assigned a valid value");
 
-	for (int iI = 0; iI < MAX_TEAMS; iI++)
+	FAssert(pCenterPlot);
+
+	int iMilitaryTargetWeight = 100;
+
+	typedef std::map<CvPlot*, int> plotMap_t;
+	plotMap_t affected_plot_values;
+	int iBestValue = 0; // note: value is divided by 100 at the end
+	pBestTarget = 0;
+
+	for (int iX = -iSearchRange; iX <= iSearchRange; iX++)
 	{
-		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
-		if (kLoopTeam.isAlive() && !isEnemy((TeamTypes)iI))
+		for (int iY = -iSearchRange; iY <= iSearchRange; iY++)
 		{
-			if (isNukeVictim(pCity->plot(), ((TeamTypes)iI)))
+			CvPlot* pLoopTarget = plotXY(pCenterPlot, iX, iY);
+			if (!pLoopTarget || !canNukeAt(plot(), pLoopTarget->getX_INLINE(), pLoopTarget->getY_INLINE()))
+				continue;
+
+			bool bValid = true;
+			// Note: canNukeAt checks that we aren't hitting any 3rd party targets, so we don't have to worry about checking that elsewhere
+
+			int iTargetValue = 0;
+
+			for (int jX = -nukeRange(); bValid && jX <= nukeRange(); jX++)
 			{
-				// Don't start wars with neutrals
-				return 0;
+				for (int jY = -nukeRange(); bValid && jY <= nukeRange(); jY++)
+				{
+					CvPlot* pLoopPlot = plotXY(pLoopTarget, jX, jY);
+					if (!pLoopPlot)
+						continue;
+
+					plotMap_t::iterator plot_it = affected_plot_values.find(pLoopPlot);
+					if (plot_it != affected_plot_values.end())
+					{
+						if (plot_it->second == INT_MIN)
+							bValid = false;
+						else
+							iTargetValue += plot_it->second;
+						continue;
+					}
+					// plot evaluation:
+					int iPlotValue = 0;
+
+					// value for improvements / bonuses etc.
+					if (bValid && isEnemy(pLoopPlot->getTeam(), pLoopPlot))
+					{
+						ImprovementTypes eImprovement = pLoopPlot->getRevealedImprovementType(getTeam(), false);
+						BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam());
+						const CvPlayerAI& kPlotOwner = GET_PLAYER(pLoopPlot->getOwnerINLINE());
+
+						if (eImprovement != NO_IMPROVEMENT)
+						{
+							const CvImprovementInfo& kImprovement = GC.getImprovementInfo(eImprovement);
+							if (!kImprovement.isPermanent())
+							{
+								// arbitrary values, sorry.
+								iPlotValue += 8 * iCivilianTargetWeight;
+								if (kImprovement.getImprovementPillage() != NO_IMPROVEMENT)
+								{
+									iPlotValue += (kImprovement.getImprovementUpgrade() == NO_IMPROVEMENT ? 32 : 16) * iCivilianTargetWeight;
+								}
+							}
+						}
+						if (eBonus != NO_BONUS)
+						{
+							iPlotValue += 8 * iCivilianTargetWeight;
+							if (kPlotOwner.doesImprovementConnectBonus(eImprovement, eBonus))
+							{
+								// assume that valueable bonuses are military targets, because the enemy might be using the bonus to build weapons.
+								iPlotValue += kPlotOwner.AI_bonusVal(eBonus, 0) * iMilitaryTargetWeight;
+							}
+						}
+					}
+					// don't pay any attention to our own plots, or to unowned plots. (Sorry.)
+
+					// consider military units if the plot is visible. (todo: increase value of military units that we can chase down this turn, maybe.)
+					if (bValid && pLoopPlot->isVisible(getTeam(), false))
+					{
+						CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
+						while (pUnitNode)
+						{
+							CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+							pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
+
+							if (!pLoopUnit->isInvisible(getTeam(), false))
+							{
+								if (pLoopUnit->isEnemy(getTeam(), pLoopPlot))
+								{
+									iPlotValue += iMilitaryTargetWeight * std::max(1, pLoopUnit->getUnitInfo().getProductionCost());
+								}
+								else // non enemy unit
+								{
+									if (pLoopUnit->getTeam() == getTeam())
+									{
+										// nuking our own units... sometimes acceptable
+										int x = pLoopUnit->getUnitInfo().getProductionCost();
+										if (x > 0)
+											iPlotValue -= iMilitaryTargetWeight * x;
+										else
+											bValid = false; // assume this is a special unit.
+									}
+									else
+									{
+										FAssertMsg(false, "3rd party unit being considered for nuking.");
+									}
+								}
+							}
+						} // end unit loop
+					} // end plot visible
+
+					if (bValid && pLoopPlot->isCity() && pLoopPlot->getPlotCity()->isRevealed(getTeam(), false))
+					{
+						CvCity* pLoopCity = pLoopPlot->getPlotCity(); // I can imagine some cases where this actually isn't pCity. Can you?
+
+						// it might even be one of our own cities, so be careful!
+						if (!isEnemy(pLoopCity->getTeam(), pLoopPlot))
+						{
+							bValid = false;
+						}
+						else
+						{
+							// the values used here are quite arbitrary.
+							iPlotValue += iCivilianTargetWeight * 2 * (pLoopCity->getCultureLevel() + 2) * pLoopCity->getPopulation();
+
+							// note, it is possible to see which buildings the city has by looking at the map. This is not secret information.
+							for (BuildingTypes i = (BuildingTypes)0; i < GC.getNumBuildingInfos(); i=(BuildingTypes)(i+1))
+							{
+								if (pLoopCity->getNumRealBuilding(i) > 0)
+								{
+									const CvBuildingInfo& kBuildingInfo = GC.getBuildingInfo(i);
+									if (!kBuildingInfo.isNukeImmune())
+										iPlotValue += iCivilianTargetWeight * pLoopCity->getNumRealBuilding(i) * std::max(0, kBuildingInfo.getProductionCost());
+								}
+							}
+
+							// if we don't have vision of the city, just assume that there are at least a couple of defenders, and count that into our evaluation.
+							if (!pLoopPlot->isVisible(getTeam(), false))
+							{
+								UnitTypes eBasicUnit = pLoopCity->getConscriptUnit();
+								int iBasicCost = std::max(10, eBasicUnit != NO_UNIT ? GC.getUnitInfo(eBasicUnit).getProductionCost() : 0);
+
+								iPlotValue += iMilitaryTargetWeight * 2 * iBasicCost;
+							}
+						}
+					}
+					// end of plot evaluation
+					affected_plot_values[pLoopPlot] = bValid ? iPlotValue : INT_MIN;
+					iTargetValue += iPlotValue;
+				}
+			}
+
+			if (bValid && iTargetValue > iBestValue)
+			{
+				pBestTarget = pLoopTarget;
+				iBestValue = iTargetValue;
 			}
 		}
 	}
-
-	int iValue = 1;
-
-	iValue += GC.getGameINLINE().getSorenRandNum((pCity->getPopulation() + 1), "AI Nuke City Value");
-	iValue += std::max(0, pCity->getPopulation() - 10);
-
-	iValue += ((pCity->getPopulation() * (100 + pCity->calculateCulturePercent(pCity->getOwnerINLINE()))) / 100);
-
-	iValue += -(GET_PLAYER(getOwnerINLINE()).AI_getAttitudeVal(pCity->getOwnerINLINE()) / 3);
-
-	for (int iDX = -(nukeRange()); iDX <= nukeRange(); iDX++)
-	{
-		for (int iDY = -(nukeRange()); iDY <= nukeRange(); iDY++)
-		{
-			CvPlot* pLoopPlot = plotXY(pCity->getX_INLINE(), pCity->getY_INLINE(), iDX, iDY);
-
-			if (pLoopPlot != NULL)
-			{
-				if (pLoopPlot->getImprovementType() != NO_IMPROVEMENT)
-				{
-					iValue++;
-				}
-
-				/********************************************************************************/
-				/* 	BETTER_BTS_AI_MOD						7/31/08				jdog5000	*/
-				/* 																			*/
-				/* 	Bugfix																	*/
-				/********************************************************************************/
-				//if (pLoopPlot->getBonusType() != NO_BONUS)
-				if (pLoopPlot->getNonObsoleteBonusType(getTeam()) != NO_BONUS)
-				{
-					iValue++;
-				}
-				/********************************************************************************/
-				/* 	BETTER_BTS_AI_MOD						END								*/
-				/********************************************************************************/
-			}
-		}
-	}
-	
-	if (!(pCity->isEverOwned(getOwnerINLINE())))
-	{
-		iValue *= 3;
-		iValue /= 2;
-	}
-	
-	if (!GET_TEAM(pCity->getTeam()).isAVassal())
-	{
-		iValue *= 2;
-	}
-	
-	if (pCity->plot()->isVisible(getTeam(), false))
-	{
-		iValue += 2 * pCity->plot()->getNumVisibleEnemyDefenders(this);
-	}
-	else
-	{
-		iValue += 6;
-	}
-
-	return iValue;
+	return iBestValue / 100;
 }
 
 
