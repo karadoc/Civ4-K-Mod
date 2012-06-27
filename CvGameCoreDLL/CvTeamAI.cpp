@@ -1395,14 +1395,16 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 			for (ReligionTypes i = (ReligionTypes)0; i < GC.getNumReligionInfos(); i=(ReligionTypes)(i+1))
 			{
 				if (pLoopCity->isHolyCity(i))
-					iCityValue += GC.getGameINLINE().countReligionLevels(i) / (pLoopCity->hasShrine(i) ? 1 : 2);
+					iCityValue += std::max(0, GC.getGameINLINE().countReligionLevels(i) / (pLoopCity->hasShrine(i) ? 1 : 2) - 4);
+				// note: the -4 at the end is mostly there to offset the 'wonder' value that will be added later.
+				// I don't want to double-count the value of the shrine, and the religion without the shrine isn't worth much anyway.
 			}
 
 			// corp HQ value
 			for (CorporationTypes i = (CorporationTypes)0; i < GC.getNumCorporationInfos(); i=(CorporationTypes)(i+1))
 			{
 				if (pLoopCity->isHeadquarters(i))
-					iCityValue += 2 * GC.getGameINLINE().countCorporationLevels(i);
+					iCityValue += std::max(0, 2 * GC.getGameINLINE().countCorporationLevels(i) - 4);
 			}
 
 			// wonders

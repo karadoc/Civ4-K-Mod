@@ -200,6 +200,8 @@ inline CvPlot* plotXY(int iX, int iY, int iDX, int iDY)																// Expose
 	return GC.getMapINLINE().plotINLINE((iX + iDX), (iY + iDY));
 }
 
+inline CvPlot* plotXY(const CvPlot* pPlot, int iDX, int iDY) { return plotXY(pPlot->getX_INLINE(), pPlot->getY_INLINE(), iDX, iDY); } // K-Mod
+
 inline DirectionTypes directionXY(int iDX, int iDY)																		// Exposed to Python
 {
 	if ((abs(iDX) > DIRECTION_RADIUS) || (abs(iDY) > DIRECTION_RADIUS))

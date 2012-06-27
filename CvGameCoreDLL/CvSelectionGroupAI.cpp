@@ -380,7 +380,7 @@ CvUnit* CvSelectionGroupAI::AI_getBestGroupAttacker(const CvPlot* pPlot, bool bP
 	CLLNode<IDInfo>* pUnitNode = headUnitNode();
 
 	bool bIsHuman = (pUnitNode != NULL) ? GET_PLAYER(::getUnit(pUnitNode->m_data)->getOwnerINLINE()).isHuman() : true;
-			
+
 	while (pUnitNode != NULL)
 	{
 		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
@@ -423,21 +423,21 @@ CvUnit* CvSelectionGroupAI::AI_getBestGroupAttacker(const CvPlot* pPlot, bool bP
 						else 
 						{
 							int iOdds = pLoopUnit->AI_attackOdds(pPlot, bPotentialEnemy);
-							
+
 							int iValue = iOdds;
 							FAssertMsg(iValue > 0, "iValue is expected to be greater than 0");
-	
+
 							if (pLoopUnit->collateralDamage() > 0)
 							{
 								int iPossibleTargets = std::min((pPlot->getNumVisibleEnemyDefenders(pLoopUnit) - 1), pLoopUnit->collateralDamageMaxUnits());
-	
+
 								if (iPossibleTargets > 0)
 								{
 									iValue *= (100 + ((pLoopUnit->collateralDamage() * iPossibleTargets) / 5));
 									iValue /= 100;
 								}
 							}
-	
+
 							// if non-human, prefer the last unit that has the best value (so as to avoid splitting the group)
 							if (iValue > iBestValue || (!bIsHuman && iValue > 0 && iValue == iBestValue))
 							{
@@ -454,7 +454,7 @@ CvUnit* CvSelectionGroupAI::AI_getBestGroupAttacker(const CvPlot* pPlot, bool bP
 			}
 		}
 	}
-	
+
 	iUnitOdds = iBestOdds;
 	return pBestUnit;
 }
