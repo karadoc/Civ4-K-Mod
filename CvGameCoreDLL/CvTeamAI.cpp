@@ -1287,7 +1287,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 
 	// Deny factor: the percieved value of denying the enemy team of its resources (generally)
 	int iDenyFactor = bAggresive
-		? 40 - AI_getAttitudeWeight(eTarget)/4
+		? 40 - AI_getAttitudeWeight(eTarget)/3
 		: 20 - AI_getAttitudeWeight(eTarget)/2;
 
 	iDenyFactor += AI_getWorstEnemy() == eTarget ? 20 : 0; // (in addition to attitude pentalities)
@@ -1299,10 +1299,14 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 			iDenyFactor += AI_isAnyMemberDoVictoryStrategyLevel4() ? 40 : 20;
 		}
 
-		if (bAggresive || AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4))
+		if (bAggresive || AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3))
 		{
-			iDenyFactor += 30;
+			iDenyFactor += 20;
 		}
+	}
+	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4))
+	{
+		iDenyFactor += 20;
 	}
 
 	int iRankDelta = GC.getGameINLINE().getTeamRank(getID()) - GC.getGameINLINE().getTeamRank(eTarget);
@@ -1327,6 +1331,7 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 	bool bImminentVictory = kTargetTeam.AI_getLowestVictoryCountdown() >= 0;
 
 	bool bTotalWar = eWarPlan == WARPLAN_TOTAL || eWarPlan == WARPLAN_PREPARING_TOTAL;
+	bool bOverseasWar = !AI_hasSharedPrimaryArea(eTarget);
 
 	int iGainedValue = 0;
 	int iDeniedValue = 0;
@@ -1344,6 +1349,11 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 		iYieldMultiplier += kLoopPlayer.AI_averageYieldMultiplier(YIELD_COMMERCE) * iFoodMulti / 100;
 	}
 	iYieldMultiplier /= std::max(1, 2 * getAliveCount());
+	// now.. here's a bit of ad-hoccery.
+	// the actual yield multiplayer is not the only thing that goes up as the game progresses.
+	// the raw produce of land also tends to increase, as improvements become more powerful. Therefore...:
+	iYieldMultiplier = iYieldMultiplier * (1 + GET_PLAYER(getLeaderID()).getCurrentEra() + GC.getNumEraInfos()) / std::max(1, GC.getNumEraInfos());
+	//
 
 	std::set<int> close_areas; // set of area IDs for which the enemy has cities close to ours.
 	for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
@@ -1422,11 +1432,26 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 			}
 
 			// gained
-			int iGainFactor = AI_isPrimaryArea(pLoopCity->area()) ? 60 : 30;
-			iGainFactor /= bTotalWar ? 1 : 2;
+			int iGainFactor = 0;
+			if (bTotalWar)
+			{
+				if (AI_isPrimaryArea(pLoopCity->area()))
+					iGainFactor = 70;
+				else if (bOverseasWar && GET_PLAYER(pLoopCity->getOwnerINLINE()).AI_isPrimaryArea(pLoopCity->area()))
+					iGainFactor = 50;
+				else
+					iGainFactor = 30;
+			}
+			else
+			{
+				if (AI_isPrimaryArea(pLoopCity->area()))
+					iGainFactor = 40;
+				else
+					iGainFactor = 20;
+			}
 			if (pLoopCity->AI_highestTeamCloseness(getID()) > 0)
 			{
-				iGainFactor += 40;
+				iGainFactor += 30;
 				close_areas.insert(pLoopCity->getArea());
 			}
 
@@ -1531,13 +1556,13 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 	// Estimate of military production costs
 	{
 		// Base commitment for a war of this type.
-		int iCommitmentPerMil = bTotalWar ? 600 : 300;
+		int iCommitmentPerMil = bTotalWar ? 525 : 250;
 
 		// scale based on our current strength relative to our enemies.
 		// cf. with code in AI_calculateAreaAIType
 		{
 			int iWarSuccessRating = isAtWar(eTarget) ? AI_getWarSuccessRating() : 0;
-			int iOurRelativeStrength = 100 * getPower(false) / (AI_countMilitaryWeight(0) + 20);
+			int iOurRelativeStrength = 100 * getPower(true) / (AI_countMilitaryWeight(0) + 20); // whether to include vassals is a tricky issue...
 			// Sum the relative strength for all enemies, including existing wars and wars with civs attached to the target team.
 			int iEnemyRelativeStrength = 0;
 			int iFreePowerBonus = GC.getUnitInfo(GC.getGameINLINE().getBestLandUnit()).getPowerValue() * 2;
@@ -1563,8 +1588,8 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 		// scale based on the relative size of our civilizations.
 		int iOurProduction = AI_estimateTotalYieldRate(YIELD_PRODUCTION);
 		int iTheirProduction = kTargetTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION);
-		iCommitmentPerMil *= 5 * iTheirProduction + iOurProduction;
-		iCommitmentPerMil /= std::max(1, iTheirProduction + 5 * iOurProduction);
+		iCommitmentPerMil *= 6 * iTheirProduction + iOurProduction;
+		iCommitmentPerMil /= std::max(1, iTheirProduction + 6 * iOurProduction);
 
 		// Adjust for overseas wars
 		if (!AI_hasSharedPrimaryArea(eTarget))
@@ -1614,7 +1639,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 		}
 
 		// iCommitmentPerMil will be multiplied by a rough estimate of the total resources this team could devote to war.
-		int iCommitmentPool = iOurProduction * 5/2 + AI_estimateTotalYieldRate(YIELD_COMMERCE); // cf. AI_yieldWeight
+		int iCommitmentPool = iOurProduction * 3 + AI_estimateTotalYieldRate(YIELD_COMMERCE); // cf. AI_yieldWeight
 		// Note: it would probably be good to take into account the expected increase in unit spending - but that's a bit tricky.
 
 		// sometimes are resources are more in demand than other times...
