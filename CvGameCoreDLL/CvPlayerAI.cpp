@@ -18986,142 +18986,145 @@ int CvPlayerAI::AI_calculateSpaceVictoryStage() const
 	return 0;
 }
 
+
+// This function has been completely rewritten for K-Mod
 int CvPlayerAI::AI_calculateConquestVictoryStage() const
 {
-	int iValue;
+	PROFILE_FUNC();
+	const CvTeamAI& kTeam = GET_TEAM(getTeam());
 
-	if (GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE))
-	{
-    	return 0;
-	}
-
-	if(GET_TEAM(getTeam()).isAVassal())
-	{
+	// check for validity of conquest victory
+	if (GC.getGameINLINE().isOption(GAMEOPTION_ALWAYS_PEACE) || kTeam.isAVassal() || GC.getDefineINT("BBAI_VICTORY_STRATEGY_CONQUEST") <= 0)
 		return 0;
-	}
 
-	if( GC.getDefineINT("BBAI_VICTORY_STRATEGY_CONQUEST") <= 0 )
 	{
-		return 0;
-	}
+		bool bValid = false;
 
-	VictoryTypes eConquest = NO_VICTORY;
-	for (int iI = 0; iI < GC.getNumVictoryInfos(); iI++)
-	{
-		if (GC.getGameINLINE().isVictoryValid((VictoryTypes) iI))
+		for (VictoryTypes i = (VictoryTypes)0; !bValid && i < GC.getNumVictoryInfos(); i=(VictoryTypes)(i+1))
 		{
-			CvVictoryInfo& kVictoryInfo = GC.getVictoryInfo((VictoryTypes) iI);
-			if( kVictoryInfo.isConquest() )
-			{
-				eConquest = (VictoryTypes)iI;
-				break;
-			}
+			if (GC.getGameINLINE().isVictoryValid(i) && GC.getVictoryInfo(i).isConquest())
+				bValid = true;
+		}
+		if (!bValid)
+			return 0;
+	}
+
+	/* Things to consider:
+	 - personality (conquest victory weight)
+	 - our relationship with other civs
+	 - our current power and productivity
+	 - our war record. (ideally, we'd look at wars won / lost, but that info is unavailable - so wars declared will have to do.)
+	*/
+
+	// first, gather some data.
+	int iDoWs = 0, iKnownCivs = 0, iRivalPop = 0, iStartCivs = 0, iConqueredCivs = 0, iAttitudeWeight = 0;
+
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		const CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+		const CvTeamAI& kLoopTeam = GET_TEAM(kLoopPlayer.getTeam());
+
+		if (!kLoopPlayer.isEverAlive() || kLoopPlayer.getTeam() == getTeam() || kLoopTeam.isMinorCiv())
+			continue;
+
+		iDoWs += kLoopPlayer.AI_getMemoryCount(getID(), MEMORY_DECLARED_WAR);
+
+		if (kLoopPlayer.getParent() != NO_PLAYER)
+			continue;
+
+		iStartCivs++;
+
+		if (!kLoopPlayer.isAlive() || kLoopTeam.isVassal(getTeam()))
+		{
+			iKnownCivs++; // eliminated civs are announced.
+			iConqueredCivs++;
+			continue;
+		}
+
+		if (!kTeam.isHasMet(kLoopPlayer.getTeam()))
+			continue;
+
+		iKnownCivs++;
+		iRivalPop += kLoopPlayer.getTotalPopulation();
+		iAttitudeWeight += kLoopPlayer.getTotalPopulation() * AI_getAttitudeWeight(i);
+	}
+	iAttitudeWeight /= std::max(1, iRivalPop);
+
+	// (please excuse the fact that the AI magically knows the power of all teams.)
+	int iRivalTeams = 0; // number of other teams we know
+	int iRivalPower = 0; // sum of their power
+	int iStrongerTeams = 0; // number of teams known to have greater power than us.
+	int iOurPower = kTeam.getPower(true);
+	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
+	{
+		const CvTeamAI& kLoopTeam = GET_TEAM(i);
+
+		if (i == getTeam() || !kLoopTeam.isAlive() && kLoopTeam.isMinorCiv())
+			continue;
+
+		if (kTeam.isHasMet(i) && !kLoopTeam.isAVassal())
+		{
+			iRivalTeams++;
+			int p = kLoopTeam.getPower(true);
+			iRivalPower += p;
+			if (p >= iOurPower)
+				iStrongerTeams++;
 		}
 	}
+	int iAverageRivalPower = iRivalPower / std::max(1, iRivalTeams);
 
-	if( eConquest == NO_VICTORY )
-	{
+	// Ok. Now, decide whether we want to consider a conquest victory.
+	// This decision is based on situation and on personality.
+
+
+	// personality & randomness
+	int iValue = GC.getLeaderHeadInfo(getPersonalityType()).getConquestVictoryWeight();
+	//iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
+	iValue += (AI_getStrategyRand(4) % 100);
+
+	// stats
+	bool bVeryStrong = iRivalTeams > 0 && iOurPower > 2*iAverageRivalPower && iOurPower - iAverageRivalPower > 100;
+	bool bTopRank = iStrongerTeams < (iRivalTeams + 4) / 5;
+	bool bWarmonger = iDoWs > iStartCivs/2 || (iKnownCivs >= iStartCivs && iDoWs > iRivalTeams*3/4);
+	bool bHateful = iAttitudeWeight < -25;
+
+	iValue += iDoWs > 1 || AI_isDoStrategy(AI_STRATEGY_CRUSH) ? 10 : 0;
+	iValue += bVeryStrong ? 30 : 0;
+	iValue += bTopRank && bHateful ? 30 : 0;
+	iValue += bWarmonger ? 30 : 0;
+	iValue += iRivalTeams > 1 && (iStrongerTeams > iRivalTeams/2 || iOurPower < iAverageRivalPower * 3/4) ? -30 : 0;
+	iValue += iOurPower < iAverageRivalPower * 4/3 && iAttitudeWeight >= 50 ? -30 : 0;
+
+	if (iKnownCivs <= iConqueredCivs || iValue < 110)
 		return 0;
-	}
 
-	// Check for whether we are very powerful, looking good for conquest
-	int iOurPower = GET_TEAM(getTeam()).getPower(true);
-	int iOurPowerRank = 1;
-	int iTotalPower = 0;
-	int iNumNonVassals = 0;
-	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	// So, we have some interest in a conquest victory. Now we just have to decide how strong the interest is.
+
+	// level 1
+	if ((iDoWs > 0 || iRivalTeams == 1 || iConqueredCivs > iStartCivs/3) && (bTopRank || bVeryStrong || bWarmonger || (iConqueredCivs >= iKnownCivs/3 && bHateful)))
 	{
-		if( iI != getTeam() )
+		// level 2
+		if ((bVeryStrong || bWarmonger || (bTopRank && bHateful)) && iKnownCivs >= iStartCivs*3/4 && iConqueredCivs >= iKnownCivs/3)
 		{
-			CvTeam& kTeam = GET_TEAM((TeamTypes) iI);
-			if (kTeam.isAlive() && !(kTeam.isMinorCiv()))
+			// level 3
+			if (bVeryStrong && bTopRank && iKnownCivs >= iStartCivs)
 			{
-				if( !kTeam.isAVassal() )
+				// finally, before confirming level 4, check that there is at least one team that we can declare war on.
+				for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 				{
-					iTotalPower += kTeam.getPower(true);
-					iNumNonVassals++;
-
-					if( GET_TEAM(getTeam()).isHasMet((TeamTypes) iI) )
+					const CvTeamAI& kLoopTeam = GET_TEAM(i);
+					if (kLoopTeam.isAlive() && kTeam.isHasMet(i) && kTeam.canEventuallyDeclareWar(i))
 					{
-						if( 95*kTeam.getPower(false) > 100*iOurPower )
-						{
-							iOurPowerRank++;
-						}
+						if (kTeam.AI_startWarVal(i, WARPLAN_TOTAL) > 0)
+							return 4;
 					}
 				}
 			}
+			return 3;
 		}
+		return 2;
 	}
-	int iAverageOtherPower = iTotalPower / std::max(1, iNumNonVassals);
-
-	if( 3*iOurPower > 4*iAverageOtherPower )
-	{
-		// BBAI TODO: Have we declared total war on anyone?  Need some aggressive action taken, maybe past war success
-		int iOthersWarMemoryOfUs = 0;
-		for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
-		{
-			if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() != getTeam() && GET_PLAYER((PlayerTypes)iPlayer).isEverAlive() )
-			{
-				iOthersWarMemoryOfUs += GET_PLAYER((PlayerTypes)iPlayer).AI_getMemoryCount(getID(), MEMORY_DECLARED_WAR);
-			}
-		}
-
-		if( GET_TEAM(getTeam()).getHasMetCivCount(false) > GC.getGameINLINE().countCivPlayersAlive()/4 )
-		{
-			if( iOurPowerRank <= 1 + (GET_TEAM(getTeam()).getHasMetCivCount(true)/10) )
-			{
-				if( (iOurPower > 2*iAverageOtherPower) && (iOurPower - iAverageOtherPower > 100) )
-				{
-					if( iOthersWarMemoryOfUs > 0  )
-					{
-						return 4;
-					}
-				}
-			}
-		}
-
-		if (getCurrentEra() >= ((GC.getNumEraInfos() / 3)))
-		{
-			if( iOurPowerRank <= 1 + (GET_TEAM(getTeam()).getHasMetCivCount(true)/7) )
-			{
-				if( iOthersWarMemoryOfUs > 2  )
-				{
-					return 3;
-				}
-			}
-		}
-	}
-
-	if( isHuman() && !(GC.getGameINLINE().isDebugMode()) )
-	{
-		return 0;
-	}
-
-	// Check for whether we are inclined to pursue a conquest strategy
-	{
-		iValue = GC.getLeaderHeadInfo(getPersonalityType()).getConquestVictoryWeight();
-		
-		iValue += (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 20 : 0);
-
-		//int iNonsense = AI_getStrategyRand() + 30;
-		iValue += (AI_getStrategyRand(4) % 100);
-
-		if (iValue >= 100)
-		{
-			// K-Mod note: I don't know why this is here. We need better units therefore we should go for conquest?
-			if( m_iStrategyHash & AI_STRATEGY_GET_BETTER_UNITS )
-			{
-				if( (getNumCities() > 3) && (4*iOurPower > 5*iAverageOtherPower) )
-				{
-					return 2;
-				}
-			}
-
-			return 1;
-		}
-	}
-
-	return 0;
+	return 1;
 }
 
 int CvPlayerAI::AI_calculateDominationVictoryStage() const

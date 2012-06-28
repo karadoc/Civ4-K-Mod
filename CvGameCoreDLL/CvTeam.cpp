@@ -2240,6 +2240,7 @@ int CvTeam::getVassalCount(TeamTypes eTeam) const
 
 bool CvTeam::isAVassal() const
 {
+	PROFILE_FUNC();
 	int iI;
 
 	for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
