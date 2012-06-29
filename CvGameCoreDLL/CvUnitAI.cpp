@@ -22425,26 +22425,26 @@ bool CvUnitAI::AI_nuke()
 
 	CvPlot* pBestTarget = 0;
 	// the initial value of iBestValue is the threshold for action. (cf. units of AI_nukeValue)
-	int iBestValue = std::max(0, 3 * getUnitInfo().getProductionCost());
+	int iBestValue = std::max(0, 4 * getUnitInfo().getProductionCost());
 	iBestValue += bDanger || kOwner.AI_isDoStrategy(AI_STRATEGY_DAGGER) ? 20 : 100;
 	iBestValue *= std::max(1, kOwner.getNumNukeUnits() + 2 * kOwner.getNumCities());
 	iBestValue /= std::max(1, 2 * kOwner.getNumNukeUnits() + (bDanger ? 2 : 1) * kOwner.getNumCities());
 	iBestValue *= 150 + iWarRating;
 	iBestValue /= 150;
 
-	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i = (PlayerTypes)(i+1))
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i = (PlayerTypes)(i+1))
 	{
 		const CvPlayer& kLoopPlayer = GET_PLAYER(i);
-		if (kLoopPlayer.isAlive() && !kLoopPlayer.isBarbarian() && isEnemy(kLoopPlayer.getTeam()))
+		if (kLoopPlayer.isAlive() && isEnemy(kLoopPlayer.getTeam()))
 		{
-			int iDestructionWeight = iBaseWeight + kOwner.AI_getAttitudeWeight(i) / 2;
+			int iDestructionWeight = iBaseWeight - kOwner.AI_getAttitudeWeight(i) / 2;
 			int iLoop;
 			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 			{
 				if (canNukeAt(plot(), pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE()))
 				{
 					CvPlot* pTarget;
-					int iValue = AI_nukeValue(pLoopCity->plot(), nukeRange(), pTarget, 100);
+					int iValue = AI_nukeValue(pLoopCity->plot(), nukeRange(), pTarget, iDestructionWeight);
 					iValue /= (kTeam.AI_getWarPlan(pLoopCity->getTeam()) == WARPLAN_LIMITED && iWarRating > -10) ? 2 : 1;
 
 					if (iValue > iBestValue)
@@ -23984,8 +23984,11 @@ int CvUnitAI::AI_nukeValue(CvPlot* pCenterPlot, int iSearchRange, CvPlot*& pBest
 					int iPlotValue = 0;
 
 					// value for improvements / bonuses etc.
-					if (bValid && isEnemy(pLoopPlot->getTeam(), pLoopPlot))
+					if (bValid && pLoopPlot->isOwned())
 					{
+						bool bEnemy = isEnemy(pLoopPlot->getTeam(), pLoopPlot);
+						FAssert(bEnemy || pLoopPlot->getTeam() == getTeam()); // it is owned, and we aren't allowed to nuke neutrals; so it is either enemy or ours.
+
 						ImprovementTypes eImprovement = pLoopPlot->getRevealedImprovementType(getTeam(), false);
 						BonusTypes eBonus = pLoopPlot->getNonObsoleteBonusType(getTeam());
 						const CvPlayerAI& kPlotOwner = GET_PLAYER(pLoopPlot->getOwnerINLINE());
@@ -23996,24 +23999,23 @@ int CvUnitAI::AI_nukeValue(CvPlot* pCenterPlot, int iSearchRange, CvPlot*& pBest
 							if (!kImprovement.isPermanent())
 							{
 								// arbitrary values, sorry.
-								iPlotValue += 8 * iCivilianTargetWeight;
+								iPlotValue += 8 * (bEnemy ? iCivilianTargetWeight : -50);
 								if (kImprovement.getImprovementPillage() != NO_IMPROVEMENT)
 								{
-									iPlotValue += (kImprovement.getImprovementUpgrade() == NO_IMPROVEMENT ? 32 : 16) * iCivilianTargetWeight;
+									iPlotValue += (kImprovement.getImprovementUpgrade() == NO_IMPROVEMENT ? 32 : 16) * (bEnemy ? iCivilianTargetWeight : -50);
 								}
 							}
 						}
 						if (eBonus != NO_BONUS)
 						{
-							iPlotValue += 8 * iCivilianTargetWeight;
+							iPlotValue += 8 * (bEnemy ? iCivilianTargetWeight : -50);
 							if (kPlotOwner.doesImprovementConnectBonus(eImprovement, eBonus))
 							{
 								// assume that valueable bonuses are military targets, because the enemy might be using the bonus to build weapons.
-								iPlotValue += kPlotOwner.AI_bonusVal(eBonus, 0) * iMilitaryTargetWeight;
+								iPlotValue += kPlotOwner.AI_bonusVal(eBonus, 0) * (bEnemy ? iMilitaryTargetWeight : -100);
 							}
 						}
 					}
-					// don't pay any attention to our own plots, or to unowned plots. (Sorry.)
 
 					// consider military units if the plot is visible. (todo: increase value of military units that we can chase down this turn, maybe.)
 					if (bValid && pLoopPlot->isVisible(getTeam(), false))
@@ -24028,7 +24030,11 @@ int CvUnitAI::AI_nukeValue(CvPlot* pCenterPlot, int iSearchRange, CvPlot*& pBest
 							{
 								if (pLoopUnit->isEnemy(getTeam(), pLoopPlot))
 								{
-									iPlotValue += iMilitaryTargetWeight * std::max(1, pLoopUnit->getUnitInfo().getProductionCost());
+									int iUnitValue = std::max(1, pLoopUnit->getUnitInfo().getProductionCost());
+									// decrease the value for wounded units. (it might be nice to only do this if we are in a position to attack with ground forces...)
+									int x = 100 * (pLoopUnit->maxHitPoints() - pLoopUnit->currHitPoints()) / std::max(1, pLoopUnit->maxHitPoints());
+									iUnitValue -= iUnitValue*x*x/10000;
+									iPlotValue += iMilitaryTargetWeight * iUnitValue;
 								}
 								else // non enemy unit
 								{
