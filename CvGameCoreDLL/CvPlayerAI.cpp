@@ -19059,7 +19059,7 @@ int CvPlayerAI::AI_calculateConquestVictoryStage() const
 	{
 		const CvTeamAI& kLoopTeam = GET_TEAM(i);
 
-		if (i == getTeam() || !kLoopTeam.isAlive() && kLoopTeam.isMinorCiv())
+		if (i == getTeam() || !kLoopTeam.isAlive() || kLoopTeam.isMinorCiv())
 			continue;
 
 		if (kTeam.isHasMet(i) && !kLoopTeam.isAVassal())
@@ -19107,16 +19107,20 @@ int CvPlayerAI::AI_calculateConquestVictoryStage() const
 		if ((bVeryStrong || bWarmonger || (bTopRank && bHateful)) && iKnownCivs >= iStartCivs*3/4 && iConqueredCivs >= iKnownCivs/3)
 		{
 			// level 3
-			if (bVeryStrong && bTopRank && iKnownCivs >= iStartCivs)
+			if (iKnownCivs >= iStartCivs && bTopRank && (bVeryStrong || (bWarmonger && bHateful && iConqueredCivs >= iKnownCivs/2)))
 			{
 				// finally, before confirming level 4, check that there is at least one team that we can declare war on.
 				for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 				{
 					const CvTeamAI& kLoopTeam = GET_TEAM(i);
-					if (kLoopTeam.isAlive() && kTeam.isHasMet(i) && kTeam.canEventuallyDeclareWar(i))
+					if (kLoopTeam.isAlive() && kTeam.isHasMet(i))
 					{
-						if (kTeam.AI_startWarVal(i, WARPLAN_TOTAL) > 0)
+						if (kTeam.AI_getWarPlan(i) != NO_WARPLAN ||
+							(kTeam.canEventuallyDeclareWar(i) /*&& kTeam.AI_startWarVal(i, WARPLAN_TOTAL) > 0*/))
+						{
 							return 4;
+						}
+						// I'm still not sure about the WarVal thing, because that value actually depends on conquest victory flags.
 					}
 				}
 			}
