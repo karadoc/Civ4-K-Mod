@@ -7309,7 +7309,14 @@ bool CvPlayerAI::AI_demandRebukedSneak(PlayerTypes ePlayer) const
 	if (GC.getGameINLINE().getSorenRandNum(100, "AI Demand Rebuked") < GC.getLeaderHeadInfo(getPersonalityType()).getDemandRebukedSneakProb())
 	{
 		//if (GET_TEAM(getTeam()).getPower(true) > GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getDefensivePower(getTeam()))
-		if (GET_TEAM(getTeam()).AI_startWarVal(GET_PLAYER(ePlayer).getTeam(), WARPLAN_LIMITED) > 50) // K-Mod (the 50 is arbitrary. zero would probably be fine.)
+		// K-Mod. Don't start a war if we're already busy; and use AI_startWarVal to evaluate, rather than just power.
+		// The 50 value is arbitrary. zero would probably be fine. 50 war rating is also arbitrary, but zero would be too low!
+		const CvTeamAI& kTeam = GET_TEAM(getTeam());
+
+		if (kTeam.AI_getWarPlan(GET_PLAYER(ePlayer).getTeam()) == NO_WARPLAN  &&
+			(kTeam.getAnyWarPlanCount(true) == 0 || kTeam.AI_getWarSuccessRating() > 50) &&
+			kTeam.AI_startWarVal(GET_PLAYER(ePlayer).getTeam(), WARPLAN_LIMITED) > 50)
+		// K-Mod end
 		{
 			return true;
 		}

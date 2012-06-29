@@ -4455,8 +4455,7 @@ void CvPlayer::handleDiploEvent(DiploEventTypes eDiploEvent, PlayerTypes ePlayer
 
 		AI_changeMemoryCount(ePlayer, MEMORY_REJECTED_DEMAND, 1);
 
-		//if (AI_demandRebukedSneak(ePlayer))
-		if (GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(ePlayer).getTeam()) == NO_WARPLAN && AI_demandRebukedSneak(ePlayer)) // K-Mod
+		if (AI_demandRebukedSneak(ePlayer))
 		{
 			GET_TEAM(getTeam()).AI_setWarPlan(GET_PLAYER(ePlayer).getTeam(), WARPLAN_PREPARING_LIMITED);
 		}
