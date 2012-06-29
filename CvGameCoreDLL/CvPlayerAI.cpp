@@ -15627,8 +15627,8 @@ void CvPlayerAI::AI_doCommerce()
 				iMinModifier /= 100;
 				// This is the espionage cost modifier for stealing techs.
 
-				// lets say "cheap" means 80% of the research cost.
-				bCheapTechSteal = ((AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) ? 8500 : 8000) * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
+				// lets say "cheap" means 75% of the research cost.
+				bCheapTechSteal = ((AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) ? 8000 : 7500) * AI_averageCommerceMultiplier(COMMERCE_ESPIONAGE) / std::max(1, iMinModifier) > AI_averageCommerceMultiplier(COMMERCE_RESEARCH)*calculateResearchModifier(getCurrentResearch()));
 				if (bCheapTechSteal)
 				{
 					aiTarget[eMinModTeam] += iApproxTechCost / 10;

@@ -1437,17 +1437,22 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 			{
 				if (AI_isPrimaryArea(pLoopCity->area()))
 					iGainFactor = 70;
-				else if (bOverseasWar && GET_PLAYER(pLoopCity->getOwnerINLINE()).AI_isPrimaryArea(pLoopCity->area()))
-					iGainFactor = 50;
 				else
-					iGainFactor = 30;
+				{
+					if (bOverseasWar && GET_PLAYER(pLoopCity->getOwnerINLINE()).AI_isPrimaryArea(pLoopCity->area()))
+						iGainFactor = 45;
+					else
+						iGainFactor = 30;
+
+					iGainFactor += AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION2) ? 10 : 0;
+				}
 			}
 			else
 			{
 				if (AI_isPrimaryArea(pLoopCity->area()))
 					iGainFactor = 40;
 				else
-					iGainFactor = 20;
+					iGainFactor = 25;
 			}
 			if (pLoopCity->AI_highestTeamCloseness(getID()) > 0)
 			{
@@ -1556,7 +1561,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 	// Estimate of military production costs
 	{
 		// Base commitment for a war of this type.
-		int iCommitmentPerMil = bTotalWar ? 525 : 250;
+		int iCommitmentPerMil = bTotalWar ? 525 : 240;
 
 		// scale based on our current strength relative to our enemies.
 		// cf. with code in AI_calculateAreaAIType

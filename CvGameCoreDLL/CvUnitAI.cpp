@@ -24080,8 +24080,9 @@ int CvUnitAI::AI_nukeValue(CvPlot* pCenterPlot, int iSearchRange, CvPlot*& pBest
 							{
 								UnitTypes eBasicUnit = pLoopCity->getConscriptUnit();
 								int iBasicCost = std::max(10, eBasicUnit != NO_UNIT ? GC.getUnitInfo(eBasicUnit).getProductionCost() : 0);
+								int iExpectedUnits = 1 + ((1 + pLoopCity->getCultureLevel()) * pLoopCity->getPopulation() + pLoopCity->getHighestPopulation()/2) / std::max(1, pLoopCity->getHighestPopulation());
 
-								iPlotValue += iMilitaryTargetWeight * 2 * iBasicCost;
+								iPlotValue += iMilitaryTargetWeight * iExpectedUnits * iBasicCost;
 							}
 						}
 					}
