@@ -11123,12 +11123,13 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 				{
 					if (isAlive())
 					{
+						// K-Mod. Call CvTeam::doTurn at the start of this team's turn. ie. when the leader's turn is activated.
+						// (regardless of simultaneous turns - see comments below)
+						if (GET_TEAM(getTeam()).getLeaderID() == getID())
+							GET_TEAM(getTeam()).doTurn();
+						// K-Mod end
 						if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 						{
-							// K-Mod. Call CvTeam::doTurn at the start of this team's turn. ie. when the leader's turn is activated.
-							if (GET_TEAM(getTeam()).getLeaderID() == getID())
-								GET_TEAM(getTeam()).doTurn();
-							// K-Mod end
 							doTurn();
 						}
 
@@ -11196,6 +11197,9 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 					{
 						doTurn();
 						// K-Mod. Call CvTeam::doTurn when all members of this team have finished their turn.
+						// (actually, no. CvTeam::doTurn should be called at the start of the team's turn, not the end.
+						//  otherwise, things like the counter-espionage counter will not work as expected.)
+						/*
 						if (GC.getGameINLINE().isSimultaneousTeamTurns())
 						{
 							if (!GET_TEAM(getTeam()).isTurnActive())
@@ -11212,7 +11216,7 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 							}
 							if (!bMoreTeammates)
 								GET_TEAM(getTeam()).doTurn();
-						}
+						} */
 						// K-Mod end
 					}
 
