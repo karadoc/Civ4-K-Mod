@@ -1139,6 +1139,11 @@ int CvPlayerAI::AI_movementPriority(CvSelectionGroup* pGroup) const
 
 		if (pHeadUnit->getDomainType() == DOMAIN_AIR)
 		{
+			// give recon units top priority. Unfortunately, these are not easy to identify because there is no air_recon AI type.
+			if (pHeadUnit->airBombBaseRate() == 0 && !pHeadUnit->canAirDefend())
+				return 0;
+
+			// non recon units (including nukes!)
 			if (pHeadUnit->canAirDefend() || pHeadUnit->evasionProbability() > 10)
 				return 4;
 			else
