@@ -1,6 +1,36 @@
-This is K-Mod version 1.31.
+This is K-Mod version 1.32.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.32 changelist
+
+Game / Back-end
+
++ Ship of the Line can now be built with copper as well as with iron. (This gives ironless civs a decent naval ship if they go for the right tech.)
++ Rearranged to order of certain turn-counting game mechanics to fix some balance problems. Most notably, the turn counter for counter-espionage missions now counts down at the start of the team's turn rather than at the end of all players' turns. This means that the duration of counter-espionage missions will now be independent of which team is doing the mission and who the target team is.
++ Fixed a problem in the player colour was handled in replays. (This problem sometimes caused player names to not use the correct colour in the replay; and it also caused some special map scripts to crash the game.)
++ Rewrote the system for attitude cache, and close-border attitude cache; so that the cache is only updated at explicitly specified times. (In the previous system, if the cache was not marked as invalid at precisely the right times then it could cause OOS errors. This was an endless headache for me to manage. In the new system, attitude cache inaccuracies can no longer cause OOS. At worst, they will just cause a delay in when the attitude is updated.)
++ Fixed the triggering of unit movement animation in a couple of places.
++ The xml log will no longer report that "NONE" was not found.
+
+AI
+
++ Redesigned and rewrote the way the AI chooses when to aim for a conquest victory. (The old version basically said "if we're very strong, then we're going for conquest". The new version is far more nuanced. It primarily depends on history, personality, attitude, and power.)
++ Redesigned and rewrote the evaluation system for the AI's use of nukes. (The old system basically said "if we're at war and furious, hit 'em with everything we've got!” The new version ... doesn't do that.)
++ Made many adjustments to the AI war evaluation functions which were introduced in the previous version.
+  + The evaluation now scales more smoothly into the late-game.
+  + War commitment cost is now more strongly linked to productivity.
+  + Holy cities without the shrine building are seen as being less valuable.
+  + Relative sea-unit strength now has a significant effect on the cost of overseas wars.
+  + The effect of unit strength in general has been changed.
+  + The adjustment for distant wars has been tweaked.
+  + (and so on)
++ Tweaked the effects of the 'dagger' strategy.
++ Slightly reduced the number of siege attack units the AI likes to build.
++ Air recon units are now given top movement priority (along with spies).
++ The AI will now re-evaluate war-plans when switching out of the 'preparing' phase; and it will abandon the plans if the war is deemed to be a bad idea.
++ Fixed a couple of problems in the way the AI decides whether or not to go to war over a rebuked demand.
+
+--
 v1.31 changelist
 
 Game / UI
