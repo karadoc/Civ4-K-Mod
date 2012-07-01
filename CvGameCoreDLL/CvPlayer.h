@@ -169,7 +169,7 @@ public:
 
 	DllExport void chooseTech(int iDiscover = 0, CvWString szText = "", bool bFront = false);				// Exposed to Python
 
-	int calculateScore(bool bFinal = false, bool bVictory = false);
+	int calculateScore(bool bFinal = false, bool bVictory = false) const;
 
 	int findBestFoundValue() const;																																				// Exposed to Python
 
@@ -680,6 +680,7 @@ public:
 
 	DllExport bool isTurnActive() const;																			
 	DllExport void setTurnActive(bool bNewValue, bool bDoTurn = true);
+	void onTurnLogging() const; // K-Mod
 
 	bool isAutoMoves() const;
 	DllExport void setAutoMoves(bool bNewValue);

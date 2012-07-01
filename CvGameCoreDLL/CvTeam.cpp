@@ -1030,7 +1030,7 @@ void CvTeam::doTurn()
 
 	doWarWeariness();
 
-	testCircumnavigated();
+	testCircumnavigated(); // K-Mod note: it's a bit unfair to test circumnavigation in this function.
 
 	AI_doTurnPost();
 }
