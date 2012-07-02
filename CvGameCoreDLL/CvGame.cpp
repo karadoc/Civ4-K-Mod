@@ -5891,13 +5891,10 @@ void CvGame::addGreatPersonBornName(const CvWString& szName)
 
 // Protected Functions...
 
+// K-Mod note: I've made some unmarked style adjustments to this function.
 void CvGame::doTurn()
 {
 	PROFILE_BEGIN("CvGame::doTurn()");
-
-	int aiShuffle[MAX_PLAYERS];
-	int iLoopPlayer;
-	int iI;
 
 	// END OF TURN
 	CvEventReporter::getInstance().beginGameTurn( getGameTurn() );
@@ -5951,21 +5948,29 @@ void CvGame::doTurn()
 
 	if (isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 	{
+		int aiShuffle[MAX_PLAYERS];
+
 		shuffleArray(aiShuffle, MAX_PLAYERS, getSorenRand());
+		std::set<TeamTypes> active_teams; // K-Mod.
 
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_PLAYERS; iI++)
 		{
-			iLoopPlayer = aiShuffle[iI];
+			PlayerTypes eLoopPlayer = (PlayerTypes)aiShuffle[iI];
 
-			if (GET_PLAYER((PlayerTypes)iLoopPlayer).isAlive())
+			CvPlayer& kLoopPlayer = GET_PLAYER(eLoopPlayer);
+			if (kLoopPlayer.isAlive())
 			{
-				GET_PLAYER((PlayerTypes)iLoopPlayer).setTurnActive(true);
+				// K-Mod. call CvTeam::doTurn when the first player from each team is activated.
+				if (active_teams.insert(kLoopPlayer.getTeam()).second)
+					GET_TEAM(kLoopPlayer.getTeam()).doTurn();
+				// K-Mod end
+				kLoopPlayer.setTurnActive(true);
 			}
 		}
 	}
 	else if (isSimultaneousTeamTurns())
 	{
-		for (iI = 0; iI < MAX_TEAMS; iI++)
+		for (int iI = 0; iI < MAX_TEAMS; iI++)
 		{
 			CvTeam& kTeam = GET_TEAM((TeamTypes)iI);
 			if (kTeam.isAlive())
@@ -5978,7 +5983,7 @@ void CvGame::doTurn()
 	}
 	else
 	{
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_PLAYERS; iI++)
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{

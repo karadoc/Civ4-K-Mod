@@ -11004,15 +11004,19 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 			{
 				if (isAlive())
 				{
-					// K-Mod. Call CvTeam::doTurn at the start of this team's turn. ie. when the leader's turn is activated.
-					// (regardless of simultaneous turns - see comments below)
-					if (GET_TEAM(getTeam()).getLeaderID() == getID())
-						GET_TEAM(getTeam()).doTurn();
-					// K-Mod end
 					if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 					{
 						doTurn();
 					}
+					// K-Mod. Call CvTeam::doTurn at the start of this team's turn. ie. when the leader's turn is activated.
+					// Note: in simultaneous turns mode this is called by CvGame::doTurn,
+					//       because from here we can't tell which player in each team will be activated first.
+					else
+					{
+						if (GET_TEAM(getTeam()).getLeaderID() == getID())
+							GET_TEAM(getTeam()).doTurn();
+					}
+					// K-Mod end
 
 					doTurnUnits();
 				}
