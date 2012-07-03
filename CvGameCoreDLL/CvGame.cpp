@@ -2416,6 +2416,7 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	bool bSelectGroup;
 	bool bGroup;
 
+	/* original bts code
 	if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
 	{
 		bSelectGroup = true;
@@ -2431,7 +2432,17 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	else
 	{
 		bSelectGroup = false;
-	}
+	} */
+	// K-Mod. Rearranged a little bit to make selection behave a little bit more sensibly
+	if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
+		bSelectGroup = true;
+	else if (pUnit->IsSelected())
+		bSelectGroup = !bToggle;
+	else if (gDLL->getInterfaceIFace()->getHeadSelectedUnit()->getGroup() != pUnit->getGroup())
+		bSelectGroup = true;
+	else
+		bSelectGroup = false;
+	// K-Mod end
 
 	gDLL->getInterfaceIFace()->clearSelectedCities();
 
@@ -2530,7 +2541,7 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 
 			if (pLoopUnit->getOwnerINLINE() == getActivePlayer())
 			{
-				if (pLoopUnit->getDomainType() == eDomain && pLoopUnit->canMove()) // K-Mod added domain check
+				if (pLoopUnit->getDomainType() == eDomain && (pLoopUnit->canMove() || !pUnit->canMove())) // K-Mod added domain check and !pUnit->canMove() option.
 				{
 					//if (!isMPOption(MPOPTION_SIMULTANEOUS_TURNS) || getTurnSlice() - pLoopUnit->getLastMoveTurn() > GC.getDefineINT("MIN_TIMER_UNIT_DOUBLE_MOVES")) // disabled by K-Mod
 					{
