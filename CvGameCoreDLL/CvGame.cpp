@@ -2434,10 +2434,14 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 		bSelectGroup = false;
 	} */
 	// K-Mod. Rearranged a little bit to make selection behave a little bit more sensibly
+	bool bExplicitDeselect = false;
 	if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
 		bSelectGroup = true;
 	else if (pUnit->IsSelected())
+	{
 		bSelectGroup = !bToggle;
+		bExplicitDeselect = bToggle;
+	}
 	else if (gDLL->getInterfaceIFace()->getHeadSelectedUnit()->getGroup() != pUnit->getGroup())
 		bSelectGroup = true;
 	else
@@ -2477,6 +2481,11 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	else
 	{
 		gDLL->getInterfaceIFace()->insertIntoSelectionList(pUnit, false, bToggle, bGroup, bSound);
+		// K-Mod. Unfortunately, removing units from the group is not correctly handled by the interface functions.
+		// so we need to do it explicitly.
+		if (bExplicitDeselect && bGroup)
+			CvMessageControl::getInstance().sendJoinGroup(pUnit->getID(), FFreeList::INVALID_INDEX);
+		// K-Mod end
 	}
 
 	gDLL->getInterfaceIFace()->makeSelectionListDirty();
