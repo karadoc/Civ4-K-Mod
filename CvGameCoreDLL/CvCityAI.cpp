@@ -7677,12 +7677,25 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		{
 			// cottage/villages (don't want to chop them up if turns have been invested)
 			ImprovementTypes eImprovementDowngrade = (ImprovementTypes)GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementPillage();
+			/* original bts code
 			while (eImprovementDowngrade != NO_IMPROVEMENT)
 			{
 				CvImprovementInfo& kImprovementDowngrade = GC.getImprovementInfo(eImprovementDowngrade);
 				iValue -= kImprovementDowngrade.getUpgradeTime() * 8;
 				eImprovementDowngrade = (ImprovementTypes)kImprovementDowngrade.getImprovementPillage();
+			} */
+			// K-Mod. Be careful not to get trapped in an infinite loop of improvement downgrades.
+			if (eImprovementDowngrade != NO_IMPROVEMENT)
+			{
+				std::set<ImprovementTypes> cited_improvements;
+				while (eImprovementDowngrade != NO_IMPROVEMENT && cited_improvements.insert(eImprovementDowngrade).second)
+				{
+					const CvImprovementInfo& kImprovementDowngrade = GC.getImprovementInfo(eImprovementDowngrade);
+					iValue -= kImprovementDowngrade.getUpgradeTime() * 8;
+					eImprovementDowngrade = (ImprovementTypes)kImprovementDowngrade.getImprovementPillage();
+				}
 			}
+			// K-Mod end
 
 			if (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementUpgrade() != NO_IMPROVEMENT)
 			{
