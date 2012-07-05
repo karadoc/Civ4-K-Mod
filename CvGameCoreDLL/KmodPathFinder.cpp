@@ -34,6 +34,11 @@ void KmodPathFinder::InitHeuristicWeights()
 	}
 }
 
+int KmodPathFinder::MinimumStepCost(int BaseMoves)
+{
+	return std::min(admissible_base_weight, BaseMoves * admissible_scaled_weight);
+}
+
 bool KmodPathFinder::OpenList_sortPred::operator()(const boost::shared_ptr<FAStarNode> &left, const boost::shared_ptr<FAStarNode> &right)
 {
 	return left->m_iTotalCost < right->m_iTotalCost;
@@ -187,7 +192,7 @@ void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 			}
 			else
 			{
-				settings.iHeuristicWeight = std::min(admissible_base_weight, settings.pGroup->baseMoves() * admissible_scaled_weight);
+				settings.iHeuristicWeight = MinimumStepCost(settings.pGroup->baseMoves());
 			}
 		}
 	}

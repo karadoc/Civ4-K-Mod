@@ -33,6 +33,7 @@
 #include "CvDLLFAStarIFaceBase.h"
 #include "CvDLLFAStarIFaceBase.h"
 #include "CvDLLPythonIFaceBase.h"
+#include "CvDLLInterfaceIFaceBase.h" // K-Mod
 
 // Public Functions...
 
@@ -435,16 +436,58 @@ void CvMap::updateIrrigated()
 }
 
 
+// K-Mod. This function is called when the unit selection is changed, or when a selected unit is promoted. (Or when UnitInfo_DIRTY_BIT is set.)
+// The purpose is to update which unit is displayed in the center of each plot.
+
+// The original implementation simply updated every plot on the map. This is a bad idea because it scales badly for big maps, and the update function on each plot can be expensive.
+// The new functionality attempts to only update plots that are in movement range of the selected group; with a very generous approximation for what might be in range.
 void CvMap::updateCenterUnit()
 {
+	/* original bts code
 	int iI;
 
 	for (iI = 0; iI < numPlotsINLINE(); iI++)
 	{
 		plotByIndexINLINE(iI)->updateCenterUnit();
+	} */
+	PROFILE_FUNC();
+	int iRange = -1;
+
+	CLLNode<IDInfo>* pSelectionNode = gDLL->getInterfaceIFace()->headSelectionListNode();
+	while (pSelectionNode)
+	{
+		const CvUnit* pLoopUnit = ::getUnit(pSelectionNode->m_data);
+		pSelectionNode = gDLL->getInterfaceIFace()->nextSelectionListNode(pSelectionNode);
+
+		int iStepCost = pLoopUnit->getDomainType() == DOMAIN_LAND ? KmodPathFinder::MinimumStepCost(pLoopUnit->baseMoves()) : GC.getMOVE_DENOMINATOR();
+		iRange = std::min(iRange, pLoopUnit->movesLeft() / iStepCost); // (is it safe to use movesLeft? ie. will this function be called again when the moves are replenished? I think so...)
+		// Note: technically we only really need the minimum range; but I'm using the maximum range because I think it will produce more intuitive and useful information for the player.
+	}
+
+	if (iRange < 0 || iRange*iRange > numPlotsINLINE() / 2)
+	{
+		// update the whole map
+		for (int i = 0; i < numPlotsINLINE(); i++)
+		{
+			plotByIndexINLINE(i)->updateCenterUnit();
+		}
+	}
+	else
+	{
+		// only update within the range
+		CvPlot* pCenterPlot = gDLL->getInterfaceIFace()->getHeadSelectedUnit()->plot();
+		for (int x = -iRange; x <= iRange; x++)
+		{
+			for (int y = -iRange; y <= iRange; y++)
+			{
+				CvPlot* pLoopPlot = plotXY(pCenterPlot, x, y);
+				if (pLoopPlot)
+					pLoopPlot->updateCenterUnit();
+			}
+		}
 	}
 }
-
+// K-Mod end
 
 void CvMap::updateWorkingCity()
 {

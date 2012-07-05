@@ -20,6 +20,7 @@ class KmodPathFinder
 {
 public:
 	static void InitHeuristicWeights();
+	static int MinimumStepCost(int BaseMoves);
 
 	bool GeneratePath(int x1, int y1, int x2, int y2);
 	bool GeneratePath(const CvPlot* pToPlot); // just a wrapper for convenience
