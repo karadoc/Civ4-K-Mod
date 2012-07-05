@@ -2439,7 +2439,7 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 		bSelectGroup = true;
 	else if (pUnit->IsSelected())
 	{
-		bSelectGroup = !bToggle;
+		bSelectGroup = !bToggle && !gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
 		bExplicitDeselect = bToggle;
 	}
 	else if (gDLL->getInterfaceIFace()->getHeadSelectedUnit()->getGroup() != pUnit->getGroup())
@@ -2458,6 +2458,16 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	else
 	{
 		bGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
+		// K-Mod note: bGroup does not clear away unselected units of the group.
+		// so if we want to do that, we'll have to do it explicitly.
+		if (!bGroup && bToggle)
+		{
+			// in my view, 'toggle' should be seen as explicitly adding / removing units from a group.
+			// so lets explicitly reform the group.
+			selectionListGameNetMessage(GAMEMESSAGE_JOIN_GROUP);
+			bGroup = true;
+		}
+		// K-Mod end
 	}
 
 	if (bSelectGroup)
@@ -2480,7 +2490,8 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	}
 	else
 	{
-		gDLL->getInterfaceIFace()->insertIntoSelectionList(pUnit, false, bToggle, bGroup, bSound);
+		if (!bExplicitDeselect || gDLL->getInterfaceIFace()->getLengthSelectionList() > 1) // K-Mod. Don't deselect the last unit. (just ungroup it)
+			gDLL->getInterfaceIFace()->insertIntoSelectionList(pUnit, false, bToggle, bGroup, bSound);
 		// K-Mod. Unfortunately, removing units from the group is not correctly handled by the interface functions.
 		// so we need to do it explicitly.
 		if (bExplicitDeselect && bGroup)
@@ -2533,7 +2544,12 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 		}
 		else
 		{
-			bGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
+			//bGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
+			// K-Mod. Treat shift as meaning we should always form a group
+			if (!gDLL->getInterfaceIFace()->mirrorsSelectionGroup())
+				selectionListGameNetMessage(GAMEMESSAGE_JOIN_GROUP);
+			bGroup = true;
+			// K-Mod end
 		}
 
 		CvPlot* pUnitPlot = pUnit->plot();
