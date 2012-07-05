@@ -4384,11 +4384,11 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 	return bSuccess;
 }
 
-void CvSelectionGroup::resetPath() const
+/* void CvSelectionGroup::resetPath() const
 {
 	//path_finder.Reset(); // note. the K-Mod finder doesn't need resetting in all the same places.
 	gDLL->getFAStarIFace()->ForceReset(&GC.getPathFinder());
-}
+} */
 
 
 void CvSelectionGroup::clearUnits()

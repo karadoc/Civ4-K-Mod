@@ -81,7 +81,6 @@ void CySelectionGroupInterface()
 		.def("getPathFirstPlot", &CySelectionGroup::getPathFirstPlot, python::return_value_policy<python::manage_new_object>(), "CyPlot* ()")
 		.def("getPathEndTurnPlot", &CySelectionGroup::getPathEndTurnPlot, python::return_value_policy<python::manage_new_object>(), "CyPlot* ()")
 		.def("generatePath", &CySelectionGroup::generatePath, "bool (CyPlot* pFromPlot, CyPlot* pToPlot, int iFlags, bool bReuse, int* piPathTurns)")
-		.def("resetPath", &CySelectionGroup::resetPath, "void ()")
 
 		.def("getNumUnits", &CySelectionGroup::getNumUnits, "int ()")			// JS Help!
 		.def("clearMissionQueue", &CySelectionGroup::clearMissionQueue, "void ()")

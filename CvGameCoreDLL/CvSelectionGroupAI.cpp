@@ -280,7 +280,7 @@ bool CvSelectionGroupAI::AI_update()
 					pEntityNode = nextUnitNode(pEntityNode);
 
 					if (bFirst)
-						resetPath();
+						path_finder.Reset();
 
 					if (pLoopUnit->canMove())
 					{

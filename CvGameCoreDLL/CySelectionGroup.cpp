@@ -274,12 +274,6 @@ bool CySelectionGroup::generatePath(CyPlot* pFromPlot, CyPlot* pToPlot, int iFla
 	return m_pSelectionGroup ? m_pSelectionGroup->generatePath(pFromPlot->getPlot(), pToPlot->getPlot(), iFlags, bReuse, piPathTurns) : false;
 }
 
-void CySelectionGroup::resetPath()
-{
-	if (m_pSelectionGroup)
-		m_pSelectionGroup->resetPath();
-}
-
 int CySelectionGroup::getNumUnits()
 {
 	return m_pSelectionGroup ? m_pSelectionGroup->getNumUnits() : -1;
