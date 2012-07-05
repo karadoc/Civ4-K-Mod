@@ -2046,23 +2046,11 @@ static float getCombatOddsSpecific(CvUnit* pAttacker, CvUnit* pDefender, int n_A
 /*************************************************************************************************/
 
 // Returns true if help was given...
+
+// K-Mod note: this function can change the center unit on the plot. (because of a change I made)
 bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 {
 	PROFILE_FUNC();
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                         05/22/08                             jdog5000      */
-/*                                                                                              */
-/* DEBUG                                                                                        */
-/************************************************************************************************/
-	if (GC.altKey() && (gDLL->getChtLvl() > 0))
-	{
-		setPlotHelp( szString, pPlot );
-		return true;
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                          END                                               */
-/************************************************************************************************/
 
 /*************************************************************************************************/
 /** ADVANCED COMBAT ODDS                      3/11/09                           PieceOfMind      */
@@ -2138,9 +2126,13 @@ bool CvGameTextMgr::setCombatPlotHelp(CvWStringBuffer &szString, CvPlot* pPlot)
 
 	if (pAttacker != NULL)
 	{
-		// BUG - Combat Odds for Friendlies - start
-		pDefender = pPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, !GC.altKey(), NO_TEAM == pAttacker->getDeclareWarMove(pPlot));
-		// BUG - Combat Odds for Friendlies - end
+		pDefender = pPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, !GC.altKey());
+		// K-Mod. If the plot's center unit isn't one of our own units, then use this defender as the plot's center unit.
+		// With this, the map will accurately shows who we're up against.
+		// (note. 'friendlies' idea is from BUG)
+		if (pDefender && (pDefender->getOwnerINLINE() == GC.getGameINLINE().getActivePlayer() || !pPlot->getCenterUnit() || pPlot->getCenterUnit()->getOwnerINLINE() != GC.getGameINLINE().getActivePlayer()))
+			pPlot->setCenterUnit(pDefender);
+		// K-Mod end
 
 		if (pDefender != NULL && pDefender != pAttacker && pDefender->canDefend(pPlot) && pAttacker->canAttack(*pDefender))
 		{
@@ -17783,7 +17775,8 @@ void CvGameTextMgr::getPlotHelp(CvPlot* pMouseOverPlot, CvCity* pCity, CvPlot* p
 		{
 			if (pMouseOverPlot != NULL)
 			{
-				if ((pMouseOverPlot == gDLL->getInterfaceIFace()->getGotoPlot()) || bAlt)
+				//if ((pMouseOverPlot == gDLL->getInterfaceIFace()->getGotoPlot()) || bAlt)
+				if (pMouseOverPlot == gDLL->getInterfaceIFace()->getGotoPlot() || (bAlt && gDLL->getChtLvl() == 0)) // K-Mod. (alt does something else in cheat mode)
 				{
 					if (pMouseOverPlot->isActiveVisible(true))
 					{

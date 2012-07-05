@@ -459,8 +459,17 @@ void CvMap::updateCenterUnit()
 		const CvUnit* pLoopUnit = ::getUnit(pSelectionNode->m_data);
 		pSelectionNode = gDLL->getInterfaceIFace()->nextSelectionListNode(pSelectionNode);
 
-		int iStepCost = pLoopUnit->getDomainType() == DOMAIN_LAND ? KmodPathFinder::MinimumStepCost(pLoopUnit->baseMoves()) : GC.getMOVE_DENOMINATOR();
-		iRange = std::min(iRange, pLoopUnit->movesLeft() / iStepCost); // (is it safe to use movesLeft? ie. will this function be called again when the moves are replenished? I think so...)
+		int iLoopRange;
+		if (pLoopUnit->getDomainType() == DOMAIN_AIR)
+		{
+			iLoopRange = pLoopUnit->airRange();
+		}
+		else
+		{
+			int iStepCost = pLoopUnit->getDomainType() == DOMAIN_LAND ? KmodPathFinder::MinimumStepCost(pLoopUnit->baseMoves()) : GC.getMOVE_DENOMINATOR();
+			iLoopRange = pLoopUnit->maxMoves() / iStepCost + (pLoopUnit->canParadrop(pLoopUnit->plot()) ? pLoopUnit->getDropRange() : 0);
+		}
+		iRange = std::max(iRange, iLoopRange);
 		// Note: technically we only really need the minimum range; but I'm using the maximum range because I think it will produce more intuitive and useful information for the player.
 	}
 
