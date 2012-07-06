@@ -469,5 +469,8 @@
 		<HintInfo>
 			<Description>TXT_KEY_KMOD_HINT_13</Description>
 		</HintInfo>
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_14</Description>
+		</HintInfo> <!-- suppress cycling -->
 	</HintInfos>
 </Civ4Hints>

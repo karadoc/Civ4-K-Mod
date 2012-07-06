@@ -137,4 +137,8 @@
 	<Italian>Double clicking on a stack of units will wake them all up.</Italian>
 	<Spanish>Double clicking on a stack of units will wake them all up.</Spanish>
 </TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_14</Tag>
+	<English>Hold the 'X' key when issuing a command to temporarily suppress automatic unit cycling.</English>
+</TEXT>
 </Civ4GameText>

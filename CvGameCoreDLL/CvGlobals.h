@@ -815,6 +815,8 @@ public:
 	inline bool ctrlKey() { return (GetKeyState(VK_CONTROL) & 0x8000); }
 	inline bool shiftKey() { return (GetKeyState(VK_SHIFT) & 0x8000); }
 	// NOTE: I've replaced all calls to the gDLL key functions with calls to these functions.
+
+	inline bool suppressCycling() { return (GetKeyState('X') & 0x8000); } // hold X to temporarily suppress automatic unit cycling.
 	// K-Mod end
 
 	DllExport int getMAX_CIV_PLAYERS();

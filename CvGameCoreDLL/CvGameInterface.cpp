@@ -437,7 +437,8 @@ void CvGame::updateSelectionList()
 {
 	CvUnit* pHeadSelectedUnit;
 
-	if (GET_PLAYER(getActivePlayer()).isOption(PLAYEROPTION_NO_UNIT_CYCLING))
+	//if (GET_PLAYER(getActivePlayer()).isOption(PLAYEROPTION_NO_UNIT_CYCLING))
+	if (GC.suppressCycling() || GET_PLAYER(getActivePlayer()).isOption(PLAYEROPTION_NO_UNIT_CYCLING)) // K-Mod
 	{
 		return;
 	}
@@ -470,7 +471,7 @@ void CvGame::updateSelectionList()
 void CvGame::updateTestEndTurn()
 {
 	bool bAny;
-	bool bShift = GC.shiftKey() || (GetKeyState(VK_SHIFT) & 0x8000); // K-Mod.
+	bool bShift = GC.shiftKey();
 
 	bAny = ((gDLL->getInterfaceIFace()->getHeadSelectedUnit() != NULL) && !(GET_PLAYER(getActivePlayer()).isOption(PLAYEROPTION_NO_UNIT_CYCLING)));
 
@@ -489,7 +490,7 @@ void CvGame::updateTestEndTurn()
 			{
 				if (!(gDLL->getInterfaceIFace()->isForcePopup()))
 				{
-					if (!bShift) // K-Mod
+					if (!bShift && !GC.suppressCycling()) // K-Mod
 						gDLL->getInterfaceIFace()->setForcePopup(true);
 				}
 				else
@@ -499,7 +500,7 @@ void CvGame::updateTestEndTurn()
 						//if (!(GC.shiftKey()))
 						// K-Mod. Don't start automoves if we currently have a group selected which would move.
 						CvUnit* pSelectedUnit = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
-						if (!GC.shiftKey() && (pSelectedUnit == NULL || !pSelectedUnit->getGroup()->readyToAuto()))
+						if (!bShift && !GC.suppressCycling() && (pSelectedUnit == NULL || !pSelectedUnit->getGroup()->readyToAuto()))
 						// K-Mod end
 						{
 							CvMessageControl::getInstance().sendAutoMoves();
@@ -776,6 +777,10 @@ void CvGame::cycleSelectionGroups(bool bClear, bool bForward, bool bWorkers) con
 void CvGame::cycleSelectionGroups_delayed(int iDelay, bool bIncremental, bool bDelayOnly) const
 {
 	PROFILE_FUNC(); // I'm just hoping that the python call doesn't hurt the respose times
+
+	if (GC.suppressCycling()) // cf. GvGame::updateSelectionList
+		return;
+
 	// Only rapid-cycle when not doing auto-play.
 	// Also note, cycleSelectionGroups currently causes a crash if the game is not initialised.
 	// (and this function is indirectly called during the set of up a new game - so we currently need that init check.)
