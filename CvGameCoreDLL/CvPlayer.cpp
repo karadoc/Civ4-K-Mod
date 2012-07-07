@@ -2503,6 +2503,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bTrade, bool b
 					pInfo->setData2(eHighestCulturePlayer);
 					pInfo->setData3(iCaptureGold);
 					gDLL->getInterfaceIFace()->addPopup(pInfo, getID());
+					gDLL->getInterfaceIFace()->playGeneralSound("AS2D_CITYCAPTURE"); // K-Mod. (this use to be in CvDLLButtonPopup::launchRazeCityPopup)
 				}
 				else
 				{
