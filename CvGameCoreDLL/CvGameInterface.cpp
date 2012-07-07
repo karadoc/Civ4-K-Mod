@@ -1085,8 +1085,8 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 						{
 							CvMessageControl::getInstance().sendJoinGroup(pSelectedUnit->getID(), FFreeList::INVALID_INDEX);
 						}
-
-						CvMessageControl::getInstance().sendJoinGroup(pSelectedUnit->getID(), pHeadSelectedUnit->getID());
+						else // K-Mod
+							CvMessageControl::getInstance().sendJoinGroup(pSelectedUnit->getID(), pHeadSelectedUnit->getID());
 					}
 				}
 

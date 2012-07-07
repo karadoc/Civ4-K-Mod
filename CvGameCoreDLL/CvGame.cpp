@@ -2411,8 +2411,6 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 {
 	PROFILE_FUNC();
 
-	CLLNode<IDInfo>* pEntityNode;
-	CvSelectionGroup* pSelectionGroup;
 	bool bSelectGroup;
 	bool bGroup;
 
@@ -2433,19 +2431,21 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	{
 		bSelectGroup = false;
 	} */
-	// K-Mod. Rearranged a little bit to make selection behave a little bit more sensibly
+	// K-Mod. Redesigned to make selection more sensible and predictable
 	bool bExplicitDeselect = false;
-	if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
-		bSelectGroup = true;
-	else if (pUnit->IsSelected())
+	if (bToggle)
 	{
-		bSelectGroup = !bToggle && !gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
-		bExplicitDeselect = bToggle;
+		bSelectGroup = false;
+		bExplicitDeselect = pUnit->IsSelected();
 	}
-	else if (gDLL->getInterfaceIFace()->getHeadSelectedUnit()->getGroup() != pUnit->getGroup())
+	else if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
 		bSelectGroup = true;
 	else
-		bSelectGroup = false;
+	{
+		bSelectGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup()
+			? gDLL->getInterfaceIFace()->getHeadSelectedUnit()->getGroup() != pUnit->getGroup()
+			: pUnit->IsSelected();
+	}
 	// K-Mod end
 
 	gDLL->getInterfaceIFace()->clearSelectedCities();
@@ -2462,22 +2462,27 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 		// so if we want to do that, we'll have to do it explicitly.
 		if (!bGroup && bToggle)
 		{
-			// in my view, 'toggle' should be seen as explicitly adding / removing units from a group.
+			// 'toggle' should be seen as explicitly adding / removing units from a group.
 			// so lets explicitly reform the group.
 			selectionListGameNetMessage(GAMEMESSAGE_JOIN_GROUP);
-			bGroup = true;
+			// note: setting bGroup = true doesn't work here either,
+			// because the internals of insertIntoSelectionList apparently wants to go out of its way to make our lives difficult.
+			// (stuffed if I know what it actually does. Maybe it only sends the group signal if the units aren't already grouped or something.
+			//  in any case, we have to do it explicitly or it won't work.)
+			CvUnit* pSelectionHead = gDLL->getInterfaceIFace()->getHeadSelectedUnit();
+			if (pSelectionHead)
+				CvMessageControl::getInstance().sendJoinGroup(pUnit->getID(), pSelectionHead->getID());
 		}
 		// K-Mod end
 	}
 
 	if (bSelectGroup)
 	{
-		pSelectionGroup = pUnit->getGroup();
+		CvSelectionGroup* pSelectionGroup = pUnit->getGroup();
 
 		gDLL->getInterfaceIFace()->selectionListPreChange();
 
-		pEntityNode = pSelectionGroup->headUnitNode();
-
+		CLLNode<IDInfo>* pEntityNode = pSelectionGroup->headUnitNode();
 		while (pEntityNode != NULL)
 		{
 			FAssertMsg(::getUnit(pEntityNode->m_data), "null entity in selection group");
@@ -2548,7 +2553,7 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 			// K-Mod. Treat shift as meaning we should always form a group
 			if (!gDLL->getInterfaceIFace()->mirrorsSelectionGroup())
 				selectionListGameNetMessage(GAMEMESSAGE_JOIN_GROUP);
-			bGroup = true;
+			bGroup = true; // note: sometimes this won't work. (see comments in CvGame::selectUnit.) Unfortunately, it's too fiddly to fix.
 			// K-Mod end
 		}
 
