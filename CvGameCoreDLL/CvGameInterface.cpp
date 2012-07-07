@@ -1778,30 +1778,16 @@ void CvGame::doControl(ControlTypes eControl)
 		break;
 
 	case CONTROL_RETIRE:
-		if (!isGameMultiPlayer() || countHumanPlayersAlive() == 1)
+		// K-Mod. (original code moved into CvGame::retire)
 		{
-			if (gDLL->GetAutorun())
+			CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_CONFIRM_MENU);
+			if (NULL != pInfo)
 			{
-				GC.getInitCore().setSlotStatus(getActivePlayer(), SS_COMPUTER);
-			}
-			else
-			{
-				setGameState(GAMESTATE_OVER);
-				gDLL->getInterfaceIFace()->setDirty(Soundtrack_DIRTY_BIT, true);
+				pInfo->setData1(2);
+				gDLL->getInterfaceIFace()->addPopup(pInfo, GC.getGameINLINE().getActivePlayer(), true);
 			}
 		}
-		else
-		{
-			if (isNetworkMultiPlayer())
-			{
-				gDLL->sendMPRetire();
-				gDLL->getInterfaceIFace()->exitingToMainMenu();
-			}
-			else
-			{
-				gDLL->handleRetirement(getActivePlayer());
-			}
-		}
+		// K-Mod end
 		break;
 
 	case CONTROL_SAVE_GROUP:
@@ -1965,19 +1951,16 @@ void CvGame::doControl(ControlTypes eControl)
 		break;
 
 	case CONTROL_WORLD_BUILDER:
-		if (GC.getInitCore().getAdminPassword().empty())
+		// K-Mod. (original code moved into CvGame::retire)
 		{
-			gDLL->getInterfaceIFace()->setWorldBuilder(!(gDLL->GetWorldBuilderMode()));
-		}
-		else
-		{
-			CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_ADMIN_PASSWORD);
+			CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_CONFIRM_MENU);
 			if (NULL != pInfo)
 			{
-				pInfo->setData1((int)CONTROL_WORLD_BUILDER);
-				gDLL->getInterfaceIFace()->addPopup(pInfo, NO_PLAYER, true);
+				pInfo->setData1(4);
+				gDLL->getInterfaceIFace()->addPopup(pInfo, GC.getGameINLINE().getActivePlayer(), true);
 			}
 		}
+		// K-Mod end
 		break;
 
 	case CONTROL_ESPIONAGE_SCREEN:
@@ -2007,6 +1990,56 @@ void CvGame::doControl(ControlTypes eControl)
 		break;
 	}
 }
+
+// K-Mod. This code use to be inside CvGame::doControl. I've moved it here and told doControl to simply create a confirmation popup.
+void CvGame::retire()
+{
+	FAssert(canDoControl(CONTROL_RETIRE));
+
+	if (!isGameMultiPlayer() || countHumanPlayersAlive() == 1)
+	{
+		if (gDLL->GetAutorun())
+		{
+			GC.getInitCore().setSlotStatus(getActivePlayer(), SS_COMPUTER);
+		}
+		else
+		{
+			setGameState(GAMESTATE_OVER);
+			gDLL->getInterfaceIFace()->setDirty(Soundtrack_DIRTY_BIT, true);
+		}
+	}
+	else
+	{
+		if (isNetworkMultiPlayer())
+		{
+			gDLL->sendMPRetire();
+			gDLL->getInterfaceIFace()->exitingToMainMenu();
+		}
+		else
+		{
+			gDLL->handleRetirement(getActivePlayer());
+		}
+	}
+}
+
+void CvGame::enterWorldBuilder()
+{
+	FAssert(canDoControl(CONTROL_WORLD_BUILDER));
+	if (GC.getInitCore().getAdminPassword().empty())
+	{
+		gDLL->getInterfaceIFace()->setWorldBuilder(!(gDLL->GetWorldBuilderMode()));
+	}
+	else
+	{
+		CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_ADMIN_PASSWORD);
+		if (NULL != pInfo)
+		{
+			pInfo->setData1((int)CONTROL_WORLD_BUILDER);
+			gDLL->getInterfaceIFace()->addPopup(pInfo, NO_PLAYER, true);
+		}
+	}
+}
+// K-Mod end
 
 void CvGame::getGlobeLayers(std::vector<CvGlobeLayerData>& aLayers) const
 {

@@ -109,13 +109,15 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 				gDLL->getInterfaceIFace()->exitingToMainMenu();
 				break;
 			case 2:
-				GC.getGameINLINE().doControl(CONTROL_RETIRE);
+				//GC.getGameINLINE().doControl(CONTROL_RETIRE);
+				GC.getGameINLINE().retire(); // K-Mod
 				break;
 			case 3:
 				GC.getGameINLINE().regenerateMap();
 				break;
 			case 4:
-				GC.getGameINLINE().doControl(CONTROL_WORLD_BUILDER);
+				//GC.getGameINLINE().doControl(CONTROL_WORLD_BUILDER);
+				GC.getGameINLINE().enterWorldBuilder(); // K-Mod
 				break;
 			}
 		}
@@ -147,6 +149,7 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 			}
 			break;
 		case MM_RETIRE:
+			/* original bts code
 			{
 				CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_CONFIRM_MENU);
 				if (NULL != pInfo)
@@ -154,7 +157,8 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 					pInfo->setData1(2);
 					gDLL->getInterfaceIFace()->addPopup(pInfo, GC.getGameINLINE().getActivePlayer(), true);
 				}
-			}
+			} */
+			GC.getGameINLINE().doControl(CONTROL_RETIRE); // K-Mod
 			break;
 		case MM_REGENERATE_MAP:
 			{
@@ -179,6 +183,7 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 			gDLL->getPythonIFace()->callFunction("CvScreensInterface", "showBugOptionsScreen");
 			break;
 		case MM_ENTER_WB:
+			/* original bts code
 			{
 				CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_CONFIRM_MENU);
 				if (NULL != pInfo)
@@ -186,7 +191,8 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 					pInfo->setData1(4);
 					gDLL->getInterfaceIFace()->addPopup(pInfo, GC.getGameINLINE().getActivePlayer(), true);
 				}
-			}
+			} */
+			GC.getGameINLINE().doControl(CONTROL_WORLD_BUILDER); // K-Mod
 			break;
 		case MM_GAME_DETAILS:
 			GC.getGameINLINE().doControl(CONTROL_ADMIN_DETAILS);
@@ -613,7 +619,8 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 			// exit to main menu
 			if (GC.getGameINLINE().isNetworkMultiPlayer() && GC.getGameINLINE().canDoControl(CONTROL_RETIRE) && GC.getGameINLINE().countHumanPlayersAlive() > 1)
 			{
-				GC.getGameINLINE().doControl(CONTROL_RETIRE);
+				//GC.getGameINLINE().doControl(CONTROL_RETIRE);
+				GC.getGameINLINE().retire(); // K-Mod
 			}
 			else if (!gDLL->getInterfaceIFace()->isDebugMenuCreated())
 			{
@@ -2147,10 +2154,40 @@ bool CvDLLButtonPopup::launchMainMenuPopup(CvPopup* pPopup, CvPopupInfo &info)
 
 bool CvDLLButtonPopup::launchConfirmMenu(CvPopup *pPopup, CvPopupInfo &info)
 {
+	/* original bts code
 	gDLL->getInterfaceIFace()->popupSetBodyString(pPopup, gDLL->getText("TXT_KEY_POPUP_ARE_YOU_SURE").c_str());
 	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_YES").c_str(), NULL, 0, WIDGET_GENERAL);
 	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_NO").c_str(), NULL, 1, WIDGET_GENERAL);
+	gDLL->getInterfaceIFace()->popupLaunch(pPopup, false, POPUPSTATE_IMMEDIATE); */
+
+	// K-Mod. The confirmation box should actually tell the user what they are being asked to confirm!
+	// Note: the text here should correspond to the functionality defined by CvDLLButtonPopup::OnOkClicked.
+	// (It's unfortunate that there's no enum defined for the different options... but I don't feel like fixing that now.)
+	gDLL->getInterfaceIFace()->popupSetBodyString(pPopup, gDLL->getText("TXT_KEY_POPUP_ARE_YOU_SURE").c_str());
+	switch (info.getData1())
+	{
+	case 0:
+		gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_EXIT_TO_DESKTOP").c_str(), NULL, 0, WIDGET_GENERAL);
+		break;
+	case 1:
+		gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_EXIT_TO_MAIN_MENU").c_str(), NULL, 0, WIDGET_GENERAL);
+		break;
+	case 2:
+		gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_RETIRE").c_str(), NULL, 0, WIDGET_GENERAL);
+		break;
+	case 3:
+		gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_REGENERATE_MAP").c_str(), NULL, 0, WIDGET_GENERAL);
+		break;
+	case 4:
+		gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_ENTER_WB").c_str(), NULL, 0, WIDGET_GENERAL);
+		break;
+	default:
+		FAssertMsg(false, "launchConfirmMenu called with unknown type");
+		return false;
+	}
+	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_CANCEL").c_str(), NULL, 1, WIDGET_GENERAL);
 	gDLL->getInterfaceIFace()->popupLaunch(pPopup, false, POPUPSTATE_IMMEDIATE);
+	// K-Mod end
 
 	return true;
 }
