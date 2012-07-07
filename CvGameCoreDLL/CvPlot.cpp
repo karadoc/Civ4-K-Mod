@@ -265,6 +265,7 @@ void CvPlot::setupGraphical()
 	updateMinimapColor();
 
 	updateVisibility();
+	updateCenterUnit(); // K-Mod (This is required now that CvMap::updateCenterUnit doesn't always update the whole map.)
 }
 
 void CvPlot::updateGraphicEra()
