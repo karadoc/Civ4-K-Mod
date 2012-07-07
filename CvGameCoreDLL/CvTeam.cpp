@@ -1030,7 +1030,7 @@ void CvTeam::doTurn()
 
 	doWarWeariness();
 
-	testCircumnavigated(); // K-Mod note: it's a bit unfair to test circumnavigation in this function.
+	testCircumnavigated(); // K-Mod note: is it a bit unfair to test circumnavigation in this function?
 
 	AI_doTurnPost();
 }
@@ -4808,10 +4808,11 @@ void CvTeam::setResearchProgress(TechTypes eIndex, int iNewValue, PlayerTypes eP
 			int iOverflow = (100 * (getResearchProgress(eIndex) - getResearchCost(eIndex))) / std::max(1, GET_PLAYER(ePlayer).calculateResearchModifier(eIndex));
 			GET_PLAYER(ePlayer).changeOverflowResearch(iOverflow);
 			setHasTech(eIndex, true, ePlayer, true, true);
+			/* original bts code
 			if (!GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS) && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_BROKERING))
 			{
 				setNoTradeTech(eIndex, true);
-			}
+			} */ // disabled by K-Mod. I don't know why this was here, and it conflicts with my changes to the order of the doTurn functions.
 		}
 	}
 }
