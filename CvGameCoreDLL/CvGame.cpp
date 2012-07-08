@@ -30,15 +30,8 @@
 #include "CvDLLEngineIFaceBase.h"
 #include "CvDLLPythonIFaceBase.h"
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/02/09                                jdog5000      */
-/*                                                                                              */
-/* AI logging                                                                                   */
-/************************************************************************************************/
-#include "BetterBTSAI.h"
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+#include "BetterBTSAI.h" // bbai
+#include "CvBugOptions.h" // K-Mod
 
 // Public Functions...
 
@@ -2432,14 +2425,25 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 		bSelectGroup = false;
 	} */
 	// K-Mod. Redesigned to make selection more sensible and predictable
+	// In 'simple mode', shift always groups and always targets a only a single unit.
+	bool bSimpleMode = getBugOptionBOOL("MainInterface__SimpleSelectionMode", false, "SIMPLE_SELECTION_MODE");
+
 	bool bExplicitDeselect = false;
-	if (bToggle)
-	{
-		bSelectGroup = false;
-		bExplicitDeselect = pUnit->IsSelected();
-	}
-	else if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
+
+	if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == NULL)
 		bSelectGroup = true;
+	else if (bToggle)
+	{
+		if (pUnit->IsSelected())
+		{
+			bExplicitDeselect = true;
+			bSelectGroup = false;
+		}
+		else
+		{
+			bSelectGroup = bSimpleMode ? false : gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
+		}
+	}
 	else
 	{
 		bSelectGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup()
@@ -2457,10 +2461,19 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	}
 	else
 	{
+		//bGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
+
+		// K-Mod. If there is only one unit selected, and it is it to be toggled, just degroup it rather than unselecting it.
+		if (bExplicitDeselect && gDLL->getInterfaceIFace()->getLengthSelectionList() == 1)
+		{
+			CvMessageControl::getInstance().sendJoinGroup(pUnit->getID(), FFreeList::INVALID_INDEX);
+			return; // that's all.
+		}
+
 		bGroup = gDLL->getInterfaceIFace()->mirrorsSelectionGroup();
-		// K-Mod note: bGroup does not clear away unselected units of the group.
+		// Note: bGroup will not clear away unselected units of the group.
 		// so if we want to do that, we'll have to do it explicitly.
-		if (!bGroup && bToggle)
+		if (!bGroup && bSimpleMode && bToggle)
 		{
 			// 'toggle' should be seen as explicitly adding / removing units from a group.
 			// so lets explicitly reform the group.
@@ -2495,8 +2508,7 @@ void CvGame::selectUnit(CvUnit* pUnit, bool bClear, bool bToggle, bool bSound) c
 	}
 	else
 	{
-		if (!bExplicitDeselect || gDLL->getInterfaceIFace()->getLengthSelectionList() > 1) // K-Mod. Don't deselect the last unit. (just ungroup it)
-			gDLL->getInterfaceIFace()->insertIntoSelectionList(pUnit, false, bToggle, bGroup, bSound);
+		gDLL->getInterfaceIFace()->insertIntoSelectionList(pUnit, false, bToggle, bGroup, bSound);
 		// K-Mod. Unfortunately, removing units from the group is not correctly handled by the interface functions.
 		// so we need to do it explicitly.
 		if (bExplicitDeselect && bGroup)

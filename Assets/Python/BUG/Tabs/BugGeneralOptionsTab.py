@@ -94,3 +94,4 @@ class BugGeneralOptionsTab(BugOptionsTab.BugOptionsTab):
 		self.addTextDropdown(screen, panel, panel, "MainInterface__BuildIconSize", True)
 		self.addCheckbox(screen, panel, "MainInterface__CityArrows")
 		self.addCheckbox(screen, panel, "MainInterface__RapidUnitCycling")
+		self.addCheckbox(screen, panel, "MainInterface__SimpleSelection")

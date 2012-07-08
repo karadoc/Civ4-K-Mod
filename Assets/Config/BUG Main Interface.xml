@@ -112,6 +112,10 @@
 			<!-- Rapid unit cycling, by karadoc -->
 			<option id="RapidUnitCycling" key="Rapid Unit Cycling"
 					type="boolean" default="False"/>
+
+			<!-- Simple selection, by karadoc -->
+			<option id="SimpleSelection" key="Simple Selection"
+					type="boolean" default="False"/>
 		</section>
 	</options>
 	

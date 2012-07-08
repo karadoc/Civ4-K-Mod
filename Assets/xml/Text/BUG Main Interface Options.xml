@@ -346,4 +346,12 @@
 		<Italian>Quando è selezionato, la selezione automatica tra le unità è istantanea anzichè con ritardo.</Italian>
 		<Spanish>When checked, automatic unit selection happens instantly rather than with a delay.</Spanish>
 	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__SIMPLESELECTION_TEXT</Tag>
+		<English>Simple [Shift] Unit Selection</English>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__SIMPLESELECTION_HOVER</Tag>
+		<English>When checked, selecting units with the [Shift] key will only ever add a single unit at a time.</English>
+	</TEXT>
 </Civ4GameText>
