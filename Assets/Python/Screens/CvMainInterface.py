@@ -1293,7 +1293,7 @@ class CvMainInterface:
 		if player.getCommercePercent(eCommerce) > 0:
 			return True
 
-		if eCommerce == CommerceTypes.COMMERCE_ESPIONAGE and gc.getTeam(player.getTeam()).getHasMetCivCount(True) == 0:
+		if eCommerce == CommerceTypes.COMMERCE_ESPIONAGE and (gc.getGame().isOption(GameOptionTypes.GAMEOPTION_NO_ESPIONAGE) or gc.getTeam(player.getTeam()).getHasMetCivCount(True) == 0):
 			return False
 
 		if player.isCommerceFlexible(eCommerce):
@@ -1330,9 +1330,7 @@ class CvMainInterface:
 					eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
 										
 					#if (gc.getActivePlayer().isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
-					# K-Mod
-					if self.showCommercePercent(eCommerce, gc.getGame().getActivePlayer()):
-					# K-Mod end
+					if self.showCommercePercent(eCommerce, gc.getGame().getActivePlayer()): # K-Mod
 # BUG - Min/Max Sliders - start
 						bEnable = gc.getActivePlayer().isCommerceFlexible(eCommerce)
 						if MainOpt.isShowMinMaxCommerceButtons() and not CyInterface().isCityScreenUp():
@@ -3039,9 +3037,7 @@ class CvMainInterface:
 				for iI in range( CommerceTypes.NUM_COMMERCE_TYPES ):
 					eCommerce = (iI + 1) % CommerceTypes.NUM_COMMERCE_TYPES
 					#if (gc.getPlayer(ePlayer).isCommerceFlexible(eCommerce) or (CyInterface().isCityScreenUp() and (eCommerce == CommerceTypes.COMMERCE_GOLD))):
-					# K-Mod
-					if self.showCommercePercent(eCommerce, ePlayer):
-					# K-Mod end
+					if self.showCommercePercent(eCommerce, ePlayer): # K-Mod
 						szOutText = u"<font=2>%c:%d%%</font>" %(gc.getCommerceInfo(eCommerce).getChar(), gc.getPlayer(ePlayer).getCommercePercent(eCommerce))
 						szString = "PercentText" + str(iI)
 						screen.setLabel( szString, "Background", szOutText, CvUtil.FONT_LEFT_JUSTIFY, 14, 50 + (iCount * 19), -0.1, FontTypes.SMALL_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
@@ -3720,7 +3716,8 @@ class CvMainInterface:
 				for i in range(CommerceTypes.NUM_COMMERCE_TYPES):
 					eCommerce = (i + 1) % CommerceTypes.NUM_COMMERCE_TYPES
 
-					if ((gc.getPlayer(pHeadSelectedCity.getOwner()).isCommerceFlexible(eCommerce)) or (eCommerce == CommerceTypes.COMMERCE_GOLD)):
+					#if ((gc.getPlayer(pHeadSelectedCity.getOwner()).isCommerceFlexible(eCommerce)) or (eCommerce == CommerceTypes.COMMERCE_GOLD)):
+					if self.showCommercePercent(eCommerce, pHeadSelectedCity.getOwner()): # K-Mod
 						szBuffer = u"%d.%02d %c" %(pHeadSelectedCity.getCommerceRate(eCommerce), pHeadSelectedCity.getCommerceRateTimes100(eCommerce)%100, gc.getCommerceInfo(eCommerce).getChar())
 
 						iHappiness = pHeadSelectedCity.getCommerceHappinessByType(eCommerce)
