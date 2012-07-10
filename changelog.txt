@@ -1,6 +1,42 @@
-This is K-Mod version 1.32.
+This is K-Mod version 1.33.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.33 changelist
+
+Game
+
++ XML balance adjustments to several units.
+    + Production cost of war elephants (and ballista elephants) increased from 60 to 70.
+    + Maximum collateral damage targets reduced from 7 to 6 for cannons, and 8 to 7 for artillery and mobile artillery.
+    + Grenadiers now get +10% city attack.
+    + Panzers now get 1-2 first strikes.
+    + Submarines and Attack Submarines now get +10% ocean attack.
+    + Ships of the Line strength increased from 8 to 10; but bonus vs frigates decreased from +50% to +20%.
+    + Stealth Destroyers strength increased from 30 to 36.
++ Fixed a bug which prevented players from trading techs immediately after completing the research. (This behaviour was an unintended side-effect of a change in the previous version of K-Mod. -- Note: it will now also be possible to trade techs immediately after bulbing them.)
++ Corrected some minor anomalies in the new handling of CvTeam::doTurn in simultaneous turns mode.
++ Fixed a bug which allowed players to queue multiple nuke targets with a single nuke unit. (Previously, this could cause some strange behaviour.)
++ Fixed a potential infinite loop in mods that have improvements which when pillaged become the same improvement (either directly or indirectly).
+
+UI
+
++ Implemented unit cycling suppression with the X key. ie. If you hold X while issuing an order, the unit will remain selected even when it has no moves left.
++ Added a new option to the BUG options screen: Simple [Shift] Unit Selection. With this option enabled, the selection with the shift key will behave in a more rigid and predictable way.
++ Fixed several bugs and inconsistencies in the default selection rules when using the shift key.
++ Units deselected with shift key will now be ungrouped. (Previously, units would be added the the group when selected, but not removed from the group when deselected.)
++ Previously when selecting units with either ctrl or alt, units with no remaining moves would be excluded from the selection. This has been changed so that if the player explicitly clicks on a unit with no moves (while holding ctrl or alt) then the selection will include all units regardless of their moves.
++ 'Retire' and 'WorldBuilder' controls now always require confirmation. (eg. if you press ctrl+q the game will now give a prompt asking of you want to retire rather than instantly ending the game.)
++ Confirmation prompts, such as those for 'Retire' or 'Exit to Desktop', will now say explicitly what it is that you are confirming. (Previously these prompts simply said "Are you sure? Yes/No", with no hint of what they were talking about.)
++ Changed the way the game updates which unit should be displayed on top of each plot. This change significantly improves the game's response time when selecting units. (Previously the game would update every plot on the map every time a unit was selected. Now, it only updates plots in the locale of the selected unit.)
++ When pointing to an enemy stack to see combat odds, the game will now update the top unit in the enemy stack to accurately reflect which enemy unit will fight first. (Previously the top unit was accurate when the player had only a single attacker selected, but was sometimes inaccurate if the player had a whole stack selected. It should now always be accurate - but only after displaying the combat odds!) (Exception: If the attacking playing has a spy or some other unit on the target plot, that unit will always be on top.)
++ Fixed a bug which prevented the "friendlies" combat odds from being displayed. (Holding alt when pointing to a plot should give combat odds regardless of who owns the target units.)
++ The city capture sound is now played when the city is actually captured rather than when the city capture popup is displayed. This change prevents the sound from repeating if the player chooses to examine the city.
++ When a corporation expands into ones own city, the player will now only receive one message to describe what the corp. has brought to the city. They will no longer get the general "corp has spread" message.
++ Religion spread and religion removal event messages now have the standard duration rather than extended duration.
++ Nuke messages (eg. player X's nuke exploded, or player Y intercepted X's nuke) are now only shown to civs who player who have met the civilizations involved in the event.
++ Fixed a bug which caused the espionage slider to still be shown when using the "no espionage" option.
+
+--
 v1.32 changelist
 
 Game / Back-end

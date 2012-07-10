@@ -1,6 +1,7 @@
 K-Mod
 
 == Installation instructions ==
+(Note: This mod requires Beyond the Sword version 3.19.)
 * Unzip into your mods directory. (eg. C:\games\Civilization 4 Complete\Beyond the Sword\Mods)
 * You should now have a directory called ...\Beyond the Sword\Mods\K-Mod, and the installation is complete!
 * To play the mod, start Beyond the Sword; choose Advanced, then Load a Mod, then K-Mod.
