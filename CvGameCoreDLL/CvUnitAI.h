@@ -125,7 +125,7 @@ protected:
 */
 	bool AI_shadow(UnitAITypes eUnitAI, int iMax = -1, int iMaxRatio = -1, bool bWithCargoOnly = true, bool bOutsideCityOnly = false, int iMaxPath = MAX_INT);
 	// K-Mod. I've created AI_omniGroup with the intention of using it to phase out AI_group and AI_groupMergeRange.
-	bool AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup = -1, int iMaxOwnUnitAI = -1, bool bStackOfDoom = false, int iFlags = 0, int iMaxPath = -1, bool bMergeGroups = true, bool bSafeOnly = true, bool bIgnoreFaster = false, bool bIgnoreOwnUnitType = false, bool bBiggerOnly = true, int iMinUnitAI = -1, bool bWithCargoOnly = false, MissionAITypes eIgnoreMissionAIType = NO_MISSIONAI);
+	bool AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup = -1, int iMaxOwnUnitAI = -1, bool bStackOfDoom = false, int iFlags = 0, int iMaxPath = -1, bool bMergeGroups = true, bool bSafeOnly = true, bool bIgnoreFaster = false, bool bIgnoreOwnUnitType = false, bool bBiggerOnly = true, int iMinUnitAI = -1, bool bWithCargoOnly = false, bool bIgnoreBusyTransports = false);
 	bool AI_group(UnitAITypes eUnitAI, int iMaxGroup = -1, int iMaxOwnUnitAI = -1, int iMinUnitAI = -1, bool bIgnoreFaster = false, bool bIgnoreOwnUnitType = false, bool bStackOfDoom = false, int iMaxPath = MAX_INT, bool bAllowRegrouping = false, bool bWithCargoOnly = false, bool bInCityOnly = false, MissionAITypes eIgnoreMissionAIType = NO_MISSIONAI);
 	//bool AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITypes eTransportedUnitAI = NO_UNITAI, int iMinCargo = -1, int iMinCargoSpace = -1, int iMaxCargoSpace = -1, int iMaxCargoOurUnitAI = -1, int iFlags = 0, int iMaxPath = MAX_INT, int iMaxTransportPath = MAX_INT);
 /************************************************************************************************/

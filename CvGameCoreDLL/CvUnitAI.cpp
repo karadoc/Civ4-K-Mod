@@ -7999,7 +7999,7 @@ void CvUnitAI::AI_assaultSeaMove()
 		} */ // disabled by K-Mod. This is redundant.
 
 		//if (AI_group(UNITAI_ASSAULT_SEA, -1, -1, -1, true, false, false, 10, false, true, false, MISSIONAI_ASSAULT))
-		if (AI_omniGroup(UNITAI_ASSAULT_SEA, -1, -1, false, 0, 10, true, true, true, false, false, -1, true, MISSIONAI_ASSAULT))
+		if (AI_omniGroup(UNITAI_ASSAULT_SEA, -1, -1, false, 0, 10, true, true, true, false, false, -1, true, true))
 		{
 			return;
 		}
@@ -10864,7 +10864,7 @@ bool CvUnitAI::AI_shadow(UnitAITypes eUnitAI, int iMax, int iMaxRatio, bool bWit
 }
 
 // K-Mod. One group function to rule them all.
-bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, bool bStackOfDoom, int iFlags, int iMaxPath, bool bMergeGroups, bool bSafeOnly, bool bIgnoreFaster, bool bIgnoreOwnUnitType, bool bBiggerOnly, int iMinUnitAI, bool bWithCargoOnly, MissionAITypes eIgnoreMissionAIType)
+bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, bool bStackOfDoom, int iFlags, int iMaxPath, bool bMergeGroups, bool bSafeOnly, bool bIgnoreFaster, bool bIgnoreOwnUnitType, bool bBiggerOnly, int iMinUnitAI, bool bWithCargoOnly, bool bIgnoreBusyTransports)
 {
 	PROFILE_FUNC();
 
@@ -10924,7 +10924,7 @@ bool CvUnitAI::AI_omniGroup(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitA
 							&& (!bBiggerOnly || !bMergeGroups || pLoopGroup->getNumUnits() >= getGroup()->getNumUnits())
 							&& (!bIgnoreFaster || pLoopGroup->baseMoves() <= baseMoves())
 							&& (!bIgnoreOwnUnitType || pLoopUnit->getUnitType() != getUnitType())
-							&& (eIgnoreMissionAIType == NO_MISSIONAI || eIgnoreMissionAIType != pLoopUnit->getGroup()->AI_getMissionAIType())
+							&& (!bIgnoreBusyTransports || !pLoopGroup->hasCargo() || (pLoopGroup->AI_getMissionAIType() != MISSIONAI_ASSAULT && pLoopGroup->AI_getMissionAIType() != MISSIONAI_REINFORCE))
 							&& (iMinUnitAI == -1 || pLoopGroup->countNumUnitAIType(eUnitAI) >= iMinUnitAI)
 							&& (iMaxOwnUnitAI == -1 || (bMergeGroups ? std::max(0, getGroup()->countNumUnitAIType(eUnitAI) - 1) : 0) + pLoopGroup->countNumUnitAIType(AI_getUnitAIType()) <= iMaxOwnUnitAI + (bStackOfDoom ? AI_stackOfDoomExtra() : 0))
 							&& (iMaxGroup == -1 || (bMergeGroups ? getGroup()->getNumUnits() - 1 : 0) + pLoopGroup->getNumUnits() + GET_PLAYER(getOwnerINLINE()).AI_unitTargetMissionAIs(pLoopUnit, MISSIONAI_GROUP, getGroup()) <= iMaxGroup + (bStackOfDoom ? AI_stackOfDoomExtra() : 0))
@@ -11010,6 +11010,7 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 
 	// unsupported features:
 	FAssert(!bInCityOnly);
+	FAssert(eIgnoreMissionAIType == NO_MISSIONAI || (eUnitAI == UNITAI_ASSAULT_SEA && eIgnoreMissionAIType == MISSIONAI_ASSAULT));
 	// .. and now the function.
 
 	if (!bAllowRegrouping)
@@ -11020,7 +11021,7 @@ bool CvUnitAI::AI_group(UnitAITypes eUnitAI, int iMaxGroup, int iMaxOwnUnitAI, i
 		}
 	}
 
-	return AI_omniGroup(eUnitAI, iMaxGroup, iMaxOwnUnitAI, bStackOfDoom, 0, iMaxPath, true, true, bIgnoreFaster, bIgnoreOwnUnitType, false, iMinUnitAI, bWithCargoOnly, eIgnoreMissionAIType);
+	return AI_omniGroup(eUnitAI, iMaxGroup, iMaxOwnUnitAI, bStackOfDoom, 0, iMaxPath, true, true, bIgnoreFaster, bIgnoreOwnUnitType, false, iMinUnitAI, bWithCargoOnly, eIgnoreMissionAIType == MISSIONAI_ASSAULT);
 }
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */

@@ -1480,6 +1480,7 @@ enum MissionAITypes		// Exposed to Python
 	MISSIONAI_CARRIER,
 	MISSIONAI_PICKUP,
 	// K-Mod
+	MISSIONAI_REINFORCE, // (ie. transporting units to a new area)
 	MISSIONAI_CHOKE,
 	MISSIONAI_HEAL,
 	MISSIONAI_RETREAT,
