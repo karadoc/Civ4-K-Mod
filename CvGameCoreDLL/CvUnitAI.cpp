@@ -7484,6 +7484,15 @@ void CvUnitAI::AI_assaultSeaMove()
 	// Cargo to launch a new invasion
 	int iTargetInvasionSize = 2*iTargetReinforcementSize;
 
+	// K-Mod. If we are already en route for invasion, decrease the threshold.
+	// (One reason for this decrease is that the threshold may actually increase midway through the journey. We don't want to turn back because of that!)
+	if (getGroup()->AI_getMissionAIType() == MISSIONAI_ASSAULT)
+	{
+		iTargetReinforcementSize = iTargetReinforcementSize*2/3;
+		iTargetInvasionSize = iTargetInvasionSize*2/3;
+	}
+	// K-Mod end
+
 	int iCargo = getGroup()->getCargo();
 	int iEscorts = getGroup()->countNumUnitAIType(UNITAI_ESCORT_SEA) + getGroup()->countNumUnitAIType(UNITAI_ATTACK_SEA);
 
