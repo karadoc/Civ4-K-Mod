@@ -200,7 +200,7 @@ protected:
 	bool AI_foundFollow(); // K-Mod
 	bool AI_assaultSeaTransport(bool bAttackBarbs = false, bool bLocal = false); // K-mod added bLocal
 	bool AI_assaultSeaReinforce(bool bAttackBarbs = false); // BBAI
-	bool AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFlags); // K-Mod
+	bool AI_transportGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFlags, MissionAITypes eMissionAI); // K-Mod
 
 	bool AI_settlerSeaTransport();
 	bool AI_settlerSeaFerry();

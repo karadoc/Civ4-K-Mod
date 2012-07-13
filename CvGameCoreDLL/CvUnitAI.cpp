@@ -7804,7 +7804,8 @@ void CvUnitAI::AI_assaultSeaMove()
 						if( (GC.getGameINLINE().getGameTurn() - pAdjacentCity->getGameTurnAcquired()) < 5 )
 						{
 							// If just captured city and we have some cargo, dump units in city
-							getGroup()->pushMission(MISSION_MOVE_TO, pAdjacentPlot->getX_INLINE(), pAdjacentPlot->getY_INLINE(), 0, false, false, MISSIONAI_ASSAULT, pAdjacentPlot);
+							getGroup()->pushMission(MISSION_MOVE_TO, pAdjacentPlot->getX_INLINE(), pAdjacentPlot->getY_INLINE(), 0, false, false, NO_MISSIONAI, pAdjacentPlot);
+							// K-Mod note: this use to use missionAI_assault. I've changed it because assault would suggest to the troops that they should stay onboard.
 							return;
 						}
 					}
@@ -17468,32 +17469,21 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 
 	if (pBestPlot != NULL && pBestAssaultPlot != NULL)
 	{
-		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, iFlags);
+		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_ASSAULT);
 	}
 
 	return false;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/07/10                                jdog5000      */
-/*                                                                                              */
-/* Naval AI, Efficiency                                                                         */
-/************************************************************************************************/
 // Returns true if a mission was pushed...
+// This function has been heavily edited and restructured by K-Mod. It includes some bbai changes.
 bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 {
 	PROFILE_FUNC();
 
 	bool bIsAttackCity = (getUnitAICargo(UNITAI_ATTACK_CITY) > 0);
-	
+
 	FAssert(getGroup()->hasCargo());
-
-	/* original bts code
-	if (!canCargoAllMove())
-	{
-		return false;
-	} */ // disabled by K-Mod. (this is now checked in AI_assaultGoTo)
-
 	FAssert(getGroup()->canAllMove()); // K-Mod (replacing a BBAI check that I'm sure is unnecessary.)
 
 	std::vector<CvUnit*> aGroupCargo;
@@ -17509,272 +17499,55 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 		}
 	}
 
+	// bool bCity = plot()->isCity(true,getTeam());
+	// K-Mod note: bCity was used in a few places, but it should not be. If we make a decision based on being in a city, then we'll just change our mind as soon as we leave the city!
+
 	int iCargo = getGroup()->getCargo();
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
 	CvPlot* pBestAssaultPlot = NULL;
 	CvArea* pWaterArea = plot()->waterArea();
-	bool bCity = plot()->isCity(true,getTeam());
 	bool bCanMoveAllTerrain = getGroup()->canMoveAllTerrain();
 	int iFlags = MOVE_AVOID_ENEMY_WEIGHT_3 | MOVE_DECLARE_WAR; // K-Mod
 
-	int iTargetCities;
-	int iOurFightersHere;
-	int iPathTurns;
-	int iValue;
-
 	// Loop over nearby plots for groups in enemy territory to reinforce
 	int iRange = 2*maxMoves();
-	int iDX, iDY;
-	for (iDX = -(iRange); iDX <= iRange; iDX++)
+	for (int iDX = -(iRange); iDX <= iRange; iDX++)
 	{
-		for (iDY = -(iRange); iDY <= iRange; iDY++)
+		for (int iDY = -(iRange); iDY <= iRange; iDY++)
 		{
 			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
 
-			if( pLoopPlot != NULL )
+			if (pLoopPlot && isEnemy(pLoopPlot->getTeam(), pLoopPlot))
 			{
-				if (pLoopPlot->isOwned())
+				if ( bCanMoveAllTerrain || (pWaterArea != NULL && pLoopPlot->isAdjacentToArea(pWaterArea)) )
 				{
-					if (isEnemy(pLoopPlot->getTeam(), pLoopPlot))
+					int iTargetCities = pLoopPlot->area()->getCitiesPerPlayer(pLoopPlot->getOwnerINLINE());
+
+					if (iTargetCities > 0)
 					{
-						if ( bCanMoveAllTerrain || (pWaterArea != NULL && pLoopPlot->isAdjacentToArea(pWaterArea)) )
+						int iOurFightersHere = pLoopPlot->getNumDefenders(getOwnerINLINE());
+
+						if( iOurFightersHere > 2 )
 						{
-							iTargetCities = pLoopPlot->area()->getCitiesPerPlayer(pLoopPlot->getOwnerINLINE());
-							
-							if (iTargetCities > 0)
+							int iPathTurns;
+							if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, 2))
 							{
-								iOurFightersHere = pLoopPlot->getNumDefenders(getOwnerINLINE());
+								CvPlot* pEndTurnPlot = getPathEndTurnPlot();
 
-								if( iOurFightersHere > 2 )
-								{
-									iPathTurns;
-									if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, 2))
-									{
-										CvPlot* pEndTurnPlot = getPathEndTurnPlot();
-
-										iValue = 10*iTargetCities;
-										iValue += 8*iOurFightersHere;
-										iValue += 3*GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
-
-										iValue *= 100;
-
-										iValue /= (iPathTurns + 1);
-
-										if (iValue > iBestValue)
-										{
-											iBestValue = iValue;
-											pBestPlot = pEndTurnPlot;
-											pBestAssaultPlot = pLoopPlot;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Loop over other transport groups, looking for synchronized landing
-	if ((pBestPlot == NULL) && (pBestAssaultPlot == NULL))
-	{
-		int iLoop;
-		for(CvSelectionGroup* pLoopSelectionGroup = GET_PLAYER(getOwnerINLINE()).firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = GET_PLAYER(getOwnerINLINE()).nextSelectionGroup(&iLoop))
-		{
-			if (pLoopSelectionGroup != getGroup())
-			{				
-				//if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT)
-				if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT && pLoopSelectionGroup->getHeadUnitAI() == UNITAI_ASSAULT_SEA) // K-Mod. (b/c assault is also used for ground units)
-				{
-					CvPlot* pLoopPlot = pLoopSelectionGroup->AI_getMissionAIPlot();
-
-					if( pLoopPlot != NULL )
-					{
-						if (pLoopPlot->isOwned())
-						{
-							if (isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
-							{
-								if ( bCanMoveAllTerrain || (pWaterArea != NULL && pLoopPlot->isAdjacentToArea(pWaterArea)) )
-								{
-									iTargetCities = pLoopPlot->area()->getCitiesPerPlayer(pLoopPlot->getOwnerINLINE());
-									if (iTargetCities > 0)
-									{
-										int iAssaultsHere = pLoopSelectionGroup->getCargo();
-											
-										if( iAssaultsHere > 2 )
-										{
-											iPathTurns;
-											if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
-											{
-												CvPlot* pEndTurnPlot = getPathEndTurnPlot();
-											
-												int iOtherPathTurns = MAX_INT;
-												//if (pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pLoopPlot, iFlags, true, &iOtherPathTurns))
-												// K-Mod. Use a different pathfinder, so that we don't clear our path data.
-												KmodPathFinder loop_path;
-												loop_path.SetSettings(pLoopSelectionGroup, iFlags, iPathTurns);
-												if (loop_path.GeneratePath(pLoopPlot))
-												// K-Mod end
-												{
-													// We need to get there the turn after they do, +1 required whether
-													// they move first or we do
-													//iOtherPathTurns += 1;
-													iOtherPathTurns = loop_path.GetPathTurns() + 1;
-												}
-												else
-												{
-													// Should never happen ...
-													continue;
-												}
-
-												if( (iPathTurns >= iOtherPathTurns) && (iPathTurns < iOtherPathTurns + 5) )
-												{
-													bool bCanCargoAllUnload = true;
-													int iEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
-													if (iEnemyDefenders > 0 || pLoopPlot->isCity())
-													{
-														for (uint i = 0; i < aGroupCargo.size(); ++i)
-														{
-															CvUnit* pAttacker = aGroupCargo[i];
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-															// From Lead From Behind by UncutDragon
-															// original
-															//CvUnit* pDefender = pLoopPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, true);
-															//if (pDefender == NULL || !pAttacker->canAttack(*pDefender))
-															// modified
-															if (!pLoopPlot->hasDefender(true, NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, true))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-															{
-																bCanCargoAllUnload = false;
-																break;
-															}
-															else if( pLoopPlot->isCity() && !(pLoopPlot->isVisible(getTeam(),false)) )
-															{
-																// Artillery can't naval invade, so don't try
-																if( pAttacker->combatLimit() < 100 )
-																{
-																	bCanCargoAllUnload = false;
-																	break;
-																}
-															}
-														}
-													}
-
-													iValue = (iAssaultsHere * 5);
-													iValue += iTargetCities*10;
-
-													iValue *= 100;
-
-													// if more than 3 turns to get there, then put some randomness into our preference of distance
-													// +/- 33%
-													if (iPathTurns > 3)
-													{
-														int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
-
-														iPathTurns *= 66 + iPathAdjustment;
-														iPathTurns /= 100;
-													}
-
-													iValue /= (iPathTurns + 1);
-
-													if (iValue > iBestValue)
-													{
-														iBestValue = iValue;
-														pBestPlot = pEndTurnPlot;
-														pBestAssaultPlot = pLoopPlot;
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Reinforce our cities in need
-	if ((pBestPlot == NULL) && (pBestAssaultPlot == NULL))
-	{
-		int iLoop;
-		CvCity* pLoopCity;
-
-		for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
-		{
-			if( bCanMoveAllTerrain || (pWaterArea != NULL && (pLoopCity->waterArea(true) == pWaterArea || pLoopCity->secondWaterArea() == pWaterArea)) )
-			{
-				iValue = 0;
-				if(pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
-				{
-					iValue = 3;
-				}
-				else if(pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE)
-				{
-					iValue = 2;
-				}
-				else if(pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_MASSING)
-				{
-					iValue = 1;
-				}
-				else if( bAttackBarbs && (pLoopCity->area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > 0) )
-				{
-					iValue = 1;
-				}
-
-				if( iValue > 0 )
-				{
-					bool bCityDanger = pLoopCity->AI_isDanger();
-					if( (bCity && pLoopCity->area() != area()) || bCityDanger || ((GC.getGameINLINE().getGameTurn() - pLoopCity->getGameTurnAcquired()) < 10 && pLoopCity->getPreviousOwner() != NO_PLAYER) )
-					{
-						int iOurPower = std::max(1, pLoopCity->area()->getPower(getOwnerINLINE()));
-						// Enemy power includes barb power
-						int iEnemyPower = GET_TEAM(getTeam()).countEnemyPowerByArea(pLoopCity->area());
-
-						// Don't send troops to areas we are dominating already
-						// Don't require presence of enemy cities, just a dangerous force
-						if( iOurPower < (3*iEnemyPower) )
-						{
-							iPathTurns;
-							if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
-							{
-								iValue *= 10*pLoopCity->AI_cityThreat();
-						
-								iValue += 20 * GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_ASSAULT, getGroup());
-								
-								iValue *= std::min(iEnemyPower, 3*iOurPower);
-								iValue /= iOurPower;
+								int iValue = 10*iTargetCities;
+								iValue += 8*iOurFightersHere;
+								iValue += 3*GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pLoopPlot);
 
 								iValue *= 100;
 
-								// if more than 3 turns to get there, then put some randomness into our preference of distance
-								// +/- 33%
-								if (iPathTurns > 3)
-								{
-									int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
-
-									iPathTurns *= 66 + iPathAdjustment;
-									iPathTurns /= 100;
-								}
-
-								iValue /= (iPathTurns + 6);
+								iValue /= (iPathTurns + 1);
 
 								if (iValue > iBestValue)
 								{
 									iBestValue = iValue;
-									//pBestPlot = (bCityDanger ? getPathEndTurnPlot() : pLoopCity->plot());
-									pBestPlot = getPathEndTurnPlot(); // K-Mod (why did they have that other stuff?)
-									pBestAssaultPlot = pLoopCity->plot();
+									pBestPlot = pEndTurnPlot;
+									pBestAssaultPlot = pLoopPlot;
 								}
 							}
 						}
@@ -17784,94 +17557,107 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 		}
 	}
 
-	if ((pBestPlot == NULL) && (pBestAssaultPlot == NULL))
+	if (pBestPlot && pBestAssaultPlot)
+		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_REINFORCE);
+
+	// Loop over other transport groups, looking for synchronized landing
+	int iLoop;
+	for(CvSelectionGroup* pLoopSelectionGroup = GET_PLAYER(getOwnerINLINE()).firstSelectionGroup(&iLoop); pLoopSelectionGroup; pLoopSelectionGroup = GET_PLAYER(getOwnerINLINE()).nextSelectionGroup(&iLoop))
 	{
-		if( bCity ) 
+		if (pLoopSelectionGroup != getGroup())
 		{
-			if( GET_TEAM(getTeam()).isAVassal() )
+			//if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT)
+			if (pLoopSelectionGroup->AI_getMissionAIType() == MISSIONAI_ASSAULT && pLoopSelectionGroup->getHeadUnitAI() == UNITAI_ASSAULT_SEA) // K-Mod. (b/c assault is also used for ground units)
 			{
-				TeamTypes eMasterTeam = NO_TEAM;
+				CvPlot* pLoopPlot = pLoopSelectionGroup->AI_getMissionAIPlot();
 
-				for( int iI = 0; iI < MAX_CIV_TEAMS; iI++ )
+				if (pLoopPlot && isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
 				{
-					if( GET_TEAM(getTeam()).isVassal((TeamTypes)iI) )
+					if ( bCanMoveAllTerrain || (pWaterArea != NULL && pLoopPlot->isAdjacentToArea(pWaterArea)) )
 					{
-						eMasterTeam = (TeamTypes)iI;
-					}
-				}
+						int iTargetCities = pLoopPlot->area()->getCitiesPerPlayer(pLoopPlot->getOwnerINLINE());
+						if (iTargetCities <= 0)
+							continue;
 
-				if( (eMasterTeam != NO_TEAM) && GET_TEAM(getTeam()).isOpenBorders(eMasterTeam) )
-				{
-					for( int iI = 0; iI < MAX_CIV_PLAYERS; iI++ )
-					{
-						if( GET_PLAYER((PlayerTypes)iI).getTeam() == eMasterTeam )
+						int iAssaultsHere = pLoopSelectionGroup->getCargo();
+
+						if (iAssaultsHere < 3)
+							continue;
+
+						int iPathTurns;
+						if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
 						{
-							int iLoop;
-							CvCity* pLoopCity;
+							CvPlot* pEndTurnPlot = getPathEndTurnPlot();
 
-							for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+							int iOtherPathTurns = MAX_INT;
+							//if (pLoopSelectionGroup->generatePath(pLoopSelectionGroup->plot(), pLoopPlot, iFlags, true, &iOtherPathTurns))
+							// K-Mod. Use a different pathfinder, so that we don't clear our path data.
+							KmodPathFinder loop_path;
+							loop_path.SetSettings(pLoopSelectionGroup, iFlags, iPathTurns);
+							if (loop_path.GeneratePath(pLoopPlot))
+								// K-Mod end
 							{
-								if( pLoopCity->area() != area() )
+								// We need to get there the turn after they do, +1 required whether
+								// they move first or we do
+								//iOtherPathTurns += 1;
+								iOtherPathTurns = loop_path.GetPathTurns() + 1;
+							}
+							else
+							{
+								continue;
+							}
+
+							FAssert(iOtherPathTurns <= iPathTurns);
+							if (iPathTurns >= iOtherPathTurns + 5)
+								continue;
+
+							bool bCanCargoAllUnload = true;
+							int iEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
+							if (iEnemyDefenders > 0 || pLoopPlot->isCity())
+							{
+								for (uint i = 0; i < aGroupCargo.size(); ++i)
 								{
-									iValue = 0;
-									if(pLoopCity->area()->getAreaAIType(eMasterTeam) == AREAAI_OFFENSIVE)
+									CvUnit* pAttacker = aGroupCargo[i];
+									if (!pLoopPlot->hasDefender(true, NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, true))
 									{
-										iValue = 2;
+										bCanCargoAllUnload = false;
+										break;
 									}
-									else if(pLoopCity->area()->getAreaAIType(eMasterTeam) == AREAAI_MASSING)
+									else if( pLoopPlot->isCity() && !(pLoopPlot->isVisible(getTeam(),false)) )
 									{
-										iValue = 1;
-									}
-
-									if( iValue > 0 )
-									{
-										if( bCanMoveAllTerrain || (pWaterArea != NULL && (pLoopCity->waterArea(true) == pWaterArea || pLoopCity->secondWaterArea() == pWaterArea)) )
+										// Artillery can't naval invade, so don't try
+										if( pAttacker->combatLimit() < 100 )
 										{
-											int iOurPower = std::max(1, pLoopCity->area()->getPower(getOwnerINLINE()));
-											iOurPower += GET_TEAM(eMasterTeam).countPowerByArea(pLoopCity->area());
-											// Enemy power includes barb power
-											int iEnemyPower = GET_TEAM(eMasterTeam).countEnemyPowerByArea(pLoopCity->area());
-
-											// Don't send troops to areas we are dominating already
-											// Don't require presence of enemy cities, just a dangerous force
-											if( iOurPower < (2*iEnemyPower) )
-											{
-												int iPathTurns;
-												if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
-												{
-													iValue *= pLoopCity->AI_cityThreat();
-											
-													iValue += 10 * GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_ASSAULT, getGroup());
-												
-													iValue *= std::min(iEnemyPower, 3*iOurPower);
-													iValue /= iOurPower;
-
-													iValue *= 100;
-
-													// if more than 3 turns to get there, then put some randomness into our preference of distance
-													// +/- 33%
-													if (iPathTurns > 3)
-													{
-														int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
-
-														iPathTurns *= 66 + iPathAdjustment;
-														iPathTurns /= 100;
-													}
-
-													iValue /= (iPathTurns + 1);
-
-													if (iValue > iBestValue)
-													{
-														iBestValue = iValue;
-														pBestPlot = getPathEndTurnPlot();
-														pBestAssaultPlot = pLoopCity->plot();
-													}
-												}
-											}
+											bCanCargoAllUnload = false;
+											break;
 										}
 									}
 								}
 							}
+
+							int iValue = (iAssaultsHere * 5);
+							iValue += iTargetCities*10;
+
+							iValue *= 100;
+
+							// if more than 3 turns to get there, then put some randomness into our preference of distance
+							// +/- 33%
+							if (iPathTurns > 3)
+							{
+								int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
+
+								iPathTurns *= 66 + iPathAdjustment;
+								iPathTurns /= 100;
+							}
+
+							iValue /= (iPathTurns + 1);
+
+							if (iValue > iBestValue)
+							{
+								iBestValue = iValue;
+								pBestPlot = pEndTurnPlot;
+								pBestAssaultPlot = pLoopPlot;
+							}
 						}
 					}
 				}
@@ -17879,24 +17665,188 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 		}
 	}
 
-	if (pBestPlot != NULL && pBestAssaultPlot != NULL)
+	if (pBestPlot && pBestAssaultPlot)
+		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_ASSAULT);
+
+	// Reinforce our cities in need
+	for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 	{
-		return AI_assaultGoTo(pBestPlot, pBestAssaultPlot, iFlags);
+		if( bCanMoveAllTerrain || (pWaterArea != NULL && (pLoopCity->waterArea(true) == pWaterArea || pLoopCity->secondWaterArea() == pWaterArea)) )
+		{
+			int iValue = 0;
+			if(pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
+			{
+				iValue = 3;
+			}
+			else if(pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE)
+			{
+				iValue = 2;
+			}
+			else if(pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_MASSING)
+			{
+				iValue = 1;
+			}
+			else if( bAttackBarbs && (pLoopCity->area()->getCitiesPerPlayer(BARBARIAN_PLAYER) > 0) )
+			{
+				iValue = 1;
+			}
+			else
+				continue;
+
+			bool bCityDanger = pLoopCity->AI_isDanger();
+			//if( (bCity && pLoopCity->area() != area()) || bCityDanger || ((GC.getGameINLINE().getGameTurn() - pLoopCity->getGameTurnAcquired()) < 10 && pLoopCity->getPreviousOwner() != NO_PLAYER) )
+			if (pLoopCity->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE || bCityDanger || (GC.getGameINLINE().getGameTurn() - pLoopCity->getGameTurnAcquired() < 10 && pLoopCity->getPreviousOwner() != NO_PLAYER)) // K-Mod
+			{
+				int iOurPower = std::max(1, pLoopCity->area()->getPower(getOwnerINLINE()));
+				// Enemy power includes barb power
+				int iEnemyPower = GET_TEAM(getTeam()).countEnemyPowerByArea(pLoopCity->area());
+
+				// Don't send troops to areas we are dominating already
+				// Don't require presence of enemy cities, just a dangerous force
+				if( iOurPower < (3*iEnemyPower) )
+				{
+					int iPathTurns;
+					if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
+					{
+						iValue *= 10*pLoopCity->AI_cityThreat();
+
+						iValue += 20 * GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_ASSAULT, getGroup());
+
+						iValue *= std::min(iEnemyPower, 3*iOurPower);
+						iValue /= iOurPower;
+
+						iValue *= 100;
+
+						// if more than 3 turns to get there, then put some randomness into our preference of distance
+						// +/- 33%
+						if (iPathTurns > 3)
+						{
+							int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
+
+							iPathTurns *= 66 + iPathAdjustment;
+							iPathTurns /= 100;
+						}
+
+						iValue /= (iPathTurns + 6);
+
+						if (iValue > iBestValue)
+						{
+							iBestValue = iValue;
+							//pBestPlot = (bCityDanger ? getPathEndTurnPlot() : pLoopCity->plot());
+							pBestPlot = getPathEndTurnPlot(); // K-Mod (why did they have that other stuff?)
+							pBestAssaultPlot = pLoopCity->plot();
+						}
+					}
+				}
+			}
+		}
 	}
+
+	if (pBestPlot && pBestAssaultPlot)
+		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_REINFORCE);
+
+	// assist master in attacking
+	if( GET_TEAM(getTeam()).isAVassal() )
+	{
+		TeamTypes eMasterTeam = NO_TEAM;
+
+		for( int iI = 0; iI < MAX_CIV_TEAMS; iI++ )
+		{
+			if( GET_TEAM(getTeam()).isVassal((TeamTypes)iI) )
+			{
+				eMasterTeam = (TeamTypes)iI;
+			}
+		}
+
+		if( (eMasterTeam != NO_TEAM) && GET_TEAM(getTeam()).isOpenBorders(eMasterTeam) )
+		{
+			for( int iI = 0; iI < MAX_CIV_PLAYERS; iI++ )
+			{
+				if( GET_PLAYER((PlayerTypes)iI).getTeam() == eMasterTeam )
+				{
+					for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+					{
+						if (pLoopCity->area() == area())
+							continue; // otherwise we can just walk there. (probably)
+
+						int iValue = 0;
+						switch (pLoopCity->area()->getAreaAIType(eMasterTeam))
+						{
+						case AREAAI_OFFENSIVE:
+							iValue = 2;
+							break;
+
+						case AREAAI_MASSING:
+							iValue = 1;
+							break;
+
+						default:
+							continue; // not an appropriate area.
+						}
+
+						if( bCanMoveAllTerrain || (pWaterArea != NULL && (pLoopCity->waterArea(true) == pWaterArea || pLoopCity->secondWaterArea() == pWaterArea)) )
+						{
+							int iOurPower = std::max(1, pLoopCity->area()->getPower(getOwnerINLINE()));
+							iOurPower += GET_TEAM(eMasterTeam).countPowerByArea(pLoopCity->area());
+							// Enemy power includes barb power
+							int iEnemyPower = GET_TEAM(eMasterTeam).countEnemyPowerByArea(pLoopCity->area());
+
+							// Don't send troops to areas we are dominating already
+							// Don't require presence of enemy cities, just a dangerous force
+							if( iOurPower < (2*iEnemyPower) )
+							{
+								int iPathTurns;
+								if (generatePath(pLoopCity->plot(), iFlags, true, &iPathTurns))
+								{
+									iValue *= pLoopCity->AI_cityThreat();
+
+									iValue += 10 * GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_ASSAULT, getGroup());
+
+									iValue *= std::min(iEnemyPower, 3*iOurPower);
+									iValue /= iOurPower;
+
+									iValue *= 100;
+
+									// if more than 3 turns to get there, then put some randomness into our preference of distance
+									// +/- 33%
+									if (iPathTurns > 3)
+									{
+										int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
+
+										iPathTurns *= 66 + iPathAdjustment;
+										iPathTurns /= 100;
+									}
+
+									iValue /= (iPathTurns + 1);
+
+									if (iValue > iBestValue)
+									{
+										iBestValue = iValue;
+										pBestPlot = getPathEndTurnPlot();
+										pBestAssaultPlot = pLoopCity->plot();
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (pBestPlot && pBestAssaultPlot)
+		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_REINFORCE);
 
 	return false;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 // K-Mod. General function for moving assault groups - to reduce code duplication.
-bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFlags)
+bool CvUnitAI::AI_transportGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFlags, MissionAITypes eMissionAI)
 {
 	FAssert(pEndTurnPlot && pTargetPlot);
 	FAssert(!pEndTurnPlot->isImpassable());
 
-	if (getGroup()->AI_getMissionAIType() != MISSIONAI_ASSAULT)
+	if (getGroup()->AI_getMissionAIType() != eMissionAI)
 	{
 		// Cancel missions of all those coming to join departing transport
 		int iLoop = 0;
@@ -17939,12 +17889,12 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 			// if our cargo isn't going to be ready to land, just wait.
 			if (pTargetPlot == pEndTurnPlot && !getGroup()->canCargoAllMove())
 			{
-				getGroup()->pushMission(MISSION_SKIP, -1, -1, iFlags, false, false, MISSIONAI_ASSAULT, pTargetPlot);
+				getGroup()->pushMission(MISSION_SKIP, -1, -1, iFlags, false, false, eMissionAI, pTargetPlot);
 				return true;
 			}
 		}
 
-		// declare war if we need to
+		// declare war if we need to. (Note: AI_considerPathDOW checks for the declare war flag.)
 		if (AI_considerPathDOW(pEndTurnPlot, iFlags))
 		{
 			if (!generatePath(pTargetPlot, iFlags, false))
@@ -17989,7 +17939,7 @@ bool CvUnitAI::AI_assaultGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int iFl
 			}
 		}
 		//
-		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, MISSIONAI_ASSAULT, pTargetPlot);
+		getGroup()->pushMission(MISSION_MOVE_TO, pEndTurnPlot->getX_INLINE(), pEndTurnPlot->getY_INLINE(), iFlags, false, false, eMissionAI, pTargetPlot);
 		return true;
 	}
 }
