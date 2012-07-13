@@ -144,14 +144,10 @@ bool CvSelectionGroup::sentryAlert() const
 	return false;
 }
 
+// Note: this function has had some editting and restructuring for K-Mod. There are some unmarked changes.
 void CvSelectionGroup::doTurn()
 {
-	PROFILE("CvSelectionGroup::doTurn()")
-
-	CLLNode<IDInfo>* pUnitNode;
-	CvUnit* pLoopUnit;
-	int iWaitTurns;
-	int iBestWaitTurns;
+	PROFILE_FUNC();
 
 	FAssert(getOwnerINLINE() != NO_PLAYER);
 
@@ -162,17 +158,19 @@ void CvSelectionGroup::doTurn()
 		bool bHurt = false;
 
 		// do unit's turns (checking for damage)
-		pUnitNode = headUnitNode();
-		while (pUnitNode != NULL)
 		{
-			pLoopUnit = ::getUnit(pUnitNode->m_data);
-			pUnitNode = nextUnitNode(pUnitNode);
-
-			pLoopUnit->doTurn();
-
-			if (pLoopUnit->isHurt())
+			CLLNode<IDInfo>* pUnitNode = headUnitNode();
+			while (pUnitNode != NULL)
 			{
-				bHurt = true;
+				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+				pUnitNode = nextUnitNode(pUnitNode);
+
+				pLoopUnit->doTurn();
+
+				if (pLoopUnit->isHurt())
+				{
+					bHurt = true;
+				}
 			}
 		}
 
@@ -183,7 +181,6 @@ void CvSelectionGroup::doTurn()
 		//		or on sentry and there is danger
 		if (eActivityType == ACTIVITY_HOLD ||
 			(eActivityType == ACTIVITY_HEAL && (AI_isControlled() || !bHurt)) ||
-			((eActivityType == ACTIVITY_INTERCEPT || eActivityType == ACTIVITY_PATROL) && AI_isControlled()) || // K-Mod
 			(eActivityType == ACTIVITY_SENTRY && sentryAlert()))
 		{
 			setActivityType(ACTIVITY_AWAKE);
@@ -191,14 +188,19 @@ void CvSelectionGroup::doTurn()
 
 		if (AI_isControlled())
 		{
-			if ((getActivityType() != ACTIVITY_MISSION) || (!canFight() && (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2))))
+			if (getActivityType() != ACTIVITY_MISSION || (!canFight() && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)))
 			{
-				//setForceUpdate(true);
-				doForceUpdate(); // K-Mod. (this prevents the forced update from interupting amphibious assaults.
+				setForceUpdate(true);
+				// K-Mod. (This stuff use to be part force update's job. Now it isn't.)
+				clearMissionQueue();
+				AI_cancelGroupAttack();
+				// K-Mod end
 			}
 		}
 		else
 		{
+			setForceUpdate(false); // K-Mod. (this should do nothing, unless we're coming out of autoplay or something like that.)
+
 			//if (getActivityType() == ACTIVITY_MISSION)
 			if (getActivityType() == ACTIVITY_MISSION && headMissionQueueNode() && !(headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER)) // K-Mod
 			{
@@ -226,16 +228,16 @@ void CvSelectionGroup::doTurn()
 			//if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 			if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS) && GET_TEAM(getTeam()).hasMetHuman()) // K-Mod
 			{
-				iBestWaitTurns = 0;
+				int iBestWaitTurns = 0;
 
-				pUnitNode = headUnitNode();
+				CLLNode<IDInfo>* pUnitNode = headUnitNode();
 
 				while (pUnitNode != NULL)
 				{
-					pLoopUnit = ::getUnit(pUnitNode->m_data);
+					CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 					pUnitNode = nextUnitNode(pUnitNode);
 
-					iWaitTurns = (GC.getDefineINT("MIN_TIMER_UNIT_DOUBLE_MOVES") - (GC.getGameINLINE().getTurnSlice() - pLoopUnit->getLastMoveTurn()));
+					int iWaitTurns = (GC.getDefineINT("MIN_TIMER_UNIT_DOUBLE_MOVES") - (GC.getGameINLINE().getTurnSlice() - pLoopUnit->getLastMoveTurn()));
 
 					if (iWaitTurns > iBestWaitTurns)
 					{
@@ -3696,7 +3698,8 @@ bool CvSelectionGroup::readyToSelect(bool bAny)
 
 bool CvSelectionGroup::readyToMove(bool bAny)
 {
-	return (((bAny) ? canAnyMove() : canAllMove()) && (headMissionQueueNode() == NULL) && (getActivityType() == ACTIVITY_AWAKE) && !isBusy() && !isCargoBusy());
+	//return (((bAny) ? canAnyMove() : canAllMove()) && (headMissionQueueNode() == NULL) && (getActivityType() == ACTIVITY_AWAKE) && !isBusy() && !isCargoBusy());
+	return (bAny ? canAnyMove() : canAllMove()) && (isForceUpdate() || (headMissionQueueNode() == NULL && getActivityType() == ACTIVITY_AWAKE)) && !isBusy() && !isCargoBusy(); // K-Mod
 }
 
 
@@ -4109,28 +4112,20 @@ void CvSelectionGroup::updateMissionTimer(int iSteps)
 	setMissionTimer(iTime);
 }
 
-
-bool CvSelectionGroup::isForceUpdate()
+// K-Mod. this is what force update use to do - but I don't use it like this anymore.
+/* void CvSelectionGroup::doForceUpdate()
 {
-	return m_bForceUpdate;
-}
+	if (isForceUpdate())
+	{
+		setForceUpdate(false);
 
+		clearMissionQueue();
+		setActivityType(ACTIVITY_AWAKE);
 
-void CvSelectionGroup::setForceUpdate(bool bNewValue)
-{
-	m_bForceUpdate = bNewValue;
-}
-
-// K-Mod
-void CvSelectionGroup::doForceUpdate()
-{
-	clearMissionQueue();
-	setActivityType(ACTIVITY_AWAKE);
-	setForceUpdate(false);
-
-	// if we are in the middle of attacking with a stack, cancel it
-	AI_cancelGroupAttack();
-}
+		// if we are in the middle of attacking with a stack, cancel it
+		AI_cancelGroupAttack();
+	}
+} */
 // K-Mod end
 
 ActivityTypes CvSelectionGroup::getActivityType() const

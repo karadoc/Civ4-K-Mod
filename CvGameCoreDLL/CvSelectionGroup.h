@@ -148,9 +148,9 @@ public:
 	void changeMissionTimer(int iChange);
 	void updateMissionTimer(int iSteps = 0);
 
-	bool isForceUpdate();
-	void setForceUpdate(bool bNewValue);
-	void doForceUpdate(); // K-Mod
+	inline bool isForceUpdate() { return m_bForceUpdate; } // K-Mod made inline
+	inline void setForceUpdate(bool bNewValue) { m_bForceUpdate = bNewValue; } // K-Mod made inline
+	// void doForceUpdate(); // K-Mod. (disabled. force update doesn't work the same way anymore.)
 
 	DllExport PlayerTypes getOwner() const;																															// Exposed to Python
 #ifdef _USRDLL

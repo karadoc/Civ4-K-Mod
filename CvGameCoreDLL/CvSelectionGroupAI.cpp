@@ -154,12 +154,7 @@ bool CvSelectionGroupAI::AI_separateEmptyTransports()
 // Returns true if the group has become busy...
 bool CvSelectionGroupAI::AI_update()
 {
-	CLLNode<IDInfo>* pEntityNode;
-	CvUnit* pLoopUnit;
-	bool bDead;
-	bool bFollow;
-
-	PROFILE("CvSelectionGroupAI::AI_update");
+	PROFILE_FUNC();
 
 	FAssert(getOwnerINLINE() != NO_PLAYER);
 
@@ -173,28 +168,23 @@ bool CvSelectionGroupAI::AI_update()
 		return false;
 	}
 
-	// K-Mod / BBAI
-	if (getActivityType() == ACTIVITY_SLEEP && !isHuman() && !getHeadUnit()->isCargo())
-	{
-		setForceUpdate(true);
-	}
-	// end
-
+	// K-Mod. (replacing the original "isForceUpdate" stuff.)
 	if (isForceUpdate())
-	{
-		doForceUpdate(); // K-Mod (based on old code)
-	}
+		AI_cancelGroupAttack(); // note: we haven't toggled the update flag, nor woken the group from sleep.
+	// K-Mod end
 
 	//FAssert(!(GET_PLAYER(getOwnerINLINE()).isAutoMoves())); // (no longer true in K-Mod)
 
 	int iTempHack = 0; // XXX
 
-	bDead = false;
+	bool bDead = false;
 	
 	bool bFailedAlreadyFighting = false;
 	//while ((m_bGroupAttack && !bFailedAlreadyFighting) || readyToMove())
 	while ((AI_isGroupAttack() && !isBusy()) || readyToMove()) // K-Mod
 	{
+		setForceUpdate(false); // K-Mod. Force update just means we should get into this loop at least once.
+
 		iTempHack++;
 		if (iTempHack > 100)
 		{
@@ -263,20 +253,28 @@ bool CvSelectionGroupAI::AI_update()
 
 	if (!bDead)
 	{
+		// K-Mod. this is how we deal with force update when some group memebers can't move.
+		if (isForceUpdate())
+		{
+			setForceUpdate(false);
+			AI_cancelGroupAttack();
+			setActivityType(ACTIVITY_AWAKE);
+		}
+		// K-Mod end
 		if (!isHuman())
 		{
-			bFollow = false;
+			bool bFollow = false;
 
 			// if we not group attacking, then check for follow action
 			if (!AI_isGroupAttack())
 			{
-				pEntityNode = headUnitNode();
+				CLLNode<IDInfo>* pEntityNode = headUnitNode();
 				// K-Mod note: I've rearranged a few things below, and added 'bFirst'.
 				bool bFirst = true;
 
 				while ((pEntityNode != NULL) && readyToMove(true))
 				{
-					pLoopUnit = ::getUnit(pEntityNode->m_data);
+					CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
 					pEntityNode = nextUnitNode(pEntityNode);
 
 					if (bFirst)
@@ -308,16 +306,6 @@ bool CvSelectionGroupAI::AI_update()
 					pushMission(MISSION_SKIP);
 				}
 			}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/28/10                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
-			// AI should never put units to sleep, how does this ever happen?
-			//FAssert( getHeadUnit()->isCargo() || getActivityType() != ACTIVITY_SLEEP );
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		}
 	}
 
