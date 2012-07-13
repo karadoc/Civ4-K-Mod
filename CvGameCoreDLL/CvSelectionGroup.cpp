@@ -223,7 +223,8 @@ void CvSelectionGroup::doTurn()
 
 		if (isHuman())
 		{
-			if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
+			//if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
+			if (GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS) && GET_TEAM(getTeam()).hasMetHuman()) // K-Mod
 			{
 				iBestWaitTurns = 0;
 
