@@ -695,15 +695,15 @@ void CvSelectionGroup::startMission()
 		}
 	}
 
-	//if (canAllMove())
-	if (readyForMission()) // K-Mod
+	/* original bts code
+	if (canAllMove())
 	{
 		setActivityType(ACTIVITY_MISSION);
 	}
 	else
 	{
 		setActivityType(ACTIVITY_HOLD);
-	}
+	} */ // moved & changed by K-Mod.
 
 
 	bool bDelete = false;
@@ -718,6 +718,13 @@ void CvSelectionGroup::startMission()
 	else
 	{
 		FAssertMsg(GET_PLAYER(getOwnerINLINE()).isTurnActive() || GET_PLAYER(getOwnerINLINE()).isHuman(), "It's expected that either the turn is active for this player or the player is human");
+
+		// K-Mod. Moved from outside.
+		if (readyForMission())
+			setActivityType(ACTIVITY_MISSION);
+		else
+			setActivityType(ACTIVITY_HOLD);
+		// K-Mod end
 
 		switch (headMissionQueueNode()->m_data.eMissionType)
 		{
