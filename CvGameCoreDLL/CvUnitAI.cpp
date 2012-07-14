@@ -17882,6 +17882,7 @@ bool CvUnitAI::AI_transportGoTo(CvPlot* pEndTurnPlot, CvPlot* pTargetPlot, int i
 	if (atPlot(pTargetPlot))
 	{
 		getGroup()->unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+		getGroup()->setActivityType(ACTIVITY_AWAKE); // K-Mod
 		return true;
 	}
 	else
@@ -18106,6 +18107,7 @@ bool CvUnitAI::AI_settlerSeaTransport()
 			if (atPlot(pBestFoundPlot))
 			{
 				unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+				getGroup()->setActivityType(ACTIVITY_AWAKE); // K-Mod
 				return true;
 			}
 			else
@@ -18189,6 +18191,7 @@ bool CvUnitAI::AI_settlerSeaTransport()
 			if (atPlot(pBestFoundPlot))
 			{
 				unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+				getGroup()->setActivityType(ACTIVITY_AWAKE); // K-Mod
 				return true;
 			}
 			else
@@ -18266,6 +18269,7 @@ bool CvUnitAI::AI_settlerSeaFerry()
 		if (atPlot(pBestPlot))
 		{
 			unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+			getGroup()->setActivityType(ACTIVITY_AWAKE); // K-Mod
 			return true;
 		}
 		else
@@ -18482,6 +18486,7 @@ bool CvUnitAI::AI_specialSeaTransportMissionary()
 			if (atPlot(pBestSpreadPlot))
 			{
 				unloadAll(); // XXX is this dangerous (not pushing a mission...) XXX air units?
+				getGroup()->setActivityType(ACTIVITY_AWAKE); // K-Mod
 				return true;
 			}
 			else
@@ -18610,6 +18615,7 @@ bool CvUnitAI::AI_specialSeaTransportSpy()
 		if (atPlot(pTargetPlot))
 		{
 			getGroup()->unloadAll();
+			getGroup()->setActivityType(ACTIVITY_AWAKE);
 			return true; // no actual mission pushed, but we need to rethink our next move.
 		}
 		else
