@@ -22451,6 +22451,7 @@ bool CvUnitAI::AI_nukeRange(int iRange)
 		getGroup()->pushMission(MISSION_NUKE, pTargetPlot->getX_INLINE(), pTargetPlot->getY_INLINE());
 		return true;
 	}
+	return false;
 }
 
 #if 0 // old code disabled by K-Mod
