@@ -162,6 +162,10 @@
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>
 	<Define>
+		<DefineName>USE_UNIT_UPGRADE_PRICE_CALLBACK</DefineName>
+		<iDefineIntVal>0</iDefineIntVal>
+	</Define>
+	<Define>
 		<DefineName>USE_DO_COMBAT_CALLBACK</DefineName>
 		<iDefineIntVal>0</iDefineIntVal>
 	</Define>

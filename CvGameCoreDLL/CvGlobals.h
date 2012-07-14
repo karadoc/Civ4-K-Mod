@@ -808,6 +808,7 @@ public:
 
 	inline bool getUSE_DO_PILLAGE_GOLD_CALLBACK() { return m_bUSE_DO_PILLAGE_GOLD_CALLBACK; }
 	inline bool getUSE_GET_EXPERIENCE_NEEDED_CALLBACK() { return m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK; }
+	inline bool getUSE_UNIT_UPGRADE_PRICE_CALLBACK() { return m_bUSE_UNIT_UPGRADE_PRICE_CALLBACK; }
 	inline bool getUSE_DO_COMBAT_CALLBACK() { return m_bUSE_DO_COMBAT_CALLBACK; }
 
 	// more reliable versions of the 'gDLL->xxxKey' functions:
@@ -1254,6 +1255,7 @@ protected:
 
 	bool m_bUSE_DO_PILLAGE_GOLD_CALLBACK;
 	bool m_bUSE_GET_EXPERIENCE_NEEDED_CALLBACK;
+	bool m_bUSE_UNIT_UPGRADE_PRICE_CALLBACK;
 	bool m_bUSE_DO_COMBAT_CALLBACK;
 	// K-Mod end
 

@@ -7188,10 +7188,14 @@ int CvUnit::upgradePrice(UnitTypes eUnit) const
 	argsList.add(getID());
 	argsList.add((int) eUnit);
 	long lResult=0;
-	gDLL->getPythonIFace()->callFunction(PYGameModule, "getUpgradePriceOverride", argsList.makeFunctionArgs(), &lResult);
-	if (lResult >= 0)
+
+	if (GC.getUSE_UNIT_UPGRADE_PRICE_CALLBACK()) // K-Mod. block unused python callbacks
 	{
-		return lResult;
+		gDLL->getPythonIFace()->callFunction(PYGameModule, "getUpgradePriceOverride", argsList.makeFunctionArgs(), &lResult);
+		if (lResult >= 0)
+		{
+			return lResult;
+		}
 	}
 
 	if (isBarbarian())
