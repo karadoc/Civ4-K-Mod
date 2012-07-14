@@ -476,71 +476,68 @@ bool CvUnitAI::AI_follow(bool bFirst)
 	return false;
 }
 
-
-// XXX what if a unit gets stuck b/c of it's UnitAIType???
-// XXX is this function costing us a lot? (it's recursive...)
+// K-Mod. This function has been completely rewritten to improve efficiency and intelligence.
 void CvUnitAI::AI_upgrade()
 {
 	PROFILE_FUNC();
 
-	FAssertMsg(!isHuman(), "isHuman did not return false as expected");
-	FAssertMsg(AI_getUnitAIType() != NO_UNITAI, "AI_getUnitAIType() is not expected to be equal with NO_UNITAI");
+	FAssert(!isHuman());
+	FAssert(AI_getUnitAIType() != NO_UNITAI);
 
-	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+	if (!isReadyForUpgrade())
+		return;
+
+	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+	const CvCivilizationInfo& kCivInfo = GC.getCivilizationInfo(kPlayer.getCivilizationType());
 	UnitAITypes eUnitAI = AI_getUnitAIType();
 	CvArea* pArea = area();
 
-	int iCurrentValue = kPlayer.AI_unitValue(getUnitType(), eUnitAI, pArea);
-	
-	for (int iPass = 0; iPass < 2; iPass++)
+	int iBestValue = kPlayer.AI_unitValue(getUnitType(), eUnitAI, pArea) * 100;
+	UnitTypes eBestUnit = NO_UNIT;
+
+	// Note: the original code did two passes, presumably for speed reasons.
+	// In the first pass, they checked only units which were flagged with the right unitAI.
+	// Then, only if no such units were found, they checked all other units.
+	//
+	// I'm just jumping straight to the second (slower) pass, because most of the time no upgrades are available at all and so both passes would be used anyway.
+	for (UnitClassTypes i = (UnitClassTypes)0; i < GC.getNumUnitClassInfos(); i=(UnitClassTypes)(i+1))
 	{
-		int iBestValue = 0;
-		UnitTypes eBestUnit = NO_UNIT;
+		UnitTypes eLoopUnit = (UnitTypes)kCivInfo.getCivilizationUnits(i);
 
-		for (int iI = 0; iI < GC.getNumUnitInfos(); iI++)
+		if (eLoopUnit != NO_UNIT)
 		{
-			if ((iPass > 0) || GC.getUnitInfo((UnitTypes)iI).getUnitAIType(AI_getUnitAIType()))
-			{
-				int iNewValue = kPlayer.AI_unitValue(((UnitTypes)iI), eUnitAI, pArea);
-				if ((iPass == 0 || iNewValue > 0) && iNewValue > iCurrentValue)
-				{
-					if (canUpgrade((UnitTypes)iI))
-					{
-						int iValue = (1 + GC.getGameINLINE().getSorenRandNum(10000, "AI Upgrade"));
+			int iValue = kPlayer.AI_unitValue(eLoopUnit, eUnitAI, pArea);
+			// use a random factor. less than 100, so that the upgrade must be better than the current unit.
+			iValue *= 80 + GC.getGameINLINE().getSorenRandNum(21, "AI Upgrade");
 
-						if (iValue > iBestValue)
-						{
-							iBestValue = iValue;
-							eBestUnit = ((UnitTypes)iI);
-						}
-					}
-				}
+			// (believe it or not, AI_unitValue is faster than canUpgrade.)
+			if (iValue > iBestValue && canUpgrade(eLoopUnit))
+			{
+				iBestValue = iValue;
+				eBestUnit = eLoopUnit;
 			}
 		}
+	}
 
-		if (eBestUnit != NO_UNIT)
+	if (eBestUnit != NO_UNIT)
+	{
+		/* original bts code
+		upgrade(eBestUnit);
+		doDelayedDeath(); */
+
+		// K-Mod. Ungroup the unit, so that we don't cause the whole group to miss their turn.
+		CvUnit* pUpgradeUnit = upgrade(eBestUnit);
+		doDelayedDeath();
+
+		if (pUpgradeUnit != this)
 		{
-			/* original bts code
-			upgrade(eBestUnit);
-			doDelayedDeath(); */
-
-			// K-Mod. Ungroup the unit, so that we don't cause the whole group to miss their turn.
-			CvUnit* pUpgradeUnit = upgrade(eBestUnit);
-			doDelayedDeath();
-
-			if (pUpgradeUnit != this)
+			CvSelectionGroup* pGroup = pUpgradeUnit->getGroup();
+			if (pGroup->getHeadUnit() != pUpgradeUnit)
 			{
-				CvSelectionGroup* pGroup = pUpgradeUnit->getGroup();
-				if (pGroup->getHeadUnit() != pUpgradeUnit)
-				{
-					pUpgradeUnit->joinGroup(NULL);
-					// indicate that the unit intends to rejoin the old group (although it might not actually do so...)
-					pUpgradeUnit->getGroup()->AI_setMissionAI(MISSIONAI_GROUP, 0, pGroup->getHeadUnit());
-				}
+				pUpgradeUnit->joinGroup(NULL);
+				// indicate that the unit intends to rejoin the old group (although it might not actually do so...)
+				pUpgradeUnit->getGroup()->AI_setMissionAI(MISSIONAI_GROUP, 0, pGroup->getHeadUnit());
 			}
-			// K-Mod end
-
-			return;
 		}
 	}
 }
