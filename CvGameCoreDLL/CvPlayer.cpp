@@ -6969,34 +6969,29 @@ int CvPlayer::getBuildCost(const CvPlot* pPlot, BuildTypes eBuild) const
 
 
 
-RouteTypes CvPlayer::getBestRoute(CvPlot* pPlot) const
+RouteTypes CvPlayer::getBestRoute(const CvPlot* pPlot) const
 {
 	PROFILE_FUNC();
 
-	RouteTypes eRoute;
-	RouteTypes eBestRoute;
-	int iValue;
-	int iBestValue;
-	int iI;
-
-	iBestValue = 0;
-	eBestRoute = NO_ROUTE;
+	int iBestValue = 0;
+	RouteTypes eBestRoute = NO_ROUTE;
 
 	// BBAI TODO: Efficiency: Could cache this, decent savings on large maps
 	// Perhaps save best route type per player each turn, then just check that
 	// one first and only check others if can't do best.
 
-	for (iI = 0; iI < GC.getNumBuildInfos(); iI++)
+	// K-Mod: I've reversed the order of iteration because the best builds are usually at the end.
+	for (int iI = GC.getNumBuildInfos()-1; iI >= 0 ; iI--)
 	{
-		eRoute = ((RouteTypes)(GC.getBuildInfo((BuildTypes)iI).getRoute()));
+		RouteTypes eRoute = ((RouteTypes)(GC.getBuildInfo((BuildTypes)iI).getRoute()));
 
 		if (eRoute != NO_ROUTE)
 		{
-			if ((pPlot != NULL) ? ((pPlot->getRouteType() == eRoute) || canBuild(pPlot, ((BuildTypes)iI))) : GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBuildInfo((BuildTypes)iI).getTechPrereq())))
+			// K-Mod: I've swapped the order of the if statments, because the value check is much faster. (faster trumps convention)
+			int iValue = GC.getRouteInfo(eRoute).getValue();
+			if (iValue > iBestValue)
 			{
-				iValue = GC.getRouteInfo(eRoute).getValue();
-
-				if (iValue > iBestValue)
+				if (pPlot != NULL ? (pPlot->getRouteType() == eRoute || canBuild(pPlot, (BuildTypes)iI)) : GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBuildInfo((BuildTypes)iI).getTechPrereq())))
 				{
 					iBestValue = iValue;
 					eBestRoute = eRoute;

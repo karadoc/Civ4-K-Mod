@@ -500,7 +500,9 @@ void CvUnitAI::AI_upgrade()
 	// Then, only if no such units were found, they checked all other units.
 	//
 	// I'm just jumping straight to the second (slower) pass, because most of the time no upgrades are available at all and so both passes would be used anyway.
-	for (UnitClassTypes i = (UnitClassTypes)0; i < GC.getNumUnitClassInfos(); i=(UnitClassTypes)(i+1))
+	//
+	// I've reversed the order of iteration because the stronger units are typically later in the list
+	for (UnitClassTypes i = (UnitClassTypes)(GC.getNumUnitClassInfos()-1); i >= 0; i=(UnitClassTypes)(i-1))
 	{
 		UnitTypes eLoopUnit = (UnitTypes)kCivInfo.getCivilizationUnits(i);
 

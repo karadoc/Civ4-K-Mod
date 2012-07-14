@@ -7395,27 +7395,30 @@ CvCity* CvUnit::getUpgradeCity(UnitTypes eUnit, bool bSearch, int* iSearchValue)
 		return false;
 	}
 
-	CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
-	while (pUnitNode != NULL)
+	if (getCargo() > 0) // K-Mod. (no point looping through everything if there is no cargo anyway.)
 	{
-		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-		pUnitNode = plot()->nextUnitNode(pUnitNode);
-
-		if (pLoopUnit->getTransportUnit() == this)
+		CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
+		while (pUnitNode != NULL)
 		{
-			if (kUnitInfo.getSpecialCargo() != NO_SPECIALUNIT)
-			{
-				if (kUnitInfo.getSpecialCargo() != pLoopUnit->getSpecialUnitType())
-				{
-					return false;
-				}
-			}
+			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+			pUnitNode = plot()->nextUnitNode(pUnitNode);
 
-			if (kUnitInfo.getDomainCargo() != NO_DOMAIN)
+			if (pLoopUnit->getTransportUnit() == this)
 			{
-				if (kUnitInfo.getDomainCargo() != pLoopUnit->getDomainType())
+				if (kUnitInfo.getSpecialCargo() != NO_SPECIALUNIT)
 				{
-					return false;
+					if (kUnitInfo.getSpecialCargo() != pLoopUnit->getSpecialUnitType())
+					{
+						return false;
+					}
+				}
+
+				if (kUnitInfo.getDomainCargo() != NO_DOMAIN)
+				{
+					if (kUnitInfo.getDomainCargo() != pLoopUnit->getDomainType())
+					{
+						return false;
+					}
 				}
 			}
 		}
