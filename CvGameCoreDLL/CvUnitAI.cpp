@@ -17516,7 +17516,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 	CvPlot* pBestAssaultPlot = NULL;
 	CvArea* pWaterArea = plot()->waterArea();
 	bool bCanMoveAllTerrain = getGroup()->canMoveAllTerrain();
-	int iFlags = MOVE_AVOID_ENEMY_WEIGHT_3 | MOVE_DECLARE_WAR; // K-Mod
+	int iFlags = MOVE_AVOID_ENEMY_WEIGHT_3; // K-Mod. (no declare war)
 
 	// Loop over nearby plots for groups in enemy territory to reinforce
 	int iRange = 2*maxMoves();
@@ -17674,7 +17674,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 	}
 
 	if (pBestPlot && pBestAssaultPlot)
-		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_ASSAULT);
+		return AI_transportGoTo(pBestPlot, pBestAssaultPlot, iFlags, MISSIONAI_REINFORCE);
 
 	// Reinforce our cities in need
 	for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
