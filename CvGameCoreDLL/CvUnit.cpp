@@ -3587,7 +3587,8 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 		return false;
 	}
 
-	if (isWaiting())
+	//if (isWaiting())
+	if (getGroup()->getActivityType() == ACTIVITY_SLEEP) // K-Mod
 	{
 		return false;
 	}
@@ -3603,7 +3604,8 @@ bool CvUnit::canFortify(const CvPlot* pPlot) const
 		return false;
 	}
 
-	if (isWaiting())
+	//if (isWaiting())
+	if (getGroup()->getActivityType() == ACTIVITY_SLEEP) // K-Mod
 	{
 		return false;
 	}
@@ -3624,7 +3626,8 @@ bool CvUnit::canAirPatrol(const CvPlot* pPlot) const
 		return false;
 	}
 
-	if (isWaiting())
+	//if (isWaiting())
+	if (getGroup()->getActivityType() == ACTIVITY_INTERCEPT) // K-Mod
 	{
 		return false;
 	}
@@ -3650,7 +3653,8 @@ bool CvUnit::canSeaPatrol(const CvPlot* pPlot) const
 		return false;
 	}
 
-	if (isWaiting())
+	//if (isWaiting())
+	if (getGroup()->getActivityType() == ACTIVITY_PATROL) // K-Mod
 	{
 		return false;
 	}
@@ -3693,7 +3697,8 @@ bool CvUnit::canHeal(const CvPlot* pPlot) const
 	if (!isHurt())
 		return false;
 
-	if (isWaiting())
+	//if (isWaiting())
+	if (getGroup()->getActivityType() == ACTIVITY_HEAL) // K-Mod
 		return false;
 
 	if (healTurns(pPlot) == MAX_INT)
@@ -3710,7 +3715,8 @@ bool CvUnit::canSentry(const CvPlot* pPlot) const
 		return false;
 	}
 
-	if (isWaiting())
+	//if (isWaiting())
+	if (getGroup()->getActivityType() == ACTIVITY_SENTRY) // K-Mod
 	{
 		return false;
 	}
