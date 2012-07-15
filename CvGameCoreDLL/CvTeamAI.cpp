@@ -1561,7 +1561,8 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 	// Estimate of military production costs
 	{
 		// Base commitment for a war of this type.
-		int iCommitmentPerMil = bTotalWar ? 525 : 240;
+		int iCommitmentPerMil = bTotalWar ? 540 : 250;
+		const int iBaseline = -25; // this value will be added to iCommitmentPerMil at the end of the calculation.
 
 		// scale based on our current strength relative to our enemies.
 		// cf. with code in AI_calculateAreaAIType
@@ -1643,12 +1644,15 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 				iCommitmentPerMil = iCommitmentPerMil * 5/4;
 		}
 
-		// iCommitmentPerMil will be multiplied by a rough estimate of the total resources this team could devote to war.
-		int iCommitmentPool = iOurProduction * 3 + AI_estimateTotalYieldRate(YIELD_COMMERCE); // cf. AI_yieldWeight
-		// Note: it would probably be good to take into account the expected increase in unit spending - but that's a bit tricky.
+		iCommitmentPerMil += iBaseline; // The baseline should be a negative value which represents some amount of "free" commitment.
 
-		// sometimes are resources are more in demand than other times...
+		if (iCommitmentPerMil > 0)
 		{
+			// iCommitmentPerMil will be multiplied by a rough estimate of the total resources this team could devote to war.
+			int iCommitmentPool = iOurProduction * 3 + AI_estimateTotalYieldRate(YIELD_COMMERCE); // cf. AI_yieldWeight
+			// Note: it would probably be good to take into account the expected increase in unit spending - but that's a bit tricky.
+
+			// sometimes are resources are more in demand than other times...
 			int iPoolMultiplier = 0;
 			for (PlayerTypes eLoopPlayer = (PlayerTypes)0; eLoopPlayer < MAX_PLAYERS; eLoopPlayer=(PlayerTypes)(eLoopPlayer+1))
 			{
@@ -1666,12 +1670,13 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			}
 			iPoolMultiplier /= std::max(1, getAliveCount());
 			iCommitmentPool = iCommitmentPool * iPoolMultiplier / 100;
+
+			//
+			if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4) || AI_getLowestVictoryCountdown() >= 0)
+				iCommitmentPool *= 2;
+
+			iTotalCost += iCommitmentPerMil * iCommitmentPool / 1000;
 		}
-
-		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4) || AI_getLowestVictoryCountdown() >= 0)
-			iCommitmentPool *= 2;
-
-		iTotalCost += iCommitmentPerMil * iCommitmentPool / 1000;
 	}
 
 	// war weariness
