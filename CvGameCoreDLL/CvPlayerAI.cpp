@@ -2722,6 +2722,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 	int iSpecialFoodMinus = 0;
 	int iSpecialProduction = 0;
 	int iSpecialCommerce = 0;
+	int iBaseProduction = 0; // K-Mod. (used to devalue cities which are unable to get any production.)
 
 	bool bNeutralTerritory = true;
 
@@ -2818,34 +2819,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 	//is basically treated as if it's within an existing city radius
 	std::vector<bool> abCitySiteRadius(NUM_CITY_PLOTS, false);
 
-	/* original bts code
-	if (!bStartingLoc)
-	{
-		if (!AI_isPlotCitySite(pPlot))
-		{
-			for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
-			{
-				pLoopPlot = plotCity(iX, iY, iI);
-				if (pLoopPlot != NULL)
-				{
-					for (int iJ = 0; iJ < AI_getNumCitySites(); iJ++)
-					{
-						CvPlot* pCitySitePlot = AI_getCitySite(iJ);
-						if (pCitySitePlot != pPlot)
-						{
-							if (plotDistance(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), pCitySitePlot->getX_INLINE(), pCitySitePlot->getY_INLINE()) <= CITY_PLOTS_RADIUS)
-							{
-								//Plot is inside the radius of a city site
-								abCitySiteRadius[iI] = true;
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
-	}*/
-	// K-Mod. bug fixes etc.
+	// K-Mod. bug fixes etc. (original code deleted)
 	if (!kSet.bStartingLoc)
 	{
 		for (int iJ = 0; iJ < AI_getNumCitySites(); iJ++)
@@ -2877,14 +2851,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 	}
 	// K-Mod end
 
-	/* original bts code
-	std::vector<int> paiBonusCount;
-
-    for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
-    {
-        paiBonusCount.push_back(0);
-    } */
-	std::vector<int> paiBonusCount(GC.getNumBonusInfos(), 0); // K-Mod
+	std::vector<int> paiBonusCount(GC.getNumBonusInfos(), 0);
 
 	int iBadTile = 0;
 
@@ -2898,29 +2865,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			{
 				iBadTile += 2;
 			}
-			/* original bts code
-			else if (!(pLoopPlot->isFreshWater()) && !(pLoopPlot->isHills()))
-			{
-				if ((pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getTeam()) == 0) || (pLoopPlot->calculateTotalBestNatureYield(getTeam()) <= 1))
-				{
-					iBadTile += 2;
-				}
-				else if (pLoopPlot->isWater() && !bIsCoastal && (pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getTeam()) <= 1))
-				{
-					iBadTile++;
-				}
-			}
-            else if (pLoopPlot->isOwned())
-            {
-                if (pLoopPlot->getTeam() == getTeam())
-                {
-                    if (pLoopPlot->isCityRadius() || abCitySiteRadius[iI])
-                    {
-                        iBadTile += bAdvancedStart ? 2 : 1;
-                    }
-                }
-            } */
-			// K-Mod
+			// K-Mod (original code deleted)
 			else if (!pLoopPlot->isFreshWater() && !pLoopPlot->isHills() &&
 				(pLoopPlot->calculateBestNatureYield(YIELD_FOOD, getTeam()) == 0 || pLoopPlot->calculateTotalBestNatureYield(getTeam()) <= 1))
 			{
@@ -3015,10 +2960,10 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		// K-Mod Note: it kind of sucks that no value is counted for taken tiles. Tile sharing / stealing should be allowed.
 		else if (kSet.bAllSeeing || pLoopPlot->isRevealed(getTeam(), false))
 		{
-			int iTempValue = 0;
+			int iPlotValue = 0; // K-Mod note. this use to be called iTempValue. I've renamed it throughout this section to improve clarity.
 
 			FeatureTypes eFeature = pLoopPlot->getFeatureType();
-			BonusTypes eBonus = pLoopPlot->getBonusType((kSet.bStartingLoc) ? NO_TEAM : getTeam());
+			BonusTypes eBonus = pLoopPlot->getBonusType(kSet.bStartingLoc ? NO_TEAM : getTeam());
 			ImprovementTypes eBonusImprovement = NO_IMPROVEMENT;
 
 			// K-Mod
@@ -3112,6 +3057,10 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 
 						aiYield[eYield] = std::max(aiYield[eYield], GC.getYieldInfo(eYield).getMinCity());
 					}
+					// K-Mod. Before we make special adjustments, add this value to the base production count.
+					if (eYield == YIELD_PRODUCTION)
+						iBaseProduction += aiYield[eYield];
+					//
 
 					if (eBonusImprovement != NO_IMPROVEMENT)
 					{
@@ -3135,128 +3084,128 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 					{
 						if (bRemoveableFeature)
 						{
-							iTempValue += 10 * GC.getFeatureInfo(eFeature).getYieldChange(eYield);
+							iPlotValue += 10 * GC.getFeatureInfo(eFeature).getYieldChange(eYield);
 						}
 						else
 						{
-							iTempValue -= 5;
+							iPlotValue -= 5;
 							if (GC.getFeatureInfo(eFeature).getYieldChange(eYield) < 0)
 							{
-								iTempValue += 30 * GC.getFeatureInfo(eFeature).getYieldChange(eYield);
+								iPlotValue += 30 * GC.getFeatureInfo(eFeature).getYieldChange(eYield);
 							}
 						}
 					}
 				}
 				// K-Mod end
 			}
+			// K-Mod. add non city plot production to the base production count. (city plot has already been counted)
+			if (iI != CITY_HOME_PLOT)
+				iBaseProduction += aiYield[YIELD_PRODUCTION];
+			//
 
-			/*if (iI == CITY_HOME_PLOT)
+			// (note: many of these numbers have been adjusted for K-Mod)
+			if (iI == CITY_HOME_PLOT || aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
 			{
-				iTempValue += aiYield[YIELD_FOOD] * 60;
-				iTempValue += aiYield[YIELD_PRODUCTION] * 60;
-				iTempValue += aiYield[YIELD_COMMERCE] * 40;
-			}
-			else if (aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())*/
-			if (iI == CITY_HOME_PLOT || aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION()) // K-Mod
-			{
-				iTempValue += aiYield[YIELD_FOOD] * 40;
-				iTempValue += aiYield[YIELD_PRODUCTION] * 40;
-				iTempValue += aiYield[YIELD_COMMERCE] * 30;
+				iPlotValue += 10;
+				iPlotValue += aiYield[YIELD_FOOD] * 40;
+				iPlotValue += aiYield[YIELD_PRODUCTION] * 30;
+				iPlotValue += aiYield[YIELD_COMMERCE] * 20;
 
 				if (kSet.bStartingLoc)
 				{
-					iTempValue *= 2;
+					iPlotValue *= 2;
 				}
 			}
 			else if (aiYield[YIELD_FOOD] == GC.getFOOD_CONSUMPTION_PER_POPULATION() - 1)
 			{
-				iTempValue += aiYield[YIELD_FOOD] * 25;
-				iTempValue += aiYield[YIELD_PRODUCTION] * 25;
-				iTempValue += aiYield[YIELD_COMMERCE] * 20;
+				iPlotValue += aiYield[YIELD_FOOD] * 30;
+				iPlotValue += aiYield[YIELD_PRODUCTION] * 25;
+				iPlotValue += aiYield[YIELD_COMMERCE] * 12;
 			}
 			else
 			{
-				iTempValue += aiYield[YIELD_FOOD] * 15;
-				iTempValue += aiYield[YIELD_PRODUCTION] * 15;
-				iTempValue += aiYield[YIELD_COMMERCE] * 10;
+				iPlotValue += aiYield[YIELD_FOOD] * 15;
+				iPlotValue += aiYield[YIELD_PRODUCTION] * 15;
+				iPlotValue += aiYield[YIELD_COMMERCE] * 8;
 			}
 
 			if (pLoopPlot->isWater())
 			{
-				if (aiYield[YIELD_COMMERCE] > 1)
-				{
-					/* orginal bts code
-					iTempValue += bIsCoastal ? 30 : -20; */
-					// K-Mod
-					iTempValue += bIsCoastal ? 8*aiYield[YIELD_COMMERCE] : -8*aiYield[YIELD_COMMERCE];
+				// K-Mod. kludge to account for lighthouse and lack of improvements.
+				iPlotValue /= (bIsCoastal ? 2 : 3);
+				iPlotValue += bIsCoastal ? 8*(aiYield[YIELD_COMMERCE]+aiYield[YIELD_PRODUCTION]) : 0;
+				//
 
-					if (bIsCoastal && (aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION()))
-					{
-						iSpecialFoodPlus += 1;
-					}
-					if (kSet.bStartingLoc && !pPlot->isStartingPlot())
-					{
-						// I'm pretty much forbidding starting 1 tile inland non-coastal.
-						// with more than a few coast tiles.
-						iTempValue += bIsCoastal ? 0 : -400;
-					}
+				if (bIsCoastal && aiYield[YIELD_COMMERCE] > 1 && aiYield[YIELD_FOOD] >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
+				{
+					iSpecialFoodPlus += 1;
+				}
+				if (kSet.bStartingLoc && !pPlot->isStartingPlot())
+				{
+					// I'm pretty much forbidding starting 1 tile inland non-coastal.
+					// with more than a few coast tiles.
+					iPlotValue += bIsCoastal ? 0 : -120; // was -400 (reduced by K-Mod)
 				}
 			}
+			else // is land
+			{
+				if (iI != CITY_HOME_PLOT)
+					iBaseProduction += pLoopPlot->isHills() ? 2 : 1;
 
-			if (pLoopPlot->isRiver())
-			{
-				//iTempValue += 10;
-				// K-Mod
-				iTempValue += (kSet.bFinancial || kSet.bStartingLoc) ? 25 : 5;
-				iTempValue += (pPlot->isRiver() ? 15 : 0);
-			}
-			// K-Mod
-			if (pLoopPlot->canHavePotentialIrrigation())
-			{
-				// in addition to the river bonus
-				iTempValue += 5 + (pLoopPlot->isFreshWater() ? 5 : 0);
+				if (pLoopPlot->isRiver())
+				{
+					//iPlotValue += 10; // (original)
+					// K-Mod
+					iPlotValue += (kSet.bFinancial || kSet.bStartingLoc) ? 25 : 5;
+					iPlotValue += (pPlot->isRiver() ? 15 : 0);
+				}
+				if (pLoopPlot->canHavePotentialIrrigation())
+				{
+					// in addition to the river bonus
+					iPlotValue += 5 + (pLoopPlot->isFreshWater() ? 5 : 0);
+				}
 			}
 
 			/* original bts code
 			if (iI == CITY_HOME_PLOT)
 			{
-				iTempValue *= 2;
+				iPlotValue *= 2;
 			}
 			else if ((pLoopPlot->getOwnerINLINE() == getID()) || (stepDistance(iX, iY, pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) == 1))
 			{
 				// BBAI Notes:  Extra weight on tiles which will be available immediately
-				iTempValue *= 3;
-				iTempValue /= 2;
+				iPlotValue *= 3;
+				iPlotValue /= 2;
 			}
 			else
 			{
-				iTempValue *= iGreed;
-				iTempValue /= 100;
+				iPlotValue *= iGreed;
+				iPlotValue /= 100;
 			}*/
 			// K-Mod version
 			if (kSet.bEasyCulture)
 			{
 				// 5/4 * 21 ~= 9 * 1.5 + 12 * 1;
-				iTempValue *= 5;
-				iTempValue /= 4;
+				iPlotValue *= 5;
+				iPlotValue /= 4;
 			}
 			else
 			{
 				if ((pLoopPlot->getOwnerINLINE() == getID()) || (stepDistance(iX, iY, pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= 1))
 				{
-					iTempValue *= 3;
-					iTempValue /= 2;
+					iPlotValue *= 3;
+					iPlotValue /= 2;
 				}
 			}
-			iTempValue *= kSet.iGreed;
-			iTempValue /= 100;
+			iPlotValue *= kSet.iGreed;
+			iPlotValue /= 100;
 			// K-Mod end
 
 			
-			iTempValue *= iCultureMultiplier;
-			iTempValue /= 100;
+			iPlotValue *= iCultureMultiplier;
+			iPlotValue /= 100;
 
-			iValue += iTempValue;
+			iValue += iPlotValue;
 
 			if (iCultureMultiplier > 33) //ignore hopelessly entrenched tiles.
 			{
@@ -3270,32 +3219,49 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 					}
 				}
 
-				if ((eBonus != NO_BONUS) && ((pLoopPlot->area() == pPlot->area()) || 
-					(pLoopPlot->area()->getCitiesPerPlayer(getID()) > 0)))
+				if (eBonus != NO_BONUS && // K-Mod added water case (!!)
+					((pLoopPlot->isWater() && bIsCoastal) || pLoopPlot->area() == pPlot->area() || pLoopPlot->area()->getCitiesPerPlayer(getID()) > 0))
 				{
-                    paiBonusCount[eBonus]++;
-                    FAssert(paiBonusCount[eBonus] > 0);
+					//iBonusValue = AI_bonusVal(eBonus, 1, true) * ((!kSet.bStartingLoc && (getNumTradeableBonuses(eBonus) == 0) && (paiBonusCount[eBonus] == 1)) ? 80 : 20);
+					// K-Mod
+					int iCount = getNumTradeableBonuses(eBonus) == 0 + paiBonusCount[eBonus];
+					int iBonusValue = AI_bonusVal(eBonus, 0, true) * 80 / (1 + 2*iCount);
+					// Note: 1. the value of starting bonuses is reduced later.
+					//       2. iTempValue use to be used throughout this section. I've replaced all references with iBonusValue, for clarity.
+					paiBonusCount[eBonus]++; // (this use to be above the iBonusValue initialization)
+					FAssert(paiBonusCount[eBonus] > 0);
+					//
 
-                    iTempValue = AI_bonusVal(eBonus, 1, true) * ((!kSet.bStartingLoc && (getNumTradeableBonuses(eBonus) == 0) && (paiBonusCount[eBonus] == 1)) ? 80 : 20);
-                    iTempValue *= (kSet.bStartingLoc ? 100 : kSet.iGreed);
-                    iTempValue /= 100;
+					iBonusValue *= (kSet.bStartingLoc ? 100 : kSet.iGreed);
+					iBonusValue /= 100;
 
-                    if (iI != CITY_HOME_PLOT && !kSet.bStartingLoc)
-                    {
-                        if ((pLoopPlot->getOwnerINLINE() != getID()) && stepDistance(pPlot->getX_INLINE(),pPlot->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) > 1)
+					if (iI != CITY_HOME_PLOT && !kSet.bStartingLoc)
+					{
+						/* original bts code
+						if ((pLoopPlot->getOwnerINLINE() != getID()) && stepDistance(pPlot->getX_INLINE(),pPlot->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) > 1)
 						{
-                            iTempValue *= 2;
-                            iTempValue /= 3;
+							iBonusValue *= 2;
+							iBonusValue /= 3;
 
-                            /* iTempValue *= std::min(150, iGreed);
-                            iTempValue /= 100; */
-							// K-Mod
-							iTempValue *= (kSet.bAmbitious ? 140 : 100);
-							iTempValue /= 100;
+							iBonusValue *= std::min(150, iGreed);
+							iBonusValue /= 100;
+						} */
+						// K-Mod
+						if (pLoopPlot->isWater())
+							iBonusValue /= 2;
+
+						if (pLoopPlot->getOwnerINLINE() != getID() && stepDistance(pPlot->getX_INLINE(),pPlot->getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) > 1)
+						{
+							if (!kSet.bEasyCulture)
+								iBonusValue = iBonusValue * 3/4;
 						}
+						FAssert(iCultureMultiplier <= 100);
+						iBonusValue = iBonusValue * (kSet.bAmbitious ? 110 : iCultureMultiplier) / 100;
+						// K-Mod end
 					}
 
-                    iValue += (iTempValue + 10);
+					//iValue += (iBonusValue + 10);
+					iValue += iBonusValue;
 
 					if (iI != CITY_HOME_PLOT)
 					{
@@ -3323,23 +3289,32 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 							}
 						}
 
-                        if (pLoopPlot->isWater())
-                        {
-                            iValue += (bIsCoastal ? 100 : -800);
-                        }
-                    }
+						if (pLoopPlot->isWater())
+						{
+							iValue += (bIsCoastal ? 100 : -800);
+						}
+					}
 				}
 			}
 		}
 	}
 
+	/* original bts code
 	iResourceValue += iSpecialFood * 50;
 	iResourceValue += iSpecialProduction * 50;
 	iResourceValue += iSpecialCommerce * 50;
-    if (kSet.bStartingLoc)
-    {
-        iResourceValue /= 2;
-    }
+	if (kSet.bStartingLoc)
+	{
+		iResourceValue /= 2;
+	} */
+	// K-mod. It's tricky to get this right. Special commerce is great in the early game, but not so great later on.
+	//        Food is always great - unless we already have too much; and food already affects a bunch of other parts of the site evaluation...
+	if (kSet.bStartingLoc)
+		iResourceValue /= 5; // try not to make the value of strategic resources too overwhelming. (note: I've removed a bigger value reduction from above.)
+	iResourceValue += iSpecialFood * 20; // Note: iSpecialFood is whatever food happens to be asscioated with bonuses. Don't value it highly, because it's also counted in a bunch of other ways.
+	iResourceValue += iSpecialProduction * 40;
+	iResourceValue += iSpecialCommerce * 35;
+	//
 
 	iValue += std::max(0, iResourceValue);
 
@@ -3382,11 +3357,11 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				CvArea* pWaterArea = pPlot->waterArea(true);
 				if( pWaterArea != NULL )
 				{
-					iSeaValue += 100 + (kSet.bSeafaring ? 160 : 0);
+					iSeaValue += 120 + (kSet.bSeafaring ? 160 : 0);
 
 					if( GET_TEAM(getTeam()).AI_isWaterAreaRelevant(pWaterArea) )
 					{
-						iSeaValue += 100 + (kSet.bSeafaring ? 160 : 0);
+						iSeaValue += 120 + (kSet.bSeafaring ? 160 : 0);
 
 						//if( (countNumCoastalCities() < (getNumCities()/4)) || (countNumCoastalCitiesByArea(pPlot->area()) == 0) )
 						if (countNumCoastalCities() < getNumCities()/4 ||
@@ -3406,14 +3381,14 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		}
 		else
 		{
-		    //let other penalties bring this down.
-		    iValue += 600;
-		    if (!pPlot->isStartingPlot())
-		    {
-                if (pArea->getNumStartingPlots() == 0)
-                {
-                    iValue += 1000;                    
-                }
+			//let other penalties bring this down.
+			iValue += 500; // was 600
+			if (!pPlot->isStartingPlot())
+			{
+				if (pArea->getNumStartingPlots() == 0)
+				{
+					iValue += 800; // was 1000
+				}
 			}
 		}
 	}
@@ -3448,7 +3423,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 					{
 						if (plotDistance(iX, iY, pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= iRange)
 						{
-						    int iTempValue = 0;
+							int iTempValue = 0;
 							iTempValue += (pLoopPlot->getYield(YIELD_FOOD) * 15);
 							iTempValue += (pLoopPlot->getYield(YIELD_PRODUCTION) * 11);
 							iTempValue += (pLoopPlot->getYield(YIELD_COMMERCE) * 5);
@@ -3459,10 +3434,10 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 								iGreaterBadTile += 2;
 								if (pLoopPlot->getFeatureType() != NO_FEATURE)
 								{
-							    	if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD,getTeam()) > 1)
-							    	{
+									if (pLoopPlot->calculateBestNatureYield(YIELD_FOOD,getTeam()) > 1)
+									{
 										iGreaterBadTile--;
-							    	}
+									}
 								}
 							}
 						}
@@ -3480,34 +3455,34 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				iValue /= iGreaterBadTile;
 			}
 		}
-		
+
 		int iWaterCount = 0;
-		
+
 		for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
-		    CvPlot* pLoopPlot = plotCity(iX, iY, iI);
-            
-            if (pLoopPlot != NULL)
-		    {
-		        if (pLoopPlot->isWater())
-		        {
-		            iWaterCount ++;
-		            if (pLoopPlot->getYield(YIELD_FOOD) <= 1)
-		            {
-		                iWaterCount++;
+			CvPlot* pLoopPlot = plotCity(iX, iY, iI);
+
+			if (pLoopPlot != NULL)
+			{
+				if (pLoopPlot->isWater())
+				{
+					iWaterCount ++;
+					if (pLoopPlot->getYield(YIELD_FOOD) <= 1)
+					{
+						iWaterCount++;
 					}
 				}
 			}
 		}
 		iWaterCount /= 2;
-		
+
 		int iLandCount = (NUM_CITY_PLOTS - iWaterCount);
-		
+
 		if (iLandCount < (NUM_CITY_PLOTS / 2))
 		{
-		    //discourage very water-heavy starts.
-		    iValue *= 1 + iLandCount;
-		    iValue /= (1 + (NUM_CITY_PLOTS / 2));
+			//discourage very water-heavy starts.
+			iValue *= 1 + iLandCount;
+			iValue /= (1 + (NUM_CITY_PLOTS / 2));
 		}
 	}
 
@@ -3522,13 +3497,13 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			iValue *= (1 + 4 * pPlot->getMinOriginalStartDist());
 			iValue /= (1 + 2 * GC.getMapINLINE().maxStepDistance());
 		}
-		
+
 		//nice hacky way to avoid this messing with normalizer, use elsewhere?
 		if (!pPlot->isStartingPlot())
 		{
 			int iMinDistanceFactor = MAX_INT;
 			int iMinRange = startingPlotRange();
-			
+
 			iValue *= 100;
 			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
 			{
@@ -3538,7 +3513,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 					{
 						int iClosenessFactor = GET_PLAYER((PlayerTypes)iJ).startingPlotDistanceFactor(pPlot, getID(), iMinRange);
 						iMinDistanceFactor = std::min(iClosenessFactor, iMinDistanceFactor);
-						
+
 						if (iClosenessFactor < 1000)
 						{
 							iValue *= 2000 + iClosenessFactor;
@@ -3547,7 +3522,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 					}
 				}
 			}
-			
+
 			if (iMinDistanceFactor > 1000)
 			{
 				//give a maximum boost of 25% for somewhat distant locations, don't go overboard.
@@ -3563,16 +3538,16 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				iValue *= iMinDistanceFactor;
 				iValue /= 1000;
 			}
-			
+
 			iValue /= 10;
-			
-            if (pPlot->getBonusType() != NO_BONUS)
-            {
-                iValue /= 2;
-            }
+
+			if (pPlot->getBonusType() != NO_BONUS)
+			{
+				iValue /= 2;
+			}
 		}
 	}
-	
+
 	if (bAdvancedStart)
 	{
 		if (pPlot->getBonusType() != NO_BONUS)
@@ -3581,6 +3556,19 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			iValue /= 100;
 		}
 	}
+
+	// K-Mod. reduce value of cities which will struggle to get any productivity.
+	{
+		iBaseProduction += iSpecialProduction;
+		FAssert(!pPlot->isRevealed(getTeam(), false) || iBaseProduction >= GC.getYieldInfo(YIELD_PRODUCTION).getMinCity());
+		const int iThreshold = 9; // pretty arbitrary
+		if (iBaseProduction < iThreshold)
+		{
+			iValue *= iBaseProduction;
+			iValue /= iThreshold;
+		}
+	}
+	// K-Mod end
 
 	//CvCity* pNearestCity = GC.getMapINLINE().findCity(iX, iY, ((isBarbarian()) ? NO_PLAYER : getID()));
 	// K-Mod. Adjust based on proximity to other players, and the shape of our empire.
@@ -3784,7 +3772,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		iValue *= 100 + 20 * std::max(0, std::min(iFoodSurplus, 2 * GC.getFOOD_CONSUMPTION_PER_POPULATION()));
 		iValue /= 100 + 20 * std::max(0, iFoodDeficit); */
 		// K-Mod. (note that iFoodSurplus and iFoodDeficit already have the "max(0, x)" built in.
-		iValue *= 100 + (kSet.bExpansive ? 20 : 15) * std::min(iFoodSurplus, 2 * GC.getFOOD_CONSUMPTION_PER_POPULATION());
+		iValue *= 100 + (kSet.bExpansive ? 20 : 15) * std::min((iFoodSurplus + iSpecialFoodPlus)/2, 2 * GC.getFOOD_CONSUMPTION_PER_POPULATION());
 		iValue /= 100 + (kSet.bExpansive ? 20 : 15) * iFoodDeficit;
 		// K-Mod end
 	}
