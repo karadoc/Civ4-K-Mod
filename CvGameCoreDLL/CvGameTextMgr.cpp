@@ -14513,7 +14513,6 @@ void CvGameTextMgr::buildFinanceAwaySupplyString(CvWStringBuffer& szBuffer, Play
 	}
 	CvPlayer& player = GET_PLAYER(ePlayer);
 
-	int iFreeUnits = GC.getDefineINT("INITIAL_FREE_OUTSIDE_UNITS"); // K-Mod
 	int iPaidUnits = 0;
 	int iBaseCost = 0;
 	int iCost = player.calculateUnitSupply(iPaidUnits, iBaseCost);
@@ -14528,7 +14527,7 @@ void CvGameTextMgr::buildFinanceAwaySupplyString(CvWStringBuffer& szBuffer, Play
 
 	szBuffer.append(NEWLINE);
 	//szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_SUPPLY_COST", iPaidUnits, GC.getDefineINT("INITIAL_FREE_OUTSIDE_UNITS"), iBaseCost, szHandicap.GetCString(), iCost));
-	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_SUPPLY_COST", iPaidUnits + iFreeUnits, iFreeUnits, iBaseCost, szHandicap.GetCString(), iCost)); // K-Mod
+	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_SUPPLY_COST", player.getNumOutsideUnits(), player.getNumOutsideUnits() - iPaidUnits, iBaseCost, szHandicap.GetCString(), iCost)); // K-Mod
 }
 
 void CvGameTextMgr::buildFinanceCityMaintString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer)
