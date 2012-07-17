@@ -198,7 +198,7 @@ public:
 	bool doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const; // K-Mod
 
 	DllExport bool canContact(PlayerTypes ePlayer) const;																									// Exposed to Python
-	DllExport bool canContactAndTalk(PlayerTypes ePlayer) const; // K-Mod. this checks willingness to talk on both sides
+	bool canContactAndTalk(PlayerTypes ePlayer) const; // K-Mod. this checks willingness to talk on both sides
 	void contact(PlayerTypes ePlayer);																															// Exposed to Python
 	DllExport void handleDiploEvent(DiploEventTypes eDiploEvent, PlayerTypes ePlayer, int iData1, int iData2);
 	bool canTradeWith(PlayerTypes eWhoTo) const;																													// Exposed to Python

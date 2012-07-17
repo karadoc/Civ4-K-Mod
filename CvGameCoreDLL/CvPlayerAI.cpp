@@ -2698,7 +2698,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 	if (!bStartingLoc)
 	{
 		int iCitiesTarget = std::max(1, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities());
-		iClaimThreshold = 100;
+		iClaimThreshold = 100 + 100 * kPlayer.getCurrentEra() / std::max(1, GC.getNumEraInfos()-1);
 		iClaimThreshold += 80 * std::max(0, iCitiesTarget - kPlayer.getNumCities()) / iCitiesTarget;
 
 		iClaimThreshold *= bEasyCulture ? (kPlayer.getCurrentEra() < 2 ? 200 : 150) : 100;
@@ -2990,23 +2990,24 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			// K-Mod end
 
 			// K-Mod note: iClaimThreshold is bigger for bEasyCulture and bAmbitious civs.
+			// Also note, if the multiplier was to be properly used for unowned plots, it would need
+			// to take into account the proximity of foreign cities and so on.
+			// (similar to the calculation at the end of this function!)
 			int iCultureMultiplier;
 			if (!pLoopPlot->isOwned() || pLoopPlot->getOwnerINLINE() == getID())
-			{
 				iCultureMultiplier = 100;
-			}
 			else
 			{
 				bNeutralTerritory = false;
+
 				int iOurCulture = pLoopPlot->getCulture(getID());
 				int iOtherCulture = std::max(1, pLoopPlot->getCulture(pLoopPlot->getOwnerINLINE()));
 				iCultureMultiplier = 100 * (iOurCulture + kSet.iClaimThreshold);
 				iCultureMultiplier /= (iOtherCulture + kSet.iClaimThreshold);
 				iCultureMultiplier = std::min(100, iCultureMultiplier);
-				//The multiplier is basically normalized...
-				//100% means we own (or rightfully own) the tile.
-				//50% means the hostile culture is fairly firmly entrenched.
 			}
+
+			//
 
 			if (iCultureMultiplier < ((iNumAreaCities > 0) ? 25 : 50))
 			{
@@ -9687,7 +9688,8 @@ int CvPlayerAI::AI_bonusVal(BonusTypes eBonus, int iChange, bool bAssumeEnabled)
 		{
 			// Decrease the value if there is some tech reason for not having the bonus..
 			const CvTeam& kTeam = GET_TEAM(getTeam());
-
+			//if (!kTeam.isBonusRevealed(eBonus))
+			// note. the tech is used here as a kind of proxy for the civ's readiness to use the bonus.
 			if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechReveal()))
 				iValue /= 2;
 			if (!kTeam.isHasTech((TechTypes)GC.getBonusInfo(eBonus).getTechCityTrade()))
@@ -18523,6 +18525,7 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 	int iCloseToLegendaryCount = 0;
 	int iLegendaryCount = 0;
 	// K-Mod
+	int iEraThresholdPercent = 80 - (AI_getStrategyRand(1) % 2)*20; // some (arbitrary) fraction of the game, after which we get more serious. (cf. old code)
 	int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
 	int iVictoryCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
 
@@ -18623,6 +18626,7 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 		// K-Mod
 		iValue += 30 * std::min(iCloseToLegendaryCount, iVictoryCities + 1);
 		iValue += 10 * std::min(iHighCultureCount, iVictoryCities + 1);
+		iValue += getCurrentEra() < (iEraThresholdPercent-20)*GC.getNumEraInfos()/100; // prep for culture in the early game, just in case.
 		// K-Mod end
 		if( iValue > 20 && getNumCities() >= iVictoryCities )
 		{
@@ -18676,7 +18680,8 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 		std::partial_sort(countdownList.begin(), countdownList.begin() + iVictoryCities, countdownList.end());
 		iWinningCountdown = countdownList[iVictoryCities-1];
 	}
-    if (iCloseToLegendaryCount >= iVictoryCities || getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
+    //if (iCloseToLegendaryCount >= iVictoryCities || getCurrentEra() >= (GC.getNumEraInfos() - (2 + AI_getStrategyRand(1) % 2)))
+	if (iCloseToLegendaryCount >= iVictoryCities || getCurrentEra() >= iEraThresholdPercent*GC.getNumEraInfos()/100) // K-Mod (note: this matches the line above)
     {
 		bool bAt3 = false;
         
