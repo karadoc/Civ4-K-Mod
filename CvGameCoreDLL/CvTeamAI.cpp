@@ -1587,7 +1587,10 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 				// also, the vassals of defensive pact civs are currently not counted either.
 				if (isAtWar(i) || i == eTargetMaster || kLoopTeam.isDefensivePact(eTargetMaster) || kLoopTeam.isVassal(eTargetMaster))
 				{
-					iEnemyRelativeStrength += 100 * ((isAtWar(i) ? 0 : iFreePowerBonus) + kLoopTeam.getPower(false)) / (((isAtWar(i) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true))*kLoopTeam.AI_countMilitaryWeight(0)/2 + 20);
+					// the + power is meant to account for the fact that the target may get stronger while we are planning for war - especially early in the game.
+					// use a slightly reduced value if we're actually not intending to attack this target. (full weight to all enemies in defensive wars)
+					int iWeight = !bAttackWar || isAtWar(i) || i == eTarget ? 100 : 80;
+					iEnemyRelativeStrength += iWeight * ((isAtWar(i) ? 0 : iFreePowerBonus) + kLoopTeam.getPower(false)) / (((isAtWar(i) ? 1 : 2) + kLoopTeam.getAtWarCount(true, true))*kLoopTeam.AI_countMilitaryWeight(0)/2 + 20);
 				}
 			}
 			//
@@ -1596,11 +1599,32 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			iCommitmentPerMil = iCommitmentPerMil * iEnemyRelativeStrength / std::max(1, iOurRelativeStrength);
 		}
 
-		// scale based on the relative size of our civilizations.  (note. this doesn't include vassals - --  should it?)
-		int iOurProduction = AI_estimateTotalYieldRate(YIELD_PRODUCTION);
-		int iTheirProduction = kTargetMasterTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION);
-		iCommitmentPerMil *= 6 * iTheirProduction + iOurProduction;
-		iCommitmentPerMil /= std::max(1, iTheirProduction + 6 * iOurProduction);
+		// scale based on the relative size of our civilizations.
+		int iOurProduction = AI_estimateTotalYieldRate(YIELD_PRODUCTION); // (note: this is separate from our total production, because I use it again a bit later.)
+		{
+			int iOurTotalProduction = iOurProduction * 100;
+			int iEnemyTotalProduction = 0;
+			const int iVassalFactor = 60; // only count some reduced percentage of vassal production.
+
+			for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
+			{
+				const CvTeamAI& kLoopTeam = GET_TEAM(i);
+				if (!kLoopTeam.isAlive() || i == getID()) // our team is already counted.
+					continue;
+
+				if (kLoopTeam.isVassal(getID()))
+					iOurTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * iVassalFactor;
+				else if (i == eTargetMaster)
+					iEnemyTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * 100;
+				else if (kLoopTeam.isVassal(eTargetMaster))
+					iEnemyTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * iVassalFactor;
+				else if (isAtWar(i) || kLoopTeam.isDefensivePact(eTargetMaster))
+					iEnemyTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * 100;
+			}
+
+			iCommitmentPerMil *= 6 * iEnemyTotalProduction + iOurTotalProduction;
+			iCommitmentPerMil /= std::max(1, iEnemyTotalProduction + 6 * iOurTotalProduction);
+		}
 
 		// Adjust for overseas wars
 		if (!AI_hasSharedPrimaryArea(eTarget))
