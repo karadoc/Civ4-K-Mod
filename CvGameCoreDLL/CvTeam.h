@@ -273,6 +273,8 @@ public:
 	bool isVassal(TeamTypes eIndex) const;																// Exposed to Python
 	void setVassal(TeamTypes eIndex, bool bNewValue, bool bCapitulated);
 
+	TeamTypes getMasterTeam() const; // K-Mod
+
 	void assignVassal(TeamTypes eVassal, bool bSurrender) const;																// Exposed to Python
 	void freeVassal(TeamTypes eVassal) const;																// Exposed to Python
 

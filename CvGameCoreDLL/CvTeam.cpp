@@ -1912,13 +1912,16 @@ int CvTeam::getDefensivePower(TeamTypes eExcludeTeam) const
 
 	FAssert(eExcludeTeam != getID());
 
+	const CvTeam& kMasterTeam = GET_TEAM(getMasterTeam()); // K-Mod. only our master will have defensive pacts.
+
 	for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
 	{
-		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
-		if (kLoopTeam.isAlive() && !kLoopTeam.isAVassal())
+		const CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
+		//if (kLoopTeam.isAlive() && !kLoopTeam.isAVassal())
+		if (kLoopTeam.isAlive()) // K-Mod. (vassal check unnecessary, b/c vassals can't be the master team, and they can't have a pact.)
 		{
-			// K-Mod: added "eExcludeTeam" argument, so that defensive power can take into account the cancelation of pacts.
-			if (iI != eExcludeTeam && (getID() == iI || isVassal((TeamTypes)iI) || isDefensivePact((TeamTypes)iI)))
+			//if (getID() == iI || isVassal((TeamTypes)iI) || isDefensivePact((TeamTypes)iI))
+			if (iI != eExcludeTeam && (kMasterTeam.getID() == iI || kMasterTeam.isDefensivePact((TeamTypes)iI))) // K-Mod
 			{
 				iCount += kLoopTeam.getPower(true);
 			}
@@ -4313,6 +4316,18 @@ void CvTeam::setVassal(TeamTypes eIndex, bool bNewValue, bool bCapitulated)
 		// K-Mod end
 	}
 }
+
+// K-Mod. Return the team which is the master of this team. (if this team is free, return getID())
+TeamTypes CvTeam::getMasterTeam() const
+{
+	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
+	{
+		if (isVassal(i))
+			return i;
+	}
+	return getID();
+}
+// K-Mod end
 
 void CvTeam::assignVassal(TeamTypes eVassal, bool bSurrender) const
 {

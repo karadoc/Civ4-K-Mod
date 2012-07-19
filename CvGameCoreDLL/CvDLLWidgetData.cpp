@@ -3982,7 +3982,8 @@ void CvDLLWidgetData::parseScoreboardCheatText(CvWidgetDataStruct &widgetDataStr
 					bool bIsVictory4 = GET_TEAM(eLoopTeam).AI_isAnyMemberDoVictoryStrategyLevel4();
 					aStartWarInfo[iTeamIndex].bIsVictory4 = bIsVictory4;
 
-					int iNoWarAttitudeProb = kTeam.AI_noWarAttitudeProb(kTeam.AI_getAttitude(eLoopTeam));
+					//int iNoWarAttitudeProb = kTeam.AI_noWarAttitudeProb(kTeam.AI_getAttitude(eLoopTeam));
+					int iNoWarAttitudeProb = std::max(kTeam.AI_noWarAttitudeProb(kTeam.AI_getAttitude(eLoopTeam)), kTeam.AI_noWarAttitudeProb(kTeam.AI_getAttitude(GET_TEAM(eLoopTeam).getMasterTeam())));
 					aStartWarInfo[iTeamIndex].iNoWarAttitudeProb = iNoWarAttitudeProb;
 
 					// total war
