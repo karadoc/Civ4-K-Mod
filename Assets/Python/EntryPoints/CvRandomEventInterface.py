@@ -23,7 +23,8 @@ def getHelpBlessedSea1(argsList):
 	kTriggeredData = argsList[1]
 	
 	map = gc.getMap()
-	iOurMinLandmass = (3 * gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers()) / 2
+	# iOurMinLandmass = (3 * gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers()) / 2
+	iOurMinLandmass = gc.getWorldInfo(map.getWorldSize()).getTargetNumCities() # K-Mod
 	
 	szHelp = localText.getText("TXT_KEY_EVENT_BLESSED_SEA_HELP", (iOurMinLandmass, ))	
 
@@ -36,8 +37,12 @@ def canTriggerBlessedSea(argsList):
 	if gc.getGame().isOption(GameOptionTypes.GAMEOPTION_ONE_CITY_CHALLENGE) and gc.getPlayer(kTriggeredData.ePlayer).isHuman():
 		return false
 
-	iMapMinLandmass = 2 * gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers()
-	iOurMaxLandmass = gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers() / 2
+	# iMapMinLandmass = 2 * gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers()
+	# iOurMaxLandmass = gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers() / 2
+	# K-Mod
+	iMapMinLandmass = 4 * gc.getWorldInfo(map.getWorldSize()).getTargetNumCities() / 3
+	iOurMaxLandmass = 2 * gc.getWorldInfo(map.getWorldSize()).getTargetNumCities() / 3
+	# K-Mod end
 	
 	if (map.getNumLandAreas() < iMapMinLandmass):
 		return false
@@ -63,8 +68,9 @@ def canTriggerBlessedSea2(argsList):
 
 	kTriggeredData = argsList[0]
 	map = gc.getMap()
-	iOurMinLandmass = (3 * gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers()) / 2
-	
+	# iOurMinLandmass = (3 * gc.getWorldInfo(map.getWorldSize()).getDefaultPlayers()) / 2
+	iOurMinLandmass = gc.getWorldInfo(map.getWorldSize()).getTargetNumCities() # K-Mod
+
 	iOurLandmasses = 0
 	for i in range(map.getIndexAfterLastArea()):
 		area = map.getArea(i)
