@@ -17605,10 +17605,8 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 							if (loop_path.GeneratePath(pLoopPlot))
 								// K-Mod end
 							{
-								// We need to get there the turn after they do, +1 required whether
-								// they move first or we do
 								//iOtherPathTurns += 1;
-								iOtherPathTurns = loop_path.GetPathTurns() + 1;
+								iOtherPathTurns = loop_path.GetPathTurns(); // (K-Mod note: I'm not convinced the +1 thing is a good idea.)
 							}
 							else
 							{
