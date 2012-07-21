@@ -22403,7 +22403,7 @@ bool CvUnitAI::AI_nuke()
 		const CvPlayer& kLoopPlayer = GET_PLAYER(i);
 		if (kLoopPlayer.isAlive() && isEnemy(kLoopPlayer.getTeam()))
 		{
-			int iDestructionWeight = iBaseWeight - kOwner.AI_getAttitudeWeight(i) / 2;
+			int iDestructionWeight = iBaseWeight - kOwner.AI_getAttitudeWeight(i) / 2 + std::min(60, 5 * kOwner.AI_getMemoryCount(i, MEMORY_NUKED_US) + 2 * kOwner.AI_getMemoryCount(i, MEMORY_NUKED_FRIEND));
 			int iLoop;
 			for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kLoopPlayer.nextCity(&iLoop))
 			{
@@ -23994,7 +23994,7 @@ int CvUnitAI::AI_nukeValue(CvPlot* pCenterPlot, int iSearchRange, CvPlot*& pBest
 							CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 							pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
 
-							if (!pLoopUnit->isInvisible(getTeam(), false))
+							if (!pLoopUnit->isInvisible(getTeam(), false, true)) // I'm going to allow the AI to cheat here by seeing cargo units. (Human players can usually guess when a ship is loaded...)
 							{
 								if (pLoopUnit->isEnemy(getTeam(), pLoopPlot))
 								{

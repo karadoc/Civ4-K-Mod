@@ -12082,7 +12082,7 @@ int CvPlayerAI::AI_nukeWeight() const
 	{
 		if (GC.getProjectInfo(i).isAllowsNukes() && kTeam.getProjectCount(i) > 0)
 		{
-			iNukeWeight += std::max(0, 100 - iHistory/2);
+			iNukeWeight += std::max(0, 150 - iHistory/2);
 			break;
 		}
 	}
