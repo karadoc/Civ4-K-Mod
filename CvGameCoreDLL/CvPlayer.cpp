@@ -21214,10 +21214,14 @@ bool CvPlayer::isValidTriggerCorporation(const CvEventTriggerInfo& kTrigger, CvC
 	}
 	else
 	{
-		if (getHasCorporationCount(eCorporation) > 0)
+		/* if (getHasCorporationCount(eCorporation) > 0)
 		{
 			return true;
-		}
+		} */
+		// K-Mod. (bugfix)
+		if (getHasCorporationCount(eCorporation) == 0)
+			return false;
+		// K-Mod end
 
 		if (kTrigger.isHeadquarters())
 		{
@@ -21229,7 +21233,8 @@ bool CvPlayer::isValidTriggerCorporation(const CvEventTriggerInfo& kTrigger, CvC
 		}
 	}
 
-	return false;
+	//return false;
+	return true; // K-Mod. (bugfix)
 }
 
 void CvPlayer::launch(VictoryTypes eVictory)
