@@ -1,18 +1,68 @@
-This is K-Mod version 1.33.
+This is K-Mod version 1.34.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.34 changelist
+
+Game
+
++ The anti-double-move rule in simultaneous turns mode now only applies after meeting another human.
++ Fixed an original BtS bug which messed up the conditions for random events that depend on corporations. (In particular, this bug allowed 'corporate expansion' and 'hostile takeover' to trigger for civs which did not own the HQ.)
++ Halved the number of islands settled to complete the Blessed Sea quest. (Eg. on a standard size map, the goal has been been reduced from 10 islands to 5 islands - which is still a lot, but less insane.)
++ Fortify, sentry, heal, and sea-patrol no longer block each other. (eg. the 'sentry' command will still be available when a unit is fortified or healing; so the unit doesn't need to be woken before changing its orders.)
++ Fixed a bug which prevented the financial advisor from ever reporting zero units in the supply cost. (The cost was accurate, but the number of units had a non-zero floor.)
++ Added xml option to block python callback for unit upgrade cost. (Blocked by default, for efficiency.)
++ Minor efficiency improvements.
+
+AI
+
++ Made a large number of behind-the-scenes changes to the AI to allow them to use and understand the 'fortify' command. (This is an aesthetics change only. Using the 'skip' command has the same effect in terms of game mechanics; but 'fortify' makes the units appear ready for combat graphically.)
++ Made some adjustments to the AI's cost war analysis for some more complex war situations
+  + Reduced the power estimate for secondary targets in offence wars. (eg. teams brought in by defensive pacts now only have part of their power counted.)
+  + The relative productivity estimate now includes productivity of vassals and of other enemies from different wars.
+  + The cost of war weariness from vassal-wars is now counted (in addition to war weariness from the primary war).
+  + When planning war on a vassal, the AI will now estimate unit strength based on the master's units rather then the vassal's units.
+  + The total commitment cost of war is now adjusted by a non-zero percentage at the end of the calculation. This is meant to represent the fact that teams will have some military spending regardless of any wars; and this minimum military cost might be all that's required for the war.
++ Fixed a set bugs which prevented the AI from taking defensive pacts into account when planning war against a vassal.
++ Restored check for 'peace not possible' when negotiating capitulation. (This can't happen with the usual rules anyway.)
++ Voluntary vassalage now checks for 'war not possible' for the would-be master. (Taking on a voluntary vassal causes the master to automatically declare war on anyone the vassal is currently at war with. Without this 'war not possible' check, the vassal trade could be used to bypass peace treaties.)
++ The AI will now refuse to take on a vassal if it would mean declaring war on someone they usually wouldn't consider war with.
++ When the AI considers starting a war with a vassal, they will now use the maximum 'no war prob' of the target and of the master.
++ The AI is now slightly more likely to make basic preparation for a cultural victory in the early game.
++ Made several changes to the AI's city site evaluation.
+  + All plots above the food-per-pop threshold are now counted as 'special food plus'. (previously it was only counted for features, water, and bonuses.)
+  + Fixed some minor problems and inconsistencies in the way plot features are evaluated.
+  + Changed the way yield is counted on the city plot to better reflect the actual game mechanics. (For example, the AI will be less discouraged from settling on bonuses which would give them 3 food on the city plot; especially if they wouldn't get much more than that from the plot anyway.)
+  + Added a new factor to decrease the value of sites which lack hammers.
+  + Fixed a bug which prevented sea resources from being evaluated. (Previously, the food was counted, but not the value of the resource itself.)
+  + Value of resources (bonuses) now scales based on how many the civ has.
+  + Changed the way resources are evaluated for starting locations. (unique bonuses will be worth slightly more; and duplicate bonuses worth slightly less.)
+  + 'Easy culture' is now taken into account for bonus value as well as for yield value; so that the AI doesn't always feel they need to get strategic resources in their inner circle.
+  + 'Ambitious' civs now value bonuses more highly.
+  + Changed the way water plots are evaluated. (In general, water is worth slightly less than before but coastal cities are worth slightly more.)
+  + Tweaked some of the yield values.
++ Made some changes to the AI's usage of nukes
+  + The AI will now be slightly more likely to use nukes against civs that have nuked them in the past.
+  + Increased the tendency for civs that build the Manhattan Project to want to build nukes.
+  + The AI will now include cargo units when evaluating potential nuke targets.
+  + Fixed a bug which sometimes prevented the AI from moving its tactical nukes.
++ Stack size thresholds in naval assault missions are now reduced when en route, to discourage the AI from changing its mind half-way.
++ Naval reinforcements missions will no longer be allowed to declare war.
++ When upgrading unit types, the AI will now put slightly more care into its choice of which upgrade to choose for each unit.
+
+
+--
 v1.33 changelist
 
 Game
 
 + XML balance adjustments to several units.
-    + Production cost of war elephants (and ballista elephants) increased from 60 to 70.
-    + Maximum collateral damage targets reduced from 7 to 6 for cannons, and 8 to 7 for artillery and mobile artillery.
-    + Grenadiers now get +10% city attack.
-    + Panzers now get 1-2 first strikes.
-    + Submarines and Attack Submarines now get +10% ocean attack.
-    + Ships of the Line strength increased from 8 to 10; but bonus vs frigates decreased from +50% to +20%.
-    + Stealth Destroyers strength increased from 30 to 36.
+  + Production cost of war elephants (and ballista elephants) increased from 60 to 70.
+  + Maximum collateral damage targets reduced from 7 to 6 for cannons, and 8 to 7 for artillery and mobile artillery.
+  + Grenadiers now get +10% city attack.
+  + Panzers now get 1-2 first strikes.
+  + Submarines and Attack Submarines now get +10% ocean attack.
+  + Ships of the Line strength increased from 8 to 10; but bonus vs frigates decreased from +50% to +20%.
+  + Stealth Destroyers strength increased from 30 to 36.
 + Fixed a bug which prevented players from trading techs immediately after completing the research. (This behaviour was an unintended side-effect of a change in the previous version of K-Mod. -- Note: it will now also be possible to trade techs immediately after bulbing them.)
 + Corrected some minor anomalies in the new handling of CvTeam::doTurn in simultaneous turns mode.
 + Fixed a bug which allowed players to queue multiple nuke targets with a single nuke unit. (Previously, this could cause some strange behaviour.)
