@@ -68,6 +68,15 @@
 		<Italian>Trasferimento dati</Italian>
 		<Spanish>Transfiriendo datos de la partida</Spanish>
 	</TEXT>
+	<!-- added missing "has", and changed "from" to "by" in the english version -->
+	<TEXT>
+		<Tag>TXT_KEY_MISC_YOUR_UNIT_DIED_BY_FLANKING</Tag>
+		<English>Your %s1_UnitName has been killed by a %s3_civilization %s2_EnUName flank attack</English>
+		<French>Votre unit&#233; [NUM2:de:d':] %s1_UnitName a &#233;t&#233; tu&#233;e suite &#224; une attaque de flanc lanc&#233;e par les %s2_EnUName (%s3_civilization)</French>
+		<German>Eure Einheit %s1_UnitName ist bei einem Flankenangriff der %s3:2_civilization Einheit %s2_EnUName umgekommen</German>
+		<Italian>La tua unit&#224; %s1_UnitName &#232; stata distrutta dall'attacco ai fianchi dell'unit&#224; %s2_EnUName %s3:2_civilization</Italian>
+		<Spanish>Un flanqueo [NUM2:del:de la:de los:de las] %s2_EnUName de la civilizaci&#243;n %s3:2_civilization ha destruido [NUM1:vuestro:vuestra:vuestros:vuestras] %s1_UnitName</Spanish>
+	</TEXT>
 	<!-- a couple of minor language adjustments to the unit cost text -->
 	<TEXT>
 		<Tag>TXT_KEY_FINANCE_ADVISOR_UNIT_COST</Tag>
