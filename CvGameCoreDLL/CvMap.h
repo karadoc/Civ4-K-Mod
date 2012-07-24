@@ -92,6 +92,7 @@ public:
 
 	void doTurn();																			
 
+	void setFlagsDirty(); // K-Mod
 	DllExport void updateFlagSymbols();
 
 	DllExport void updateFog();

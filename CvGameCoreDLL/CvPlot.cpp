@@ -8154,7 +8154,8 @@ void CvPlot::updateFlagSymbol()
 	PlayerTypes ePlayer = NO_PLAYER;
 	PlayerTypes ePlayerOffset = NO_PLAYER;
 
-	CvUnit* pCenterUnit = getCenterUnit();
+	//CvUnit* pCenterUnit = getCenterUnit();
+	CvUnit* pCenterUnit = getDebugCenterUnit(); // K-Mod
 
 	//get the plot's unit's flag
 	if (pCenterUnit != NULL)

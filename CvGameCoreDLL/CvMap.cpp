@@ -338,6 +338,15 @@ void CvMap::doTurn()
 	}
 }
 
+// K-Mod
+void CvMap::setFlagsDirty()
+{
+	for (int i = 0; i < numPlotsINLINE(); i++)
+	{
+		plotByIndexINLINE(i)->setFlagDirty(true);
+	}
+}
+// K-Mod end
 
 void CvMap::updateFlagSymbols()
 {
