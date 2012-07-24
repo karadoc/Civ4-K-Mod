@@ -278,7 +278,8 @@ class CvDiplomacy:
 		elif (self.isComment(eComment, "AI_DIPLOCOMMENT_TARGET")):
 			for i in range(gc.getMAX_CIV_PLAYERS()):
 				if (gc.getPlayer(i).isAlive()):
-					if (gc.getTeam(gc.getGame().getActiveTeam()).isAtWar(gc.getPlayer(i).getTeam())):
+					#if (gc.getTeam(gc.getGame().getActiveTeam()).isAtWar(gc.getPlayer(i).getTeam())):
+					if gc.getTeam(gc.getGame().getActiveTeam()).isAtWar(gc.getPlayer(i).getTeam()) and gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).isAtWar(gc.getPlayer(i).getTeam()): # K-Mod
 						player = PyPlayer(i)
 						cityList = player.getCityList()
 						for city in cityList:
