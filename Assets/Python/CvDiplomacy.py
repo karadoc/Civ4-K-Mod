@@ -246,7 +246,13 @@ class CvDiplomacy:
 			if (gc.getGame().getActiveTeam() == gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam() or gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).isVassal(gc.getGame().getActiveTeam())):
 				self.addUserComment("USER_DIPLOCOMMENT_RESEARCH", -1, -1)
 
-			if (gc.getTeam(gc.getGame().getActiveTeam()).AI_shareWar(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam())):
+			#if (gc.getTeam(gc.getGame().getActiveTeam()).AI_shareWar(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam())):
+			# K-Mod. The AI should not just accept target requests from anyone...
+			if (gc.getTeam(gc.getGame().getActiveTeam()).AI_shareWar(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()) and
+				(gc.getPlayer(self.diploScreen.getWhoTradingWith()).AI_getAttitude(gc.getGame().getActivePlayer()) >= AttitudeTypes.ATTITUDE_PLEASED or
+				gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam() == gc.getGame().getActiveTeam() or
+				gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).isVassal(gc.getGame().getActiveTeam()))):
+			# K-Mod end
 				self.addUserComment("USER_DIPLOCOMMENT_TARGET", -1, -1)
 
 			self.addUserComment("USER_DIPLOCOMMENT_NEVERMIND", -1, -1)
