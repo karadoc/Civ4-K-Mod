@@ -1353,6 +1353,7 @@ void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, 
 		}
 	}
 
+	/* original bts code
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).isAlive())
@@ -1381,7 +1382,42 @@ void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, 
 				}
 			}
 		}
+	} */
+	// K-Mod. Same functionality, but a bit cleaner and a bit faster.
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i = (PlayerTypes)(i+1))
+	{
+		const CvPlayerAI& kPlayer_i = GET_PLAYER(i);
+
+		if (!kPlayer_i.isAlive() || kPlayer_i.getTeam() != getID())
+			continue;
+		// player i is a member of this team.
+
+		for (PlayerTypes j = (PlayerTypes)0; j < MAX_PLAYERS; j = (PlayerTypes)(j+1))
+		{
+			CvPlayerAI& kPlayer_j = GET_PLAYER(j);
+
+			if (!kPlayer_j.isAlive())
+				continue;
+
+			if (kPlayer_j.getTeam() == eTeam)
+			{
+				kPlayer_j.AI_changeMemoryCount(i, MEMORY_DECLARED_WAR, 1);
+			}
+			else if (kPlayer_j.getTeam() != getID())
+			{
+				const CvTeamAI& kTeam_j = GET_TEAM(kPlayer_j.getTeam());
+
+				if (kTeam_j.isHasMet(eTeam) && !kTeam_j.isAtWar(eTeam))
+				{
+					if (kTeam_j.AI_getAttitude(eTeam) >= ATTITUDE_PLEASED)
+					{
+						kPlayer_j.AI_changeMemoryCount(i, MEMORY_DECLARED_WAR_ON_FRIEND, 1);
+					}
+				}
+			}
+		}
 	}
+	// K-Mod end.
 
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
