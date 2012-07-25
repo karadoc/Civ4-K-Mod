@@ -3985,11 +3985,6 @@ int CvPlayer::upgradeAllPrice(UnitTypes eUpgradeUnit, UnitTypes eFromUnit)
 	return iPrice;
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      11/14/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
 int CvPlayer::countReligionSpreadUnits(CvArea* pArea, ReligionTypes eReligion, bool bIncludeTraining) const
 {
 	PROFILE_FUNC();
@@ -4011,6 +4006,7 @@ int CvPlayer::countReligionSpreadUnits(CvArea* pArea, ReligionTypes eReligion, b
 		}
 	}
 
+	// bbai
 	if( bIncludeTraining )
 	{
 		CvCity* pLoopCity;
@@ -4027,6 +4023,7 @@ int CvPlayer::countReligionSpreadUnits(CvArea* pArea, ReligionTypes eReligion, b
 			}
 		}
 	}
+	// bbai end
 
 	return iCount;
 }
@@ -4049,6 +4046,7 @@ int CvPlayer::countCorporationSpreadUnits(CvArea* pArea, CorporationTypes eCorpo
 		}
 	}
 
+	// bbai
 	if (bIncludeTraining)
 	{
 		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
@@ -4067,12 +4065,10 @@ int CvPlayer::countCorporationSpreadUnits(CvArea* pArea, CorporationTypes eCorpo
 			}
 		}
 	}
+	// bbai end
 
 	return iCount;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 int CvPlayer::countNumCoastalCities() const
 {
