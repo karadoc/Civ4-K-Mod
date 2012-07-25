@@ -4582,6 +4582,7 @@ void CvPlayer::handleDiploEvent(DiploEventTypes eDiploEvent, PlayerTypes ePlayer
 		if (pCity != NULL)
 		{
 			pCity->area()->setTargetCity(getID(), pCity);
+			GET_PLAYER(getID()).AI_setCityTargetTimer(GC.getDefineINT("PEACE_TREATY_LENGTH")); // K-Mod. (I'd make it a virtual function, but that causes problems.)
 		}
 		break;
 

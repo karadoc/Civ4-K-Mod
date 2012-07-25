@@ -183,6 +183,7 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 	m_iCivicTimer = 0;
 	m_iReligionTimer = 0;
 	m_iExtraGoldTarget = 0;
+	m_iCityTargetTimer = 0; // K-Mod
 
 /************************************************************************************************/
 /* CHANGE_PLAYER                         06/08/09                                 jdog5000      */
@@ -441,7 +442,7 @@ void CvPlayerAI::AI_doTurnUnitsPre()
 
 	AI_updateFoundValues();
 
-	if (GC.getGameINLINE().getSorenRandNum(8, "AI Update Area Targets") == 0) // XXX personality???
+	if (AI_getCityTargetTimer() == 0 && GC.getGameINLINE().getSorenRandNum(8, "AI Update Area Targets") == 0) // K-Mod added timer check.
 	{
 		AI_updateAreaTargets();
 	}
@@ -1087,6 +1088,7 @@ void CvPlayerAI::AI_updateAreaTargets()
 {
 	CvArea* pLoopArea;
 	int iLoop;
+	bool bResetTimer = AI_getCityTargetTimer() > 4; // K-Mod. (reset the timer if it is above the minimum time)
 
 	for(pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 	{
@@ -1100,8 +1102,13 @@ void CvPlayerAI::AI_updateAreaTargets()
 			{
 				pLoopArea->setTargetCity(getID(), AI_findTargetCity(pLoopArea));
 			}
+			bResetTimer = bResetTimer || pLoopArea->getTargetCity(getID()); // K-Mod
 		}
 	}
+	// K-Mod. (guarantee a short amount of time before randomly updating again)
+	if (bResetTimer)
+		AI_setCityTargetTimer(4);
+	// K-Mod end
 }
 
 
@@ -14990,6 +14997,19 @@ void CvPlayerAI::AI_changeMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2, 
 	AI_changeCachedAttitude(eIndex1, AI_getMemoryAttitude(eIndex1, eIndex2) - iAttitude); // K-Mod
 }
 
+// K-Mod. Note, unlike some other timers, this timer is internally stored as the turn number that the timer will expire.
+// With this system, the timer doesn't have to be decremented every turn.
+int CvPlayerAI::AI_getCityTargetTimer() const
+{
+	return std::max(0, m_iCityTargetTimer - GC.getGameINLINE().getGameTurn());
+}
+
+void CvPlayerAI::AI_setCityTargetTimer(int iTurns)
+{
+	m_iCityTargetTimer = GC.getGameINLINE().getGameTurn() + iTurns;
+}
+// K-Mod end
+
 int CvPlayerAI::AI_calculateGoldenAgeValue(bool bConsiderRevolution) const
 {
     int iValue;
@@ -17564,6 +17584,12 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	pStream->Read(&m_iCivicTimer);
 	pStream->Read(&m_iReligionTimer);
 	pStream->Read(&m_iExtraGoldTarget);
+	// K-Mod
+	if (uiFlag >= 6)
+		pStream->Read(&m_iCityTargetTimer);
+	else
+		AI_setCityTargetTimer(0);
+	// K-Mod end
 
 	pStream->Read(&m_iStrategyHash);
 	//pStream->Read(&m_iStrategyHashCacheTurn); // disabled by K-Mod
@@ -17660,7 +17686,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	uint uiFlag=0;
 */
 	// Flag for type of save
-	uint uiFlag=5;
+	uint uiFlag=6;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iPeaceWeight);
@@ -17669,6 +17695,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(m_iCivicTimer);
 	pStream->Write(m_iReligionTimer);
 	pStream->Write(m_iExtraGoldTarget);
+	pStream->Write(m_iCityTargetTimer); // K-Mod. uiFlag >= 6
 
 	pStream->Write(m_iStrategyHash);
 	//pStream->Write(m_iStrategyHashCacheTurn); // disabled by K-Mod

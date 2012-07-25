@@ -253,15 +253,14 @@ void CvTeamAI::AI_updateAreaStragies(bool bTargets)
 
 void CvTeamAI::AI_updateAreaTargets()
 {
-	int iI;
-
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for (int iI = 0; iI < MAX_PLAYERS; iI++)
 	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI); // K-Mod
+		if (kLoopPlayer.isAlive())
 		{
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+			if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.AI_getCityTargetTimer() == 0) // K-Mod added timer check.
 			{
-				GET_PLAYER((PlayerTypes)iI).AI_updateAreaTargets();
+				kLoopPlayer.AI_updateAreaTargets();
 			}
 		}
 	}

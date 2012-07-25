@@ -318,6 +318,11 @@ public:
 	int AI_getMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2) const;
 	void AI_changeMemoryCount(PlayerTypes eIndex1, MemoryTypes eIndex2, int iChange);
 
+	// K-Mod
+	int AI_getCityTargetTimer() const;
+	void AI_setCityTargetTimer(int iTurns);
+	// K-Mod end
+
 	int AI_calculateGoldenAgeValue(bool bConsiderRevolution = true) const;
 
 	void AI_doCommerce();
@@ -452,6 +457,7 @@ protected:
 	int m_iCivicTimer;
 	int m_iReligionTimer;
 	int m_iExtraGoldTarget;
+	int m_iCityTargetTimer; // K-Mod
 
 	/* original bts code
 	mutable int m_iStrategyHash;
