@@ -715,6 +715,7 @@ public:
 	DllExport void setDefineFLOAT( const char * szName, float fValue );
 	DllExport void setDefineSTRING( const char * szName, const char * szValue );
 
+	inline int getEXTRA_YIELD() { return m_iEXTRA_YIELD; } // K-Mod (why aren't all these functions inline?)
 	int getMOVE_DENOMINATOR();
 	int getNUM_UNIT_PREREQ_OR_BONUSES();
 	int getNUM_BUILDING_PREREQ_OR_BONUSES();
@@ -1162,6 +1163,7 @@ protected:
 
 	FVariableSystem* m_VarSystem;
 
+	int m_iEXTRA_YIELD; // K-Mod
 	int m_iMOVE_DENOMINATOR;
 	int m_iNUM_UNIT_PREREQ_OR_BONUSES;
 	int m_iNUM_BUILDING_PREREQ_OR_BONUSES;

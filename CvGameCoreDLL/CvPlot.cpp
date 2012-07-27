@@ -6439,7 +6439,7 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay) const
 		{
 			if (iYield >= GET_PLAYER(ePlayer).getExtraYieldThreshold(eYield))
 			{
-				iYield += GC.getDefineINT("EXTRA_YIELD");
+				iYield += GC.getEXTRA_YIELD();
 			}
 		}
 

@@ -139,6 +139,7 @@ m_aeTurnRightDirection(NULL),
 //m_aPlayerOptionsInfo(NULL),
 m_Profiler(NULL),
 m_VarSystem(NULL),
+m_iEXTRA_YIELD(0), // K-Mod
 m_iMOVE_DENOMINATOR(0),
 m_iNUM_UNIT_PREREQ_OR_BONUSES(0),
 m_iNUM_BUILDING_PREREQ_OR_BONUSES(0),
@@ -2643,6 +2644,7 @@ FVariableSystem* CvGlobals::getDefinesVarSystem()
 
 void CvGlobals::cacheGlobals()
 {
+	m_iEXTRA_YIELD = getDefineINT("EXTRA_YIELD"); // K-Mod
 	m_iMOVE_DENOMINATOR = getDefineINT("MOVE_DENOMINATOR");
 	m_iNUM_UNIT_PREREQ_OR_BONUSES = getDefineINT("NUM_UNIT_PREREQ_OR_BONUSES");
 	m_iNUM_BUILDING_PREREQ_OR_BONUSES = getDefineINT("NUM_BUILDING_PREREQ_OR_BONUSES");
