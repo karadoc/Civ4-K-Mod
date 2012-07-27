@@ -9574,8 +9574,9 @@ void CvUnit::joinGroup(CvSelectionGroup* pSelectionGroup, bool bRemoveSelected, 
 				{
 					getGroup()->setAutomateType(NO_AUTOMATE);
 					getGroup()->setActivityType(ACTIVITY_AWAKE);
-					// I'm not going to clear the mission queue. I'm just going to change to rules so that "automoves" won't start while the group is selected.
-					//getGroup()->clearMissionQueue();
+					getGroup()->clearMissionQueue();
+					// K-Mod note. the mission queue has to be cleared, because when the shift key is released, the exe automatically sends the autoMission net message.
+					// (if the mission queue isn't cleared, the units will immediately begin their message whenever units are added using shift.)
 				}
 				else if (getGroup()->AI_getMissionAIType() == MISSIONAI_GROUP || getLastMoveTurn() == GC.getGameINLINE().getTurnSlice())
 					getGroup()->setActivityType(ACTIVITY_AWAKE);
