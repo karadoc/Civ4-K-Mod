@@ -518,7 +518,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bRemove, bool
 		// Scale based on how often this city will actually get a great person.
 		if (!AI_isEmphasizeGreatPeople())
 		{
-			int iCityRate = getGreatPeopleRate() + bRemove ? 0 : iGreatPeopleRate/100;
+			int iCityRate = getGreatPeopleRate() + (bRemove ? 0 : iGreatPeopleRate/100);
 			int iHighestRate = 0;
 			int iLoop;
 			for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
@@ -604,9 +604,10 @@ int CvCityAI::AI_permanentSpecialistValue(SpecialistTypes eSpecialist) const
 	{
 		int iFoodX, iProdX, iComX, iUnused;
 		AI_getYieldMultipliers(iFoodX, iProdX, iComX, iUnused);
-		iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD) * iFoodX / 100;
-		iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION) * iProdX / 100;
-		iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE) * iComX / 100;
+		// I'm going to dilute the yield value multipliers, because they are ultimately less stable than commerce multipliers.
+		iValue += iFoodValue * kPlayer.specialistYield(eSpecialist, YIELD_FOOD) * AI_yieldMultiplier(YIELD_FOOD) * (100+iFoodX) / 200;
+		iValue += iProdValue * kPlayer.specialistYield(eSpecialist, YIELD_PRODUCTION) * AI_yieldMultiplier(YIELD_PRODUCTION) * (100+iProdX) / 200;
+		iValue += iCommerceValue * kPlayer.specialistYield(eSpecialist, YIELD_COMMERCE) * AI_yieldMultiplier(YIELD_COMMERCE) * (100+iComX) / 200;
 	}
 
 	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
