@@ -6290,6 +6290,8 @@ int CvPlot::calculateImprovementYieldChange(ImprovementTypes eImprovement, Yield
 			iYield += GC.getImprovementInfo(eImprovement).getTechYieldChanges(iI, eYield);
 		}
 
+		// K-Mod note: this doesn't calculate the 'optimal' yield, because it will count negative effects and it will count effects from competing civics.
+		// Maybe I'll fix it later.
 		for (iI = 0; iI < GC.getNumCivicInfos(); ++iI)
 		{
 			iYield += GC.getCivicInfo((CivicTypes) iI).getImprovementYieldChanges(eImprovement, eYield);

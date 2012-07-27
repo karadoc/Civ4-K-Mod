@@ -7454,6 +7454,8 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			{
 				aiFinalYields[iJ] -= 2 * GC.getFeatureInfo(pPlot->getFeatureType()).getYieldChange((YieldTypes)iJ);							
 			} */ // disabled by K-Mod. (this is already taken into account with bIgnoreFeature in calculateNatureYield)
+			// K-Mod note: these calculations currently do not take the 'financial' bonus into account.
+			// They probably should take that bonus into account. But it would be a bit messy to code and I don't want to do it right now.
 
 			int iCurYield = 2*(pPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), false));
 
@@ -10147,10 +10149,18 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool b
 	//if (eFinalImprovement != NO_IMPROVEMENT)
 	if (eFinalImprovement != NO_IMPROVEMENT && eFinalImprovement != eCurrentImprovement) // K-Mod
 	{
-		for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		const CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
+		for (YieldTypes i = (YieldTypes)0; i < NUM_YIELD_TYPES; i=(YieldTypes)(i+1))
 		{
-			int iYieldDiff = (pPlot->calculateImprovementYieldChange(eFinalImprovement, ((YieldTypes)iI), getOwnerINLINE()) - pPlot->calculateImprovementYieldChange(eCurrentImprovement, ((YieldTypes)iI), getOwnerINLINE()));
-			aiYields[iI] += iYieldDiff;
+			int iYieldDiff = pPlot->calculateImprovementYieldChange(eFinalImprovement, i, getOwnerINLINE()) - pPlot->calculateImprovementYieldChange(eCurrentImprovement, i, getOwnerINLINE());
+			// K-Mod. Try to count the 'extra yield', for financial civs. (Don't bother with golden-age bonuses.)
+			if (kOwner.getExtraYieldThreshold(i) > 0)
+			{
+				iYieldDiff += (aiYields[i] >= kOwner.getExtraYieldThreshold(i) ? -GC.getEXTRA_YIELD() : 0) + (aiYields[i]+iYieldDiff >= kOwner.getExtraYieldThreshold(i) ? GC.getEXTRA_YIELD() : 0);
+			}
+			// K-Mod end
+
+			aiYields[i] += iYieldDiff;
 		}
 		int iFinalYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
 		
