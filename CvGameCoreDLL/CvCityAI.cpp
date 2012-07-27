@@ -10968,16 +10968,17 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		}
 
 		//military
-		bool bWar = GET_TEAM(getTeam()).getAtWarCount(true) > 0;
-		if (bDanger || iBestBuildingValue < (bWar ? 35 : 20))
+		bool bWar = area()->getAreaAIType(kOwner.getTeam()) != AREAAI_NEUTRAL;
+		// (I'd like to check AI_neededFloatingDefenders, but I don't want to have to calculate it just for this singluar case.)
+		if (bDanger || iBestBuildingValue < (bWar ? 70 : 35))
 		{
-			int iOdds = (bWar ? 100 : 50) - kOwner.AI_unitCostPerMil()/2;
+			int iOdds = (bWar ? 100 : 60) - kOwner.AI_unitCostPerMil()/2;
 			iOdds += AI_experienceWeight();
 			iOdds *= 100 + 2*getMilitaryProductionModifier();
 			iOdds /= 100;
 
-			iOdds *= 50 + iBestBuildingValue;
-			iOdds /= 50 + 10 * iBestBuildingValue;
+			iOdds *= 60 + iBestBuildingValue;
+			iOdds /= 60 + 10 * iBestBuildingValue;
 
 			if (GC.getGameINLINE().getSorenRandNum(100, "City governor choose military") < iOdds)
 			{
@@ -11133,6 +11134,11 @@ void CvCityAI::AI_barbChooseProduction()
 			return;
 		}
 	}
+
+	// K-Mod. Allow barbs to pop their borders when they can.
+	if (getCultureLevel() <= 1 && AI_chooseProcess(COMMERCE_CULTURE))
+		return;
+	// K-Mod end
 
 	if (!bDanger && (2*iExistingWorkers < iNeededWorkers) && (AI_getWorkersNeeded() > 0) && (AI_getWorkersHave() == 0))
 	{
