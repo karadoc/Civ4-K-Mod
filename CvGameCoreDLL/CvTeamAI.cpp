@@ -3189,7 +3189,8 @@ int CvTeamAI::AI_getEnemyPowerPercent( bool bConsiderOthers ) const
 	//return (iEnemyPower/std::max(1, (isAVassal() ? getCurrentMasterPower(true) : getPower(true))));
 	// K-Mod - Lets not rely too much on our vassals...
 	int iOurPower = getPower(false);
-	iOurPower += isAVassal() ? getCurrentMasterPower(true) : getPower(true);
+	const CvTeam& kMasterTeam = GET_TEAM(getMasterTeam());
+	iOurPower += kMasterTeam.getPower(true);
 	iOurPower /= 2;
 	return iEnemyPower/std::max(1, iOurPower);
 	// K-Mod end

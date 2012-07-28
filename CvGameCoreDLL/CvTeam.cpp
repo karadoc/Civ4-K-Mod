@@ -2339,30 +2339,6 @@ bool CvTeam::canVassalRevolt(TeamTypes eMaster) const
 /*                                                                                              */
 /* General AI                                                                                   */
 /************************************************************************************************/
-int CvTeam::getCurrentMasterPower(bool bIncludeVassals) const
-{
-	if( isAVassal() )
-	{
-		for( int iI = 0; iI < MAX_CIV_TEAMS; iI++)
-		{
-			if (GET_TEAM((TeamTypes)iI).isAlive())
-			{
-				if (iI != getID())
-				{
-					if (isVassal((TeamTypes)iI))
-					{
-						return GET_TEAM((TeamTypes)iI).getPower(bIncludeVassals);
-					}
-				}
-			}
-		}
-	}
-
-	// Should never get here
-	FAssert(false);
-	return 0;
-}
-
 bool CvTeam::isMasterPlanningLandWar(CvArea* pArea)
 {
 	if( !isAVassal() )

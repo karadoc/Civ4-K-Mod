@@ -74,7 +74,6 @@ public:
 /*                                                                                              */
 /*                                                                                              */
 /************************************************************************************************/
-	int getCurrentMasterPower( bool bIncludeVassals ) const;
 	bool isMasterPlanningLandWar(CvArea* pArea);
 	bool isMasterPlanningSeaWar(CvArea* pArea);
 	int getAtWarCount(bool bIgnoreMinors, bool bIgnoreVassals = false) const;																				// Exposed to Python
