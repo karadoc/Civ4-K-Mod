@@ -278,7 +278,7 @@ void CvCityAI::AI_assignWorkingPlots()
 		}
 
 		//if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
-		if (bIsSpecialistForced && !isHuman() || isCitizensAutomated() || getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
+		if (bIsSpecialistForced && (!isHuman() || isCitizensAutomated()) && getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
 		{
 			setSpecialistCount(((SpecialistTypes)iI), iForcedSpecialistCount);
 		}
