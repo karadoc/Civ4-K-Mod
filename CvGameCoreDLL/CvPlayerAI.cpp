@@ -8797,6 +8797,25 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 			}
 		}
 	}
+	// K-Mod. This is our opportunity for canceling a vassal deal.
+	else
+	{
+		for (CLLNode<TradeData>* pNode = pOurList->head(); pNode; pNode = pOurList->next(pNode))
+		{
+			if (pNode->m_data.m_eItemType == TRADE_VASSAL || pNode->m_data.m_eItemType == TRADE_SURRENDER)
+			{
+				bVassalTrade = true;
+				// The trade denial calculation for vassal trades is actually a bit nuanced.
+				// Rather than trying to restructure it, or write new code and risk inconsistencies, I'm just going use it.
+				if (kOurTeam.AI_surrenderTrade(GET_PLAYER(ePlayer).getTeam(), pNode->m_data.m_eItemType == TRADE_SURRENDER ? 125 : 75) != NO_DENIAL)
+					return false;
+				// note: AI_vassalTrade calls AI_surrenderTrade after doing a bunch of war checks and so on. So we don't need that.
+				// CvPlayer::getTradeDenial, unfortunately, will reject any vassal deal by an AI player on a human team - we don't want that here.
+				// (regarding the power multiplier, cf. values used in getTradeDenial)
+			}
+		}
+	}
+	// K-Mod end
 	
 	if( !bVassalTrade )
 	{

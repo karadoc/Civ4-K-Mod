@@ -2837,7 +2837,8 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 						{
 							if (kLoopTeam.getPower(true) > getPower(true))
 							{
-								if (kLoopTeam.isAtWar(eTeam) && !kLoopTeam.isAtWar(getID()))
+								//if (kLoopTeam.isAtWar(eTeam) && !kLoopTeam.isAtWar(getID()))
+								if (kLoopTeam.isAtWar(eTeam) && !kLoopTeam.isAtWar(getID()) && (!isAtWar(eTeam) || kMasterTeam.getPower(true) < 2 * kLoopTeam.getPower(true))) // K-Mod
 								{
 									return DENIAL_POWER_YOUR_ENEMIES;
 								}
