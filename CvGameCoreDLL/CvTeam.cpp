@@ -5713,8 +5713,8 @@ void CvTeam::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes e
 // I created this function to make the situation a bit more clear...
 bool CvTeam::doesImprovementConnectBonus(ImprovementTypes eImprovement, BonusTypes eBonus) const
 {
-	FAssert(eImprovement <= GC.getNumImprovementInfos());
-	FAssert(eBonus <= GC.getNumBonusInfos());
+	FAssert(eImprovement < GC.getNumImprovementInfos());
+	FAssert(eBonus < GC.getNumBonusInfos());
 
 	if (eImprovement == NO_IMPROVEMENT || eBonus == NO_BONUS)
 		return false;

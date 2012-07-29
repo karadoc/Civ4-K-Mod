@@ -3131,9 +3131,11 @@ int CvGame::countFreeTeamsAlive() const
 {
 	int iCount = 0;
 
-	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 	{
-		if (GET_TEAM((TeamTypes)iI).isAlive() && !GET_TEAM((TeamTypes)iI).isAVassal())
+		const CvTeam& kLoopTeam = GET_TEAM(i);
+		//if (kLoopTeam.isAlive() && !kLoopTeam.isCapitulated())
+		if (kLoopTeam.isAlive() && !kLoopTeam.isAVassal()) // I'm in two minds about which of these to use here.
 		{
 			iCount++;
 		}
@@ -3141,6 +3143,7 @@ int CvGame::countFreeTeamsAlive() const
 
 	return iCount;
 }
+// K-Mod end
 
 int CvGame::countTotalCivPower()
 {

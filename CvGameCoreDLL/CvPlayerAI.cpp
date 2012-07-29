@@ -8713,9 +8713,6 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 {
 	const CvTeamAI& kOurTeam = GET_TEAM(getTeam()); // K-Mod
 
-	CLLNode<TradeData>* pNode;
-	int iThreshold;
-
 	FAssertMsg(ePlayer != getID(), "shouldn't call this function on ourselves");
 
 	if (AI_goldDeal(pTheirList) && AI_goldDeal(pOurList))
@@ -8725,7 +8722,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 
 	if (iChange > -1)
 	{
-		for (pNode = pOurList->head(); pNode; pNode = pOurList->next(pNode))
+		for (CLLNode<TradeData>* pNode = pOurList->head(); pNode; pNode = pOurList->next(pNode))
 		{
 			if (getTradeDenial(ePlayer, pNode->m_data) != NO_DENIAL)
 			{
@@ -8743,6 +8740,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 	if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 	{
 		bool bEndWar = false;
+		CLLNode<TradeData>* pNode;
 		for (pNode = pTheirList->head(); !bEndWar && pNode; pNode = pTheirList->next(pNode))
 		{
 			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
@@ -8768,7 +8766,7 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 	bool bVassalTrade = false;
 	if (iChange > -1) // K-Mod
 	{
-		for (pNode = pTheirList->head(); pNode; pNode = pTheirList->next(pNode))
+		for (CLLNode<TradeData>* pNode = pTheirList->head(); pNode; pNode = pTheirList->next(pNode))
 		{
 			if( pNode->m_data.m_eItemType == TRADE_VASSAL )
 			{
@@ -8884,22 +8882,14 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 			}
 		}
 
-		iThreshold = (kOurTeam.AI_getHasMetCounter(GET_PLAYER(ePlayer).getTeam()) + 50);
+		int iThreshold = (kOurTeam.AI_getHasMetCounter(GET_PLAYER(ePlayer).getTeam()) + 50);
 
 		iThreshold *= 2;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/12/10                                jdog5000      */
-/*                                                                                              */
-/* Diplomacy AI                                                                                 */
-/************************************************************************************************/
 		if (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_isLandTarget(getTeam()))
 		{
 			iThreshold *= 3;
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 		iThreshold *= (GET_TEAM(GET_PLAYER(ePlayer).getTeam()).getPower(false) + 100);
 		iThreshold /= (kOurTeam.getPower(false) + 100);
