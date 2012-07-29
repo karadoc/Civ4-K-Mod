@@ -3271,9 +3271,12 @@ bool CvTeamAI::AI_refusePeace(TeamTypes ePeaceTeam) const
 }
 // K-Mod end
 
+// the following is a bbai function which has been edited for K-Mod (most of the K-Mod changes are unmarked)
 bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 {
 	PROFILE_FUNC();
+
+	const CvTeamAI& kSurrenderTeam = GET_TEAM(eSurrenderTeam);
 
 	if( isHuman() )
 	{
@@ -3285,33 +3288,32 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 		return true;
 	}
 
-	if( GET_TEAM(eSurrenderTeam).AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE3) )
+	if (kSurrenderTeam.AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE3 | AI_VICTORY_CULTURE3))
 	{
 		// Capturing capital or Apollo city will stop space
-		return false;
-	}
-
-	if( GET_TEAM(eSurrenderTeam).AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE3) )
-	{
 		// Capturing top culture cities will stop culture
 		return false;
 	}
 
 	// Check for whether another team has won enough to cause capitulation
+	bool bMightCapToOther = false; // K-Mod
 	for( int iI = 0; iI < MAX_CIV_TEAMS; iI++ )
 	{
 		if (GET_TEAM((TeamTypes)iI).isAlive())
 		{
 			if (iI != getID() && !(GET_TEAM((TeamTypes)iI).isVassal(getID())) )
 			{
-				if (GET_TEAM(eSurrenderTeam).isAtWar((TeamTypes)iI))
+				if (kSurrenderTeam.isAtWar((TeamTypes)iI))
 				{
-					if (GET_TEAM(eSurrenderTeam).AI_getAtWarCounter((TeamTypes)iI) >= 10)
+					if (kSurrenderTeam.AI_getAtWarCounter((TeamTypes)iI) >= 10)
 					{
-						if( (GET_TEAM(eSurrenderTeam).AI_getWarSuccess((TeamTypes)iI) + std::min(GET_TEAM(eSurrenderTeam).getNumCities(), 4) * GC.getWAR_SUCCESS_CITY_CAPTURING()) < GET_TEAM((TeamTypes)iI).AI_getWarSuccess(eSurrenderTeam))
+						if( (kSurrenderTeam.AI_getWarSuccess((TeamTypes)iI) + std::min(kSurrenderTeam.getNumCities(), 4) * GC.getWAR_SUCCESS_CITY_CAPTURING()) < GET_TEAM((TeamTypes)iI).AI_getWarSuccess(eSurrenderTeam))
 						{
-							// K-Mod todo: that's nothing like the capitulation condition. I'll have to come back and fix this later.
-							return true;
+							//return true;
+							// K-Mod: that's not the only capitulation condition. I might revise it later, but in the mean time I'll just relax the effect.
+							bMightCapToOther = true;
+							break;
+							//
 						}
 					}
 				}
@@ -3324,14 +3326,12 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 	int iValuableCitiesThreatenedByUs = 0;
 	int iCitiesThreatenedByOthers = 0;
 
-	CvCity* pLoopCity;
-	int iLoop;
-
 	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 	{
 		if( GET_PLAYER((PlayerTypes)iI).getTeam() == eSurrenderTeam && GET_PLAYER((PlayerTypes)iI).isAlive() )
 		{
-			for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+			int iLoop;
+			for (CvCity* pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
 			{
 				bool bValuable = false;
 
@@ -3347,11 +3347,11 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 				{
 					bValuable = true;
 				}
-				else if( AI_isPrimaryArea(pLoopCity->area()) && (GET_TEAM(eSurrenderTeam).countNumCitiesByArea(pLoopCity->area()) < 3) )
+				else if( AI_isPrimaryArea(pLoopCity->area()) && (kSurrenderTeam.countNumCitiesByArea(pLoopCity->area()) < 3) )
 				{
 					bValuable = true;
 				}
-				else if( pLoopCity->isCapital() && (GET_TEAM(eSurrenderTeam).getNumCities() > GET_TEAM(eSurrenderTeam).getNumMembers() || countNumCitiesByArea(pLoopCity->area()) > 0) )
+				else if( pLoopCity->isCapital() && (kSurrenderTeam.getNumCities() > kSurrenderTeam.getNumMembers() || countNumCitiesByArea(pLoopCity->area()) > 0) )
 				{
 					bValuable = true;
 				}
@@ -3439,37 +3439,6 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 		}
 	}
 
-	if( iValuableCitiesThreatenedByUs > 0 )
-	{
-		// Press for capture of valuable city
-		return false;
-	}
-
-	if( iCitiesThreatenedByOthers > (1 + iCitiesThreatenedByUs/2) )
-	{
-		// Keep others from capturing spoils, but let it go if surrender civ is too small
-		// to care about
-		/* original BBAI code
-		if( 6*(iValuableCities + GET_TEAM(eSurrenderTeam).getNumCities()) > getNumCities() )
-		{
-			return true;
-		} */
-		// K-Mod. That looks like it's the opposite of what you said it should do.
-		if (6*(iValuableCities + GET_TEAM(eSurrenderTeam).getNumCities()) < getNumCities())
-		{
-			return true;
-		}
-		// K-Mod end
-	}
-
-	// If we're low on the totem poll, accept so enemies don't drag anyone else into war with us
-	// Top rank is 0, second is 1, etc.
-	int iTeamRank = GC.getGameINLINE().getTeamRank(getID());
-	if( iTeamRank > (1 + GC.getGameINLINE().countCivTeamsAlive()/3) )
-	{
-		return true;
-	}
-
 	int iOurWarSuccessRating = AI_getWarSuccessRating();
 	if( iOurWarSuccessRating < -30 )
 	{
@@ -3477,50 +3446,70 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 		return true;
 	}
 
-	int iWarCount = 0;
-	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	if( iValuableCitiesThreatenedByUs > 0 )
 	{
-		if (GET_TEAM((TeamTypes)iI).isAlive() && !(GET_TEAM((TeamTypes)iI).isMinorCiv()))
+		// Press for capture of valuable city
+		return false;
+	}
+
+	if (iCitiesThreatenedByOthers > (1 + iCitiesThreatenedByUs/2) && (bMightCapToOther || iCitiesThreatenedByOthers >= iValuableCities)) // K-Mod
+	{
+		// Keep others from capturing spoils, but let it go if surrender civ is too small to care about
+		/* original BBAI code
+		if( 6*(iValuableCities + kSurrenderTeam.getNumCities()) > getNumCities() )
 		{
-			if ((TeamTypes)iI != eSurrenderTeam && !(GET_TEAM((TeamTypes)iI).isVassal(eSurrenderTeam)))
+			return true;
+		} */
+		// K-Mod
+		if (5*iValuableCities + 3*(kSurrenderTeam.getNumCities()-iCitiesThreatenedByUs) > getNumCities())
+			return true;
+		// K-Mod end
+	}
+
+	// If we're low on the totem poll, accept so enemies don't drag anyone else into war with us
+	// Top rank is 0, second is 1, etc.
+	if ((bMightCapToOther || iOurWarSuccessRating < 60) && GC.getGameINLINE().getTeamRank(getID()) > 1 + GC.getGameINLINE().countCivTeamsAlive()/3)
+	{
+		return true;
+	}
+
+	if (iOurWarSuccessRating < 50)
+	{
+		// Accept if we have other wars to fight
+		for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
+		{
+			const CvTeam& kLoopTeam = GET_TEAM(i);
+			if (isAtWar(i) && kLoopTeam.isAlive() && !kLoopTeam.isMinorCiv() && i != eSurrenderTeam && !kLoopTeam.isVassal(eSurrenderTeam))
 			{
-				if (isAtWar((TeamTypes)iI))
+				if (kLoopTeam.AI_getWarSuccess(getID()) > 5*GC.getDefineINT("WAR_SUCCESS_ATTACKING"))
 				{
-					if( GET_TEAM((TeamTypes)iI).AI_getWarSuccess(getID()) > 5*GC.getDefineINT("WAR_SUCCESS_ATTACKING") )
-					{
-						iWarCount++;
-					}
+					return true;
 				}
 			}
 		}
 	}
 
-	if( iWarCount > 0 && iOurWarSuccessRating < 50 )
-	{
-		// Accept if we have other wars to fight
-		return true;
-	}
-
 	// War weariness
 	int iWearinessThreshold = (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 300 : 240);
-	iWearinessThreshold += 10*iValuableCities + 20*iCitiesThreatenedByUs;
-
-	for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	if (!bMightCapToOther)
 	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
-		{
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID() )
-			{
-				int iWarWearinessPercentAnger = (getWarWeariness(eSurrenderTeam) * std::max(0, 100 + GET_TEAM(eSurrenderTeam).getEnemyWarWearinessModifier())) / 10000;
-				iWarWearinessPercentAnger = GET_PLAYER((PlayerTypes)iI).getModifiedWarWearinessPercentAnger(iWarWearinessPercentAnger);
+		iWearinessThreshold += 20*iValuableCities + 30*iCitiesThreatenedByUs;
+		iWearinessThreshold += 10*std::max(0, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() - kSurrenderTeam.getNumCities()); // (to help finish off small civs)
+	}
 
-				// Significant war weariness from eSurrenderTeam, 1000 = 100%
-				if( iWarWearinessPercentAnger > 100 ) // was 50 (K-Mod. And note, this isn't really "percent")
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+
+		if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() == getID())
+		{
+			if (kLoopPlayer.getWarWearinessPercentAnger() > iWearinessThreshold) // K-Mod note: it isn't really "percent". The API lies.
+			{
+				int iWwPerMil = kLoopPlayer.getModifiedWarWearinessPercentAnger(getWarWeariness(eSurrenderTeam, true) / 100);
+
+				if (iWwPerMil > iWearinessThreshold/2)
 				{
-					if( GET_PLAYER((PlayerTypes)iI).getWarWearinessPercentAnger() > iWearinessThreshold )
-					{
-						return true;
-					}
+					return true;
 				}
 			}
 		}
@@ -3532,7 +3521,7 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 		return false;
 	}
 
-	if( GET_TEAM(eSurrenderTeam).getNumCities() < (getNumCities()/4 - (AI_maxWarRand()/100)) )
+	if( kSurrenderTeam.getNumCities() < (getNumCities()/4 - (AI_maxWarRand()/100)) )
 	{
 		// Too small to bother leaving alive
 		return false;
