@@ -1708,16 +1708,15 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 	}
 
 	// war weariness
-	int iEstimatedPercentAnger = 0;
+	int iTotalWw = 0;
 	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 	{
 		const CvTeamAI& kLoopTeam = GET_TEAM(i);
 		if (kLoopTeam.isAlive() && (i == eTargetMaster || kLoopTeam.isVassal(eTargetMaster)))
-			iEstimatedPercentAnger += getWarWeariness(i);
+			iTotalWw += getWarWeariness(i, true)/100;
 	}
-	iEstimatedPercentAnger /= 1000;
-	// note: getWarWeariness has units of anger per 100,000 population
-	if (iEstimatedPercentAnger > 5)
+	// note: getWarWeariness has units of anger per 100,000 population, and it is customary to divide it by 100 immediately
+	if (iTotalWw > 50)
 	{
 		int iS = isAtWar(eTarget) ? -1 : 1;
 		int iWwCost = 0;
@@ -1726,6 +1725,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			const CvPlayerAI& kLoopPlayer = GET_PLAYER(eLoopPlayer);
 			if (kLoopPlayer.getTeam() == getID() && kLoopPlayer.isAlive())
 			{
+				int iEstimatedPercentAnger = kLoopPlayer.getModifiedWarWearinessPercentAnger(iTotalWw) / 10; // (ugly, I know. But that's just how it's done.)
 				// note. Unfortunately, we haven't taken the effect of jails into account.
 				iWwCost += iS * kLoopPlayer.getNumCities() * kLoopPlayer.AI_getHappinessWeight(iS * iEstimatedPercentAnger * (100 + kLoopPlayer.getWarWearinessModifier())/100, 0, true) / 20;
 			}
@@ -1768,6 +1768,10 @@ int CvTeamAI::AI_warDiplomacyCost(TeamTypes eTarget) const
 			if (kLoopTeam.AI_getAttitude(eTarget) >= ATTITUDE_PLEASED && AI_getAttitude(i) >= ATTITUDE_PLEASED)
 			{
 				iDiploCost += iPop * (100 + AI_getAttitudeWeight(i)) / 200;
+			}
+			else if (kLoopTeam.isAtWar(eTarget))
+			{
+				iDiploCost -= iPop * (100 + AI_getAttitudeWeight(i)) / 400;
 			}
 		}
 	}
