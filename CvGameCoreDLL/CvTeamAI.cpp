@@ -1993,55 +1993,53 @@ int CvTeamAI::AI_startWarVal(TeamTypes eTeam) const
 // XXX this should consider area power...
 int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 {
-	int iValue;
-
 	FAssertMsg(eTeam != getID(), "shouldn't call this function on ourselves");
 	FAssertMsg(isAtWar(eTeam), "Current AI Team instance is expected to be at war with eTeam");
 
-	iValue = 100;
+	const CvTeam& kWarTeam = GET_TEAM(eTeam); // K-Mod
+
+	int iValue = 100;
 
 	iValue += (getNumCities() * 3);
-	iValue += (GET_TEAM(eTeam).getNumCities() * 3);
+	iValue += (kWarTeam.getNumCities() * 3);
 
 	iValue += getTotalPopulation();
-	iValue += GET_TEAM(eTeam).getTotalPopulation();
+	iValue += kWarTeam.getTotalPopulation();
 
-	iValue += (GET_TEAM(eTeam).AI_getWarSuccess(getID()) * 20);
+	iValue += (kWarTeam.AI_getWarSuccess(getID()) * 20);
 
 	int iOurPower = std::max(1, getPower(true));
-	int iTheirPower = std::max(1, GET_TEAM(eTeam).getDefensivePower(getID()));
+	int iTheirPower = std::max(1, kWarTeam.getDefensivePower(getID()));
 
 	iValue *= iTheirPower + 10;
 	iValue /= std::max(1, iOurPower + iTheirPower + 10);
-	
+
 	WarPlanTypes eWarPlan = AI_getWarPlan(eTeam);
 
 	// if we are not human, do we want to continue war for strategic reasons?
 	// only check if our power is at least 120% of theirs
-	if (!isHuman() && iOurPower > ((120 * iTheirPower) / 100))
+	if (!isHuman() && iOurPower > 120 * iTheirPower / 100)
 	{
 		bool bDagger = false;
-		
+
 		bool bAnyFinancialTrouble = false;
 		for (int iI = 0; iI < MAX_PLAYERS; iI++)
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
+			const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI); // K-Mod
+			if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() == getID())
 			{
-				if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+				if (kLoopPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER))
 				{
-					if (GET_PLAYER((PlayerTypes)iI).AI_isDoStrategy(AI_STRATEGY_DAGGER))
-					{
-						bDagger = true;
-					}
-					
-					if (GET_PLAYER((PlayerTypes)iI).AI_isFinancialTrouble())
-					{
-						bAnyFinancialTrouble = true;
-					}
+					bDagger = true;
+				}
+
+				if (kLoopPlayer.AI_isFinancialTrouble())
+				{
+					bAnyFinancialTrouble = true;
 				}
 			}
 		}
-		
+
 		// if dagger, value peace at 90% * power ratio
 		if (bDagger)
 		{
@@ -2051,7 +2049,7 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 		
 	    // for now, we will always do the land mass check for domination
 		// if we have more than half the land, then value peace at 90% * land ratio 
-		int iLandRatio = ((getTotalLand(true) * 100) / std::max(1, GET_TEAM(eTeam).getTotalLand(true)));
+		int iLandRatio = getTotalLand(true) * 100 / std::max(1, kWarTeam.getTotalLand(true));
 	    if (iLandRatio > 120)
 	    {
 			iValue *= 9 * 100;
@@ -2117,20 +2115,20 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 	{
 		iValue *= 2;
 	}
-	else if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE3) || AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE3))
+	else if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE3 | AI_VICTORY_SPACE3))
 	{
 		iValue *= 4;
 		iValue /= 3;
 	}
 	// K-Mod end
 
-	if ((!(isHuman()) && (eWarPlan == WARPLAN_TOTAL)) ||
-		  (!(GET_TEAM(eTeam).isHuman()) && (GET_TEAM(eTeam).AI_getWarPlan(getID()) == WARPLAN_TOTAL)))
+	if ((!isHuman() && eWarPlan == WARPLAN_TOTAL) ||
+		(!kWarTeam.isHuman() && kWarTeam.AI_getWarPlan(getID()) == WARPLAN_TOTAL))
 	{
 		iValue *= 2;
 	}
-	else if ((!(isHuman()) && (eWarPlan == WARPLAN_DOGPILE) && (GET_TEAM(eTeam).getAtWarCount(true) > 1)) ||
-		       (!(GET_TEAM(eTeam).isHuman()) && (GET_TEAM(eTeam).AI_getWarPlan(getID()) == WARPLAN_DOGPILE) && (getAtWarCount(true) > 1)))
+	else if ((!isHuman() && eWarPlan == WARPLAN_DOGPILE && kWarTeam.getAtWarCount(true) > 1) ||
+		     (!kWarTeam.isHuman() && kWarTeam.AI_getWarPlan(getID()) == WARPLAN_DOGPILE && getAtWarCount(true) > 1))
 	{
 		iValue *= 3;
 		iValue /= 2;
@@ -2154,7 +2152,7 @@ int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
 	}
 
 	int iAttackerRatio = (100 * iOurAttackers) / std::max(1 + GC.getGameINLINE().getCurrentEra(), iTheirAttackers);
-		
+
 	if( GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) )
 	{
 		iValue *= 150;
@@ -2188,11 +2186,12 @@ int CvTeamAI::AI_knownTechValModifier(TechTypes eTech) const
 	int iTechCivs = 0;
 	int iCivsMet = 0;
 
-	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 	{
-		if (GET_TEAM((TeamTypes)iI).isAlive() && iI != getID() && isHasMet((TeamTypes)iI))
+		const CvTeam& kLoopTeam = GET_TEAM(i);
+		if (i != getID() && kLoopTeam.isAlive() && isHasMet(i))
 		{
-			if (GET_TEAM((TeamTypes)iI).isHasTech(eTech))
+			if (kLoopTeam.isHasTech(eTech))
 				iTechCivs++;
 
 			iCivsMet++;
