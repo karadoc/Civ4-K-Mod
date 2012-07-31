@@ -2778,8 +2778,9 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
-		int iMasterPower = GET_TEAM(eTeam).getPower(false);
-		int iVassalPower = (getPower(true) * (iPowerMultiplier + iPersonalityModifier / std::max(1, iMembers))) / 100;
+		int iMasterPower = kMasterTeam.getPower(false);
+		int iOurPower = getPower(true); // K-Mod (this value is used a bunch of times separately)
+		int iVassalPower = (iOurPower * (iPowerMultiplier + iPersonalityModifier / std::max(1, iMembers))) / 100;
 
 		if (isAtWar(eTeam))
 		{
@@ -2825,6 +2826,10 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 			}
 		}
 
+		// K-Mod. (condition moved here from lower down; for efficiency.)
+		if (3 * iVassalPower > 2 * iMasterPower)
+			return DENIAL_POWER_US;
+		// K-Mod end
 
 		for (int iLoopTeam = 0; iLoopTeam < MAX_CIV_TEAMS; iLoopTeam++)
 		{
@@ -2838,22 +2843,25 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 					{
 						if (iLoopTeam != eTeam)
 						{
-							if (kLoopTeam.getPower(true) > getPower(true))
+							int iLoopPower = kLoopTeam.getPower(true); // K-Mod
+							if (iLoopPower > iOurPower)
 							{
 								//if (kLoopTeam.isAtWar(eTeam) && !kLoopTeam.isAtWar(getID()))
-								if (kLoopTeam.isAtWar(eTeam) && !kLoopTeam.isAtWar(getID()) && (!isAtWar(eTeam) || kMasterTeam.getPower(true) < 2 * kLoopTeam.getPower(true))) // K-Mod
+								if (kLoopTeam.isAtWar(eTeam) && !kLoopTeam.isAtWar(getID()) && (!isAtWar(eTeam) || iMasterPower < 2 * iLoopPower)) // K-Mod
 								{
 									return DENIAL_POWER_YOUR_ENEMIES;
 								}
 
-								iAveragePower = (2 * iAveragePower * kLoopTeam.getPower(true)) / std::max(1, kLoopTeam.getPower(true) + getPower(true));
+								iAveragePower = (2 * iAveragePower * iLoopPower) / std::max(1, iLoopPower + iOurPower);
 
-								iAttitudeModifier += (3 * kLoopTeam.getPower(true)) / std::max(1, getPower(true)) - 2;
+								//iAttitudeModifier += (3 * kLoopTeam.getPower(true)) / std::max(1, getPower(true)) - 2;
+								iAttitudeModifier += (6 * iLoopPower / std::max(1, iOurPower) - 5)/2; // K-Mod. (effectively -2.5 instead of 2)
 							}
 
 							if (!kLoopTeam.isAtWar(eTeam) && kLoopTeam.isAtWar(getID()))
 							{
-								iAveragePower = (iAveragePower * (getPower(true) + GET_TEAM(eTeam).getPower(false))) / std::max(1, getPower(true));
+								//iAveragePower = (iAveragePower * (getPower(true) + GET_TEAM(eTeam).getPower(false))) / std::max(1, getPower(true));
+								iAveragePower = iAveragePower * (iOurPower + iMasterPower) / std::max(1, iOurPower + std::max(iOurPower, iLoopPower)); // K-Mod
 							}
 						}
 					}
@@ -2878,18 +2886,8 @@ DenialTypes CvTeamAI::AI_surrenderTrade(TeamTypes eTeam, int iPowerMultiplier) c
 			return DENIAL_POWER_US;
 		}
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/02/09                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI                                                                              */
-/************************************************************************************************/
-/* original bts code
-		if (iVassalPower > iAveragePower || 3 * iVassalPower > 2 * iMasterPower)
-*/
-		if (5*iVassalPower > 4*iAveragePower || 3 * iVassalPower > 2 * iMasterPower)
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		// if (iVassalPower > iAveragePower || 3 * iVassalPower > 2 * iMasterPower)
+		if (5*iVassalPower > 4*iAveragePower) // K-Mod. (second condition already checked)
 		{
 			return DENIAL_POWER_US;
 		}
