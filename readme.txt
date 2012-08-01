@@ -20,7 +20,7 @@ Paypal: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=55F
 Bitcoin: 15kzyE5fvQvicfg2rtXppqKYD63t4rFCSt
 
 == Introduction ==
-I originally intended for this mod to be extremely minimalistic, and for personal use only. My original intended changes were just to buff serfdom, protective, and aggressive, and to introduce some features to make automated workers a bit more friendly. The plan was that my mod would be basically the same as the unmodded game, but with a few of the obviously game elements improved. But as I read the game code to learn how to implement my changes, and as I browsed the change-lists of other mods (such as the PIG mod) to see what other minor changes I could make, I started to realise that unmodded BtS isn't anywhere near as planned and polished as I had thought. I use to think that all the mechanics and numbers were a result of careful calculations and thinking and testing, but I learnt that many of the features in the game are completely arbitrary and sometimes obviously unfinished. So the scope of my mod widened dramatically to include pretty much everything that I thought was not as it should be.
+I originally intended for this mod to be extremely minimalistic, and for personal use only. My original intended changes were just to buff serfdom, protective, and aggressive, and to introduce some features to make automated workers a bit more friendly. The plan was that my mod would be basically the same as the unmodded game, but with a few of the obviously game elements improved. But as I read the game code to learn how to implement my changes, and as I browsed the change-lists of other mods (such as the PIG mod) to see what other minor changes I could make, I started to realise that unmodded BtS isn't anywhere near as planned and polished as I had thought. I use to think that all the mechanics and numbers were a result of careful calculations and thinking and testing, but I learned that many of the features in the game are completely arbitrary and sometimes poorly designed or obviously unfinished. So the scope of my mod has widened dramatically to include pretty much everything that I thought was not as it should be.
 
 I now think of K-Mod as an kind of 'unofficial content & balance patch'. The mod is intended to be played as a replacement for standard BtS. Many of the changes are 'under-the-hood' things that a casual player probably wouldn't notice, but I think the changes will enhance their enjoyment of the game nonetheless.
 
@@ -32,12 +32,12 @@ Here I'll list a few significant features. See changelog.txt for a more complete
  + "unofficial patch" (well known bugfixes)
 
 == Technical improvements ==
- + K-Mod includes many optimisation to the way the game runs. Although many of the calculations in K-Mod are more complex, the game actually runs a lot faster than standard BtS. In many cases, the time spent waiting between turns is _halved_.
+ + K-Mod includes many optimisations to the way the game runs. Although many of the calculations in K-Mod are more complex, the game actually runs a lot faster than standard BtS. In many cases, the time spent waiting between turns is _halved_.
  + Special care has been taken to make sure K-Mod works correctly in multiplayer mode. Due to various bug-fixes and back-end changes, K-Mod has fewer OOS problems than standard BtS. (In fact, if you see _any_ OOS errors at all, please tell me about it. I suspect that OOS may have been completely eliminated.)
- + K-Mod includes many bug fixes to the controls and user-interface of the game. For example, units will no longer automatically attack when they are ordered into an unseen enemy unit in the fog-of-war; and using the diplomacy screen to suggest peace will now bring up possible peace-trade deal rather than simply ending the war without negotiations. There are many other such minor improvements.
+ + K-Mod includes many bug fixes to the controls and user-interface of the game. For example, units will no longer automatically attack when they are ordered into an unseen enemy unit in the fog-of-war; using the diplomacy screen to suggest peace will now bring up possible peace-trade deal rather than simply ending the war without negotiations; grouping and ungrouping units behaves more predictably; and so on. There are many such minor improvements like these.
 
 == Better AI ==
-The BBAI mod was used as the starting point for the AI in K-Mod, but each new version of K-Mod comes with further AI improvements which are gradually replacing all of the old AI. The AI in K-Mod is now noticeably stronger than the AI in the BBAI mod, and the standard BtS AI. The obvious improvements are that AI civilizations will research faster, fight smarter, and place cities more thoughtfully, and so on. But there are also some "flavour" changes as well - different AI leaders like to pursue different kinds of strategies, with different areas of emphasis based on their individual personalities. It's also worth noting that the AI in K-Mod actually cheats /less/ than the standard AI; not more. (For those who don't know; the standard AI 'cheats' by sometimes knowing what is on certain plots without actually seeing them. This still sometimes happens in K-Mod, but it happens far less.)
+The 'BBAI' mod was used as the starting point for the AI in K-Mod, but each new version of K-Mod comes with further AI improvements which are gradually replacing all of the old AI. The AI in K-Mod is now noticeably stronger than the AI in the BBAI mod, and the standard BtS AI. The obvious improvements are that AI civilizations will research faster, fight smarter, and place cities more thoughtfully, and so on. But there are also some "flavour" changes as well - different AI leaders like to pursue different kinds of strategies, with different areas of emphasis based on their individual personalities. It's also worth noting that the AI in K-Mod actually cheats /less/ than the standard AI; not more. (For those who don't know; the standard AI 'cheats' by sometimes knowing what is on certain plots without actually seeing them. This still sometimes happens in K-Mod, but it happens far less.)
 
 == New global warming system ==
 In standard BtS, global warming is a bit of a joke. It is triggered by the wrong things, you can't really do much to prevent it, and it hits the world in a harsh and unintuitive way. I've completely changed it.
@@ -47,7 +47,7 @@ Every point of unhealthiness is counted across the world. If this total is more 
 
 When global warming strikes, it no longer removes the tile improvement, and it doesn't turn the tile straight into desert, so each strike is far less severe than in original BtS. Also, global warming is more likely to strike cold tiles before hot tiles. eg. The ice caps are likely to melt before your plains get turned into desert.
 
-Positive healthiness (eg. from hospitals) does not reduce the global warming pollution, but a environmentalism and public transport have been changed so that they do reduce unhealthiness rather than increase healthiness.
+Positive healthiness (eg. from hospitals) does not reduce the global warming pollution, but environmentalism and public transport have been altered to reduce unhealthiness rather than increasing healthiness so that they do reduce global warming pollution.
 
 As global warming becomes more likely, civilizations start to get a happiness penalty which is based on their relative contribution to global pollution.
 
@@ -64,13 +64,15 @@ Plot culture is now primarily determined by the culture output of cities. The 'f
 
 The result is that cultural output now plays a more significant and dynamic role in determining cultural borders. The culture of inner cities is no longer useless, because it will typically extend far enough to help contribute to the culture front-line, and even if it doesn't reach that far it can still contribute via the new 'trade culture' mechanics.
 
-== Many many balance changes ==
-I've identified many things that I think were too weak or too strong in original BtS, and I've tried to balance them. But I haven't simply buffed or nerfed things, I've tried to make changes that give each thing its own niche for which it is powerful; so that everything is viable _under the right conditions_, and very few things can be considered 'the best' for all situations. I'm speaking in general terms here because I don't want to try to list every change I've made. But I will give one example:
+== Many balance changes ==
+I've identified many things that I think were too weak or too strong in original BtS, and I've tried to balance them without changing their original purpose or flavour. In general, I've tried to make changes that give each thing its own niche for which it is powerful; so that everything is viable _under the right conditions_, and very few things can be considered 'the best' for all situations. I'm speaking in general terms here because I don't want to try to list every change I've made. But I will give one example:
 
 Serfdom: +1 commerce farms & plantations, -1 commerce from towns (in addition to its original effects).
 I've always thought that Serfdom was the most obviously weak civic in the game. In standard BtS, serfdom was very very rarely better than its alternatives. So I wanted to buff it. But I like that slavery is the dominant civic in the early game, and caste system is useful for particular playstyles, and in the late game emancipation gradually (usually) forces most civs out of their otherwise chosen civics...  Everything civic seemed to have a role, and I thought it worked pretty well - except that serfdom was useless. My change to serfdom is only simple, but the effect is that serfdom is now a viable civic for a significant part of the game, and it has its own playstyle / strategy type; and it becomes weaker in the late-game as towns become the dominant source of commerce.
 
-Again, see changelog.txt for a more complete list of balance changes.
+(The serfdom change is one of the biggest balance changes in K-Mod. Most of the changes are actually quite subtle.)
+
+Again, see changelog.txt for a more complete list of changes.
 
 I hope you enjoy the mod.
 

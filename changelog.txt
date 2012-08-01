@@ -1,6 +1,36 @@
-This is K-Mod version 1.34.
+This is K-Mod version 1.35.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
 
+v1.35 changelist
+
++ The 'why don't you attack' diplomacy screen no longer lists cities that the civ is not at war with.
++ The 'why don't you attack' diplomacy option is now only available if the civ is at least pleased towards the player, or is the player's vassal.
++ The effects of telling a civ to target a particular city will now last at least 10 turns. (The AI updates its choice of target city on random turns, and so previously the AI could randomly overrule the choice of target city immediately after the player makes the request. The new behaviour is that the choice of target city is locked in for 10 turns before the random updates resume. [Note: this still doesn't guarantee that the AI will actually attack the chosen city! It merely encourages them to do so.])
++ Fixed a problem in the way unit flags on the map are updated when switching in and out of debug mode.
++ When adding units to a group, the group's mission queue is once again cleared. (I've restored this behaviour as a workaround to a problem in the exe)
+
++ Automated cities will now build units slightly more often. (But they'll still primarily focus on buildings.)
++ The city governor now takes the 'financial' trait bonus into account when evaluating improvement upgrades to choose which plots to work.
++ Made several changes to the way the city governor chooses which plots to work
+  + Corrected an overestimate in the time for the city to grow - which sometimes caused the governor to mistakenly grow the city while still waiting for slavery unhappiness to wear off.
+  + Fixed a couple of mistakes which caused the governor to overvalue food when attempting to fill the food bar without growing the city.
+  + Reduced the value of food in general.
+  + Extra value for productivity when below par is now only used if the player doesn't have any hurry types enabled.
+  + Fixed a bug which prevented the governor from trying to stack great-person points as intended.
+
++ Tweaked the way the AI evaluates the yield of super specialists when deciding where to settle them.
++ Barbarian cities will now use 'build culture' to pop their borders once they get drama. (They still can't build any culture buildings.)
++ Fixed a problem which sometimes caused the AI to use their navy to guard lakes.
++ The AI's estimate of the diplomatic cost of war now takes into account the bonus of sharing a war with friends.
++ Slightly tightened the conditions on when an AI team will offer itself as a vassal.
++ Adjusted many of the conditions on when the AI will choose to accept a vassal.
++ Taught the AI to free itself when it no longer wants to be a vassal.
++ AI will no longer use 'we're afraid of your enemies' as an excuse to refuse capitulation when the would-be master is much stronger than their enemies.
+
++ Fixed a grammar mistake in the original BtS text for when a unit is killed by a flanking attack.
++ Fixed a bug which caused the city captured sound effect to be played to all players rather than just those who saw the city being captured.
+
+--
 v1.34 changelist
 
 Game
