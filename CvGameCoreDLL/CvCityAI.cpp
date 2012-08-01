@@ -7674,7 +7674,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 						iValue += iClearFeatureValue;
 					}
 				}
-			} */ // K-Mod. I've moved this out of the if statement, because it should apply regardless of whether their is already an improvement on the plot.
+			} */ // K-Mod. I've moved this out of the if statement, because it should apply regardless of whether there is already an improvement on the plot.
 		}
 		else
 		{
@@ -7726,9 +7726,9 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		// K-Mod. Feature value. (moved from the 'no improvement' block above.)
 		if (pPlot->getFeatureType() != NO_FEATURE && eBestTempBuild != NO_BUILD && GC.getBuildInfo(eBestTempBuild).isFeatureRemove(pPlot->getFeatureType()))
 		{
-			CvCity* pCity;
-			iValue += pPlot->getFeatureProduction(eBestTempBuild, getTeam(), &pCity) * 2;
-			FAssert(pCity == this);
+			//CvCity* pCity;
+			//iValue += pPlot->getFeatureProduction(eBestTempBuild, getTeam(), &pCity) * 2; // handle chop value elsewhere
+			//FAssert(pCity == this);
 			iValue += iClearFeatureValue;
 		}
 		// K-Mod end
@@ -7794,47 +7794,50 @@ void CvCityAI::AI_updateBestBuild()
 
 	bool bChop = false;
 
-    if (!bChop)
+	if (getProductionProcess() == NO_PROCESS) // K-Mod. (never chop if building a process.)
 	{
-		ProjectTypes eProductionProject = getProductionProject();
-		bChop = (eProductionProject != NO_PROJECT && AI_projectValue(eProductionProject) > 0);
-	}
-	if (!bChop)
-	{
-		BuildingTypes eProductionBuilding = getProductionBuilding();
-		bChop = (eProductionBuilding != NO_BUILDING && isWorldWonderClass((BuildingClassTypes)(GC.getBuildingInfo(eProductionBuilding).getBuildingClassType())));
-	}
-	if (!bChop)
-	{
-		//bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
-		bChop = kOwner.AI_isLandWar(area()); // K-Mod
-	}
-	if (!bChop)
-	{
-		/* UnitTypes eProductionUnit = getProductionUnit();
-		bChop = (eProductionUnit != NO_UNIT && GC.getUnitInfo(eProductionUnit).isFoodProduction()); */
-		// K-Mod
-		UnitAITypes eUnitAI = getProductionUnitAI();
-
-		switch (eUnitAI)
+		if (!bChop)
 		{
-		case UNITAI_SETTLE:
-			if (kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())
-			{
-				int iDummy;
-				bChop = kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0;
-			}
-			break;
-
-		case UNITAI_WORKER:
-			// bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < kOwner.AI_neededWorkers(area())/2; // maybe too slow
-			bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < std::max(area()->getCitiesPerPlayer(getOwnerINLINE()), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2);
-			break;
-
-		default:
-			break;
+			ProjectTypes eProductionProject = getProductionProject();
+			bChop = (eProductionProject != NO_PROJECT && AI_projectValue(eProductionProject) > 0);
 		}
-		// K-Mod end
+		if (!bChop)
+		{
+			BuildingTypes eProductionBuilding = getProductionBuilding();
+			bChop = (eProductionBuilding != NO_BUILDING && isWorldWonderClass((BuildingClassTypes)(GC.getBuildingInfo(eProductionBuilding).getBuildingClassType())));
+		}
+		if (!bChop)
+		{
+			//bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
+			bChop = kOwner.AI_isLandWar(area()); // K-Mod
+		}
+		if (!bChop)
+		{
+			/* UnitTypes eProductionUnit = getProductionUnit();
+			bChop = (eProductionUnit != NO_UNIT && GC.getUnitInfo(eProductionUnit).isFoodProduction()); */
+			// K-Mod
+			UnitAITypes eUnitAI = getProductionUnitAI();
+
+			switch (eUnitAI)
+			{
+			case UNITAI_SETTLE:
+				if (kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())
+				{
+					int iDummy;
+					bChop = kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0;
+				}
+				break;
+
+			case UNITAI_WORKER:
+				// bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < kOwner.AI_neededWorkers(area())/2; // maybe too slow
+				bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < std::max(area()->getCitiesPerPlayer(getOwnerINLINE()), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2);
+				break;
+
+			default:
+				break;
+			}
+			// K-Mod end
+		}
 	}
 
 	/*if (getProductionBuilding() != NO_BUILDING)
@@ -10511,7 +10514,8 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 								iValue *= 400;
 								iValue /= std::max(1, (GC.getBuildInfo(eBuild).getFeatureTime(pPlot->getFeatureType()) + 100));
 
-								if ((iValue > iBestValue) || ((iValue > 0) && (eBestBuild == NO_BUILD)))
+								//if ((iValue > iBestValue) || ((iValue > 0) && (eBestBuild == NO_BUILD)))
+								if (iValue > iBestValue) // K-Mod. (removed redundant checks)
 								{
 									iBestValue = iValue;
 									eBestBuild = eBuild;
@@ -10544,6 +10548,14 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 
 						if (iValue > 0)
 						{
+							// K-Mod. Inflate the production value in the early expansion phase of the game.
+							int iCitiesTarget = GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities();
+							if (kOwner.getNumCities() < iCitiesTarget && kOwner.AI_getNumCitySites() > 0)
+							{
+								iValue = iValue * 2*iCitiesTarget / std::max(1, kOwner.getNumCities() + iCitiesTarget);
+							}
+							// K-Mod end
+
 							iValue += iClearValue_wYield;
 							// K-Mod
 							if (!pPlot->isBeingWorked() && iClearFeatureValue < 0)
