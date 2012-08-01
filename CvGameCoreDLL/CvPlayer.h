@@ -15,7 +15,7 @@
 class CvDiploParameters;
 class CvPopupInfo;
 class CvEventTriggerInfo;
-
+class CvPlayerRecord; // K-Mod
 
 typedef std::list<CvTalkingHeadMessage> CvMessageQueue;
 typedef std::list<CvPopupInfo*> CvPopupQueue;
@@ -970,6 +970,8 @@ public:
 	void updateCultureHistory(int iTurn, int iBestCulture);
 	int getEspionageHistory(int iTurn) const;																							// Exposed to Python
 	void updateEspionageHistory(int iTurn, int iBestEspionage);
+
+	const CvPlayerRecord* getPlayerRecord() const; // K-Mod
 
 	// Script data needs to be a narrow string for pickling in Python
 	std::string getScriptData() const;																									// Exposed to Python

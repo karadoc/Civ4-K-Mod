@@ -2570,6 +2570,7 @@ CvWString CvPlayer::getNewCityName() const
 	CvWString szName;
 	int iI;
 
+	/* original bts code
 	for (pNode = headCityNameNode(); (pNode != NULL); pNode = nextCityNameNode(pNode))
 	{
 		szName = gDLL->getText(pNode->m_data);
@@ -2578,7 +2579,19 @@ CvWString CvPlayer::getNewCityName() const
 			szName = pNode->m_data;
 			break;
 		}
+	} */
+	// K-Mod
+	for (pNode = headCityNameNode(); pNode && szName.empty(); pNode = nextCityNameNode(pNode))
+	{
+		szName = gDLL->getText(pNode->m_data); // (temp use of the buffer)
+
+		if (isCityNameValid(szName, true))
+			szName = pNode->m_data;
+		else
+			szName.clear(); // clear the buffer if the name is not valid!
 	}
+	// Note: unfortunately, the name-skipping system in getCivilizationCityName does not apply here.
+	// K-Mod end
 
 	if (szName.empty())
 	{
@@ -2617,6 +2630,7 @@ void CvPlayer::getCivilizationCityName(CvWString& szBuffer, CivilizationTypes eC
 	int iLoopName;
 	int iI;
 
+	/* original bts code
 	if (isBarbarian() || isMinorCiv())
 	{
 		iRandOffset = GC.getGameINLINE().getSorenRandNum(GC.getCivilizationInfo(eCivilization).getNumCityNames(), "Place Units (Player)");
@@ -2624,7 +2638,13 @@ void CvPlayer::getCivilizationCityName(CvWString& szBuffer, CivilizationTypes eC
 	else
 	{
 		iRandOffset = 0;
-	}
+	} */
+	// K-Mod
+	if (eCivilization != getCivilizationType() || isBarbarian() || isMinorCiv())
+		iRandOffset = GC.getGameINLINE().getSorenRandNum(GC.getCivilizationInfo(eCivilization).getNumCityNames(), "City name offset");
+	else
+		iRandOffset = std::max(0, getPlayerRecord()->getNumCitiesBuilt() - getNumCityNames()); // note: the explicit city names list is checked before this function is called.
+	// K-Mod end
 
 	for (iI = 0; iI < GC.getCivilizationInfo(eCivilization).getNumCityNames(); iI++)
 	{
@@ -14044,6 +14064,14 @@ void CvPlayer::updateEspionageHistory(int iTurn, int iBestEspionage)
 {
 	m_mapEspionageHistory[iTurn] = iBestEspionage;
 }
+
+// K-Mod. Note, this function is a friend of CvEventReporter, so that it can access the data we need.
+// (This saves us from having to use the built-in CyStatistics class)
+const CvPlayerRecord* CvPlayer::getPlayerRecord() const
+{
+	return CvEventReporter::getInstance().m_kStatistics.getPlayerRecord(getID());
+}
+// K-Mod end
 
 std::string CvPlayer::getScriptData() const
 {
