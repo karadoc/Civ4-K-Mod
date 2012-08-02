@@ -11721,17 +11721,26 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 	UnitTypes eProductionUnit = getProductionUnit();
 	if (eProductionUnit != NO_UNIT)
 	{
+		/* original bts code
 		if (GC.getUnitInfo(eProductionUnit).getDefaultUnitAIType() == UNITAI_WORKER_SEA)
 		{
 			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += 50;
-			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 50;				
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 50;
 		}
 		if ((GC.getUnitInfo(eProductionUnit).getDefaultUnitAIType() == UNITAI_WORKER) ||
 			(GC.getUnitInfo(eProductionUnit).getDefaultUnitAIType() == UNITAI_SETTLE))
 		
 		{
-			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 50;			
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 50;
+		} */
+		// K-Mod. note: when food is production, food is counted as production!
+		UnitAITypes eUnitAI = (UnitAITypes)GC.getUnitInfo(eProductionUnit).getDefaultUnitAIType();
+		if (eUnitAI == UNITAI_WORKER_SEA || eUnitAI == UNITAI_WORKER || eUnitAI == UNITAI_SETTLE)
+		{
+			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += 50;
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 25;
 		}
+		// K-Mod end
 	}
 
 	BuildingTypes eProductionBuilding = getProductionBuilding();
@@ -11768,16 +11777,49 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 	{
 		CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 		AreaAITypes eAreaAIType = area()->getAreaAIType(getTeam());
+
+		// K-Mod. special strategy adjustments
+		if (kPlayer.AI_isDoStrategy(AI_STRATEGY_PRODUCTION))
+		{
+			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += 15;
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 15;
+		}
+		if (kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS))
+		{
+			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] -= 10;
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] += 20;
+		}
+		else if (kPlayer.AI_isDoVictoryStrategy(AI_STRATEGY_GET_BETTER_UNITS)) // doesn't stack with ec focus.
+		{
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] += 20;
+		}
+		// K-Mod end
 		
 		if ((kPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER) && getPopulation() >= 4)
 			|| (eAreaAIType == AREAAI_OFFENSIVE) || (eAreaAIType == AREAAI_DEFENSIVE) 
 			|| (eAreaAIType == AREAAI_MASSING) || (eAreaAIType == AREAAI_ASSAULT))
 		{
+			/* original bts code
 			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += 10;
 			if (!kPlayer.AI_isFinancialTrouble())
 			{
 				m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 40;
+			} */
+			// K-Mod. Don't sacrifice lots of commerce unless we're on the defensive, or this is 'total war'.
+			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += kPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER | AI_STRATEGY_CRUSH | AI_STRATEGY_TURTLE) ? 20 : 10;
+			if (eAreaAIType != AREAAI_NEUTRAL && !kPlayer.AI_isFinancialTrouble())
+			{
+				const CvTeamAI& kTeam = GET_TEAM(kPlayer.getTeam());
+				bool bSeriousWar = eAreaAIType == AREAAI_DEFENSIVE || kPlayer.isBarbarian();
+				for (TeamTypes i = (TeamTypes)0; !bSeriousWar && i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
+				{
+					WarPlanTypes ePlan = kTeam.AI_getWarPlan(i);
+					FAssert(ePlan == NO_WARPLAN || (kTeam.isHasMet(i) && GET_TEAM(i).isAlive()));
+					bSeriousWar = ePlan == WARPLAN_PREPARING_TOTAL || ePlan == WARPLAN_TOTAL;
+				}
+				m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= bSeriousWar ? 35 : 10;
 			}
+			// K-Mod end
 		}
 		
 		int iIncome = 1 + kPlayer.getCommerceRate(COMMERCE_GOLD) + kPlayer.getCommerceRate(COMMERCE_RESEARCH) + std::max(0, kPlayer.getGoldPerTurn());
