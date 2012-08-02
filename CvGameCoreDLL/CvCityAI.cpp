@@ -4329,7 +4329,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						// additional bonuses
 						for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 						{
-							iSpecialistValue += kOwner.getSpecialistExtraCommerce(i) * 4 * kOwner.AI_commerceWeight(i);
+							if (kOwner.getSpecialistExtraCommerce(i))
+								iSpecialistValue += kOwner.getSpecialistExtraCommerce(i) * 4 * kOwner.AI_commerceWeight(i);
 						}
 						iSpecialistValue += 8*std::max(0, kOwner.AI_averageGreatPeopleMultiplier()-100);
 
@@ -4660,6 +4661,9 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 										int iTempValue = iChange * 4;
 
 										// K-Mod
+										if (iTempValue == 0)
+											continue;
+
 										iTempValue *= getTotalCommerceRateModifier((CommerceTypes)iCommerce);
 										iTempValue /= 100;
 										// K-Mod end

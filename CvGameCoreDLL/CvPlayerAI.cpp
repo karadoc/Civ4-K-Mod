@@ -5584,6 +5584,11 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			{
 				int iTempValue = (GC.getProcessInfo((ProcessTypes)iJ).getProductionToCommerceModifier(iK) * 4);
 
+				// K-Mod. (check out what would happen to "bIsGoodProcess" without this bit.  "oops.")
+				if (iTempValue <= 0)
+					continue;
+				// K-Mod end
+
 				iTempValue *= AI_commerceWeight((CommerceTypes)iK);
 				iTempValue /= 100;
 
@@ -12388,9 +12393,10 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	{
 		int iHqValue = 0;
 		CvCity* kHqCity = kGame.getHeadquarters(eCorporation);
-		for (int i = 0; i < NUM_COMMERCE_TYPES; i++)
+		for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i=(CommerceTypes)(i+1))
 		{
-			iHqValue += kCorp.getHeadquarterCommerce(i) * kHqCity->getTotalCommerceRateModifier((CommerceTypes)i) * AI_commerceWeight((CommerceTypes)i)/100;
+			if (kCorp.getHeadquarterCommerce(i))
+				iHqValue += kCorp.getHeadquarterCommerce(i) * kHqCity->getTotalCommerceRateModifier(i) * AI_commerceWeight(i)/100;
 		}
 
 		iSpreadExternalValue += iHqValue;
@@ -13416,7 +13422,9 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		// additional bonuses
 		for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i = (CommerceTypes)(i+1))
 		{
-			iSpecialistValue += (getSpecialistExtraCommerce(i) + kCivic.getSpecialistExtraCommerce(i)) * AI_commerceWeight(i);
+			int c = getSpecialistExtraCommerce(i) + kCivic.getSpecialistExtraCommerce(i);
+			if (c)
+				iSpecialistValue += c * AI_commerceWeight(i);
 		}
 		iSpecialistValue += 2*std::max(0, AI_averageGreatPeopleMultiplier()-100);
 		iValue += iCities * iSpecialistValue / 100;
@@ -13636,10 +13644,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 					iTempValue -= iCorpCities * ((AI_averageCommerceMultiplier(i) * kCorpInfo.getCommerceProduced(i))/100 * iBonuses * GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getCorporationMaintenancePercent()) / 10000;
 				}
 
-				iTempValue *= AI_commerceWeight(i);
-				iTempValue /= 100;
+				if (iTempValue != 0)
+				{
+					iTempValue *= AI_commerceWeight(i);
+					iTempValue /= 100;
 
-				iCorpValue += iTempValue;
+					iCorpValue += iTempValue;
+				}
 
 				iMaintenance += kCorpInfo.getHeadquarterCommerce(i) * iCorpCities;
 			}
@@ -14006,11 +14017,13 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 
 		iTempValue /= 100; // (for the 3 things above)
 
-		iTempValue *= AI_commerceWeight((CommerceTypes)iI);
+		if (iTempValue)
+		{
+			iTempValue *= AI_commerceWeight((CommerceTypes)iI);
+			iTempValue /= 100;
 
-		iTempValue /= 100;
-
-		iValue += iTempValue;
+			iValue += iTempValue;
+		}
 	}
 
 	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
