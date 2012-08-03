@@ -274,6 +274,7 @@ void CvPlayerAI::AI_reset(bool bConstructor)
 	//m_iUpgradeUnitsCacheTurn = -1;
 	//m_iUpgradeUnitsCachedExpThreshold = 0;
 	m_iUpgradeUnitsCachedGold = 0;
+	m_iAvailableIncome = 0; // K-Mod
 
 	m_aiAICitySites.clear();
 	
@@ -339,6 +340,7 @@ void CvPlayerAI::updateCacheData()
 		// note. total upgrade gold is currently used in AI_hurry, which is used by production-automated.
 		// Therefore, we need to get total upgrade gold for human players as well as AI players.
 		AI_updateGoldToUpgradeAllUnits();
+		AI_updateAvailableIncome(); // K-Mod
 	}
 }
 // K-Mod end
@@ -4530,28 +4532,10 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 
 	//if (getCommercePercent(COMMERCE_GOLD) > 50)
 	{
-		/* original bts code
-		int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn()); */
-		// K-Mod: have you heard of "cultural victory"? How about "espionage economy"?
-		// Lets try it a more general way. (hopefully this doesn't slow it down too much...)
-		int iTotalRaw = calculateTotalYield(YIELD_COMMERCE);
-
-		int iNetCommerce = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
-		iNetCommerce += std::max(0, getGoldPerTurn());
-		iNetCommerce += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
-		// K-Mod end
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       06/11/09                       jdog5000 & DanF5771    */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original BTS code
-		int iNetExpenses = calculateInflatedCosts() + std::min(0, getGoldPerTurn());
-*/
-		int iNetExpenses = calculateInflatedCosts() + std::max(0, -getGoldPerTurn());
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/		
+		//int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn());
+		//int iNetExpenses = calculateInflatedCosts() + std::min(0, getGoldPerTurn());
+		int iNetCommerce = AI_getAvailableIncome(); // K-Mod
+		int iNetExpenses = calculateInflatedCosts() + std::max(0, -getGoldPerTurn()); // unofficial patch
 		
 		int iFundedPercent = (100 * (iNetCommerce - iNetExpenses)) / std::max(1, iNetCommerce);
 		
@@ -17622,6 +17606,10 @@ void CvPlayerAI::read(FDataStreamBase* pStream)
 	//pStream->Read(&m_iUpgradeUnitsCacheTurn); // disabled by K-Mod
 	//pStream->Read(&m_iUpgradeUnitsCachedExpThreshold); // disabled by K-Mod
 	pStream->Read(&m_iUpgradeUnitsCachedGold);
+	// K-Mod
+	if (uiFlag >= 7)
+		pStream->Read(&m_iAvailableIncome);
+	// K-Mod end
 
 	pStream->Read(NUM_UNITAI_TYPES, m_aiNumTrainAIUnits);
 	pStream->Read(NUM_UNITAI_TYPES, m_aiNumAIUnits);
@@ -17700,7 +17688,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	uint uiFlag=0;
 */
 	// Flag for type of save
-	uint uiFlag=6;
+	uint uiFlag=7;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iPeaceWeight);
@@ -17728,6 +17716,7 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	//pStream->Write(m_iUpgradeUnitsCacheTurn); // disabled by K-Mod
 	//pStream->Write(m_iUpgradeUnitsCachedExpThreshold); // disabled by K-Mod
 	pStream->Write(m_iUpgradeUnitsCachedGold);
+	pStream->Write(m_iAvailableIncome); // K-Mod. uiFlag >= 7
 
 	pStream->Write(NUM_UNITAI_TYPES, m_aiNumTrainAIUnits);
 	pStream->Write(NUM_UNITAI_TYPES, m_aiNumAIUnits);
@@ -20872,6 +20861,20 @@ void CvPlayerAI::AI_updateGoldToUpgradeAllUnits()
 	//return iTotalGold;
 }
 
+// K-Mod. 'available income' is meant to roughly represent the amount of gold-per-turn the player would produce with 100% gold on the commerce slider.
+// (without subtracting costs)
+// In the original code, this value was essentially calculated by simply adding total gold to total science.
+// This new version is better able to handle civs which are using culture or espionage on their commerce slider.
+void CvPlayerAI::AI_updateAvailableIncome()
+{
+	int iTotalRaw = calculateTotalYield(YIELD_COMMERCE);
+
+	m_iAvailableIncome = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
+	m_iAvailableIncome += std::max(0, getGoldPerTurn());
+	m_iAvailableIncome += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
+}
+// K-Mod end
+
 int CvPlayerAI::AI_goldTradeValuePercent() const
 {
 	int iValue = 2;
@@ -22476,7 +22479,8 @@ int CvPlayerAI::AI_getMinFoundValue() const
 	PROFILE_FUNC();
 	//int iValue = 600;
 	int iValue = GC.getDefineINT("BBAI_MINIMUM_FOUND_VALUE"); // K-Mod
-	int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn());
+	//int iNetCommerce = 1 + getCommerceRate(COMMERCE_GOLD) + getCommerceRate(COMMERCE_RESEARCH) + std::max(0, getGoldPerTurn());
+	int iNetCommerce = AI_getAvailableIncome(); // K-Mod
 	int iNetExpenses = calculateInflatedCosts() + std::max(0, -getGoldPerTurn());
 
 	iValue *= iNetCommerce;

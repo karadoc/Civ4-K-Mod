@@ -364,6 +364,8 @@ public:
 	// K-Mod
 	inline int AI_getGoldToUpgradeAllUnits() const { return m_iUpgradeUnitsCachedGold; }
 	void AI_updateGoldToUpgradeAllUnits();
+	inline int AI_getAvailableIncome() const { return m_iAvailableIncome; }
+	void AI_updateAvailableIncome();
 	// K-Mod end
 
 	int AI_goldTradeValuePercent() const;
@@ -490,7 +492,8 @@ protected:
 	int *m_aiAverageCommerceMultiplier;
 	int *m_aiAverageCommerceExchange;
 
-	int m_iUpgradeUnitsCachedGold; 
+	int m_iUpgradeUnitsCachedGold;
+	int m_iAvailableIncome;
 	// K-Mod end
 
 	int *m_aiNumTrainAIUnits;
