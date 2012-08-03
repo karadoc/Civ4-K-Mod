@@ -2264,6 +2264,7 @@ int CvPlayerAI::AI_yieldWeight(YieldTypes eYield, const CvCity* pCity) const // 
 
 int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) const
 {
+	PROFILE_FUNC();
 	int iWeight;
 
 	iWeight = GC.getCommerceInfo(eCommerce).getAIWeightPercent();
@@ -2285,26 +2286,22 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		}
 		break;
 	case COMMERCE_GOLD:
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/12/09                                jdog5000      */
-/*                                                                                              */
-/* Gold AI                                                                        */
-/************************************************************************************************/
-		if (getCommercePercent(COMMERCE_GOLD) > 70)
+		if (getCommercePercent(COMMERCE_GOLD) > 80) // originally == 100
 		{
 			//avoid strikes
-			if (getGoldPerTurn() < -getGold()/100)
+			//if (getGoldPerTurn() < -getGold()/100)
+			if (calculateGoldRate() < -getGold()/100) // K-Mod
 			{
 				iWeight += 15;
 			}
 		}
-		else if (getCommercePercent(COMMERCE_GOLD) < 25)
+		else if (getCommercePercent(COMMERCE_GOLD) < 25) // originally == 0 (bbai)
 		{
 			//put more money towards other commerce types
-			int iGoldPerTurn = getGoldPerTurn(); // K-Mod
+			int iGoldPerTurn = calculateGoldRate(); // K-Mod (the original code used getGoldPerTurn, which is faster, but the wrong number.)
 			if (iGoldPerTurn > -getGold()/40)
 			{
-				iWeight -= 25 - getCommercePercent(COMMERCE_GOLD);
+				iWeight -= 25 - getCommercePercent(COMMERCE_GOLD); // originally 15 (bbai)
 				iWeight -= (iGoldPerTurn > 0 && getCommercePercent(COMMERCE_GOLD) == 0) ? 10 : 0; // K-Mod. just a bit extra. (I'd like to compare getGold to AI_goldTarget; but it's too expensive.)
 			}
 		}
@@ -2317,9 +2314,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			iWeight *= pCity->getTotalCommerceRateModifier(COMMERCE_GOLD);
 			iWeight /= AI_averageCommerceMultiplier(COMMERCE_GOLD);
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		//
 		break;
 	case COMMERCE_CULTURE:
 		// COMMERCE_CULTURE AIWeightPercent is 25% in default xml

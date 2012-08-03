@@ -7406,6 +7406,8 @@ int CvPlayer::calculateInflationRate() const
 
 int CvPlayer::calculateInflatedCosts() const
 {
+	PROFILE_FUNC();
+
 	int iCosts;
 
 	iCosts = calculatePreInflatedCosts();
