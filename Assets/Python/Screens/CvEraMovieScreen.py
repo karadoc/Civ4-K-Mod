@@ -35,7 +35,8 @@ class CvEraMovieScreen:
 		player = PyPlayer(CyGame().getActivePlayer())
 
 		screen = CyGInterfaceScreen( "EraMovieScreen" + str(iEra), CvScreenEnums.ERA_MOVIE_SCREEN)
-		screen.setDimensions(screen.centerX(0), screen.centerY(0), self.W_SCREEN, self.H_SCREEN)
+		#screen.setDimensions(screen.centerX(0), screen.centerY(0), self.W_SCREEN, self.H_SCREEN) # This doesn't work. Those 'center' functions assume a particular window size. (not original code)
+		screen.setDimensions(screen.getXResolution()/2-self.W_SCREEN/2, screen.getYResolution()/2-self.H_SCREEN/2 - 70, self.W_SCREEN, self.H_SCREEN) # K-Mod
 		screen.addPanel("EraMoviePanel", "", "", true, true, 0, 0, self.W_SCREEN, self.H_SCREEN, PanelStyles.PANEL_STYLE_MAIN)
 
 		screen.showWindowBackground(True)
