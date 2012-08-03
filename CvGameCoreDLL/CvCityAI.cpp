@@ -7822,20 +7822,18 @@ void CvCityAI::AI_updateBestBuild()
 
 			switch (eUnitAI)
 			{
-			case UNITAI_SETTLE:
-				if (kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())
-				{
-					int iDummy;
-					bChop = kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0;
-				}
-				break;
 
 			case UNITAI_WORKER:
 				// bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < kOwner.AI_neededWorkers(area())/2; // maybe too slow
 				bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < std::max(area()->getCitiesPerPlayer(getOwnerINLINE()), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2);
 				break;
 
-			default:
+			default: // (buildings, settlers, military escorts -- everything.)
+				if (kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())
+				{
+					int iDummy;
+					bChop = kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0 && !kOwner.AI_isFinancialTrouble();
+				}
 				break;
 			}
 			// K-Mod end
@@ -8001,6 +7999,14 @@ void CvCityAI::AI_updateBestBuild()
 							iValue++;
 						} */
 						// K-Mod
+						// priority increase for chopping when we want to chop
+						if (bChop && pLoopPlot->getFeatureType() != NO_FEATURE && GC.getBuildInfo(m_aeBestBuild[iI]).isFeatureRemove(pLoopPlot->getFeatureType()))
+						{
+							CvCity* pCity;
+							iValue += pLoopPlot->getFeatureProduction(m_aeBestBuild[iI], getTeam(), &pCity) * 2;
+							// note: the scale of iValue here is roughly 4x commerce per turn. So a boost of 40 would be signficant.
+							FAssert(pCity == this);
+						}
 						// make some minor adjustments to prioritize plots that are easy to access, and plots which aren't already improved.
 						if (iValue > 0)
 						{
@@ -8048,6 +8054,7 @@ void CvCityAI::AI_updateBestBuild()
 		// K-Mod. I've rearranged the following code. But kept most of the original functionality.
 		if (iBestUnworkedPlotValue > 0)
 		{
+			PROFILE("AI_updateBestBuild pruning phase");
 			for (int iI = 1; iI < NUM_CITY_PLOTS; iI++) // skip the city plot
 			{
 				CvPlot* pLoopPlot = plotCity(getX_INLINE(), getY_INLINE(), iI);
@@ -8060,7 +8067,7 @@ void CvCityAI::AI_updateBestBuild()
 					{
 						if (pLoopPlot->getImprovementType() == NO_IMPROVEMENT)
 						{
-							if (!pLoopPlot->isBeingWorked() && aiValues[iI] <= iBestUnworkedPlotValue && aiValues[iI] < 500)
+							if (!pLoopPlot->isBeingWorked() && aiValues[iI] <= iBestUnworkedPlotValue && aiValues[iI] < 400) // was 500. (reduced due to some rescaling)
 							{
 								m_aiBestBuildValue[iI] = 1;
 							}
