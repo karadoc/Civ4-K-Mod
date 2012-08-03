@@ -9726,6 +9726,12 @@ int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUp
 		}
 	}
 
+	// K-Mod. Count the 'extra yield' for financial civs. (Don't bother with golden-age bonuses.)
+	int iThreshold = GET_PLAYER(getOwnerINLINE()).getExtraYieldThreshold(eYield);
+	if (iThreshold > 0 && iYield >= iThreshold)
+		iYield += GC.getEXTRA_YIELD();
+	// K-Mod end
+
 	//return iYield;
 	return std::max(0, iYield); // K-Mod - so that it matches calculateYield()
 }
