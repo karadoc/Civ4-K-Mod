@@ -7158,12 +7158,12 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		iFoodMultiplier -= 8 + 4 * iFoodDifference;
 	}
 
-	if (iProductionTotal < 10)
+	/* if (iProductionTotal < 10)
 	{
 		iProductionMultiplier += (80 - 8 * iProductionTotal);
-	}
+	} */ // disabled by K-Mod
 	//int iProductionTarget = 1 + (std::min(getPopulation(), (iTargetSize * 3) / 5));
-	int iProductionTarget = 1 + std::max(getPopulation(), iTargetSize * 3 / 5); // K-Mod
+	int iProductionTarget = 1 + std::max(getPopulation(), iTargetSize * 4 / 5); // K-Mod
 
 	if (iProductionTotal < iProductionTarget)
 	{
@@ -7173,8 +7173,10 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 	// K-mod
 	if (kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0 || kPlayer.AI_getFlavorValue(FLAVOR_MILITARY) >= 10)
 	{
-		iProductionMultiplier *= 113 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) + kPlayer.AI_getFlavorValue(FLAVOR_MILITARY);
-		iProductionMultiplier /= 100;
+		/* iProductionMultiplier *= 113 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) + kPlayer.AI_getFlavorValue(FLAVOR_MILITARY);
+		iProductionMultiplier /= 100; */
+		iCommerceMultiplier *= 100;
+		iCommerceMultiplier /= 113 + 2 * kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) + kPlayer.AI_getFlavorValue(FLAVOR_MILITARY);
 	}
 	// K-Mod end
 
@@ -7183,7 +7185,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		if ((iBonusFoodDeficit + iHillFoodDeficit) > 8)
 		{
 			//probably a good candidate for a wonder pump
-			iProductionMultiplier += 40;
+			//iProductionMultiplier += 40; // disabled by K-Mod
 			iCommerceMultiplier += (kPlayer.AI_isFinancialTrouble()) ? 0 : -40;
 		}
 	}
@@ -7269,10 +7271,20 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 		iCommerceMultiplier -= 10; */
 		// K-Mod. Strategy_production is now more rare and specific than before
 		// so when the AI wants to use it, I think we can afford to emphasise a bit more strongly...
-		iProductionMultiplier += 25;
-		iCommerceMultiplier -= 20;
+		iProductionMultiplier += 10;
+		iCommerceMultiplier -= 30;
 		// K-Mod end
 	}
+
+	// K-Mod. experimental food value. (todo: remove the existing calculation above.)
+	// we need commerce & production from explicitly worked plots and specialists (but not from free specialists or from buildings etc.)
+	// similarly for food.
+	// we need to know how many jobs are being counted for those yield total above.. and we should weight the production & commerce like the calculation is done above.
+
+	//int iCommerceTotal = iProductionTotal; // (temp. iCommerceTotal doesn't exist...)
+	//iFoodMultiplier = (80 * iProductionTotal + 40 * iCommerceTotal) * (iFoodTotal + iFoodDifference) / std::max(1, iFoodTotal * iTargetSize * GC.getFOOD_CONSUMPTION_PER_POPULATION());
+
+	// K-Mod end
 
 	if (iFoodMultiplier < 100)
 	{
@@ -7492,20 +7504,36 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 			}
 		In our situation, we have iDesiredFoodChange ~= -iFoodDifference and aiDiffYields[0] == 2 * food change from the improvement.
 		That roughly means that
-		if iDesiredFoodChange > 0 && iDesiredFoodChange - aiDiffYields[0]/2 <= 0, or
-		if iDesiredFoodChange < -4 && iDesiredFoodChange - aiDiffYields[0]/2 >= -4
+		if iDesiredFoodChange > 0 or iDesiredFoodChange < -4
 		then the food multiplier will change.
 		We should try to preempt that change to prevent bestbuild from oscillating.
 		*/
 		int iCorrectedFoodPriority = iFoodPriority;
-		if (iDesiredFoodChange > 0 && iDesiredFoodChange - aiDiffYields[YIELD_FOOD]/2 <= 0)
+		if (aiDiffYields[YIELD_FOOD] > 0)
 		{
-			iCorrectedFoodPriority -= iDesiredFoodChange * 4; // undo the food priority increase.
+			// net food up, food priority down
+			if (-iDesiredFoodChange + aiDiffYields[YIELD_FOOD]/2 > 4)
+			{
+				iCorrectedFoodPriority -= 4 * (aiDiffYields[YIELD_FOOD]/2 - std::max(0, 4+iDesiredFoodChange)) + (-iDesiredFoodChange <= 4 ? 8 : 0);
+			}
+			if (-iDesiredFoodChange < 0)
+			{
+				iCorrectedFoodPriority -= 4 * std::min(iDesiredFoodChange, aiDiffYields[YIELD_FOOD]/2);
+			}
 		}
-		if (iDesiredFoodChange < -4 && iDesiredFoodChange - aiDiffYields[YIELD_FOOD]/2 >= -4)
+		else
 		{
-			iCorrectedFoodPriority += 8 + 4 * -iDesiredFoodChange; // undo the food priority decrease
+			// net food down, food priority up.
+			if (-iDesiredFoodChange > 4)
+			{
+				iCorrectedFoodPriority += 4 * std::min(-aiDiffYields[YIELD_FOOD]/2, -iDesiredFoodChange-4) + (-iDesiredFoodChange+aiDiffYields[YIELD_FOOD]/2 <= 4 ? 8 : 0);
+			}
+			if (-iDesiredFoodChange + aiDiffYields[YIELD_FOOD]/2 < 0)
+			{
+				iCorrectedFoodPriority += 4 * (-aiDiffYields[YIELD_FOOD]/2 - std::max(0, -iDesiredFoodChange));
+			}
 		}
+		FAssert(iCorrectedFoodPriority == iFoodPriority || (iCorrectedFoodPriority < iFoodPriority == aiDiffYields[YIELD_FOOD] > 0));
 		// This corrected priority isn't perfect, but I think it will be better than nothing.
 		// K-Mod end
 
