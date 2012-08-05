@@ -1518,6 +1518,7 @@ int CvCity::findPopulationRank() const
 {
 	if (!m_bPopulationRankValid)
 	{
+		/* original bts code
 		int iRank = 1;
 
 		int iLoop;
@@ -1533,7 +1534,27 @@ int CvCity::findPopulationRank() const
 
 		// shenanigans are to get around the const check
 		m_bPopulationRankValid = true;
-		m_iPopulationRank = iRank;
+		m_iPopulationRank = iRank; */
+		// K-Mod. Set all ranks at the same time.
+		const CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+		std::vector<std::pair<int, int> > city_scores;
+		int iLoop;
+		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
+		{
+			city_scores.push_back(std::make_pair(pLoopCity->getPopulation(), pLoopCity->getID()));
+		}
+		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		FAssert(city_scores.size() == kPlayer.getNumCities());
+		for (size_t i = 0; i < city_scores.size(); i++)
+		{
+			CvCity* pLoopCity = kPlayer.getCity(city_scores[i].second);
+			pLoopCity->m_iPopulationRank = i+1;
+			pLoopCity->m_bPopulationRankValid = true;
+			// (It's strange that this is allowed. Aren't these values protected or something?)
+		}
+		FAssert(m_bPopulationRankValid);
+		// K-Mod end
 	}
 
 	return m_iPopulationRank;
@@ -1544,6 +1565,7 @@ int CvCity::findBaseYieldRateRank(YieldTypes eYield) const
 {
 	if (!m_abBaseYieldRankValid[eYield])
 	{
+		/* original bts code
 		int iRate = getBaseYieldRate(eYield);
 
 		int iRank = 1;
@@ -1560,7 +1582,27 @@ int CvCity::findBaseYieldRateRank(YieldTypes eYield) const
 		}
 
 		m_abBaseYieldRankValid[eYield] = true;
-		m_aiBaseYieldRank[eYield] = iRank;
+		m_aiBaseYieldRank[eYield] = iRank; */
+		// K-Mod. Set all ranks at the same time.
+		const CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+		std::vector<std::pair<int, int> > city_scores;
+		int iLoop;
+		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
+		{
+			city_scores.push_back(std::make_pair(pLoopCity->getBaseYieldRate(eYield), pLoopCity->getID()));
+		}
+		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		FAssert(city_scores.size() == kPlayer.getNumCities());
+		for (size_t i = 0; i < city_scores.size(); i++)
+		{
+			CvCity* pLoopCity = kPlayer.getCity(city_scores[i].second);
+			pLoopCity->m_aiBaseYieldRank[eYield] = i+1;
+			pLoopCity->m_abBaseYieldRankValid[eYield] = true;
+			// (It's strange that this is allowed. Aren't these values protected or something?)
+		}
+		FAssert(m_abBaseYieldRankValid[eYield]);
+		// K-Mod end
 	}
 
 	return m_aiBaseYieldRank[eYield];
@@ -1571,6 +1613,7 @@ int CvCity::findYieldRateRank(YieldTypes eYield) const
 {
 	if (!m_abYieldRankValid[eYield])
 	{
+		/* original bts code
 		int iRate = getYieldRate(eYield);
 
 		int iRank = 1;
@@ -1587,7 +1630,27 @@ int CvCity::findYieldRateRank(YieldTypes eYield) const
 		}
 
 		m_abYieldRankValid[eYield] = true;
-		m_aiYieldRank[eYield] = iRank;
+		m_aiYieldRank[eYield] = iRank; */
+		// K-Mod. Set all ranks at the same time.
+		const CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+		std::vector<std::pair<int, int> > city_scores;
+		int iLoop;
+		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
+		{
+			city_scores.push_back(std::make_pair(pLoopCity->getYieldRate(eYield), pLoopCity->getID()));
+		}
+		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		FAssert(city_scores.size() == kPlayer.getNumCities());
+		for (size_t i = 0; i < city_scores.size(); i++)
+		{
+			CvCity* pLoopCity = kPlayer.getCity(city_scores[i].second);
+			pLoopCity->m_aiYieldRank[eYield] = i+1;
+			pLoopCity->m_abYieldRankValid[eYield] = true;
+			// (It's strange that this is allowed. Aren't these values protected or something?)
+		}
+		FAssert(m_abYieldRankValid[eYield]);
+		// K-Mod end
 	}
 
 	return m_aiYieldRank[eYield];
@@ -1598,6 +1661,7 @@ int CvCity::findCommerceRateRank(CommerceTypes eCommerce) const
 {
 	if (!m_abCommerceRankValid[eCommerce])
 	{
+		/* original bts code
 		int iRate = getCommerceRateTimes100(eCommerce);
 
 		int iRank = 1;
@@ -1614,7 +1678,27 @@ int CvCity::findCommerceRateRank(CommerceTypes eCommerce) const
 		}
 
 		m_abCommerceRankValid[eCommerce] = true;
-		m_aiCommerceRank[eCommerce] = iRank;
+		m_aiCommerceRank[eCommerce] = iRank; */
+		// K-Mod. Set all ranks at the same time.
+		const CvPlayer& kPlayer = GET_PLAYER(getOwnerINLINE());
+
+		std::vector<std::pair<int, int> > city_scores;
+		int iLoop;
+		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
+		{
+			city_scores.push_back(std::make_pair(pLoopCity->getCommerceRateTimes100(eCommerce), pLoopCity->getID()));
+		}
+		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		FAssert(city_scores.size() == kPlayer.getNumCities());
+		for (size_t i = 0; i < city_scores.size(); i++)
+		{
+			CvCity* pLoopCity = kPlayer.getCity(city_scores[i].second);
+			pLoopCity->m_aiCommerceRank[eCommerce] = i+1;
+			pLoopCity->m_abCommerceRankValid[eCommerce] = true;
+			// (It's strange that this is allowed. Aren't these values protected or something?)
+		}
+		FAssert(m_abCommerceRankValid[eCommerce]);
+		// K-Mod end
 	}
 
 	return m_aiCommerceRank[eCommerce];
