@@ -9678,6 +9678,14 @@ int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUp
 	iYield += calculateNatureYield(eYield, getTeam(), bIgnoreFeature);
 
 	ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
+	// K-Mod. if the build doesn't have its own improvement - use the existing one!
+	if (eImprovement == NO_IMPROVEMENT)
+	{
+		eImprovement = getImprovementType();
+		// note: unfortunately this won't account for the fact that some builds will destroy the existing improvement without creating a new one.
+		// eg. chopping a forest which has a lumbermill. I'm sorry about that. I may correct it later.
+	}
+	// K-Mod end
 
 	if (eImprovement != NO_IMPROVEMENT)
 	{
@@ -9712,7 +9720,7 @@ int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUp
 	RouteTypes eRoute = (RouteTypes)GC.getBuildInfo(eBuild).getRoute();
 	if (eRoute != NO_ROUTE)
 	{
-		eImprovement = getImprovementType();
+		//eImprovement = getImprovementType(); // disabled by K-Mod
 		if (eImprovement != NO_IMPROVEMENT)
 		{
 			for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
