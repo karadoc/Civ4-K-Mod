@@ -1554,7 +1554,21 @@ void CvGame::normalizeAddFoodBonuses()
 											}
 											else
 											{
-												iFoodBonus += 3;
+												//iFoodBonus += 3;
+												// K-Mod
+												int iNaturalFood = pLoopPlot->calculateBestNatureYield(YIELD_FOOD, kLoopPlayer.getTeam());
+												int iHighFoodThreshold = 2*iFoodPerPop; // ie. 4 food.
+												bool bHighFood = iNaturalFood + 1 >= iHighFoodThreshold; // (+1 just as a shortcut to save time for obvious cases.)
+
+												for (ImprovementTypes eImp = (ImprovementTypes)0; !bHighFood && eImp < GC.getNumImprovementInfos(); eImp=(ImprovementTypes)(eImp+1))
+												{
+													if (GC.getImprovementInfo(eImp).isImprovementBonusTrade((BonusTypes)iK))
+													{
+														bHighFood = iNaturalFood + pLoopPlot->calculateImprovementYieldChange(eImp, YIELD_FOOD, (PlayerTypes)iI, false, false) >= iHighFoodThreshold;
+													}
+												}
+												iFoodBonus += bHighFood ? 3 : 2;
+												// K-Mod end
 											}
 											break;
 										}
