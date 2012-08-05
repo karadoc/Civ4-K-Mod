@@ -313,7 +313,7 @@ int CvTeamAI::AI_countMilitaryWeight(CvArea* pArea) const
 	return iCount;
 }
 
-// K-Mod. return the total production of the team, estimated by averaging over the last few turns of the productivity graph.
+// K-Mod. return the total yield of the team, estimated by averaging over the last few turns of the yield's history graph.
 int CvTeamAI::AI_estimateTotalYieldRate(YieldTypes eYield) const
 {
 	PROFILE_FUNC();
@@ -1625,28 +1625,6 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			iCommitmentPerMil /= std::max(1, iEnemyTotalProduction + 6 * iOurTotalProduction);
 		}
 
-		// Adjust for overseas wars
-		if (!AI_hasSharedPrimaryArea(eTarget))
-		{
-			int iOurNavy = getTypicalUnitValue(NO_UNITAI, DOMAIN_SEA);
-			int iEnemyNavy = kTargetMasterTeam.getTypicalUnitValue(NO_UNITAI, DOMAIN_SEA);
-
-			// rescale (unused)
-			/* {
-				int x = std::max(2, iOurNavy + iEnemyNavy) / 2;
-				iOurNavy = iOurNavy * 100 / x;
-				iEnemyNavy = iEnemyNavy * 100 / x;
-			} */
-
-			if (bTotalWar)
-			{
-				iCommitmentPerMil = iCommitmentPerMil * (4*iOurNavy + 5*iEnemyNavy) / (8*iOurNavy + 1*iEnemyNavy);
-				iCommitmentPerMil = iCommitmentPerMil * 5/4;
-			}
-			else
-				iCommitmentPerMil = iCommitmentPerMil * (1*iOurNavy + 4*iEnemyNavy) / (4*iOurNavy + 1*iEnemyNavy);
-		}
-
 		// scale based on the relative strengths of our units
 		{
 			int iEnemyUnit = std::max(30, kTargetMasterTeam.getTypicalUnitValue(NO_UNITAI, DOMAIN_LAND));
@@ -1656,6 +1634,29 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			int iLowScale = 10 + 90 * std::min(iOurAttackUnit, iOurDefenceUnit) / iEnemyUnit;
 
 			iCommitmentPerMil = std::min(iCommitmentPerMil, 300) * 100 / iHighScale + std::max(0, iCommitmentPerMil - 300) * 100 / iLowScale;
+
+			// Adjust for overseas wars
+			if (!AI_hasSharedPrimaryArea(eTarget))
+			{
+				int iOurNavy = getTypicalUnitValue(NO_UNITAI, DOMAIN_SEA);
+				int iEnemyNavy = std::max(1, kTargetMasterTeam.getTypicalUnitValue(NO_UNITAI, DOMAIN_SEA)); // (using max here to avoid div-by-zero later on)
+
+				// rescale (unused)
+				/* {
+					int x = std::max(2, iOurNavy + iEnemyNavy) / 2;
+					iOurNavy = iOurNavy * 100 / x;
+					iEnemyNavy = iEnemyNavy * 100 / x;
+				} */
+
+				if (bTotalWar)
+				{
+					iCommitmentPerMil = iCommitmentPerMil * (4*iOurNavy + 5*iEnemyNavy) / (8*iOurNavy + 1*iEnemyNavy);
+					//iCommitmentPerMil = iCommitmentPerMil * 5/4;
+					iCommitmentPerMil = iCommitmentPerMil * 200 / std::min(200, iLowScale + iHighScale);
+				}
+				else
+					iCommitmentPerMil = iCommitmentPerMil * (1*iOurNavy + 4*iEnemyNavy) / (4*iOurNavy + 1*iEnemyNavy);
+			}
 		}
 
 		// increase the cost for distant targets...
