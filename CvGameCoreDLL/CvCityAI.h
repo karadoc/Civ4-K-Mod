@@ -102,10 +102,11 @@ public:
 	int AI_totalBestBuildValue(CvArea* pArea);
 
 	int AI_clearFeatureValue(int iIndex);
-	// K-Mod note: some of the following functions were originally created by jdog5000 for debugging BBAI. I've adopted them and changed them.
+	// K-Mod
+	// note: some of the following functions existed in BBAI for debugging purposes. But the new K-Mod versions are an integral part of the AI.
 	bool AI_isGoodPlot(int iPlot, int* aiYields = 0) const;
-	int AI_getGoodTileCount() const;
-	int AI_countWorkedPoorTiles() const;
+	int AI_countGoodPlots() const;
+	int AI_countWorkedPoorPlots() const;
 	int AI_getTargetPopulation() const;
 	void AI_getYieldMultipliers(int &iFoodMultiplier, int &iProductionMultiplier, int &iCommerceMultiplier, int &iDesiredFoodChange) const;
 	int AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovement, int iFoodPriority, int iProductionPriority, int iCommercePriority, int iDesiredFoodChange, int iClearFeatureValue = 0, bool bEmphasizeIrrigation = false, BuildTypes* peBestBuild = 0) const;

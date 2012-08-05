@@ -6739,7 +6739,7 @@ bool CvCityAI::AI_isGoodPlot(int iPlot, int* aiYields) const
 // K-Mod end
 
 // K-Mod rewriten to use my new function - AI_isGoodPlot.
-int CvCityAI::AI_getGoodTileCount() const
+int CvCityAI::AI_countGoodPlots() const
 {
 	int iCount = 0;
 
@@ -6750,7 +6750,7 @@ int CvCityAI::AI_getGoodTileCount() const
 	return iCount;
 }
 
-int CvCityAI::AI_countWorkedPoorTiles() const
+int CvCityAI::AI_countWorkedPoorPlots() const
 {
 	int iCount = 0;
 
@@ -6765,7 +6765,7 @@ int CvCityAI::AI_countWorkedPoorTiles() const
 int CvCityAI::AI_getTargetPopulation() const
 {
 	int iHealth = goodHealth() - badHealth() + getEspionageHealthCounter();
-	int iTargetSize = AI_getGoodTileCount();
+	int iTargetSize = AI_countGoodPlots();
 	if (GET_PLAYER(getOwnerINLINE()).AI_getFlavorValue(FLAVOR_GROWTH) > 0)
 		iTargetSize += iTargetSize / 6; // specialists.
 
@@ -6773,7 +6773,7 @@ int CvCityAI::AI_getTargetPopulation() const
 
 	if (iTargetSize < getPopulation())
 	{
-		iTargetSize = std::max(iTargetSize, getPopulation() - AI_countWorkedPoorTiles() + std::min(0, iHealth/2));
+		iTargetSize = std::max(iTargetSize, getPopulation() - AI_countWorkedPoorPlots() + std::min(0, iHealth/2));
 	}
 
 	iTargetSize = std::min(iTargetSize, 1 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
@@ -6993,7 +6993,7 @@ void CvCityAI::AI_getYieldMultipliers( int &iFoodMultiplier, int &iProductionMul
 
 	if (iTargetSize < getPopulation())
 	{
-		iTargetSize = std::max(iTargetSize, getPopulation() - AI_countWorkedPoorTiles() + std::min(0, iHealth/2));
+		iTargetSize = std::max(iTargetSize, getPopulation() - AI_countWorkedPoorPlots() + std::min(0, iHealth/2));
 	}
 
 	iTargetSize = std::min(iTargetSize, 1 + getPopulation()+(happyLevel()-unhappyLevel()+getEspionageHappinessCounter()));
@@ -8110,14 +8110,14 @@ void CvCityAI::AI_doDraft(bool bForce)
 					{
 						bWait = false;
 					}
-					else if( AI_countWorkedPoorTiles() >= 1 )
+					else if( AI_countWorkedPoorPlots() >= 1 )
 					{
 						bWait = false;
 					}*/
 
 					// K-Mod: full out defensive indeed. We've already checked for happiness, and we're desperate for units.
 					// Just beware of happiness sources that might expire - such as military happiness.
-					if (getConscriptAngerTimer() == 0 || AI_countWorkedPoorTiles() > 0)
+					if (getConscriptAngerTimer() == 0 || AI_countWorkedPoorPlots() > 0)
 						bWait = false;
 				}
 
@@ -8142,9 +8142,9 @@ void CvCityAI::AI_doDraft(bool bForce)
 				if( bWait )
 				{
 					// Non-critical, only burn population if population is not worth much
-					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorTiles() > 1))
+					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorPlots() > 1))
 					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) // K-Mod
-						&& (bGoodValue || AI_countWorkedPoorTiles() > 0 || foodDifference()+getFood() < 0 || (foodDifference() < 0 && healthRate() <= -4)))
+						&& (bGoodValue || AI_countWorkedPoorPlots() > 0 || foodDifference()+getFood() < 0 || (foodDifference() < 0 && healthRate() <= -4)))
 					{
 						//if( (getPopulation() >= std::max(5, getHighestPopulation() - 1)) )
 						// We're working poor tiles. What more do you want?
@@ -8156,7 +8156,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 
 				if( !bWait && gCityLogLevel >= 2 )
 				{
-					logBBAI("      City %S (size %d, highest %d) chooses to conscript with danger: %d, land war: %d, poor tiles: %d%s", getName().GetCString(), getPopulation(), getHighestPopulation(), bDanger, bLandWar, AI_countWorkedPoorTiles(), bGoodValue ? ", good value" : "");
+					logBBAI("      City %S (size %d, highest %d) chooses to conscript with danger: %d, land war: %d, poor tiles: %d%s", getName().GetCString(), getPopulation(), getHighestPopulation(), bDanger, bLandWar, AI_countWorkedPoorPlots(), bGoodValue ? ", good value" : "");
 				}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
