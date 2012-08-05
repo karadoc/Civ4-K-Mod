@@ -102,7 +102,8 @@ public:
 	int AI_totalBestBuildValue(CvArea* pArea);
 
 	int AI_clearFeatureValue(int iIndex);
-	// K-Mod note: the following functions were originally created by jdog5000 for debugging BBAI. I've adopted them and changed them.
+	// K-Mod note: some of the following functions were originally created by jdog5000 for debugging BBAI. I've adopted them and changed them.
+	bool AI_isGoodPlot(int iPlot, int* aiYields = 0) const;
 	int AI_getGoodTileCount() const;
 	int AI_countWorkedPoorTiles() const;
 	int AI_getTargetPopulation() const;

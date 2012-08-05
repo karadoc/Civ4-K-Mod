@@ -6695,158 +6695,70 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 	return -iValue;
 }
 
-// K-Mod, based on ideas from BBAI (this code is currently duplicated in AI_getYieldMultipliers and AI_countWorkedPoorTiles)
-int CvCityAI::AI_getGoodTileCount() const
+// K-Mod. if aiYields == 0, then it will be calculated based on the 'best build' of the plot.
+bool CvCityAI::AI_isGoodPlot(int iPlot, int* aiYields) const
 {
-	int iGoodTileCount = 0;
-	int aiFinalYields[NUM_YIELD_TYPES];
+	int tempArray[NUM_YIELD_TYPES];
 
-	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
+	FAssert(iPlot != CITY_HOME_PLOT); // it doesn't matter if this assert is wrong. I just don't expect to ever want this for the center plot.
+	CvPlot* pPlot = getCityIndexPlot(iPlot);
 
-	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	if (!pPlot || pPlot->getWorkingCity() != this)
 	{
-		if (iI != CITY_HOME_PLOT)
+		FAssertMsg(aiYields == 0, "yields specified for non-existent plot");
+		return false;
+	}
+
+	if (aiYields == 0)
+	{
+		aiYields = tempArray;
+
+		BuildTypes eBuild = NO_BUILD;
+		if (m_aeBestBuild[iPlot] != NO_BUILD && m_aiBestBuildValue[iPlot] > 50)
+			eBuild = m_aeBestBuild[iPlot];
+
+		if (eBuild != NO_BUILD)
 		{
-			CvPlot* pLoopPlot = getCityIndexPlot(iI);
-
-			if (NULL != pLoopPlot && pLoopPlot->getWorkingCity() == this)
+			for (YieldTypes y = (YieldTypes)0; y < NUM_YIELD_TYPES; y=(YieldTypes)(y+1))
 			{
-				int iWorkerCount = (kPlayer.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD));
-
-				bool bUseBaseValue = true;
-				//If the tile has a BestBuild and is being improved, then use the BestBuild
-				//determine if the tile is being improved.
-				if (iWorkerCount > 0)
-				{
-					BuildTypes eBuild = NO_BUILD;
-					if (m_aeBestBuild[iI] != NO_BUILD && m_aiBestBuildValue[iI] > 0)
-					{
-						eBuild = m_aeBestBuild[iI];
-					}
-
-					if( eBuild != NO_BUILD )
-					{
-						ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
-						if (eImprovement != NO_IMPROVEMENT)
-						{
-							bool bIgnoreFeature = false;
-							if (pLoopPlot->getFeatureType() != NO_FEATURE)
-							{
-								if (GC.getBuildInfo(eBuild).isFeatureRemove(pLoopPlot->getFeatureType()))
-								{
-									bIgnoreFeature = true;
-								}
-							}
-
-							bUseBaseValue = false;
-							for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-							{
-								aiFinalYields[iJ] = (pLoopPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature) + pLoopPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
-							}
-						}
-					}
-				}
-
-				//Otherwise use the base value.
-				if (bUseBaseValue)
-				{
-					for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-					{
-						//by default we'll use the current value
-						aiFinalYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
-						if (pLoopPlot->getFeatureType() != NO_FEATURE)
-						{
-							aiFinalYields[iJ] += std::max(0, -GC.getFeatureInfo(pLoopPlot->getFeatureType()).getYieldChange((YieldTypes)iJ));
-						}
-					}
-				}
-
-				if (aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 > 27 || // prod was *6
-					(!pLoopPlot->isWater() && aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 > 21)) // was *6
-				{
-					iGoodTileCount++;
-				}
+				aiYields[y] = pPlot->getYieldWithBuild(eBuild, y, true);
+			}
+		}
+		else
+		{
+			for (YieldTypes y = (YieldTypes)0; y < NUM_YIELD_TYPES; y=(YieldTypes)(y+1))
+			{
+				aiYields[y] = pPlot->getYield(y);
 			}
 		}
 	}
-	return iGoodTileCount;
+
+	FAssert((1+GC.getFOOD_CONSUMPTION_PER_POPULATION())*10 > 27); // the numbers used here are arbitrary; and I want to make sure high food tiles count as 'good'.
+	return aiYields[YIELD_FOOD]*10 + aiYields[YIELD_PRODUCTION]*7 + aiYields[YIELD_COMMERCE]*4 > (pPlot->isWater() ? 27 : 21);
+}
+// K-Mod end
+
+// K-Mod rewriten to use my new function - AI_isGoodPlot.
+int CvCityAI::AI_getGoodTileCount() const
+{
+	int iCount = 0;
+
+	for (int i = 1; i < NUM_CITY_PLOTS; i++)
+	{
+		iCount += AI_isGoodPlot(i) ? 1 : 0;
+	}
+	return iCount;
 }
 
 int CvCityAI::AI_countWorkedPoorTiles() const
 {
-	int iWorkedPoorTileCount = 0;
-	int aiFinalYields[NUM_YIELD_TYPES];
+	int iCount = 0;
 
-	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
-
-	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	for (int i = 1; i < NUM_CITY_PLOTS; i++)
 	{
-		if (iI != CITY_HOME_PLOT)
-		{
-			CvPlot* pLoopPlot = getCityIndexPlot(iI);
-
-			if (NULL != pLoopPlot && pLoopPlot->getWorkingCity() == this)
-			{
-				int iWorkerCount = (kPlayer.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD));
-
-				bool bUseBaseValue = true;
-				//If the tile has a BestBuild and is being improved, then use the BestBuild
-				//determine if the tile is being improved.
-				if (iWorkerCount > 0)
-				{
-					BuildTypes eBuild = NO_BUILD;
-					if (m_aeBestBuild[iI] != NO_BUILD && m_aiBestBuildValue[iI] > 0)
-					{
-						eBuild = m_aeBestBuild[iI];
-					}
-
-					if( eBuild != NO_BUILD )
-					{
-						ImprovementTypes eImprovement = (ImprovementTypes)GC.getBuildInfo(eBuild).getImprovement();
-						if (eImprovement != NO_IMPROVEMENT)
-						{
-							bool bIgnoreFeature = false;
-							if (pLoopPlot->getFeatureType() != NO_FEATURE)
-							{
-								if (GC.getBuildInfo(eBuild).isFeatureRemove(pLoopPlot->getFeatureType()))
-								{
-									bIgnoreFeature = true;
-								}
-							}
-
-							bUseBaseValue = false;
-							for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-							{
-								aiFinalYields[iJ] = (pLoopPlot->calculateNatureYield(((YieldTypes)iJ), getTeam(), bIgnoreFeature) + pLoopPlot->calculateImprovementYieldChange(eImprovement, ((YieldTypes)iJ), getOwnerINLINE(), false));
-							}
-						}
-					}
-				}
-
-				//Otherwise use the base value.
-				if (bUseBaseValue)
-				{
-					for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
-					{
-						//by default we'll use the current value
-						aiFinalYields[iJ] = pLoopPlot->getYield((YieldTypes)iJ);
-						if (pLoopPlot->getFeatureType() != NO_FEATURE)
-						{
-							aiFinalYields[iJ] += std::max(0, -GC.getFeatureInfo(pLoopPlot->getFeatureType()).getYieldChange((YieldTypes)iJ));
-						}
-					}
-				}
-				
-				if (pLoopPlot->isBeingWorked() &&
-					aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 <= 27 && //prod was *6
-					(pLoopPlot->isWater() || aiFinalYields[YIELD_FOOD]*10 + aiFinalYields[YIELD_PRODUCTION]*7 + aiFinalYields[YIELD_COMMERCE]*4 <= 21))
-				{
-					iWorkedPoorTileCount++;
-				}
-			}
-		}
+		iCount += isWorkingPlot(i) && !AI_isGoodPlot(i) ? 1 : 0;
 	}
-	return iWorkedPoorTileCount;
+	return iCount;
 }
 
 // K-Mod, based on BBAI ideas
