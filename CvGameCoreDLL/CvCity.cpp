@@ -1542,9 +1542,10 @@ int CvCity::findPopulationRank() const
 		int iLoop;
 		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
 		{
-			city_scores.push_back(std::make_pair(pLoopCity->getPopulation(), pLoopCity->getID()));
+			city_scores.push_back(std::make_pair(-pLoopCity->getPopulation(), pLoopCity->getID()));
 		}
-		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		// note: we are sorting by minimum of _negative_ score, and then by min cityID.
+		std::sort(city_scores.begin(), city_scores.end());
 		FAssert(city_scores.size() == kPlayer.getNumCities());
 		for (size_t i = 0; i < city_scores.size(); i++)
 		{
@@ -1590,9 +1591,10 @@ int CvCity::findBaseYieldRateRank(YieldTypes eYield) const
 		int iLoop;
 		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
 		{
-			city_scores.push_back(std::make_pair(pLoopCity->getBaseYieldRate(eYield), pLoopCity->getID()));
+			city_scores.push_back(std::make_pair(-pLoopCity->getBaseYieldRate(eYield), pLoopCity->getID()));
 		}
-		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		// note: we are sorting by minimum of _negative_ score, and then by min cityID.
+		std::sort(city_scores.begin(), city_scores.end());
 		FAssert(city_scores.size() == kPlayer.getNumCities());
 		for (size_t i = 0; i < city_scores.size(); i++)
 		{
@@ -1638,9 +1640,10 @@ int CvCity::findYieldRateRank(YieldTypes eYield) const
 		int iLoop;
 		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
 		{
-			city_scores.push_back(std::make_pair(pLoopCity->getYieldRate(eYield), pLoopCity->getID()));
+			city_scores.push_back(std::make_pair(-pLoopCity->getYieldRate(eYield), pLoopCity->getID()));
 		}
-		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		// note: we are sorting by minimum of _negative_ score, and then by min cityID.
+		std::sort(city_scores.begin(), city_scores.end());
 		FAssert(city_scores.size() == kPlayer.getNumCities());
 		for (size_t i = 0; i < city_scores.size(); i++)
 		{
@@ -1686,9 +1689,10 @@ int CvCity::findCommerceRateRank(CommerceTypes eCommerce) const
 		int iLoop;
 		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kPlayer.nextCity(&iLoop))
 		{
-			city_scores.push_back(std::make_pair(pLoopCity->getCommerceRateTimes100(eCommerce), pLoopCity->getID()));
+			city_scores.push_back(std::make_pair(-pLoopCity->getCommerceRateTimes100(eCommerce), pLoopCity->getID()));
 		}
-		std::sort(city_scores.begin(), city_scores.end(), std::greater<std::pair<int, int> >());
+		// note: we are sorting by minimum of _negative_ score, and then by min cityID.
+		std::sort(city_scores.begin(), city_scores.end());
 		FAssert(city_scores.size() == kPlayer.getNumCities());
 		for (size_t i = 0; i < city_scores.size(); i++)
 		{
