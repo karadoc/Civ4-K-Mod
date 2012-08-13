@@ -278,11 +278,21 @@ void CvCityAI::AI_assignWorkingPlots()
 		}
 
 		//if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
-		if (bIsSpecialistForced && (!isHuman() || isCitizensAutomated()) && getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
+		if (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
 		{
 			setSpecialistCount(((SpecialistTypes)iI), iForcedSpecialistCount);
 		}
 	}
+	// K-Mod. If we have forced specialists, then we need to clear away all specialists - because otherwise AI_juggleCitizens won't necessarily respect the force correctly.
+	if (bIsSpecialistForced && isCitizensAutomated())
+	{
+		FAssert(isHuman());
+		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i=(SpecialistTypes)(i+1))
+		{
+			setSpecialistCount(i, getForceSpecialistCount(i));
+		}
+	}
+	// K-Mod end
 
 	// if we have more specialists of any type than this city can have, reduce to the max
 	for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
