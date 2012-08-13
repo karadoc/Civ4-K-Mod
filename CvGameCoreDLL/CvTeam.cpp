@@ -6190,7 +6190,8 @@ void CvTeam::testCircumnavigated()
 
 	GC.getGameINLINE().makeCircumnavigated();
 
-	if (GC.getGameINLINE().getElapsedGameTurns() > 0)
+	//if (GC.getGameINLINE().getElapsedGameTurns() > 0)
+	if (GC.getGameINLINE().getElapsedGameTurns() > 1) // K-Mod (due to changes in when CvTeam::doTurn is called)
 	{
 		if (GC.getDefineINT("CIRCUMNAVIGATE_FREE_MOVES") != 0)
 		{
