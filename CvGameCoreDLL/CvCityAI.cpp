@@ -6805,6 +6805,7 @@ void CvCityAI::AI_getYieldMultipliers(int &iFoodMultiplier, int &iProductionMult
 	int aiUnworkedYield[NUM_YIELD_TYPES] = {};
 	int aiWorkedYield[NUM_YIELD_TYPES] = {};
 	int iUnworkedPlots = 0;
+	int iWorkedPlots = 0;
 
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
@@ -6853,6 +6854,8 @@ void CvCityAI::AI_getYieldMultipliers(int &iFoodMultiplier, int &iProductionMult
 		{
 			for (YieldTypes y = (YieldTypes)0; y < NUM_YIELD_TYPES; y=(YieldTypes)(y+1))
 				aiWorkedYield[y] += aiPlotYields[y];
+
+			iWorkedPlots++;
 		}
 	}
 	// I'd like to use AI_getTargetPopulation here, to avoid code duplication, but that would result in us doing a bunch of unneccessary recalculations.
@@ -7035,13 +7038,19 @@ void CvCityAI::AI_getYieldMultipliers(int &iFoodMultiplier, int &iProductionMult
 	//iFoodMultiplier = (80 * iProduction + 40 * iCommerce) / (food needed for jobs)  * (Food needed for jobs + growth) / (food have total)
 	//iFoodMultiplier = (80 * iProductionMultiplier * iProductionTotal + 40 * iCommerceMultiplier * iCommerceTotal) * (iFoodTotal + iDesiredFoodChange) / std::max(1, 100 * iTargetSize * GC.getFOOD_CONSUMPTION_PER_POPULATION() * iFoodTotal);
 
-	iFoodMultiplier = 80 * iProductionMultiplier * (aiUnworkedYield[YIELD_PRODUCTION] + aiWorkedYield[YIELD_PRODUCTION]) * iTargetSize;
-	iFoodMultiplier += 40 * iCommerceMultiplier * (aiUnworkedYield[YIELD_COMMERCE] + aiWorkedYield[YIELD_COMMERCE]) * iTargetSize;
-	iFoodMultiplier = std::max(iFoodMultiplier, 200); // (a minimum yield value for small cities.)
+	// emphasise the yield that we are working, so that the weakest of the 'good' plots don't drag down the average quite so much.
 	// note: the multipliers on production and commerce should match the numbers used in AI_getImprovementValue.
-	iFoodMultiplier /= 100 * std::max(1, iTargetSize + iUnworkedPlots);
+	iFoodMultiplier = 80 * iProductionMultiplier * (aiUnworkedYield[YIELD_PRODUCTION] + aiWorkedYield[YIELD_PRODUCTION] * 2) * (iUnworkedPlots + iWorkedPlots);
+	iFoodMultiplier += 40 * iCommerceMultiplier * (aiUnworkedYield[YIELD_COMMERCE] + aiWorkedYield[YIELD_COMMERCE] * 2) * (iUnworkedPlots + iWorkedPlots);
+	iFoodMultiplier /= 100 * std::max(1, iUnworkedPlots + 2*iWorkedPlots);
+	iFoodMultiplier += 160 * iDesiredFoodChange;
+	iFoodMultiplier = std::max(iFoodMultiplier, 200); // (a minimum yield value for small cities.)
+
+	//iFoodMultiplier *= iTargetSize;
+	//iFoodMultiplier /= std::max(iTargetSize, getPopulation() + iUnworkedPlots - std::max(0, iDesiredFoodChange));
+
 	iFoodMultiplier *= (iFoodTotal + iDesiredFoodChange);
-	iFoodMultiplier /= std::max(1, (iTargetSize-iSpecialistCount) * GC.getFOOD_CONSUMPTION_PER_POPULATION() * iFoodTotal);
+	iFoodMultiplier /= std::max(1, (iUnworkedPlots + iWorkedPlots) * GC.getFOOD_CONSUMPTION_PER_POPULATION() * (iFoodTotal-iExtraFoodForGrowth));
 
 	// Note: this food multiplier calculation still doesn't account for possible food yield multipliers. Sorry.
 
@@ -7250,7 +7259,7 @@ int CvCityAI::AI_getImprovementValue(CvPlot* pPlot, ImprovementTypes eImprovemen
 		So I'll just use a very rough approximation. Hopefully it will be better than nothing.
 		*/
 		int iCorrectedFoodPriority = iFoodPriority;
-		if (aiDiffYields[YIELD_FOOD])
+		if (aiDiffYields[YIELD_FOOD] && isWorkingPlot(pPlot))
 		{
 			int iTotalFood = 16 * GC.getFOOD_CONSUMPTION_PER_POPULATION();
 			// 16 is arbitrary. It would be possible to get something better using targetPop and so on, but that would be slower...
@@ -7625,46 +7634,45 @@ void CvCityAI::AI_updateBestBuild()
 				}
 
 				// K-Mod, make some adjustments to our yield weights based on our new bestbuild
-				if (m_aeBestBuild[iI] != eLastBestBuildType)
+				if (m_aeBestBuild[iI] != eLastBestBuildType) // [really we want (isWorking || was good plot), but that's harder and more expensive...]
 				{
-					// its a new best-build, so lets adjust our multiplier values.
-					// This adjustment is rough, but better than nothing. (at least, I hope so...)
-					int iDelta;
-
-					// food
-					iDelta =   m_aeBestBuild[iI] == NO_BUILD ? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_FOOD, true); // new
-					iDelta -= eLastBestBuildType == NO_BUILD ? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_FOOD, true); // old
-					if (iDelta != 0)
+					if (isWorkingPlot(iI)) // [or was 'good plot' with previous build]
 					{
-						int iTotalFood = 16 * GC.getFOOD_CONSUMPTION_PER_POPULATION();
-						iFoodMultiplier *= iTotalFood - iDelta;
-						iFoodMultiplier /= std::max(1, iTotalFood);
-						// cf. adjustment in AI_getImprovementValue.
+						// its a new best-build, so lets adjust our multiplier values.
+						// This adjustment is rough, but better than nothing. (at least, I hope so...)
+						// (The most accurate way to do this would be to use AI_getYieldMultipliers; but I think that would be too slow.)
+						int iDelta;
 
-						iDesiredFoodChange -= iDelta;
-					}
+						// food
+						iDelta =   m_aeBestBuild[iI] == NO_BUILD ? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_FOOD, true); // new
+						iDelta -= eLastBestBuildType == NO_BUILD ? pLoopPlot->getYield(YIELD_FOOD) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_FOOD, true); // old
+						if (iDelta != 0)
+						{
+							int iTotalFood = 16 * GC.getFOOD_CONSUMPTION_PER_POPULATION();
+							iFoodMultiplier *= iTotalFood - iDelta;
+							iFoodMultiplier /= std::max(1, iTotalFood);
+							// cf. adjustment in AI_getImprovementValue.
 
-					// production
-					iDelta =   m_aeBestBuild[iI] == NO_BUILD ? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_PRODUCTION, true); // new
-					iDelta -= eLastBestBuildType == NO_BUILD ? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_PRODUCTION, true); // old
-					if (iDelta != 0)
-					{
-						/* original K-Mod code... 
-						if (iProductionTotal < 10)
-						{
-							iProductionMultiplier -= 8 * std::min(iDelta, 10-iProductionTotal);
-							// cf. iProductionMultiplier += (80 - 8 * iProductionTotal);
+							iDesiredFoodChange -= iDelta;
 						}
-						
-						if (iProductionTotal < iProductionTarget)
+
+						// production
+						iDelta =   m_aeBestBuild[iI] == NO_BUILD ? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(m_aeBestBuild[iI], YIELD_PRODUCTION, true); // new
+						iDelta -= eLastBestBuildType == NO_BUILD ? pLoopPlot->getYield(YIELD_PRODUCTION) : pLoopPlot->getYieldWithBuild(eLastBestBuildType, YIELD_PRODUCTION, true); // old
+						if (iDelta != 0)
 						{
-							iProductionMultiplier -= 8 * std::min(iDelta, iProductionTarget - iProductionTotal);
-							// cf. iProductionMultiplier += 8 * (iProductionTarget - iProductionTotal);
+							int iProductionTotal = getBaseYieldRate(YIELD_PRODUCTION);
+							int iProductionTarget = 1 + getPopulation();
+							// note: the true values depend on unworked plots and so on. this is just a rough approximation.
+							if (iProductionTotal < iProductionTarget)
+							{
+								iProductionMultiplier -= 6 * std::min(iDelta, iProductionTarget - iProductionTotal);
+								// cf. iProductionMultiplier += 8 * (iProductionTarget - iProductionTotal);
+							}
+							// iProductionTotal += iDelta;
 						}
-						iProductionTotal += iDelta;*/
-						iProductionMultiplier -= 8 * iDelta;
+						// Happiness modifers.. maybe I'll do this later, after testing etc.
 					}
-					// Happiness modifers.. maybe I'll do this later, after testing etc.
 
 					// since best-build has changed, cancel all current build missions on this plot
 					if (eLastBestBuildType != NO_BUILD)
@@ -7680,26 +7688,6 @@ void CvCityAI::AI_updateBestBuild()
 						}
 					}
 				}
-				// K-Mod end
-
-				// K-Mod
-				//if (iWorkerCount > 0)
-				/*{
-					CvUnit* pLoopUnit;
-					CLLNode<IDInfo>* pUnitNode = pLoopPlot->headUnitNode();
-
-					while (pUnitNode != NULL)
-					{
-						pLoopUnit = ::getUnit(pUnitNode->m_data);
-						pUnitNode = pLoopPlot->nextUnitNode(pUnitNode);
-
-						if (pLoopUnit->getOwnerINLINE() == getOwnerINLINE() && pLoopUnit->getGroup()->AI_isControlled() &&
-							pLoopUnit->getBuildType() != NO_BUILD && pLoopUnit->getBuildType() != m_aeBestBuild[iI])
-						{
-							pLoopUnit->getGroup()->clearMissionQueue();
-						}
-					}
-				}*/
 				// K-Mod end
 			}
 		}
