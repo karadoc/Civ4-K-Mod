@@ -3398,10 +3398,6 @@ void CvPlayer::doTurn()
 
 	doEspionagePoints();
 
-	// K-Mod / BBAI centralized production. - Currently not enabled. (the function hasn't been writen yet)
-	//GET_PLAYER(getID()).AI_doCentralizedProduction();
-	//
-
 	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
 		pLoopCity->doTurn();
@@ -11096,28 +11092,6 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 				if (isAlive())
 				{
 					doTurn();
-					// K-Mod. Call CvTeam::doTurn when all members of this team have finished their turn.
-					// (actually, no. CvTeam::doTurn should be called at the start of the team's turn, not the end.
-					//  otherwise, things like the counter-espionage counter will not work as expected.)
-					/*
-					if (GC.getGameINLINE().isSimultaneousTeamTurns())
-					{
-						if (!GET_TEAM(getTeam()).isTurnActive())
-							GET_TEAM(getTeam()).doTurn();
-					}
-					else
-					{
-						bool bMoreTeammates = false;
-						for (PlayerTypes i = (PlayerTypes)(getID() + 1); !bMoreTeammates && i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
-						{
-							const CvPlayer& kLoopPlayer = GET_PLAYER(i);
-							if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() == getTeam())
-								bMoreTeammates = true;
-						}
-						if (!bMoreTeammates)
-							GET_TEAM(getTeam()).doTurn();
-					} */
-					// K-Mod end
 				}
 
 				if ((GC.getGameINLINE().isPbem() || GC.getGameINLINE().isHotSeat()) && isHuman() && GC.getGameINLINE().countHumanPlayersAlive() > 1)
