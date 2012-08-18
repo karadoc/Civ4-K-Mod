@@ -946,7 +946,8 @@ class WorstEnemy(AbstractStatefulAlert):
 				if eOldEnemy != -1 and not gc.getTeam(eOldEnemy).isAlive():
 					eOldEnemy = -1
 					enemies[eTeam] = -1
-				if eActiveTeam != eNewEnemy and not activeTeam.isHasMet(eNewEnemy):
+				#if eActiveTeam != eNewEnemy and not activeTeam.isHasMet(eNewEnemy):
+				if eNewEnemy != -1 and not activeTeam.isHasMet(eNewEnemy): # K-Mod. (isHasMet(-1) could cause a seg-fault.)
 					eNewEnemy = -1
 				if eOldEnemy != eNewEnemy:
 					enemies[eTeam] = eNewEnemy
