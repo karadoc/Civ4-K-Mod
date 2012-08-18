@@ -9520,6 +9520,7 @@ int CvPlayer::getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain) cons
 			(eDomain == NO_DOMAIN || GC.getUnitInfo(eLoopUnit).getDomainType() == eDomain) &&
 			canTrain(eLoopUnit))
 		{
+			// Note: currently the above checks do not consider any resource prerequites.
 			int iValue = GC.getGameINLINE().AI_combatValue(eLoopUnit);
 			if (iValue > iHighestValue)
 			{
@@ -13723,7 +13724,14 @@ CvSelectionGroup* CvPlayer::getSelectionGroup(int iID) const
 
 CvSelectionGroup* CvPlayer::addSelectionGroup()
 {
-	return ((CvSelectionGroup *)(m_selectionGroups.add()));
+	//return ((CvSelectionGroup *)(m_selectionGroups.add()));
+	// K-Mod. Make sure that every time we add a group, it also gets added to the group cycle list.
+	// (we can update the specific position in the cycle list later; but it's important it gets into the list.)
+	CvSelectionGroup* pGroup = m_selectionGroups.add();
+	if (pGroup)
+		m_groupCycle.insertAtEnd(pGroup->getID());
+	return pGroup;
+	// K-Mod end
 }
 
 
