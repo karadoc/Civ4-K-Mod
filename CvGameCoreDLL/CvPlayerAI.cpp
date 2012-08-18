@@ -1061,6 +1061,7 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc)
 					iValue = AI_foundValue_bulk(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), kFoundSet); // K-Mod
 				}
 
+				FAssert(iValue <= MAX_SHORT); // K-Mod. If this assert fails, the foundValue calculation may need to be changed.
 				iValue = std::min((long)MAX_SHORT, iValue); // K-Mod
 				pLoopPlot->setFoundValue(getID(), (short)iValue);
 
@@ -1069,6 +1070,14 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc)
 					pLoopPlot->area()->setBestFoundValue(getID(), iValue);
 				}
 			}
+			// K-Mod. Clear out any junk found values.
+			// (I've seen legacy AI code which makes use of the found values of unrevealed plots.
+			//  It shouldn't use those values at all, but if it does use them, I'd prefer them not to be junk!)
+			else
+			{
+				pLoopPlot->setFoundValue(getID(), 0);
+			}
+			// K-Mod end
 		}
 		if (!isBarbarian())
 		{

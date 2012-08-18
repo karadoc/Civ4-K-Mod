@@ -18012,31 +18012,20 @@ bool CvUnitAI::AI_settlerSeaTransport()
 	int iOtherAreaBestFoundValue = 0;
 	CvPlot* pOtherAreaBestPlot = NULL;
 
+	KmodPathFinder land_path;
+	land_path.SetSettings(pSettlerUnit->getGroup(), MOVE_SAFE_TERRITORY);
+
 	for (iI = 0; iI < GET_PLAYER(getOwnerINLINE()).AI_getNumCitySites(); iI++)
 	{
 		CvPlot* pCitySitePlot = GET_PLAYER(getOwnerINLINE()).AI_getCitySite(iI);
 		if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pCitySitePlot, MISSIONAI_FOUND, getGroup()) == 0)
 		{
 			iValue = pCitySitePlot->getFoundValue(getOwnerINLINE());
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/13/09                                jdog5000      */
-/*                                                                                              */
-/* Settler AI                                                                                   */
-/************************************************************************************************/
-/* original bts code
-			if (pCitySitePlot->getArea() == getArea())
+			//if (pCitySitePlot->getArea() == getArea())
+			if (pCitySitePlot->getArea() == getArea() && land_path.GeneratePath(pCitySitePlot)) // K-Mod
 			{
 				if (iValue > iAreaBestFoundValue)
 				{
-*/
-			// Only count city sites we can get to
-			if (pCitySitePlot->getArea() == getArea() && pSettlerUnit->generatePath(pCitySitePlot, MOVE_SAFE_TERRITORY, true))
-			{
-				if (iValue > iAreaBestFoundValue)
-				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 					iAreaBestFoundValue = iValue;
 					pAreaBestPlot = pCitySitePlot;
 				}
@@ -18135,7 +18124,11 @@ bool CvUnitAI::AI_settlerSeaTransport()
 	{
 		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
-		if (pLoopPlot->isCoastalLand())
+		//if (pLoopPlot->isCoastalLand())
+		// K-Mod. Only consider areas we have explored, and only land if we know there is something we want to settle.
+		int iAreaBest; // (currently unused)
+		if (pLoopPlot->isCoastalLand() && pLoopPlot->isRevealed(getTeam(), false) && GET_PLAYER(getOwnerINLINE()).AI_getNumAreaCitySites(pLoopPlot->getArea(), iAreaBest) > 0)
+		// K-Mod end
 		{
 			iValue = pLoopPlot->getFoundValue(getOwnerINLINE());
 
