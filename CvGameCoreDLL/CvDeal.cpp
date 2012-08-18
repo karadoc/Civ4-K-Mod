@@ -875,6 +875,8 @@ bool CvDeal::startTrade(TradeData trade, PlayerTypes eFromPlayer, PlayerTypes eT
 		}
 		//GET_TEAM(GET_PLAYER(eFromPlayer).getTeam()).makePeace((TeamTypes)trade.m_iData);
 		GET_TEAM(GET_PLAYER(eFromPlayer).getTeam()).makePeace((TeamTypes)trade.m_iData, false); // K-Mod. (units will be bumped after the rest of the trade deals are completed.)
+		GET_TEAM(GET_PLAYER(eFromPlayer).getTeam()).signPeaceTreaty((TeamTypes)trade.m_iData); // K-Mod. Use a standard peace treaty rather than a simple cease-fire.
+		// K-Mod todo: this team should offer something fair to the peace-team if this teams endWarVal is higher.
 		break;
 
 	case TRADE_WAR:

@@ -56,6 +56,7 @@ public:
 	//bool canContact(TeamTypes eTeam) const; // Exposed to Python
 	bool canContact(TeamTypes eTeam, bool bCheckWillingness = false) const; // K-Mod, Exposed to Python
 	void meet(TeamTypes eTeam, bool bNewDiplo);																		// Exposed to Python
+	void signPeaceTreaty(TeamTypes eTeam); // K-Mod
 	void signOpenBorders(TeamTypes eTeam);																				// Exposed to Python
 	void signDefensivePact(TeamTypes eTeam);																			// Exposed to Python
 	bool canSignDefensivePact(TeamTypes eTeam);
