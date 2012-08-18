@@ -1,6 +1,42 @@
-This is K-Mod version 1.35.
-If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/showthread.php?p=10094243
+This is K-Mod version 1.36.
+If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.36 changelist
+
+Game / UI
+
++ When choosing a default city name, the search will now skip a number of names corresponding to the number of cities the player has already founded. This means that if a player renames a city that they have founded, the game won't immediately suggest the same previous name for the next city founded. (Note: there are some technical caveats to this which may come into play in some mods.)
++ If a civilization's list of city names is exhausted, the game will suggest a _random_ name from a random civ; rather than the first available city name from a random civ.
++ When selecting a group of units by holding ctrl/alt, if the clicked unit is already selected then only units with moves will be selected in the new group regardless of the moves of the unit that was clicked. (This new condition is to work around an ambiguity problem when clicking units on the main map.)
++ Reduced the city governor's yield value adjustments when building work-boats.
++ Restored the city governor's preference for forced specialist types when assigning additional specialists. (This was broken as a side effect of a recent K-Mod change.)
++ Removed a loophole which in rare cases could cause the 'plains cow start' problem to resurface.
++ Corrected the horizontal centering of the 'new era' screen.
++ 'Make peace with other civ' trades will now result in a 10 turn peace treaty between the two civs rather than just a cease fire.
++ 'Make peace with other civ' trades will now be denied if the 3rd party refuses to talk to the 2nd party, or if the 3rd party simply refuses to make peace.
++ Restored functionality which prevents the sea movement bonus for circumnavigation from being awarded in games where the map is complete from turn 1. (This functionality had been unintentionally broken as a side effect from an earlier change.)
++ Fixed a couple of minor python problems which led to assertion failures (potentially leading to more serious problems in the future).
++ Fixed a bug which sometimes caused an infinite loop after adding units for an AI team in the world-builder.
+
+AI
+
++ Fixed a rare divide-by-zero crash caused when the AI decided to plan war against an overseas civ before either team could build boats.
++ Adjusted the AI's cost estimates for overseas wars.
++ Fixed a bug in CvTeam::getTypicalUnitValue caused the domain parameter to be ignored, which resulted in some erroneous evaluations in various parts of the AI.
+
++ Made several significant changes to the way the AI evaluates yield when choosing plot improvements. Most noteably, the value of food is now scaled based on how much food would be required to work the other available yields.
++ Made some adjustments to how the AI decides when to chop forests in the early game.
++ Fixed a bug in getYieldWithBuild which caused it to ignore yield from existing improvements when building roads. (This only had minor side effects.)
++ getYieldWithBuild now counts 'extra yield' (eg. from financial). (This helps the AI decide which plot improvements to build.)
+
++ Fixed a couple of minor bugs which sometimes caused the AI to get a bit confused when trying to transport settlers to new areas.
+
++ Corrected several parts of the AI which were using a poor approximation for the net income of their civilization. (This approximation caused some parts of the AI to think the civ was having financial difficulties if the civ was making heavy use of their espionage slider or their culture slider.)
++ Corrected a mistake in the original BtS code in AI_commerceWeight which caused the AI to miscalculate how many turns its gold would last at the current research rate.
++ Fixed an original BtS bug which caused all commerce building processes to be identified as being "good" when evaluating techs.
++ Tweaked the AI's yield values adjustments when using particular strategies.
+
+--
 v1.35 changelist
 
 + The 'why don't you attack' diplomacy screen no longer lists cities that the civ is not at war with.
@@ -154,7 +190,7 @@ Game / UI
 + Fixed an original BtS bug which caused pitboss servers to crash whenever a player launched a spaceship.
 + Fixed an original BtS pitboss OOS bug which was triggered when an attack animation included a siege tower.
 + Fixed several bugs which caused the pitboss server to attempt to access unallocated memory. (There were bugs like this in the original BtS code, and K-Mod code, and BUG code.)
-+ Changed the default Field of View settings so a dynamic value which scales with the size of the player's monitor.
++ Changed the default Field of View settings to a dynamic value which scales with the size of the player's monitor.
 + Removed the city-screen field of view switching. It didn't work correctly, and I don't think we need it anyway.
 + Fixed a bug which essentially negated my previous bugfix for the 'plains cow' problem with starting positions.
 + The starting site will now always be recommended on the first turn.
