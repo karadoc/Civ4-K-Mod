@@ -273,19 +273,22 @@ void CvGame::setInitialItems()
 {
 	PROFILE_FUNC();
 
-	// K-Mod: Adjust the AI handicap to be the minimum of all the human player's handicap.
+	// K-Mod: Adjust the game handicap level to be the average of all the human player's handicap.
+	// (Note: in the original bts rules, it would always set to Nobel if the human's had different handicaps)
 	if (isGameMultiPlayer())
 	{
-		HandicapTypes eMinHandicap = (HandicapTypes)INT_MAX;
-		for (int iI = 0; iI < MAX_PLAYERS; iI++)
+		int iHumanPlayers = 0;
+		int iTotal = 0;
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isHuman())
+			if (GET_PLAYER(i).isHuman())
 			{
-				eMinHandicap = std::min(GET_PLAYER((PlayerTypes)iI).getHandicapType(), eMinHandicap);
+				iHumanPlayers++;
+				iTotal += GET_PLAYER(i).getHandicapType();
 			}
 		}
-		if (eMinHandicap != INT_MAX)
-			setHandicapType(eMinHandicap);
+		if (iHumanPlayers > 0)
+			setHandicapType((HandicapTypes)(iTotal/iHumanPlayers));
 		else
 			FAssert(false); // all AI game. Not necessary wrong - but unexpected.
 	}
@@ -696,7 +699,7 @@ void CvGame::initFreeState()
 
 				if (!bValid)
 				{
-					if ((GC.getHandicapInfo(getHandicapType()).isFreeTechs(iI)) ||
+					if (//(GC.getHandicapInfo(getHandicapType()).isFreeTechs(iI)) || // disabled by K-Mod. (moved & changed. See below)
 						  (!(GET_TEAM((TeamTypes)iJ).isHuman())&& GC.getHandicapInfo(getHandicapType()).isAIFreeTechs(iI)) ||
 						  (GC.getTechInfo((TechTypes)iI).getEra() < getStartEra()))
 					{
@@ -708,11 +711,13 @@ void CvGame::initFreeState()
 				{
 					for (iK = 0; iK < MAX_PLAYERS; iK++)
 					{
-						if (GET_PLAYER((PlayerTypes)iK).isAlive())
+						CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iK); // K-Mod
+						if (kLoopPlayer.isAlive())
 						{
-							if (GET_PLAYER((PlayerTypes)iK).getTeam() == iJ)
+							if (kLoopPlayer.getTeam() == iJ)
 							{
-								if (GC.getCivilizationInfo(GET_PLAYER((PlayerTypes)iK).getCivilizationType()).isCivilizationFreeTechs(iI))
+								if (GC.getCivilizationInfo(kLoopPlayer.getCivilizationType()).isCivilizationFreeTechs(iI) ||
+									(GC.getHandicapInfo(kLoopPlayer.getHandicapType()).isFreeTechs(iI))) // K-Mod (give techs based on player handicap, not game handicap.)
 								{
 									bValid = true;
 									break;
