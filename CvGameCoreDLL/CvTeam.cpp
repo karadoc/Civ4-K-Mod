@@ -3803,6 +3803,24 @@ void CvTeam::makeHasMet(TeamTypes eIndex, bool bNewDiplo)
 			}
 		}
 
+		// K-Mod. Initialize attitude cache for players on our team towards player's on their team.
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+		{
+			CvPlayerAI& kOurPlayer = GET_PLAYER(i);
+			if (!kOurPlayer.isAlive() || kOurPlayer.getTeam() != getID())
+				continue;
+
+			for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
+			{
+				CvPlayerAI& kTheirPlayer = GET_PLAYER(j);
+				if (!kTheirPlayer.isAlive() || kTheirPlayer.getTeam() != eIndex)
+					continue;
+
+				kOurPlayer.AI_updateAttitudeCache(j);
+			}
+		}
+		// K-Mod end
+
 		if ((getID() == GC.getGameINLINE().getActiveTeam()) || (eIndex == GC.getGameINLINE().getActiveTeam()))
 		{
 			gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
