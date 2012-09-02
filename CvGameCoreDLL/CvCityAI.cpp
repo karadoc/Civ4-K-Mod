@@ -9004,7 +9004,27 @@ void CvCityAI::AI_juggleCitizens()
 		}
 		// if values are equal - prefer to work the specialist job. (perhaps a different city can use the plot)
 
-		// don't let us reassign our free specialists onto plots
+		// make sure our free specialists get the best jobs, regardless of plot value,
+		// and don't let us reassign our free specialists onto plots
+		if (getSpecialistPopulation() <= iTotalFreeSpecialists && iWorkedSpecValue < iWorkedPlotValue)
+		{
+			if (iUnworkedSpecValue > iWorkedSpecValue && eUnworkedSpecialist != eLatestSpecialist)
+			{
+				int iWorkedForce = bForcedSpecialists && eWorkedSpecialist != NO_SPECIALIST
+					? getForceSpecialistCount(eWorkedSpecialist) * 128 / iTotalForcedSpecialists - getSpecialistCount(eWorkedSpecialist) * 128 / (getSpecialistPopulation()+1)
+					: 0;
+				if (iWorkedForce >= iUnworkedSpecForce)
+				{
+					iUnworkedSpecValue = INT_MAX; // force specialist swap
+				}
+			}
+
+			if (iUnworkedPlotValue > iUnworkedSpecValue)
+			{
+				iWorkedSpecValue = INT_MAX; // block spec removal
+			}
+		}
+
 		if (iWorkedSpecValue < iWorkedPlotValue && iUnworkedPlotValue > iUnworkedSpecValue &&
 			getSpecialistPopulation() <= iTotalFreeSpecialists)
 		{
