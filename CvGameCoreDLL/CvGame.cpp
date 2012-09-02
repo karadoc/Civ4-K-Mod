@@ -2572,6 +2572,11 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 	{
 		gDLL->getInterfaceIFace()->clearSelectedCities();
 
+		CvPlot* pUnitPlot = pUnit->plot();
+		DomainTypes eDomain = pUnit->getDomainType(); // K-Mod
+		bool bCheckMoves = pUnit->canMove() || pUnit->IsSelected(); // K-Mod.
+		// (Note: the IsSelected check is to stop selected units with no moves from make it hard to select moveable units by clicking on the map.)
+
 		bool bGroup;
 		if (!bShift)
 		{
@@ -2587,11 +2592,6 @@ void CvGame::selectGroup(CvUnit* pUnit, bool bShift, bool bCtrl, bool bAlt) cons
 			bGroup = true; // note: sometimes this won't work. (see comments in CvGame::selectUnit.) Unfortunately, it's too fiddly to fix.
 			// K-Mod end
 		}
-
-		CvPlot* pUnitPlot = pUnit->plot();
-		DomainTypes eDomain = pUnit->getDomainType(); // K-Mod
-		bool bCheckMoves = pUnit->canMove() || pUnit->IsSelected(); // K-Mod.
-		// (Note: the IsSelected check is to stop selected units with no moves from make it hard to select moveable units by clicking on the map.)
 
 		CLLNode<IDInfo>* pUnitNode = pUnitPlot->headUnitNode();
 
