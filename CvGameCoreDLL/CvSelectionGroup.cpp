@@ -4614,19 +4614,20 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 
 	int iGroupSize = getNumUnits();
 
-	int aiUnitAIs[NUM_UNITAI_TYPES] = {};
+	int aiTotalAIs[NUM_UNITAI_TYPES] = {};
+	int aiNewGroupAIs[NUM_UNITAI_TYPES] = {};
 	FAssert(iGroupSize > 0);
 
-	// populate 'aiUnitAIs' with the number of each AI type in the remainer group.
+	// populate 'aiTotalAIs' with the number of each AI type in the existing group.
 	CLLNode<IDInfo>* pUnitNode = headUnitNode();
 	while (pUnitNode)
 	{
 		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 		pUnitNode = nextUnitNode(pUnitNode);
-		aiUnitAIs[pLoopUnit->AI_getUnitAIType()]++;
+		aiTotalAIs[pLoopUnit->AI_getUnitAIType()]++;
 	}
 
-	// next, from those numbers, work out how many of each unit type we need in new group.
+	// Next, from those numbers, work out how many of each unit type we need in new group.
 	// round evenly, and carry the rounding-error onto the next unit type so that we don't have an off-by-one error at the end.
 	int iCarry = 0;
 
@@ -4635,40 +4636,40 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 		// reserve a unit of the old AI type to lead the remainder group
 		// and more importantly, reserve a unit of the new AI type to lead the new group!
 
-		int x = std::max(1, (aiUnitAIs[eNewHeadAI] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize);
+		int x = std::max(1, (aiTotalAIs[eNewHeadAI] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize);
 		if (eOldHeadAI == eNewHeadAI)
 		{
-			if (x > 1 && aiUnitAIs[eOldHeadAI] == x)
+			if (x > 1 && aiTotalAIs[eOldHeadAI] == x)
 				x--;
 
-			iCarry += aiUnitAIs[eNewHeadAI] * iSplitSize - x * iGroupSize;
-			aiUnitAIs[eNewHeadAI] = x;
+			iCarry += aiTotalAIs[eNewHeadAI] * iSplitSize - x * iGroupSize;
+			aiNewGroupAIs[eNewHeadAI] = x;
 		}
 		else
 		{
-			iCarry += aiUnitAIs[eNewHeadAI] * iSplitSize - x * iGroupSize;
-			aiUnitAIs[eNewHeadAI] = x;
+			iCarry += aiTotalAIs[eNewHeadAI] * iSplitSize - x * iGroupSize;
+			aiNewGroupAIs[eNewHeadAI] = x;
 
-			x = (aiUnitAIs[eOldHeadAI] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
+			x = (aiTotalAIs[eOldHeadAI] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
 
-			if (x > 0 && aiUnitAIs[eOldHeadAI] == x)
+			if (x > 0 && aiTotalAIs[eOldHeadAI] == x)
 				x--;
 
-			iCarry += aiUnitAIs[eOldHeadAI] * iSplitSize - x * iGroupSize;
-			aiUnitAIs[eOldHeadAI] = x;
+			iCarry += aiTotalAIs[eOldHeadAI] * iSplitSize - x * iGroupSize;
+			aiNewGroupAIs[eOldHeadAI] = x;
 		}
 	}
 
 	for (UnitAITypes i = (UnitAITypes)0; i < NUM_UNITAI_TYPES; i = (UnitAITypes)(i+1))
 	{
-		if (aiUnitAIs[i] == 0 || i == eNewHeadAI || i == eOldHeadAI)
+		if (aiTotalAIs[i] == 0 || i == eNewHeadAI || i == eOldHeadAI)
 			continue; // already done. (see above)
 
-		int x = (aiUnitAIs[i] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
+		int x = (aiTotalAIs[i] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
 
-		FAssert(x >= 0 && x <= aiUnitAIs[i]);
-		iCarry += aiUnitAIs[i] * iSplitSize - x * iGroupSize;
-		aiUnitAIs[i] = x;
+		FAssert(x >= 0 && x <= aiTotalAIs[i]);
+		iCarry += aiTotalAIs[i] * iSplitSize - x * iGroupSize;
+		aiNewGroupAIs[i] = x;
 		FAssert(iCarry >= -iGroupSize && iCarry <= iGroupSize);
 	}
 	FAssert(iCarry == 0);
@@ -4676,9 +4677,13 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 	// make the new group for the new head
 	pNewHeadUnit->joinGroup(0);
 	CvSelectionGroup* pSplitGroup = pNewHeadUnit->getGroup();
-	aiUnitAIs[eNewHeadAI]--;
+	aiNewGroupAIs[eNewHeadAI]--;
+	aiTotalAIs[eNewHeadAI]--;
 	CvSelectionGroup* pRemainderGroup = this;
 
+	// Populate the new group with the quantity of AI types specified in aiNewGroupAIs.
+	// However, the units of each AI type should not simply be taken from the front of the list,
+	// because we always want to have an even distribution of unit types. (not just unitAI types)
 	pUnitNode = headUnitNode();
 	while (pUnitNode)
 	{
@@ -4687,11 +4692,17 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 
 		UnitAITypes eAI = pLoopUnit->AI_getUnitAIType();
 		FAssert(eAI != NO_UNITAI);
-		if (aiUnitAIs[eAI] > 0)
+		if (aiNewGroupAIs[eAI] > 0)
 		{
-			pLoopUnit->joinGroup(pSplitGroup);
-			aiUnitAIs[eAI]--;
+			if (iGroupSize * aiNewGroupAIs[eAI] >= iSplitSize * aiTotalAIs[eAI])
+			{
+				pLoopUnit->joinGroup(pSplitGroup);
+				aiNewGroupAIs[eAI]--;
+				FAssert(aiNewGroupAIs[eAI] >= 0);
+			}
 		}
+		aiTotalAIs[eAI]--; // (note. this isn't really important if aiNewGroupAIs[eAI] == 0; but we might as well keep it accurate anyway.)
+		FAssert(aiTotalAIs[eAI] >= 0);
 	}
 
 	FAssert(pSplitGroup->getNumUnits() == iSplitSize);
