@@ -348,6 +348,7 @@ class CvDiplomacy:
 		     eComment == self.getCommentID("AI_DIPLOCOMMENT_NO_DEAL") or
 		     eComment == self.getCommentID("AI_DIPLOCOMMENT_CANCEL_DEAL") or
 		     eComment == self.getCommentID("AI_DIPLOCOMMENT_REJECT_ASK") or
+			 eComment == self.getCommentID("AI_DIPLOCOMMENT_WORST_ENEMY_TRADING") or # K-Mod. (not really "disagreeing" so much as expressing discouragement)
 		     eComment == self.getCommentID("AI_DIPLOCOMMENT_REJECT_DEMAND") ):
 			self.diploScreen.performHeadAction( LeaderheadAction.LEADERANIM_DISAGREE ) 
 		elif ( eComment == self.getCommentID("AI_DIPLOCOMMENT_ACCEPT") or
@@ -371,7 +372,7 @@ class CvDiplomacy:
 		       eComment == self.getCommentID("AI_DIPLOCOMMENT_DEMAND_TRIBUTE") ):
 			self.diploScreen.performHeadAction( LeaderheadAction.LEADERANIM_GREETING ) 
 		elif ( eComment == self.getCommentID("AI_DIPLOCOMMENT_ATTITUDE_PLAYER_FURIOUS") or
-		       eComment == self.getCommentID("AI_DIPLOCOMMENT_WORST_ENEMY_TRADING") or
+		       #eComment == self.getCommentID("AI_DIPLOCOMMENT_WORST_ENEMY_TRADING") or # (moved by K-mod)
 		       eComment == self.getCommentID("AI_DIPLOCOMMENT_HELP_REFUSED") or
 		       eComment == self.getCommentID("AI_DIPLOCOMMENT_DEMAND_REJECTED") or
 		       eComment == self.getCommentID("AI_DIPLOCOMMENT_RELIGION_DENIED") or
