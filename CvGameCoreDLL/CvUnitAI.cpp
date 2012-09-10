@@ -14837,6 +14837,7 @@ bool CvUnitAI::AI_explore()
 	pBestExplorePlot = NULL;
 	
 	bool bNoContact = (GC.getGameINLINE().countCivTeamsAlive() > GET_TEAM(getTeam()).getHasMetCivCount(true));
+	const CvTeam& kTeam = GET_TEAM(getTeam()); // K-Mod
 
 	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
@@ -14872,13 +14873,22 @@ bool CvUnitAI::AI_explore()
 						{
 							iValue += 1000;
 						}
+						/* original bts code
 						else if (bNoContact)
 						{
 							if (pAdjacentPlot->getRevealedTeam(getTeam(), false) != pAdjacentPlot->getTeam())
 							{
 								iValue += 100;
 							}
+						} */
+						// K-Mod. Not only is the original code cheating, it also doesn't help us meet anyone!
+						// The goal here is to try to meet teams which we have already seen through map trading.
+						if (bNoContact && pAdjacentPlot->getRevealedOwner(kTeam.getID(), false) != NO_PLAYER) // note: revealed team can be set before the plot is actually revealed.
+						{
+							if (!kTeam.isHasMet(pAdjacentPlot->getRevealedTeam(kTeam.getID(), false)))
+								iValue += 100;
 						}
+						// K-Mod end
 					}
 				}
 
@@ -14953,6 +14963,8 @@ bool CvUnitAI::AI_exploreRange(int iRange)
 
 	int iImpassableCount = GET_PLAYER(getOwnerINLINE()).AI_unitImpassableCount(getUnitType());
 
+	const CvTeam& kTeam = GET_TEAM(getTeam()); // K-Mod
+
 	for (iDX = -(iSearchRange); iDX <= iSearchRange; iDX++)
 	{
 		for (iDY = -(iSearchRange); iDY <= iSearchRange; iDY++)
@@ -14976,6 +14988,11 @@ bool CvUnitAI::AI_exploreRange(int iRange)
 					{
 						iValue += 10000;
 					}
+
+					// K-Mod. Try to meet teams that we have seen through map trading
+					if (pLoopPlot->getRevealedOwner(kTeam.getID(), false) != NO_PLAYER && !kTeam.isHasMet(pLoopPlot->getRevealedTeam(kTeam.getID(), false)))
+						iValue += 1000;
+					// K-Mod end
 
 					for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 					{
