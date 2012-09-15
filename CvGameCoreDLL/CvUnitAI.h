@@ -305,6 +305,7 @@ protected:
 
 	//int AI_finalOddsThreshold(CvPlot* pPlot, int iOddsThreshold);
 	int AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy = false); // K-Mod
+	unsigned AI_unitPlotHash(const CvPlot* pPlot, int iExtra = 0) const; // K-Mod
 
 	int AI_stackOfDoomExtra() const;
 

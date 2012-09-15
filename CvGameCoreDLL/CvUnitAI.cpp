@@ -15282,12 +15282,8 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									}
 								}
 								// A const-random component, so that the AI doesn't always go for the same city.
-								{
-									unsigned iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pLoopCity->getX_INLINE(), pLoopCity->getY_INLINE());
-									iHash *= 2654435761; // golden ratio of 2^32;
-									iValue *= 80 + iHash % 41;
-									iValue /= 100;
-								}
+								iValue *= 80 + AI_unitPlotHash(pLoopCity->plot()) % 41;
+								iValue /= 100;
 
 								iValue *= 1000;
 
@@ -17487,7 +17483,8 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 									}
 									else if (iPathTurns > 2)
 									{
-										iValue *= 60 + GC.getGameINLINE().getSorenRandNum(81, "AI Assault Target");
+										//iValue *= 60 + GC.getGameINLINE().getSorenRandNum(81, "AI Assault Target");
+										iValue *= 60 + (AI_unitPlotHash(pLoopPlot, getGroup()->getNumUnits()) % 81);
 										iValue /= 100;
 									}
 									iValue /= (iPathTurns + 2);
@@ -17679,6 +17676,7 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 
 							iValue *= 100;
 
+							/* original bts code
 							// if more than 3 turns to get there, then put some randomness into our preference of distance
 							// +/- 33%
 							if (iPathTurns > 3)
@@ -17688,8 +17686,14 @@ bool CvUnitAI::AI_assaultSeaReinforce(bool bAttackBarbs)
 								iPathTurns *= 66 + iPathAdjustment;
 								iPathTurns /= 100;
 							}
-
 							iValue /= (iPathTurns + 1);
+							*/
+							// K-Mod. More consistent randomness, to prevent decisions from oscillating.
+							iValue *= 70 + (AI_unitPlotHash(pLoopPlot, getGroup()->getNumUnits()) % 61);
+							iValue /= 100;
+
+							iValue /= (iPathTurns + 2);
+							// K-Mod end
 
 							if (iValue > iBestValue)
 							{
@@ -24320,6 +24324,14 @@ int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
 }
 // K-Mod end
 
+// K-Mod. A simple hash of the unit's birthmark and the plot position
+// used for getting a 'random' number which depends on the unit and the plot, but which does not vary from turn to turn.
+unsigned CvUnitAI::AI_unitPlotHash(const CvPlot* pPlot, int iExtra) const
+{
+	unsigned iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pPlot->getX_INLINE(), pPlot->getY_INLINE()) + iExtra;
+	iHash *= 2654435761; // golden ratio of 2^32;
+	return iHash;
+}
 
 int CvUnitAI::AI_stackOfDoomExtra() const
 {
