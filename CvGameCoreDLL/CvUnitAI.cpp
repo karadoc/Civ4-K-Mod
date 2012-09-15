@@ -17378,7 +17378,8 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 											iValue += (50 * -(GC.getRIVER_ATTACK_MODIFIER()));
 										}
 
-										iValue += 15 * (pLoopPlot->defenseModifier(getTeam(), false));
+										//iValue += 15 * (pLoopPlot->defenseModifier(getTeam(), false));
+										iValue += pLoopPlot == pCity->plot() ? 0 : 15 * (pLoopPlot->defenseModifier(getTeam(), false)); // K-Mod
 										iValue += 1000;
 										iValue += (GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pCity->plot()) * 200);
 
@@ -17467,6 +17468,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 
 									// if more than 3 turns to get there, then put some randomness into our preference of distance
 									// +/- 33%
+									/* original bts code
 									if (iPathTurns > 3)
 									{
 										int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
@@ -17475,7 +17477,21 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 										iPathTurns /= 100;
 									}
 
-									iValue /= (iPathTurns + 1);
+									iValue /= (iPathTurns + 1); */
+									// K-Mod. A bit of randomness is good, but if it's random every turn then it will lead to inconsistent decisions.
+									// So.. if we're already en-route somewhere, try to keep going there.
+									if (pCity && getGroup()->AI_getMissionAIPlot() && stepDistance(getGroup()->AI_getMissionAIPlot(), pCity->plot()) <= 1)
+									{
+										iValue *= 150;
+										iValue /= 100;
+									}
+									else if (iPathTurns > 2)
+									{
+										iValue *= 60 + GC.getGameINLINE().getSorenRandNum(81, "AI Assault Target");
+										iValue /= 100;
+									}
+									iValue /= (iPathTurns + 2);
+									// K-Mod end
 
 									if (iValue > iBestValue)
 									{
