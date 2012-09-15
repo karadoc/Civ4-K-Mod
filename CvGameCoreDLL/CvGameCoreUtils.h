@@ -152,11 +152,12 @@ inline int plotDistance(int iX1, int iY1, int iX2, int iY2)													// Expos
 	return (std::max(iDX, iDY) + (std::min(iDX, iDY) / 2));
 }
 
-// K-Mod, for convenience:
+// K-Mod, plot-to-plot alias for convenience:
 inline int plotDistance(const CvPlot* plot1, const CvPlot* plot2)
 {
 	return plotDistance(plot1->getX_INLINE(), plot1->getY_INLINE(), plot2->getX_INLINE(), plot2->getY_INLINE());
 }
+// K-Mod end
 
 // 3 | 3 | 3 | 3 | 3 | 3 | 3
 // -------------------------
@@ -177,6 +178,13 @@ inline int stepDistance(int iX1, int iY1, int iX2, int iY2)													// Expos
 {
 	return std::max(xDistance(iX1, iX2), yDistance(iY1, iY2));
 }
+
+// K-Mod, plot-to-plot alias for convenience:
+inline int stepDistance(const CvPlot* plot1, const CvPlot* plot2)
+{
+	return stepDistance(plot1->getX_INLINE(), plot1->getY_INLINE(), plot2->getX_INLINE(), plot2->getY_INLINE());
+}
+// K-Mod end
 
 inline CvPlot* plotDirection(int iX, int iY, DirectionTypes eDirection)							// Exposed to Python
 {
