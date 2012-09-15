@@ -11248,19 +11248,27 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 
 		if (!AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
 		{
-			//int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * 8;
-			int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * (GC.getUnitInfo(eUnit).isIgnoreBuildingDefense()?12 :8);
+			int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * 8;
+			//int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * (GC.getUnitInfo(eUnit).isIgnoreBuildingDefense()?12 :8);
 			if (iBombardValue > 0)
 			{
 				//int iGoalTotalBombardRate = 200;
 				// K-Mod note: This goal has no dependancy on civ size, map size, era, strategy, or anything else that matters
 				// a flat goal of 200... This needs to be fixed, but for now, I'll just replace it with something rough.
 				//int iGoalTotalBombardRate = (getNumCities()+3) * (getCurrentEra()+2) * (AI_isDoStrategy(AI_STRATEGY_CRUSH)?10 :5);
-				int iGoalTotalBombardRate = AI_totalUnitAIs(UNITAI_ATTACK_CITY) * (getCurrentEra()+3);
-				if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
+				int iGoalTotalBombardRate = (AI_totalUnitAIs(UNITAI_ATTACK) + AI_totalUnitAIs(UNITAI_ATTACK_CITY)) * (getCurrentEra()+3);
+				/* if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
 				{
 					iGoalTotalBombardRate *= 3;
 					iGoalTotalBombardRate /= 2;
+				} */
+				// Decrease the bombard target if we own every city in the area, or if we are fighting an overseas war
+				if (pArea &&
+					(pArea->getNumCities() == pArea->getCitiesPerPlayer(getID()) ||
+					(pArea->getAreaAIType(getTeam()) != AREAAI_NEUTRAL && !AI_isLandWar(pArea))))
+				{
+					iGoalTotalBombardRate *= 2;
+					iGoalTotalBombardRate /= 3;
 				}
 
 				// Note: this also counts UNITAI_COLLATERAL units, which only play defense
