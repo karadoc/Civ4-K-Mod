@@ -6044,7 +6044,7 @@ void CvUnitAI::AI_spyMove()
 		}
 
 		if (!kOwner.AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_TEAM(getTeam()).getAtWarCount(true) > 0 &&
-			GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (kOwner.AI_getStrategyRand(5) % 30))
+			GC.getGame().getSorenRandNum(100, "AI Spy pillage improvement") < (kOwner.AI_getStrategyRand(5) % 36))
 		{
 			if (AI_bonusOffenseSpy(6))
 			{
@@ -23444,7 +23444,7 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 					// Block small missions when using "big espionage", unless the mission is really good value.
 					if (bBigEspionage
 						&& iValue < 50*kPlayer.getCurrentEra()*(kPlayer.getCurrentEra()+1) // 100, 300, 600, 1000, 1500, ...
-						&& iValue < 2*iCost)
+						&& iValue < (kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) ? 4 : 2)*iCost)
 					{
 						iValue = 0;
 					}
