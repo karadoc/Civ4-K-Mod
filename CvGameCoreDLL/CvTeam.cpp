@@ -2825,10 +2825,28 @@ int CvTeam::getResearchCost(TechTypes eTech, bool bGlobalModifiers) const // K-M
 
 		iCost *= GC.getEraInfo(GC.getGameINLINE().getStartEra()).getResearchPercent();
 		iCost /= 100;
+
+		// K-Mod. Scale the global tech rate based on how many teams their are compared to the default for this map size.
+		// The cost should be _reduced_ if there are fewer teams than usual. (depending on the xml value. see comment below)
+		int iEffectiveTeamSizePercent = 100*GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getDefaultPlayers() / std::max(1, GC.getGameINLINE().countCivTeamsEverAlive());
+		if (iEffectiveTeamSizePercent > 100)
+		{
+			iCost *= GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (iEffectiveTeamSizePercent - 100) + 10000;
+			iCost /= iEffectiveTeamSizePercent*100;
+		}
+		// K-Mod end
 	}
 
+	/* original bts code
 	iCost *= std::max(0, ((GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (getNumMembers() - 1)) + 100));
-	iCost /= 100;
+	iCost /= 100; */
+
+	iCost *= getNumMembers(); // K-Mod
+	// K-Mod note: For balance in games with different sized teams, the cost should be proportional to team size.
+	// But if that was the only factor, it would slow down the global tech-rate in team-based games.
+	// To deal with this global tech rate issue, I've added an "effective team size" multiplier in the global modifiers
+	// section. This "effective team size" multiplier combined with the direct # of members multiplier should combine to
+	// give roughly the same result as the original code in games with even team sizes.
 
 	return std::max(1, iCost);
 }
