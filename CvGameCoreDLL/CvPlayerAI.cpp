@@ -16139,7 +16139,7 @@ void CvPlayerAI::AI_doDiplo()
 										// K-Mod
 										bool bHasBonus = GET_PLAYER((PlayerTypes)iI).getNumAvailableBonuses((BonusTypes)iJ) > 0;
 										if (GET_PLAYER((PlayerTypes)iI).AI_bonusTradeVal(((BonusTypes)iJ), getID(), 1) > 0
-											&& 2 * GET_PLAYER((PlayerTypes)iI).AI_bonusVal((BonusTypes)iJ, 1) > (bHasBonus? 2 : 3) * AI_bonusVal((BonusTypes)iJ, -1))
+											&& 2 * GET_PLAYER((PlayerTypes)iI).AI_bonusVal((BonusTypes)iJ, 1) > (bHasBonus? 3 : 2) * AI_bonusVal((BonusTypes)iJ, -1))
 										// K-mod end
 										{
 											setTradeItem(&item, TRADE_RESOURCES, iJ);
