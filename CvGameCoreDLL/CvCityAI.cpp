@@ -1037,9 +1037,30 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
+	// K-Mod. Make room for a 'best project'. -1 indicates that we haven't yet calculated the best project.
+	// Well evaluate it soon if we are aiming for a space victory; otherwise we'll just leave it until the end.
+	ProjectTypes eBestProject = NO_PROJECT;
+	int iProjectValue = -1;
+	// K-Mod end
+
 	// K-Mod, short-circuit production choice if we already have something really good in mind
 	if (kPlayer.getNumCities() > 1) // don't use this short circuit if this is our only city.
 	{
+		if (kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4))
+		{
+			eBestProject = AI_bestProject(&iProjectValue);
+			if (eBestProject != NO_PROJECT && iProjectValue > iBestBuildingValue)
+			{
+				int iOdds = std::max(0, 100 * iProjectValue / (3 * iProjectValue + 300) - 10);
+				if (GC.getGameINLINE().getSorenRandNum(100, "Build Project short circuit 1") < iOdds)
+				{
+					pushOrder(ORDER_CREATE, eBestProject);
+					if( gCityLogLevel >= 2 ) logBBAI("      City %S uses choose project short-circuit 1. (project value: %d, building value: %d, odds: %d)", getName().GetCString(), iProjectValue, iBestBuildingValue, iOdds);
+					return;
+				}
+			}
+		}
+
 		int iOdds = std::max(0, 100 * iBestBuildingValue / (3 * iBestBuildingValue + 300) - 10);
 		if (AI_chooseBuilding(0, INT_MAX, 0, iOdds))
 		{
@@ -1574,13 +1595,9 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	// K-Mod
-	ProjectTypes eBestProject = NO_PROJECT;
-	int iProjectValue = 0; //
-	if (kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) || !(bLandWar && iWarSuccessRating < 30))
-	{
+	// K-Mod.
+	if (iProjectValue < 0 && (kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) || !(bLandWar && iWarSuccessRating < 30)))
 		eBestProject = AI_bestProject(&iProjectValue);
-	}
 	// K-Mod end
 
 	int iSpreadUnitThreshold = 1000;
@@ -2640,7 +2657,8 @@ void CvCityAI::AI_chooseProduction()
 		}
 	} */
 	// K-Mod
-	if (eBestProject == NO_PROJECT)
+	FAssert((eBestProject == NO_PROJECT) == (iProjectValue <= 0));
+	if (iProjectValue < 0)
 		eBestProject = AI_bestProject(&iProjectValue);
 	if (iProjectValue > iBestBuildingValue)
 	{
@@ -5689,7 +5707,7 @@ ProjectTypes CvCityAI::AI_bestProject(int* piBestValue)
 		}
 	}
 
-	if (piBestValue)
+	if (piBestValue) // note: piBestValue is set even if there is no best project.
 		*piBestValue = iBestValue;
 
 	return eBestProject;
