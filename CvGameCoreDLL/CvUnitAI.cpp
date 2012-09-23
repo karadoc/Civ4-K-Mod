@@ -453,10 +453,26 @@ bool CvUnitAI::AI_follow(bool bFirst)
 	}
 
 	// I've changed attack-follow code so that it will only attack with a single unit, not the whole group.
-	if (bFirst && AI_cityAttack(1, 70, 0, true))
+	if (bFirst && AI_cityAttack(1, 65, 0, true))
 		return true;
-	if (bFirst && AI_anyAttack(1, 70, 0, 2, true, true))
-		return true;
+	if (bFirst)
+	{
+		bool bMoveGroup = false; // to large groups to leave some units behind.
+		if (getGroup()->getNumUnits() >= 16)
+		{
+			int iCanMove = 0;
+			CLLNode<IDInfo>* pEntityNode = getGroup()->headUnitNode();
+			while (pEntityNode)
+			{
+				CvUnit* pLoopUnit = ::getUnit(pEntityNode->m_data);
+				pEntityNode = getGroup()->nextUnitNode(pEntityNode);
+				iCanMove += (pLoopUnit->canMove() ? 1 : 0);
+			}
+			bMoveGroup = 5 * iCanMove >= 4 * getGroup()->getNumUnits() || iCanMove >= 20; // if 4/5 of our group can still move.
+		}
+		if (AI_anyAttack(1, isEnemy(plot()->getTeam()) ? 65 : 70, 0, bMoveGroup ? 0 : 2, true, true))
+			return true;
+	}
 	//
 
 	if (isEnemy(plot()->getTeam()))
@@ -15718,7 +15734,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 			if (iEnemyDefenders < iMinStack)
 				continue;
 
-			if (!atPlot(pLoopPlot) && (bFollow ? canMoveOrAttackInto(pLoopPlot, bDeclareWar) : generatePath(pLoopPlot, iFlags, true, 0, iRange)))
+			if (!atPlot(pLoopPlot) && (bFollow ? getGroup()->canMoveOrAttackInto(pLoopPlot, bDeclareWar, true) : generatePath(pLoopPlot, iFlags, true, 0, iRange)))
 			{
 				int iOdds = iEnemyDefenders == 0 ? (pLoopPlot->isCity() ? 101 : 100) : AI_getWeightedOdds(pLoopPlot, false); // 101 for cities, because that's a better thing to capture.
 				if (iOdds >= iOddsThreshold)
@@ -16099,7 +16115,7 @@ bool CvUnitAI::AI_defendTeritory(int iThreshold, int iFlags, int iMaxPathTurns, 
 // K-Mod end
 
 // iAttackThreshold is the minimum ratio for our attack / their defence.
-// iDefenceThreshold is the minimum ratio for their attack / our defence.
+// iRiskThreshold is the minimum ratio for their attack / our defence adjusted for stack size
 // note: iSearchRange is /not/ the number of turns. It is the number of steps. iSearchRange < 1 means 'automatic'
 // Only 1-turn moves are considered here.
 bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRiskThreshold, int iFlags)
@@ -16128,11 +16144,15 @@ bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRisk
 			{
 				int iEnemies = pLoopPlot->getNumVisibleEnemyDefenders(this);
 				int iPathTurns;
-				if (iEnemies > 0 && generatePath(pLoopPlot, iFlags, true, &iPathTurns, 1) && iPathTurns <= 1)
+				if (iEnemies > 0 && generatePath(pLoopPlot, iFlags, true, &iPathTurns, 1))
 				{
 					int iEnemyAttack = kOwner.AI_localAttackStrength(pLoopPlot, NO_TEAM, getDomainType(), 0, false);
 
 					int iRiskRatio = 100 * iEnemyAttack / std::max(1, iOurDefence);
+					// adjust risk ratio based on the relative numbers of units.
+					iRiskRatio *= 60 + 40 * getGroup()->getNumUnits() / std::min(iEnemies, getGroup()->getNumUnits());
+					iRiskRatio /= 100;
+					//
 					if (iRiskRatio < iRiskThreshold)
 						continue;
 
