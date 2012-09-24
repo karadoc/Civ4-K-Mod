@@ -923,19 +923,25 @@ void CvTeam::shareCounters(TeamTypes eTeam)
 
 	for (TechTypes eTech = (TechTypes)0; eTech < GC.getNumTechInfos(); eTech=(TechTypes)(eTech+1))
 	{
-		if (!isHasTech(eTech))
+		//if (!isHasTech(eTech))
+		if (!isHasTech(eTech) && !kShareTeam.isHasTech(eTech))
 		{
-			/* if (kShareTeam.getResearchProgress(eTech) > getResearchProgress(eTech))
+			// K-Mod note: it's difficult to do any combined proportionality adjustments here, because if we set
+			// the progress higher than the current cost then we'll get the tech right now before the cost is increased.
+			// We can however adjust for uneven tech costs before the teams are merged.
+			// (eg. suppose techs are more expensive for team 2; if team 2 almost has a tech - and if progress is
+			//  transfered without adjustment, team 1 will immediately get the tech even though team 2 didn't finish it.)
+
+			//if (kShareTeam.getResearchProgress(eTech) > getResearchProgress(eTech))
+			if (kShareTeam.getResearchProgress(eTech) * getResearchCost(eTech) > getResearchProgress(eTech) * kShareTeam.getResearchCost(eTech))
 			{
-				setResearchProgress((eTech), kShareTeam.getResearchProgress(eTech), getLeaderID());
-			} */
-			// K-Mod note: the following assumes the tech cost is directly proportional to the size of the team
-			changeResearchProgress(eTech, kShareTeam.getResearchProgress(eTech), getLeaderID());
+				setResearchProgress(eTech, kShareTeam.getResearchProgress(eTech) * getResearchCost(eTech) / std::max(1, kShareTeam.getResearchCost(eTech)), getLeaderID());
+			}
+			//
+			//else
+			//	kShareTeam.setResearchProgress(eTech, getResearchProgress(eTech) * kShareTeam.getResearchCost(eTech) / std::max(1, getResearchCost(eTech)), kShareTeam.getLeaderID());
+			//
 		}
-		//
-		//if (!kShareTeam.isHasTech(eTech))
-		//	setResearchProgress(eTech, getResearchProgress(eTech), getLeaderID());
-		//
 
 		// unofficial patch
 		if ( kShareTeam.isHasTech(eTech) && !(kShareTeam.isNoTradeTech(eTech)) )
@@ -2828,7 +2834,7 @@ int CvTeam::getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain) const
 	return iMax;
 }
 
-int CvTeam::getResearchCost(TechTypes eTech, bool bGlobalModifiers) const // K-Mod added bGlobalModifiers
+int CvTeam::getResearchCost(TechTypes eTech, bool bGlobalModifiers, bool bTeamSizeModifiers) const // K-Mod added bGlobalModifiers & bTeamSizeModifiers
 {
 	int iCost;
 
@@ -2849,28 +2855,14 @@ int CvTeam::getResearchCost(TechTypes eTech, bool bGlobalModifiers) const // K-M
 
 		iCost *= GC.getEraInfo(GC.getGameINLINE().getStartEra()).getResearchPercent();
 		iCost /= 100;
-
-		// K-Mod. Scale the global tech rate based on how many teams their are compared to the default for this map size.
-		// The cost should be _reduced_ if there are fewer teams than usual. (depending on the xml value. see comment below)
-		int iEffectiveTeamSizePercent = 100*GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getDefaultPlayers() / std::max(1, GC.getGameINLINE().countCivTeamsEverAlive());
-		if (iEffectiveTeamSizePercent > 100)
-		{
-			iCost *= GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (iEffectiveTeamSizePercent - 100) + 10000;
-			iCost /= iEffectiveTeamSizePercent*100;
-		}
-		// K-Mod end
 	}
 
-	/* original bts code
-	iCost *= std::max(0, ((GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (getNumMembers() - 1)) + 100));
-	iCost /= 100; */
+	if (bTeamSizeModifiers) // K-Mod
+	{
+		iCost *= std::max(0, ((GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (getNumMembers() - 1)) + 100));
+		iCost /= 100;
+	}
 
-	iCost *= getNumMembers(); // K-Mod
-	// K-Mod note: For balance in games with different sized teams, the cost should be proportional to team size.
-	// But if that was the only factor, it would slow down the global tech-rate in team-based games.
-	// To deal with this global tech rate issue, I've added an "effective team size" multiplier in the global modifiers
-	// section. This "effective team size" multiplier combined with the direct # of members multiplier should combine to
-	// give roughly the same result as the original code in games with even team sizes.
 
 	return std::max(1, iCost);
 }

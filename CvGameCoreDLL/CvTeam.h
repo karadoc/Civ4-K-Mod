@@ -120,7 +120,7 @@ public:
 	// K-Mod
 	int getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain = NO_DOMAIN) const;
 
-	int getResearchCost(TechTypes eTech, bool bGlobalModifiers = true) const; // (K-Mod added bGlobalModifiers) Exposed to Python
+	int getResearchCost(TechTypes eTech, bool bGlobalModifiers = true, bool bTeamSizeModifiers = true) const; // (K-Mod added bools) Exposed to Python
 	int getResearchLeft(TechTypes eTech) const;																// Exposed to Python
 
 	bool hasHolyCity(ReligionTypes eReligion) const;																		// Exposed to Python
