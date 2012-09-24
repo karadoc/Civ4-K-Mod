@@ -1,6 +1,6 @@
 
 ## "not too Big or Small". A modified version of "big and small" to scale better with larger maps.
-## by Karadoc. version 1.3
+## by Karadoc. version 1.4
 
 from CvPythonExtensions import *
 import CvUtil
@@ -83,8 +83,20 @@ class BnSMultilayeredFractal(CvMapGeneratorUtil.MultilayeredFractal):
 		# Water variables need to differ if Overlap is set. Defining default here.
 		iWater = 74
 
-		# Add a few random patches of Tiny Islands first.
-		numTinies = 1 + self.dice.get(4, "Tiny Islands - Custom Continents PYTHON")
+		iTargetSize = 30 + self.dice.get(min(36, self.iW/3), "zone target size (horiz)")
+		iHorizontalZones = max(1, (self.iW+iTargetSize/2) / iTargetSize)
+		iTargetSize = 30 + self.dice.get(min(34, self.iH/2), "zone target size (vert)")
+		iVerticalZones = max(1, (self.iH+iTargetSize/2) / iTargetSize)
+
+		# if iHorizontalZones == 1 and iVerticalZones == 1:
+			# iHorizontalZones = 1 + self.dice.get(2, "Saving throw vs. Pangaea")
+
+		iTotalZones = iHorizontalZones * iVerticalZones
+		iContinentZones = (iTotalZones+1)/2 + self.dice.get(1+(iTotalZones-1)/2, "number of 'big' zones")
+		iIslandZones = iTotalZones - iContinentZones
+
+		# Add a few random patches of Tiny Islands first. (originaly 1 + r(4))
+		numTinies = iContinentZones + self.dice.get(2 + iTotalZones, "number of Tiny Islands")
 		print("Patches of Tiny Islands: ", numTinies)
 		if numTinies:
 			for tiny_loop in range(numTinies):
@@ -106,15 +118,6 @@ class BnSMultilayeredFractal(CvMapGeneratorUtil.MultilayeredFractal):
 				                           False
 				                           )
 
-		iTargetSize = 32 + self.dice.get(26, "zone target size")
-		iHorizontalZones = max(2, (self.iW+iTargetSize/2) / iTargetSize)
-		iTargetSize = 32 + self.dice.get(26, "zone target size")
-		iVerticalZones = max(1, (self.iH+iTargetSize/2) / iTargetSize)
-		
-		iTotalZones = iHorizontalZones * iVerticalZones
-		iContinentZones = (iTotalZones+1)/2 + self.dice.get(1+(iTotalZones-1)/2, "number of 'big' zones")
-		iIslandZones = iTotalZones - iContinentZones
-		
 		zone_types = [0] * iTotalZones
 		i = 0
 		while i < iContinentZones:
@@ -135,11 +138,11 @@ class BnSMultilayeredFractal(CvMapGeneratorUtil.MultilayeredFractal):
 		iMaxOverLap = 5
 
 		for i in range(iTotalZones):
-			iWestX = max(0, (i % iHorizontalZones) * iZoneWidth - self.dice.get(iMaxOverLap, "zone overlap"))
-			iEastX = min(self.iW - 1, (i % iHorizontalZones + 1) * iZoneWidth + self.dice.get(iMaxOverLap, "zone overlap"))
-			iSouthY = max(0, (i / iHorizontalZones) * iZoneHeight - self.dice.get(iMaxOverLap, "zone overlap"))
-			iNorthY = min(self.iH - 1, (i / iHorizontalZones + 1) * iZoneHeight + self.dice.get(iMaxOverLap, "zone overlap"))
-			
+			iWestX = max(0, (i % iHorizontalZones) * iZoneWidth - self.dice.get(iMaxOverLap, "zone overlap (west)"))
+			iEastX = min(self.iW - 1, (i % iHorizontalZones + 1) * iZoneWidth + self.dice.get(iMaxOverLap, "zone overlap (east)"))
+			iSouthY = max(0, max(3, (i / iHorizontalZones) * iZoneHeight) - self.dice.get(iMaxOverLap, "zone overlap (south)"))
+			iNorthY = min(self.iH - 1, min(self.iH - 4, (i / iHorizontalZones + 1) * iZoneHeight) + self.dice.get(iMaxOverLap, "zone overlap (north)"))
+
 			iWidth = iEastX - iWestX + 1
 			iHeight = iNorthY - iSouthY + 1
 
