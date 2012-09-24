@@ -11215,11 +11215,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		break;
 
 	case UNITAI_ATTACK_CITY:
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/24/10                                jdog5000      */
-/*                                                                                              */
-/* War strategy AI           (corrected by K-Mod)                                               */
-/************************************************************************************************/
+	{
 		// Effect army composition to have more collateral/bombard units
 		iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 4 : 1;
 		
@@ -11235,33 +11231,25 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		if (GC.getUnitInfo(eUnit).getDropRange() > 0)
 		{
 			//iValue -= iTempValue / 2;
-			// K-Mod (how is drop range a disadvantage?)
+			// disabled by K-Mod (how is drop range a disadvantage?)
 		}
 		if (GC.getUnitInfo(eUnit).isFirstStrikeImmune())
 		{
 			iValue += (iTempValue * 8) / 100;
 		}		
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCityAttackModifier()) / 75);
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 200);
+		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCityAttackModifier()) / 75); // bbai (was 100).
+		// iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 400); // (moved)
 		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 6); // K-Mod put in -1, and changed /4 to /6
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 100);
+		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 150); // K-Mod (was 100)
 
-		if (!AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
+		/* if (!AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
 		{
 			int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * 8;
 			//int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * (GC.getUnitInfo(eUnit).isIgnoreBuildingDefense()?12 :8);
 			if (iBombardValue > 0)
 			{
-				//int iGoalTotalBombardRate = 200;
-				// K-Mod note: This goal has no dependancy on civ size, map size, era, strategy, or anything else that matters
-				// a flat goal of 200... This needs to be fixed, but for now, I'll just replace it with something rough.
-				//int iGoalTotalBombardRate = (getNumCities()+3) * (getCurrentEra()+2) * (AI_isDoStrategy(AI_STRATEGY_CRUSH)?10 :5);
-				int iGoalTotalBombardRate = (AI_totalUnitAIs(UNITAI_ATTACK) + AI_totalUnitAIs(UNITAI_ATTACK_CITY)) * (getCurrentEra()+3);
-				/* if (AI_isDoStrategy(AI_STRATEGY_CRUSH))
-				{
-					iGoalTotalBombardRate *= 3;
-					iGoalTotalBombardRate /= 2;
-				} */
+				int iGoalTotalBombardRate = (AI_totalUnitAIs(UNITAI_ATTACK) + AI_totalUnitAIs(UNITAI_ATTACK_CITY)) * (getCurrentEra()+3) / 2;
+
 				// Decrease the bombard target if we own every city in the area, or if we are fighting an overseas war
 				if (pArea &&
 					(pArea->getNumCities() == pArea->getCitiesPerPlayer(getID()) ||
@@ -11281,19 +11269,78 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 				}
 				else
 				{
-					/*iBombardValue *= iGoalTotalBombardRate;
-					iBombardValue /= std::min(4*iGoalTotalBombardRate, 2*iTotalBombardRate - iGoalTotalBombardRate);*/
 					iBombardValue *= 3*iGoalTotalBombardRate+iTotalBombardRate;
 					iBombardValue /= 4*std::max(1, iTotalBombardRate);
 				}
 
 				iValue += iBombardValue;
 			}
+		} */
+		// K-Mod. Bombard rate and collateral damage are both very powerful, but they have diminishing returns wrt the number of such units.
+		// Units with these traits tend to also have a 'combat limit' of less than 100%. It is bad to have an army with a high proportion of
+		// combat-limited units, but it is fine to have some. So as an ad hoc mechanism for evaluating the tradeoff between collateral damage
+		// & bombard vs. combat limit, I'm going to estimate the number of combat limited attack units we already have and use this to adjust
+		// the value of this unit.
+		// Note: The original bts bombard evaluation has been deleted.
+		// The commented code above is K-Mod code from before the more recent changes; kept for comparison.
+		int iSiegeValue = 0;
+		iSiegeValue += iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage() * (4+GC.getUnitInfo(eUnit).getCollateralDamageMaxUnits()) / 600;
+		if (GC.getUnitInfo(eUnit).getBombardRate() > 0 && !AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
+		{
+			int iBombardValue = GC.getUnitInfo(eUnit).getBombardRate() * 8;
+			// Decrease the bombard value if we own every city in the area, or if we are fighting an overseas war
+			if (pArea &&
+				(pArea->getNumCities() == pArea->getCitiesPerPlayer(getID()) ||
+				(pArea->getAreaAIType(getTeam()) != AREAAI_NEUTRAL && !AI_isLandWar(pArea))))
+			{
+				iBombardValue *= 2;
+				iBombardValue /= 3;
+			}
+			iSiegeValue += iBombardValue;
 		}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+		if (GC.getUnitInfo(eUnit).getCombatLimit() < 100)
+		{
+			PROFILE("AI_unitValue, UNITAI_ATTACK_CITY combat limit adjustment");
+			// count the number of existing combat-limited units.
+			int iLimitedUnits = 0;
+
+			// Unfortunately, when counting units like this we can't distiguish between attack unit and collateral defensive units.
+			// Most of the time, unitai_collateral units will be combat limited, and so we should subtract them from out limited unit tally.
+			// But in some situations there are collateral damage units without combat limits (eg. Cho-Ko-Nu). When such units are in use,
+			// we should not assume all unitai_collateral are limited. -- This whole business is an ugly kludge... I hope it works.
+			int iNoLimitCollateral = 0;
+
+			for (UnitClassTypes i = (UnitClassTypes)0; i < GC.getNumUnitClassInfos(); i=(UnitClassTypes)(i+1))
+			{
+				UnitTypes eLoopUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(i);
+				if (eLoopUnit == NO_UNIT)
+					continue;
+				const CvUnitInfo& kLoopInfo = GC.getUnitInfo(eLoopUnit);
+
+				if (kLoopInfo.getDomainType() == DOMAIN_LAND && kLoopInfo.getCombat() > 0 && !kLoopInfo.isOnlyDefensive())
+				{
+					if (kLoopInfo.getCombatLimit() < 100)
+						iLimitedUnits += getUnitClassCount(i);
+					else if (kLoopInfo.getCollateralDamage() > 0)
+						iNoLimitCollateral = getUnitClassCount(i);
+				}
+			}
+
+			iLimitedUnits -= range(AI_totalUnitAIs(UNITAI_COLLATERAL) - iNoLimitCollateral / 2, 0, iLimitedUnits);
+			FAssert(iLimitedUnits >= 0);
+			int iAttackUnits = std::max(1, AI_totalUnitAIs(UNITAI_ATTACK) + AI_totalUnitAIs(UNITAI_ATTACK_CITY)); // floor value is just to avoid divide-by-zero
+			FAssert(iAttackUnits >= iLimitedUnits); // this is not strictly guarenteed, but I expect it to always be true under normal playing conditions.
+
+			iValue *= iAttackUnits;
+			iValue /= std::max(iAttackUnits, iAttackUnits/2 + iLimitedUnits);
+
+			iSiegeValue *= std::max(1, iAttackUnits - iLimitedUnits);
+			iSiegeValue /= iAttackUnits;
+		}
+		iValue += iSiegeValue;
+
 		break;
+	}
 
 	case UNITAI_COLLATERAL:
 		iValue += iCombatValue;
