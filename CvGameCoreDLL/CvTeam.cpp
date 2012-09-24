@@ -416,6 +416,7 @@ void CvTeam::addTeam(TeamTypes eTeam)
 	bool bValid;
 	int iLoop;
 	int iI, iJ;
+	int iOriginalTeamSize = getNumMembers();// K-Mod
 
 	FAssert(eTeam != NO_TEAM);
 	FAssert(eTeam != getID());
@@ -567,7 +568,8 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			{
 				if (GET_TEAM(eTeam).isVassal((TeamTypes)iI))
 				{
-					setVassal(((TeamTypes)iI), true, isCapitulated());
+					//setVassal(((TeamTypes)iI), true, isCapitulated());
+					setVassal(((TeamTypes)iI), true, GET_TEAM(eTeam).isCapitulated()); // K-Mod
 				}
 				else if (isVassal((TeamTypes)iI))
 				{
@@ -606,6 +608,23 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			GET_PLAYER((PlayerTypes)iI).setTeam(getID());
 		}
 	}
+
+	// K-Mod. Adjust the progress of unfinished research so that it is proportionally the same as it was before the merge.
+	{
+		// cf. CvTeam::getResearchCost
+		int iCostMultiplier = 100;
+		iCostMultiplier *= 100 + GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (getNumMembers() - 1); // new
+		iCostMultiplier /= 100 + GC.getDefineINT("TECH_COST_EXTRA_TEAM_MEMBER_MODIFIER") * (iOriginalTeamSize - 1); // old
+
+		FAssert(iCostMultiplier >= 100);
+
+		for (TechTypes i = (TechTypes)0; i < GC.getNumTechInfos(); i=(TechTypes)(i+1))
+		{
+			if (!isHasTech(i) && getResearchProgress(i) > 0)
+				setResearchProgress(i, getResearchProgress(i)*iCostMultiplier/100, getLeaderID());
+		}
+	}
+	// K-Mod end
 
 	// K-Mod. The following cancel deals code has been moved from higher up.
 	// I've done this so that when open-borders is canceled, it doesn't bump our new allies out of our borders.
@@ -739,6 +758,7 @@ void CvTeam::shareItems(TeamTypes eTeam)
 	{
 		setEspionagePointsAgainstTeam((TeamTypes)iTeam, std::max(GET_TEAM(eTeam).getEspionagePointsAgainstTeam((TeamTypes)iTeam), getEspionagePointsAgainstTeam((TeamTypes)iTeam)));
 	}
+	setEspionagePointsEver(std::max(GET_TEAM(eTeam).getEspionagePointsEver(), getEspionagePointsEver())); // K-Mod
 
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
@@ -859,24 +879,10 @@ void CvTeam::shareCounters(TeamTypes eTeam)
 			//else
 			//	kShareTeam.AI_setEnemyPeacetimeGrantValue(eLoopTeam, AI_getEnemyPeacetimeGrantValue(eLoopTeam));
 
-			// K-Mod - share unspent espionage
-			if (kShareTeam.getEspionagePointsAgainstTeam(eLoopTeam) > getEspionagePointsAgainstTeam(eLoopTeam))
-				setEspionagePointsAgainstTeam(eLoopTeam, kShareTeam.getEspionagePointsAgainstTeam(eLoopTeam));
-			//else
-			//	kShareTeam.setEspionagePointsAgainstTeam(eLoopTeam, getEspionagePointsAgainstTeam(eLoopTeam));
-			// K-Mod end
-
 			kShareTeam.AI_setWarPlan(eLoopTeam, NO_WARPLAN, false);
 			// K-Mod note. presumably, the warplan is cleared under the assumption that kShareTeam is going to be removed.
 		}
 	}
-
-	// K-Mod total espionage
-	if (kShareTeam.getEspionagePointsEver() > getEspionagePointsEver())
-		setEspionagePointsEver(kShareTeam.getEspionagePointsEver());
-	//else
-	//	kShareTeam.setEspionagePointsEver(getEspionagePointsEver());
-	// K-Mod end
 
 	for (ProjectTypes eProject = (ProjectTypes)0; eProject < GC.getNumProjectInfos(); eProject=(ProjectTypes)(eProject+1))
 	{
