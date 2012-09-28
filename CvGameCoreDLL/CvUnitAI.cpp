@@ -15238,6 +15238,8 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										+ (pLoopCity->plot()->isHills() ? GC.getHILLS_EXTRA_DEFENSE() : 0);
 									iValue *= std::max(25, 125 - iMod);
 									iValue /= 25; // the denominator is arbitrary, and unimportant.
+									// note: the value reduction from high defences which are bombardable should not be more than
+									// the value reduction from simply having higher iPathTurns.
 								}
 
 								// prefer cities which are close to the main target.
@@ -15257,8 +15259,8 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 
 								if (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
 								{
-									iValue *= 50 + pLoopCity->calculateCulturePercent(getOwnerINLINE());
-									iValue /= 50;
+									iValue *= 100 + pLoopCity->calculateCulturePercent(getOwnerINLINE()); // was 50
+									iValue /= 125; // was 50 (unimportant)
 								}
 
 								// boost value if we can see that the city is poorly defended, or if our existing armies need help there
@@ -15276,6 +15278,13 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 										int iCap = 100 + 100 * (6 - iPathTurns) / 5;
 										iValue *= std::min(iCap, 100 * iOurOffence / std::max(1, iEnemyDefence));
 										iValue /= 100;
+										// an additional bonus if we're already adjacent
+										// (we can afford to be generous with this bonus, because the enemy has no time to bring in reinforcements)
+										if (iPathTurns <= 1)
+										{
+											iValue *= std::min(300, 150 * iOurOffence / std::max(1, iEnemyDefence));
+											iValue /= 100;
+										}
 									}
 								}
 								// Reduce the value if we can see, or remember, that the city is well defended.

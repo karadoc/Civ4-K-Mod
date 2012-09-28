@@ -3859,7 +3859,8 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 
 	FAssertMsg(pCity != NULL, "City is not assigned a valid value");
 
-	int iValue = 1 + pCity->getPopulation() * (50 + pCity->calculateCulturePercent(getID())) / 100;
+	//int iValue = 1 + pCity->getPopulation() * (50 + pCity->calculateCulturePercent(getID())) / 100;
+	int iValue = 5 + pCity->getPopulation() * (100 + pCity->calculateCulturePercent(getID())) / 150; // K-Mod (to dilute the other effects)
 
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      06/30/10                     Mongoose & jdog5000      */
