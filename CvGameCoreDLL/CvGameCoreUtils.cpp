@@ -761,29 +761,14 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 	FAssert((iAttackerStrength + iDefenderStrength) > 0);
 	FAssert((iAttackerFirepower + iDefenderFirepower) > 0);
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      02/21/10                                jdog5000      */
-/*                                                                                              */
-/* Efficiency, Lead From Behind                                                                 */
-/************************************************************************************************/
-	// From Lead From Behind by UncutDragon
-	// original
-	//iDefenderOdds = ((GC.getDefineINT("COMBAT_DIE_SIDES") * iDefenderStrength) / (iAttackerStrength + iDefenderStrength));
-	// modified
 	iDefenderOdds = ((GC.getCOMBAT_DIE_SIDES() * iDefenderStrength) / (iAttackerStrength + iDefenderStrength));
-	// /UncutDragon
 
 	if (iDefenderOdds == 0)
 	{
 		return 1000;
 	}
 
-	// UncutDragon
-	// original
-	//iAttackerOdds = GC.getDefineINT("COMBAT_DIE_SIDES") - iDefenderOdds;	
-	// modified
 	iAttackerOdds = GC.getCOMBAT_DIE_SIDES() - iDefenderOdds;	
-	// /UncutDragon
 
 	if (iAttackerOdds == 0)
 	{
@@ -795,14 +780,8 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 	// calculate damage done in one round
 	//////
 
-	// UncutDragon
-	// original
-	//iDamageToAttacker = std::max(1,((GC.getDefineINT("COMBAT_DAMAGE") * (iDefenderFirepower + iStrengthFactor)) / (iAttackerFirepower + iStrengthFactor)));
-	//iDamageToDefender = std::max(1,((GC.getDefineINT("COMBAT_DAMAGE") * (iAttackerFirepower + iStrengthFactor)) / (iDefenderFirepower + iStrengthFactor)));
-	// modified
 	iDamageToAttacker = std::max(1,((GC.getCOMBAT_DAMAGE() * (iDefenderFirepower + iStrengthFactor)) / (iAttackerFirepower + iStrengthFactor)));
 	iDamageToDefender = std::max(1,((GC.getCOMBAT_DAMAGE() * (iAttackerFirepower + iStrengthFactor)) / (iDefenderFirepower + iStrengthFactor)));
-	// /UncutDragon
 
 	// calculate needed rounds.
 	// Needed rounds = round_up(health/damage)
@@ -863,12 +842,7 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 					// this needs to be in floating point math
 					//////
 
-					// UncutDragon
-					// original
-					//fOddsEvent = ((float)getBinomialCoefficient(iFirstStrikes, iI3)) * pow((((float)iAttackerOdds) / GC.getDefineINT("COMBAT_DIE_SIDES")), iI3) * pow((1.0f - (((float)iAttackerOdds) / GC.getDefineINT("COMBAT_DIE_SIDES"))), (iFirstStrikes - iI3));
-					// modified
 					fOddsEvent = ((float)getBinomialCoefficient(iFirstStrikes, iI3)) * pow((((float)iAttackerOdds) / GC.getCOMBAT_DIE_SIDES()), iI3) * pow((1.0f - (((float)iAttackerOdds) / GC.getCOMBAT_DIE_SIDES())), (iFirstStrikes - iI3));
-					// /UncutDragon
 
 					// calculate chance assuming iI3 first strike hits: fOddsAfterEvent
 					//////
@@ -893,12 +867,7 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 							// this needs to be in floating point math
 							//////
 
-							// UncutDragon
-							// original
-							//fOddsAfterEvent += ((float)getBinomialCoefficient((iMaxRounds - iI3), iI4)) * pow((((float)iAttackerOdds) / GC.getDefineINT("COMBAT_DIE_SIDES")), iI4) * pow((1.0f - (((float)iAttackerOdds) / GC.getDefineINT("COMBAT_DIE_SIDES"))), ((iMaxRounds - iI3) - iI4));
-							// modified
 							fOddsAfterEvent += ((float)getBinomialCoefficient((iMaxRounds - iI3), iI4)) * pow((((float)iAttackerOdds) / GC.getCOMBAT_DIE_SIDES()), iI4) * pow((1.0f - (((float)iAttackerOdds) / GC.getCOMBAT_DIE_SIDES())), ((iMaxRounds - iI3) - iI4));
-							// /UncutDragon
 						}
 					}
 
@@ -937,12 +906,7 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 						// this needs to be in floating point math
 						//////
 
-						// UncutDragon
-						// original
-						//fOddsEvent = ((float)getBinomialCoefficient(iFirstStrikes, iI3)) * pow((((float)iDefenderOdds) / GC.getDefineINT("COMBAT_DIE_SIDES")), iI3) * pow((1.0f - (((float)iDefenderOdds) / GC.getDefineINT("COMBAT_DIE_SIDES"))), (iFirstStrikes - iI3));
-						// modified
 						fOddsEvent = ((float)getBinomialCoefficient(iFirstStrikes, iI3)) * pow((((float)iDefenderOdds) / GC.getCOMBAT_DIE_SIDES()), iI3) * pow((1.0f - (((float)iDefenderOdds) / GC.getCOMBAT_DIE_SIDES())), (iFirstStrikes - iI3));
-						// /UncutDragon
 
 						// calculate chance assuming iI3 first strike hits: fOddsAfterEvent
 						//////
@@ -962,12 +926,7 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 							// this needs to be in floating point math
 							//////
 
-							// UncutDragon
-							// original
-							//fOddsAfterEvent += ((float)getBinomialCoefficient((iMaxRounds - iI3), iI4)) * pow((((float)iAttackerOdds) / GC.getDefineINT("COMBAT_DIE_SIDES")), iI4) * pow((1.0f - (((float)iAttackerOdds) / GC.getDefineINT("COMBAT_DIE_SIDES"))), ((iMaxRounds - iI3) - iI4));
-							// modified
 							fOddsAfterEvent += ((float)getBinomialCoefficient((iMaxRounds - iI3), iI4)) * pow((((float)iAttackerOdds) / GC.getCOMBAT_DIE_SIDES()), iI4) * pow((1.0f - (((float)iAttackerOdds) / GC.getCOMBAT_DIE_SIDES())), ((iMaxRounds - iI3) - iI4));
-							// /UncutDragon
 						}
 
 						// Multiply these together, round them properly, and add 
@@ -980,9 +939,6 @@ int getCombatOdds(const CvUnit* pAttacker, const CvUnit* pDefender)
 			}
 		}
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	// Weigh the total to the number of possible combinations of first strikes events
 	// note: the integer math breaks down when #FS > 656 (with a die size of 1000)
