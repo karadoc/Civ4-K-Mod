@@ -2073,9 +2073,9 @@ void CvCityAI::AI_chooseProduction()
 			}
 
 			UnitTypeWeightArray invaderTypes;
-			invaderTypes.push_back(std::make_pair(UNITAI_ATTACK_CITY, 100));
-			invaderTypes.push_back(std::make_pair(UNITAI_COUNTER, 50));
-			invaderTypes.push_back(std::make_pair(UNITAI_ATTACK, 40));
+			invaderTypes.push_back(std::make_pair(UNITAI_ATTACK_CITY, 110)); // was 100
+			invaderTypes.push_back(std::make_pair(UNITAI_COUNTER, 40)); // was 50
+			invaderTypes.push_back(std::make_pair(UNITAI_ATTACK, 50)); // was 40
 			if( kPlayer.AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ) )
 			{
 				invaderTypes.push_back(std::make_pair(UNITAI_PARADROP, 20));
