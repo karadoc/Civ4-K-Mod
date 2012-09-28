@@ -21322,25 +21322,11 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 	// K-Mod
 	iDefenders = 1 + iAreaCities + AI_totalAreaUnitAIs(pArea, UNITAI_SETTLE);
 	iDefenders += pArea->getPopulationPerPlayer(getID()) / 7;
+	if (AI_isLandWar(pArea))
+		iDefenders += 1 + (2+GET_TEAM(getTeam()).countEnemyCitiesByArea(pArea))/3;
 	iDefenders *= iCurrentEra + (GC.getGameINLINE().getMaxCityElimination() > 0 ? 3 : 2);
 	iDefenders /= 3;
 	// K-Mod end
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/01/10                                jdog5000      */
-/*                                                                                              */
-/* War strategy AI, Victory Strategy AI                                                         */
-/************************************************************************************************/
-	//if( pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE || pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE || pArea->getAreaAIType(getTeam()) == AREAAI_MASSING )
-	if (AI_isLandWar(pArea)) // K-Mod
-	{
-		if( iAreaCities <= std::min(4, pArea->getNumCities()/3) )
-		{
-			// Land war here, as floating defenders are based on cities/population need to make sure
-			// AI defends its footholds in new continents well.
-			iDefenders += GET_TEAM(getTeam()).countEnemyPopulationByArea(pArea) / 14;
-		}
-	}
 
 	if (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)
 	{
@@ -21364,7 +21350,7 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 		}
 		else if (pArea->getAreaAIType(getTeam()) == AREAAI_MASSING)
 		{
-			if( GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true) < (10 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarNearbyPowerRatio()) )
+			if( GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true) < (10 + GC.getLeaderHeadInfo(getPersonalityType()).getMaxWarNearbyPowerRatio()) ) // bbai
 			{
 				iDefenders *= 2;
 				iDefenders /= 3;
@@ -21383,12 +21369,9 @@ int CvPlayerAI::AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const
 		iDefenders /= 3;
 	}
 
-	// Removed AI_STRATEGY_GET_BETTER_UNITS reduction, it was reducing defenses twice
+	// BBAI: Removed AI_STRATEGY_GET_BETTER_UNITS reduction, it was reducing defenses twice
 	
 	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 	{
 		iDefenders += 2 * iAreaCities;
 		//if (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE)

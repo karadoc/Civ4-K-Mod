@@ -11907,6 +11907,9 @@ int CvCityAI::AI_cityThreat(bool bDangerPercent)
 						iTempValue += (stepDistance(getX_INLINE(), getY_INLINE(), pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE()) <= 1) ? 2 : 1;
 					}
 				}
+				//if (getPreviousOwner() == iI && GC.getGameINLINE().getGameTurn() - getGameTurnAcquired() < 40)
+				if (getPreviousOwner() == iI) // lets try this first. If weird stuff happens, then we'll try the turn limit.
+					iTempValue = iTempValue * 3/2;
 				// K-Mod end
 
 				if (bCrushStrategy && GET_TEAM(getTeam()).AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)

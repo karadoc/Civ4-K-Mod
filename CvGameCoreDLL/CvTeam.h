@@ -105,17 +105,10 @@ public:
 	int countTotalPopulationByArea(CvArea* pArea) const;																// Exposed to Python
 	int countPowerByArea(CvArea* pArea) const;																					// Exposed to Python
 	int countEnemyPowerByArea(CvArea* pArea) const;																			// Exposed to Python
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/19/10                                jdog5000      */
-/*                                                                                              */
-/* War strategy AI                                                                              */
-/************************************************************************************************/
-	int countEnemyPopulationByArea(CvArea* pArea) const;
+	int countEnemyCitiesByArea(CvArea* pArea) const; // K-Mod
+	int countEnemyPopulationByArea(CvArea* pArea) const; // bbai
 	int countNumAIUnitsByArea(CvArea* pArea, UnitAITypes eUnitAI) const;								// Exposed to Python
 	int countEnemyDangerByArea(CvArea* pArea, TeamTypes eEnemyTeam = NO_TEAM) const;																		// Exposed to Python
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	// K-Mod
 	int getTypicalUnitValue(UnitAITypes eUnitAI, DomainTypes eDomain = NO_DOMAIN) const;

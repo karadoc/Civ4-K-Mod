@@ -2734,6 +2734,21 @@ int CvTeam::countEnemyPowerByArea(CvArea* pArea) const
 	return iCount;
 }
 
+// K-Mod
+// Note: this includes barbarian cities.
+int CvTeam::countEnemyCitiesByArea(CvArea* pArea) const
+{
+	int iCount = 0;
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+		if (kLoopPlayer.isAlive() && AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN)
+			iCount += pArea->getCitiesPerPlayer(i);
+	}
+	return 0;
+}
+// K-Mod end
+
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      04/01/10                                jdog5000      */
 /*                                                                                              */
