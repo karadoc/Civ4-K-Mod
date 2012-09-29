@@ -2186,6 +2186,7 @@ void CvUnitAI::AI_attackMove()
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
 
 	bool bDanger = (kOwner.AI_getAnyPlotDanger(plot(), 3));
+	bool bLandWar = kOwner.AI_isLandWar(area()); // K-Mod
 
 	// K-Mod note. We'll split the group up later if we need to. (bbai group splitting code deleted.)
 	FAssert(getGroup()->countNumUnitAIType(UNITAI_ATTACK_CITY) == 0); // K-Mod. (I'm pretty sure this can't happen.)
@@ -2274,13 +2275,23 @@ void CvUnitAI::AI_attackMove()
 		}
 
 		//join any city attacks in progress
+		/* original bts code
 		if (plot()->isOwned() && plot()->getOwnerINLINE() != getOwnerINLINE())
 		{
 			if (AI_groupMergeRange(UNITAI_ATTACK_CITY, 1, true, true))
 			{
 				return;
 			}
+		} */
+		// K-Mod
+		if (isEnemy(plot()->getTeam()))
+		{
+			if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, 0, 2, true, false))
+			{
+				return;
+			}
 		}
+		// K-Mod end
 		
 		AreaAITypes eAreaAIType = area()->getAreaAIType(getTeam());
         if (plot()->isCity())
@@ -2357,7 +2368,6 @@ void CvUnitAI::AI_attackMove()
 				}
 
 				//bool bLandWar = ((eAreaAIType == AREAAI_OFFENSIVE) || (eAreaAIType == AREAAI_DEFENSIVE) || (eAreaAIType == AREAAI_MASSING));
-				bool bLandWar = kOwner.AI_isLandWar(area()); // K-Mod
 				if (!bLandWar)
 				{
 					// Fill transports before starting new one, but not just full of our unit ai
@@ -2439,7 +2449,7 @@ void CvUnitAI::AI_attackMove()
 				return;
 			}
 
-			if (getGroup()->getNumUnits() < 4)
+			if (getGroup()->getNumUnits() < 4 && isEnemy(plot()->getTeam()))
 			{
 				if (AI_choke(1))
 				{
@@ -2474,10 +2484,21 @@ void CvUnitAI::AI_attackMove()
 			}
 
 			//if (AI_group(UNITAI_ATTACK_CITY, 1, 1, -1, bIgnoreFaster, true, true, 5))
-			if (AI_omniGroup(UNITAI_ATTACK_CITY, 1, 1, true, 0, 5, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, false))
+			// K-Mod
+			bool bAttackCity = bLandWar && (area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE || (AI_getBirthmark() + GC.getGameINLINE().getGameTurn()/8)%5 <= 1);
+			if (bAttackCity)
 			{
-				return;
+				// strong merge strategy
+				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, -1, true, 0, 5, true, getGroup()->getNumUnits() < 2, bIgnoreFaster, false, false))
+					return;
 			}
+			else
+			{
+				// weak merge strategy
+				if (AI_omniGroup(UNITAI_ATTACK_CITY, -1, 2, true, 0, 5, true, false, bIgnoreFaster, false, true))
+					return;
+			}
+			// K-Mod end
 
 			//if (AI_group(UNITAI_ATTACK, 1, 1, -1, true, true, false, 4))
 			if (AI_omniGroup(UNITAI_ATTACK, 2, -1, false, 0, 4, true, true, true, true, false))
@@ -2499,8 +2520,17 @@ void CvUnitAI::AI_attackMove()
 			{
 				return;
 			}
+
+			// K-Mod. If we're feeling aggressive, then try to get closer to the enemy.
+			if (bAttackCity && getGroup()->getNumUnits() > 1)
+			{
+				if (AI_goToTargetCity(0, 12))
+					return;
+			}
+			// K-Mod end
 		}
 
+		/* original bts code
 		if (area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE)
 		{
 			if (getGroup()->getNumUnits() > 1)
@@ -2511,7 +2541,7 @@ void CvUnitAI::AI_attackMove()
 					return;
 				}
 			}
-		}
+		} */ // disabled by K-Mod. (moved / changed)
 		/* BBAI code
 		else if( area()->getAreaAIType(getTeam()) != AREAAI_DEFENSIVE )
 		{
