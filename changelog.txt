@@ -1,6 +1,50 @@
-This is K-Mod version 1.36.
+This is K-Mod version 1.37.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.37 changelist
+
+Game / UI
+
++ Game handicap level is now set to average of humans' handicap rather than minimum.
++ Free starting techs for handicap levels are now granted based on the team handicap level rather than the game handicap level.
++ When the player handicap and game handicap are not the same, the settings screen now shows both values. (This only affects mixed handicap multiplayer games.)
++ Tech progress now carries over proportionally when a permanent alliance is formed. (eg. 100/200 will go to 150/300, whereas previously it would go to 100/300.)
++ 'Total espionage ever' is now set correctly when a permanent alliance is formed.
++ Fixed a BtS bug which caused capitulation status to not be set correctly when a permanent alliance is formed with a capitulated civ. (This is impossible in the standard rules anyway.)
++ When selecting units with ctrl/alt, if the clicked unit is already selected then moves should be checked. (The previous implementation of this rule was flawed. It should work correctly now.)
++ Tightened the conditions on some city advisor popups. (eg. the 'liberate city' recommendation now requires that the city be at least 10 turns old)
++ AI attitudes are now updated when first contact is made. (This fixes a bug which caused all leaders to be 'cautious' during the first meeting.)
++ Changed the diplomacy animation for the "worst enemy trading" greeting from 'furious' to 'disagree'. (This isn't ideal, but I think it's a bit less jarring for the AI to go from "no" to a smiling face than to go from a furious glare to a smiling face.)
+
+AI
+
++ The trade value of techs is now independent of team size. (ie. the AI will now value techs the same regardless of whether they are giving them to a 2-civ team or a to 1-civ team, whereas previously the tech would be valued more highly for the 2-civ team.)
++ Fixed a bug which sometimes caused free specialist to be poorly assigned.
++ Corrected a bug which sometimes caused the AI to give resources to their allies more often that they should.
++ Made some adjustments to the way the AI chooses target cities.
++ The AI will now put a bit more emphasis on defending cities it has captured during war.
++ Made some changes to the AI's evaluation and distribution of units built for attack forces. (This may need further tweaking after more testing.)
++ Fixed a bug which sometimes caused the AI to incorrectly think it could not attack.
++ The AI's 'attack' units should now be a bit more inclined to group with attack_city stacks rather than just doing their own thing.
++ Large AI stacks will now be willing to leave units behind so that the stack is less likely to be stalled by minor skirmishes on the way to their destination.
++ Large AI stacks will now be a bit more willing to attack smaller enemy stacks when the opportunity arises.
++ The AI will now be a bit more decisive in choosing their naval assault target. (Previously they would often change their mind when they started to get close to the destination. This wouldn't be obvious to the player, but it was a problem.)
++ Fixed a problem which sometimes caused the AI to load an unbalanced naval attack force when they didn't have enough ships. (They'd often bring too many siege units.)
++ Fixed a minor bug which sometimes caused the AI to waste a turn when unloading units at the end of a diagonal move.
++ AI explorers will now try to make contact with mapped but unmet players. (Previously the explorers were only interested in unmapped territory.)
++ Slightly increased the probability of AI spies targeting plot improvements when at war.
++ Tightened the conditions on espionage usage when using the 'espionage economy' strategy, so that the AI will be a bit less likely to waste all its espionage blowing up factories when it is meant to be stealing techs.
++ The AI will now focus slightly more on building spaceship parts during the final stages of a space race. (This will probably still need some adjustments.)
+
+Map script: Not Too Big or Small
+
++ Zones are now more likely to have a buffer at the north and south poles. This will reduce the chance of ice continents.
++ Increased the range of allowable zone sizes, particularly on larger maps.
++ Single zone maps are no longer forbidden. This will make 'Pangaea' style maps slightly more common on 'normal' size maps, and much more common on smaller maps.
++ The number of "tiny islands" now depends on the number of zones. This will reduce the chance of having vast empty oceans.
+
+
+--
 v1.36 changelist
 
 Game / UI

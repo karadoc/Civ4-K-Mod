@@ -27,7 +27,7 @@
 				ReBuildCommandLine="nmake Debug_clean&#x0D;&#x0A;nmake Debug"
 				CleanCommandLine="nmake Debug_clean"
 				Output=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_USRDLL;KMOD_PATH_FINDER"
+				PreprocessorDefinitions="WIN32;_DEBUG;_USRDLL;KMOD_PATH_FINDER;FASSERT_ENABLE"
 				IncludeSearchPath=""
 				ForcedIncludes=""
 				AssemblySearchPath=""
