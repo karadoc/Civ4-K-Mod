@@ -1140,6 +1140,13 @@ bool CvPlot::isAdjacentPlotGroupConnectedBonus(PlayerTypes ePlayer, BonusTypes e
 	CvPlot* pAdjacentPlot;
 	int iI;
 
+	// K-Mod. Allow this plot to have whatever resources are available in the city working the plot.
+	// (The purpose of this is to allow railroads to be built the 'oil' from Standard Ethonol.)
+	CvCity* pCity = getWorkingCity();
+	if (pCity && pCity->getOwnerINLINE() == ePlayer && pCity->hasBonus(eBonus))
+		return true;
+	// K-Mod end
+
 	for (iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
 	{
 		pAdjacentPlot = plotDirection(getX_INLINE(), getY_INLINE(), ((DirectionTypes)iI));
