@@ -5493,6 +5493,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	iValue -= AI_obsoleteBuildingPenalty(eTech, bAsync); // K-Mod!
 
 	// if it gives at least one wonder
+	/* original bts code
 	if (bEnablesWonder)
 	{
 		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(800, "AI Research Wonder Building ASYNC") : GC.getGameINLINE().getSorenRandNum(800, "AI Research Wonder Building"));
@@ -5500,7 +5501,19 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 		iRandomMax += 800;
 		iRandomFactor += iWonderRandom;
+	} */
+	// K-Mod. Scale the random wonder bonus based on leader personality.
+	// Note: the new conditions here use to be inside AI_techBuildingValue. I think it makes much more sense to have them here instead.
+	if (bEnablesWonder && iPathLength <= 1 && getTotalPopulation() > 5)
+	{
+		int iPersonalityFactor = GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(); // note: highest value is 50 in the default xml.
+		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(1600, "AI Research Wonder Building ASYNC") : GC.getGameINLINE().getSorenRandNum(1600, "AI Research Wonder Building"));
+		iValue += (1000 + iWonderRandom) * iPersonalityFactor / (bAdvancedStart ? 400 : 100);
+
+		iRandomMax += 16 * iPersonalityFactor;
+		iRandomFactor += iWonderRandom * iPersonalityFactor / 100;
 	}
+	// K-Mod end
 
 	/* ------------------ Project Value  ------------------ */
 	bool bEnablesProjectWonder = false;
