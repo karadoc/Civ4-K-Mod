@@ -1013,7 +1013,7 @@ void CvPlayerAI::AI_updateFoundValues(bool bStartingLoc)
 {
 	PROFILE_FUNC();
 
-	bool bCitySiteCalculations = (GC.getGame().getGameTurn() > GC.getGame().getStartTurn());
+	// bool bCitySiteCalculations = (GC.getGame().getGameTurn() > GC.getGame().getStartTurn()); // disabled by K-Mod (unused)
 	
 	int iLoop;
 	for (CvArea* pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
@@ -5489,7 +5489,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 	/* ------------------ Building Value  ------------------ */
 	bool bEnablesWonder;
-	iValue += AI_techBuildingValue( eTech, iPathLength, bEnablesWonder );
+	iValue += AI_techBuildingValue(eTech, bAsync, bEnablesWonder); // changed by K-Mod
 	iValue -= AI_obsoleteBuildingPenalty(eTech, bAsync); // K-Mod!
 
 	// if it gives at least one wonder
@@ -6121,10 +6121,138 @@ int CvPlayerAI::AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) co
 
 	return iTotalPenalty;
 }
-// K-Mod
 
-int CvPlayerAI::AI_techBuildingValue( TechTypes eTech, int iPathLength, bool &bEnablesWonder ) const
+// K-Mod. The original code had some vague / ad-hoc calculations to evalute the buildings enabled by techs.
+// It was completely separate from CvCity::AI_buildingValue, and it ignored _most_ building functionality.
+// I've decided it would be better to use the thorough calculations already present in AI_buildingValue.
+// This should make the AI a bit smarter and the code more easy to update. But it might run slightly slower.
+//
+// Note: There are some cases where this new kind of evaluation is significantly flawed. For example,
+// Assembly Line enables factories and coal power plants; since these two buildings are highly dependant on
+// one another, their individual evaluation will greatly undervalue them. Another example: catherals can't
+// be built in every city, but this function will evaluate them as if they could, thus overvaluing them.
+// But still, the original code was far worse - so I think I'll just tolerate such flaws for now.
+int CvPlayerAI::AI_techBuildingValue(TechTypes eTech, bool bConstCache, bool& bEnablesWonder) const
 {
+	PROFILE_FUNC();
+	FAssertMsg(!isAnarchy(), "AI_techBuildingValue should not be used while in anarchy. Results will be inaccurate.");
+
+	int iTotalValue = 0;
+	std::vector<const CvCity*> relevant_cities; // (this will be populated when we find a building that needs to be evaluated)
+
+	for (BuildingClassTypes eClass = (BuildingClassTypes)0; eClass < GC.getNumBuildingClassInfos(); eClass=(BuildingClassTypes)(eClass+1))
+	{
+		BuildingTypes eLoopBuilding = ((BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(eClass));
+
+		if (eLoopBuilding == NO_BUILDING || !isTechRequiredForBuilding(eTech, eLoopBuilding))
+			continue; // this building class is not relevent
+
+		const CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
+
+		if (GET_TEAM(getTeam()).isObsoleteBuilding(eLoopBuilding))
+			continue; // already obsolete
+
+		if (isWorldWonderClass(eClass))
+		{
+			if (GC.getGameINLINE().isBuildingClassMaxedOut(eClass) || kLoopBuilding.getProductionCost() < 0)
+				continue; // either maxed out, or it's a special building that we don't want to evaluate here.
+
+			if (kLoopBuilding.getPrereqAndTech() == eTech)
+				bEnablesWonder = true; // a buildable world wonder
+		}
+
+		bool bLimitedBuilding = isLimitedWonderClass(eClass) || kLoopBuilding.getProductionCost() < 0;
+
+		// Populate the relevant_cities list if we haven't done so already.
+		if (relevant_cities.empty())
+		{
+			int iEarliestTurn = INT_MAX;
+
+			int iLoop;
+			for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+			{
+				iEarliestTurn = std::min(iEarliestTurn, pLoopCity->getGameTurnAcquired());
+			}
+
+			int iCutoffTurn = (GC.getGameINLINE().getGameTurn() + iEarliestTurn) / 2 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent() * 30 / 100;
+			// iCutoffTurn corresponds 50% of the time since our first city was aquired, with a 30 turn (scaled) buffer.
+
+			for (const CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+			{
+				if (pLoopCity->getGameTurnAcquired() < iCutoffTurn || pLoopCity->isCapital())
+					relevant_cities.push_back(pLoopCity);
+			}
+
+			if (relevant_cities.empty())
+			{
+				FAssertMsg(false, "No revelent cities in AI_techBuildingValue");
+				return 0;
+			}
+		}
+		//
+
+		// Perform the evaluation.
+		int iBuildingValue = 0;
+		for (size_t i = 0; i < relevant_cities.size(); i++)
+		{
+			if (relevant_cities[i]->canConstruct(eLoopBuilding, false, false, true, true) ||
+				isNationalWonderClass(eClass)) // (ad-hoc). National wonders often require something which is unlocked by the same tech. So I'll disregard the construction requirements.
+			{
+				if (bLimitedBuilding)
+					iBuildingValue = std::max(iBuildingValue, relevant_cities[i]->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache));
+				else
+					iBuildingValue += relevant_cities[i]->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache);
+			}
+		}
+		if (iBuildingValue > 0)
+		{
+			// Scale the value based on production cost and special production multipliers.
+			if (kLoopBuilding.getProductionCost() > 0)
+			{
+				int iMultiplier = 0;
+				for (TraitTypes i = (TraitTypes)0; i < GC.getNumTraitInfos(); i=(TraitTypes)(i+1))
+				{
+					if (hasTrait(i))
+					{
+						iMultiplier += kLoopBuilding.getProductionTraits(i);
+
+						if (kLoopBuilding.getSpecialBuildingType() != NO_SPECIALBUILDING)
+						{
+							iMultiplier += GC.getSpecialBuildingInfo((SpecialBuildingTypes)kLoopBuilding.getSpecialBuildingType()).getProductionTraits(i);
+						}
+					}
+				}
+
+				for (BonusTypes i = (BonusTypes)0; i < GC.getNumBonusInfos(); i=(BonusTypes)(i+1))
+				{
+					if (hasBonus(i))
+						iMultiplier += kLoopBuilding.getBonusProductionModifier(i);
+				}
+				int iScale = 15 * (3 + getCurrentEra()); // hammers (ideally this would be based on the average city yield or something like that.)
+				iScale += AI_isCapitalAreaAlone() ? 30 : 0; // can afford to spend more on infrastructure if we are alone.
+				iScale *= isLimitedWonderClass(eClass) ? 4 : 1; // higher scale for limited wonders because they don't need to be built in every city.
+				iScale = iScale * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getBuildPercent() / 100;
+				iBuildingValue *= 100;
+				iBuildingValue /= std::max(100, 100 * 100 * kLoopBuilding.getProductionCost() / (iScale * (100 + iMultiplier)));
+			}
+			//
+			iTotalValue += iBuildingValue;
+		}
+	}
+	// Scale the total value based on the number of relevant cities, and other factors.
+	int iScale = AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 240 : 140;
+
+	iTotalValue *= iScale;
+	iTotalValue /= 10 * std::max(1, (int)relevant_cities.size());
+
+	return iTotalValue;
+}
+// K-Mod end
+
+int CvPlayerAI::AI_techBuildingValue_old( TechTypes eTech, int iPathLength, bool &bEnablesWonder ) const
+{
+	PROFILE_FUNC();
+
 	bool bCapitalAlone = (GC.getGameINLINE().getElapsedGameTurns() > 0) ? AI_isCapitalAreaAlone() : false;
 	bool bFinancialTrouble = AI_isFinancialTrouble();
 	int iTeamCityCount = GET_TEAM(getTeam()).getNumCities();
@@ -15340,7 +15468,8 @@ void CvPlayerAI::AI_doResearch()
 {
 	FAssertMsg(!isHuman(), "isHuman did not return false as expected");
 
-	if (getCurrentResearch() == NO_TECH)
+	//if (getCurrentResearch() == NO_TECH)
+	if (getCurrentResearch() == NO_TECH && isResearch() && !isAnarchy()) // K-Mod
 	{
 		AI_chooseResearch();
 		//AI_forceUpdateStrategies(); //to account for current research.
