@@ -19521,64 +19521,17 @@ bool CvPlayerAI::AI_isDoVictoryStrategy(int iVictoryStrategy) const
     return (iVictoryStrategy & AI_getVictoryStrategyHash());
 }
 
+// K-Mod note. The bbai version of this function checked each victory type one at a time.
+// I've changed it to test them all at once. This is possible since it's a bitfield.
 bool CvPlayerAI::AI_isDoVictoryStrategyLevel4() const
 {
-	if( AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST4) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION4) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_DIPLOMACY4) )
-	{
-		return true;
-	}
-
-	return false;
+	return AI_isDoVictoryStrategy(AI_VICTORY_SPACE4 | AI_VICTORY_CONQUEST4 | AI_VICTORY_CULTURE4 | AI_VICTORY_DOMINATION4 | AI_VICTORY_DIPLOMACY4);
 }
 
+// (same)
 bool CvPlayerAI::AI_isDoVictoryStrategyLevel3() const
 {
-	if( AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION3) )
-	{
-		return true;
-	}
-
-	if( AI_isDoVictoryStrategy(AI_VICTORY_DIPLOMACY3) )
-	{
-		return true;
-	}
-
-	return false;
+	return AI_isDoVictoryStrategy(AI_VICTORY_SPACE3 | AI_VICTORY_CONQUEST3 | AI_VICTORY_CULTURE3 | AI_VICTORY_DOMINATION3 | AI_VICTORY_DIPLOMACY3);
 }
 
 void CvPlayerAI::AI_updateVictoryStrategyHash()
