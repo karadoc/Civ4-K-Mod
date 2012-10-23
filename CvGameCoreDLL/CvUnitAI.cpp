@@ -23543,6 +23543,9 @@ EspionageMissionTypes CvUnitAI::AI_bestPlotEspionage(PlayerTypes& eTargetPlayer,
 	}
 	if (gUnitLogLevel > 2 && eBestMission != NO_ESPIONAGEMISSION)
 	{
+		// The following assert isn't a problem or a bug. I just want to know when it happens, for testing purposes.
+		FAssertMsg(!kPlayer.AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || GC.getEspionageMissionInfo(eBestMission).getBuyTechCostFactor() > 0 || GC.getEspionageMissionInfo(eBestMission).getDestroyProjectCostFactor() > 0, "Potentially wasteful AI use of espionage.");
+		//
 		logBBAI("      %S chooses %S as their best%s espionage mission (value: %d, cost: %d).", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), GC.getEspionageMissionInfo(eBestMission).getText(), bBigEspionage?" (big)":"", iBestValue, kPlayer.getEspionageMissionCost(eBestMission, eTargetPlayer, pPlot, iData, this));
 	}
 

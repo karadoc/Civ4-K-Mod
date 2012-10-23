@@ -14552,9 +14552,14 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 							// K-Mod
 							// Note: I'm not allowing recursion in the building evaluation.
 							// This may cause the cached value to be inaccurate, but it doesn't really matter, because the building is already built!
-							iValue += 2 * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false);
+							// (first attempt)
+							/* iValue += 2 * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false);
 							iValue *= 60 + kBuilding.getProductionCost();
-							iValue /= 100;
+							iValue /= 100; */
+							// (second attempt) - recall that AI_buildingValue gives units of 4x commerce/turn
+							iValue += kBuilding.getProductionCost() / 2;
+							iValue += (2 + pCity->getProductionTurnsLeft((BuildingTypes)iData, 1)) * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false) / 4;
+							// K-Mod end
 						}
 					}
 				}
@@ -14691,8 +14696,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					{
 						iValue += iCultureAmount * 3;
 					}*/
-					// K-Mod - defensive use of spread culture mission. (The first "if" is really just for effeciency.)
-					if (pCity->calculateCulturePercent(getID()) > 10)
+					// K-Mod - both offensive & defensive use of spread culture mission. (The first "if" is really just for effeciency.)
+					if (pCity->calculateCulturePercent(getID()) >= 8)
 					{
 						const CvCity* pOurClosestCity = GC.getMap().findCity(pPlot->getX(), pPlot->getY(), getID());
 						if (pOurClosestCity != NULL)
@@ -14700,7 +14705,8 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 							int iDistance = pCity->cultureDistance(xDistance(pPlot->getX(), pOurClosestCity->getX()), yDistance(pPlot->getY(), pOurClosestCity->getY()));
 							if (iDistance < 6)
 							{
-								int iMultiplier = std::min(2, (6 - iDistance) * pOurClosestCity->culturePressureFactor() / 600);
+								int iPressure = std::max(pCity->culturePressureFactor() - 100, pOurClosestCity->culturePressureFactor());
+								int iMultiplier = std::min(2, (6 - iDistance) * iPressure / 500);
 								iValue += iCultureAmount * iMultiplier;
 							}
 						}
@@ -14734,15 +14740,13 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				{
 					iValue += 8 * iAvgFoodShortage * iAvgFoodShortage;
 				}*/
-				int iAvgFoodShortage = std::max(0, iBaseUnhealth - iCityHealth) - pCity->foodDifference();
-				iAvgFoodShortage += std::max(0, -iCityHealth) - pCity->foodDifference();
-				
-				iAvgFoodShortage /= 2;
-				
-				if( iAvgFoodShortage > 0 )
+				int iAvgFoodShortage = (std::max(0, iBaseUnhealth - iCityHealth) + std::max(0, -iCityHealth))/2 - pCity->foodDifference(true, true);
+
+				if (iAvgFoodShortage > 0)
 				{
 					iValue += 3 * iAvgFoodShortage * iBaseUnhealth;
 				}
+				// K-Mod end
 			}
 		}
 	}
