@@ -3043,7 +3043,8 @@ UnitTypes CvCityAI::AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync, AdvisorTypes
 
 	bool bGrowMore = false;
 
-	if (foodDifference() > 0)
+	//if (foodDifference() > 0)
+	if (foodDifference(true, true) > 0) // K-Mod
 	{
 		// BBAI NOTE: This is where small city worker and settler production is blocked
 		if (GET_PLAYER(getOwnerINLINE()).getNumCities() <= 2)
@@ -3569,7 +3570,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	bool bAreaAlone = kOwner.AI_isAreaAlone(area());
 	int iHasMetCount = GET_TEAM(getTeam()).getHasMetCivCount(true);
 
-	int iFoodDifference = foodDifference(false);
+	int iFoodDifference = foodDifference(false, true); // K-Mod note: I've set this to ignore "food is production" so that building value is not distorted by that effect.
 
 	// Reduce reaction to temporary happy/health problems
 	// K-Mod
@@ -7950,7 +7951,7 @@ void CvCityAI::AI_doDraft(bool bForce)
 					// Non-critical, only burn population if population is not worth much
 					//if ((getConscriptAngerTimer() == 0) && (AI_countWorkedPoorPlots() > 1))
 					if ((getConscriptAngerTimer() == 0 || isNoUnhappiness()) // K-Mod
-						&& (bGoodValue || AI_countWorkedPoorPlots() > 0 || foodDifference()+getFood() < 0 || (foodDifference() < 0 && healthRate() <= -4)))
+						&& (bGoodValue || AI_countWorkedPoorPlots() > 0 || foodDifference(false, true)+getFood() < 0 || (foodDifference(false, true) < 0 && healthRate() <= -4)))
 					{
 						//if( (getPopulation() >= std::max(5, getHighestPopulation() - 1)) )
 						// We're working poor tiles. What more do you want?

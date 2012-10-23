@@ -207,7 +207,7 @@ public:
 	int badHealth(bool bNoAngry = false, int iExtra = 0) const;		// Exposed to Python
 	int healthRate(bool bNoAngry = false, int iExtra = 0) const;	// Exposed to Python
 	int foodConsumption(bool bNoAngry = false, int iExtra = 0) const;				// Exposed to Python
-	int foodDifference(bool bBottom = true) const;								// Exposed to Python
+	int foodDifference(bool bBottom = true, bool bIgnoreProduction = false) const; // Exposed to Python, K-Mod added bIgnoreProduction
 	int growthThreshold() const;																	// Exposed to Python
 
 	int productionLeft() const;																							// Exposed to Python

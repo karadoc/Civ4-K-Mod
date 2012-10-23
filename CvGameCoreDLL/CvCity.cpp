@@ -4769,7 +4769,7 @@ int CvCity::foodConsumption(bool bNoAngry, int iExtra) const
 }
 
 
-int CvCity::foodDifference(bool bBottom) const
+int CvCity::foodDifference(bool bBottom, bool bIgnoreProduction) const
 {
 	int iDifference;
 
@@ -4778,7 +4778,8 @@ int CvCity::foodDifference(bool bBottom) const
 		return 0;
 	}
 
-	if (isFoodProduction())
+	//if (isFoodProduction())
+	if (!bIgnoreProduction && isFoodProduction()) // K-Mod
 	{
 		iDifference = std::min(0, (getYieldRate(YIELD_FOOD) - foodConsumption()));
 	}
