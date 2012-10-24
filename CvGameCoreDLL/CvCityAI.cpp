@@ -5086,10 +5086,30 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					iTempValue += ((kBuilding.getGlobalCommerceModifier(iI) * iNumCities) / 4);
 					// iTempValue += ((kBuilding.getSpecialistExtraCommerce(iI) * kOwner.getTotalPopulation()) / 3); // moved up (K-Mod)
 
+					/* original bts code
 					if (eStateReligion != NO_RELIGION)
 					{
 						iTempValue += (kBuilding.getStateReligionCommerce(iI) * kOwner.getHasReligionCount(eStateReligion) * 3);
+					} */
+					// K-Mod. A more accurate calculation of the value from increasing commerce on all state religion buildings. (eg. Sankore)
+					if (eStateReligion != NO_RELIGION && kBuilding.getStateReligionCommerce(iI) != 0)
+					{
+						int iCount = 0;
+						for (BuildingClassTypes eLoopClass = (BuildingClassTypes)0; eLoopClass < GC.getNumBuildingClassInfos(); eLoopClass = (BuildingClassTypes)(eLoopClass+1))
+						{
+							BuildingTypes eLoopBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(eLoopClass); // K-Mod
+
+							if (eLoopBuilding != NO_BUILDING &&
+								GC.getBuildingInfo(eLoopBuilding).getReligionType() == eStateReligion &&
+								!GET_TEAM(kOwner.getTeam()).isObsoleteBuilding(eLoopBuilding))
+							{
+								iCount += kOwner.getBuildingClassCountPlusMaking(eLoopClass);
+							}
+						}
+						iCount = std::max(iCount, kOwner.getHasReligionCount(eStateReligion));
+						iTempValue += iCount * 35 * kOwner.AI_averageCommerceMultiplier((CommerceTypes)iI) / 1000;
 					}
+					// K-Mod end
 
 					if (kBuilding.getGlobalReligionCommerce() != NO_RELIGION)
 					{
