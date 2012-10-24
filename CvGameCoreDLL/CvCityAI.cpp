@@ -5591,8 +5591,11 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 	// K-Mod
 	// priority factor
-	iValue *= iPriorityFactor;
-	iValue /= 100;
+	if (kBuilding.getProductionCost() > 0)
+	{
+		iValue *= iPriorityFactor;
+		iValue /= 100;
+	}
 
 	// constructionValue cache
 	if (!bConstCache && iFocusFlags == 0 && iThreshold == 0)
