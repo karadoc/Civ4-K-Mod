@@ -5625,16 +5625,44 @@ bool CvUnitAI::AI_greatPersonMove()
 	}
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
+	// To give this estimate, I'm going to do a rough personality-based calculation of how many turns to count.
+	// Note that "iBestValue" is roughly 100x commerce per turn for our best join or build mission.
+	// Also note that the commerce per turn is likely to increase as we improve our city infrastructure and so on.
 	int iSlowValue = iBestValue;
-	iSlowValue *= (GC.getNumEraInfos() - kPlayer.getCurrentEra());
-	// at this point, we have roughly 100 * commerce per turn * number of eras remaining. Scale it down.
-	iSlowValue = 35 * iSlowValue / 100;
-	iSlowValue *= GC.getNumEraInfos();
-	iSlowValue /= std::max(1, 2 * GC.getNumEraInfos() - kPlayer.getCurrentEra());
-	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel3() ? 2 : 1;
-	iSlowValue /= kPlayer.AI_isDoVictoryStrategyLevel4() ? 2 : 1;
-	iSlowValue *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
-	iSlowValue /= 100;
+	if (iSlowValue > 0)
+	{
+		// multiply by the full number of turns remaining
+		iSlowValue *= GC.getGameINLINE().getEstimateEndTurn() - GC.getGameINLINE().getGameTurn();
+
+		// construct a modifier based on what victory we might like to aim for with our personality & situation
+		const CvLeaderHeadInfo& kLeader = GC.getLeaderHeadInfo(kPlayer.getPersonalityType());
+		int iModifier =
+			2 * std::max(kLeader.getSpaceVictoryWeight(), kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_SPACE1) ? 35 : 0) +
+			1 * std::max(kLeader.getCultureVictoryWeight(), kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) ? 35 : 0) +
+			//0 * kLeader.getDiplomacyVictoryWeight() +
+			-1 * std::max(kLeader.getDominationVictoryWeight(), kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION1) ? 35 : 0) +
+			-2 * std::max(kLeader.getConquestVictoryWeight(), kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1) ? 35 : 0);
+		// If we're small, then slow & steady progress might be our best hope to keep up. So increase the modifier for small civs. (think avg. cities / our cities)
+		iModifier += range(40 * GC.getGameINLINE().getNumCivCities() / std::max(1, GC.getGameINLINE().countCivPlayersAlive()*kPlayer.getNumCities()) - 50, 0, 50);
+
+		// convert the modifier into some percentage of the remaining turns
+		iModifier = range(30 + iModifier/2, 20, 80);
+		// apply it
+		iSlowValue *= iModifier;
+		iSlowValue /= 10000; // (also removing excess factor of 100)
+
+		// half the value if anyone we know is up to stage 4. (including us)
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+		{
+			const CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+			if (kLoopPlayer.isAlive() && kLoopPlayer.AI_isDoVictoryStrategyLevel4() && GET_TEAM(getTeam()).isHasMet(kLoopPlayer.getTeam()))
+			{
+				iSlowValue /= 2;
+				break; // just once.
+			}
+		}
+		//if (gUnitLogLevel > 2) logBBAI("    %S GP slow modifier: %d, value: %d", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), range(30 + iModifier/2, 20, 80), iSlowValue);
+	}
 	iSlowValue *= (75 + kPlayer.AI_getStrategyRand(6) % 51);
 	iSlowValue /= 100;
 
