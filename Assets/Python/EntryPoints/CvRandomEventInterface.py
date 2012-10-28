@@ -830,6 +830,7 @@ def applyVolcano1(argsList):
 # K-Mod, karadoc, 26/Jun/2011
 # Volcanic ash improves some tiles
 ##
+	sEventType = gc.getEventInfo(iEvent).getType(); # Event name string
 	listPlots = []
 	for iDX in range(-1, 2):
 		for iDY in range(-1, 2):
@@ -847,6 +848,7 @@ def applyVolcano1(argsList):
 			break
 		plot = listPlots[gc.getGame().getSorenRandNum(len(listPlots), "Volcano event increased yield")]
 		gc.getGame().setPlotExtraYield(plot.getX(), plot.getY(), YieldTypes.YIELD_FOOD, 1)
+		placeLandmark(plot, sEventType, 1, 0, 0, True, -1) # event sign
 		if plot.getOwner() != PlayerTypes.NO_PLAYER:
 			plot_owner = plot.getOwner()
 		else:
