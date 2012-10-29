@@ -5519,13 +5519,15 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	bool bEnablesProjectWonder = false;
 	for (int iJ = 0; iJ < GC.getNumProjectInfos(); iJ++)
 	{
-		if (GC.getProjectInfo((ProjectTypes)iJ).getTechPrereq() == eTech)
+		const CvProjectInfo& kProjectInfo = GC.getProjectInfo((ProjectTypes)iJ); // K-Mod
+
+		if (kProjectInfo.getTechPrereq() == eTech)
 		{
 			iValue += 1000;
 
-			if( (VictoryTypes)GC.getProjectInfo((ProjectTypes)iJ).getVictoryPrereq() != NO_VICTORY )
+			if( (VictoryTypes)kProjectInfo.getVictoryPrereq() != NO_VICTORY )
 			{
-				if( !(GC.getProjectInfo((ProjectTypes)iJ).isSpaceship()) )
+				if( !(kProjectInfo.isSpaceship()) )
 				{
 					// Apollo
 					iValue += (AI_isDoVictoryStrategy(AI_VICTORY_SPACE2) ? 2000 : 100);
@@ -5533,12 +5535,18 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				else
 				{
 					// Space ship parts (changed by K-Mod)
+					// Note: ideally this would take into account the production cost of each item,
+					//       and the total number / production of a completed space-ship, and a
+					//       bunch of other things. But I think this is good enough for now.
 					if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE2))
 					{
 						iValue += 1000;
 						if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
 						{
-							iValue += 1000; // (additional)
+							iValue += 800; // (additional)
+							iValue += kProjectInfo.getMaxTeamInstances() > 0
+								? kProjectInfo.getMaxTeamInstances() * 200
+								: 400;
 						}
 					}
 				}
