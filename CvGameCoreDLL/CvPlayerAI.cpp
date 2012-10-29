@@ -3852,7 +3852,7 @@ int CvPlayerAI::AI_militaryWeight(CvArea* pArea) const
 	// K-Mod end
 }
 
-
+// This function has been edited by Mongoose, then by jdog5000, and then by me (karadoc). Some changes are marked, others are not.
 int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreAttackers) const
 {
 	PROFILE_FUNC();
@@ -3862,17 +3862,8 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 	//int iValue = 1 + pCity->getPopulation() * (50 + pCity->calculateCulturePercent(getID())) / 100;
 	int iValue = 5 + pCity->getPopulation() * (100 + pCity->calculateCulturePercent(getID())) / 150; // K-Mod (to dilute the other effects)
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/30/10                     Mongoose & jdog5000      */
-/*                                                                                              */
-/* War strategy AI                                                                              */
-/************************************************************************************************/
-	/* if (pCity->getDefenseDamage() > 0)
-	{
-		iValue += ((pCity->getDefenseDamage() / 30) + 1);
-	} */ // disabled by K-Mod
+	const CvPlayerAI& kOwner = GET_PLAYER(pCity->getOwnerINLINE());
 
-	// Significant amounting of borrowing/adapting from Mongoose AITargetCityValueFix
 	if (pCity->isCoastal(GC.getMIN_WATER_SIZE_FOR_OCEAN()))
 	{
 		iValue += 2;
@@ -3886,7 +3877,7 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 		{
 			iValue += 2 + ((GC.getGameINLINE().calculateReligionPercent((ReligionTypes)iI)) / 5);
 
-			if (GET_PLAYER(pCity->getOwnerINLINE()).getStateReligion() == iI)
+			if (kOwner.getStateReligion() == iI)
 			{
 				iValue += 2;
 			}
@@ -3935,37 +3926,38 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 		}
 	}
 
-	if( GET_PLAYER(pCity->getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) )
+	if( kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) )
 	{
 		if( pCity->getCultureLevel() >= (GC.getGameINLINE().culturalVictoryCultureLevel() - 1) )
 		{
 			iValue += 15;
 			
-			if( GET_PLAYER(pCity->getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4) )
+			if( kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4) )
 			{
 				iValue += 25;
 
-				if( pCity->getCultureLevel() >= (GC.getGameINLINE().culturalVictoryCultureLevel()) )
+				 if (pCity->getCultureLevel() >= (GC.getGameINLINE().culturalVictoryCultureLevel()) ||
+					 pCity->findCommerceRateRank(COMMERCE_CULTURE) <= GC.getGameINLINE().culturalVictoryNumCultureCities()) // K-Mod
 				{
-					iValue += 10;
+					iValue += 60; // was 10
 				}
 			}
 		}
 	}
 
-	if( GET_PLAYER(pCity->getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) )
+	if( kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE3) )
 	{
 		if( pCity->isCapital() )
 		{
 			iValue += 10;
 
-			if( GET_PLAYER(pCity->getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) )
+			if( kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) )
 			{
-				iValue += 20;
+				iValue += 10; // was 20
 
 				if( GET_TEAM(pCity->getTeam()).getVictoryCountdown(GC.getGameINLINE().getSpaceVictory()) >= 0 )
 				{
-					iValue += 30;
+					iValue += 100; // was 30
 				}
 			}
 		}
@@ -3987,9 +3979,15 @@ int CvPlayerAI::AI_targetCityValue(CvCity* pCity, bool bRandomize, bool bIgnoreA
 	{
 		iValue += GC.getGameINLINE().getSorenRandNum(((pCity->getPopulation() / 2) + 1), "AI Target City Value");
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+
+	// K-Mod
+	if (pCity->getHighestPopulation() < 1)
+	{
+		// Usually this means the city would be auto-razed.
+		// (We can't use isAutoRaze for this, because that assumes the city is already captured.)
+		iValue = (iValue +2)/3;
+	}
+	// K-Mod end
 
 	return iValue;
 }
