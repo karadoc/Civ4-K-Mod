@@ -484,7 +484,7 @@ int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bRemove, bool
 			if (AI_isEmphasizeYield(YIELD_COMMERCE))
 			{
 				iGPPValue = 3; // was 2
-				iEmphasisCount++;			
+				iEmphasisCount++;
 			}
 			if (AI_isEmphasizeYield(YIELD_FOOD))
 			{
@@ -11321,18 +11321,12 @@ int CvCityAI::AI_countGoodSpecialists(bool bHealthy) const
 }
 //0 is normal
 //higher than zero means special.
+// (K-Mod todo: this function is currently only used for CvCityAI::AI_stealPlots, and even there it is only used in a very binary way.
+// I think I can make this function more versitile, and then use it to bring some consistency to other parts of the code.)
 int CvCityAI::AI_getCityImportance(bool bEconomy, bool bMilitary)
 {
     int iValue = 0;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-	if (GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	if (GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) // K-Mod (bbai used culture2)
     {
         int iCultureRateRank = findCommerceRateRank(COMMERCE_CULTURE);
         int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
