@@ -3791,13 +3791,15 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 				for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 				{
-					iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 4;
+					//iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 4;
+					iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 20; // K-Mod (note, commercehappiness is already counted by iBuildingActualHappiness)
 				}
 
 				int iWarWearinessModifer = kBuilding.getWarWearinessModifier();
 				if (iWarWearinessModifer != 0)
 				{
-					iValue += (-iWarWearinessModifer * iHappyModifier) / 16;
+					//iValue += (-iWarWearinessModifer * iHappyModifier) / 16;
+					iValue += (-iWarWearinessModifer * iHappyModifier) / (bWarPlan ? 16 : 32); // K-Mod (again, the immediate effects of this are already counted)
 				}
 
 				/*iValue += (kBuilding.getAreaHappiness() * (iNumCitiesInArea - 1) * 8);
