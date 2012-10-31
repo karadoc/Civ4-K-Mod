@@ -26,6 +26,5 @@
 	<events class="EventSignsEventHandler"/>
 	
 	<export function="applyLandmarkFromEvent" to="CvRandomEventInterface"/>
-	<export function="applySaltpeter" to="CvRandomEventInterface"/>
 
 </mod>

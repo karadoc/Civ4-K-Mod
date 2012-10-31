@@ -11,6 +11,7 @@
 #
 import CvUtil
 from CvPythonExtensions import *
+from EventSigns import placeLandmark # K-Mod
 
 gc = CyGlobalContext()
 localText = CyTranslator()
@@ -948,9 +949,19 @@ def canApplySaltpeter(argsList):
 	
 	return (iNumPlots >= getSaltpeterNumExtraPlots())
 
+# K-Mod. EventSigns originally overwrote applySaltpeter with an equivalent function in EventSigns.py.
+# I think it makes much more sense to just apply the changes here directly - so that's what I've done.
 def applySaltpeter(argsList):
 	iEvent = argsList[0]
 	kTriggeredData = argsList[1]
+
+	# EventSigns start -- setup
+	event = gc.getEventInfo(iEvent)
+	iFood = event.getPlotExtraYield(YieldTypes.YIELD_FOOD)
+	iProd = event.getPlotExtraYield(YieldTypes.YIELD_PRODUCTION)
+	iComm = event.getPlotExtraYield(YieldTypes.YIELD_COMMERCE)
+	sEventType = event.getType()
+	# EventSigns end
 
 	map = gc.getMap()
 	
@@ -959,8 +970,11 @@ def applySaltpeter(argsList):
 	plot = gc.getMap().plot(kTriggeredData.iPlotX, kTriggeredData.iPlotY)
 	if (plot == None):
 		return
+	# EventSigns start -- Add landmark for initial plot, if there is still a yield change
+	placeLandmark(plot, sEventType, iFood, iProd, iComm, True, -1)
+	# EventSigns end
 		
-	iForest = CvUtil.findInfoTypeNum(gc.getFeatureInfo,gc.getNumFeatureInfos(),'FEATURE_FOREST')
+	iForest = gc.getInfoTypeForString('FEATURE_FOREST')
 	
 	listPlots = []
 	for i in range(map.numPlots()):
@@ -979,6 +993,9 @@ def applySaltpeter(argsList):
 		iCount -= 1
 		gc.getGame().setPlotExtraYield(loopPlot[1].getX(), loopPlot[1].getY(), YieldTypes.YIELD_COMMERCE, 1)
 		CyInterface().addMessage(kTriggeredData.ePlayer, false, gc.getEVENT_MESSAGE_TIME(), localText.getText("TXT_KEY_EVENT_SALTPETER_DISCOVERED", ()), "", InterfaceMessageTypes.MESSAGE_TYPE_INFO, None, gc.getInfoTypeForString("COLOR_WHITE"), loopPlot[1].getX(), loopPlot[1].getY(), true, true)
+		# EventSigns start -- Add landmark for other plots, if there is still a yield change
+		placeLandmark(loopPlot[1], sEventType, 0, 0, 1, True, -1) # K-Mod. (originally it used iFood, iProd, iComm -- and that's not correct.)
+		# EventSigns end
 
 ######## GREAT DEPRESSION ###########
 
