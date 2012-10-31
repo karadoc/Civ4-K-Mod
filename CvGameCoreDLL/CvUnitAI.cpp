@@ -6135,7 +6135,7 @@ void CvUnitAI::AI_spyMove()
 	}
 	
 	if (getGroup()->AI_getMissionAIType() == MISSIONAI_ATTACK_SPY && plot()->getNonObsoleteBonusType(getTeam(), true) != NO_BONUS
-		&& plot()->isOwned() && kOwner.isMaliciousEspionageTarget(plot()->getOwner()))
+		&& plot()->isOwned() && kOwner.AI_isMaliciousEspionageTarget(plot()->getOwner()))
 	{
 		// assume this is the target of our destroy improvement mission.
 		if (getFortifyTurns() >= GC.getDefineINT("MAX_FORTIFY_TURNS"))
@@ -18645,7 +18645,7 @@ bool CvUnitAI::AI_specialSeaTransportSpy()
 		{
 			int iValue = 1000 * kOurTeam.getEspionagePointsAgainstTeam(kLoopPlayer.getTeam()) / std::max(1, iTotalPoints);
 
-			if (kOwner.isMaliciousEspionageTarget((PlayerTypes)i))
+			if (kOwner.AI_isMaliciousEspionageTarget((PlayerTypes)i))
 				iValue = 3*iValue/2;
 
 			if (kOurTeam.isAtWar(kLoopPlayer.getTeam()) && !isInvisible(kLoopPlayer.getTeam(), false))
@@ -23260,7 +23260,7 @@ bool CvUnitAI::AI_cityOffenseSpy(int iMaxPath, CvCity* pSkipCity)
 			iTeamWeight *= kTeam.AI_getWarPlan(kLoopPlayer.getTeam()) != NO_WARPLAN ? 2 : 1;
 			iTeamWeight *= kTeam.AI_isSneakAttackPreparing(kLoopPlayer.getTeam()) ? 2 : 1;
 
-			iTeamWeight *= kOwner.isMaliciousEspionageTarget((PlayerTypes)iPlayer) ? 3 : 2;
+			iTeamWeight *= kOwner.AI_isMaliciousEspionageTarget((PlayerTypes)iPlayer) ? 3 : 2;
 			iTeamWeight /= 2;
 
 			if (iTeamWeight < 200 && GC.getGame().getSorenRandNum(10, "AI team target saving throw") != 0)
@@ -23356,7 +23356,7 @@ bool CvUnitAI::AI_bonusOffenseSpy(int iRange)
 					}*/
 
 					// K-Mod. I think this is only worthwhile when at war...
-					//if (kOwner.isMaliciousEspionageTarget(pLoopPlot->getOwner()))
+					//if (kOwner.AI_isMaliciousEspionageTarget(pLoopPlot->getOwner()))
 					if (GET_TEAM(getTeam()).isAtWar(pLoopPlot->getTeam()))
 					{
 						int iPathTurns;

@@ -14517,7 +14517,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		return 0;
 	}
 
-	bool bMalicious = isMaliciousEspionageTarget(eTargetPlayer);
+	bool bMalicious = AI_isMaliciousEspionageTarget(eTargetPlayer);
 
 	int iValue = 0;
 	if (bMalicious && GC.getEspionageMissionInfo(eMission).isDestroyImprovement())
@@ -14829,11 +14829,14 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 }
 
 // K-Mod
-bool CvPlayerAI::isMaliciousEspionageTarget(PlayerTypes eTarget) const
+bool CvPlayerAI::AI_isMaliciousEspionageTarget(PlayerTypes eTarget) const
 {
 	if (GET_PLAYER(eTarget).getTeam() == getTeam())
 		return false;
-	return (AI_getAttitudeWeight(eTarget) < (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 51 : 1) || GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(eTarget).getTeam()) != NO_WARPLAN);
+	return
+		AI_getAttitude(eTarget) <= (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? ATTITUDE_PLEASED : ATTITUDE_CAUTIOUS) ||
+		GET_TEAM(getTeam()).AI_getWarPlan(GET_PLAYER(eTarget).getTeam()) != NO_WARPLAN ||
+		(AI_isDoVictoryStrategyLevel4() && GET_PLAYER(eTarget).AI_isDoVictoryStrategyLevel4() && !AI_isDoVictoryStrategy(AI_VICTORY_DIPLOMACY1));
 }
 // K-Mod end
 
@@ -15852,7 +15855,7 @@ void CvPlayerAI::AI_doCommerce()
 			else if (aiTarget[iTeam] < 0)
 			{
 				if (iTeam != eMinModTeam &&
-					(!isMaliciousEspionageTarget(GET_TEAM((TeamTypes)iTeam).getLeaderID()) || !kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)iTeam)))
+					(!AI_isMaliciousEspionageTarget(GET_TEAM((TeamTypes)iTeam).getLeaderID()) || !kTeam.AI_hasCitiesInPrimaryArea((TeamTypes)iTeam)))
 					aiWeight[iTeam] = 0;
 			}
 			if (iTeam == eMinModTeam)
