@@ -14500,6 +14500,7 @@ int CvPlayerAI::AI_religionValue(ReligionTypes eReligion) const
 /// \brief Value of espionage mission at this plot.
 ///
 /// Assigns value to espionage mission against ePlayer at pPlot, where iData can provide additional information about mission.
+// K-Mod note: A rough rule of thumb for this evaluation is that depriving the enemy of 1 commerce is worth 1 point; gaining 1 commerce for ourself is worth 2 points.
 int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes eMission, CvPlot* pPlot, int iData) const
 {
 	TeamTypes eTargetTeam = GET_PLAYER(eTargetPlayer).getTeam();
@@ -14562,21 +14563,16 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					if (pCity->getNumRealBuilding((BuildingTypes)iData) > 0)
 					{
 						CvBuildingInfo& kBuilding = GC.getBuildingInfo((BuildingTypes)iData);
-						if ((kBuilding.getProductionCost() > 1) && !isWorldWonderClass((BuildingClassTypes)kBuilding.getBuildingClassType()))
+						// K-Mod
+						if (!pCity->isDisorder()) // disorder messes up the evaluation of production and of building value. That's the only reason for this condition.
 						{
-							//iValue += pCity->AI_buildingValue((BuildingTypes)iData);
-							// K-Mod
 							// Note: I'm not allowing recursion in the building evaluation.
 							// This may cause the cached value to be inaccurate, but it doesn't really matter, because the building is already built!
-							// (first attempt)
-							/* iValue += 2 * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false);
-							iValue *= 60 + kBuilding.getProductionCost();
-							iValue /= 100; */
-							// (second attempt) - recall that AI_buildingValue gives units of 4x commerce/turn
+							// (AI_buildingValue gives units of 4x commerce/turn)
 							iValue += kBuilding.getProductionCost() / 2;
-							iValue += (2 + pCity->getProductionTurnsLeft((BuildingTypes)iData, 1)) * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false) / 4;
-							// K-Mod end
+							iValue += (2 + pCity->getProductionTurnsLeft((BuildingTypes)iData, 1)) * pCity->AI_buildingValue((BuildingTypes)iData, 0, 0, false, false) / 5;
 						}
+						// K-Mod end
 					}
 				}
 			}
@@ -14590,7 +14586,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 		{
 			CvProjectInfo& kProject = GC.getProjectInfo((ProjectTypes)iData);
 			
-			iValue += getProductionNeeded((ProjectTypes)iData) * (kProject.getMaxTeamInstances() == 1 ? 6 : 4); // was 3 : 2
+			iValue += getProductionNeeded((ProjectTypes)iData) * (kProject.getMaxTeamInstances() == 1 ? 8 : 6); // was 3 : 2
 		}
 	}
 
@@ -14647,9 +14643,10 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					{
 						iValue += AI_unitValue(eUnit, (UnitAITypes)GC.getUnitInfo(eUnit).getDefaultUnitAIType(), pUnit->area());
 					}*/
-					// K-Mod. (this kind of mission is not enabled anyway.)
-					iValue += AI_unitValue(eUnit, (UnitAITypes)GC.getUnitInfo(eUnit).getDefaultUnitAIType(), pUnit->area());
-					iValue *= (canTrain(eUnit) ? 1 : 2);
+					// K-Mod. AI_unitValue is a relative rating value. It shouldn't be used for this.
+					// (The espionage mission is not enabled anyway, so I'm not going to put a lot of effort into it.)
+					iValue += GC.getUnitInfo(eUnit).getProductionCost() * canTrain(eUnit) ? 4 : 8;
+					//
 				}
 			}
 		}
@@ -14784,7 +14781,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 				
 				if (iAvgUnhappy < 0)
 				{
-					iValue += 8 * abs(iAvgUnhappy) * iBaseAnger;// down from 14
+					iValue += 7 * abs(iAvgUnhappy) * iBaseAnger;// down from 14
 				}
 			}
 		}
