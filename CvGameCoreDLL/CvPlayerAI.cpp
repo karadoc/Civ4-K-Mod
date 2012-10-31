@@ -6240,10 +6240,16 @@ int CvPlayerAI::AI_techBuildingValue(TechTypes eTech, bool bConstCache, bool& bE
 				}
 				int iScale = 15 * (3 + getCurrentEra()); // hammers (ideally this would be based on the average city yield or something like that.)
 				iScale += AI_isCapitalAreaAlone() ? 30 : 0; // can afford to spend more on infrastructure if we are alone.
-				iScale *= isLimitedWonderClass(eClass) ? 4 : 1; // higher scale for limited wonders because they don't need to be built in every city.
+				// increase scale for limited wonders, because they don't need to be built in every city.
+				if (isLimitedWonderClass(eClass))
+					iScale *= std::min((int)relevant_cities.size(), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities());
+				// adjust for game speed
 				iScale = iScale * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getBuildPercent() / 100;
+				// use the multiplier we calculated earlier
+				iScale = iScale * (100 + iMultiplier) / 100;
+				//
 				iBuildingValue *= 100;
-				iBuildingValue /= std::max(100, 100 * 100 * kLoopBuilding.getProductionCost() / (iScale * (100 + iMultiplier)));
+				iBuildingValue /= std::max(33, 100 * kLoopBuilding.getProductionCost() / std::max(1, iScale));
 			}
 			//
 			iTotalValue += iBuildingValue;
