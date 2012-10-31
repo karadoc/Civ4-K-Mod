@@ -5504,12 +5504,16 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	// Note: the new conditions here use to be inside AI_techBuildingValue. I think it makes much more sense to have them here instead.
 	if (bEnablesWonder && iPathLength <= 1 && getTotalPopulation() > 5)
 	{
-		int iPersonalityFactor = GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(); // note: highest value is 50 in the default xml.
-		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(1600, "AI Research Wonder Building ASYNC") : GC.getGameINLINE().getSorenRandNum(1600, "AI Research Wonder Building"));
-		iValue += (1000 + iWonderRandom) * iPersonalityFactor / (bAdvancedStart ? 400 : 100);
+		const int iBaseRand = 1200;
+		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(iBaseRand, "AI Research Wonder Building ASYNC") : GC.getGameINLINE().getSorenRandNum(iBaseRand, "AI Research Wonder Building"));
+		int iFactor = 10 + GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(); // note: highest value of iWonderConstructRand 50 in the default xml.
+		iFactor += AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) ? 15 : 0;
+		iFactor += AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) ? 10 : 0;
+		iFactor /= bAdvancedStart ? 4 : 1;
+		iValue += (800 + iWonderRandom) * iFactor / 100;
 
-		iRandomMax += 16 * iPersonalityFactor;
-		iRandomFactor += iWonderRandom * iPersonalityFactor / 100;
+		iRandomMax += iBaseRand * iFactor / 100;
+		iRandomFactor += iWonderRandom * iFactor / 100;
 	}
 	// K-Mod end
 
