@@ -169,4 +169,9 @@
 		<Italian>grande animale</Italian>
 		<Spanish>gran bestia</Spanish>
 	</TEXT>
+<!-- K-Mod -->
+	<TEXT>
+		<Tag>TXT_KEY_SIGN_EVENT_VOLCANO_1</Tag>
+		<English>volcanic ash</English>
+	</TEXT>
 </Civ4GameText>
