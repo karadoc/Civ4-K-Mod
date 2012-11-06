@@ -21547,6 +21547,24 @@ int CvPlayerAI::AI_getTotalFloatingDefenders(CvArea* pArea) const
 	return iCount;
 }
 
+// K-Mod. (very basic just as a starting point. I'll refine this later.)
+int CvPlayerAI::AI_getTotalAirDefendersNeeded() const
+{
+	int iNeeded = getNumCities() + 1;
+
+	//iNeeded = iNeeded + iNeeded*(getCurrentEra()+1) / std::max(1, GC.getNumEraInfos()*2);
+
+	// Todo. Adjust based on what other civs are doing.
+
+	if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4))
+		iNeeded = iNeeded*3/2;
+	if (AI_isDoStrategy(AI_STRATEGY_ALERT2))
+		iNeeded = iNeeded*3/2;
+
+	return iNeeded;
+}
+// K-Mod end
+
 RouteTypes CvPlayerAI::AI_bestAdvancedStartRoute(CvPlot* pPlot, int* piYieldValue) const
 {
 	RouteTypes eBestRoute = NO_ROUTE;

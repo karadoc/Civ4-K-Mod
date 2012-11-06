@@ -9384,292 +9384,100 @@ void CvUnitAI::AI_attackAirMove()
 	return;
 }
 
-
+// This function has been rewritten for K-Mod. (The new version is much simplier.)
 void CvUnitAI::AI_defenseAirMove()
 {
 	PROFILE_FUNC();
 
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						10/21/08	Solver & jdog5000	*/
-/* 																			*/
-/* 	Air AI																	*/
-/********************************************************************************/
+	if (!plot()->isCity(true))
+	{
+		FAssertMsg(false, "defenseAir units are expected to stay in cities/forts");
+		if (AI_airDefensiveCity())
+			return;
+	}
+
 	CvCity* pCity = plot()->getPlotCity();
 
-	//int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(),2,false,false);
-	// K-Mod
 	int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_localAttackStrength(plot(), NO_TEAM);
 	int iOurDefense = GET_PLAYER(getOwnerINLINE()).AI_localDefenceStrength(plot(), getTeam());
-	FAssert(plot()->isCity(true));
-	// K-Mod end
 
-	// includes forts
-	if (plot()->isCity(true))
+	if (iEnemyOffense > 2*iOurDefense || iOurDefense == 0)
 	{
-		//int iOurDefense = GET_TEAM(getTeam()).AI_getOurPlotStrength(plot(),0,true,false,true);
-	
-		if (3*iEnemyOffense > 4*iOurDefense || iOurDefense == 0)
+		// Too risky, pull out
+		if (AI_airDefensiveCity())
 		{
-			// Too risky, pull out
-			// AI_airDefensiveCity will leave some air defense, pull extras out
-			if (AI_airDefensiveCity())
-			{
-				return;
-			}
-		}
-		else if ( iEnemyOffense > iOurDefense/3 )
-		{
-			if (getDamage() > 0)
-			{
-				if( healTurns(plot()) > 1 + GC.getGameINLINE().getSorenRandNum(2, "AI Air Defense Move") )
-				{
-					// Can't help current situation, only risk losing unit
-					if (AI_airDefensiveCity())
-					{
-						return;
-					}
-				}
-
-				// Stay to defend in the future
-				getGroup()->pushMission(MISSION_SKIP);
-				return;
-			}
-
-			if (canAirDefend() && pCity != NULL)
-			{
-				// Check for whether city needs this unit to air defend
-				if( !(pCity->AI_isAirDefended(true,-1)) )
-				{
-					getGroup()->pushMission(MISSION_AIRPATROL);
-					return;
-				}
-
-				// Consider adding extra defenders
-				if( collateralDamage() == 0 && (!pCity->AI_isAirDefended(false,-2)) )
-				{
-					if( GC.getGameINLINE().getSorenRandNum(3, "AI Air Defense Move") == 0 )
-					{
-						getGroup()->pushMission(MISSION_AIRPATROL);
-						return;
-					}
-				}
-			}
-
-			// Attack the invaders!
-			if (AI_defendBaseAirStrike())
-			{
-				return;
-			}
-			
-			/* if (AI_defensiveAirStrike())
-			{
-				return;
-			} */
-
-			if (AI_airStrike())
-			{
-				return;
-			}
-
-			if (AI_airDefensiveCity())
-			{
-				return;
-			}
+			return;
 		}
 	}
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								*/
-/********************************************************************************/
 
-	if (getDamage() > 0)
+	int iDefNeeded = pCity ? pCity->AI_neededAirDefenders() : 0;
+	int iDefHere = plot()->plotCount(PUF_isAirIntercept, -1, -1, NO_PLAYER, getTeam()) - (PUF_isAirIntercept(this, -1, -1) ? 1 : 0);
+	FAssert(iDefHere >= 0);
+
+	if (canAirDefend() && iEnemyOffense < iOurDefense && iDefHere < iDefNeeded/2)
+	{
+		getGroup()->pushMission(MISSION_AIRPATROL);
+		return;
+	}
+
+	if (iEnemyOffense > (getDamage() == 0 ? iOurDefense/3 : iOurDefense))
+	{
+		// Attack the invaders!
+		if (AI_defendBaseAirStrike())
+		{
+			return;
+		}
+	}
+
+	if (getDamage() > maxHitPoints()/3)
 	{
 		getGroup()->pushMission(MISSION_SKIP);
 		return;
 	}
-	
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						10/17/08	Solver & jdog5000	*/
-/* 																			*/
-/* 	Air AI																	*/
-/********************************************************************************/
-	/* original BTS code
-	if ((GC.getGameINLINE().getSorenRandNum(2, "AI Air Defense Move") == 0))
+
+	if (iEnemyOffense == 0 && GC.getGameINLINE().getSorenRandNum(4, "AI Air Defense Move") == 0)
 	{
-		if ((pCity != NULL) && pCity->AI_isDanger())
-		{
-			if (AI_airStrike())
-			{
-				return;
-			}
-		}
-		else
-		{
-			if (AI_airBombDefenses())
-			{
-				return;
-			}
-
-			if (AI_airStrike())
-			{
-				return;
-			}
-			
-			if (AI_getBirthmark() % 2 == 0)
-			{
-				if (AI_airBombPlots())
-				{
-					return;
-				}
-			}
-		}
-
 		if (AI_travelToUpgradeCity())
 		{
 			return;
 		}
 	}
 
-	bool bNoWar = (GET_TEAM(getTeam()).getAtWarCount(false) == 0);
-	
-	if (canRecon(plot()))
+	bool bDefensive = area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE;
+	bool bOffensive = area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE;
+	bool bTriedAirStrike = false;
+
+	if (!bTriedAirStrike && GC.getGameINLINE().getSorenRandNum(3, "AI_defenseAirMove airstrike") <= (bOffensive ? 1 : 0) - (bDefensive ? 1 : 0))
 	{
-		if (GC.getGame().getSorenRandNum(bNoWar ? 2 : 4, "AI defensive air recon") == 0)
-		{
-			if (AI_exploreAir())
-			{
-				return;
-			}
-		}
+		if (AI_airStrike())
+			return;
+		bTriedAirStrike = true;
 	}
 
-	if (AI_airDefensiveCity())
+	if (canAirDefend() && iDefHere < iDefNeeded*2/3)
 	{
+		getGroup()->pushMission(MISSION_AIRPATROL);
 		return;
 	}
-	*/
-	if((GC.getGameINLINE().getSorenRandNum(4, "AI Air Defense Move") == 0))
+
+	if (!bTriedAirStrike && GC.getGameINLINE().getSorenRandNum(3, "AI_defenseAirMove airstrike2") <= (bOffensive ? 1 : 0) - (bDefensive ? 1 : 0))
 	{
-		// only moves unit in a fort
-		if (AI_travelToUpgradeCity())
-		{
+		if (AI_airStrike())
 			return;
-		}
+		bTriedAirStrike = true;
 	}
 
-	if( canAirDefend() )
-	{
-		// Check for whether city needs this unit for base air defenses
-		int iBaseAirDefenders = 0;
-
-		if( iEnemyOffense > 0 )
-		{
-			iBaseAirDefenders++;
-		}
-
-		if( pCity != NULL )
-		{
-			iBaseAirDefenders += pCity->AI_neededAirDefenders()/2;
-		}
-
-		//if( plot()->countAirInterceptorsActive(getTeam()) < iBaseAirDefenders )
-		if (plot()->plotCount(PUF_isAirIntercept, -1, -1, NO_PLAYER, getTeam()) < iBaseAirDefenders) // K-Mod
-		{
-			getGroup()->pushMission(MISSION_AIRPATROL);
-			return;
-		}
-	}
-
-	CvArea* pArea = area();
-	bool bDefensive = false;
-	bool bOffensive = false;
-
-	if( pArea != NULL )
-	{
-		bDefensive = (pArea->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE);
-		bOffensive = (pArea->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE);
-	}
-
-	if( (iEnemyOffense > 0) || bDefensive )
-	{
-		if( canAirDefend() )
-		{
-			if( pCity != NULL )
-			{
-				// Consider adding extra defenders
-				if( !(pCity->AI_isAirDefended(false,-1)) )
-				{
-					if ((GC.getGameINLINE().getSorenRandNum((bOffensive ? 3 : 2), "AI Air Defense Move") == 0))
-					{
-						getGroup()->pushMission(MISSION_AIRPATROL);
-						return;
-					}
-				}
-			}
-			else
-			{
-				if ((GC.getGameINLINE().getSorenRandNum((bOffensive ? 3 : 2), "AI Air Defense Move") == 0))
-				{
-					getGroup()->pushMission(MISSION_AIRPATROL);
-					return;
-				}
-			}
-		}
-
-		if((GC.getGameINLINE().getSorenRandNum(3, "AI Air Defense Move") > 0))
-		{
-			/* if (AI_defensiveAirStrike())
-			{
-				return;
-			} */ // disabled by K-Mod
-
-			if (AI_airStrike())
-			{
-				return;
-			}
-		}
-	}
-	else
-	{
-		if ((GC.getGameINLINE().getSorenRandNum(3, "AI Air Defense Move") > 0))
-		{
-			// Clear out any enemy fighters, support offensive units
-			/* original bts code
-			if (AI_airBombDefenses())
-			{
-				return;
-			}
-
-			if (GC.getGameINLINE().getSorenRandNum(3, "AI Air Defense Move") == 0)
-			{
-				// Hit enemy land stacks near our cities
-				if (AI_defensiveAirStrike())
-				{
-					return;
-				}
-			} */ // disabled by K-mod. That stuff is handled in AI_airStrike now.
-
-			if (AI_airStrike())
-			{
-				return;
-			}
-			
-			//if (AI_getBirthmark() % 2 == 0 || bOffensive)
-			if (AI_getBirthmark() % 2 == 0) // K-Mod
-			{
-				if (AI_airBombPlots())
-				{
-					return;
-				}
-			}
-		}
-	}
-
-	if (AI_airDefensiveCity())
+	if (AI_airDefensiveCity()) // check if there's a better city to be in
 	{
 		return;
 	}
 
-	// BBAI TODO: how valuable is recon information to AI in war time?	
+	if (canAirDefend() && iDefHere < iDefNeeded)
+	{
+		getGroup()->pushMission(MISSION_AIRPATROL);
+		return;
+	}
+
 	if (canRecon(plot()))
 	{
 		if (GC.getGame().getSorenRandNum(bDefensive ? 6 : 3, "AI defensive air recon") == 0)
@@ -9680,9 +9488,6 @@ void CvUnitAI::AI_defenseAirMove()
 			}
 		}
 	}
-/********************************************************************************/
-/* 	BETTER_BTS_AI_MOD						END								*/
-/********************************************************************************/
 
 	if (canAirDefend())
 	{
@@ -21560,8 +21365,26 @@ int CvUnitAI::AI_airOffenseBaseValue( CvPlot* pPlot )
 		// If no wars, use prior logic with added value to keeping planes safe from sneak attack
 		if (pCity != NULL)
 		{
+			/* original bts code
 			iValue = (pCity->getPopulation() + 20);
-			iValue += pCity->AI_cityThreat();
+			iValue += pCity->AI_cityThreat(); */
+
+			// K-Mod. Try not to waste airspace which we need for air defenders; but use the needed air defenders as a proxy for good offense placement.
+			// AI_cityThreat has arbitrary scale, so it should not be added to population like that.
+			// (the rest of this function still needs some work, but this bit was particularly problematic.)
+			int iDefNeeded = static_cast<CvCityAI*>(pCity)->AI_neededAirDefenders();
+			int iDefHere = pPlot->plotCount(PUF_isAirIntercept, -1, -1, NO_PLAYER, getTeam()) - (atPlot(pPlot) && PUF_isAirIntercept(this, -1, -1) ? 1 : 0);
+			int iSpace = pPlot->airUnitSpaceAvailable(getTeam()) + (atPlot(pPlot) ? 1 : 0);
+			iValue = pCity->getPopulation() + 20;
+			iValue *= std::min(iDefNeeded+1, iDefHere+iSpace);
+			if (iDefNeeded > iSpace+iDefHere)
+			{
+				FAssert(iDefNeeded > 0);
+				// drop value to zero if we can't even fit half of the air defenders we need here.
+				iValue *= 2*(iSpace+iDefHere) - iDefNeeded;
+				iValue /= iDefNeeded;
+			}
+			// K-Mod end
 		}
 		else
 		{
@@ -21616,112 +21439,117 @@ int CvUnitAI::AI_airOffenseBaseValue( CvPlot* pPlot )
 /********************************************************************************/
 
 // Returns true if a mission was pushed...
+// Most of this function has been rewritten for K-Mod, using bbai as the base version. (old code deleted.)
 bool CvUnitAI::AI_airDefensiveCity()
 {
-	//PROFILE_FUNC();
-
-	CvCity* pCity;
-	CvCity* pLoopCity;
-	CvPlot* pBestPlot;
-	int iValue;
-	int iBestValue;
-	int iLoop;
+	PROFILE_FUNC();
 
 	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
 
 	FAssert(getDomainType() == DOMAIN_AIR);
 	FAssert(canAirDefend());
 
-	/********************************************************************************/
-	/* 	BETTER_BTS_AI_MOD						10/26/08			jdog5000	*/
-	/* 																			*/
-	/* 	Air AI																	*/
-	/********************************************************************************/
 	if (canAirDefend() && getDamage() == 0)
 	{
-		pCity = plot()->getPlotCity();
+		CvCity* pCity = plot()->getPlotCity();
 
-		if (pCity != NULL)
+		if (pCity && pCity->getOwnerINLINE() == getOwnerINLINE())
 		{
-			if (pCity->getOwnerINLINE() == getOwnerINLINE())
+			int iExistingAirDefenders = plot()->plotCount(PUF_isAirIntercept, -1, -1, getOwnerINLINE());
+			if (PUF_isAirIntercept(this, -1, -1))
+				iExistingAirDefenders--;
+			int iNeedAirDefenders = pCity->AI_neededAirDefenders();
+
+			if (iExistingAirDefenders < iNeedAirDefenders/2 && iExistingAirDefenders < 3)
 			{
-				if ( !(pCity->AI_isAirDefended(false,+1)) )
+				// Be willing to defend with a couple of planes even if it means their doom.
+				getGroup()->pushMission(MISSION_AIRPATROL);
+				return true;
+			}
+
+			if (iExistingAirDefenders < iNeedAirDefenders)
+			{
+				// Stay if city is threatened or if we're well short of our target, but not if capture is imminent.
+				int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2);
+
+				if (iEnemyOffense > 0 || iExistingAirDefenders < iNeedAirDefenders/2)
 				{
-					// Stay if very short on planes, regardless of situation
-					getGroup()->pushMission(MISSION_AIRPATROL);
-					return true;
-				}
-				
-				if( !(pCity->AI_isAirDefended(true,-1)) )
-				{
-					// Stay if city is threatened but not seriously threatened
-					//int iEnemyOffense = GET_PLAYER(getOwnerINLINE()).AI_getEnemyPlotStrength(plot(),2,false,false);
-					int iEnemyOffense = kOwner.AI_localAttackStrength(plot(), NO_TEAM, DOMAIN_LAND, 2); // K-Mod
-				
-					if (iEnemyOffense > 0)
+					int iOurDefense = kOwner.AI_localDefenceStrength(plot(), getTeam());
+					if (iEnemyOffense < iOurDefense)
 					{
-						//int iOurDefense = GET_TEAM(getTeam()).AI_getOurPlotStrength(plot(),0,true,false,true);
-						int iOurDefense = kOwner.AI_localDefenceStrength(plot(), getTeam());
-						if( 3*iEnemyOffense < 4*iOurDefense )
-						{
-							getGroup()->pushMission(MISSION_AIRPATROL);
-							return true;
-						}
+						getGroup()->pushMission(MISSION_AIRPATROL);
+						return true;
 					}
 				}
 			}
 		}
 	}
 	
-	iBestValue = 0;
-	pBestPlot = NULL;
+	int iBestValue = 0;
+	CvPlot* pBestPlot = NULL;
 
-	for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+	int iLoop;
+	for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 	{
-		if (canAirDefend(pLoopCity->plot()))
+		if (!canAirDefend(pLoopCity->plot()))
+			continue;
+
+		if (!atPlot(pLoopCity->plot()) && !canMoveInto(pLoopCity->plot()))
+			continue;
+
+		bool bCurrentPlot = atPlot(pLoopCity->plot());
+
+		int iExistingAirDefenders = pLoopCity->plot()->plotCount(PUF_isAirIntercept, -1, -1, pLoopCity->getOwnerINLINE());
+		if (bCurrentPlot && PUF_isAirIntercept(this, -1, -1))
+			iExistingAirDefenders--;
+		int iNeedAirDefenders = pLoopCity->AI_neededAirDefenders();
+		int iAirSpaceAvailable = pLoopCity->plot()->airUnitSpaceAvailable(kOwner.getTeam()) + (bCurrentPlot ? 1 : 0);
+
+		if (iNeedAirDefenders > iExistingAirDefenders || iAirSpaceAvailable > 1)
 		{
-			if (atPlot(pLoopCity->plot()) || canMoveInto(pLoopCity->plot()))
+			/* int iValue = pLoopCity->getPopulation() + pLoopCity->AI_cityThreat();
+			iValue *= 100;
+			iValue *= std::max(1, 3 + iNeedAirDefenders - iExistingAirDefenders); */
+			// K-Mod note: AI_cityThreat is too expensive for this stuff, and it's already taken into account by AI_neededAirDefenders anyway
+
+			int iOurDefense = kOwner.AI_localDefenceStrength(pLoopCity->plot(), getTeam(), DOMAIN_LAND, 0);
+			int iEnemyOffense = kOwner.AI_localAttackStrength(pLoopCity->plot(), NO_TEAM, DOMAIN_LAND, 2);
+
+			int iValue = 10 + iAirSpaceAvailable;
+			iValue *= 10 * std::max(0, iNeedAirDefenders - iExistingAirDefenders) + 1;
+
+			if (bCurrentPlot && iAirSpaceAvailable > 1)
+				iValue = iValue * 4/3;
+
+			if( kOwner.AI_isPrimaryArea(pLoopCity->area()) )
 			{
-				int iExistingAirDefenders = pLoopCity->plot()->plotCount(PUF_canAirDefend, -1, -1, pLoopCity->getOwnerINLINE(), NO_TEAM, PUF_isDomainType, DOMAIN_AIR);
-				if( atPlot(pLoopCity->plot()) )
+				iValue *= 4;
+				iValue /= 3;
+			}
+
+			if (pLoopCity->getPreviousOwner() != getOwnerINLINE())
+			{
+				iValue *= (GC.getGameINLINE().getGameTurn() - pLoopCity->getGameTurnAcquired() < 20 ? 3 : 4);
+				iValue /= 5;
+			}
+
+			// Reduce value of endangered city, it may be too late to help
+			if (iEnemyOffense > 0)
+			{
+				if (iOurDefense == 0)
+					iValue = 0;
+				else if (iEnemyOffense*4 > iOurDefense*3)
 				{
-					iExistingAirDefenders -= 1;
+					// note: this will drop to zero when iEnemyOffense = 1.5 * iOurDefence.
+					iValue *= 6*iOurDefense - 4*iEnemyOffense;
+					iValue /= 3*iOurDefense;
 				}
-				int iNeedAirDefenders = pLoopCity->AI_neededAirDefenders();
-			
-				if ( iNeedAirDefenders > iExistingAirDefenders )
-				{
-					iValue = pLoopCity->getPopulation() + pLoopCity->AI_cityThreat();
+			}
 
-					// K-Mod
-					int iOurDefense = kOwner.AI_localDefenceStrength(pLoopCity->plot(), getTeam(), DOMAIN_LAND, 0);
-					int iEnemyOffense = kOwner.AI_localAttackStrength(pLoopCity->plot(), NO_TEAM, DOMAIN_LAND, 2);
-					// K-Mod end
-
-					iValue *= 100;
-
-					// Increase value of cities needing air defense more
-					iValue *= std::max(1, 3 + iNeedAirDefenders - iExistingAirDefenders);
-
-					if( kOwner.AI_isPrimaryArea(pLoopCity->area()) )
-					{
-						iValue *= 4;
-						iValue /= 3;
-					}
-
-					// Reduce value of endangered city, it may be too late to help
-					if (3*iEnemyOffense > iOurDefense || iOurDefense == 0)
-					{
-						iValue *= iOurDefense;
-						iValue /= std::max(1,3*iEnemyOffense);
-					}
-
-					if (iValue > iBestValue)
-					{
-						iBestValue = iValue;
-						pBestPlot = pLoopCity->plot();
-					}
-				}
+			if (iValue > iBestValue)
+			{
+				iBestValue = iValue;
+				pBestPlot = pLoopCity->plot();
 			}
 		}
 	}
@@ -21731,9 +21559,6 @@ bool CvUnitAI::AI_airDefensiveCity()
 		getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
 		return true;
 	}
-	/********************************************************************************/
-	/* 	BETTER_BTS_AI_MOD						END								*/
-	/********************************************************************************/
 
 	return false;
 }

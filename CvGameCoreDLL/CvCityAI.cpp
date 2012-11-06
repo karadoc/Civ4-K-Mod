@@ -2146,11 +2146,17 @@ void CvCityAI::AI_chooseProduction()
 				{
 					iAircraftNeed = (2 + kPlayer.getNumCities() * (3 * GC.getUnitInfo(eBestAttackAircraft).getAirCombat())) / (2 * std::max(1, GC.getGame().getBestLandUnitCombat()));
 					int iBestDefenseValue = kPlayer.AI_bestCityUnitAIValue(UNITAI_DEFENSE_AIR, this);
-					if ((iBestDefenseValue > 0) && (iBestAirValue > iBestDefenseValue))
+					if (iBestDefenseValue > 0)
+					{
+						iAircraftNeed = std::max(iAircraftNeed, kPlayer.AI_getTotalAirDefendersNeeded()); // K-Mod
+						if (iBestAirValue > iBestDefenseValue)
+							iAircraftNeed = iAircraftNeed*3/2;
+					}
+					/* if ((iBestDefenseValue > 0) && (iBestAirValue > iBestDefenseValue))
 					{
 						iAircraftNeed *= 3;
 						iAircraftNeed /= 2;
-					}
+					} */ // (original code, reworded above.)
 				}
 				if (iBestMissileValue > 0)
 				{
@@ -2799,7 +2805,8 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 		aiUnitAIVal[UNITAI_COUNTER] += ((iMilitaryWeight / ((bWarPlan || bLandWar || bAssault) ? 13 : 22)) + ((bPrimaryArea) ? 1 : 0));
 		aiUnitAIVal[UNITAI_PARADROP] += ((iMilitaryWeight / ((bWarPlan || bLandWar || bAssault) ? 5 : 8)) + ((bPrimaryArea) ? 1 : 0));
 
-		aiUnitAIVal[UNITAI_DEFENSE_AIR] += (kOwner.getNumCities() + 1);
+		//aiUnitAIVal[UNITAI_DEFENSE_AIR] += (kOwner.getNumCities() + 1);
+		aiUnitAIVal[UNITAI_DEFENSE_AIR] += kOwner.AI_getTotalAirDefendersNeeded(); // K-Mod
 		aiUnitAIVal[UNITAI_CARRIER_AIR] += kOwner.AI_countCargoSpace(UNITAI_CARRIER_SEA);
 		aiUnitAIVal[UNITAI_MISSILE_AIR] += kOwner.AI_countCargoSpace(UNITAI_MISSILE_CARRIER_SEA);
 
@@ -2966,7 +2973,7 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	aiUnitAIVal[UNITAI_MISSILE_CARRIER_SEA] *= 8;
 	aiUnitAIVal[UNITAI_PIRATE_SEA] *= 5;
 	aiUnitAIVal[UNITAI_ATTACK_AIR] *= 6;
-	aiUnitAIVal[UNITAI_DEFENSE_AIR] *= 3;
+	aiUnitAIVal[UNITAI_DEFENSE_AIR] *= 4; // K-Mod, up from *3
 	aiUnitAIVal[UNITAI_CARRIER_AIR] *= 15;
 	aiUnitAIVal[UNITAI_MISSILE_AIR] *= 15;
 
@@ -6064,21 +6071,21 @@ bool CvCityAI::AI_isDefended(int iExtra)
 	return ((plot()->plotCount(PUF_canDefendGroupHead, -1, -1, getOwnerINLINE(), NO_TEAM, PUF_isCityAIType) + iExtra) >= AI_neededDefenders()); // XXX check for other team's units?
 }
 
+/* original BTS code
+bool CvCityAI::AI_isAirDefended(int iExtra)
+{
+	PROFILE_FUNC();
+
+	return ((plot()->plotCount(PUF_canAirDefend, -1, -1, getOwnerINLINE(), NO_TEAM, PUF_isDomainType, DOMAIN_AIR) + iExtra) >= AI_neededAirDefenders()); // XXX check for other team's units?
+} */
+
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						10/17/08		jdog5000		*/
 /* 																			*/
 /* 	Air AI																	*/
 /********************************************************************************/
-/* original BTS code
-bool CvCityAI::AI_isAirDefended(int iExtra)
-{
-	PROFILE_FUNC();
-	
-	return ((plot()->plotCount(PUF_canAirDefend, -1, -1, getOwnerINLINE(), NO_TEAM, PUF_isDomainType, DOMAIN_AIR) + iExtra) >= AI_neededAirDefenders()); // XXX check for other team's units?
-}
-*/
 // Function now answers question of whether city has enough ready air defense, no longer just counts fighters
-bool CvCityAI::AI_isAirDefended(bool bCountLand, int iExtra)
+/* bool CvCityAI::AI_isAirDefended(bool bCountLand, int iExtra)
 {
 	PROFILE_FUNC();
 	
@@ -6141,10 +6148,20 @@ bool CvCityAI::AI_isAirDefended(bool bCountLand, int iExtra)
 	bool bHaveEnough = (iAirDefenders >= iNeededAirDefenders);
 
 	return bHaveEnough;
-}
+} */ // disabled by K-Mod
 /********************************************************************************/
 /* 	BETTER_BTS_AI_MOD						END								*/
 /********************************************************************************/
+
+// K-Mod. I've reverted AI_isAirDefended back to its original simple functionality.
+// I've done this because my new version of AI_neededAirDefenders is not suitable for use in the bbai version of AI_isAirDefended.
+// I may put some more work into this stuff in the future if I ever work through CvUnitAI::AI_defenseAirMove
+bool CvCityAI::AI_isAirDefended(bool bCountLand, int iExtra) // function signature changed to match bbai usage.
+{
+	PROFILE_FUNC();
+
+	return plot()->plotCount(PUF_isAirIntercept, -1, -1, getOwnerINLINE()) + iExtra >= AI_neededAirDefenders();
+}
 
 
 /************************************************************************************************/
@@ -6330,69 +6347,52 @@ void CvCityAI::AI_updateNeededFloatingDefenders()
 	m_iNeededFloatingDefendersCacheTurn = GC.getGame().getGameTurn();
 }
 
+// This function has been completely rewritten for K-Mod. (The original code has been deleted.)
+// My version is still very simplistic, but it has the advantage of being consistent with other AI calculations.
 int CvCityAI::AI_neededAirDefenders()
 {
-	int iDefenders;
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
 
-	if (!(GET_TEAM(getTeam()).AI_isWarPossible()))
+	if (!GET_TEAM(kOwner.getTeam()).AI_isWarPossible())
 	{
 		return 0;
 	}
 
-	iDefenders = 0;
+	const int iRange = 5;
 
-	int iRange = 5;
+	// Essentially I'm going to bootstrap off the hard work already done in AI_neededFloatingDefenders.
+	// We'll just count the number of floating defenders needed in nearby cities; and use this to
+	// calculate what proportion of our airforce we should deploy here.
+	int iNearbyFloaters = 0;
+	int iNearbyCities = 0;
+	int iTotalFloaters = 0;
 
-	int iOtherTeam = 0;
-	int iEnemyTeam = 0;
-	for (int iDX = -(iRange); iDX <= iRange; iDX++)
+	// Note: checking the nearby plots directly to look for cities may scale better than this
+	//       on very large maps; but that would make it harder to work out iTotalFloaters.
+	int iLoop;
+	for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity; pLoopCity = kOwner.nextCity(&iLoop))
 	{
-		for (int iDY = -(iRange); iDY <= iRange; iDY++)
-		{
-			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+		// static_cast to get around weird code structure...
+		int iFloaters = static_cast<CvCityAI*>(pLoopCity)->AI_neededFloatingDefenders();
 
-			if ((pLoopPlot != NULL) && pLoopPlot->isOwned() && (pLoopPlot->getTeam() != getTeam()))
-			{
-				iOtherTeam++;
-				if (GET_TEAM(getTeam()).AI_getWarPlan(pLoopPlot->getTeam()) != NO_WARPLAN)
-				{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/01/09                                jdog5000      */
-/*                                                                                              */
-/* Air AI                                                                                       */
-/************************************************************************************************/
-					// If enemy has no bombers, don't need to defend as much
-					if( GET_PLAYER(pLoopPlot->getOwner()).AI_totalUnitAIs(UNITAI_ATTACK_AIR) == 0 )
-					{
-						continue;
-					}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-					iEnemyTeam += 2;
-					if (pLoopPlot->isCity())
-					{
-						iEnemyTeam += 6;
-					}
-				}
-			}
+		iTotalFloaters += iFloaters;
+		if (plotDistance(plot(), pLoopCity->plot()) <= iRange)
+		{
+			iNearbyCities++;
+			iNearbyFloaters += iFloaters;
+			// Note: floaters for this city really should be divided by the number of cities near
+			// pLoopCity rather than thenumber near 'this'. But that would be a longer calculation.
 		}
 	}
-	
-	iDefenders += (iOtherTeam + iEnemyTeam + 2) / 8;
+	FAssert(iNearbyCities > 0);
+	// 'iNearbyFloaters / iTotalFloaters' is the proportion of our air defenders we should use in this city.
+	// ie. a proportion of the total air defenders for our civ we already have or expect to have.
+	int iNeeded = (std::max(kOwner.AI_getTotalAirDefendersNeeded(), kOwner.AI_getNumAIUnits(UNITAI_DEFENSE_AIR)) * iNearbyFloaters + (iNearbyCities * iTotalFloaters)/2) / std::max(1, iNearbyCities * iTotalFloaters);
+	return std::min(iNeeded, getAirUnitCapacity(kOwner.getTeam())); // Capped at the air capacity of the city.
 
-	iDefenders = std::min((iEnemyTeam > 0) ? 4 : 2, iDefenders);
-	
-	if (iDefenders == 0)
-	{
-		if (isCoastal(GC.getMIN_WATER_SIZE_FOR_OCEAN()))
-		{
-			iDefenders++;
-		}
-	}
-	return iDefenders;
+	//Note: because of the air capacity cap, and rounding, and the shortcut used for the nearbyFloater averaging,
+	// the sum of AI_neededAirDefenders for each city won't necessarily equal our intended total.
 }
-
 
 bool CvCityAI::AI_isDanger()
 {

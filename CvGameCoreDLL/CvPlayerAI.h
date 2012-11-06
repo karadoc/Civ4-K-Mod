@@ -387,6 +387,7 @@ public:
 	int AI_countNumAreaHostileUnits(CvArea* pArea, bool bPlayer, bool bTeam, bool bNeutral, bool bHostile) const;
 	int AI_getTotalFloatingDefendersNeeded(CvArea* pArea) const;
 	int AI_getTotalFloatingDefenders(CvArea* pArea) const;
+	int AI_getTotalAirDefendersNeeded() const; // K-Mod
 
 	RouteTypes AI_bestAdvancedStartRoute(CvPlot* pPlot, int* piYieldValue = NULL) const;
 	UnitTypes AI_bestAdvancedStartUnitAI(CvPlot* pPlot, UnitAITypes eUnitAI) const;
