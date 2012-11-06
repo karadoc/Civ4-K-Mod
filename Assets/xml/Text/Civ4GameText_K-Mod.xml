@@ -129,6 +129,16 @@
 		<Italian>Contatta il giocatore [COLOR_HIGHLIGHT_TEXT]%s1_PlyrName della civilt&#224; %s2:2_CivName[COLOR_REVERT]</Italian>
 		<Spanish>Contactar con [COLOR_HIGHLIGHT_TEXT]%s1_PlyrName del %s2_CivName[COLOR_REVERT]</Spanish>
 	</TEXT>
+	<!-- The original text incorrectly stated that liberies were required for the Heroic Epic.
+	(These 'strategy' hints are just a damn nightmare. They don't give any hints or information that isn't already stated in automatically generated description; and they are often wrong, because they aren't auto-updated...)-->
+	<TEXT>
+		<Tag>TXT_KEY_BUILDING_LIBRARY_STRATEGY</Tag>
+		<English>[COLOR_BUILDING_TEXT]Libraries[COLOR_REVERT] boost your cities' research and provide culture. They are required to build [COLOR_BUILDING_TEXT]Universities[COLOR_REVERT], the [COLOR_BUILDING_TEXT]Great Library[COLOR_REVERT] wonder, and the [COLOR_BUILDING_TEXT]National Epic[COLOR_REVERT] national wonder.</English>
+		<French>Les [COLOR_BUILDING_TEXT]biblioth&#232;ques[COLOR_REVERT] am&#233;liorent la recherche et produisent de la culture. Elles sont n&#233;cessaires pour construire des [COLOR_BUILDING_TEXT]universit&#233;s[COLOR_REVERT], la [COLOR_BUILDING_TEXT]Grande biblioth&#232;que[COLOR_REVERT], et l'[COLOR_BUILDING_TEXT]Epop&#233;e nationale[COLOR_REVERT].</French>
+		<German>[COLOR_BUILDING_TEXT]Bibliotheken[COLOR_REVERT] erh&#246;hen den kulturellen Wert einer Stadt und beschleunigen die Forschung sp&#252;rbar. Dar&#252;ber hinaus sind sie die Voraussetzung f&#252;r den Bau von [COLOR_BUILDING_TEXT]Universit&#228;ten[COLOR_REVERT], eines Weltwunders ([COLOR_BUILDING_TEXT]Gro&#223;e Bibliothek[COLOR_REVERT]) und der Nationalen Wunder [COLOR_BUILDING_TEXT]Nationalepos[COLOR_REVERT].</German>
+		<Italian>Le [COLOR_BUILDING_TEXT]biblioteche[COLOR_REVERT] aumentano la ricerca e la cultura delle citt&#224;. Sono necessarie per la realizzazione di [COLOR_BUILDING_TEXT]universit&#224;[COLOR_REVERT], della Meraviglia [COLOR_BUILDING_TEXT]Grande Biblioteca[COLOR_REVERT] e delle Meraviglia Nazionali [COLOR_BUILDING_TEXT]Poema Patriottico[COLOR_REVERT].</Italian>
+		<Spanish>Las [COLOR_BUILDING_TEXT]Bibliotecas[COLOR_REVERT] impulsan la investigaci&#243;n de las ciudades y proporcionan cultura. Son necesarias para construir [COLOR_BUILDING_TEXT]Universidades[COLOR_REVERT], la maravilla de la [COLOR_BUILDING_TEXT]Gran Biblioteca[COLOR_REVERT] y las maravilla nacionales de la [COLOR_BUILDING_TEXT]Epopeya nacional[COLOR_REVERT].</Spanish>
+	</TEXT>
 
 	<!-- "-X% strength to opposing city defenders"?
 	<TEXT>
