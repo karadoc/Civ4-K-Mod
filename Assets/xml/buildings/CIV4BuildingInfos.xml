@@ -750,7 +750,7 @@
 			<FreeBonus>NONE</FreeBonus>
 			<iNumFreeBonuses>0</iNumFreeBonuses>
 			<FreeBuilding>NONE</FreeBuilding>
-			<FreePromotion>PROMOTION_GUERILLA1</FreePromotion>
+			<FreePromotion/>
 			<CivicOption>NONE</CivicOption>
 			<GreatPeopleUnitClass>NONE</GreatPeopleUnitClass>
 			<iGreatPeopleRateChange>0</iGreatPeopleRateChange>
@@ -862,7 +862,12 @@
 					<iProductonModifier>100</iProductonModifier>
 				</BonusProductionModifier>
 			</BonusProductionModifiers>
-			<UnitCombatFreeExperiences/>
+			<UnitCombatFreeExperiences>
+				<UnitCombatFreeExperience>
+					<UnitCombatType>UNITCOMBAT_MELEE</UnitCombatType>
+					<iExperience>2</iExperience>
+				</UnitCombatFreeExperience>
+			</UnitCombatFreeExperiences>
 			<DomainFreeExperiences/>
 			<DomainProductionModifiers/>
 			<BuildingHappinessChanges/>
