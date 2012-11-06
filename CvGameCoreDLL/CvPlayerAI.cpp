@@ -5542,12 +5542,12 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					//       bunch of other things. But I think this is good enough for now.
 					if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE2))
 					{
-						iValue += 1000;
+						iValue += 1200;
 						if (AI_isDoVictoryStrategy(AI_VICTORY_SPACE3))
 						{
-							iValue += 800; // (additional)
+							iValue += 1200; // (additional)
 							iValue += kProjectInfo.getMaxTeamInstances() > 0
-								? kProjectInfo.getMaxTeamInstances() * 200
+								? kProjectInfo.getMaxTeamInstances() * 300
 								: 400;
 						}
 					}
