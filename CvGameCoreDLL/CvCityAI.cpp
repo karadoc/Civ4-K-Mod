@@ -4956,12 +4956,12 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					        iTempValue *= 2;					        
 					    }
 
-						// K-Mod
-						if (iTempValue > 0 &&
+						// K-Mod. Build culture buildings quickly to pop our borders (but not wonders / special buildings)
+						if (iTempValue > 0 && !bIsLimitedWonder && kBuilding.getProductionCost() > 0 &&
 							getCultureLevel() <= (CultureLevelTypes)1 && getCommerceRateTimes100(COMMERCE_CULTURE) < 100)
 						{
 							iTempValue += 16;
-							iPriorityFactor += 30;
+							iPriorityFactor += 25;
 						}
 						// K-Mod end
 					}
