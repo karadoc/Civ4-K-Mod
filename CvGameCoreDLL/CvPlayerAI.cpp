@@ -4898,12 +4898,30 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
-	if (kTechInfo.isTechTrading() && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
+	//if (kTechInfo.isTechTrading() && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
+	if (kTechInfo.isTechTrading() && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING) && !kTeam.isTechTrading()) // K-Mod
 	{
 		iValue += 500;
 
-		iValue += 500 * iHasMetCount;
-		// K-Mod TODO; increase the bonus for each known civ that we can't already tech trade with
+		//iValue += 500 * iHasMetCount;
+		// K-Mod. increase the bonus for each known civ that we can't already tech trade with
+		int iNewTrade = 0;
+		int iExistingTrade = 0;
+		for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
+		{
+			if (i == getTeam() || !kTeam.isHasMet(i))
+				continue;
+			const CvTeamAI& kLoopTeam = GET_TEAM(i);
+			if (!kLoopTeam.isTechTrading())
+			{
+				if (kLoopTeam.AI_techTrade(NO_TECH, getTeam()) == NO_DENIAL && kTeam.AI_techTrade(NO_TECH, i) == NO_DENIAL)
+					iNewTrade += kLoopTeam.getAliveCount();
+			}
+			else
+				iExistingTrade += kLoopTeam.getAliveCount();
+		}
+		iValue += std::max(0, iNewTrade * 750 - iExistingTrade * 250);
+		// K-Mod end
 	}
 
 	if (kTechInfo.isGoldTrading())
