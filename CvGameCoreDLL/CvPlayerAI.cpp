@@ -5836,11 +5836,11 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			{
 				if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
 				{
-					iReligionValue += 500;
+					iReligionValue += 400; // was 500
 
 					if (countHolyCities() < 1)
 					{
-						iReligionValue += 1000;
+						iReligionValue += 800; // was 1000
 					}
 				}
 				else
@@ -5854,6 +5854,26 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					iReligionValue *= 2;
 					iReligionValue += 500; */
 					// K-Mod
+					bool bNeighbouringReligions = false;
+					for (PlayerTypes i = (PlayerTypes)0; !bNeighbouringReligions && i < MAX_CIV_PLAYERS; i = (PlayerTypes)(i+1))
+					{
+						const CvPlayer& kLoopPlayer = GET_PLAYER(i);
+						if (kLoopPlayer.isAlive() && kTeam.isHasMet(kLoopPlayer.getTeam()) &&
+							kLoopPlayer.getStateReligion() != NO_RELIGION && kTeam.AI_hasSharedPrimaryArea(kLoopPlayer.getTeam()))
+						{
+							bNeighbouringReligions = true;
+						}
+					}
+					if (!bNeighbouringReligions)
+					{
+						if (AI_getFlavorValue(FLAVOR_RELIGION))
+							iReligionValue += 100 + 10 * AI_getFlavorValue(FLAVOR_RELIGION);
+						if (GC.getGameINLINE().getElapsedGameTurns() >= 26 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent() / 100)
+							iReligionValue += 250;
+						if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
+							iReligionValue += 300;
+					}
+
 					if (iAvailableReligions <= 4 || AI_getFlavorValue(FLAVOR_RELIGION) > 0)
 					{
 						iReligionValue *= 2;
