@@ -5500,10 +5500,13 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				iValue += kBuilding.getAIWeight();
 				if (iValue > 0)
 				{
+					int iFlavour = 0; // K-Mod
 					for (int iI = 0; iI < GC.getNumFlavorTypes(); iI++)
 					{
-						iValue += (kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI));
+						//iValue += (kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI));
+						iFlavour += kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI); // K-Mod
 					}
+					iValue = iValue * (150 + iFlavour) / 150; // K-Mod. (This will give +66% for 10-10 flavour matchups.)
 				}
 			}
 		}
