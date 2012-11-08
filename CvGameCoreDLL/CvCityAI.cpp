@@ -3456,7 +3456,7 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 										}
 										// Subtract some points from wonder value, just to stop us from wasting it
 										if (isNationalWonderClass((BuildingClassTypes)iI))
-											iValue -= 40;
+											iValue -= 40 + (iMaxNumWonders > 0 ? 60 * getNumNationalWonders() / iMaxNumWonders : 0);
 									}
 								}
 								// K-Mod end
@@ -3708,6 +3708,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						iValue += iTemp;
 					}
 				}
+				iValue += kBuilding.getAllCityDefenseModifier() * iNumCities / (bWarPlan ? 4 : 5);
 				iValue += kBuilding.getAirlift() * 10 + (iNumCitiesInArea < iNumCities && kBuilding.getAirlift() > 0 ? getPopulation()+25 : 0);
 
 				int iAirDefense = -kBuilding.getAirModifier();
@@ -3786,8 +3787,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				// finally, a little bit of value for happiness which gives us some padding
 				iValue += 16 * iCitValue * std::max(0, iBuildingActualHappiness)/(4 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel));
 
-				// I'll now define the "iHappinessModifer" that some of the other happy effects use.
-				int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 4) ? iCitValue : iCitValue/2;
+				// I'll now define the "iHappinessModifer" that some of the other happy effects use. (note. this is around 4x bigger than the original definition.)
+				int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 3) ? iCitValue*3 : iCitValue;
 				if (iHappinessLevel >= 10)
 				{
 					iHappyModifier = 1;
@@ -3799,14 +3800,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 				{
 					//iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 4;
-					iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 20; // K-Mod (note, commercehappiness is already counted by iBuildingActualHappiness)
+					iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 150; // K-Mod (note, commercehappiness is already counted by iBuildingActualHappiness)
 				}
 
 				int iWarWearinessModifer = kBuilding.getWarWearinessModifier();
 				if (iWarWearinessModifer != 0)
 				{
 					//iValue += (-iWarWearinessModifer * iHappyModifier) / 16;
-					iValue += (-iWarWearinessModifer * iHappyModifier) / (bWarPlan ? 16 : 32); // K-Mod (again, the immediate effects of this are already counted)
+					iValue += (-iWarWearinessModifer * iHappyModifier) / (bWarPlan ? 100 : 200); // K-Mod (again, the immediate effects of this are already counted)
 				}
 
 				/*iValue += (kBuilding.getAreaHappiness() * (iNumCitiesInArea - 1) * 8);
@@ -3820,8 +3821,9 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				int iGlobalWarWearinessModifer = kBuilding.getGlobalWarWearinessModifier();
 				if (iGlobalWarWearinessModifer != 0)
 				{
-					iValue += (-(((iGlobalWarWearinessModifer * iWarWearinessPercentAnger / 100) / GC.getPERCENT_ANGER_DIVISOR())) * iNumCities);
-					iValue += (-iGlobalWarWearinessModifer * iHappyModifier) / 16;
+					/* iValue += (-(((iGlobalWarWearinessModifer * iWarWearinessPercentAnger / 100) / GC.getPERCENT_ANGER_DIVISOR())) * iNumCities);
+					iValue += (-iGlobalWarWearinessModifer * iHappyModifier) / 16; */
+					iValue += iCitValue * iNumCities * -iGlobalWarWearinessModifer * (iWarWearinessPercentAnger + GC.getPERCENT_ANGER_DIVISOR()/(bWarPlan ? 10 : 20)) / (100 * GC.getPERCENT_ANGER_DIVISOR()); // K-Mod
 				}
 
 				for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
@@ -4131,27 +4133,29 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				} */
 				// K-Mod
 				int iTotalTradeModifier = totalTradeModifier();
-				int iTempValue = kBuilding.getTradeRoutes() * (getTradeRoutes() > 0 ? 6*getTradeYield(YIELD_COMMERCE) / getTradeRoutes() : 6 * (getPopulation() / 5 + 1) * iTotalTradeModifier / 100);
-				int iGlobalTradeValue = (6 * iTotalPopulation / (5 * iNumCities) + 1) * kOwner.AI_averageYieldMultiplier(YIELD_COMMERCE) / 100;
+				int iTempValue = kBuilding.getTradeRoutes() * (getTradeRoutes() > 0 ? 5*getTradeYield(YIELD_COMMERCE) / getTradeRoutes() : 5 * (getPopulation() / 5 + 1) * iTotalTradeModifier / 100);
+				//int iGlobalTradeValue = (6 * iTotalPopulation / (5 * iNumCities) + 1) * kOwner.AI_averageYieldMultiplier(YIELD_COMMERCE) / 100;
+				// 1.2 * average population seems wrong. Instead, do something roughly compariable to what's used in CvPlayerAI::AI_civicValue.
+				int iGlobalTradeValue = (bForeignTrade ? 5 : 3) * (2*(kOwner.getCurrentEra()+1) + GC.getNumEraInfos()) / GC.getNumEraInfos();
 
-				iTempValue += 6 * kBuilding.getTradeRouteModifier() * getTradeYield(YIELD_COMMERCE) / std::max(1, iTotalTradeModifier);
+				iTempValue += 5 * kBuilding.getTradeRouteModifier() * getTradeYield(YIELD_COMMERCE) / std::max(1, iTotalTradeModifier);
 				if (bForeignTrade)
 				{
-					iTempValue += 4 * kBuilding.getForeignTradeRouteModifier() * getTradeYield(YIELD_COMMERCE) / std::max(1, iTotalTradeModifier+getForeignTradeRouteModifier());
+					iTempValue += 3 * kBuilding.getForeignTradeRouteModifier() * getTradeYield(YIELD_COMMERCE) / std::max(1, iTotalTradeModifier+getForeignTradeRouteModifier());
 				}
 
 				iTempValue *= AI_yieldMultiplier(YIELD_COMMERCE);
 				iTempValue /= 100;
 
-				iTempValue += (kBuilding.getCoastalTradeRoutes() * kOwner.countNumCoastalCities() * iGlobalTradeValue);
-				iTempValue += (kBuilding.getGlobalTradeRoutes() * iNumCities * iGlobalTradeValue);
+				iTempValue += kBuilding.getCoastalTradeRoutes() * std::max((iCitiesTarget+1)/2, kOwner.countNumCoastalCities()) * iGlobalTradeValue;
+				iTempValue += kBuilding.getGlobalTradeRoutes() * std::max(iCitiesTarget, iNumCities) * iGlobalTradeValue;
 				// K-Mod end
-					
+
 				if (bFinancialTrouble)
 				{
 					iTempValue *= 2;
 				}
-					
+
 				if (kOwner.isNoForeignTrade())
 				{
 					iTempValue /= 2; // was /3
@@ -4205,7 +4209,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 							}
 							else if( !(pLoopCity->isPower()) )
 							{
-								iValue += 8;
+								//iValue += 8;
+								iValue += 24; // K-Mod. Giving power should be more valuable than replacing existing power!
 							}
 						}
 					}
@@ -4769,11 +4774,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 					// (K-Mod)...and now the things that should not depend on whether or not we have a good yield rank
 					int iRawYieldValue = 0;
-					iRawYieldValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 26); // originally 12 (and 'iValue')
-					//if (bForeignTrade)
-					if (bForeignTrade && !kOwner.isNoForeignTrade()) // K-Mod
+					if (iI != YIELD_COMMERCE) // K-Mod, don't count trade commerce here, because that has already been counted earlier... (the systme is a mess, I know.)
 					{
-						iRawYieldValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 35); // originally 12 (and 'iValue')
+						iRawYieldValue += ((kBuilding.getTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 26); // originally 12 (and 'iValue')
+						//if (bForeignTrade)
+						if (bForeignTrade && !kOwner.isNoForeignTrade()) // K-Mod
+						{
+							iRawYieldValue += ((kBuilding.getForeignTradeRouteModifier() * getTradeYield((YieldTypes)iI)) / 35); // originally 12 (and 'iValue')
+						}
 					}
 
 					/* original bts code (We're inside a yield types loop. This would be triple counted here!)
@@ -4815,8 +4823,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 						// K-Mod
 						if (iI == YIELD_PRODUCTION)
 						{
-							// priority += 2.8% per 1% in production increase. roughly. More when at war.
-							iPriorityFactor += std::min(100, (bWarPlan ? 320 : 280)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
+							// priority += 2.4% per 1% in production increase. roughly. More when at war.
+							iPriorityFactor += std::min(100, (bWarPlan ? 280 : 240)*iTempValue/std::max(1, 4*getYieldRate(YIELD_PRODUCTION)));
 						}
 						// K-Mod end
 
@@ -4999,7 +5007,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 							// if this is one of our top culture cities, then we want to build this here first!
 							if (iCultureRank <= iCulturalVictoryNumCultureCities)
 							{
-								iCommerceMultiplierValue /= 12; // was 8
+								iCommerceMultiplierValue /= 15; // was 8
 
 								// if we at culture level 3, then these need to get built asap
 								if (bCulturalVictory3)
@@ -5013,7 +5021,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 									FAssert(iHighestRate >= getCommerceRate(COMMERCE_CULTURE));
 
 									// its most important to build in the lowest rate city, but important everywhere
-									iCommerceMultiplierValue += (iHighestRate - getCommerceRate(COMMERCE_CULTURE)) * iCommerceModifier / 12; // was 8
+									iCommerceMultiplierValue += (iHighestRate - getCommerceRate(COMMERCE_CULTURE)) * iCommerceModifier / 15; // was 8
 								}
 							}
 							else
@@ -5053,18 +5061,18 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 								// if we have enough and our rank is close to the top, then possibly build here too
 								if (bHaveEnough && (iCultureRank - iCulturalVictoryNumCultureCities) <= 3)
 								{
-									iCommerceMultiplierValue /= 16; // was 12
+									iCommerceMultiplierValue /= 20; // was 12
 								}
 								// otherwise, we really do not want to build this here
 								else
 								{
-									iCommerceMultiplierValue /= 30;
+									iCommerceMultiplierValue /= 50; // was 30
 								}
 							}
 						}
 						else
 						{
-							iCommerceMultiplierValue /= 20; // was 15
+							iCommerceMultiplierValue /= 25; // was 15
 
 							// increase priority if we need culture oppressed city
 							// K-Mod: moved this to outside of the current "if".
@@ -5074,7 +5082,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					}
 					else
 					{
-						iCommerceMultiplierValue /= 20; // was 15
+						iCommerceMultiplierValue /= 25; // was 15
 					}
 					iTempValue += iCommerceMultiplierValue;
 
@@ -5600,6 +5608,9 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 	// K-Mod
 	// priority factor
+	if (isWorldWonderClass(eBuildingClass))
+		iPriorityFactor += 20; // this could be adjusted based on iWonderConstructRand, or on rival's tech, or whatever...
+
 	if (kBuilding.getProductionCost() > 0)
 	{
 		iValue *= iPriorityFactor;
