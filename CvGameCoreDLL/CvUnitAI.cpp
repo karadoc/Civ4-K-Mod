@@ -5488,7 +5488,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	CvPlot* pBestPlot = NULL;
 	SpecialistTypes eBestSpecialist = NO_SPECIALIST;
 	BuildingTypes eBestBuilding = NO_BUILDING;
-	int iBestValue = 0;
+	int iBestValue = 1;
 	int iBestPathTurns = MAX_INT; // just used as a tie-breaker.
 
 	int iLoop;
@@ -5507,7 +5507,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					{
 						// Note, specialistValue is roughly 400x the commerce it provides. So /= 4 to make it 100x.
 						int iValue = pLoopCity->AI_permanentSpecialistValue(eSpecialist)/4;
-						if (iValue > iBestValue)
+						if (iValue > iBestValue || (iValue == iBestValue && iPathTurns < iBestPathTurns))
 						{
 							iBestValue = iValue;
 							pBestPlot = getPathEndTurnPlot();
@@ -5530,7 +5530,7 @@ bool CvUnitAI::AI_greatPersonMove()
 							// so we * 25 to match the scale of specialist value.
 							int iValue = pLoopCity->AI_buildingValue(eBuilding) * 25;
 
-							if (iValue > iBestValue)
+							if (iValue > iBestValue || (iValue == iBestValue && iPathTurns < iBestPathTurns))
 							{
 								iBestValue = iValue;
 								pBestPlot = getPathEndTurnPlot();
@@ -5555,25 +5555,19 @@ bool CvUnitAI::AI_greatPersonMove()
 							}
 
 							FAssert(iHurryProduction > 0);
-							int iFraction = 100 * std::min(iHurryProduction, iCost-iProgress) / std::min(iHurryProduction, iCost);
+							int iFraction = 100 * std::min(iHurryProduction, iCost-iProgress) / std::max(1, iCost);
 
-							if (iFraction > 50) // arbitary, and somewhat unneccessary.
+							if (iFraction > 40) // arbitary, and somewhat unneccessary.
 							{
 								FAssert(iFraction <= 100);
 								int iValue = pLoopCity->AI_buildingValue(eBuilding) * 25 * iFraction / 100;
 
-								if (iProgress + iHurryProduction >= iCost)
-								{
-									// increase the value, because we would be preventing someone else from getting it.
-									iValue *= 4;
-									iValue /= 3;
-								}
-								else
+								if (iProgress + iHurryProduction < iCost)
 								{
 									// decrease the value, because we might still miss out!
 									FAssert(iProductionRate > 0 || pLoopCity->isDisorder());
 									iValue *= 12;
-									iValue /= 10 + std::min(30, pLoopCity->getProductionTurnsLeft(iCost, iProgress, iProductionRate, iProductionRate));
+									iValue /= 12 + std::min(30, pLoopCity->getProductionTurnsLeft(iCost, iProgress, iProductionRate, iProductionRate));
 								}
 
 								if (iValue > iBestValue || (iValue == iBestValue && iPathTurns < iBestPathTurns))
