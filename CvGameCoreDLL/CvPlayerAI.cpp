@@ -6768,7 +6768,7 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 
 				case UNITAI_DEFENSE_AIR:
 					//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
-					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 10 : 6)*iWeight);
+					iDefenceValue = std::max(iDefenceValue, (bWarPlan ? 10 : 6)*iWeight + (bCapitalAlone ? 3 : 0)*iWeight);
 					break;
 
 				case UNITAI_CARRIER_AIR:
