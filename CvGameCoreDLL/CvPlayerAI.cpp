@@ -5161,7 +5161,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						iYieldValue += iTempValue;
 					}
 					// K-Mod
-					iImprovementValue -= 100;
+					iYieldValue -= 100;
 					if (kImprovement.isWater())
 					{
 						iYieldValue *= 2;
@@ -5175,11 +5175,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				{
 					int iBonusValue = 0;
 
-					/* original bts code
-					iBonusValue += ((kImprovement.isImprovementBonusMakesValid(iK)) ? 450 : 0);
-					iBonusValue += ((kImprovement.isImprovementBonusTrade(iK)) ? (45 * AI_bonusVal((BonusTypes) iK, 1, true)) : 0); */
-
-					// K-Mod
+					// K-Mod. This section has been rewritten. (original code deleted)
 					const CvBonusInfo& kBonusInfo = GC.getBonusInfo((BonusTypes)iK);
 
 					if (!kImprovement.isImprovementBonusMakesValid(iK) && !kImprovement.isImprovementBonusTrade(iK))
@@ -5200,46 +5196,12 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 							iBonusValue += AI_bonusVal((BonusTypes)iK, 1, true);
 							iBonusValue += (iNumBonuses-1) * iBonusValue / 10;
 						}
-					}
 
-					//if (iBonusValue > 0)
-					if (iNumBonuses > 0)
-					{
-					// K-Mod end (kind of)
 						int iYieldValue = 0; // K-Mod
 						for (int iL = 0; iL < NUM_YIELD_TYPES; iL++)
 						{
 							int iTempValue = 0;
 
-							/* original bts code
-							iTempValue += (kImprovement.getImprovementBonusYield(iK, iL) * 300);
-							iTempValue += (kImprovement.getIrrigatedYieldChange(iL) * 200);
-
-							// food bonuses are more valueble
-							if (iL == YIELD_FOOD)
-							{
-								iTempValue *= 2;
-							}
-							// otherwise, devalue the bonus slightly
-							else if (iL == YIELD_COMMERCE && bFinancialTrouble)
-							{
-								iTempValue *= 4;
-								iTempValue /= 3;
-							}
-							else
-							{
-								iTempValue *= 3;
-								iTempValue /= 4;
-							}
-							
-							if (bAdvancedStart && getCurrentEra() < 2)
-							{
-								iValue *= (iL == YIELD_FOOD) ? 3 : 2;
-							}
-							iTempValue *= AI_yieldWeight((YieldTypes)iL);
-							iTempValue /= 100;
-
-							iBonusValue += iTempValue; */
 							// K-Mod. Note: value adjustments are now rolled into AI_yieldWeight
 							iTempValue += (kImprovement.getImprovementBonusYield(iK, iL) * 200);
 							iTempValue += (kImprovement.getIrrigatedYieldChange(iL) * 100); // already taken into account?
@@ -5248,18 +5210,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 							iTempValue /= 100;
 
 							iYieldValue += iTempValue;
-							// K-Mod end
 						}
 
-						/* original bts code
-						iNumBonuses = countOwnedBonuses((BonusTypes)iK);
-						if (iNumBonuses > 0)
-						{
-							iBonusValue *= (iNumBonuses + 2);
-							iBonusValue /= kImprovement.isWater() ? 4 : 3;	// water resources are worth less
-							iImprovementValue += iBonusValue;
-						} */
-						// K-Mod
 						if (kImprovement.isWater())
 						{
 							iYieldValue *= (iNumBonuses + 2);
@@ -5272,8 +5224,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 						}
 
 						iImprovementValue += iBonusValue + iYieldValue;
-						// K-Mod end
 					}
+					// K-Mod end
 				}
 				
 				// if water improvement, weight by coastal cities (weight the whole build)
