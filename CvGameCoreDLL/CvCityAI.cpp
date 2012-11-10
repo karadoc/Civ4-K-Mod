@@ -4009,23 +4009,36 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				int iBaseMaintenance = getMaintenanceTimes100();
 				int iExistingUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier())) / 100;
 				int iNewUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier() + kBuilding.getMaintenanceModifier())) / 100;
-				*/
-				// K-Mod, bugfix. getMaintenanceTimes100 is the total, with modifiers already applied.
-				// (note. ideally we'd use "calculateBaseMaintenanceTimes100", and that would avoid problem caused by "we love the X day".
-				// but doing it this way is slightly faster.)
-				int iExistingUpkeep = getMaintenanceTimes100();
-				int iBaseMaintenance = 100 * iExistingUpkeep / std::max(1, 100 + getMaintenanceModifier());
-				int iNewUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier() + kBuilding.getMaintenanceModifier())) / 100;
-				// K-Mod end
-				
+
 				int iTempValue = (iExistingUpkeep - iNewUpkeep) / 16;
-				
+
 				if (bFinancialTrouble)
 				{
 					iTempValue *= 2;
 				}
 
 				iValue += iTempValue;
+				*/
+				// K-Mod, bugfix. getMaintenanceTimes100 is the total, with modifiers already applied.
+				// (note. ideally we'd use "calculateBaseMaintenanceTimes100", and that would a avoid problem caused by "we love the X day".
+				// but doing it this way is slightly faster.)
+				if (kBuilding.getMaintenanceModifier())
+				{
+					int iExistingUpkeep = getMaintenanceTimes100();
+					int iBaseMaintenance = 100 * iExistingUpkeep / std::max(1, 100 + getMaintenanceModifier());
+					int iNewUpkeep = (iBaseMaintenance * std::max(0, 100 + getMaintenanceModifier() + kBuilding.getMaintenanceModifier())) / 100;
+
+					int iTempValue = (iExistingUpkeep - iNewUpkeep) / 22; // slightly more then 4x savings, just to acomodate growth.
+
+					/* iTempValue *= kOwner.AI_commerceWeight(COMMERCE_GOLD, 0); // (note, not just for this particular city - because this isn't direct gold production)
+					iTempValue /= 100; */
+
+					if (bFinancialTrouble)
+						iTempValue = iTempValue*2;
+
+					iValue += iTempValue;
+				}
+				// K-Mod end
 			}
 
 			if ((iFocusFlags & BUILDINGFOCUS_SPECIALIST) || (iPass > 0))
@@ -4243,7 +4256,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					/* original bts code
 					iValue += ((calculateDistanceMaintenance() - 3) * iNumCitiesInArea); */
 					// K-mod. More bonus for colonies, because it reduces that extra maintenance too.
-					int iTempValue = (calculateDistanceMaintenance() - 3) * iNumCitiesInArea;
+					int iTempValue = 2*(calculateDistanceMaintenance() - 2) * iNumCitiesInArea;
 					const CvCity* pCapitalCity = kOwner.getCapitalCity();
 					if (pCapitalCity == NULL || pCapitalCity->area() != area())
 					{
