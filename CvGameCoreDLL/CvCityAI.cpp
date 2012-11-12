@@ -3564,6 +3564,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	// The point is to get the AI to build productiviy buildings quickly, but not if they come with large negative side effects.
 	// I may use it for other adjustments in the future.
 	int iPriorityFactor = 100;
+
+	// bRemove means that we're evaluating the cost of losing this building rather than adding it.
+	// the definition used here is just a kludge because there currently isn't any other to tell the difference.
+	// Currently, bRemove is only in a few parts of the evaluation where it is particularly important;
+	// for example, bRemove is critical for calculating the lost value of obsoleting walls and castles.
+	// There are several sections which could, in the future, be improved using bRemove -
+	// but I don't see it as a high priority.
+	bool bRemove = getNumBuilding(eBuilding) >= GC.getCITY_MAX_NUM_BUILDINGS();
 	// K-Mod end
 
 	// K-Mod, constructionValue cache
@@ -3690,12 +3698,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				{
 					if (GC.getGameINLINE().getBestLandUnit() == NO_UNIT || !GC.getUnitInfo(GC.getGameINLINE().getBestLandUnit()).isIgnoreBuildingDefense())
 					{
-						// bRemove means that we're evaluating the cost of losing this building rather than adding it.
-						// the definition used here is just a kludge because there currently isn't any other to tell the difference.
-						// Also, this isn't the only part of the evaluation that depends on whether we are adding or removing
-						// but this is a particular important case due to the way walls and castles get obsoleted...
-						bool bRemove = getNumActiveBuilding(eBuilding) > 0;
-
 						int iTemp = 0;
 						// bombard reduction
 						int iOldBombardMod = getBuildingBombardDefense() - (bRemove ? kBuilding.getBombardDefenseModifier() : 0);
@@ -5513,20 +5515,18 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				}
 			}
 
+			/* original bts code
 			if (iPass > 0 && !isHuman())
 			{
 				iValue += kBuilding.getAIWeight();
 				if (iValue > 0)
 				{
-					int iFlavour = 0; // K-Mod
 					for (int iI = 0; iI < GC.getNumFlavorTypes(); iI++)
 					{
-						//iValue += (kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI));
-						iFlavour += kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI); // K-Mod
+						iValue += (kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI));
 					}
-					iValue = iValue * (150 + iFlavour) / 150; // K-Mod. (This will give +66% for 10-10 flavour matchups.)
 				}
-			}
+			} */ // Moved & changed by K-Mod. (flavour adjustments are now done at the end of this function)
 		}
 	}
 
@@ -5636,6 +5636,23 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	{
 		iValue *= iPriorityFactor;
 		iValue /= 100;
+	}
+
+	// flavour factor
+	if (!isHuman())
+	{
+		iValue += kBuilding.getAIWeight();
+		//if (iValue > 0)
+		if (iValue > 0 && kBuilding.getProductionCost() > 0 && !bRemove) // K-Mod. Only use flavour adjustments for constructing ordinary buildings.
+		{
+			int iFlavour = 0;
+			for (int iI = 0; iI < GC.getNumFlavorTypes(); iI++)
+			{
+				//iValue += (kOwner.AI_getFlavorValue((FlavorTypes)iI) * kBuilding.getFlavorValue(iI));
+				iFlavour += std::min(kOwner.AI_getFlavorValue((FlavorTypes)iI), kBuilding.getFlavorValue(iI)); // K-Mod
+			}
+			iValue = iValue * (10 + iFlavour) / 10; // K-Mod. (This will give +100% for 10-10 flavour matchups.)
+		}
 	}
 
 	// constructionValue cache
