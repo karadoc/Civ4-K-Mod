@@ -3748,7 +3748,10 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				if (kBuilding.isNoUnhappiness())
 				{
 					//iValue += ((iAngryPopulation * 10) + getPopulation());
-					iValue += ((std::max(0, -iHappinessLevel) * 10) + getPopulation()); // K-Mod
+					// K-Mod
+					int iEstGrowth = iFoodDifference + std::max(0, -iHealthLevel+iFoodDifference);
+					iValue += std::max(0, (getPopulation() - std::max(0, 2*iHappinessLevel)) * 2 + std::max(0, -iHappinessLevel) * 6 + std::max(0, -iHappinessLevel+iEstGrowth) * 4);
+					// K-Mod end
 				}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      02/24/10                              jdog5000        */
@@ -3785,10 +3788,10 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					iValue -= 10 * iAngerDelta;
 				}
 				// finally, a little bit of value for happiness which gives us some padding
-				iValue += 16 * iCitValue * std::max(0, iBuildingActualHappiness)/(4 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel));
+				int iHappyModifier = 10 * iCitValue / (3 + std::max(0, iHappinessLevel+iBuildingActualHappiness) + std::max(0, iHappinessLevel) + std::max(0, -iHealthLevel));
+				iValue += std::max(0, iBuildingActualHappiness) * iHappyModifier;
+				// The "iHappinessModifer" is used for some percentage-based happy effects. (note. this not the same magnitude as the original definition.)
 
-				// I'll now define the "iHappinessModifer" that some of the other happy effects use. (note. this is around 4x bigger than the original definition.)
-				int iHappyModifier = (iHappinessLevel <= iHealthLevel && iHappinessLevel <= 3) ? iCitValue*3 : iCitValue;
 				if (iHappinessLevel >= 10)
 				{
 					iHappyModifier = 1;
@@ -3800,21 +3803,21 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
 				{
 					//iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 4;
-					iValue += (kBuilding.getCommerceHappiness(iI) * iHappyModifier) / 150; // K-Mod (note, commercehappiness is already counted by iBuildingActualHappiness)
+					iValue += kBuilding.getCommerceHappiness(iI) * iHappyModifier / 50; // K-Mod (note, commercehappiness is already counted by iBuildingActualHappiness)
 				}
 
 				int iWarWearinessModifer = kBuilding.getWarWearinessModifier();
 				if (iWarWearinessModifer != 0)
 				{
 					//iValue += (-iWarWearinessModifer * iHappyModifier) / 16;
-					iValue += (-iWarWearinessModifer * iHappyModifier) / (bWarPlan ? 100 : 200); // K-Mod (again, the immediate effects of this are already counted)
+					iValue += -iWarWearinessModifer * getPopulation() * iHappyModifier / (bWarPlan ? 400 : 1000); // K-Mod (again, the immediate effects of this are already counted)
 				}
 
 				/*iValue += (kBuilding.getAreaHappiness() * (iNumCitiesInArea - 1) * 8);
 				iValue += (kBuilding.getGlobalHappiness() * iNumCities * 8);*/
 				// K-Mod - just a tweak.. nothing fancy.
-				iValue += kBuilding.getAreaHappiness() * (iNumCitiesInArea + iCitiesTarget/3) * 8;
-				iValue += kBuilding.getGlobalHappiness() * (iNumCities + iCitiesTarget/2) * 8;
+				iValue += kBuilding.getAreaHappiness() * (iNumCitiesInArea + iCitiesTarget/3) * iCitValue;
+				iValue += kBuilding.getGlobalHappiness() * (iNumCities + iCitiesTarget/2) * iCitValue;
 				// K-Mod end
 
 				int iWarWearinessPercentAnger = kOwner.getWarWearinessPercentAnger();
