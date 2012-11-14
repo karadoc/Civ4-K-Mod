@@ -1,6 +1,58 @@
-This is K-Mod version 1.37.
+This is K-Mod version 1.38.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.38 changelist
+
+Game
+
++ Duns now give +1 xp for melee units (in addition to the free Guerilla I promotion).
++ Musketeers now have +15 withdrawal chance.
++ Slightly decreased the tech rate from the renaissance era onwards. (This was done by tweaking the existing hidden rate modifiers by a couple of percentage points.)
++ For the purpose of building plot improvements, resources available inside a city are now provided to all the workable plots around that city. (The purpose of this change is to let civs use Standard Ethanol corp to build railroads.)
+
+UI
+
++ Corrected the 'strategy' text for libraries. (Previously the text incorrectly stated that a library was required to build the Heroic Epic.)
++ Food added by the Volcano event will now be landmarked when 'Event Signs' is enabled.
+
+AI
+
++ Restructured the AI's 'city threat rating' calculation to be more flexible and to better reflect the risk to coastal cities.
++ Made lots of changes to the way the AI positions and uses its air units; particularly for defence.
++ When at war, the AI will now be less inclined to attack newly founded cities, and more inclined to attack cities which are likely to result in an imminent enemy victory.
++ Rewrote part of the AI's evaluation of settling great people to be more sensitive to the civ's situation and personality.
++ Fixed a problem which sometimes messed up the AI's evaluation of rushing wonders with great engineers.
+
++ Made many changes to improve the accuracy & consistency of the AI's building evaluation.
+  + Reduced the value of trade commerce and of commerce multipliers to more closely match the intended scale of 4x commerce.
+  + Removed double-counting of trade commerce from original bts code.
+  + Fixed some major inaccuracies in the evaluation of commerce happiness (theatres) and war-weariness reduction.
+  + Increased the value of clean power for the area. (Three Gorges Dam)
+  + Improved the accuracy of the 'stateReligionCommerce' evaluation.
+  + Restored missing AllCityDefenseModifier evaluation in the AI's building evaluation.
+  + Increased penalty for having multiple national wonders in the same city.
+  + Changed the way 'flavour' affects the AI's evaluation of buildings.
+  + ...
+
++ Made many changes to the AI's tech evaluation. The AI's choice of tech will now be more dependant on situation & personality.
+  + Completely redesigned the way the AI evaluates buildings to be enabled - it is now much more dependant on the AI's situation and personality.
+  + The AI will now value founding religions more highly if they have not met anyone with a state religion.
+  + The value of enabling tech trading is now based on number of civs trade would be enabled for, rather than just the number of civs met.
+  + Fixed a problem which caused Mining to be massively overrated.
+  + Fixed a minor mistake in the yield evaluation of improvements.
+  + The value bonus for wonders now depends on the AI leader's personality
+  + Increased the value of space-victory components – particularly for components which can be built more than once (eg. SS Casing).
+  + 'defence_air' units are now valued slightly more highly if the AI is alone on their island.
+
++ Made several tweaks to the AI's usage of espionage.
+  + The AI will now be willing to use malicious espionage against their 'friends' if both they and their friend are very close to victory.
+  + Increased the value of sabotaging projects.
+  + Reduced the value of spreading unhappiness.
+  + Redesigned the sabotage building evaluation.
+  + Increased the value of spread culture and allowed it to be used for offence as well as defence. (This is still very rare.)
+
+
+--
 v1.37 changelist
 
 Game / UI
@@ -132,7 +184,7 @@ AI
   + The cost of war weariness from vassal-wars is now counted (in addition to war weariness from the primary war).
   + When planning war on a vassal, the AI will now estimate unit strength based on the master's units rather then the vassal's units.
   + The total commitment cost of war is now adjusted by a non-zero percentage at the end of the calculation. This is meant to represent the fact that teams will have some military spending regardless of any wars; and this minimum military cost might be all that's required for the war.
-+ Fixed a set bugs which prevented the AI from taking defensive pacts into account when planning war against a vassal.
++ Fixed a set of bugs which prevented the AI from taking defensive pacts into account when planning war against a vassal.
 + Restored check for 'peace not possible' when negotiating capitulation. (This can't happen with the usual rules anyway.)
 + Voluntary vassalage now checks for 'war not possible' for the would-be master. (Taking on a voluntary vassal causes the master to automatically declare war on anyone the vassal is currently at war with. Without this 'war not possible' check, the vassal trade could be used to bypass peace treaties.)
 + The AI will now refuse to take on a vassal if it would mean declaring war on someone they usually wouldn't consider war with.
@@ -491,7 +543,7 @@ Game
 
 + The cost of espionage missions and the probability of spies being caught both depend on the total espionage points ever earnt by each of the two teams involved. These total-points modifiers are now scaled by the relative populations of the teams. This change will give small civs a slightly better chance of spying successfully on large civs.
 + Military Unit cost (from pacifism) is no longer multiplied by the handicap modifier for unit cost. Neither is "extra cost" for units (which is currently unused).
-+ Changed the pacifism cost from +1 gold per military unit to +0.5 gold per military unit. (Note, the new cost is independent of difficulty level, whereas the previous cost was actually between 0.2 $/unit and 1 $/unit depending on difficulty. 0.5 gold / unit matches the previous cost on Nobel.)
++ Changed the pacifism cost from +1 gold per military unit to +0.5 gold per military unit. (Note, the new cost is independent of difficulty level, whereas the previous cost was actually between 0.2 $/unit and 1 $/unit depending on difficulty. 0.5 gold / unit matches the previous cost on Noble.)
 + The "handicap cost" is no longer shown on the unit cost mouse-over text. Instead, it is included in the unit cost. (This change makes it consistent with other handicap modifiers in the game.)
 + "Gold per unit" and "gold per military unit" are now in units of 1/100 gold, rather than just 1 gold.
 + Increased the range of guided missiles from 4 to 5.
