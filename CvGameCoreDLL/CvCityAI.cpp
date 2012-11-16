@@ -8396,11 +8396,6 @@ void CvCityAI::AI_doEmphasize()
 	}
 }
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      01/09/10                                jdog5000      */
-/*                                                                                              */
-/* City AI                                                                                      */
-/************************************************************************************************/
 bool CvCityAI::AI_chooseUnit(UnitAITypes eUnitAI, int iOdds)
 {
 	UnitTypes eBestUnit;
@@ -8688,9 +8683,16 @@ bool CvCityAI::AI_chooseBuilding(int iFocusFlags, int iMaxTurns, int iMinThresho
 
 	if (eBestBuilding != NO_BUILDING)
 	{
+		/* bbai code
 		if( iOdds < 0 || 
 			getBuildingProduction(eBestBuilding) > 0 ||
-			GC.getGameINLINE().getSorenRandNum(100,"City AI choose building") < iOdds )
+			GC.getGameINLINE().getSorenRandNum(100,"City AI choose building") < iOdds ) */
+		// K-Mod
+		int iRand;
+		if (iOdds < 0 ||
+			(iRand = GC.getGameINLINE().getSorenRandNum(100, "City AI choose building") < iOdds) ||
+			iRand < iOdds + 100*getBuildingProduction(eBestBuilding)/std::max(1, getProductionNeeded(eBestBuilding)))
+		// K-Mod end
 		{
 			pushOrder(ORDER_CONSTRUCT, eBestBuilding);
 			return true;
@@ -8699,10 +8701,6 @@ bool CvCityAI::AI_chooseBuilding(int iFocusFlags, int iMaxTurns, int iMinThresho
 
 	return false;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 bool CvCityAI::AI_chooseProject()
 {
