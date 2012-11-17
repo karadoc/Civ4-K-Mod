@@ -4888,14 +4888,48 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	}
 
 	// Expand trading options
-	if (kTechInfo.isMapTrading())
+	//if (kTechInfo.isMapTrading())
+	if (kTechInfo.isMapTrading() && !kTeam.isMapTrading()) // K-Mod
 	{
+		/* original bts code
 		iValue += 100;
 
 		if (bCapitalAlone)
 		{
 			iValue += 400;
+		} */
+		// K-Mod. increase the bonus for each known civ that we can't already tech trade with
+		int iNewTrade = 0;
+		int iExistingTrade = 0;
+		for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
+		{
+			if (i == getTeam() || !kTeam.isHasMet(i))
+				continue;
+			const CvTeamAI& kLoopTeam = GET_TEAM(i);
+			if (!kLoopTeam.isMapTrading())
+			{
+				if (kLoopTeam.AI_mapTrade(getTeam()) == NO_DENIAL && kTeam.AI_mapTrade(i) == NO_DENIAL)
+					iNewTrade += kLoopTeam.getAliveCount();
+			}
+			else
+				iExistingTrade += kLoopTeam.getAliveCount();
 		}
+		// The value could be scaled based on how much map we're missing; but I don't want to waste time calculating that.
+		iValue += 50;
+		if (iNewTrade > 0)
+		{
+			if (bCapitalAlone) // (or rather, have we met anyone from overseas)
+			{
+				iValue += 250; // a stronger chance of getting the map for a different island
+			}
+
+			if (iExistingTrade == 0 && iNewTrade > 1)
+			{
+				iValue += 150; // we have the possibility of being a map broker.
+			}
+			iValue += 75 + 75 * iNewTrade;
+		}
+		// K-Mod end
 	}
 
 	//if (kTechInfo.isTechTrading() && !GC.getGameINLINE().isOption(GAMEOPTION_NO_TECH_TRADING))
@@ -4947,10 +4981,46 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		}
 	}
 
+	/* original bts code
 	if (kTechInfo.isDefensivePactTrading())
 	{
 		iValue += 400;
+	} */
+
+	// K-Mod. Value pact trading based on how many civs are willing, and on how much we think we need it!
+	if (kTechInfo.isDefensivePactTrading() && !kTeam.isDefensivePactTrading())
+	{
+		int iNewTrade = 0;
+		int iExistingTrade = 0;
+		for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i = (TeamTypes)(i+1))
+		{
+			if (i == getTeam() || !kTeam.isHasMet(i))
+				continue;
+			const CvTeamAI& kLoopTeam = GET_TEAM(i);
+			if (!kLoopTeam.isDefensivePactTrading())
+			{
+				if (kLoopTeam.AI_defensivePactTrade(getTeam()) == NO_DENIAL && kTeam.AI_defensivePactTrade(i) == NO_DENIAL)
+					iNewTrade += kLoopTeam.getAliveCount();
+			}
+			else
+				iExistingTrade += kLoopTeam.getAliveCount();
+		}
+		if (iNewTrade > 0)
+		{
+			int iPactValue = 300;
+			if (AI_isDoStrategy(AI_STRATEGY_ALERT1))
+				iPactValue += 100;
+			if (AI_isDoStrategy(AI_STRATEGY_ALERT2))
+				iPactValue += 100;
+			if (AI_isDoVictoryStrategy(AI_VICTORY_DIPLOMACY2))
+				iPactValue += 200;
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3 | AI_VICTORY_SPACE3 | AI_VICTORY_DIPLOMACY3))
+				iPactValue += 100;
+
+			iValue += iNewTrade * iPactValue;
+		}
 	}
+	// K-Mod end
 
 	if (kTechInfo.isPermanentAllianceTrading() && (GC.getGameINLINE().isOption(GAMEOPTION_PERMANENT_ALLIANCES)))
 	{
