@@ -6165,6 +6165,7 @@ bool CvPlayer::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool
 		return false;
 	}
 
+	/* original bts code
 	if (GET_TEAM(getTeam()).isUnitClassMaxedOut(eUnitClass))
 	{
 		return false;
@@ -6173,7 +6174,9 @@ bool CvPlayer::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool
 	if (isUnitClassMaxedOut(eUnitClass))
 	{
 		return false;
-	}
+	} */  // disabled by K-Mod.
+	// Note that unlike the global limit, these two limits apply to the number of units currently alive rather than the total ever trained.
+	// Therefore these limits should be ignored for the visibility test.
 
 	if (!bTestVisible)
 	{
