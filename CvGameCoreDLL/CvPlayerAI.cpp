@@ -14172,7 +14172,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	{
 		int iTempValue = 0;
 
-		iTempValue += ((kCivic.getYieldModifier(iI) * iCities) / 2);
+		//iTempValue += ((kCivic.getYieldModifier(iI) * iCities) / 2);
+		iTempValue += kCivic.getYieldModifier(iI) * iCities / 4; // K-Mod (Still bogus, but I'd rather assume 25 yield/turn average than 50.)
 		
 		if (pCapital) 
 		{
@@ -14200,9 +14201,8 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 			}
 			// K-Mod end
 		}
-		//iTempValue += ((kCivic.getTradeYieldModifier(iI) * iCities) / 11);
-		iTempValue += kCivic.getTradeYieldModifier(iI) * AI_averageYieldMultiplier((YieldTypes)iI) * iCities / 1100; // K-Mod.
-		// (that denominator is bogus, but since no civics currently have this modifier anyway, I'm just going to leave it.)
+		iTempValue += ((kCivic.getTradeYieldModifier(iI) * iCities) / 11);
+		// (K-Mod note: that denominator is bogus, but since no civics currently have this modifier anyway, I'm just going to leave it.)
 
 		for (int iJ = 0; iJ < GC.getNumImprovementInfos(); iJ++)
 		{
@@ -14386,6 +14386,34 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 		}
 		iValue += (iTempValue / 2);
 	}
+
+	// K-Mod. When aiming for a diplomatic victory, consider the favourite civics of our friends!
+	if (AI_isDoVictoryStrategy(AI_VICTORY_DIPLOMACY3))
+	{
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+		{
+			const CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+
+			if (!kLoopPlayer.isAlive() || kLoopPlayer.getTeam() == getTeam() || !kTeam.isHasMet(kLoopPlayer.getTeam()))
+				continue;
+
+			if (kLoopPlayer.isHuman())
+				continue; // human players don't care about favourite civics. The AI should understand this.
+
+			AttitudeTypes eAttitude = AI_getAttitude(i, false);
+			if (eAttitude >= ATTITUDE_PLEASED)
+			{
+				const CvLeaderHeadInfo& kPersonality = GC.getLeaderHeadInfo(kLoopPlayer.getPersonalityType());
+				if (kPersonality.getFavoriteCivic() == eCivic)
+				{
+					// (better to use getVotes; but that's more complex.)
+					//iValue += kLoopPlayer.getTotalPopulation() * (2 + kPersonality.getFavoriteCivicAttitudeChangeLimit()) / 20;
+					iValue += kLoopPlayer.getTotalPopulation() / 5; // lets keep it simple
+				}
+			}
+		}
+	}
+	// K-Mod end
 
 	if (GC.getLeaderHeadInfo(getPersonalityType()).getFavoriteCivic() == eCivic)
 	{
