@@ -120,6 +120,31 @@
 		<Italian>Stanchezza della guerra</Italian>
 		<Spanish>Hast&#237;o b&#233;lico</Spanish>
 	</TEXT>
+	<!-- removed leading [SPACE] in unit limit messages -->
+	<TEXT>
+		<Tag>TXT_KEY_UNIT_WORLD_UNIT_LEFT</Tag>
+		<English>World Unit: %d1_Num Left</English>
+		<French>Unit&#233; mondiale : reste %d1_Num</French>
+		<German>Welteinheit: %d1_Num &#252;brig</German>
+		<Italian>Unit&#224; mondiale: %d1_Num [NUM1:rimanente:rimanenti]</Italian>
+		<Spanish>Unidad mundial: %d1_Num [NUM1:restante:restantes]</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_UNIT_TEAM_UNIT_LEFT</Tag>
+		<English>Team Unit: %d1_Num Left</English>
+		<French>Unit&#233; d'&#233;quipe : reste %d1_Num</French>
+		<German>Teameinheit: %d1_Num &#252;brig</German>
+		<Italian>Unit&#224; di squadra: %d1_Num [NUM1:rimanente:rimanenti]</Italian>
+		<Spanish>Unidad de equipo: %d1_Num [NUM1:restante:restantes]</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_UNIT_NATIONAL_UNIT_LEFT</Tag>
+		<English>National Unit: %d1_Num Left</English>
+		<French>Unit&#233; nationale : reste %d1_Num</French>
+		<German>Nationale Einheit: %d1_Num &#252;brig</German>
+		<Italian>Unit&#224; nazionale: %d1_Num [NUM1:rimanente:rimanenti]</Italian>
+		<Spanish>Unidad nacional: %d1_Num [NUM1:restante:restantes]</Spanish>
+	</TEXT>
 	<!-- highlight leader name in the contact string -->
 	<TEXT>
 		<Tag>TXT_KEY_MISC_CONTACT_LEADER</Tag>
