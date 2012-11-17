@@ -3915,6 +3915,7 @@ bool CvPlayer::hasBusyUnit() const
 void CvPlayer::chooseTech(int iDiscover, CvWString szText, bool bFront)
 {
 	// K-mod
+	FAssert(isHuman());
 	if (iDiscover > 0)
 		changeChoosingFreeTechCount(1); // note: if iDiscover is > 1, this function will be called again with iDiscover-=1
 	// K-Mod end
@@ -9067,9 +9068,14 @@ void CvPlayer::changeAnarchyTurns(int iChange)
 			else
 			{
 				gDLL->getInterfaceIFace()->addHumanMessage(getID(), false, GC.getEVENT_MESSAGE_TIME(), gDLL->getText("TXT_KEY_MISC_REVOLUTION_OVER").GetCString(), "AS2D_REVOLTEND", MESSAGE_TYPE_MINOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_WARNING_TEXT"));
-				// K-Mod. trigger production popups that have been suppressed.
+				// K-Mod. trigger production/research popups that have been suppressed.
 				if (isHuman())
 				{
+					if (isResearch() && getCurrentResearch() == NO_TECH)
+					{
+						chooseTech();
+					}
+
 					int iLoop;
 					for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 					{
@@ -14170,11 +14176,13 @@ void CvPlayer::doResearch()
 		return;
 	}
 
-	if (isResearch())
+	//if (isResearch())
+	if (isResearch() && !isAnarchy()) // K-Mod
 	{
 		bForceResearchChoice = false;
 
-		if (getCurrentResearch() == NO_TECH)
+		//if (getCurrentResearch() == NO_TECH)
+		if (getCurrentResearch() == NO_TECH && isHuman()) // K-Mod
 		{
 			if (getID() == GC.getGameINLINE().getActivePlayer())
 			{

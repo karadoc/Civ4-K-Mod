@@ -5629,7 +5629,7 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 								{
 									if (GET_PLAYER((PlayerTypes)iI).isResearchingTech(eIndex))
 									{
-										GET_PLAYER((PlayerTypes)iI).clearResearchQueue();
+										GET_PLAYER((PlayerTypes)iI).clearResearchQueue(); // K-Mod note: we just want to flag it for re-evaluation. Clearing the queue is currently the only way to do that.
 									}
 								}
 							}
@@ -5739,7 +5739,8 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 				if (GC.getGameINLINE().isFinalInitialized() && !(gDLL->GetWorldBuilderMode()))
 				{
 					FAssert(ePlayer != NO_PLAYER);
-					if (GET_PLAYER(ePlayer).isResearch() && (GET_PLAYER(ePlayer).getCurrentResearch() == NO_TECH))
+					//if (GET_PLAYER(ePlayer).isResearch() && (GET_PLAYER(ePlayer).getCurrentResearch() == NO_TECH))
+					if (GET_PLAYER(ePlayer).isResearch() && GET_PLAYER(ePlayer).getCurrentResearch() == NO_TECH && GET_PLAYER(ePlayer).isHuman()) // K-Mod
 					{
 						szBuffer = gDLL->getText("TXT_KEY_MISC_WHAT_TO_RESEARCH_NEXT");
 						GET_PLAYER(ePlayer).chooseTech(0, szBuffer);

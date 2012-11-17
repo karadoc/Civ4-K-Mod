@@ -784,6 +784,7 @@ void CvDLLButtonPopup::OnFocus(CvPopup* pPopup, CvPopupInfo &info)
 			{
 				gDLL->getInterfaceIFace()->popupSetAsCancelled(pPopup);
 			}
+			// K-Mod todo: Perhaps we should cancel this popup and create a new one on-the-fly so that we can be sure the tech-list is up-to-date.
 		}
 		// K-Mod
 		else if (!GET_PLAYER(GC.getGameINLINE().getActivePlayer()).isChoosingFreeTech())
