@@ -8981,8 +8981,15 @@ void CvGameTextMgr::setUnitHelp(CvWStringBuffer &szBuffer, UnitTypes eUnit, bool
 			{
 				if ((pCity == NULL) || (pCity->getNumBuilding((BuildingTypes)(GC.getUnitInfo(eUnit).getPrereqBuilding())) <= 0))
 				{
-					szBuffer.append(NEWLINE);
-					szBuffer.append(gDLL->getText("TXT_KEY_UNIT_REQUIRES_STRING", GC.getBuildingInfo((BuildingTypes)(GC.getUnitInfo(eUnit).getPrereqBuilding())).getTextKeyWide()));
+					// K-Mod. Check if the player has an exemption from the building requirement.
+					SpecialBuildingTypes eSpecialBuilding = (SpecialBuildingTypes)GC.getBuildingInfo((BuildingTypes)(GC.getUnitInfo(eUnit).getPrereqBuilding())).getSpecialBuildingType();
+
+					if (pCity == NULL || eSpecialBuilding == NO_SPECIALBUILDING || !GET_PLAYER(pCity->getOwnerINLINE()).isSpecialBuildingNotRequired(eSpecialBuilding))
+					{
+					// K-Mod end
+						szBuffer.append(NEWLINE);
+						szBuffer.append(gDLL->getText("TXT_KEY_UNIT_REQUIRES_STRING", GC.getBuildingInfo((BuildingTypes)(GC.getUnitInfo(eUnit).getPrereqBuilding())).getTextKeyWide()));
+					}
 				}
 			}
 
