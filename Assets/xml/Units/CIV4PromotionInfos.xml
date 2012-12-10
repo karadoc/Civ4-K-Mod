@@ -2527,7 +2527,7 @@
 			<iHillsDefense>0</iHillsDefense>
 			<iKamikazePercent>0</iKamikazePercent>
 			<iRevoltProtection>0</iRevoltProtection>
-			<iCollateralDamageProtection>0</iCollateralDamageProtection>
+			<iCollateralDamageProtection>15</iCollateralDamageProtection>
 			<iPillageChange>0</iPillageChange>
 			<iUpgradeDiscount>0</iUpgradeDiscount>
 			<iExperiencePercent>0</iExperiencePercent>
@@ -2615,7 +2615,7 @@
 			<iHillsDefense>0</iHillsDefense>
 			<iKamikazePercent>0</iKamikazePercent>
 			<iRevoltProtection>0</iRevoltProtection>
-			<iCollateralDamageProtection>20</iCollateralDamageProtection>
+			<iCollateralDamageProtection>15</iCollateralDamageProtection>
 			<iPillageChange>0</iPillageChange>
 			<iUpgradeDiscount>0</iUpgradeDiscount>
 			<iExperiencePercent>0</iExperiencePercent>
@@ -2707,7 +2707,7 @@
 			<iHillsDefense>0</iHillsDefense>
 			<iKamikazePercent>0</iKamikazePercent>
 			<iRevoltProtection>0</iRevoltProtection>
-			<iCollateralDamageProtection>20</iCollateralDamageProtection>
+			<iCollateralDamageProtection>15</iCollateralDamageProtection>
 			<iPillageChange>0</iPillageChange>
 			<iUpgradeDiscount>0</iUpgradeDiscount>
 			<iExperiencePercent>0</iExperiencePercent>
@@ -2799,7 +2799,7 @@
 			<iHillsDefense>0</iHillsDefense>
 			<iKamikazePercent>0</iKamikazePercent>
 			<iRevoltProtection>0</iRevoltProtection>
-			<iCollateralDamageProtection>20</iCollateralDamageProtection>
+			<iCollateralDamageProtection>15</iCollateralDamageProtection>
 			<iPillageChange>0</iPillageChange>
 			<iUpgradeDiscount>0</iUpgradeDiscount>
 			<iExperiencePercent>0</iExperiencePercent>
