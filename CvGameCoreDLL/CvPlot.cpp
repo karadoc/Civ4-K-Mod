@@ -5091,20 +5091,8 @@ void CvPlot::setOwner(PlayerTypes eNewValue, bool bCheckUnits, bool bUpdatePlotG
 			}
 		}
 
-		
-		// BBAI / K-Mod. Plot danger cache.
-		for (int iDX = -BORDER_DANGER_RANGE; iDX <= BORDER_DANGER_RANGE; iDX++)
-		{
-			for (int iDY = -BORDER_DANGER_RANGE; iDY <= BORDER_DANGER_RANGE; iDY++)
-			{
-				CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iDX, iDY);
+		invalidateBorderDangerCache(); // K-Mod. (based on BBAI)
 
-				if (pLoopPlot)
-					pLoopPlot->invalidateBorderDangerCache();
-			}
-		}
-		// BBAI / K-Mod end
-		
 		updateSymbols();
 	}
 }
