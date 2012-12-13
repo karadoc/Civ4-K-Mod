@@ -16016,7 +16016,7 @@ bool CvUnitAI::AI_stackVsStack(int iSearchRange, int iAttackThreshold, int iRisk
 
 					int iRiskRatio = 100 * iEnemyAttack / std::max(1, iOurDefence);
 					// adjust risk ratio based on the relative numbers of units.
-					iRiskRatio *= 60 + 40 * getGroup()->getNumUnits() / std::min(iEnemies, getGroup()->getNumUnits());
+					iRiskRatio *= 50 + 50 * (getGroup()->getNumUnits()+3) / std::min(iEnemies+3, getGroup()->getNumUnits()+3);
 					iRiskRatio /= 100;
 					//
 					if (iRiskRatio < iRiskThreshold)
