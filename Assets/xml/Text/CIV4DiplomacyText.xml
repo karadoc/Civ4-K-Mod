@@ -417,7 +417,7 @@
 	</TEXT>
 	<TEXT>
 		<Tag>AI_DIPLO_FIRST_CONTACT_LEADER_JULIUS_CAESAR_1</Tag>
-		<English>Senatus populusque Romani saluto vos, [CT_NAME]. I am [OUR_NAME]. I love the name of honour more than I fear death.</English>
+		<English>Senatus Populusque Romanus te salutant, [CT_NAME]. I am [OUR_NAME]. I love the name of honour more than I fear death.</English>
 		<French>Bienvenue chez les [OUR_CIV_SHORT], [CT_NAME]. Voulez-vous un peu de salade ? Je l'ai pr&#233;par&#233;e moi-m&#234;me.</French>
 		<German>Willkommen in [OUR_CIV_SHORT], [CT_NAME]. M&#246;chtet Ihr etwas Salat? Er ist gut, ich habe ihn selbst zubereitet.</German>
 		<Italian>Ti do il benvenuto da parte [OUR_CIV_SHORT:3], [CT_NAME]. Gradisci dell'insalata? L'ho fatta con le mie mani.</Italian>
