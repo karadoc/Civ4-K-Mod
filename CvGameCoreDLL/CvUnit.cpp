@@ -3251,10 +3251,6 @@ bool CvUnit::canGift(bool bTestVisible, bool bTestTransport)
 
 void CvUnit::gift(bool bTestTransport)
 {
-	CvUnit* pGiftUnit;
-	CvWString szBuffer;
-	PlayerTypes eOwner;
-
 	if (!canGift(false, bTestTransport))
 	{
 		return;
@@ -3268,33 +3264,50 @@ void CvUnit::gift(bool bTestTransport)
 	}
 
 	FAssertMsg(plot()->getOwnerINLINE() != NO_PLAYER, "plot()->getOwnerINLINE() is not expected to be equal with NO_PLAYER");
-	pGiftUnit = GET_PLAYER(plot()->getOwnerINLINE()).initUnit(getUnitType(), getX_INLINE(), getY_INLINE(), AI_getUnitAIType());
+	CvPlayerAI& kRecievingPlayer = GET_PLAYER(plot()->getOwnerINLINE()); // K-Mod
 
+	CvUnit* pGiftUnit = kRecievingPlayer.initUnit(getUnitType(), getX_INLINE(), getY_INLINE(), AI_getUnitAIType());
 	FAssertMsg(pGiftUnit != NULL, "GiftUnit is not assigned a valid value");
-
-	eOwner = getOwnerINLINE();
 
 	pGiftUnit->convert(this);
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      10/03/09                                jdog5000      */
-/*                                                                                              */
-/* General AI                                                                                   */
-/************************************************************************************************/
+	PlayerTypes eOwner = getOwnerINLINE();
+
 	//GET_PLAYER(pGiftUnit->getOwnerINLINE()).AI_changePeacetimeGrantValue(eOwner, (pGiftUnit->getUnitInfo().getProductionCost() / 5));
-	if( pGiftUnit->isCombat() )
+	// K-Mod
+	if (pGiftUnit->isGoldenAge())
 	{
-		GET_PLAYER(pGiftUnit->getOwnerINLINE()).AI_changePeacetimeGrantValue(eOwner, (pGiftUnit->getUnitInfo().getProductionCost() * 3 * GC.getGameINLINE().AI_combatValue(pGiftUnit->getUnitType()))/100);
+		kRecievingPlayer.AI_changeMemoryCount(eOwner, MEMORY_GIVE_HELP, 1);
+	}
+	// Note: I'm not currently considering special units with < 0 production cost.
+	if (pGiftUnit->isCombat())
+	{
+		int iEffectiveWarRating = plot()->area()->getAreaAIType(kRecievingPlayer.getTeam()) != AREAAI_NEUTRAL
+			? GET_TEAM(kRecievingPlayer.getTeam()).AI_getWarSuccessRating()
+			: 60 - (kRecievingPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT1) ? 20 : 0) - (kRecievingPlayer.AI_isDoStrategy(AI_STRATEGY_ALERT2) ? 20 : 0);
+
+		int iUnitValue = std::max(0, kRecievingPlayer.AI_unitValue(pGiftUnit->getUnitType(), pGiftUnit->AI_getUnitAIType(), plot()->area()));
+		int iBestValue = kRecievingPlayer.AI_bestAreaUnitAIValue(pGiftUnit->AI_getUnitAIType(), plot()->area());
+
+		int iGiftValue = pGiftUnit->getUnitInfo().getProductionCost() * 4 * std::min(300, 100*iUnitValue/std::max(1, iBestValue)) / 100;
+		iGiftValue *= 100;
+		iGiftValue /= std::max(20, 110 + 3*iEffectiveWarRating);
+
+		if (iUnitValue <= iBestValue && kRecievingPlayer.AI_unitCostPerMil() > kRecievingPlayer.AI_maxUnitCostPerMil(plot()->area()))
+		{
+			iGiftValue /= 2;
+		}
+		kRecievingPlayer.AI_changePeacetimeGrantValue(eOwner, iGiftValue);
+		// TODO: It would nice if there was some way this could also reduce "you refused to help us during war time", and stuff like that.
+		//       But I think that would probably require some additional AI memory.
 	}
 	else
 	{
-		GET_PLAYER(pGiftUnit->getOwnerINLINE()).AI_changePeacetimeGrantValue(eOwner, (pGiftUnit->getUnitInfo().getProductionCost()));
+		kRecievingPlayer.AI_changePeacetimeGrantValue(eOwner, pGiftUnit->getUnitInfo().getProductionCost() / 2);
 	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+	// K-Mod end
 
-	szBuffer = gDLL->getText("TXT_KEY_MISC_GIFTED_UNIT_TO_YOU", GET_PLAYER(eOwner).getNameKey(), pGiftUnit->getNameKey());
+	CvWString szBuffer = gDLL->getText("TXT_KEY_MISC_GIFTED_UNIT_TO_YOU", GET_PLAYER(eOwner).getNameKey(), pGiftUnit->getNameKey());
 	gDLL->getInterfaceIFace()->addHumanMessage(pGiftUnit->getOwnerINLINE(), false, GC.getEVENT_MESSAGE_TIME(), szBuffer, "AS2D_UNITGIFTED", MESSAGE_TYPE_INFO, pGiftUnit->getButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_WHITE"), pGiftUnit->getX_INLINE(), pGiftUnit->getY_INLINE(), true, true);
 
 	// Python Event
