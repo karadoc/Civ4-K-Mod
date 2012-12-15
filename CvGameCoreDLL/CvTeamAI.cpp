@@ -1648,11 +1648,19 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 					iEnemyNavy = iEnemyNavy * 100 / x;
 				} */
 
+				// Note: Commitment cost is currently meant to take into account risk as well as resource requirements.
+				//       But with overseas wars, the relative strength of navy units effects these things differently.
+				//       If our navy is much stronger than theirs, then our risk is low but we still need to commit a
+				//       just as much resources to win the land-war for an invasion.
+				//       If their navy is stronger than ours, our risk is high and our resources will be higher too.
+				//
+				//       The current calculations are too simplistic to explicitly specify all that stuff.
 				if (bTotalWar)
 				{
-					iCommitmentPerMil = iCommitmentPerMil * (4*iOurNavy + 5*iEnemyNavy) / (8*iOurNavy + 1*iEnemyNavy);
-					//iCommitmentPerMil = iCommitmentPerMil * 5/4;
-					iCommitmentPerMil = iCommitmentPerMil * 200 / std::min(200, iLowScale + iHighScale);
+					//iCommitmentPerMil = iCommitmentPerMil * (4*iOurNavy + 5*iEnemyNavy) / (8*iOurNavy + 1*iEnemyNavy);
+					//iCommitmentPerMil = iCommitmentPerMil * 200 / std::min(200, iLowScale + iHighScale);
+					//
+					iCommitmentPerMil = iCommitmentPerMil * 200 / std::min(240, (iLowScale + iHighScale) * (9*iOurNavy + 1*iEnemyNavy) / (6*iOurNavy + 4*iEnemyNavy));
 				}
 				else
 					iCommitmentPerMil = iCommitmentPerMil * (1*iOurNavy + 4*iEnemyNavy) / (4*iOurNavy + 1*iEnemyNavy);
@@ -1700,9 +1708,16 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			iPoolMultiplier /= std::max(1, getAliveCount());
 			iCommitmentPool = iCommitmentPool * iPoolMultiplier / 100;
 
-			//
-			if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4) || AI_getLowestVictoryCountdown() >= 0)
-				iCommitmentPool *= 2;
+			// Don't pick a fight if we're expecting to beat them to a peaceful victory.
+			if (!AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_DOMINATION4 | AI_VICTORY_CONQUEST4))
+			{
+				if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4) ||
+					(AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE4) && !GET_TEAM(eTarget).AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4 | AI_VICTORY_SPACE4)) ||
+					(AI_getLowestVictoryCountdown() > 0 && (GET_TEAM(eTarget).AI_getLowestVictoryCountdown() < 0 || AI_getLowestVictoryCountdown() < GET_TEAM(eTarget).AI_getLowestVictoryCountdown())))
+				{
+					iCommitmentPool *= 2;
+				}
+			}
 
 			iTotalCost += iCommitmentPerMil * iCommitmentPool / 1000;
 		}
