@@ -2047,6 +2047,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 
 		int iStartMoves = parent->m_iData1;
 		iTurns = parent->m_iData2;
+		/* original bts code
 		if (iStartMoves == 0)
 		{
 			iTurns++;
@@ -2061,7 +2062,72 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 			iUnitMoves = std::max(iUnitMoves, 0);
 			
 			iMoves = std::min(iMoves, iUnitMoves);
+		} */
+		// K-Mod. The original code would give incorrect results for groups where one unit had more moves but also had higher move cost.
+		// (eg. the most obvious example is when a group with 1-move units and 2-move units is moving on a railroad. - In this situation,
+		//  the original code would consistently underestimate the remaining moves at every step.)
+		bool bNewTurn = iStartMoves == 0;
+
+		if (bNewTurn)
+		{
+			iTurns++;
+			iStartMoves = pSelectionGroup->maxMoves();
 		}
+
+		CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode();
+		int iMoveCost = pToPlot->movementCost(::getUnit(pUnitNode->m_data), pFromPlot);
+		bool bUniformCost = true;
+
+		for (pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode); pUnitNode && (bNewTurn || bUniformCost) ; pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
+		{
+			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+
+			int iLoopCost = pToPlot->movementCost(pLoopUnit, pFromPlot);
+			if (iLoopCost != iMoveCost)
+			{
+				bUniformCost = false;
+				iMoveCost = std::max(iMoveCost, iLoopCost);
+			}
+		}
+
+		if (bNewTurn || bUniformCost)
+		{
+			// the simple, normal case
+			iMoves = std::max(0, iStartMoves - iMoveCost);
+		}
+		else
+		{
+			PROFILE("pathAdd - non-uniform cost");
+			// Move costs are even for units in this group.
+			// To be sure of the true movement cost for the group, we need to calculate the movement cost for each unit for every step in this turn.
+			std::vector<const CvPlot*> plot_list; // will be traversed in reverse order
+			plot_list.push_back(pToPlot);
+			plot_list.push_back(pFromPlot);
+			FAStarNode* pStartNode = parent;
+			while (pStartNode->m_iData2 == iTurns && pStartNode->m_pParent)
+			{
+				pStartNode = pStartNode->m_pParent;
+				plot_list.push_back(GC.getMapINLINE().plotSorenINLINE(pStartNode->m_iX, pStartNode->m_iY));
+			}
+			iMoves = INT_MAX;
+			bool bMaxMoves = pStartNode->m_iData2 > 1 || iFlags & MOVE_MAX_MOVES;
+
+			for (CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode(); pUnitNode != NULL; pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
+			{
+				CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
+
+				int iUnitMoves = bMaxMoves ? pLoopUnit->maxMoves() : pLoopUnit->movesLeft();
+				for (size_t i = plot_list.size()-1; i > 0; i--)
+				{
+					iUnitMoves -= plot_list[i]->movementCost(pLoopUnit, plot_list[i-1]);
+					FAssert(iUnitMoves > 0 || i == 1);
+				}
+
+				iUnitMoves = std::max(iUnitMoves, 0);
+				iMoves = std::min(iMoves, iUnitMoves);
+			}
+		}
+		// K-Mod end
 	}
 
 	FAssertMsg(iMoves >= 0, "iMoves is expected to be non-negative (invalid Index)");

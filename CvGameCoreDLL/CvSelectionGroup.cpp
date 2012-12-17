@@ -2155,12 +2155,13 @@ int CvSelectionGroup::baseMoves() const
 // K-Mod
 int CvSelectionGroup::maxMoves() const
 {
-	int iMoves = 0;
+	int iMoves = MAX_INT; // (was 0 - see comment below)
 
 	for (CLLNode<IDInfo>* pUnitNode = headUnitNode(); pUnitNode != NULL; pUnitNode = nextUnitNode(pUnitNode))
 	{
 		CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
-		iMoves = std::max(iMoves, pLoopUnit->maxMoves());
+		iMoves = std::min(iMoves, pLoopUnit->maxMoves());
+		// note: in the original code, this used std::max -- I'm pretty sure that was just a mistake. I don't know why they'd want to use that.
 	}
 	return iMoves;
 }
