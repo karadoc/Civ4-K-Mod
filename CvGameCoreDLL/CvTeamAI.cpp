@@ -1763,6 +1763,9 @@ int CvTeamAI::AI_warDiplomacyCost(TeamTypes eTarget) const
 		return 0;
 	}
 
+	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4))
+		return 0;
+
 	const CvTeamAI& kTargetTeam = GET_TEAM(eTarget);
 
 	// first, the cost of upsetting the team we are declaring war on.
@@ -1804,23 +1807,26 @@ int CvTeamAI::AI_warDiplomacyCost(TeamTypes eTarget) const
 			}
 		}
 
-		int iDiploWeight = 50;
-		iDiploWeight += 20 * iPeaceWeight / getAliveCount();
+		int iDiploWeight = 40;
+		iDiploWeight += 10 * iPeaceWeight / getAliveCount();
 		// This puts iDiploWeight somewhere around 50 - 250.
 		if (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI))
 			iDiploWeight /= 2;
-		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3))
-			iDiploWeight /= 2;
+		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_DIPLOMACY3))
+			iDiploWeight += 50;
 		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_DIPLOMACY4))
 			iDiploWeight += 50;
+		if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3)) // note: conquest4 ignores diplo completely.
+			iDiploWeight /= 2;
 
 		iDiploCost *= iDiploWeight;
 		iDiploCost /= 100;
 	}
 
-	// finally, some strange rescaling so that this diplomacy stuff doesn't get huge on huge maps.
-	iDiploCost *= getTotalPopulation(false) + kTargetTeam.getTotalPopulation(false);
-	iDiploCost /= std::max(1, iDiploPopulation);
+	// Finally, reduce the value for large maps;
+	// so that this diplomacy stuff doesn't become huge relative to other parts of the war evaluation.
+	iDiploCost *= 3;
+	iDiploCost /= std::max(5, GC.getWorldInfo((WorldSizeTypes)GC.getMapINLINE().getWorldSize()).getDefaultPlayers());
 
 	return iDiploCost;
 }
