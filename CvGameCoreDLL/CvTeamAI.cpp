@@ -1295,12 +1295,17 @@ int CvTeamAI::AI_warSpoilsValue(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 	{
 		if (kTargetTeam.AI_isAnyMemberDoVictoryStrategyLevel4())
 		{
-			iDenyFactor += AI_isAnyMemberDoVictoryStrategyLevel4() ? 40 : 20;
+			iDenyFactor += AI_isAnyMemberDoVictoryStrategyLevel4() ? 50 : 30;
 		}
 
 		if (bAggresive || AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3))
 		{
 			iDenyFactor += 20;
+		}
+
+		if (GC.getGameINLINE().getTeamRank(eTarget) < GC.getGameINLINE().getTeamRank(getID()))
+		{
+			iDenyFactor += 10;
 		}
 	}
 	if (AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4 | AI_VICTORY_DOMINATION4))
