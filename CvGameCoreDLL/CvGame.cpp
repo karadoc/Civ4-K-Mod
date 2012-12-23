@@ -5310,7 +5310,7 @@ bool CvGame::isUnitClassMaxedOut(UnitClassTypes eIndex, int iExtra) const
 	{
 		return false;
 	}
-	FASSERT_BOUNDS(0, GC.getUnitClassInfo(eIndex).getMaxGlobalInstances(), getUnitClassCreatedCount(eIndex), "CvGame::isUnitClassMaxedOut");
+	FASSERT_BOUNDS(0, GC.getUnitClassInfo(eIndex).getMaxGlobalInstances()+1, getUnitClassCreatedCount(eIndex), "CvGame::isUnitClassMaxedOut");
 
 
 	return ((getUnitClassCreatedCount(eIndex) + iExtra) >= GC.getUnitClassInfo(eIndex).getMaxGlobalInstances());
