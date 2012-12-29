@@ -1,6 +1,42 @@
-This is K-Mod version 1.38.
+This is K-Mod version 1.39.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.39 changelist
+
+Game
+
++ All four Drill promotions now give +15% collateral damage reduction. (Previously it was +0, +20, +20, +20.)
++ Added some nuance to the AI's evaluation of gifted units.
+  + Gifts of great people will now always result in +1 for "you gave us help".
+  + Gifts of military units are now evaluated based on the usefulness of the gifted unit and the AI player's current military needs.
+  + (The diplomatic effect of non-great person gifts still only affects the "fair and forthright" diplomatic modifier.)
++ Fixed a K-Mod bug which caused distance maintenance to always be zero for civs with exactly 2 cities.
++ Research is now completely halted while in anarchy. (Previously civs would still get +1 science per turn.)
+
+UI
+
++ Corrected the Latin in one of Julius Caeser's quotes. (hopefully)
++ Fixed a bug in the Hall of Fame screen which in rare cases could cause the game to crash.
++ The UI pathfinder is now reset when a unit is promoted. (This change was meant to be in a previous version, but it was implemented incorrectly.)
++ Fixed a BtS pathfinding bug which sometimes caused inaccurate path turns.
+
++ The the mouseover text for cathedrals will now include the number of cathedrals currently under construction when calculating the required number of temples. (ie. it will report how many temples are required to start the the construction of another cathedral.)
++ Catherals' temple requirements in the civilopedia will no longer take into account how many cathedrals the active player has built. (ie. if each cathedral requires 3 temples, then the civilopedia will just say 3 temples rather than saying how many temples are required for the next one.)
++ Missionaries will now appear as greyed out in the city-screen when they are maxed out rather than being removed completely.
++ The mouse-over text for missionaries will no longer say "requires monastery" if the player is using Organized Religion. (ie. It will only say 'requires monastery' if the player is not exempt from that requirement.)
++ In the mouseover text, unit limits are now displayed on a new line rather than inline with the unit name, and the limit text is displayed in red if the limit has already been reached.
+
+AI
+
++ Tweaked the group size adjustment used in AI_stackVsStack, so that the AI is a bit less inclined to use a big stack to attack a well defended small stack.
++ When aiming for a diplomatic victory, the AI now give some additional value to the favourite civics of their potential allies.
++ Tweaked AI_warCommitmentCost for overseas wars and for late-game wars. (This may need further testing and adjustments.)
++ Rescaled and adjusted AI_warDiplomacyCost to fix some problematic fringe cases.
++ Changed the odds formula for short-circuit 2&3 in AI_chooseProduction to better reflect individual AI flavours.
++ Reduced the effect of pre-existing progress in AI_chooseBuilding.
+
+
+--
 v1.38 changelist
 
 Game
