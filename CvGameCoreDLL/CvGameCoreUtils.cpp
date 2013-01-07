@@ -2098,7 +2098,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 		else
 		{
 			PROFILE("pathAdd - non-uniform cost");
-			// Move costs are even for units in this group.
+			// Move costs are uneven for units in this group.
 			// To be sure of the true movement cost for the group, we need to calculate the movement cost for each unit for every step in this turn.
 			std::vector<const CvPlot*> plot_list; // will be traversed in reverse order
 			plot_list.push_back(pToPlot);
@@ -2119,7 +2119,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 				int iUnitMoves = bMaxMoves ? pLoopUnit->maxMoves() : pLoopUnit->movesLeft();
 				for (size_t i = plot_list.size()-1; i > 0; i--)
 				{
-					iUnitMoves -= plot_list[i]->movementCost(pLoopUnit, plot_list[i-1]);
+					iUnitMoves -= plot_list[i-1]->movementCost(pLoopUnit, plot_list[i]);
 					FAssert(iUnitMoves > 0 || i == 1);
 				}
 
