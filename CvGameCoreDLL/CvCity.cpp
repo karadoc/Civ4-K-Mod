@@ -1995,7 +1995,8 @@ bool CvCity::canConstruct(BuildingTypes eBuilding, bool bContinue, bool bTestVis
 
 	if (GC.getBuildingInfo(eBuilding).isPrereqReligion())
 	{
-		if (getReligionCount() > 0)
+		//if (getReligionCount() > 0)
+		if (getReligionCount() == 0) // K-Mod
 		{
 			return false;
 		}

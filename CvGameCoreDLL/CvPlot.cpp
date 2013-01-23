@@ -10051,7 +10051,8 @@ bool CvPlot::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible) const
 
 	if (GC.getUnitInfo(eUnit).isPrereqReligion())
 	{
-		if (NULL == pCity || pCity->getReligionCount() > 0)
+		//if (NULL == pCity || pCity->getReligionCount() > 0)
+		if (NULL == pCity || pCity->getReligionCount() == 0) // K-Mod
 		{
 			return false;
 		}
