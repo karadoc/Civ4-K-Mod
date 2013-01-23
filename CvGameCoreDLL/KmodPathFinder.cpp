@@ -36,7 +36,7 @@ void KmodPathFinder::InitHeuristicWeights()
 
 int KmodPathFinder::MinimumStepCost(int BaseMoves)
 {
-	return std::min(admissible_base_weight, BaseMoves * admissible_scaled_weight);
+	return std::max(1, std::min(admissible_base_weight, BaseMoves * admissible_scaled_weight));
 }
 
 bool KmodPathFinder::OpenList_sortPred::operator()(const boost::shared_ptr<FAStarNode> &left, const boost::shared_ptr<FAStarNode> &right)
