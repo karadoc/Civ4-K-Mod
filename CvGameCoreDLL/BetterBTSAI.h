@@ -15,11 +15,13 @@
 #define gTeamLogLevel   3
 #define gCityLogLevel   3
 #define gUnitLogLevel   3
+#define gMapLogLevel    3 // K-Mod
 #else
 #define gPlayerLogLevel 0
 #define gTeamLogLevel   0
 #define gCityLogLevel   0
 #define gUnitLogLevel   0
+#define gMapLogLevel    0 // K-Mod
 #endif
 
 void logBBAI(TCHAR* format, ... );
