@@ -767,21 +767,7 @@ void CvGame::assignStartingPlots()
 {
 	PROFILE_FUNC();
 
-	CvPlot* pPlot;
-	CvPlot* pBestPlot;
-	bool bStartFound;
-	bool bValid;
-	int iRandOffset;
-	int iLoopTeam;
-	int iLoopPlayer;
-	int iHumanSlot;
-	int iValue;
-	int iBestValue;
-	int iI, iJ, iK;
-	
-	std::vector<int> playerOrder;
-	std::vector<int>::iterator playerOrderIter;
-
+	/* original bts code. (note. variables were originally declared at the top of the function. I've moved them.)
 	for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).isAlive())
@@ -832,7 +818,33 @@ void CvGame::assignStartingPlots()
 				}
 			}
 		}
+	} */
+	// K-Mod. Same functionality, but much faster and easier to read.
+	//
+	// First, make a list of all the pre-marked starting plots on the map.
+	std::vector<CvPlot*> starting_plots;
+	for (int i = 0; i < GC.getMapINLINE().numPlotsINLINE(); i++)
+	{
+		gDLL->callUpdater();	// allow window updates during launch
+
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(i);
+		if (pLoopPlot->isStartingPlot())
+			starting_plots.push_back(pLoopPlot);
 	}
+	// Now, randomly the starting plots to each player.
+	for (PlayerTypes i = (PlayerTypes)0; starting_plots.size() > 0 && i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+	{
+		CvPlayer& kLoopPlayer = GET_PLAYER(i);
+		if (kLoopPlayer.isAlive() && kLoopPlayer.getStartingPlot() == NULL)
+		{
+			int iRandOffset = getSorenRandNum(starting_plots.size(), "Starting Plot");
+			kLoopPlayer.setStartingPlot(starting_plots[iRandOffset], true);
+			// remove this plot from the list.
+			starting_plots[iRandOffset] = starting_plots[starting_plots.size()-1];
+			starting_plots.pop_back();
+		}
+	}
+	// K-Mod end
 
 	if (gDLL->getPythonIFace()->callFunction(gDLL->getPythonIFace()->getMapScriptModule(), "assignStartingPlots"))
 	{ 
@@ -843,21 +855,24 @@ void CvGame::assignStartingPlots()
 		}
 	}
 
+	std::vector<int> playerOrder;
+	std::vector<int>::iterator playerOrderIter;
+
 	if (isTeamGame())
 	{
 		for (int iPass = 0; iPass < 2 * MAX_PLAYERS; ++iPass)
 		{
-			bStartFound = false;
+			bool bStartFound = false;
 
-			iRandOffset = getSorenRandNum(countCivTeamsAlive(), "Team Starting Plot");
+			int iRandOffset = getSorenRandNum(countCivTeamsAlive(), "Team Starting Plot");
 
-			for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
+			for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
 			{
-				iLoopTeam = ((iI + iRandOffset) % MAX_CIV_TEAMS);
+				int iLoopTeam = ((iI + iRandOffset) % MAX_CIV_TEAMS);
 
 				if (GET_TEAM((TeamTypes)iLoopTeam).isAlive())
 				{
-					for (iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
+					for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
 					{
 						if (GET_PLAYER((PlayerTypes)iJ).isAlive())
 						{
@@ -888,18 +903,18 @@ void CvGame::assignStartingPlots()
 		}
 
 		//check all players have starting plots
-		for (iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
+		for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
 		{
 			FAssertMsg(!GET_PLAYER((PlayerTypes)iJ).isAlive() || GET_PLAYER((PlayerTypes)iJ).getStartingPlot() != NULL, "Player has no starting plot");
 		}
 	}
 	else if (isGameMultiPlayer())
 	{
-		iRandOffset = getSorenRandNum(countCivPlayersAlive(), "Player Starting Plot");
+		int iRandOffset = getSorenRandNum(countCivPlayersAlive(), "Player Starting Plot");
 
-		for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
-			iLoopPlayer = ((iI + iRandOffset) % MAX_CIV_PLAYERS);
+			int iLoopPlayer = ((iI + iRandOffset) % MAX_CIV_PLAYERS);
 
 			if (GET_PLAYER((PlayerTypes)iLoopPlayer).isAlive())
 			{
@@ -914,7 +929,7 @@ void CvGame::assignStartingPlots()
 			}
 		}
 
-		for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
@@ -931,9 +946,9 @@ void CvGame::assignStartingPlots()
 	}
 	else
 	{
-		iHumanSlot = range((((countCivPlayersAlive() - 1) * GC.getHandicapInfo(getHandicapType()).getStartingLocationPercent()) / 100), 0, (countCivPlayersAlive() - 1));
+		int iHumanSlot = range((((countCivPlayersAlive() - 1) * GC.getHandicapInfo(getHandicapType()).getStartingLocationPercent()) / 100), 0, (countCivPlayersAlive() - 1));
 
-		for (iI = 0; iI < iHumanSlot; iI++)
+		for (int iI = 0; iI < iHumanSlot; iI++)
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
@@ -948,7 +963,7 @@ void CvGame::assignStartingPlots()
 			}
 		}
 
-		for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
@@ -963,7 +978,7 @@ void CvGame::assignStartingPlots()
 			}
 		}
 
-		for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+		for (int iI = 0; iI < MAX_CIV_PLAYERS; iI++)
 		{
 			if (GET_PLAYER((PlayerTypes)iI).isAlive())
 			{
