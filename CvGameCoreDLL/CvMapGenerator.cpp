@@ -13,6 +13,7 @@
 #include "FProfiler.h"
 #include "CyPlot.h"
 #include "CyArgsList.h"
+#include <set> // K-Mod
 
 //
 // static
@@ -710,12 +711,10 @@ void CvMapGenerator::addBonuses()
 
 void CvMapGenerator::addUniqueBonusType(BonusTypes eBonusType)
 {
-	int* piAreaTried = new int[GC.getMapINLINE().getNumAreas()];
-
-	for (int iI = 0; iI < GC.getMapINLINE().getNumAreas(); iI++)
-	{
-		piAreaTried[iI] = FFreeList::INVALID_INDEX;
-	}
+	// K-Mod note: the areas tried stuff was originally done using an array.
+	// I've rewritten it to use std::set, for no good reason. The functionality is unchanged.
+	// (But it is now slightly more efficient and easier to read.)
+	std::set<int> areas_tried;
 
 	CvBonusInfo& pBonusInfo = GC.getBonusInfo(eBonusType);
 
@@ -734,22 +733,12 @@ void CvMapGenerator::addUniqueBonusType(BonusTypes eBonusType)
 
 		for(pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 		{
-			bool bTried = false;
-
-			for (int iI = 0; iI < GC.getMapINLINE().getNumAreas(); iI++)
-			{
-				if (pLoopArea->getID() == piAreaTried[iI])
-				{
-					bTried = true;
-					break;
-				}
-			}
-
-			if (!bTried)
+			if (areas_tried.count(pLoopArea->getID()) == 0)
 			{
 				int iNumUniqueBonusesOnArea = pLoopArea->countNumUniqueBonusTypes() + 1; // number of unique bonuses starting on the area, plus this one
 				int iNumTiles = pLoopArea->getNumTiles();
-				int iValue = iNumTiles / iNumUniqueBonusesOnArea;
+				//int iValue = iNumTiles / iNumUniqueBonusesOnArea;
+				int iValue = (iNumTiles + (iNumTiles >= 4*NUM_CITY_PLOTS ? GC.getGameINLINE().getMapRandNum(3*NUM_CITY_PLOTS, "addUniqueBonusType area value"): 0)) / iNumUniqueBonusesOnArea; // K-Mod
 
 				if (iValue > iBestValue)
 				{
@@ -764,14 +753,7 @@ void CvMapGenerator::addUniqueBonusType(BonusTypes eBonusType)
 			break; // can't place bonus on any area
 		}
 
-		for (int iI = 0; iI < GC.getMapINLINE().getNumAreas(); iI++)
-		{
-			if (piAreaTried[iI] == FFreeList::INVALID_INDEX)
-			{
-				piAreaTried[iI] = pBestArea->getID();
-				break;
-			}
-		}
+		areas_tried.insert(pBestArea->getID());
 
 		// Place the bonuses:
 
@@ -820,8 +802,6 @@ void CvMapGenerator::addUniqueBonusType(BonusTypes eBonusType)
 
 		SAFE_DELETE_ARRAY(piShuffle);
 	}
-
-	SAFE_DELETE_ARRAY(piAreaTried);
 }
 
 void CvMapGenerator::addNonUniqueBonusType(BonusTypes eBonusType)
