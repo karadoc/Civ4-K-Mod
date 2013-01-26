@@ -549,7 +549,8 @@ void CvMap::updateMinOriginalStartDist(CvArea* pArea)
 				{
 					pLoopPlot = plotByIndexINLINE(iJ);
 
-					if (pLoopPlot->area() == pArea)
+					//if (pLoopPlot->area() == pArea)
+					if (pLoopPlot->area() == pArea && pLoopPlot != pStartingPlot) // K-Mod
 					{
 						
 						//iDist = GC.getMapINLINE().calculatePathDistance(pStartingPlot, pLoopPlot);
