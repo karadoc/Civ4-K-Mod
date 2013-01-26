@@ -3466,7 +3466,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 			int iMinDistanceFactor = MAX_INT;
 			int iMinRange = startingPlotRange();
 
-			iValue *= 100;
+			//iValue *= 100; // (disabled by K-Mod to prevent int overflow)
 			for (int iJ = 0; iJ < MAX_CIV_PLAYERS; iJ++)
 			{
 				if (GET_PLAYER((PlayerTypes)iJ).isAlive())
@@ -3501,7 +3501,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				iValue /= 1000;
 			}
 
-			iValue /= 10;
+			//iValue /= 10; // (disabled by K-Mod)
 
 			if (pPlot->getBonusType() != NO_BONUS)
 			{
@@ -3789,6 +3789,11 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		iValue /= (std::max(0, (iDifferentAreaTile - ((NUM_CITY_PLOTS * 2) / 3))) + 2);
 	}
 
+	// K-Mod. Note: iValue is an int, but this function only return a short - so we need to be careful.
+	FAssert(iValue >= 0);
+	FAssert(iValue < MAX_SHORT);
+	iValue = std::min(iValue, MAX_SHORT);
+	// K-Mod end
 	return std::max(1, iValue);
 }
 
