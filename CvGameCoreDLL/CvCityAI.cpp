@@ -733,12 +733,26 @@ void CvCityAI::AI_chooseProduction()
 			}
 
 			// if we are building a wonder, do not cancel, keep building it (if no danger)
+			/* original bts code
 			BuildingTypes eProductionBuilding = getProductionBuilding();
 			if (!bDanger && eProductionBuilding != NO_BUILDING && 
 				isLimitedWonderClass((BuildingClassTypes) GC.getBuildingInfo(eProductionBuilding).getBuildingClassType()))
 			{
 				return;
+			} */
+			// K-Mod. same idea, but with a few more conditions
+			BuildingTypes eProductionBuilding = getProductionBuilding();
+			if (eProductionBuilding != NO_BUILDING && isLimitedWonderClass((BuildingClassTypes) GC.getBuildingInfo(eProductionBuilding).getBuildingClassType()))
+			{
+				int iCompletion = 100*getBuildingProduction(eProductionBuilding)/std::max(1, getProductionNeeded(eProductionBuilding));
+				int iThreshold = 25;
+				iThreshold += kPlayer.AI_isLandWar(area()) ? 40 : 0;
+				iThreshold += kPlayer.AI_isDoStrategy(AI_STRATEGY_TURTLE) ? 25 : 0; // (in addition to land war)
+				iThreshold += !isWorldWonderClass((BuildingClassTypes) GC.getBuildingInfo(eProductionBuilding).getBuildingClassType()) ? 10 : 0;
+				if (iCompletion >= iThreshold)
+					return;
 			}
+			// K-Mod end
 		}
 
 		clearOrderQueue();
@@ -1562,17 +1576,19 @@ void CvCityAI::AI_chooseProduction()
 	}
 
 	//opportunistic wonder build (1)
-	if (!bDanger && (!hasActiveWorldWonder()) && (kPlayer.getNumCities() <= 3))
+	//if (!bDanger && (!hasActiveWorldWonder()) && (kPlayer.getNumCities() <= 3))
+	if (!bDanger && (!hasActiveWorldWonder()) && (kPlayer.getNumCities() <= 3) && (kPlayer.getNumCities() > 1 || iNumSettlers > 0)) // K-Mod
 	{
 		// For small civ at war, don't build wonders unless winning
-		if( !bLandWar || (iWarSuccessRating > 30) )
+		//if( !bLandWar || (iWarSuccessRating > 30) )
+		if (pArea->getAreaAIType(getTeam()) == AREAAI_NEUTRAL) // K-Mod. Don't do this if there is any war at all.
 		{
 			int iWonderTime = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
 			iWonderTime /= 5;
 			iWonderTime += 7;
 			if (AI_chooseBuilding(BUILDINGFOCUS_WORLDWONDER, iWonderTime))
 			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses oppurtunistic wonder build 1", getName().GetCString());
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses opportunistic wonder build 1", getName().GetCString());
 				return;
 			}
 		}
@@ -1814,16 +1830,29 @@ void CvCityAI::AI_chooseProduction()
 	if (!bDanger && (!hasActiveWorldWonder() || (kPlayer.getNumCities() > 3)))
 	{
 		// For civ at war, don't build wonders if losing
-		if (!bTotalWar && (!bLandWar || iWarSuccessRating > -30))
+		if (!bTotalWar && (!bLandWar || iWarSuccessRating > 0)) // was -30
 		{	
 			int iWonderTime = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
 			iWonderTime /= 5;
 			iWonderTime += 8;
-			if (AI_chooseBuilding(BUILDINGFOCUS_WORLDWONDER, iWonderTime))
-			{
+			/*if (AI_chooseBuilding(BUILDINGFOCUS_WORLDWONDER, iWonderTime))
+						{
 				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses oppurtunistic wonder build 2", getName().GetCString());
 				return;
+			}*/
+			// K-Mod
+			// Reduce the max time when at war (arbitrary - but then again, this part of the AI is not for strategy. It's for flavour.)
+			if (pArea->getAreaAIType(getTeam()) != AREAAI_NEUTRAL)
+				iWonderTime = iWonderTime * 2/3;
+			// And only build the wonder if it is at least as valuable as the building we would have chosen anyway.
+			BuildingTypes eBestWonder = AI_bestBuildingThreshold(BUILDINGFOCUS_WORLDWONDER, iWonderTime);
+			if (eBestWonder != NO_BUILDING && AI_buildingValue(eBestWonder) >= iBestBuildingValue)
+			{
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses opportunistic wonder build 2", getName().GetCString());
+				pushOrder(ORDER_CONSTRUCT, eBestWonder);
+				return;
 			}
+			// K-Mod end
 		}
 	}
 
@@ -2485,11 +2514,19 @@ void CvCityAI::AI_chooseProduction()
 			iWonderRand /= 3;
 		}
 
-		if (bLandWar && bTotalWar)
+		/* if (bLandWar && bTotalWar)
 		{
 			iWonderRand *= 2;
 			iWonderRand /= 3;
-		}
+		} */
+		// K-Mod. When losing a war, it's not really an "opportune" time to build a wonder...
+		if (bLandWar)
+			iWonderRand = iWonderRand * 2/3;
+		if (bTotalWar)
+			iWonderRand = iWonderRand * 2/3;
+		if (iWarSuccessRating < 0)
+			iWonderRand = iWonderRand * 10/(10-iWarSuccessRating);
+		// K-Mod end
 		
 		int iWonderRoll = GC.getGameINLINE().getSorenRandNum(100, "Wonder Build Rand");
 		
@@ -2508,7 +2545,7 @@ void CvCityAI::AI_chooseProduction()
 			
 			if (AI_chooseBuilding(BUILDINGFOCUS_WORLDWONDER, iWonderMaxTurns))
 			{
-				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses oppurtunistic wonder build 3", getName().GetCString());
+				if( gCityLogLevel >= 2 ) logBBAI("      City %S uses opportunistic wonder build 3", getName().GetCString());
 				return;
 			}
 		}
