@@ -12208,6 +12208,16 @@ int CvPlayerAI::AI_neededWorkers(CvArea* pArea) const
 		return 0;
 	}
 
+	// K-Mod. Some additional workers if for 'growth' flavour AIs who are still growing...
+	if (AI_getFlavorValue(FLAVOR_GROWTH) > 0 && AI_isPrimaryArea(pArea))
+	{
+		int iDummy;
+		int iExtraCities = std::min(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*4/3 - getNumCities(), AI_getNumAreaCitySites(pArea->getID(), iDummy));
+		iExtraCities = range(iExtraCities, 0, getNumCities()*2/3);
+		iCount += iExtraCities * 3;
+	}
+	// K-Mod end
+
 	if (getBestRoute() != NO_ROUTE)
 	{
 		iCount += pArea->getCitiesPerPlayer(getID()) / 2;
