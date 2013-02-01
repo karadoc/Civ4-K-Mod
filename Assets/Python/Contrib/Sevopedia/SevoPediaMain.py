@@ -30,7 +30,7 @@ import SevoPediaImprovement
 import SevoPediaCivic
 import SevoPediaCivilization
 import SevoPediaLeader
-import SevoPediaTrait
+# import SevoPediaTrait
 import SevoPediaSpecialist
 import SevoPediaHistory
 import SevoPediaProject
@@ -155,7 +155,7 @@ class SevoPediaMain(CvPediaScreen.CvPediaScreen):
 			SevoScreenEnums.PEDIA_IMPROVEMENTS	: self.placeImprovements,
 			SevoScreenEnums.PEDIA_CIVS		: self.placeCivs,
 			SevoScreenEnums.PEDIA_LEADERS		: self.placeLeaders,
-			SevoScreenEnums.PEDIA_TRAITS		: self.placeTraits,
+			# SevoScreenEnums.PEDIA_TRAITS		: self.placeTraits,
 			SevoScreenEnums.PEDIA_CIVICS		: self.placeCivics,
 			SevoScreenEnums.PEDIA_RELIGIONS		: self.placeReligions,
 			SevoScreenEnums.PEDIA_CORPORATIONS	: self.placeCorporations,
@@ -185,7 +185,7 @@ class SevoPediaMain(CvPediaScreen.CvPediaScreen):
 			SevoScreenEnums.PEDIA_IMPROVEMENTS	: SevoPediaImprovement.SevoPediaImprovement(self),
 			SevoScreenEnums.PEDIA_CIVS		: SevoPediaCivilization.SevoPediaCivilization(self),
 			SevoScreenEnums.PEDIA_LEADERS		: self.pediaLeader,
-			SevoScreenEnums.PEDIA_TRAITS		: SevoPediaTrait.SevoPediaTrait(self),
+			# SevoScreenEnums.PEDIA_TRAITS		: SevoPediaTrait.SevoPediaTrait(self),
 			SevoScreenEnums.PEDIA_CIVICS		: SevoPediaCivic.SevoPediaCivic(self),
 			SevoScreenEnums.PEDIA_RELIGIONS		: SevoPediaReligion.SevoPediaReligion(self),
 			SevoScreenEnums.PEDIA_CORPORATIONS	: SevoPediaCorporation.SevoPediaCorporation(self),
@@ -348,7 +348,7 @@ class SevoPediaMain(CvPediaScreen.CvPediaScreen):
 		self.szCategoryImprovements	= localText.getText("TXT_KEY_PEDIA_CATEGORY_IMPROVEMENT", ())
 		self.szCategoryCivs			= localText.getText("TXT_KEY_PEDIA_CATEGORY_CIV", ())
 		self.szCategoryLeaders		= localText.getText("TXT_KEY_PEDIA_CATEGORY_LEADER", ())
-		self.szCategoryTraits		= localText.getText("TXT_KEY_PEDIA_TRAITS", ())
+		# self.szCategoryTraits		= localText.getText("TXT_KEY_PEDIA_TRAITS", ())
 		self.szCategoryCivics		= localText.getText("TXT_KEY_PEDIA_CATEGORY_CIVIC", ())
 		self.szCategoryReligions	= localText.getText("TXT_KEY_PEDIA_CATEGORY_RELIGION", ())
 		self.szCategoryCorporations	= localText.getText("TXT_KEY_CONCEPT_CORPORATIONS", ())
@@ -375,14 +375,14 @@ class SevoPediaMain(CvPediaScreen.CvPediaScreen):
 			["TERRAINS",	self.szCategoryImprovements],
 			["CIVS",	self.szCategoryCivs],
 			["CIVS",	self.szCategoryLeaders],
-			["CIVS",	self.szCategoryTraits],
+			# ["CIVS",	self.szCategoryTraits],
 			["CIVICS",	self.szCategoryCivics],
 			["CIVICS",	self.szCategoryReligions],
 			["CIVICS",	self.szCategoryCorporations],
 			["HINTS",	self.szCategoryConcepts],
 			["HINTS",	self.szCategoryConceptsNew],
 			["HINTS",	self.szCategoryHints],
-			["HINTS",	self.szCategoryShortcuts],
+			# ["HINTS",	self.szCategoryShortcuts],
 			]
 
 		self.categoryGraphics = {
