@@ -4642,6 +4642,15 @@ bool CvPlayerAI::AI_isFinancialTrouble() const
 		{
 			iSafePercent -= 10;
 		}
+
+		// K-Mod
+		int iCitiesTarget = std::max(1, GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities());
+		if (getNumCities() < iCitiesTarget)
+		{
+			// note: I'd like to use (AI_getNumCitySites() > 0) as well, but that could potentially cause the site selection to oscillate.
+			iSafePercent -= 14 * (iCitiesTarget - getNumCities()) / iCitiesTarget;
+		}
+		// K-Mod end
 		
 		if (iFundedPercent < iSafePercent)
 		{
