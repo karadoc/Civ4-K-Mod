@@ -7425,35 +7425,45 @@ void CvCityAI::AI_updateBestBuild()
 			BuildingTypes eProductionBuilding = getProductionBuilding();
 			bChop = (eProductionBuilding != NO_BUILDING && isWorldWonderClass((BuildingClassTypes)(GC.getBuildingInfo(eProductionBuilding).getBuildingClassType())));
 		}
+		/* original bts code
 		if (!bChop)
 		{
-			//bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
-			bChop = kOwner.AI_isLandWar(area()); // K-Mod
+			bChop = ((area()->getAreaAIType(getTeam()) == AREAAI_OFFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE) || (area()->getAreaAIType(getTeam()) == AREAAI_MASSING));
 		}
 		if (!bChop)
 		{
-			/* UnitTypes eProductionUnit = getProductionUnit();
-			bChop = (eProductionUnit != NO_UNIT && GC.getUnitInfo(eProductionUnit).isFoodProduction()); */
-			// K-Mod
-			UnitAITypes eUnitAI = getProductionUnitAI();
-
-			switch (eUnitAI)
+			UnitTypes eProductionUnit = getProductionUnit();
+			bChop = (eProductionUnit != NO_UNIT && GC.getUnitInfo(eProductionUnit).isFoodProduction());
+		} */
+		// K-Mod. Chop when a new city with low productivity is trying to construct a (useful) building.
+		if (!bChop)
+		{
+			// ideally this would be based on the value of what we are building, and on the number of things we still want to build.
+			// But it currently isn't easy to get that infomation, so I'm just going to use arbitrary minimums. Sorry.
+			// (The scale of this is roughly a 2 pop whip or 2 mines of productivity - higher with productive flavour.)
+			if (kOwner.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0
+				? (getHighestPopulation() <= 6 && getBaseYieldRate(YIELD_PRODUCTION) <= 9)
+				: (getHighestPopulation() <= 4 && getBaseYieldRate(YIELD_PRODUCTION) <= 6))
 			{
-			case UNITAI_WORKER:
-				// bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < kOwner.AI_neededWorkers(area())/2; // maybe too slow
-				bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < std::max(area()->getCitiesPerPlayer(getOwnerINLINE()), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2);
-				break;
-
-			default: // (buildings, settlers, military escorts -- everything.)
-				if (kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities())
-				{
-					int iDummy;
-					bChop = kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0 && !kOwner.AI_isFinancialTrouble();
-				}
-				break;
+				bChop = getProductionBuilding() != NO_BUILDING;
 			}
-			// K-Mod end
 		}
+		// Chop when trying to expand, and when at war -- but only if there is not financial trouble.
+		if (!bChop)
+		{
+			int iDummy;
+			if (kOwner.AI_isLandWar(area()) ||
+				(kOwner.getNumCities() < GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() && kOwner.AI_getNumAreaCitySites(getArea(), iDummy) > 0))
+			{
+				bChop = !kOwner.AI_isFinancialTrouble();
+			}
+		}
+		// Chop for workers, if we are short.
+		if (getProductionUnitAI() == UNITAI_WORKER)
+		{
+			bChop = area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) < std::max(area()->getCitiesPerPlayer(getOwnerINLINE()), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2);
+		}
+		// K-Mod end
 	}
 
 	/*if (getProductionBuilding() != NO_BUILDING)
@@ -10165,6 +10175,9 @@ void CvCityAI::AI_bestPlotBuild(CvPlot* pPlot, int* piBestValue, BuildTypes* peB
 							{
 								iValue = iValue * 3*iCitiesTarget / std::max(1, 2*kOwner.getNumCities() + iCitiesTarget);
 							}
+							// Increase the value if it is large compared to the city's natural production rate
+							// (note: iValue is chop production * 10)
+							iValue += iValue / (getBaseYieldRate(YIELD_PRODUCTION)*20 + iValue);
 							// K-Mod end
 
 							iValue += iClearValue_wYield;
