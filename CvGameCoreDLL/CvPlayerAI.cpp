@@ -9917,8 +9917,9 @@ int CvPlayerAI::AI_tradeAcceptabilityThreshold(PlayerTypes eTrader) const
 
 int CvPlayerAI::AI_maxGoldTrade(PlayerTypes ePlayer) const
 {
+	PROFILE_FUNC();
+
 	int iMaxGold;
-	int iResearchBuffer;
 
 	FAssert(ePlayer != getID());
 
@@ -9928,6 +9929,7 @@ int CvPlayerAI::AI_maxGoldTrade(PlayerTypes ePlayer) const
 	}
 	else
 	{
+		/* original bts code
 		iMaxGold = getTotalPopulation();
 
 		iMaxGold *= (GET_TEAM(getTeam()).AI_getHasMetCounter(GET_PLAYER(ePlayer).getTeam()) + 10);
@@ -9945,7 +9947,48 @@ int CvPlayerAI::AI_maxGoldTrade(PlayerTypes ePlayer) const
 
 		iMaxGold = std::min(iMaxGold, getGold());
 
+		iMaxGold -= (iMaxGold % GC.getDefineINT("DIPLOMACY_VALUE_REMAINDER")); */
+		// K-Mod. Similar, but with more personality, and with better handling of situations where the AI has lots of spare gold.
+		int iTradePercent = GC.getLeaderHeadInfo(getPersonalityType()).getMaxGoldTradePercent();
+		iMaxGold = getTotalPopulation();
+
+		iMaxGold *= (GET_TEAM(getTeam()).AI_getHasMetCounter(GET_PLAYER(ePlayer).getTeam()) + 10);
+
+		iMaxGold *= iTradePercent;
+		iMaxGold /= 100;
+
+		iMaxGold -= AI_getGoldTradedTo(ePlayer);
+		iMaxGold = std::max(0, iMaxGold);
+
+		int iGoldRate = calculateGoldRate();
+		if (iGoldRate > 0)
+		{
+			PROFILE("AI_maxGoldTrade: gold rate adjustment");
+			int iTarget = AI_goldTarget();
+			if (getGold() < iTarget)
+			{
+				iGoldRate -= (iTarget - getGold())/3;
+				iGoldRate = std::max(0, iGoldRate);
+			}
+			else
+			{
+				iMaxGold += (getGold() - iTarget) * iTradePercent / 100;
+			}
+			iMaxGold += iGoldRate * 2 * iTradePercent / 100;
+		}
+		else
+		{
+			int iAdjustment = iGoldRate * 12;
+			iAdjustment *= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent();
+			iAdjustment /= 100;
+
+			iMaxGold += iAdjustment;
+		}
+
+		iMaxGold = range(iMaxGold, 0, getGold());
+
 		iMaxGold -= (iMaxGold % GC.getDefineINT("DIPLOMACY_VALUE_REMAINDER"));
+		// K-Mod end
 	}
 
 	return std::max(0, iMaxGold);
