@@ -3605,9 +3605,33 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 	// There are several sections which could, in the future, be improved using bRemove -
 	// but I don't see it as a high priority.
 	bool bRemove = getNumBuilding(eBuilding) >= GC.getCITY_MAX_NUM_BUILDINGS();
-	// K-Mod end
 
-	// K-Mod, constructionValue cache.
+	// Veto checks: return zero if the building is not suitable.
+	// Note: these checks are essentially the same as in the original code, they've just been moved.
+	if (iFocusFlags & BUILDINGFOCUS_WORLDWONDER)
+	{
+		if (!isWorldWonderClass(eBuildingClass) || findBaseYieldRateRank(YIELD_PRODUCTION) <= 3)
+		{
+			// Note / TODO: the production condition is from the original BtS code.
+			// I intend to remove / change that condition in the future.
+			return 0;
+		}
+	}
+	if (kBuilding.isCapital())
+		return 0;
+
+	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
+	{
+		if (kBuilding.getReligionChange(iI) > 0)
+		{
+			if (!GET_TEAM(getTeam()).hasHolyCity((ReligionTypes)iI))
+			{
+				return 0;
+			}
+		}
+	}
+
+	// Construction value cache.
 	// Note: the WONDEROK and WORLDWONDER flags should not affect the final value - and so cache should not be disabled by those flags.
 	const bool bNeutralFlags = (iFocusFlags & ~(BUILDINGFOCUS_WONDEROK | BUILDINGFOCUS_WORLDWONDER)) == 0;
 	const bool bUseConstructionValueCache = bNeutralFlags && iThreshold == 0;
@@ -3675,34 +3699,6 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 			}
 		}
 	}
-
-	if (kBuilding.isCapital())
-	{
-		return 0;
-	}
-
-	for (int iI = 0; iI < GC.getNumReligionInfos(); iI++)
-	{
-		if (kBuilding.getReligionChange(iI) > 0)
-		{
-			if (!(GET_TEAM(getTeam()).hasHolyCity((ReligionTypes)iI)))
-			{
-				return 0;
-			}
-		}
-	}
-
-	// K-Mod. Note: something similar to this use to be done inside the loop below.
-	if (iFocusFlags & BUILDINGFOCUS_WORLDWONDER)
-	{
-		if (!isWorldWonderClass(eBuildingClass) || findBaseYieldRateRank(YIELD_PRODUCTION) <= 3)
-		{
-			// Note / TODO: the production condition is from the original BtS code.
-			// I intend to remove / change that condition in the future.
-			return 0;
-		}
-	}
-	// K-Mod end
 
 	int iValue = 0;
 
