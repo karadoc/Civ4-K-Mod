@@ -227,22 +227,7 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 
 	if (lResult == 1)
 	{
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       03/01/10                     Mongoose & jdog5000      */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
 		if (pPlot->getFeatureType() != NO_FEATURE)
-*/
-		// From Mongoose SDK
-		// Don't remove floodplains from tiles when founding city
-		//if ((pPlot->getFeatureType() != NO_FEATURE) && (pPlot->getFeatureType() != (FeatureTypes)GC.getInfoTypeForString("FEATURE_FLOOD_PLAINS")))
-		
-		if (pPlot->getFeatureType() != NO_FEATURE)
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
 		{
 			pPlot->setFeatureType(NO_FEATURE);
 		}
@@ -9845,7 +9830,7 @@ void CvCity::updateCorporationBonus()
 				processBonus((BonusTypes)iI, -1);
 			}
 		}
-	}			
+	}
 }
 
 
@@ -11247,7 +11232,7 @@ void CvCity::setWorkingPlot(int iIndex, bool bNewValue)
 			if ((getTeam() == GC.getGameINLINE().getActiveTeam()) || GC.getGameINLINE().isDebugMode())
 			{
 				pPlot->updateSymbolDisplay();
-			}			
+			}
 		}
 
 		if (isCitySelected())
@@ -11496,7 +11481,7 @@ void CvCity::setNumRealBuildingTimed(BuildingTypes eIndex, int iNewValue, bool b
 				if (GC.getBuildingInfo(eIndex).isAllowsNukes())
 				{
 					GC.getGameINLINE().makeNukesValid(true);
-				}	
+				}
 
 				GC.getGameINLINE().incrementBuildingClassCreatedCount((BuildingClassTypes)(GC.getBuildingInfo(eIndex).getBuildingClassType()));
 			}
@@ -12350,7 +12335,7 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 			iLostProduction -= iProductionNeeded * (iBuilt-1);
 			FAssert(iLostProduction >= 0);
 
-			if (canTrain(eTrainUnit))
+			if (iLostProduction > 0 && canTrain(eTrainUnit))
 			{
 				FAssert(iLostProduction < iProductionNeeded);
 				setUnitProduction(eTrainUnit, iLostProduction);
@@ -12369,6 +12354,32 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 				if (iProductionGold > 0)
 				{
 					GET_PLAYER(getOwnerINLINE()).changeGold(iProductionGold);
+				}
+			}
+
+			// If we finished more than one of this unit in one shot,
+			// then we should pop more than one entry of this unit in the queue.
+			{
+				int iCount = 0;
+				CLLNode<OrderData>* pLoopNode = headOrderQueueNode();
+				while (pLoopNode && iBuilt > 1)
+				{
+					const OrderData& kLoopData = pLoopNode->m_data;
+					if (pLoopNode != pOrderNode &&
+						kLoopData.eOrderType == ORDER_TRAIN &&
+						kLoopData.iData1 == pOrderNode->m_data.iData1 &&
+						kLoopData.iData2 == pOrderNode->m_data.iData2)
+					{
+						popOrder(iCount);
+						iBuilt--;
+						pLoopNode = headOrderQueueNode();
+						iCount = 0;
+					}
+					else
+					{
+						pLoopNode = nextOrderQueueNode(pLoopNode);
+						iCount++;
+					}
 				}
 			}
 			// K-Mod end
