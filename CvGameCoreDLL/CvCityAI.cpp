@@ -3370,204 +3370,209 @@ BuildingTypes CvCityAI::AI_bestBuildingThreshold(int iFocusFlags, int iMaxTurns,
 		return eBestBuilding;
 	}
 
-	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	// K-Mote note: I've rearranged most of the code below to improve readability and efficiency.
+	// Some changes are marked, but most are not.
+	// (At least 6 huge nested 'if' blocks have been replaced with 'continue' conditions.)
+	for (BuildingClassTypes eLoopClass = (BuildingClassTypes)0; eLoopClass < GC.getNumBuildingClassInfos(); eLoopClass=(BuildingClassTypes)(eLoopClass+1))
 	{
-		if (!(kOwner.isBuildingClassMaxedOut(((BuildingClassTypes)iI), GC.getBuildingClassInfo((BuildingClassTypes)iI).getExtraPlayerInstances())))
+		if (kOwner.isBuildingClassMaxedOut(eLoopClass, GC.getBuildingClassInfo(eLoopClass).getExtraPlayerInstances()))
+			continue;
+
+		BuildingTypes eLoopBuilding = (BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(eLoopClass));
+
+		if (eLoopBuilding == NO_BUILDING || getNumBuilding(eLoopBuilding) >= GC.getCITY_MAX_NUM_BUILDINGS())
+			continue;
+
+		if (iFocusFlags & BUILDINGFOCUS_WORLDWONDER && !isWorldWonderClass(eLoopClass))
+			continue;
+
+		if (isLimitedWonderClass(eLoopClass))
 		{
-			BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
+			if (isProductionAutomated())
+				continue;
+			if (iFocusFlags != 0 && !(iFocusFlags & BUILDINGFOCUS_WONDEROK))
+				continue;
+		}
 
-			if ((eLoopBuilding != NO_BUILDING) && (getNumBuilding(eLoopBuilding) < GC.getCITY_MAX_NUM_BUILDINGS())
-			&&  (!isProductionAutomated() || !(isWorldWonderClass((BuildingClassTypes)iI) || isNationalWonderClass((BuildingClassTypes)iI))))
+		const CvBuildingInfo& kBuilding = GC.getBuildingInfo(eLoopBuilding);
+
+		if (eIgnoreAdvisor != NO_ADVISOR && eIgnoreAdvisor == kBuilding.getAdvisorType())
+			continue;
+
+		if (!canConstruct(eLoopBuilding))
+			continue;
+
+		if (isProductionAutomated())
+		{
+			bool bHasPrereqs = false;
+			for (int iJ = 0; !bHasPrereqs && iJ < GC.getNumBuildingClassInfos(); iJ++)
+				bHasPrereqs = kBuilding.getPrereqNumOfBuildingClass(iJ) > 0;
+
+			if (bHasPrereqs)
+				continue;
+		}
+
+		int iValue = AI_buildingValue(eLoopBuilding, iFocusFlags, iMinThreshold, bAsync);
+
+		if (iValue <= 0)
+			continue;
+
+		//
+
+		/* original bts code
+		if (kBuilding.getFreeBuildingClass() != NO_BUILDINGCLASS)
+		{
+			BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(kBuilding.getFreeBuildingClass());
+			if (NO_BUILDING != eFreeBuilding)
 			{
-				const CvBuildingInfo& kBuilding = GC.getBuildingInfo(eLoopBuilding); // K-Mod
+				//iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
+				iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags, 0, bAsync) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
+			}
+		} */ // Moved into AI_buildingValue
 
-				bool bWonderOk = false;
-				//bWonderOk = ((iFocusFlags == 0) || (iFocusFlags & BUILDINGFOCUS_WONDEROK) || (iFocusFlags & BUILDINGFOCUS_WORLDWONDER));
-				bWonderOk = iFocusFlags == 0 || iFocusFlags & BUILDINGFOCUS_WONDEROK; // K-Mod
+		// K-Mod
+		TechTypes eObsoleteTech = (TechTypes)kBuilding.getObsoleteTech();
+		TechTypes eSpObsoleteTech = kBuilding.getSpecialBuildingType() == NO_SPECIALBUILDING
+			? NO_TECH
+			: (TechTypes)GC.getSpecialBuildingInfo((SpecialBuildingTypes)(kBuilding.getSpecialBuildingType())).getObsoleteTech();
 
-				if (bWonderOk || !isLimitedWonderClass((BuildingClassTypes)iI))
+		if ((eObsoleteTech != NO_TECH && kOwner.getCurrentResearch() == eObsoleteTech) || (eSpObsoleteTech != NO_TECH && kOwner.getCurrentResearch() == eSpObsoleteTech))
+			iValue /= 2;
+		// K-Mod end
+
+		int iTurnsLeft = getProductionTurnsLeft(eLoopBuilding, 0);
+
+		// K-Mod
+		// Block construction of limited buildings in bad places
+		// (the value check is just for efficiency. 1250 takes into account the possible +25 random boost)
+		if (iFocusFlags == 0 && iValue * 1250 / std::max(1, iTurnsLeft + 3) >= iBestValue)
+		{
+			int iLimit = limitedWonderClassLimit(eLoopClass);
+			if (iLimit == -1)
+			{
+				// We're not out of the woods yet. Check for prereq buildings.
+				for (int iJ = 0; iJ < GC.getNumBuildingClassInfos(); iJ++)
 				{
-					if ((eIgnoreAdvisor == NO_ADVISOR) || (kBuilding.getAdvisorType() != eIgnoreAdvisor))
+					if (kBuilding.getPrereqNumOfBuildingClass(iJ) > 0)
 					{
-						if (canConstruct(eLoopBuilding))
+						// I wish this was easier to calculate...
+						int iBuilt = kOwner.getBuildingClassCount(eLoopClass);
+						int iBuilding = kOwner.getBuildingClassMaking(eLoopClass);
+						int iPrereqEach = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, (BuildingClassTypes)iJ, -iBuilt);
+						int iPrereqBuilt = kOwner.getBuildingClassCount((BuildingClassTypes)iJ);
+						FAssert(iPrereqEach > 0);
+						iLimit = iPrereqBuilt / iPrereqEach - iBuilt - iBuilding;
+						FAssert(iLimit > 0);
+						break;
+					}
+				}
+			}
+			if (iLimit != -1)
+			{
+				const int iMaxNumWonders = (GC.getGameINLINE().isOption(GAMEOPTION_ONE_CITY_CHALLENGE) && isHuman()) ? GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY_FOR_OCC") : GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY");
+
+				if (isNationalWonderClass(eLoopClass) && iMaxNumWonders != -1)
+				{
+					iValue *= iMaxNumWonders + 1 - getNumNationalWonders();
+					iValue /= iMaxNumWonders + 1;
+				}
+
+				int iLoop;
+				for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+				{
+					if (pLoopCity->canConstruct(eLoopBuilding))
+					{
+						int iLoopValue = pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bAsync);
+						if (isNationalWonderClass(eLoopClass) && iMaxNumWonders != -1)
 						{
-							//iValue = AI_buildingValueThreshold(eLoopBuilding, iFocusFlags, iMinThreshold);
-							int iValue = AI_buildingValue(eLoopBuilding, iFocusFlags, iMinThreshold, bAsync); // K-Mod
-
-							/* original bts code
-							if (kBuilding.getFreeBuildingClass() != NO_BUILDINGCLASS)
+							iLoopValue *= iMaxNumWonders + 1 - pLoopCity->getNumNationalWonders();
+							iLoopValue /= iMaxNumWonders + 1;
+						}
+						if (80 * iLoopValue > 100 * iValue)
+						{
+							if (--iLimit <= 0)
 							{
-								BuildingTypes eFreeBuilding = (BuildingTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(kBuilding.getFreeBuildingClass());
-								if (NO_BUILDING != eFreeBuilding)
-								{
-									//iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
-									iValue += (AI_buildingValue(eFreeBuilding, iFocusFlags, 0, bAsync) * (kOwner.getNumCities() - kOwner.getBuildingClassCountPlusMaking((BuildingClassTypes)kBuilding.getFreeBuildingClass())));
-								}
-							} */ // Moved into AI_buildingValue
-
-							// K-Mod
-							TechTypes eObsoleteTech = (TechTypes)kBuilding.getObsoleteTech();
-							TechTypes eSpObsoleteTech = kBuilding.getSpecialBuildingType() == NO_SPECIALBUILDING
-								? NO_TECH
-								: (TechTypes)GC.getSpecialBuildingInfo((SpecialBuildingTypes)(kBuilding.getSpecialBuildingType())).getObsoleteTech();
-
-							if ((eObsoleteTech != NO_TECH && kOwner.getCurrentResearch() == eObsoleteTech) || (eSpObsoleteTech != NO_TECH && kOwner.getCurrentResearch() == eSpObsoleteTech))
-								iValue /= 2;
-							// K-Mod end
-
-							if (isProductionAutomated())
-							{
-								for (int iJ = 0; iJ < GC.getNumBuildingClassInfos(); iJ++)
-								{
-									if (kBuilding.getPrereqNumOfBuildingClass(iJ) > 0)
-									{
-										iValue = 0;
-										break;
-									}
-								}
-							}
-
-							if (iValue > 0)
-							{
-								int iTurnsLeft = getProductionTurnsLeft(eLoopBuilding, 0);
-
-								// K-Mod
-								// Block construction of limited buildings in bad places
-								// (the value check is just for efficiency. 1250 takes into account the possible +25 random boost)
-								if (iFocusFlags == 0 && iValue * 1250 / std::max(1, iTurnsLeft + 3) >= iBestValue)
-								{
-									int iLimit = limitedWonderClassLimit((BuildingClassTypes)iI);
-									if (iLimit == -1)
-									{
-										// We're not out of the woods yet. Check for prereq buildings.
-										for (int iJ = 0; iJ < GC.getNumBuildingClassInfos(); iJ++)
-										{
-											if (kBuilding.getPrereqNumOfBuildingClass(iJ) > 0)
-											{
-												// I wish this was easier to calculate...
-												int iBuilt = kOwner.getBuildingClassCount((BuildingClassTypes)iI);
-												int iBuilding = kOwner.getBuildingClassMaking((BuildingClassTypes)iI);
-												int iPrereqEach = kOwner.getBuildingClassPrereqBuilding(eLoopBuilding, (BuildingClassTypes)iJ, -iBuilt);
-												int iPrereqBuilt = kOwner.getBuildingClassCount((BuildingClassTypes)iJ);
-												FAssert(iPrereqEach > 0);
-												iLimit = iPrereqBuilt / iPrereqEach - iBuilt - iBuilding;
-												FAssert(iLimit > 0);
-												break;
-											}
-										}
-									}
-									if (iLimit != -1)
-									{
-										const int iMaxNumWonders = (GC.getGameINLINE().isOption(GAMEOPTION_ONE_CITY_CHALLENGE) && isHuman()) ? GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY_FOR_OCC") : GC.getDefineINT("MAX_NATIONAL_WONDERS_PER_CITY");
-
-										if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
-										{
-											iValue *= iMaxNumWonders + 1 - getNumNationalWonders();
-											iValue /= iMaxNumWonders + 1;
-										}
-
-										int iLoop;
-										for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
-										{
-											if (pLoopCity->canConstruct(eLoopBuilding))
-											{
-												int iLoopValue = pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bAsync);
-												if (isNationalWonderClass((BuildingClassTypes)iI) && iMaxNumWonders != -1)
-												{
-													iLoopValue *= iMaxNumWonders + 1 - pLoopCity->getNumNationalWonders();
-													iLoopValue /= iMaxNumWonders + 1;
-												}
-												if (80 * iLoopValue > 100 * iValue)
-												{
-													if (--iLimit <= 0)
-													{
-														iValue = 0;
-														break;
-													}
-												}
-											}
-										}
-										// Subtract some points from wonder value, just to stop us from wasting it
-										if (isNationalWonderClass((BuildingClassTypes)iI))
-											iValue -= 40 + (iMaxNumWonders > 0 ? 60 * getNumNationalWonders() / iMaxNumWonders : 0);
-									}
-								}
-								// K-Mod end
-
-								if (isWorldWonderClass((BuildingClassTypes)iI))
-								{
-									if (iProductionRank <= std::min(3, ((kOwner.getNumCities() + 2) / 3)))
-									{
-										int iTempValue;
-										if (bAsync)
-										{
-											iTempValue = GC.getASyncRand().get(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand ASYNC");
-										}
-										else
-										{
-											iTempValue = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
-										}
-										
-										if (bAreaAlone)
-										{
-											iTempValue *= 2;
-										}
-										iValue += iTempValue;
-									}
-								}
-
-								if (bAsync)
-								{
-									iValue *= (GC.getASyncRand().get(25, "AI Best Building ASYNC") + 100);
-									iValue /= 100;
-								}
-								else
-								{
-									iValue *= (GC.getGameINLINE().getSorenRandNum(25, "AI Best Building") + 100);
-									iValue /= 100;
-								}
-
-								iValue += getBuildingProduction(eLoopBuilding);
-
-
-								bool bValid = ((iMaxTurns <= 0) ? true : false);
-								if (!bValid)
-								{
-									bValid = (iTurnsLeft <= GC.getGameINLINE().AI_turnsPercent(iMaxTurns, GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getConstructPercent()));
-								}
-								if (!bValid)
-								{
-									for (int iHurry = 0; iHurry < GC.getNumHurryInfos(); ++iHurry)
-									{
-										if (canHurryBuilding((HurryTypes)iHurry, eLoopBuilding, true))
-										{
-											if (AI_getHappyFromHurry((HurryTypes)iHurry, eLoopBuilding, true) > 0)
-											{
-												bValid = true;
-												break;
-											}
-										}
-									}
-								}
-								
-								if (bValid)
-								{
-									FAssert((MAX_INT / 1000) > iValue);
-									iValue *= 1000;
-									iValue /= std::max(1, (iTurnsLeft + 3));
-
-									iValue = std::max(1, iValue);
-
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										eBestBuilding = eLoopBuilding;
-									}
-								}
+								iValue = 0;
+								break;
 							}
 						}
 					}
 				}
+				// Subtract some points from wonder value, just to stop us from wasting it
+				if (isNationalWonderClass(eLoopClass))
+					iValue -= 40 + (iMaxNumWonders > 0 ? 60 * getNumNationalWonders() / iMaxNumWonders : 0);
+			}
+		}
+		// K-Mod end
+
+		if (isWorldWonderClass(eLoopClass))
+		{
+			if (iProductionRank <= std::min(3, ((kOwner.getNumCities() + 2) / 3)))
+			{
+				int iTempValue;
+				if (bAsync)
+				{
+					iTempValue = GC.getASyncRand().get(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand ASYNC");
+				}
+				else
+				{
+					iTempValue = GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(), "Wonder Construction Rand");
+				}
+
+				if (bAreaAlone)
+				{
+					iTempValue *= 2;
+				}
+				iValue += iTempValue;
+			}
+		}
+
+		if (bAsync)
+		{
+			iValue *= (GC.getASyncRand().get(25, "AI Best Building ASYNC") + 100);
+			iValue /= 100;
+		}
+		else
+		{
+			iValue *= (GC.getGameINLINE().getSorenRandNum(25, "AI Best Building") + 100);
+			iValue /= 100;
+		}
+
+		//iValue += getBuildingProduction(eLoopBuilding);
+		iValue += getBuildingProduction(eLoopBuilding) / 4; // K-Mod
+
+		bool bValid = iMaxTurns <= 0 ? true : false;
+		if (!bValid)
+		{
+			bValid = (iTurnsLeft <= GC.getGameINLINE().AI_turnsPercent(iMaxTurns, GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getConstructPercent()));
+		}
+		if (!bValid)
+		{
+			for (int iHurry = 0; iHurry < GC.getNumHurryInfos(); ++iHurry)
+			{
+				if (canHurryBuilding((HurryTypes)iHurry, eLoopBuilding, true))
+				{
+					if (AI_getHappyFromHurry((HurryTypes)iHurry, eLoopBuilding, true) > 0)
+					{
+						bValid = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (bValid)
+		{
+			FAssert((MAX_INT / 1000) > iValue);
+			iValue *= 1000;
+			iValue /= std::max(1, (iTurnsLeft + 3));
+
+			iValue = std::max(1, iValue);
+
+			if (iValue > iBestValue)
+			{
+				iBestValue = iValue;
+				eBestBuilding = eLoopBuilding;
 			}
 		}
 	}
