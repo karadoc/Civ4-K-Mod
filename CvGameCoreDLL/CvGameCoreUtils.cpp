@@ -2078,7 +2078,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 		int iMoveCost = pToPlot->movementCost(::getUnit(pUnitNode->m_data), pFromPlot);
 		bool bUniformCost = true;
 
-		for (pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode); pUnitNode && (bNewTurn || bUniformCost) ; pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
+		for (pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode); pUnitNode && (bNewTurn || bUniformCost); pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
 		{
 			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 
@@ -2086,7 +2086,6 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 			if (iLoopCost != iMoveCost)
 			{
 				bUniformCost = false;
-				iMoveCost = std::max(iMoveCost, iLoopCost);
 			}
 		}
 
@@ -2110,7 +2109,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 				plot_list.push_back(GC.getMapINLINE().plotSorenINLINE(pStartNode->m_iX, pStartNode->m_iY));
 			}
 			iMoves = INT_MAX;
-			bool bMaxMoves = pStartNode->m_iData2 > 1 || iFlags & MOVE_MAX_MOVES;
+			bool bMaxMoves = pStartNode->m_iData1 == 0 || iFlags & MOVE_MAX_MOVES;
 
 			for (CLLNode<IDInfo>* pUnitNode = pSelectionGroup->headUnitNode(); pUnitNode != NULL; pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
 			{
