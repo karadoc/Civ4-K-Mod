@@ -8463,7 +8463,7 @@ bool CvCityAI::AI_chooseBuilding(int iFocusFlags, int iMaxTurns, int iMinThresho
 		// K-Mod
 		int iRand;
 		if (iOdds < 0 ||
-			(iRand = GC.getGameINLINE().getSorenRandNum(100, "City AI choose building") < iOdds) ||
+			(iRand = GC.getGameINLINE().getSorenRandNum(100, "City AI choose building")) < iOdds ||
 			iRand < iOdds + 100*getBuildingProduction(eBestBuilding)/std::max(1, getProductionNeeded(eBestBuilding)))
 		// K-Mod end
 		{
