@@ -968,10 +968,10 @@ bool CvGame::selectCity(CvCity* pSelectCity, bool bCtrl, bool bAlt, bool bShift)
 
 void CvGame::selectionListMove(CvPlot* pPlot, bool bAlt, bool bShift, bool bCtrl) const
 {
-	CLLNode<IDInfo>* pSelectedUnitNode;
+	//CLLNode<IDInfo>* pSelectedUnitNode;
 	CvUnit* pHeadSelectedUnit;
-	CvUnit* pSelectedUnit;
-	TeamTypes eRivalTeam;
+	//CvUnit* pSelectedUnit;
+	//TeamTypes eRivalTeam;
 
 	if (pPlot == NULL)
 	{
@@ -1009,6 +1009,7 @@ void CvGame::selectionListMove(CvPlot* pPlot, bool bAlt, bool bShift, bool bCtrl
 		gDLL->getInterfaceIFace()->selectGroup(pHeadSelectedUnit, false, true, false);
 	}
 
+	/* original bts code
 	pSelectedUnitNode = gDLL->getInterfaceIFace()->headSelectionListNode();
 
 	while (pSelectedUnitNode != NULL)
@@ -1033,7 +1034,7 @@ void CvGame::selectionListMove(CvPlot* pPlot, bool bAlt, bool bShift, bool bCtrl
 		}
 
 		pSelectedUnitNode = gDLL->getInterfaceIFace()->nextSelectionListNode(pSelectedUnitNode);
-	}
+	} */ // K-Mod has moved this to selectionListGameNetMessage.
 
 	selectionListGameNetMessage(GAMEMESSAGE_PUSH_MISSION, MISSION_MOVE_TO, pPlot->getX(), pPlot->getY(), 0, false, bShift);
 }
@@ -1122,7 +1123,43 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 
 				if (eMessage == GAMEMESSAGE_PUSH_MISSION)
 				{
-					// K-Mod todo: move the BUTTONPOPUP_DECLAREWARMOVE stuff to here, so that it can catch left-click moves as well as right-click moves.
+					// K-Mod. I've moved the BUTTONPOPUP_DECLAREWARMOVE stuff to here from selectionListMove
+					// so that it can catch left-click moves as well as right-click moves.
+					//
+					// (I'd rather not have UI stuff like this in this function,
+					//  but this is the only place where I can catch left-click moves.)
+					if (iData2 == MISSION_MOVE_TO)
+					{
+						CvPlot* pPlot = GC.getMapINLINE().plotINLINE(iData3, iData4);
+						FAssert(pPlot);
+						pSelectedUnitNode = gDLL->getInterfaceIFace()->headSelectionListNode();
+
+						while (pSelectedUnitNode != NULL)
+						{
+							pSelectedUnit = ::getUnit(pSelectedUnitNode->m_data);
+
+							TeamTypes eRivalTeam = pSelectedUnit->getDeclareWarMove(pPlot);
+
+							if (eRivalTeam != NO_TEAM)
+							{
+								CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_DECLAREWARMOVE);
+								if (NULL != pInfo)
+								{
+									pInfo->setData1(eRivalTeam);
+									pInfo->setData2(pPlot->getX());
+									pInfo->setData3(pPlot->getY());
+									pInfo->setOption1(bShift);
+									pInfo->setOption2(pPlot->getTeam() != eRivalTeam);
+									gDLL->getInterfaceIFace()->addPopup(pInfo);
+								}
+								return;
+							}
+
+							pSelectedUnitNode = gDLL->getInterfaceIFace()->nextSelectionListNode(pSelectedUnitNode);
+						}
+					}
+					// K-Mod end
+
 					CvMessageControl::getInstance().sendPushMission(pHeadSelectedUnit->getID(), ((MissionTypes)iData2), iData3, iData4, iFlags, bShift);
 				}
 				else
