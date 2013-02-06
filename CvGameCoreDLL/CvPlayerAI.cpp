@@ -10581,32 +10581,49 @@ DenialTypes CvPlayerAI::AI_bonusTrade(BonusTypes eBonus, PlayerTypes ePlayer) co
 	return NO_DENIAL;
 }
 
-
+// K-Mod note: the way this function is currently used is that it actually represents
+// the how much the current owner values _not giving the city to this player_.
+//
+// For example, if this player currently controls most of the city's culture,
+// the value should be _lower_ rather than higher, so that the current owner
+// is more likely to give up the city.
+//
+// Ideally the value of receiving the city and the cost of giving the city away would be
+// separate things; but that's currently not how trades are made.
 int CvPlayerAI::AI_cityTradeVal(CvCity* pCity) const
 {
-	CvPlot* pLoopPlot;
-	int iValue;
-	int iI;
-
 	FAssert(pCity->getOwnerINLINE() != getID());
 
-	iValue = 300;
+	int iValue = 300;
 
-	iValue += (pCity->getPopulation() * 50);
+	//iValue += (pCity->getPopulation() * 50);
+	iValue += pCity->getPopulation()*20 + pCity->getHighestPopulation()*30; // K-Mod
 
 	iValue += (pCity->getCultureLevel() * 200);
+	iValue += 200 * pCity->getCultureLevel() * pCity->getCulture(getID()) / std::max(1, pCity->getCulture(pCity->getOwnerINLINE())); // K-Mod
 
-	iValue += (((((pCity->getPopulation() * 50) + GC.getGameINLINE().getElapsedGameTurns() + 100) * 4) * pCity->plot()->calculateCulturePercent(pCity->getOwnerINLINE())) / 100);
+	//iValue += (((((pCity->getPopulation() * 50) + GC.getGameINLINE().getElapsedGameTurns() + 100) * 4) * pCity->plot()->calculateCulturePercent(pCity->getOwnerINLINE())) / 100);
+	// K-Mod
+	int iCityTurns = GC.getGameINLINE().getGameTurn() - (pCity->getGameTurnFounded() + pCity->getGameTurnAcquired())/2;
+	iCityTurns = iCityTurns * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent() / 100;
+	iValue += ((pCity->getPopulation()*20 + pCity->getHighestPopulation()*30 + iCityTurns*3/2 + 80) * 4 * (pCity->plot()->calculateCulturePercent(pCity->getOwnerINLINE())+10)) / 110;
+	// K-Mod end
 
-	for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+	for (int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 	{
-		pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
+		CvPlot* pLoopPlot = plotCity(pCity->getX_INLINE(), pCity->getY_INLINE(), iI);
 
 		if (pLoopPlot != NULL)
 		{
 			if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 			{
-				iValue += (AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true) * 10);
+				//iValue += (AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true) * 10);
+				// K-Mod
+				int iBonusValue = AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true);
+				iBonusValue += GET_PLAYER(pCity->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(pCity->getTeam()), -1, true);
+				iBonusValue *= plotDistance(pLoopPlot, pCity->plot()) <= 1 ? 5 : 4;
+				iValue += iBonusValue;
+				// K-Mod end
 			}
 		}
 	}
@@ -10616,6 +10633,31 @@ int CvPlayerAI::AI_cityTradeVal(CvCity* pCity) const
 		iValue *= 3;
 		iValue /= 2;
 	}
+
+	// K-Mod. (Some stuff copied from AI_warSpoilsValue)
+	{
+		int iCityValue = 0;
+		// holy city value
+		for (ReligionTypes i = (ReligionTypes)0; i < GC.getNumReligionInfos(); i=(ReligionTypes)(i+1))
+		{
+			if (pCity->isHolyCity(i))
+				iCityValue += std::max(0, GC.getGameINLINE().countReligionLevels(i) / (pCity->hasShrine(i) ? 1 : 2) - 4);
+			// note: the -4 at the end is mostly there to offset the 'wonder' value that will be added later.
+			// I don't want to double-count the value of the shrine, and the religion without the shrine isn't worth much anyway.
+		}
+
+		// corp HQ value
+		for (CorporationTypes i = (CorporationTypes)0; i < GC.getNumCorporationInfos(); i=(CorporationTypes)(i+1))
+		{
+			if (pCity->isHeadquarters(i))
+				iCityValue += std::max(0, 2 * GC.getGameINLINE().countCorporationLevels(i) - 4);
+		}
+
+		// wonders
+		iCityValue += 4 * pCity->getNumActiveWorldWonders();
+		iValue += iCityValue * 10;
+	}
+	// K-Mod end
 
 	iValue -= (iValue % GC.getDefineINT("DIPLOMACY_VALUE_REMAINDER"));
 
