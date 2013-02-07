@@ -1941,7 +1941,7 @@ int CvTeamAI::AI_startWarVal(TeamTypes eTeam) const
 			{
 				iValue *= 2;
 			}
-		}	
+		}
 	}
 
 	// This adapted legacy code just makes us more willing to enter a war in a trade deal 
@@ -4682,7 +4682,7 @@ int CvTeamAI::AI_teamCloseness(TeamTypes eIndex, int iMaxDistance) const
 							iValue += GET_PLAYER((PlayerTypes)iI).AI_playerCloseness((PlayerTypes)iJ, iMaxDistance);
 						}
 					}
-				}	
+				}
 			}
 		}
 	}
@@ -5536,7 +5536,7 @@ void CvTeamAI::AI_doWar()
 				int iUnitSpendingPercent = (GET_PLAYER((PlayerTypes)iI).calculateUnitCost() * 100) / std::max(1, GET_PLAYER((PlayerTypes)iI).calculatePreInflatedCosts());
 				iHighUnitSpendingPercent += (std::max(0, iUnitSpendingPercent - 7) / 2);
 				iLowUnitSpendingPercent += iUnitSpendingPercent;
-			}			
+			}
 		}
 	}
 	
@@ -6290,7 +6290,7 @@ bool CvTeamAI::AI_isWaterAreaRelevant(CvArea* pArea)
 					{
 						iOtherTeamCities++;
 					}
-				}				
+				}
 			}
 		}
 		if (iTeamCities >= 2 && iOtherTeamCities >= 2)

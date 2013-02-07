@@ -6857,7 +6857,7 @@ void CvGame::createBarbarianCities()
 				{
 					iTargetCities *= iTargetCitiesMultiplier;
 					iTargetCities /= 100;
-				}				
+				}
 
 				iTargetCities /= std::max(1, iUnownedTilesThreshold);
 
