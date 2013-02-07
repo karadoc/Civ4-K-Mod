@@ -12370,10 +12370,17 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 						kLoopData.iData1 == pOrderNode->m_data.iData1 &&
 						kLoopData.iData2 == pOrderNode->m_data.iData2)
 					{
+						// Since we aren't 'finishing' these orders, repeated orders will need to be re-created manually.
+						if (kLoopData.bSave)
+						{
+							pushOrder(kLoopData.eOrderType, kLoopData.iData1, kLoopData.iData2, true, false, -1);
+						}
+						// Move on to the next node before we pop the order - but don't increment iCount.
+						pLoopNode = nextOrderQueueNode(pLoopNode);
 						popOrder(iCount);
 						iBuilt--;
-						pLoopNode = headOrderQueueNode();
-						iCount = 0;
+						/* pLoopNode = headOrderQueueNode();
+						iCount = 0; */
 					}
 					else
 					{
