@@ -2074,7 +2074,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(int **ppiList, const TCHAR* szRoot
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal = FindInInfoClass(szTextVal);
 
@@ -2143,7 +2144,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(bool **ppbList, const TCHAR* szRoo
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal = FindInInfoClass(szTextVal);
 							if (iIndexVal != -1)
@@ -2211,7 +2213,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(float **ppfList, const TCHAR* szRo
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal = FindInInfoClass(szTextVal);
 							if (iIndexVal != -1)
@@ -2279,7 +2282,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(CvString **ppszList, const TCHAR* 
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal = FindInInfoClass(szTextVal);
 							if (iIndexVal != -1)
@@ -2347,7 +2351,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(int **ppiList, const TCHAR* szRoot
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal = GC.getTypesEnum(szTextVal);
 							if (iIndexVal != -1)
@@ -2416,7 +2421,8 @@ void CvXMLLoadUtility::SetVariableListTagPairForAudioScripts(int **ppiList, cons
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal =	GC.getTypesEnum(szTextVal);
 							if (iIndexVal != -1)
@@ -2488,7 +2494,8 @@ void CvXMLLoadUtility::SetVariableListTagPairForAudioScripts(int **ppiList, cons
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal = FindInInfoClass(szTextVal);
 							if (iIndexVal != -1)
@@ -2560,7 +2567,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(bool **ppbList, const TCHAR* szRoo
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal =	GC.getTypesEnum(szTextVal);
 							if (iIndexVal != -1)
@@ -2628,7 +2636,8 @@ void CvXMLLoadUtility::SetVariableListTagPair(CvString **ppszList, const TCHAR* 
 				{
 					for (i=0;i<iNumSibs;i++)
 					{
-						if (GetChildXmlVal(szTextVal))
+						//if (GetChildXmlVal(szTextVal))
+						if (SkipToNextVal() && GetChildXmlVal(szTextVal)) // K-Mod. (without this, a comment in the xml could break this)
 						{
 							iIndexVal =	GC.getTypesEnum(szTextVal);
 							if (iIndexVal != -1)
