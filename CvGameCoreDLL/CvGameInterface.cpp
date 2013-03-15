@@ -1126,9 +1126,15 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 					// K-Mod. I've moved the BUTTONPOPUP_DECLAREWARMOVE stuff to here from selectionListMove
 					// so that it can catch left-click moves as well as right-click moves.
 					//
+					// Note: If MOVE_DECLARE_WAR is set, then we assume it was set by a BUTTONPOPUP_DECLAREWARMOVE
+					// which was triggered already by this move. In which case we shouldn't check for declare war
+					// this time. This is a kludge to prevent the popup from appearing twice.
+					// Also, when this happens we should clear the MOVE_DECLARE_WAR flag. Otherwise it may cause
+					// the pathfinder to fail in some cases.
+					//
 					// (I'd rather not have UI stuff like this in this function,
 					//  but this is the only place where I can catch left-click moves.)
-					if (iData2 == MISSION_MOVE_TO)
+					if (iData2 == MISSION_MOVE_TO && !(iFlags & MOVE_DECLARE_WAR))
 					{
 						CvPlot* pPlot = GC.getMapINLINE().plotINLINE(iData3, iData4);
 						FAssert(pPlot);
@@ -1158,9 +1164,10 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 							pSelectedUnitNode = gDLL->getInterfaceIFace()->nextSelectionListNode(pSelectedUnitNode);
 						}
 					}
-					// K-Mod end
 
-					CvMessageControl::getInstance().sendPushMission(pHeadSelectedUnit->getID(), ((MissionTypes)iData2), iData3, iData4, iFlags, bShift);
+					//CvMessageControl::getInstance().sendPushMission(pHeadSelectedUnit->getID(), ((MissionTypes)iData2), iData3, iData4, iFlags, bShift);
+					CvMessageControl::getInstance().sendPushMission(pHeadSelectedUnit->getID(), ((MissionTypes)iData2), iData3, iData4, iFlags & ~ MOVE_DECLARE_WAR, bShift);
+					// K-Mod end
 				}
 				else
 				{
