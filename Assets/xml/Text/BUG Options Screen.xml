@@ -17,7 +17,7 @@
 		<French>Options du BUG Mod</French>
 		<German>Optionen der BUG Mod</German>
 		<Italian>Opzioni BUG Mod</Italian>
-		<Spanish>BUG Mod Options</Spanish>
+		<Spanish>Opciones de BUG Mod</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTBUTTON_HELP</Tag>
@@ -25,7 +25,7 @@
 		<French>d'Aide du BUG Mod</French>
 		<German>Hilfe der BUG Mod</German>
 		<Italian>Guida del BUG Mod</Italian>
-		<Spanish>Ayuda por BUG Mod</Spanish>
+		<Spanish>Ayuda BUG Mod</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTBUTTON_HELP_HOVER</Tag>
@@ -33,7 +33,7 @@
 		<French>Ouvre le fichier d'aide du BUG Mod. Vous pouvez aussi utiliser [ALT + CTRL + F1] dans l'écran principal du jeu.</French>
 		<German>Öffnet die Hilfe-Datei der BUG Mod (Tastenkombination [STRG + ALT + F1] im Hauptbildschirm)</German>
 		<Italian>Apre il file della Guida del BUG Mod. Puoi utilizzare la scorciatoia [ALT + CTRL + F1] dall'interfaccia principale.</Italian>
-		<Spanish>Opens the BUG Mod help file. You can hit [ALT + CTRL + F1] from the main interface.</Spanish>
+		<Spanish>Abre la ayuda de BUG Mod. También puedes pulsar [ALT + CTRL + F1] desde la pantalla principal.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTBUTTON_EXIT_HOVER</Tag>
@@ -41,7 +41,7 @@
 		<French>Sortir de l'écran d'options du BUG.</French>
 		<German>Den Optionensbildschirm der BUG Mod verlassen</German>
 		<Italian>Esci dalla schermata delle Opzioni del BUG Mod.</Italian>
-		<Spanish>Exits the BUG Options screen.</Spanish>
+		<Spanish>Sale de la pantalla de opciones de BUG.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTIONS_SCREEN_HOVER</Tag>
@@ -49,7 +49,7 @@
 		<French>Shows the BUG Option Screen.</French>
 		<German>Ruft den Optionsbildschirm der BUG Mod auf</German>
 		<Italian>Mostra le opzioni del BUG Mod.</Italian>
-		<Spanish>Shows BUG Option Screen.</Spanish>
+		<Spanish>Muestra la pantalla de opciones de BUG.</Spanish>
 	</TEXT>
 
 <!-- Tabs and Labels -->
@@ -70,7 +70,7 @@
 		<French>Progress Bars:</French>
 		<German>Fortschrittsbalken:</German>
 		<Italian>Progressi Barra:</Italian>
-		<Spanish>Progress Bars:</Spanish>
+		<Spanish>Barras de Progreso:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_LEADERHEADS</Tag>
@@ -78,7 +78,7 @@
 		<French>Leaderheads:</French>
 		<German>Oberhaupt-Symbole:</German>
 		<Italian>Leaderheads:</Italian>
-		<Spanish>Leaderheads:</Spanish>
+		<Spanish>Retratos de Líderes</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOSAVE</Tag>
@@ -86,7 +86,7 @@
 		<French>AutoSave:</French>
 		<German>Automatisches Speichern:</German>
 		<Italian>Salvataggio automatico:</Italian>
-		<Spanish>AutoSave:</Spanish>
+		<Spanish>Autoguardado:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ACTIONS</Tag>
@@ -94,7 +94,7 @@
 		<French>Actions:</French>
 		<German>Aktionen:</German>
 		<Italian>Azioni:</Italian>
-		<Spanish>Actions:</Spanish>
+		<Spanish>Acciones:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_TECHWINDOW</Tag>
@@ -102,7 +102,7 @@
 		<French>Tech Splash Screen:</French>
 		<German>Technologie-Popup:</German>
 		<Italian>Scheda della scoperta tecnologica:</Italian>
-		<Spanish>Tech Splash Screen:</Spanish>
+		<Spanish>Tecnologías:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_BUFFY</Tag>
@@ -118,7 +118,7 @@
 		<French>Miscellaneous:</French>
 		<German>Sonstiges:</German>
 		<Italian>Varie:</Italian>
-		<Spanish>Miscellaneous:</Spanish>
+		<Spanish>Misceláneo:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_INIFILENOTFOUND</Tag>
@@ -126,7 +126,7 @@
 		<French>Fichier INI Non Trouvé</French>
 		<German>INI-Datei nicht gefunden</German>
 		<Italian>Il file 'BUG Mod.ini' non è stato trovato</Italian>
-		<Spanish>Cannot Find INI File</Spanish>
+		<Spanish>No se pudo encontrar fichero INI</Spanish>
 	</TEXT>
 	
 	<!-- Map Tab -->
@@ -137,7 +137,7 @@
 		<French>Map</French>
 		<German>Karte</German>
 		<Italian>Mappa</Italian>
-		<Spanish>Map</Spanish>
+		<Spanish>Mapa</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_STRATEGYOVERLAY</Tag>
@@ -145,7 +145,7 @@
 		<French>Strategy Layer:</French>
 		<German>Strategie-Overlay:</German>
 		<Italian>Livello Strategico:</Italian>
-		<Spanish>Strategy Layer:</Spanish>
+		<Spanish>Mapa Estratégico:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_CITYBAR</Tag>
@@ -153,7 +153,7 @@
 		<French>City Bar:</French>
 		<German>Stadtbalken:</German>
 		<Italian>Barra Cittadina:</Italian>
-		<Spanish>City Bar:</Spanish>
+		<Spanish>Barra de Ciudad:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_TILEHOVER</Tag>
@@ -161,7 +161,7 @@
 		<French>Tile Hover:</French>
 		<German>Geländefeld-Tooltip:</German>
 		<Italian>Casella Selezionata:</Italian>
-		<Spanish>Tile Hover:</Spanish>
+		<Spanish>Texto Flotante Casilla:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_MAPFINDER</Tag>
@@ -180,7 +180,7 @@
 		<French>Adviseurs</French>
 		<German>Berater</German>
 		<Italian>Consiglieri</Italian>
-		<Spanish>Advisors</Spanish>
+		<Spanish>Consejeros</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_DOMESTIC_ADVISOR</Tag>
@@ -188,7 +188,7 @@
 		<French>Domestique [F1]:</French>
 		<German>Inland [F1]:</German>
 		<Italian>Interno [F1]:</Italian>
-		<Spanish>Domestic [F1]:</Spanish>
+		<Spanish>Interior [F1]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_FINANCE_ADVISOR</Tag>
@@ -196,7 +196,7 @@
 		<French>Finance [F2]:</French>
 		<German>Finanzen [F2]:</German>
 		<Italian>Economico [F2]:</Italian>
-		<Spanish>Finance [F2]:</Spanish>
+		<Spanish>Financiero [F2]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_FOREIGN_ADVISOR</Tag>
@@ -204,7 +204,7 @@
 		<French>Etranger [F4]:</French>
 		<German>Ausland [F4]:</German>
 		<Italian>Estero [F4]:</Italian>
-		<Spanish>Foreign [F4]:</Spanish>
+		<Spanish>Asuntos Exteriores [F4]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_MILITARY_ADVISOR</Tag>
@@ -212,7 +212,7 @@
 		<French>Militaire [F5]:</French>
 		<German>Militär [F5]:</German>
 		<Italian>Militare [F5]:</Italian>
-		<Spanish>Military [F5]:</Spanish>
+		<Spanish>Militar [F5]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_TECHNOLOGY_ADVISOR</Tag>
@@ -220,7 +220,7 @@
 		<French>Technologie [F6]:</French>
 		<German>Technologiebaum [F6]:</German>
 		<Italian>Tecnologico [F6]:</Italian>
-		<Spanish>Technology [F6]:</Spanish>
+		<Spanish>Tecnología [F6]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_RELIGIOUS_ADVISOR</Tag>
@@ -228,7 +228,7 @@
 		<French>Religion [F7]:</French>
 		<German>Religion [F7]:</German>
 		<Italian>Religioso [F7]:</Italian>
-		<Spanish>Religion [F7]:</Spanish>
+		<Spanish>Religión [F7]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_VICTORY_CONDITIONS</Tag>
@@ -236,7 +236,7 @@
 		<French>Victory [F8]:</French>
 		<German>Siegbedingungen [F8]:</German>
 		<Italian>Vittoria [F8]:</Italian>
-		<Spanish>Victory [F8]:</Spanish>
+		<Spanish>Victoria [F8]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_INFO_SCREENS</Tag>
@@ -260,7 +260,7 @@
 		<French>Espionnage [CTRL + E]:</French>
 		<German>Spionage [STRG + E]:</German>
 		<Italian>Spionaggio [CTRL + E]:</Italian>
-		<Spanish>Espionage [CTRL + E]:</Spanish>
+		<Spanish>Espionaje [CTRL + E]:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ESPIONAGE_RATIO</Tag>
@@ -268,7 +268,7 @@
 		<French>Pro Rata:</French>
 		<German>Spionagepunktverhältnis:</German>
 		<Italian>Rapporto:</Italian>
-		<Spanish>Ratio:</Spanish>
+		<Spanish>Proporción:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ESPIONAGE_MISSIONS</Tag>
@@ -276,7 +276,7 @@
 		<French>Missions:</French>
 		<German>Spionagemissionen:</German>
 		<Italian>Missioni:</Italian>
-		<Spanish>Missions:</Spanish>
+		<Spanish>Misiones:</Spanish>
 	</TEXT>
 	
 	<!-- City Screen Tab -->
@@ -287,7 +287,7 @@
 		<French>City Screen</French>
 		<German>Stadt-Bildschirm</German>
 		<Italian>Città</Italian>
-		<Spanish>City Screen</Spanish>
+		<Spanish>Pantalla de Ciudad</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_HURRYDETAIL</Tag>
@@ -295,7 +295,7 @@
 		<French>Hurry Detail:</French>
 		<German>Produktionsbeschleunigung:</German>
 		<Italian>Accelerazione dettagliata:</Italian>
-		<Spanish>Hurry Detail:</Spanish>
+		<Spanish>Detalles acelerar:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_GREATPERSONBAR</Tag>
@@ -303,7 +303,7 @@
 		<French>Great Person Bar:</French>
 		<German>Anzeige für Große Persönlichkeit-Punkte:</German>
 		<Italian>Barra dei Grandi Personaggi:</Italian>
-		<Spanish>Great Person Bar:</Spanish>
+		<Spanish>Barra Grandes Personajes:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_BUILDINGEFFECTS</Tag>
@@ -311,7 +311,7 @@
 		<French>Building Actual Effects:</French>
 		<German>Effektive Gebäudeerträge:</German>
 		<Italian>Effetti degli Edifici:</Italian>
-		<Spanish>Building Actual Effects:</Spanish>
+		<Spanish>Efectos Construcción:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_PRODUCTIONQUEUE</Tag>
@@ -319,7 +319,7 @@
 		<French>Production Queue:</French>
 		<German>Produktionskette:</German>
 		<Italian>Coda di Produzione:</Italian>
-		<Spanish>Production Queue:</Spanish>
+		<Spanish>Cola de Producción:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_PRODUCTIONDECAY</Tag>
@@ -327,7 +327,7 @@
 		<French>Decay:</French>
 		<German>Verfall:</German>
 		<Italian>Decadimento:</Italian>
-		<Spanish>Decay:</Spanish>
+		<Spanish>Decaimiento:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_CITYBAR_HOVER</Tag>
@@ -335,7 +335,7 @@
 		<French>City Bar Hover:</French>
 		<German>Stadtbalken-Tooltip:</German>
 		<Italian>Testo della Barra Cittadina:</Italian>
-		<Spanish>City Bar Hover:</Spanish>
+		<Spanish>Información Barra Ciudad:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_CITYANGER</Tag>
@@ -343,7 +343,7 @@
 		<French>City Anger:</French>
 		<German>Unzufriedenheit:</German>
 		<Italian>Rabbia Cittadina:</Italian>
-		<Spanish>City Anger:</Spanish>
+		<Spanish>Infelicidad Ciudad:</Spanish>
 	</TEXT>
 	
 	<!-- Clock Tab -->
@@ -354,7 +354,7 @@
 		<French>Horloge</French>
 		<German>Uhr</German>
 		<Italian>Orologio</Italian>
-		<Spanish>Clock</Spanish>
+		<Spanish>Reloj</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_NJAGC_REGULAR</Tag>
@@ -362,7 +362,7 @@
 		<French>Vue Standard:</French>
 		<German>Standardansicht:</German>
 		<Italian>Visualizzazione normale:</Italian>
-		<Spanish>Standard View:</Spanish>
+		<Spanish>Vista Estándar:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_NJAGC_ALTERNATE</Tag>
@@ -370,7 +370,7 @@
 		<French>Vue Alternative:</French>
 		<German>Alternative Ansicht:</German>
 		<Italian>Visualizzazione alternativa:</Italian>
-		<Spanish>Alternate View:</Spanish>
+		<Spanish>Vista Alternativa:</Spanish>
 	</TEXT>
 	
 	<!-- Scores Tab -->
@@ -381,7 +381,7 @@
 		<French>Scores</French>
 		<German>Punkteanzeige</German>
 		<Italian>Punteggio</Italian>
-		<Spanish>Scoreboard</Spanish>
+		<Spanish>Puntuaciones</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SCORES_GENERAL</Tag>
@@ -397,7 +397,7 @@
 		<French>Civilisations Mortes:</French>
 		<German>Ausgelöschte Zivilisationen:</German>
 		<Italian>Civiltà scomparse:</Italian>
-		<Spanish>Dead Civilizations:</Spanish>
+		<Spanish>Civilizaciones Eliminadas:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SCORES_NEW_COLUMNS</Tag>
@@ -405,7 +405,7 @@
 		<French>Additional Columns:</French>
 		<German>Zusätzliche Spalten:</German>
 		<Italian>Colonne aggiuntive:</Italian>
-		<Spanish>Additional Columns:</Spanish>
+		<Spanish>Columnas Adicionales:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SCORES_ICONS</Tag>
@@ -413,7 +413,7 @@
 		<French>Icons:</French>
 		<German>Symbole:</German>
 		<Italian>Icone:</Italian>
-		<Spanish>Icons:</Spanish>
+		<Spanish>Iconos:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SCORES_GRID</Tag>
@@ -421,7 +421,7 @@
 		<French>Layout Avancé:</French>
 		<German>Erweitertes Layout:</German>
 		<Italian>Layout avanzato:</Italian>
-		<Spanish>Advanced Layout:</Spanish>
+		<Spanish>Puntuaciones Avanzadas:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SCORES_ORDER</Tag>
@@ -429,7 +429,7 @@
 		<French>Ordre des Colonnes:</French>
 		<German>Spaltenreihenfolge:</German>
 		<Italian>Ordine delle colonne:</Italian>
-		<Spanish>Column Order:</Spanish>
+		<Spanish>Orden de Columnas:</Spanish>
 	</TEXT>
 	
 	<!-- PLE Tab -->
@@ -440,7 +440,7 @@
 		<French>Plot List</French>
 		<German>Einheitenliste</German>
 		<Italian>Icone Unità</Italian>
-		<Spanish>Plot List</Spanish>
+		<Spanish>Lista</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_PLE_INDICATORS</Tag>
@@ -448,7 +448,7 @@
 		<French>Indicators:</French>
 		<German>Zusätzliche Anzeigen:</German>
 		<Italian>Indicatori:</Italian>
-		<Spanish>Indicators:</Spanish>
+		<Spanish>Indicadores:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_PLE_UNIT_INFO_TOOLTIP</Tag>
@@ -456,7 +456,7 @@
 		<French>Infobulle d'Info d'Unité:</French>
 		<German>Info-Tooltip:</German>
 		<Italian>Informazioni sulle Unità:</Italian>
-		<Spanish>Unit Info Tooltip:</Spanish>
+		<Spanish>Información Unidad:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_PLE_UPGRADE_COST</Tag>
@@ -464,7 +464,7 @@
 		<French>Upgrade Cost:</French>
 		<German>Modernisierungskosten:</German>
 		<Italian>Costo di avanzamento:</Italian>
-		<Spanish>Upgrade Cost:</Spanish>
+		<Spanish>Coste Actualización:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_PLE_SPECIALTIES</Tag>
@@ -472,7 +472,7 @@
 		<French>Unit Specialties:</French>
 		<German>Spezialfähigkeiten:</German>
 		<Italian>Caratteristiche:</Italian>
-		<Spanish>Unit Specialties:</Spanish>
+		<Spanish>Especialización:</Spanish>
 	</TEXT>
 	
 	<!-- ACO Tab -->
@@ -483,7 +483,7 @@
 		<French>Odds</French>
 		<German>Siegchancen</German>
 		<Italian>Probabilità</Italian>
-		<Spanish>Odds</Spanish>
+		<Spanish>Probabilidades</Spanish>
 	</TEXT>
 	
 	<!-- Alerts Tab -->
@@ -494,7 +494,7 @@
 		<French>Alertes</French>
 		<German>Warnungen</German>
 		<Italian>Avvisi</Italian>
-		<Spanish>Alerts</Spanish>
+		<Spanish>Alertas</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ALERTS_CITY</Tag>
@@ -502,7 +502,7 @@
 		<French>Ville:</French>
 		<German>Städte:</German>
 		<Italian>Città:</Italian>
-		<Spanish>City:</Spanish>
+		<Spanish>Ciudad:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ALERTS_DIPLOMACY</Tag>
@@ -510,7 +510,7 @@
 		<French>Diplomatie:</French>
 		<German>Diplomatie:</German>
 		<Italian>Diplomazia:</Italian>
-		<Spanish>Diplomacy:</Spanish>
+		<Spanish>Diplomacia:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ALERTS_TRADE</Tag>
@@ -518,7 +518,7 @@
 		<French>Commerce:</French>
 		<German>Handel:</German>
 		<Italian>Commercio:</Italian>
-		<Spanish>Trading:</Spanish>
+		<Spanish>Comercio:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ALERTS_VICTORY</Tag>
@@ -526,7 +526,7 @@
 		<French>Victoire:</French>
 		<German>Vorherrschafts-Sieg:</German>
 		<Italian>Vittoria di Dominazione:</Italian>
-		<Spanish>Victory:</Spanish>
+		<Spanish>Victoria:</Spanish>
 	</TEXT>
 	
 	<!-- Logging Tab -->
@@ -537,7 +537,7 @@
 		<French>Log</French>
 		<German>Protokollierung</German>
 		<Italian>Registro</Italian>
-		<Spanish>Logging</Spanish>
+		<Spanish>Registrado</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_BUILDS</Tag>
@@ -545,7 +545,7 @@
 		<French>Recherche et Construction:</French>
 		<German>Forschung / Bauten:</German>
 		<Italian>Ricerca e costruzioni:</Italian>
-		<Spanish>Research and Builds:</Spanish>
+		<Spanish>Investigación y Construcción:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_CITIES</Tag>
@@ -553,7 +553,7 @@
 		<French>Villes:</French>
 		<German>Städte:</German>
 		<Italian>Città:</Italian>
-		<Spanish>Cities:</Spanish>
+		<Spanish>Ciudades:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_EVENTS</Tag>
@@ -561,7 +561,7 @@
 		<French>Evènements:</French>
 		<German>Ereignisse:</German>
 		<Italian>Eventi:</Italian>
-		<Spanish>Events:</Spanish>
+		<Spanish>Eventos:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_POLITICS</Tag>
@@ -569,7 +569,7 @@
 		<French>Diplomatie:</French>
 		<German>Diplomatie:</German>
 		<Italian>Diplomazia:</Italian>
-		<Spanish>Diplomacy:</Spanish>
+		<Spanish>Diplomacia:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_COMBAT</Tag>
@@ -577,7 +577,7 @@
 		<French>Combat:</French>
 		<German>Kampf:</German>
 		<Italian>Combattimento:</Italian>
-		<Spanish>Combat:</Spanish>
+		<Spanish>Combate:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_TRADE</Tag>
@@ -585,7 +585,7 @@
 		<French>Trade and Demands:</French>
 		<German>Handel / Forderungen:</German>
 		<Italian>Commercio:</Italian>
-		<Spanish>Trade and Demands:</Spanish>
+		<Spanish>Comercio:</Spanish>
 	</TEXT>
 	
 	<!-- Unit Naming Tab -->
@@ -596,7 +596,7 @@
 		<French>Noms des Unités</French>
 		<German>Einheitennamen</German>
 		<Italian>Nomi Unità</Italian>
-		<Spanish>Unit Naming</Spanish>
+		<Spanish>Nombres Unidad</Spanish>
 	</TEXT>
 	
 	<!-- System Tab -->
@@ -607,7 +607,7 @@
 		<French>System</French>
 		<German>System</German>
 		<Italian>Sistema</Italian>
-		<Spanish>System</Spanish>
+		<Spanish>Sistema</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SUBVERSION</Tag>
@@ -634,7 +634,7 @@
 		<French>Configuration</French>
 		<German>Pfade</German>
 		<Italian>Config</Italian>
-		<Spanish>Config</Spanish>
+		<Spanish>Configuración</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_MOD_DIRECTORY</Tag>
@@ -642,7 +642,7 @@
 		<French>Mod Directory:</French>
 		<German>Mod-Verzeichnis:</German>
 		<Italian>Directory del Mod:</Italian>
-		<Spanish>Mod Directory:</Spanish>
+		<Spanish>Directorio del Mod:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ROOT_DIRECTORY</Tag>
@@ -650,7 +650,7 @@
 		<French>CivilizationIV.ini Directory:</French>
 		<German>CivilizationIV.ini:</German>
 		<Italian>Directory di CivilizationIV.ini:</Italian>
-		<Spanish>CivilizationIV.ini Directory:</Spanish>
+		<Spanish>Directorio CivilizationIV.ini:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_SETTINGS_DIRECTORY</Tag>
@@ -658,7 +658,7 @@
 		<French>Settings Directory:</French>
 		<German>Einstellungen:</German>
 		<Italian>Directory dei Settings:</Italian>
-		<Spanish>Settings Directory:</Spanish>
+		<Spanish>Directorio Opciones:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_ASSET_SEARCH_PATHS</Tag>
@@ -666,7 +666,7 @@
 		<French>Asset Search Paths:</French>
 		<German>"Assets"-Verzeichnisse:</German>
 		<Italian>Percorsi di ricerca di 'Assets':</Italian>
-		<Spanish>Asset Search Paths:</Spanish>
+		<Spanish>Directorios de Assets:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_CDA_CONFIG</Tag>
@@ -674,7 +674,7 @@
 		<French>Fichiers des Pages CDA:</French>
 		<German>"CDA"-Optionsdatei:</German>
 		<Italian>File di personalizzazione del CDA:</Italian>
-		<Spanish>CDA Pages File:</Spanish>
+		<Spanish>Páginas CDA:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_UNITNAMING_CONFIG</Tag>
@@ -682,7 +682,7 @@
 		<French>Fichier d'options Advanced Unit Naming:</French>
 		<German>"Advanced Unit Naming"-Optionsdatei:</German>
 		<Italian>File per la Denominazione avanzata delle Unità:</Italian>
-		<Spanish>Advanced Unit Naming Options File:</Spanish>
+		<Spanish>Fichero de Nombres Avanzados:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_AUTOLOG_LOG</Tag>
@@ -690,7 +690,7 @@
 		<French>Fichier Autolog:</French>
 		<German>"Autolog"-Protokolldatei:</German>
 		<Italian>File del Registro Automatico:</Italian>
-		<Spanish>Autolog File:</Spanish>
+		<Spanish>Fichero Autolog:</Spanish>
 	</TEXT>
 	
 	<!-- Credits Tab -->
@@ -701,7 +701,7 @@
 		<French>Credits</French>
 		<German>Credits</German>
 		<Italian>Crediti</Italian>
-		<Spanish>Credits</Spanish>
+		<Spanish>Créditos</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_BUG_TEAM</Tag>
@@ -709,7 +709,7 @@
 		<French>Team BUG</French>
 		<German>BUG Team</German>
 		<Italian>BUG Team</Italian>
-		<Spanish>BUG Team</Spanish>
+		<Spanish>Equipo BUG</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_MOD_AUTHORS</Tag>
@@ -717,7 +717,7 @@
 		<French>Auteurs des Mods</French>
 		<German>Mod-Autoren</German>
 		<Italian>Autori dei Mod inclusi</Italian>
-		<Spanish>Mod Authors</Spanish>
+		<Spanish>Autores de Mods</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_MAP_SCRIPTS</Tag>
@@ -725,7 +725,7 @@
 		<French>Map Scripts</French>
 		<German>Map-Scripte</German>
 		<Italian>Autori dei Map Script</Italian>
-		<Spanish>Map Scripts</Spanish>
+		<Spanish>Scripts de Mapa</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_TRANSLATORS</Tag>
@@ -733,7 +733,7 @@
 		<French>Traducteurs</French>
 		<German>Übersetzer</German>
 		<Italian>Traduttori</Italian>
-		<Spanish>Translators</Spanish>
+		<Spanish>Traductores</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPTLABEL_THANKS</Tag>
@@ -741,6 +741,6 @@
 		<French>Special Thanks</French>
 		<German>Besonderer Dank an</German>
 		<Italian>Ringraziamenti</Italian>
-		<Spanish>Special Thanks</Spanish>
+		<Spanish>Agradecimientos</Spanish>
 	</TEXT>
 </Civ4GameText>

@@ -15,7 +15,7 @@
 		<French>Screen Logging Level</French>
 		<German>Protokollierungsstufe (Bildschirm)</German>
 		<Italian>Livello di log a video</Italian>
-		<Spanish>Screen Logging Level</Spanish>
+		<Spanish>Registrado en Pantalla</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__SCREENLOGLEVEL_HOVER</Tag>
@@ -23,7 +23,7 @@
 		<French>Selects which logging messages get printed to the screen. Each level includes messages of all levels below it.</French>
 		<German>Bestimmt, welche Protokoll-Meldungen im Hauptbildschirm angezeigt werden (jede Stufe schließt die Meldungen der Stufe darunter mit ein)</German>
 		<Italian>Seleziona quali messaggi di log vengono mostrati sullo schermo. Ogni livello comprende ovviamente tutti i messaggi dei livelli inferiori.</Italian>
-		<Spanish>Selects which logging messages get printed to the screen. Each level includes messages of all levels below it.</Spanish>
+		<Spanish>Selecciona qué mensajes del registro serán mostrados en pantalla. Cada nivel incluye todos los mensajes de los niveles inferiores.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__SCREENLOGLEVEL_LIST</Tag>
@@ -31,7 +31,7 @@
 		<French>Debug|Info|Warning|Error|None</French>
 		<German>Debug|Info|Warnung|Fehler|Keine</German>
 		<Italian>Debug|Informazioni|Avvisi|Errori|Nessuno</Italian>
-		<Spanish>Debug|Info|Warning|Error|None</Spanish>
+		<Spanish>Depuración|Información|Advertencias|Errores|Ninguno</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__FILELOGLEVEL_TEXT</Tag>
@@ -39,7 +39,7 @@
 		<French>File Logging Level</French>
 		<German>Protokollierungsstufe (Datei)</German>
 		<Italian>Livello di log su file</Italian>
-		<Spanish>File Logging Level</Spanish>
+		<Spanish>Registrado en Fichero</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__FILELOGLEVEL_HOVER</Tag>
@@ -47,7 +47,7 @@
 		<French>Selects which logging messages get printed to the PythonDbg.log file. Each level includes messages of all levels below it.</French>
 		<German>Bestimmt, welche Protokoll-Meldungen in der Datei "PythonDbg.log" gespeichert werden (jede Stufe schließt die Meldungen der Stufe darunter mit ein)</German>
 		<Italian>Seleziona quali messaggi di log vengono scritti nel file PythonDbg.log. Ogni livello comprende ovviamente tutti i messaggi dei livelli inferiori.</Italian>
-		<Spanish>Selects which logging messages get printed to the PythonDbg.log file. Each level includes messages of all levels below it.</Spanish>
+		<Spanish>Selecciona qué mensajes del registro serán añadidos al fichero PythonDbg.log. Cada nivel incluye todos los mensajes de los niveles inferiores.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__FILELOGLEVEL_LIST</Tag>
@@ -55,7 +55,7 @@
 		<French>Debug|Info|Warning|Error|None</French>
 		<German>Debug|Info|Warnung|Fehler|Keine</German>
 		<Italian>Debug|Informazioni|Avvisi|Errori|Nessuno</Italian>
-		<Spanish>Debug|Info|Warning|Error|None</Spanish>
+		<Spanish>Depuración|Información|Advertencias|Errores|Ninguno</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__LOGTIME_TEXT</Tag>
@@ -63,7 +63,7 @@
 		<French>Include Time</French>
 		<German>Zeit protokollieren</German>
 		<Italian>Includi ora</Italian>
-		<Spanish>Include Time</Spanish>
+		<Spanish>Incluir Tiemo</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__LOGTIME_HOVER</Tag>
@@ -71,7 +71,7 @@
 		<French>When checked, each log file message includes the current time in HH:MM:SS format.</French>
 		<German>Fügt jeder ausgegebenen Protokoll-Meldung die aktuelle Uhrzeit im Format "HH:MM:SS" hinzu</German>
 		<Italian>Quando è selezionato, ogni messaggio di log include l'ora corrente (nel formato HH:MM:SS).</Italian>
-		<Spanish>When checked, each log file message includes the current time in HH:MM:SS format.</Spanish>
+		<Spanish>Si se activa, cada mensaje del registro incluye el tiempo actual en el formato HH:MM:SS.</Spanish>
 	</TEXT>
 	
 <!-- Subversion -->
@@ -82,7 +82,7 @@
 		<French>Check for Updates</French>
 		<German>Nach Updates suchen</German>
 		<Italian>Cerca aggiornamenti</Italian>
-		<Spanish>Check for Updates</Spanish>
+		<Spanish>Comprobar Actualizaciones</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__CHECKFORUPDATES_HOVER</Tag>
@@ -90,7 +90,7 @@
 		<French>When checked, BUG will look for SVN updates and/or releases each time you launch Civilization and notify you when new ones are found.</French>
 		<German>Lässt die BUG Mod bei jedem Spielstart nach SVN-Updates und/oder neuen offiziellen Versionen suchen und eine Meldung ausgeben, wenn aktuellere Versionen gefunden wurden</German>
 		<Italian>Quando è selezionato, il BUG Mod controllerà la disponibilità di aggiornamenti SVN e/o nuove versioni ogni volta che lancerai Civ4 e ti notificherà ciò che avrà eventualmente trovato.</Italian>
-		<Spanish>When checked, BUG will look for SVN updates and/or releases each time you launch Civilization and notify you when new ones are found.</Spanish>
+		<Spanish>Si se activa, BUG comprobará si existen actualizaciones SVN o nuevas versiones estables cada vez que lanzas Civilization, y creará una notificación en caso de haberlas.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__LOCALROOT_TEXT</Tag>
@@ -98,7 +98,7 @@
 		<French>BUG Install Folder</French>
 		<German>Installationsverzeichnis der BUG Mod</German>
 		<Italian>Cartella di installazione del BUG Mod</Italian>
-		<Spanish>BUG Install Folder</Spanish>
+		<Spanish>Directorio BUG</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__LOCALROOT_HOVER</Tag>
@@ -106,7 +106,7 @@
 		<French>Location where BUG files are installed.</French>
 		<German>Verzeichnis, in dem sich die Dateien der BUG Mod befinden</German>
 		<Italian>Posizione in cui sono installati i file del BUG Mod.</Italian>
-		<Spanish>Location where BUG files are installed.</Spanish>
+		<Spanish>Directorio donde los ficheros de BUG están instalados.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__LOCALVERSION_TEXT</Tag>
@@ -114,7 +114,7 @@
 		<French>Installed Revision</French>
 		<German>Installierte Revision</German>
 		<Italian>Revisione installata</Italian>
-		<Spanish>Installed Revision</Spanish>
+		<Spanish>Revisión Instalada</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__LOCALVERSION_HOVER</Tag>
@@ -122,7 +122,7 @@
 		<French>Revision number of the BUG installation.</French>
 		<German>Revisionsnummer der installierten BUG Mod</German>
 		<Italian>Numero di revisione del BUG Mod installato.</Italian>
-		<Spanish>Revision number of the BUG installation.</Spanish>
+		<Spanish>Número de revisión de la versión BUG instalada..</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__REPOSITORYURL_TEXT</Tag>
@@ -130,7 +130,7 @@
 		<French>Repository URL</French>
 		<German>URL des Projektarchivs</German>
 		<Italian>URL del repository SVN</Italian>
-		<Spanish>Repository URL</Spanish>
+		<Spanish>URL del repositorio SVN</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__REPOSITORYURL_HOVER</Tag>
@@ -138,7 +138,7 @@
 		<French>URL for the BUG repository.</French>
 		<German>URL des Projektarchivs der BUG Mod</German>
 		<Italian>URL della directory SVN online dove si trovano i file del BUG Mod.</Italian>
-		<Spanish>URL for the BUG repository.</Spanish>
+		<Spanish>URL del repositorio de BUG</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__REPOSITORYVERSION_TEXT</Tag>
@@ -146,7 +146,7 @@
 		<French>Repository Revision</French>
 		<German>Revision des Projektarchivs</German>
 		<Italian>Revisione del repository</Italian>
-		<Spanish>Repository Revision</Spanish>
+		<Spanish>Revisión del repositorio</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CORE__REPOSITORYVERSION_HOVER</Tag>
@@ -154,6 +154,6 @@
 		<French>Revision number of the BUG repository.</French>
 		<German>Revisionsnummer des Projektarchivs der BUG Mod</German>
 		<Italian>Numero di revisione della versione SVN disponibile online del BUG Mod.</Italian>
-		<Spanish>Revision number of the BUG repository.</Spanish>
+		<Spanish>Número de revisión del repositorio de BUG.</Spanish>
 	</TEXT>
 </Civ4GameText>

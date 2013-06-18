@@ -114,7 +114,7 @@
 		<French>Déplacement des unités seulement (Pas encore testé à fond)</French>
 		<German>Nur Einheitenz&#252;ge automatisieren (noch nicht vollst&#228;ndig getestet)</German>
 		<Italian>Automatisieren Sie nur Ma&#223;einheitsbewegungen (nicht v&#246;llig gepr&#252;ft)</Italian>
-		<Spanish>La unidad automatizada se mueve solo (sin terminar de probar)</Spanish>
+		<Spanish>La unidad automatizada se mueve sola (sin terminar de probar)</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_AIAUTOPLAY_DEBUG</Tag>

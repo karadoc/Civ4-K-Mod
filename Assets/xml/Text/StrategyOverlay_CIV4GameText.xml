@@ -8,7 +8,7 @@
 		<French>Strategy Overlay</French>
 		<German>Strategie-Overlay</German>
 		<Italian>Livello Strategico</Italian>
-		<Spanish>Strategy Overlay</Spanish>
+		<Spanish>Mapa Estratégico</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_DOTMAPPER</Tag>
@@ -16,7 +16,7 @@
 		<French>Dot Mapper</French>
 		<German>Punkt-Werkzeug</German>
 		<Italian>Mappa di posizionamento</Italian>
-		<Spanish>Dot Mapper</Spanish>
+		<Spanish>Mapa Puntos</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_PLACECITY</Tag>
@@ -24,7 +24,7 @@
 		<French>Place City</French>
 		<German>Stadt platzieren</German>
 		<Italian>Posiziona città</Italian>
-		<Spanish>Place City</Spanish>
+		<Spanish>Colocar Ciudad</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_REMOVECITY</Tag>
@@ -32,7 +32,7 @@
 		<French>Remove City</French>
 		<German>Stadt entfernen</German>
 		<Italian>Rimuovi Città</Italian>
-		<Spanish>Remove City</Spanish>
+		<Spanish>Eliminar Ciudad</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_COLORSELECT</Tag>
@@ -40,7 +40,7 @@
 		<French>Color Selection</French>
 		<German>Farbauswahl</German>
 		<Italian>Seleziona colore</Italian>
-		<Spanish>Color Selection</Spanish>
+		<Spanish>Seleccionar Color</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_SIGNS</Tag>
@@ -48,7 +48,7 @@
 		<French>Signs</French>
 		<German>Markierungen</German>
 		<Italian>Etichette</Italian>
-		<Spanish>Signs</Spanish>
+		<Spanish>Señal</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_ADDSIGN_TITLE</Tag>
@@ -56,7 +56,7 @@
 		<French>Add Overlay Sign</French>
 		<German>Overlay-Markierung hinzufügen</German>
 		<Italian>Aggiungi livello etichette</Italian>
-		<Spanish>Add Overlay Sign</Spanish>
+		<Spanish>Añadir Señal</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_ADDSIGN_BODY</Tag>
@@ -64,7 +64,7 @@
 		<French>Caption for the sign</French>
 		<German>Text der Markierung</German>
 		<Italian>Testo dell'etichetta</Italian>
-		<Spanish>Caption for the sign</Spanish>
+		<Spanish>Texto para la señal</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_ADDSIGN</Tag>
@@ -72,7 +72,7 @@
 		<French>Add Sign</French>
 		<German>Markierung hinzufügen</German>
 		<Italian>Aggiungi etichetta</Italian>
-		<Spanish>Add Sign</Spanish>
+		<Spanish>Añadir Señal</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_REMOVESIGN</Tag>
@@ -80,7 +80,7 @@
 		<French>Remove Sign</French>
 		<German>Markierung entfernen</German>
 		<Italian>Rimuovi etichetta</Italian>
-		<Spanish>Remove Sign</Spanish>
+		<Spanish>Eliminar Señal</Spanish>
 	</TEXT>
 	<TEXT>
 	    <Tag>TXT_KEY_STRATOVERLAY_ADDSIGN_EDITBOX_HELP</Tag>
@@ -88,6 +88,6 @@
 	    <French>Enter the text to be displayed on the sign</French>
 	    <German>Eingabe des Textes, der auf der Markierung erscheinen soll</German>
 	    <Italian>Digita il testo che deve essere visualizzato sull'etichetta</Italian>
-	    <Spanish>Enter the text to be displayed on the sign</Spanish>
+	    <Spanish>Texto que será mostrado en la señal</Spanish>
 	</TEXT>
 </Civ4GameText>

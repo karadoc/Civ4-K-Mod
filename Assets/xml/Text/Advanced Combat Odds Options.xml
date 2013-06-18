@@ -20,7 +20,7 @@
 		<French>When checked, PieceOfMind's ACO shows more detailed combat odds information when you hover over a unit to attack.</French>
 		<German>Zeigt detailliertere Informationen zur Berechnung der Siegchancen an, wenn der Mauszeiger für einen Angriff über eine feindliche Einheit bewegt wird (verwendet PieceOfMind's "Advanced Combat Odds (ACO)"-Mod)</German>
 		<Italian>Quando selezionato, PieceOfMind's ACO mostra probabilità di combattimento più avanzate quando passi il mouse sopra un'unità da attaccare.</Italian>
-		<Spanish>Cuando está activada, PCA de PieceOfMind muestra información más detallada de probabilidades de combate cuando pasas el mouse sobre una unidad a atacar.</Spanish>
+		<Spanish>Cuando está activada, PCA de PieceOfMind muestra información más detallada de probabilidades de combate cuando pasas el ratón sobre una unidad a atacar.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ACO__DEBUG_TEXT</Tag>
@@ -118,7 +118,7 @@
 		<French>When checked, displays "attacker" and "defender" labels before each non-empty set of modifiers.</French>
 		<German>Kennzeichnet, falls vorhanden, die jeweilige Gruppe der kampfrelevanten Modifikatoren der Einheiten mit "Angreifer" und "Verteidiger"</German>
 		<Italian>Quando selezionato, mostra le etichette "attaccante" e "difensore" prima di ogni set di modificatori non vuoto.</Italian>
-		<Spanish>Cuando está habilitado, muestra las etiquetas "atacante" y "defensor" antes de cada set de modificadores que no esté vacío.</Spanish>
+		<Spanish>Cuando está habilitado, muestra las etiquetas "atacante" y "defensor" antes de cada conjunto de modificadores que no esté vacío.</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -265,7 +265,7 @@
 		<French>Unrounded XP</French>
 		<German>Ungerundete EP</German>
 		<Italian>XP non arrotondata</Italian>
-		<Spanish>XP sin Redondear</Spanish>
+		<Spanish>PE sin Redondear</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ACO__SHOWUNROUNDEDEXPERIENCE_HOVER</Tag>
@@ -273,7 +273,7 @@
 		<French>Select when to show the unrounded XP values in addition to the actual rounded values the units will gain.</French>
 		<German>Bestimmt, wann die ungerundeten Erfahrungspunkte zusätzlich zu den tatsächlichen (gerundeten) Erfahrungspunkten, die die Einheiten erhalten werden, angezeigt werden</German>
 		<Italian>Seleziona per mostrare i valori XP in aggiunta agli attuali valori arrotondati che l'unità guadagnerà.</Italian>
-		<Spanish>Selecciona cuándo mostrar los valores no redondeados de XP además de los redondeados que las unidades ganarán.</Spanish>
+		<Spanish>Selecciona cuándo mostrar los valores no redondeados de experiencia además de los redondeados que las unidades ganarán.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ACO__SHOWEXPERIENCERANGE_TEXT</Tag>
@@ -281,7 +281,7 @@
 		<French>XP Range</French>
 		<German>EP-Spanne</German>
 		<Italian>XP Range</Italian>
-		<Spanish>Rango de XP</Spanish>
+		<Spanish>Rango de PE</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ACO__SHOWEXPERIENCERANGE_HOVER</Tag>
@@ -289,7 +289,7 @@
 		<French>Select when to show the R values on either side of the actual value that will produce +/- 1 XP.</French>
 		<German>Bestimmt, wann die R-Werte, die +/- 1 EP ausmachen können, auf beiden Seiten des tatsächlichen Wertes angezeigt werden</German>
 		<Italian>Seleziona per mostrare i valori R di entrambi i lati dell'attuale valore che produrrà +/- 1 XP.</Italian>
-		<Spanish>Selecciona cuándo mostrar los valores R en cada lado del valor actual que producirá +/- 1 XP.</Spanish>
+		<Spanish>Selecciona cuándo mostrar los valores R a cada lado del valor real que producirá +/- 1 PE.</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -322,7 +322,7 @@
 		<French>Select when to show the total defense modifiers (includes attacker's non-combat modifiers that apply to the defender).</French>
 		<German>Bestimmt, wann der absolute Verteidigungsmodifikator angezeigt wird (beinhaltet die nicht kampfrelevanten Modifikatoren des Angreifers, die auf den Verteidiger angewendet werden)</German>
 		<Italian>Seleziona per mostrare il modificatore difensivo globale(include i modificatori di non combattimento dell'attacante che si applicano al difensore).</Italian>
-		<Spanish>Selecciona cuándo mostrar los modificadores defensivos totales (incluyendo los no-de-combate del atacante que se aplican al defensor).</Spanish>
+		<Spanish>Selecciona cuándo mostrar los modificadores defensivos totales (incluyendo los modificadores del atacante que no sean de combate y que se aplican al defensor).</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -331,7 +331,7 @@
 		<French>[SHIFT] Instructions</French>
 		<German>[UMSCHALT]-Hinweis</German>
 		<Italian>[SHIFT] Instruzioni</Italian>
-		<Spanish>[MAYÚS] Instructiones</Spanish>
+		<Spanish>[MAYÚS] Instrucciones</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_ACO__SHOWSHIFTINSTRUCTIONS_HOVER</Tag>

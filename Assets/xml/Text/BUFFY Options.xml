@@ -13,7 +13,7 @@
 		<French>Activé</French>
 		<German>Aktivieren</German>
 		<Italian>Attivato</Italian>
-		<Spanish>Enabled</Spanish>
+		<Spanish>Activado</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_BUFFY__ENABLED_HOVER</Tag>
@@ -21,7 +21,7 @@
 		<French>When checked, BUFFY is in operation.</French>
 		<German>Aktiviert BUFFY</German>
 		<Italian>Quando è selezionato, il BUFFY Mod è attivo.</Italian>
-		<Spanish>When checked, BUFFY is in operation.</Spanish>
+		<Spanish>Permite activar BUFFY.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_BUFFY__WARNINGSDAWNOFMAN_TEXT</Tag>
@@ -29,7 +29,7 @@
 		<French>Warnings on Dawn of Man</French>
 		<German>BUFFY-Warnungen bei Gründung der Zivilisation</German>
 		<Italian>Mostra gli avvertimenti in 'Dawn of Man'</Italian>
-		<Spanish>Warnings on Dawn of Man</Spanish>
+		<Spanish>Advertencias en Dawn of Man</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_BUFFY__WARNINGSDAWNOFMAN_HOVER</Tag>
@@ -37,7 +37,7 @@
 		<French>When checked, BUFFY warnings are shown on the Dawn of Man screen.</French>
 		<German>Zeigt die BUFFY-Warnungen beim Bildschirm "Gründung der Zivilisation"</German>
 		<Italian>Quando è selezionato, mostra gli avvenimenti del BUFFY Mod nella schermata 'Dawn of Man'.</Italian>
-		<Spanish>When checked, BUFFY warnings are shown on the Dawn of Man screen.</Spanish>
+		<Spanish>Si se activa, se mostrarán advertencias en la pantalla de Dawn of Man.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_BUFFY__WARNINGSSETTINGS_TEXT</Tag>
@@ -45,7 +45,7 @@
 		<French>Warnings on Settings tab</French>
 		<German>BUFFY-Warnungen bei Einstellungen</German>
 		<Italian>Mostra gli avvertimenti nelle Impostazioni</Italian>
-		<Spanish>Warnings on Settings tab</Spanish>
+		<Spanish>Advertencias en la pestaña de Opciones</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_BUFFY__WARNINGSSETTINGS_HOVER</Tag>
@@ -53,6 +53,6 @@
 		<French>When checked, BUFFY warnings are shown on the Settings tab of the Victory Screen.</French>
 		<German>Zeigt die BUFFY-Warnungen beim Bildschirm "Einstellungen"</German>
 		<Italian>Quando è selezionato, mostra gli avvenimenti del BUFFY Mod nella schermata delle Impostazioni.</Italian>
-		<Spanish>When checked, BUFFY warnings are shown on the Settings tab of the Victory Screen.</Spanish>
+		<Spanish>Si se activa, se mostrarán advertencias en la pestaña de configuración de la ventana de condiciones de victoria.</Spanish>
 	</TEXT>
 </Civ4GameText>

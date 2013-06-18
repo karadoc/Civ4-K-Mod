@@ -5933,7 +5933,7 @@
 		<French>Les developpeurs de jeux videos %s1_civ_adjective game ont cree un nouvelle version de Civilization.</French>
 		<German>Von %s1:2_civ_adjective Entwicklern wird ein neuartiges Computerspiel namens 'Civilization' pr&#228;sentiert.</German>
 		<Italian>Progettisti di videogiochi %s1_civ_adjective hanno sviluppato un nuovo gioco chiamato Civilization.</Italian>
-		<Spanish>Los dise&#241;adores de juegos %s1_civ_adjective han desarrollado un nuevo juego de Civilization.</Spanish>
+		<Spanish>Los dise&#241;adores de juegos %s1:3_civ_adjective han desarrollado un nuevo juego de Civilization.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_TRIGGER_CIV_GAME</Tag>
@@ -6014,7 +6014,7 @@
 		<French>Les botanistes %s1_civ_adjective ont decouvert une plante qui pourrait ameliorer le traitement de certaines maladies.</French>
 		<German>Von %s1:2_civ_adjective Naturheilkundigen wird die besondere Wirksamkeit einer Pflanze f&#252;r die Behandlung von Krankheiten entdeckt.</German>
 		<Italian>Erboristi %s1_civ_adjective hanno scoperto una pianta che potrebbe risultare utile nella cura di alcune malattie.</Italian>
-		<Spanish>Boticarios %s1_civ_adjective han descubierto una planta que puede servir para un mejor tratamiento de enfermedades.</Spanish>
+		<Spanish>Boticarios %s1:3_civ_adjective han descubierto una planta que puede servir para un mejor tratamiento de enfermedades.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_HEALING_PLANT</Tag>
@@ -6078,7 +6078,7 @@
 		<French>Les chasseurs %s1_civ_adjective ont decouvert une enorme bete rodant pres d'un de leurs camps.</French>
 		<German>Von %s1:2_civ_adjective J&#228;gern gibt es Berichte &#252;ber ein riesiges Tier, das sich in der N&#228;he eines Lagers gezeigt haben soll.</German>
 		<Italian>Cacciatori %s1_civ_adjective hanno avvistato un grande animale appostato nei dintorni di un loro accampamento.</Italian>
-		<Spanish>Cazadores %s1_civ_adjective han descubierto una gran bestia acechando uno de sus campamentos.</Spanish>
+		<Spanish>Cazadores %s1:3_civ_adjective han descubierto una gran bestia acechando uno de sus campamentos.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_GREAT_BEAST</Tag>
@@ -6326,7 +6326,7 @@
 		<French>Les scientifiques %s1_civ_adjective ont developpe une methode amelioree d'exploitation du charbon.</French>
 		<German>Die %s1:2_civ_adjective Wissenschaftler entwickeln ein verbessertes Verfahren zur Energiegewinnung aus Kohle.</German>
 		<Italian>Scienziati %s1_civ_adjective hanno sviluppato metodi migliori per la lavorazione del combustibile derivante dal carbone.</Italian>
-		<Spanish>Cient&#237;ficos %s1_civ_adjective han descubierto mejores maneras de procesar carb&#243;n.</Spanish>
+		<Spanish>Cient&#237;ficos %s1:3_civ_adjective han descubierto mejores maneras de procesar carb&#243;n.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_BETTER_COAL</Tag>
@@ -6606,7 +6606,7 @@
 		<French>Une radio pirate dans la ville %s1_civ_adjective de %s2_city diffuse de la propagande anti-gouvernementale.</French>
 		<German>Im %s1:2_civ_adjective Reich verbreitet ein Piratensender ausgehend von der Stadt %s2_city Propaganda gegen die Regierung.</German>
 		<Italian>Una stazione radio dissidente nella citt&#224; %s1_civ_adjective di %s2_city sta diffondendo propaganda contro il partito al potere</Italian>
-		<Spanish>Una emisora pirata en la ciudad %s1_civ_adjective de %s2_city est&#225; emitiendo propaganda contra el partido gobernante.</Spanish>
+		<Spanish>Una emisora pirata en la ciudad %s1:2_civ_adjective de %s2_city est&#225; emitiendo propaganda contra el partido gobernante.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_ROGUE_STATION</Tag>
@@ -6646,7 +6646,7 @@
 		<French>Des anti-monarchistes %s1_civ_adjective manifestent car ils trouvent que les institutions religieuses ne sont pas assez puissantes comparees au roi.</French>
 		<German>Im %s1:2_civ_adjective Reich protestieren gl&#228;ubige Menschen gegen die Ohnmacht religi&#246;ser Institutionen im Vergleich zur Allmacht des K&#246;nigshauses.</German>
 		<Italian>Gli antimonarchici %s1_civ_adjective stanno protestando, dicono che le istituzioni religiose non hanno abbastanza poteri rispetto al re.</Italian>
-		<Spanish>Antimon&#225;rquicos %s1_civ_adjective estan protestando, diciendo que las instituciones religiosas apenas tiene poder frente al Rey.</Spanish>
+		<Spanish>Antimon&#225;rquicos %s1:3_civ_adjective estan protestando, diciendo que las instituciones religiosas apenas tienen poder frente al Rey.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_EVENT_ANTIMONARCHISTS</Tag>

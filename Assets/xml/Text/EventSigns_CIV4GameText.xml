@@ -23,7 +23,7 @@
 		<French>%D1 F</French>
 		<German>%D1 N</German>
 		<Italian>%D1 Cibo</Italian>
-		<Spanish>%D1 F</Spanish>
+		<Spanish>%D1 C</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_SIGN_FORMAT_PROD</Tag>
@@ -39,7 +39,7 @@
 		<French>%D1 C</French>
 		<German>%D1 G</German>
 		<Italian>%D1 Comm.</Italian>
-		<Spanish>%D1 C</Spanish>
+		<Spanish>%D1 O</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_SIGN_EVENT_HORTICULTURE_1</Tag>
@@ -111,7 +111,7 @@
 		<French>truffes</French>
 		<German>Trüffel</German>
 		<Italian>tartufi</Italian>
-		<Spanish>Trufas</Spanish>
+		<Spanish>trufas</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_SIGN_EVENT_SEA_TURTLES_1</Tag>
@@ -119,7 +119,7 @@
 		<French>tortues de mer</French>
 		<German>Meeresschildkröten</German>
 		<Italian>testuggini</Italian>
-		<Spanish>Tortugas marinas</Spanish>
+		<Spanish>tortugas marinas</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_SIGN_EVENT_TIN_1</Tag>
@@ -173,5 +173,6 @@
 	<TEXT>
 		<Tag>TXT_KEY_SIGN_EVENT_VOLCANO_1</Tag>
 		<English>volcanic ash</English>
+		<Spanish>cenizas volcánicas</Spanish>
 	</TEXT>
 </Civ4GameText>

@@ -11,7 +11,7 @@
 		<French>[COLOR_POSITIVE_TEXT]%s1[COLOR_REVERT] vs. [COLOR_NEGATIVE_TEXT]%s2[COLOR_REVERT]</French>
 		<German>[COLOR_POSITIVE_TEXT]%s1[COLOR_REVERT] gegen [COLOR_NEGATIVE_TEXT]%s2[COLOR_REVERT]</German>
 		<Italian>[COLOR_POSITIVE_TEXT]%s1[COLOR_REVERT] vs. [COLOR_NEGATIVE_TEXT]%s2[COLOR_REVERT]</Italian>
-		<Spanish>[COLOR_POSITIVE_TEXT]%s1[COLOR_REVERT] vs. [COLOR_NEGATIVE_TEXT]%s2[COLOR_REVERT]</Spanish>
+		<Spanish>[COLOR_POSITIVE_TEXT]%s1[COLOR_REVERT] contra [COLOR_NEGATIVE_TEXT]%s2[COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_BarbFreeWinsLeft</Tag>
@@ -27,7 +27,7 @@
 		<French>[COLOR_HIGHLIGHT_TEXT]Pesez sur  MAJ pour plus de détails[COLOR_REVERT]</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]&lt;Umschalt&gt; drücken für mehr Einzelheiten[COLOR_REVERT]</German>
 		<Italian>[COLOR_HIGHLIGHT_TEXT]Tieni premuto SHIFT per maggiori dettagli[COLOR_REVERT]</Italian>
-		<Spanish>[COLOR_HIGHLIGHT_TEXT]Oprima SHIFT para más detalles[COLOR_REVERT]</Spanish>
+		<Spanish>[COLOR_HIGHLIGHT_TEXT]Pulse SHIFT para más detalles[COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_SurvivalOdds</Tag>
@@ -35,7 +35,7 @@
 		<French>Chances de survie:[SPACE]</French>
 		<German>Überlebenschance:[SPACE]</German>
 		<Italian>Probabilità di sopravvivenza:[SPACE]</Italian>
-		<Spanish>Probabilidad de sobrevivencia:[SPACE]</Spanish>
+		<Spanish>Probabilidad de supervivencia:[SPACE]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_SurvivalGuaranteed</Tag>
@@ -43,7 +43,7 @@
 		<French>[COLOR_HIGHLIGHT_TEXT]Survie Garantie![COLOR_REVERT]</French>
 		<German>[COLOR_HIGHLIGHT_TEXT]Sicheres Überleben![COLOR_REVERT]</German>
 		<Italian>[COLOR_HIGHLIGHT_TEXT]Sopravvivenza certa![COLOR_REVERT]</Italian>
-		<Spanish>[COLOR_HIGHLIGHT_TEXT]¡Sobrevivencia garantizada![COLOR_REVERT]</Spanish>
+		<Spanish>[COLOR_HIGHLIGHT_TEXT]¡Supervivencia garantizada![COLOR_REVERT]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_Victory</Tag>
@@ -83,7 +83,7 @@
 		<French>[NEWLINE]PV Moyen:[SPACE]</French>
 		<German>[NEWLINE]Mittlere TP:[SPACE]</German>
 		<Italian>[NEWLINE]PV medi:[SPACE]</Italian>
-		<Spanish>[NEWLINE]PG promedio:[SPACE]</Spanish>
+		<Spanish>[NEWLINE]PV promedio:[SPACE]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_Unharmed</Tag>
@@ -99,7 +99,7 @@
 		<French>[NEWLINE]EXP Non-arrondit:[SPACE]</French>
 		<German>[NEWLINE]Ungerundete EP:[SPACE]</German>
 		<Italian>[NEWLINE]XP non arrotondati:[SPACE]</Italian>
-		<Spanish>[NEWLINE]XP no redondeados:[SPACE]</Spanish>
+		<Spanish>[NEWLINE]PE no redondeados:[SPACE]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_TotalDefenseModifier</Tag>
@@ -147,7 +147,7 @@
 		<French>PV</French>
 		<German>TP</German>
 		<Italian>PV</Italian>
-		<Spanish>PG</Spanish>
+		<Spanish>PV</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_INJURED_HP</Tag>
@@ -155,7 +155,7 @@
 		<French>%d1/%d2PV</French>
 		<German>%d1/%d2TP</German>
 		<Italian>%d1/%d2PV</Italian>
-		<Spanish>%d1/%d2PG</Spanish>
+		<Spanish>%d1/%d2PV</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_HP_NEUTRAL</Tag>
@@ -163,7 +163,7 @@
 		<French>[COLOR_UNIT_TEXT]PV[COLOR_REVERT]</French>
 		<German>[COLOR_UNIT_TEXT]TP[COLOR_REVERT]</German>
 		<Italian>[COLOR_UNIT_TEXT]PV[COLOR_REVERT]</Italian>
-		<Spanish>[COLOR_UNIT_TEXT]PG[COLOR_REVERT]</Spanish>
+		<Spanish>[COLOR_UNIT_TEXT]PV[COLOR_REVERT]</Spanish>
 	</TEXT>	
 	<TEXT>
 		<Tag>TXT_ACO_XP</Tag>
@@ -171,7 +171,7 @@
 		<French>EXP</French>
 		<German>EP</German>
 		<Italian>XP</Italian>
-		<Spanish>XP</Spanish>
+		<Spanish>PE</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_ACO_MULTIPLY</Tag>

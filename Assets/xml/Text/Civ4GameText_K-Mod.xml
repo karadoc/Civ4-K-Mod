@@ -47,7 +47,7 @@
 		<French>Cette religion ([COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT]) s'est &#233;teinte &#224; %s2_CityName.</French>
 		<German>Die Religion [COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] hat aus %s2_CityName entfernt worden.</German>
 		<Italian>[COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] ha [NUM1:lasciato:lasciata] %s2_CityName</Italian>
-		<Spanish>El [COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] ha dejado %s2_CityName.</Spanish>
+		<Spanish>El [COLOR_HIGHLIGHT_TEXT]%s1_RelName[COLOR_REVERT] ha abandonado %s2_CityName.</Spanish>
 	</TEXT>
 	<!-- K-Mod trade culture -->
 	<TEXT>
@@ -240,7 +240,7 @@
 		<French>Domestic</French>
 		<German>Domestic</German>
 		<Italian>Domestic</Italian>
-		<Spanish>Domestic</Spanish>
+		<Spanish>Nacional</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_GLOBAL</Tag>
@@ -256,7 +256,7 @@
 		<French>Effects</French>
 		<German>Effects</German>
 		<Italian>Effects</Italian>
-		<Spanish>Effects</Spanish>
+		<Spanish>Efectos</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_TOTAL</Tag>
@@ -272,7 +272,7 @@
 		<French>Total Impact</French>
 		<German>Total Impact</German>
 		<Italian>Total Impact</Italian>
-		<Spanish>Total Impact</Spanish>
+		<Spanish>Impacto total</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_THRESHOLD</Tag>
@@ -280,7 +280,7 @@
 		<French>Sustainability Threshold</French>
 		<German>Sustainability Threshold</German>
 		<Italian>Il limite di sostenibilità</Italian>
-		<Spanish>Sustainability Threshold</Spanish>
+		<Spanish>Límite de sostenibilidad</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_LOCAL_THRESHOLD</Tag>
@@ -288,7 +288,7 @@
 		<French>Local Sustainability Threshold</French>
 		<German>Local Sustainability Threshold</German>
 		<Italian>Local Sustainability Threshold</Italian>
-		<Spanish>Local Sustainability Threshold</Spanish>
+		<Spanish>Límite de sostenibilidad local</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_POLLUTION</Tag>
@@ -296,7 +296,7 @@
 		<French>Total Pollution</French>
 		<German>Total Pollution</German>
 		<Italian>Total Pollution</Italian>
-		<Spanish>Total Pollution</Spanish>
+		<Spanish>Polución total</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_OFFSETS</Tag>
@@ -304,7 +304,7 @@
 		<French>Total Offsets</French>
 		<German>Total Offsets</German>
 		<Italian>Total Offsets</Italian>
-		<Spanish>Total Offsets</Spanish>
+		<Spanish>Compensaciones totales</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_GW_CHANGE_RATE</Tag>
@@ -312,7 +312,7 @@
 		<French>Change Rate of GW Index</French>
 		<German>Change Rate of GW Index</German>
 		<Italian>Change Rate of GW Index</Italian>
-		<Spanish>Change Rate of GW Index</Spanish>
+		<Spanish>Cambio en el índice del CG</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_RELATIVE_CONTRIBUTION</Tag>
@@ -320,7 +320,7 @@
 		<French>Our Relative Contribution</French>
 		<German>Our Relative Contribution</German>
 		<Italian>Our Relative Contribution</Italian>
-		<Spanish>Our Relative Contribution</Spanish>
+		<Spanish>Nuestra contribución relativa</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_GW_INDEX</Tag>
@@ -328,7 +328,7 @@
 		<French>Global Warming Index</French>
 		<German>Global Warming Index</German>
 		<Italian>Global Warming Index</Italian>
-		<Spanish>Global Warming Index</Spanish>
+		<Spanish>Índice del calentamiento global</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_EXPECTED_EVENTS</Tag>
@@ -336,7 +336,7 @@
 		<French>Expected Events per Turn</French>
 		<German>Expected Events per Turn</German>
 		<Italian>Expected Events per Turn</Italian>
-		<Spanish>Expected Events per Turn</Spanish>
+		<Spanish>Eventos esperados por turno</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_EVENT_TALLY</Tag>
@@ -344,7 +344,7 @@
 		<French>Event Tally</French>
 		<German>Event Tally</German>
 		<Italian>Event Tally</Italian>
-		<Spanish>Event Tally</Spanish>
+		<Spanish>Registro de eventos</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_ENVIRONMENT_LOCAL_ANGER_LEVEL</Tag>
@@ -352,7 +352,7 @@
 		<French>Local Anger Level</French>
 		<German>Local Anger Level</German>
 		<Italian>Local Anger Level</Italian>
-		<Spanish>Local Anger Level</Spanish>
+		<Spanish>Nivel de enfado local</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_CHANCES</Tag>
@@ -360,7 +360,7 @@
 		<French>Chances</French>
 		<German>Chances</German>
 		<Italian>Chances</Italian>
-		<Spanish>Chances</Spanish>
+		<Spanish>Probabilidades</Spanish>
 	</TEXT>
 
 	<TEXT>
@@ -369,7 +369,7 @@
 		<French>Total accumulated pollution above the sustainability threshold.</French>
 		<German>Total accumulated pollution above the sustainability threshold.</German>
 		<Italian>Inquinamento accumulato totale prima di oltrepassare il limite di sostenibilità.</Italian>
-		<Spanish>Total accumulated pollution above the sustainability threshold.</Spanish>
+		<Spanish>Polución acumulada total por encima del límite de sostenibilidad</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_GW_UNHAPPY_HELP</Tag>
@@ -377,7 +377,7 @@
 		<French>[ICON_UNHAPPY] due to global warming.</French>
 		<German>[ICON_UNHAPPY] due to global warming.</German>
 		<Italian>[ICON_UNHAPPY] a causa del riscaldamento globale.</Italian>
-		<Spanish>[ICON_UNHAPPY] due to global warming.</Spanish>
+		<Spanish>[ICON_UNHAPPY] debido al calentamiento global.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_SUSTAINABILITY_THRESHOLD_HELP</Tag>
@@ -385,7 +385,7 @@
 		<French>The maximum rate of pollution that can be safely absorbed by the environment.</French>
 		<German>The maximum rate of pollution that can be safely absorbed by the environment.</German>
 		<Italian>Il massimo livello di inquinamento che può essere assorbito dall'ambiente senza problemi.</Italian>
-		<Spanish>The maximum rate of pollution that can be safely absorbed by the environment.</Spanish>
+		<Spanish>La tasa máxima de polución que puede ser absorbida con seguridad por el entorno.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_GW_RELATIVE_CONTRIBUTION_HELP</Tag>
@@ -393,7 +393,7 @@
 		<French>Our pollution rate relative to the global average.</French>
 		<German>Our pollution rate relative to the global average.</German>
 		<Italian>Il nostro livello di inquinamento relativo alla media globale.</Italian>
-		<Spanish>Our pollution rate relative to the global average.</Spanish>
+		<Spanish>Nuestra tasa de polución relativa a la media global.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_GW_SEVERITY_RATING</Tag>
@@ -401,7 +401,7 @@
 		<French>Évaluation globale sévérité du réchauffement</French>
 		<German>Schweregrad der globalen Erwärmung</German>
 		<Italian>Riscaldamento globale livello di gravità</Italian>
-		<Spanish>El calentamiento global clasificación de gravedad</Spanish>
+		<Spanish>Grado de gravedad del calentamiento global</Spanish>
 	</TEXT>
 
 	<TEXT>
@@ -410,7 +410,7 @@
 		<French>Effective pollution reductions:</French>
 		<German>Effective pollution reductions:</German>
 		<Italian>Riduzioni effettive inquinamento:</Italian>
-		<Spanish>Effective pollution reductions:</Spanish>
+		<Spanish>Reducciones de polución efectivas:</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_POLLUTION</Tag>
@@ -418,7 +418,7 @@
 		<French>Pollution</French>
 		<German>Umweltverschmutzung</German>
 		<Italian>Inquinamento</Italian>
-		<Spanish>Contaminaci&#211;n</Spanish>
+		<Spanish>Contaminación</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_POLLUTION_FROM_POPULATION</Tag>
@@ -426,7 +426,7 @@
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (population)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Bev&#246;lkerung</German>
 		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dalla popolazione</Italian>
-		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde poblaci&#243;n</Spanish>
+		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] de poblaci&#243;n</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_POLLUTION_FROM_BUILDINGS</Tag>
@@ -434,7 +434,7 @@
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (b&#226;timents)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Geb&#228;ude</German>
 		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dagli edifici</Italian>
-		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde edificios</Spanish>
+		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] de edificios</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_POLLUTION_FROM_BONUSES</Tag>
@@ -442,7 +442,7 @@
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (bonus)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Boni</German>
 		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dai bonus</Italian>
-		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde bonificaciones</Spanish>
+		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] de bonificaciones</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_POLLUTION_FROM_POWER</Tag>
@@ -450,7 +450,7 @@
 		<French>[ICON_BULLET]%d1_Num par [ICON_UNHEALTHY] (&#233;lectricit&#233;)</French>
 		<German>[ICON_BULLET]%d1_Num pro [ICON_UNHEALTHY] durch Energie</German>
 		<Italian>[ICON_BULLET]%d1_Num per [ICON_UNHEALTHY] dall'energia</Italian>
-		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] desde energ&#237;a</Spanish>
+		<Spanish>[ICON_BULLET]%d1_Num por [ICON_UNHEALTHY] de energ&#237;a</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_OFFSET_PER_FEATURE</Tag>
@@ -468,7 +468,7 @@
 		<French>+%d1_Change[ICON_UNHAPPY]: "Save the planet!"</French>
 		<German>+%d1_Change[ICON_UNHAPPY]: "Save the planet!"</German>
 		<Italian>+%d1_Change[ICON_UNHAPPY]: "Salvare il pianeta!"</Italian>
-		<Spanish>+%d1_Change[ICON_UNHAPPY]: "Salvar el planeta!"</Spanish>
+		<Spanish>+%d1_Change[ICON_UNHAPPY]: "¡Salvad el planeta!"</Spanish>
 	</TEXT>
 	<!--<TEXT>
 		<Tag>TXT_KEY_ANGER_GLOBAL_WARMING</Tag>
@@ -485,7 +485,7 @@
 		<French>Worldwide pollution has reached the sustainability threshold.</French>
 		<German>Worldwide pollution has reached the sustainability threshold.</German>
 		<Italian>L'inquinamento mondiale ha raggiunto il limite di sostenibilità.</Italian>
-		<Spanish>Worldwide pollution has reached the sustainability threshold.</Spanish>
+		<Spanish>La polución mundial ha alcanzado el límite de sostenibilidad.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_POPUP_ENVIRONMENTAL_ADVISOR</Tag>
@@ -493,7 +493,7 @@
 		<French>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</French>
 		<German>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</German>
 		<Italian>I nostri scenziati hanno teorizzato che se l'inquinamento mondiale continua a crescere, dovremmo fronteggiare cambiamenti climatici irreversibili. Consulta il Consigliere Finanziario per maggiori informazioni.</Italian>
-		<Spanish>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</Spanish>
+		<Spanish>Nuestros científicos han teorizado que si la producción de polución mundial continua aumentando, debemos enfrentarnos a un cambio climático irreversible. Mira el Consejero Económico para información adicional.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_UNHEALTHY_POP_MODIFIER</Tag>
@@ -508,6 +508,7 @@
 	<TEXT>
 		<Tag>TXT_KEY_PROMOTION_DISORGANIZED</Tag>
 		<English>Disorganized</English>
+		<Spanish>Desorganizado</Spanish>
 	</TEXT>
 
 	<!-- new volcano text-->
@@ -517,7 +518,7 @@
 		<French>Les cendres volcaniques am&#233;lior&#233; la fertilit&#233; du sol.</French>
 		<German>Vulkanische Asche verbessert die Bodenfruchtbarkeit.</German>
 		<Italian>Le ceneri vulcaniche hanno migliorato la fertilità del suolo.</Italian>
-		<Spanish>La ceniza volcánica mejorar la fertilidad del suelo.</Spanish>
+		<Spanish>La ceniza volcánica ha mejorado la fertilidad del suelo.</Spanish>
 	</TEXT>	
 	<!-- replacement volcano text (unfinished)-->
 	<TEXT>
@@ -526,13 +527,13 @@
 		<French>[ICON_BULLET]Subir des pertes d'am&#233;nagements sur les cases proches de l'&#233;ruption</French>
 		<German>[ICON_BULLET]Verlust der Gel&#228;ndefeld-Modernisierungen in der N&#228;he der Eruption</German>
 		<Italian>[ICON_BULLET]Perdita dei miglioramenti delle caselle vicino all'eruzione</Italian>
-		<Spanish>[ICON_BULLET]P&#233;rdida de mejoras de casillas cerca de la erupci&#243;n.</Spanish>
+		<Spanish>[ICON_BULLET]P&#233;rdida de mejoras de casillas cerca de la erupci&#243;n.[NEWLINE][ICON_BULLET]Probabilidad de +1[ICON_FOOD] en casillas cercanas a la erupción</Spanish>
 	</TEXT>
 		<English>[ICON_BULLET]+1[ICON_COMMERCE] in %d1 additional [NUM1:plot:plots]</English>
 		<French>[ICON_BULLET]+1[ICON_COMMERCE] sur %d1 [NUM1:case suppl&#233;mentaire:cases suppl&#233;mentaires]</French>
 		<German>[ICON_BULLET]+1[ICON_COMMERCE] auf %d1 [NUM1:zus&#228;tzlichem Gel&#228;ndefeld:zus&#228;tzlichen Gel&#228;ndefeldern]</German>
 		<Italian>[ICON_BULLET]+1[ICON_COMMERCE] in %d1 [NUM1:casella aggiuntiva:caselle aggiuntive]</Italian>
-		<Spanish>[ICON_BULLET]+1 [ICON_COMMERCE] en %d1 [NUM1:%casilla:casillas] m&#225;s.</Spanish>
+		<Spanish>[ICON_BULLET]+1[ICON_COMMERCE] en %d1 [NUM1:casilla:casillas] m&#225;s.</Spanish>
 
 	<!-- Example text
 		<English>Clearing a %s1_FeatName has created %d2_Num [ICON_PRODUCTION] for %s3_CityName.</English>

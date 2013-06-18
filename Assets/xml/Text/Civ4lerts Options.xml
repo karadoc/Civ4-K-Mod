@@ -13,7 +13,7 @@
 		<French>Activer Civ4lerts</French>
 		<German>Civ4lerts aktivieren</German>
 		<Italian>Abilita Avvisi</Italian>
-		<Spanish>Enable Civ4lerts</Spanish>
+		<Spanish>Activar Civ4lerts</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__ENABLED_HOVER</Tag>
@@ -21,7 +21,7 @@
 		<French>En activant, des messages apparaissent pour vous informer de l'état de plusieurs éléments du jeu, grâce au mod Civ4lerts de Dr. Elmer Jiggle.</French>
 		<German>Lässt Warnungen erscheinen, die bevorstehende oder bereits eingetretene Ereignisse melden (verwendet Dr. Elmer Jiggles "Civ4lerts"-Mod)</German>
 		<Italian>Quando è selezionato, vengono visualizzati dei messaggi per avvertirti di varie condizioni presenti o imminenti (utilizzando il Civ4lerts Mod di Dr. Elmer Jiggle's).</Italian>
-		<Spanish>When checked, messages are displayed to alert you to various pending and existing conditions using Dr. Elmer Jiggle's Civ4lerts mod.</Spanish>
+		<Spanish>Si se activa, se muestran mensajes para avisar sobre diversas situaciones empleando el mod Civ4lerts de Dr. Elmer Jiggle.</Spanish>
 	</TEXT>
 
 <!-- Cities -->
@@ -32,7 +32,7 @@
 		<French>Prochain tour</French>
 		<German>Bevorstehendes</German>
 		<Italian>Imminente</Italian>
-		<Spanish>Pending</Spanish>
+		<Spanish>Pendiente</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYPENDINGGROWTH_HOVER</Tag>
@@ -40,7 +40,7 @@
 		<French>En activant, une alerte sera montrée quand la population d'une ville grandira ou retrécira au prochain tour.</French>
 		<German>Lässt eine Warnung erscheinen, wenn die Bevölkerung einer Stadt in der nächsten Runde wächst oder schrumpft</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando la popolazione di una città crescerà o si ridurrà al turno successivo.</Italian>
-		<Spanish>When checked, displays an alert when a city's population will grow or shrink next turn.</Spanish>
+		<Spanish>Muestra un aviso cuando la población de una ciudad vaya a crecer o a reducirse en el próximo turno.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYGROWTH_TEXT</Tag>
@@ -48,7 +48,7 @@
 		<French>Taille</French>
 		<German>Wachstum</German>
 		<Italian>Crescita</Italian>
-		<Spanish>Growth</Spanish>
+		<Spanish>Crecimiento</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYGROWTH_HOVER</Tag>
@@ -56,7 +56,7 @@
 		<French>En activant, une alerte sera montrée quand la population d'une ville a grandie ou retrécie.</French>
 		<German>Lässt eine Warnung erscheinen, wenn die Bevölkerung einer Stadt gewachsen oder geschrumpft ist</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando la popolazione di una città cresce o si riduce.</Italian>
-		<Spanish>When checked, displays an alert when a city's population has grown or shrunk.</Spanish>
+		<Spanish>Muestra un aviso cada vez que la población de una ciudad crezca o se reduzca.</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -65,7 +65,7 @@
 		<French>Prochain tour</French>
 		<German>Bevorstehende</German>
 		<Italian>Imminente</Italian>
-		<Spanish>Pending</Spanish>
+		<Spanish>Pendiente</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYPENDINGHAPPINESS_HOVER</Tag>
@@ -73,7 +73,7 @@
 		<French>En activant, une alerte sera montrée quand une ville deviendra heureuse ou malheureuse au prochain tour.</French>
 		<German>Lässt eine Warnung erscheinen, wenn sich die Zufriedenheit der Bevölkerung einer Stadt in der nächsten Runde verbessert oder verschlechtert</German>
 		<Italian>Quando è selezionato,viene visualizzato un avviso quando la popolazione di una città diverrà felice o infelice al turno successivo.</Italian>
-		<Spanish>When checked, displays an alert when a city will become happy or unhappy next turn.</Spanish>
+		<Spanish>Muestra un aviso cuando la felicidad de una ciudad vaya a cambiar en el próximo turno.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYHAPPINESS_TEXT</Tag>
@@ -81,7 +81,7 @@
 		<French>Bonheur</French>
 		<German>Zufriedenheit</German>
 		<Italian>Felicità</Italian>
-		<Spanish>Happiness</Spanish>
+		<Spanish>Felicidad</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYHAPPINESS_HOVER</Tag>
@@ -89,7 +89,7 @@
 		<French>En activant, une alerte sera montrée quand une ville est devenue heureuse ou malheureuse.</French>
 		<German>Lässt eine Warnung erscheinen, wenn sich die Zufriedenheit der Bevölkerung einer Stadt verbessert oder verschlechtert hat</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando la popolazione di una città diviene felice o infelice.</Italian>
-		<Spanish>When checked, displays an alert when a city has become happy or unhappy.</Spanish>
+		<Spanish>Muestra un aviso cuando una ciudad se vuelva feliz o infeliz.</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -98,7 +98,7 @@
 		<French>Prochain tour</French>
 		<German>Bevorstehende</German>
 		<Italian>Imminente</Italian>
-		<Spanish>Pending</Spanish>
+		<Spanish>Pendiente</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYPENDINGHEALTHINESS_HOVER</Tag>
@@ -106,7 +106,7 @@
 		<French>En activant, une alerte sera montrée quand une ville deviendra saine ou malsaine au prochain tour.</French>
 		<German>Lässt eine Warnung erscheinen, wenn sich die Gesundheit der Bevölkerung einer Stadt in der nächsten Runde verbessert oder verschlechtert</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una città diverrà salubre o insalubre al turno successivo.</Italian>
-		<Spanish>When checked, displays an alert when a city will become healthy or unhealthy next turn.</Spanish>
+		<Spanish>Muestra un aviso cuando la salud de una ciudad vaya a cambiar en el próximo turno.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYHEALTHINESS_TEXT</Tag>
@@ -114,7 +114,7 @@
 		<French>Santé</French>
 		<German>Gesundheit</German>
 		<Italian>Salute</Italian>
-		<Spanish>Healthiness</Spanish>
+		<Spanish>Salud</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYHEALTHINESS_HOVER</Tag>
@@ -122,7 +122,7 @@
 		<French>En activant, une alerte sera montrée quand une ville est devenue saine ou malsaine.</French>
 		<German>Lässt eine Warnung erscheinen, wenn sich die Gesundheit der Bevölkerung einer Stadt verbessert oder verschlechtert hat</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una città diviene salubre o insalubre.</Italian>
-		<Spanish>When checked, displays an alert when a city has become healthy or unhealthy.</Spanish>
+		<Spanish>Muestra un aviso cuando la ciudad se vuelva sana o insalubre.</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -131,7 +131,7 @@
 		<French>Prochain tour</French>
 		<German>Bevorstehende</German>
 		<Italian>Imminente</Italian>
-		<Spanish>Pending</Spanish>
+		<Spanish>Pendiente</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYPENDINGOCCUPATION_HOVER</Tag>
@@ -139,7 +139,7 @@
 		<French>When checked, displays an alert when a city will be pacified next turn, ending occupation.</French>
 		<German>Lässt eine Warnung erscheinen, wenn die Unruhen in einer (eroberten) Stadt in der nächsten Runde enden</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una città verrà pacificata al turno successivo, ponendo fine al periodo di occupazione.</Italian>
-		<Spanish>When checked, displays an alert when a city will be pacified next turn, ending occupation.</Spanish>
+		<Spanish>Muestra un aviso cuando una ciudad vaya a ser pacificada el próximo turno, terminando con la ocupación.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYOCCUPATION_TEXT</Tag>
@@ -147,7 +147,7 @@
 		<French>Pacification</French>
 		<German>Beruhigung</German>
 		<Italian>Pacificazione</Italian>
-		<Spanish>Pacification</Spanish>
+		<Spanish>Pacificación</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYOCCUPATION_HOVER</Tag>
@@ -155,7 +155,7 @@
 		<French>When checked, displays an alert when a city has been pacified, ending occupation.</French>
 		<German>Lässt eine Warnung erscheinen, wenn die Unruhen in einer (eroberten) Stadt enden</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una città viene pacificata, ponendo fine al periodo di occupazione.</Italian>
-		<Spanish>When checked, displays an alert when a city has been pacified, ending occupation.</Spanish>
+		<Spanish>Muestra un aviso cuando una ciudad sea pacificada, terminando con la ocupación.</Spanish>
 	</TEXT>
 
 <!-- Hurry -->
@@ -166,7 +166,7 @@
 		<French>Précipiter à cout de Population</French>
 		<German>Zwangsarbeit möglich</German>
 		<Italian>Accelerazione con sacrifici</Italian>
-		<Spanish>Can Hurry with Population</Spanish>
+		<Spanish>Apresurar con Sacrificio</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYCANHURRYPOP_HOVER</Tag>
@@ -174,7 +174,7 @@
 		<French>En activant, une alerte sera montrée quand une ville peut précipiter sa construction avec le fouet.</French>
 		<German>Lässt eine Warnung erscheinen, wenn die Produktion einer Stadt durch Opferung eines Teils der Bevölkerung beschleunigt werden kann</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una città può accelerare la produzione attuale mediante sacrifici di Popolazione.</Italian>
-		<Spanish>When checked, displays an alert once a city can hurry the item it's building with the whip.</Spanish>
+		<Spanish>Muestra un aviso cuando una ciudad pueda apresurar su producción actual mediante sacrificio.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYCANHURRYGOLD_TEXT</Tag>
@@ -182,7 +182,7 @@
 		<French>Précipiter à cout d'or</French>
 		<German>Goldzahlung möglich</German>
 		<Italian>Accelerazione con pagamenti</Italian>
-		<Spanish>Can Hurry with Gold</Spanish>
+		<Spanish>Apresurar con Oro</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__CITYCANHURRYGOLD_HOVER</Tag>
@@ -190,7 +190,7 @@
 		<French>En activant, une alerte sera montrée quand une ville peut précipiter sa construction avec de l'or.</French>
 		<German>Lässt eine Warnung erscheinen, wenn die Produktion einer Stadt durch Zahlung von Gold beschleunigt werden kann</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una città può accelerare la produzione attuale mediante pagamenti in Oro.</Italian>
-		<Spanish>When checked, displays an alert once a city can hurry the item it's building with gold.</Spanish>
+		<Spanish>Muestra un aviso cuando una ciudad pueda apresurar su producción actual mediante oro.</Spanish>
 	</TEXT>
 
 <!-- Diplomacy -->
@@ -209,7 +209,7 @@
 		<French>When checked, displays an alert when a civilization changes their willingness to negotiate.</French>
 		<German>Lässt eine Warnung erscheinen, wenn sich die Gesprächsbereitschaft einer Zivilisation ändert</German>
 		<Italian>Quando è selezionato, mostra un avviso quando una civiltà cambia la sua disponibilità a negoziare.</Italian>
-		<Spanish>When checked, displays an alert when a civilization changes their willingness to negotiate.</Spanish>
+		<Spanish>Muestra un aviso cuando una civilización cambie su disposición a negociar.</Spanish>
 	</TEXT>
 
 	<TEXT>
@@ -226,7 +226,7 @@
 		<French>When checked, displays an alert when a civilization's worst enemy changes.</French>
 		<German>Lässt eine Warnung erscheinen, wenn der Erzfeind einer Zivilisation wechselt</German>
 		<Italian>Quando è selezioanto, mostra un avviso quando una civiltà cambia  la designazione del suo peggior nemico.</Italian>
-		<Spanish>When checked, displays an alert when a civilization's worst enemy changes.</Spanish>
+		<Spanish>Muestra un aviso cuando el peor enemigo de una civilización cambie.</Spanish>
 	</TEXT>
 
 <!-- Trade -->
@@ -237,7 +237,7 @@
 		<French>Or</French>
 		<German>Goldbetrag</German>
 		<Italian>Oro</Italian>
-		<Spanish>Gold</Spanish>
+		<Spanish>Oro</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__GOLDTRADE_HOVER</Tag>
@@ -245,7 +245,7 @@
 		<French>When checked, displays an alert when a civilization can trade a specified amount of gold.</French>
 		<German>Lässt eine Warnung erscheinen, wenn eine Zivilisation eine bestimmte Menge Gold zum Handeln zur Verfügung hat</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una Civiltà è disponibile a commerciare un ammontare d'oro predefinito.</Italian>
-		<Spanish>When checked, displays an alert when a civilization can trade a specified amount of gold.</Spanish>
+		<Spanish>Muestra un aviso cuando una civilización pueda intercambiar una cantidad específica de oro.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__GOLDTRADETHRESH_TEXT</Tag>
@@ -253,7 +253,7 @@
 		<French>Seuil</French>
 		<German>Schwelle</German>
 		<Italian>Quantità</Italian>
-		<Spanish>Threshold</Spanish>
+		<Spanish>Cantidad</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__GOLDTRADETHRESH_HOVER</Tag>
@@ -261,7 +261,7 @@
 		<French>Determines the threshold for the amount of gold that will display an alert.</French>
 		<German>Bestimmt die Schwelle für den Goldbetrag, ab der eine Meldung ausgegeben wird</German>
 		<Italian>Determina la quantità d'oro che costituisce il limite per la visualizzazione dell'avviso.</Italian>
-		<Spanish>Determines the threshold for the amount of gold that will display an alert.</Spanish>
+		<Spanish>Determina la cantidad de oro que hará mostrar una alerta.</Spanish>
 	</TEXT>
 	
 	<TEXT>
@@ -270,7 +270,7 @@
 		<French>Or Par Tour</French>
 		<German>Gold pro Runde</German>
 		<Italian>Oro per turno</Italian>
-		<Spanish>Gold Per Turn</Spanish>
+		<Spanish>Oro por Turno</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__GOLDPERTURNTRADE_HOVER</Tag>
@@ -278,7 +278,7 @@
 		<French>When checked, displays an alert when a civilization can trade a specified amount of gold per turn.</French>
 		<German>Lässt eine Warnung erscheinen, wenn eine Zivilisation eine bestimmte Menge Gold pro Runde zum Handeln zur Verfügung hat</German>
 		<Italian>Quando è selezionato, viene visualizzato un avviso quando una Civiltà è disponibile a commerciare un ammontare d'oro per turno predefinito.</Italian>
-		<Spanish>When checked, displays an alert when a civilization can trade a specified amount of gold per turn.</Spanish>
+		<Spanish>Muestra un aviso cuando una civilización pueda intercambiar una cantidad específica de oro por turno.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__GOLDPERTURNTRADETHRESH_TEXT</Tag>
@@ -286,7 +286,7 @@
 		<French>Seuil</French>
 		<German>Schwelle</German>
 		<Italian>Quantità</Italian>
-		<Spanish>Threshold</Spanish>
+		<Spanish>Cantidad</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_CIV4LERTS__GOLDPERTURNTRADETHRESH_HOVER</Tag>
@@ -294,7 +294,7 @@
 		<French>Determines the threshold for gold per turn that will display an alert.</French>
 		<German>Bestimmt die Schwelle für die Menge Gold pro Runde, ab der eine Meldung ausgegeben wird</German>
 		<Italian>Determina la quantità d'oro per turno che costituisce il limite per la visualizzazione dell'avviso.</Italian>
-		<Spanish>Determines the threshold for gold per turn that will display an alert.</Spanish>
+		<Spanish>Determina la cantidad de oro turno que hará mostrar una alerta.</Spanish>
 	</TEXT>
 
 </Civ4GameText>

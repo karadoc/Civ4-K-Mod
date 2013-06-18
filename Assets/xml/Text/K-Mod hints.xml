@@ -13,7 +13,7 @@
 	<French>Pressez [ALT + CTRL + O] pour accèder aux écrans d'options du BUG Mod.</French>
 	<German>Mit der Tastenkombination [STRG + ALT + O] lässt sich das Optionsmenü der BUG Mod aufrufen.</German>
 	<Italian>Premi [ALT + CTRL + O] per accedere alla schermata di configurazione del BUG Mod.</Italian>
-	<Spanish>Press [ALT + CTRL + O] to open The BUG options screen.</Spanish>
+	<Spanish>Presiona [ALT + CTRL + O] para abrir la pantalla de opciones de BUG.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_1</Tag>
@@ -21,7 +21,7 @@
 	<French>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</French>
 	<German>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</German>
 	<Italian>Un acquedotto o un ospedale aumentano la salute della città, ma il trasporto pubblico o il centro riciclaggio ne riducono l'inquinamento...</Italian>
-	<Spanish>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</Spanish>
+	<Spanish>Un acueducto o un hospital aumentará la salud de una ciudad, pero el transporte público o un centro de reciclaje reduce su polución...</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_2</Tag>
@@ -29,7 +29,7 @@
 	<French>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</French>
 	<German>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</German>
 	<Italian>L'influenza culturale di ogni città si estende oltre i suoi bordi. Se sei pressato culturalmente da un'altra civiltà prendi in considerazione di aumentare l'output culturale delle città vicine e non solo di quella pressata.</Italian>
-	<Spanish>The cultural influence of each city extends beyond its border. If you are being culturally pressured by another civilization, consider getting more culture in all nearby cities; not just the cities being pressed.</Spanish>
+	<Spanish>La influencia clultural de cada ciudad se extiende más alla de su frontera. Si estás siendo presionado culturalmente por otra civilización, considera adquirir más cultura en todas las ciudades cercanas; no solo en las ciudades que están siendo presionadas.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_3</Tag>
@@ -37,7 +37,7 @@
 	<French>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</French>
 	<German>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</German>
 	<Italian>Foreste e giungle aiutano a contrastare l'inquinamento causato dalla tua civilità. Se non hai necessità di abbatterle, considera di mantenerle per ridurre gli effetti del riscaldamento globale.</Italian>
-	<Spanish>Forests and jungles help offset the pollution caused by your civilization. If you don't need to chop them down, consider keeping them to reduce the effects of global warming.</Spanish>
+	<Spanish>Los bosques y las selvas ayudan a compensar la polución causada por tu civilización. Si no necesitas talarlos, considéraros para reducir los efectos del calentamiento global.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_4</Tag>
@@ -45,7 +45,7 @@
 	<French>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</French>
 	<German>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</German>
 	<Italian>Se una civiltà rivale punta a dominare il mondo - attenzione! Potrebbe decidere di attacacrti anche se appare amichevole.</Italian>
-	<Spanish>If a rival civilization becomes fixated on world domination - beware! They may decide to attack you even if they appear friendly.</Spanish>
+	<Spanish>Si un rival se ha obsesionado en la dominación mundial - ¡ten cuidado! Pueden decidir atacarte incluso si parecen amistosos.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_5</Tag>
@@ -53,7 +53,7 @@
 	<French>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</French>
 	<German>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</German>
 	<Italian>Fabbriche e Linee di produzione causano ulteriore inquinamento con carbone e petrolio. Se non usi combustibili fossili, considera di rimuoverne l'accesso per aumentare la salute di cittadini.</Italian>
-	<Spanish>Factories and Assembly Lines create extra pollution with coal and oil. If aren't using your fossil fuels, consider removing access to them so that your people will be healthier.</Spanish>
+	<Spanish>Las fábricas y cadenas de montaje pueden producir polución extra con carbón y petróleo. Si no estás usando combustibles fósiles, considera quitar el acceso a ellos para que tu gente sea más saludable.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_6</Tag>
@@ -61,7 +61,7 @@
 	<French>Units with the "leadership" warlord promotion greatly reduce the chance of cultural revolts in their city.</French>
 	<German>Units with the "leadership" warlord promotion greatly reduce the chance of cultural revolts in their city.</German>
 	<Italian>Le unità con la promozione "Leadership" (Grande Generale richiesto) riducono maggiormente le probabilità di rivolta di una città.</Italian>
-	<Spanish>Units with the "leadership" warlord promotion greatly reduce the chance of cultural revolts in their city.</Spanish>
+	<Spanish>Las unidades con el ascendo de caudillo "liderazgo" reduce enormemente la probabilidad de rebeliones culturales en su ciudad.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_7</Tag>
@@ -69,7 +69,7 @@
 	<French>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</French>
 	<German>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</German>
 	<Italian>Quando un Grande Generale decide di unirsi ad un unità come Grande Condottiero, distribuisce in immediato aumento di esperienza con tutte le unità sulla stessa casella. Maggiore lo stack, maggiore l'esperienza.</Italian>
-	<Spanish>When a Great General chooses to lead a unit as a warlord, it shares an immediate experience boost to all units in the group. More experience points are given to bigger groups.</Spanish>
+	<Spanish>Cuando un Gran General elige liderar una unidad como un caudillo, comparte un aumento inmediato de experiencia a todas las unidades en el grupo. Más puntos de experiencia son dados a grupos más grandes.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_8</Tag>
@@ -77,7 +77,7 @@
 	<French>Hold down the [ALT] key and point to a building or specialist to see the net effect it would have in the current city.</French>
 	<German>Hold down the [ALT] key and point to a building or specialist to see the net effect it would have in the current city.</German>
 	<Italian>Hold down the [ALT] key and point to a building or specialist to see the net effect it would have in the current city.</Italian>
-	<Spanish>Hold down the [ALT] key and point to a building or specialist to see the net effect it would have in the current city.</Spanish>
+	<Spanish>Mantén la tecla [ALT] presionada y apunta a un edificio o especialista para ver el efecto si estuviera en la ciudad actual.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_9</Tag>
@@ -85,7 +85,7 @@
 	<French>As religions grow older, they become slightly less likely to spread.</French>
 	<German>As religions grow older, they become slightly less likely to spread.</German>
 	<Italian>As religions grow older, they become slightly less likely to spread.</Italian>
-	<Spanish>As religions grow older, they become slightly less likely to spread.</Spanish>
+	<Spanish>Cuando las religiones envejecen, se vuelven un poco menos probable de propagarse.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_10</Tag>
@@ -93,7 +93,7 @@
 	<French>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</French>
 	<German>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</German>
 	<Italian>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</Italian>
-	<Spanish>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</Spanish>
+	<Spanish>Si un leader extranjero está Amable contigo, no se opondrán a ser preguntados por un pequeño regalo.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_11</Tag>
@@ -101,7 +101,7 @@
 	<French>Units led by a warlord can be upgraded for free, and they do not lose their experience points.</French>
 	<German>Units led by a warlord can be upgraded for free, and they do not lose their experience points.</German>
 	<Italian>Units led by a warlord can be upgraded for free, and they do not lose their experience points.</Italian>
-	<Spanish>Units led by a warlord can be upgraded for free, and they do not lose their experience points.</Spanish>
+	<Spanish>Las unidades lideradas por un caudillo pueden ser modernizadas gratis, y no perderán sus putnos de experiencia.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_12</Tag>
@@ -109,7 +109,7 @@
 	<French>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</French>
 	<German>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</German>
 	<Italian>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Italian>
-	<Spanish>When a stack of units is attacked, the unit with the best chance of winning will usually defend first - but rookie units will attempt to protect experienced veterans and medics.</Spanish>
+	<Spanish>Cuando una pila de unidades es atacada, la unidad con mejor oprtunidad de ganar será normalmente la que defienda primero - pero las unidades novatas intentarán proteger veteranos experimentados y médicos.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_13</Tag>
@@ -117,7 +117,7 @@
 	<French>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</French>
 	<German>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</German>
 	<Italian>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</Italian>
-	<Spanish>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</Spanish>
+	<Spanish>En la cola de construcción, usa [CTRL] y [MAYÚS] para mover objetos arriba y abajo; y [ALT] para alternar si los objetos deben repetirse o no.</Spanish>
 </TEXT>
 <!-- replacement text for the inaccurate barbarian tip (changed english only)-->
 <TEXT>
@@ -126,7 +126,7 @@
 	<French>Les barbares peuvent appara&#238;tre sur toutes les cases recouvertes par le brouillard de guerre. Vous ne saurez donc jamais ce qu'il y a sur celles qui sont invisibles, m&#234;me si vous avez d&#233;j&#224; v&#233;rifi&#233; au tour pr&#233;c&#233;dent !</French>
 	<German>Barbaren k&#246;nnen auf allen vom Nebel des Krieges verh&#252;llten Gel&#228;ndefeldern lauern. Gehen Sie also nie davon aus, dass ein Feld, das Sie nicht sehen k&#246;nnen, sicher ist ... auch wenn Sie es in der vorherigen Runde &#252;berpr&#252;ft haben!</German>
 	<Italian>I Barbari possono apparire in un qualsiasi spazio oscurato dalla nebbia di guerra. Non essere mai certo che uno spazio non visibile sia sicuro, anche se hai controllato durante il turno precedente!</Italian>
-	<Spanish>Los b&#225;rbaros pueden aparecer en cualquier lugar en el que una casilla est&#233; oscurecida por la niebla de la guerra, as&#237; que no supong&#225;is que una casilla que no pod&#225;is ver es segura, aunque la hay&#225;is comprobado en el turno anterior.</Spanish>
+	<Spanish>Los bárbaros no reaparecerán en dos pasos de cualquiera de las unidades. Con el posicionamiento cuidadoso de batidores puedes bloquear completamente grupos de pillaje que se formen en tu área.</Spanish>
 </TEXT>
 <!-- replacement text for the double-click tip, because I've changed the functionality of double-click -->
 <TEXT>
@@ -135,10 +135,11 @@
 	<French>Double clicking on a stack of units will wake them all up.</French>
 	<German>Double clicking on a stack of units will wake them all up.</German>
 	<Italian>Double clicking on a stack of units will wake them all up.</Italian>
-	<Spanish>Double clicking on a stack of units will wake them all up.</Spanish>
+	<Spanish>Doble click en una pila de unidades las despertará a todas.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_14</Tag>
 	<English>Hold the 'X' key when issuing a command to temporarily suppress automatic unit cycling.</English>
+	<Spanish>Mantener la tecla 'X' presionada cuando das una órden para suprimir temporalmente el ciclo de unidades.</Spanish>
 </TEXT>
 </Civ4GameText>

@@ -18,7 +18,7 @@
 		<French>Index</French>
 		<German>Index</German>
 		<Italian>Indice</Italian>
-		<Spanish>Indice</Spanish>
+		<Spanish>Índice</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_PEDIA_SCREEN_CONTENTS</Tag>
@@ -34,7 +34,7 @@
 		<French>Améliorations des Unités</French>
 		<German>Modernisierungen</German>
 		<Italian>Avanzamenti</Italian>
-		<Spanish>Unit Upgrades</Spanish>
+		<Spanish>Modernizaciones</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_PEDIA_CATEGORY_PROMOTION_TREE</Tag>
@@ -42,7 +42,7 @@
 		<French>Arborescence des Promotions</French>
 		<German>Beförderungsbaum</German>
 		<Italian>Albero Promoz.</Italian>
-		<Spanish>Promotion Tree</Spanish>
+		<Spanish>Árbol de ascensos</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_PEDIA_CATEGORY_NATIONAL_WONDERS</Tag>
@@ -50,7 +50,7 @@
 		<French>Merveilles Nationales</French>
 		<German>Nationalwunder</German>
 		<Italian>Merav. Naz.</Italian>
-		<Spanish>National Wonders</Spanish>
+		<Spanish>Maravillas Nacionales</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_PEDIA_CATEGORY_GREAT_WONDERS</Tag>
@@ -58,7 +58,7 @@
 		<French>Merveilles Mondiales</French>
 		<German>Weltwunder</German>
 		<Italian>Grandi Merav.</Italian>
-		<Spanish>Great Wonders</Spanish>
+		<Spanish>Maravillas del Mundo</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_PEDIA_CATEGORY_CONCEPT_NEW</Tag>
@@ -66,7 +66,7 @@
 		<French>Conceptes BTS</French>
 		<German>Beyond the Sword-Konzepte</German>
 		<Italian>Concetti di BTS</Italian>
-		<Spanish>BTS Concepts</Spanish>
+		<Spanish>Conceptos BtS</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_UNIQUE_BUILDINGS</Tag>
@@ -74,7 +74,7 @@
 		<French>Bâtiments Uniques</French>
 		<German>Einzigartige Gebäude</German>
 		<Italian>Edifici Unici</Italian>
-		<Spanish>Unique Buildings</Spanish>
+		<Spanish>Edificios Únicos</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_PEDIA_FAV_CIVIC_AND_RELIGION</Tag>
@@ -82,6 +82,6 @@
 		<French>Doctrine et Religion Préférée</French>
 		<German>Bevorzugte Staatsform und Religion</German>
 		<Italian>Forme di governo e Religioni preferite</Italian>
-		<Spanish>Principio y religi&#243;n favoritos</Spanish>
+		<Spanish>Principio y religión favoritos</Spanish>
 	</TEXT>
 </Civ4GameText>
