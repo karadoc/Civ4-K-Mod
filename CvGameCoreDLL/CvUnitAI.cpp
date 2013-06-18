@@ -1797,10 +1797,11 @@ void CvUnitAI::AI_workerMove()
 	}
 	
 	bool bBuildFort = false;
-	
+
 	if (GC.getGame().getSorenRandNum(5, "AI Worker build Fort with Priority"))
 	{
-		bool bCanal = ((100 * area()->getNumCities()) / std::max(1, GC.getGame().getNumCities()) < 85);
+		//bool bCanal = ((100 * area()->getNumCities()) / std::max(1, GC.getGame().getNumCities()) < 85);
+		bool bCanal = false; // K-Mod. The current AI for canals doesn't work anyway; so lets skip it to save time.
 		bool bAirbase = false;
 		bAirbase = (kOwner.AI_totalUnitAIs(UNITAI_PARADROP) || kOwner.AI_totalUnitAIs(UNITAI_ATTACK_AIR) || kOwner.AI_totalUnitAIs(UNITAI_MISSILE_AIR));
 		
@@ -1892,10 +1893,11 @@ void CvUnitAI::AI_workerMove()
 	{
 		return;
 	}
-	
+
 	if (!bBuildFort)
 	{
-		bool bCanal = ((100 * area()->getNumCities()) / std::max(1, GC.getGame().getNumCities()) < 85);
+		//bool bCanal = ((100 * area()->getNumCities()) / std::max(1, GC.getGame().getNumCities()) < 85);
+		bool bCanal = false; // K-Mod. The current AI for canals doesn't work anyway; so lets skip it to save time.
 		bool bAirbase = false;
 		bAirbase = (kOwner.AI_totalUnitAIs(UNITAI_PARADROP) || kOwner.AI_totalUnitAIs(UNITAI_ATTACK_AIR) || kOwner.AI_totalUnitAIs(UNITAI_MISSILE_AIR));
 		
@@ -19378,6 +19380,11 @@ bool CvUnitAI::AI_fortTerritory(bool bCanal, bool bAirbase)
 {
 	PROFILE_FUNC();
 
+	// K-Mod. This function currently only handles canals and airbases. So if we want neither, just abort.
+	if (!bCanal && !bAirbase)
+		return false;
+	// K-Mod end
+
 	int iBestValue = 0;
 	BuildTypes eBestBuild = NO_BUILD;
 	CvPlot* pBestPlot = NULL;
@@ -19402,6 +19409,8 @@ bool CvUnitAI::AI_fortTerritory(bool bCanal, bool bAirbase)
 						int iBestTempBuildValue = MAX_INT;
 						BuildTypes eBestTempBuild = NO_BUILD;
 
+						// K-Mod note: the following code may choose the improvement poorly if there are multiple fort options to choose from.
+						// I don't want to spend time fixing it now, because K-Mod only has one type of fort anyway.
 						for (int iJ = 0; iJ < GC.getNumBuildInfos(); iJ++)
 						{
 							BuildTypes eBuild = ((BuildTypes)iJ);

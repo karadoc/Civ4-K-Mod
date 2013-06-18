@@ -23781,6 +23781,7 @@ int CvPlayerAI::AI_getPlotAirbaseValue(CvPlot* pPlot) const
 		CvCity* pWorkingCity = pPlot->getWorkingCity();
 		if (pWorkingCity != NULL)
 		{
+			/* original bts code
 			if (pWorkingCity->AI_getBestBuild(pWorkingCity->getCityPlotIndex(pPlot)) != NO_BUILD)
 			{
 				return 0;
@@ -23792,7 +23793,24 @@ int CvPlayerAI::AI_getPlotAirbaseValue(CvPlot* pPlot) const
 				{
 					return 0;
 				}
+			} */
+			// K-Mod
+			ImprovementTypes eBestImprovement = pPlot->getImprovementType();
+			BuildTypes eBestBuild = pWorkingCity->AI_getBestBuild(pWorkingCity->getCityPlotIndex(pPlot));
+			if (eBestBuild != NO_BUILD)
+			{
+				if (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT)
+					eBestImprovement = (ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement();
 			}
+			if (eBestImprovement != NO_IMPROVEMENT)
+			{
+				CvImprovementInfo &kImprovementInfo = GC.getImprovementInfo(eBestImprovement);
+				if (!kImprovementInfo.isActsAsCity())
+				{
+					return 0;
+				}
+			}
+			// K-Mod end
 		}
 	}
 	
@@ -23906,6 +23924,7 @@ int CvPlayerAI::AI_getPlotCanalValue(CvPlot* pPlot) const
 			CvCity* pWorkingCity = pPlot->getWorkingCity();
 			if (pWorkingCity != NULL)
 			{
+				/* original bts code
 				if (pWorkingCity->AI_getBestBuild(pWorkingCity->getCityPlotIndex(pPlot)) != NO_BUILD)
 				{
 					return 0;
@@ -23917,7 +23936,24 @@ int CvPlayerAI::AI_getPlotCanalValue(CvPlot* pPlot) const
 					{
 						return 0;
 					}
+				} */
+				// K-Mod
+				ImprovementTypes eBestImprovement = pPlot->getImprovementType();
+				BuildTypes eBestBuild = pWorkingCity->AI_getBestBuild(pWorkingCity->getCityPlotIndex(pPlot));
+				if (eBestBuild != NO_BUILD)
+				{
+					if (GC.getBuildInfo(eBestBuild).getImprovement() != NO_IMPROVEMENT)
+						eBestImprovement = (ImprovementTypes)GC.getBuildInfo(eBestBuild).getImprovement();
 				}
+				if (eBestImprovement != NO_IMPROVEMENT)
+				{
+					CvImprovementInfo &kImprovementInfo = GC.getImprovementInfo(eBestImprovement);
+					if (!kImprovementInfo.isActsAsCity())
+					{
+						return 0;
+					}
+				}
+				// K-Mod end
 			}
 		}
 	}
@@ -23940,7 +23976,8 @@ int CvPlayerAI::AI_getPlotCanalValue(CvPlot* pPlot) const
 		return 0;
 	}
 	
-	return 10 * std::min(0, pSecondWaterArea->getNumTiles() - 2);
+	//return 10 * std::min(0, pSecondWaterArea->getNumTiles() - 2);
+	return 10 * std::max(0, pSecondWaterArea->getNumTiles() - 2);
 }
 
 //This returns approximately to the sum
