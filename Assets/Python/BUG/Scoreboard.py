@@ -492,7 +492,8 @@ class TeamScores:
 		self._team = team
 		self._rank = rank
 		self._playerScores = []
-		self._isVassal = team.isAVassal()
+		#self._isVassal = team.isAVassal()
+		self._isVassal = team.isAVassal() and gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(team.getID()) # K-Mod
 		self._master = None
 		self._vassalTeamScores = []
 		
@@ -517,7 +518,8 @@ class TeamScores:
 		self._vassalTeamScores.append(teamScore)
 		
 	def gatherVassals(self):
-		if self._team.isAVassal():
+		#if self._team.isAVassal():
+		if self.isVassal(): # K-Mod
 			for eTeam in range( gc.getMAX_TEAMS() ):
 				teamScores = self._scoreboard.getTeamScores(eTeam)
 				if teamScores and self._team.isVassal(eTeam):
@@ -530,6 +532,10 @@ class TeamScores:
 						else:
 							playerScore.set(MASTER, MASTER_ICON)
 					self._scoreboard._anyHas[MASTER] = True
+			# K-Mod (to fix a problem when a human player becomes the vassal of an unmet team)
+			if self._master == None:
+				self._isVassal = False
+			# K-Mod end
 
 
 class PlayerScore:
