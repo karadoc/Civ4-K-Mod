@@ -628,7 +628,7 @@ class EconomicsAdvisor:
 
 		yLocation += 1.5 * self.Y_SPACING
 		fExpectedEvents = 1.0 * iGlobalWarmingChances * gc.getDefineINT("GLOBAL_WARMING_PROB") / (10.0 * gc.getGameSpeedInfo(game.getGameSpeedType()).getVictoryDelayPercent())
-		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + "Expected Events per Turn" + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
+		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_ENVIRONMENT_EXPECTED_EVENTS", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + u"%0.1f" % fExpectedEvents + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 
 		if (iGwEventTally >= 0):
