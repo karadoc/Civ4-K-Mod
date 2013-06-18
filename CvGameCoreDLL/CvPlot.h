@@ -155,9 +155,9 @@ public:
 /*                                                                                              */
 /* Efficiency                                                                                   */
 /************************************************************************************************/
-	// Plot danger cache (renamed and edited for K-Mod)
-	bool getActivePlayerNoDangerCache() const;
-	void setActivePlayerNoDangerCache( bool bNewValue );
+	// Plot danger cache (rewritten for K-Mod to fix bugs and improvement performance)
+	inline int getActivePlayerSafeRangeCache() const { return m_iActivePlayerSafeRangeCache; }
+	inline void setActivePlayerSafeRangeCache(int range) { m_iActivePlayerSafeRangeCache = range; }
 	inline bool getBorderDangerCache(TeamTypes eTeam) const { return m_abBorderDangerCache[eTeam]; }
 	inline void setBorderDangerCache(TeamTypes eTeam, bool bNewValue) { m_abBorderDangerCache[eTeam] = bNewValue; }
 	void invalidateBorderDangerCache();
@@ -576,7 +576,8 @@ protected:
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	bool m_bActivePlayerNoDangerCache;
+	//bool m_bActivePlayerNoDangerCache;
+	int m_iActivePlayerSafeRangeCache; // K-Mod (the bbai implementation was flawed)
 	bool* m_abBorderDangerCache;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */

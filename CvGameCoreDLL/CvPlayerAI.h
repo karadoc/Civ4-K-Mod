@@ -109,6 +109,7 @@ public:
 /*                                                                                              */
 /*                                                                                              */
 /************************************************************************************************/
+	bool isSafeRangeCacheValid() const; // K-Mod
 	bool AI_getAnyPlotDanger(CvPlot* pPlot, int iRange = -1, bool bTestMoves = true, bool bCheckBorder = true) const; // K-Mod added bCheckBorder
 	int AI_getPlotDanger(CvPlot* pPlot, int iRange = -1, bool bTestMoves = true) const;
 	//int AI_getUnitDanger(CvUnit* pUnit, int iRange = -1, bool bTestMoves = true, bool bAnyDanger = true) const;

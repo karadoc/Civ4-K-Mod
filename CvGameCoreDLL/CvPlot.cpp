@@ -235,7 +235,7 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	m_bActivePlayerNoDangerCache = false;
+	m_iActivePlayerSafeRangeCache = -1;
 
 	for (iI = 0; iI < MAX_TEAMS; iI++)
 	{
@@ -3147,23 +3147,8 @@ int CvPlot::calculatePathDistanceToPlot( TeamTypes eTeam, CvPlot* pTargetPlot )
 /* BETTER_BTS_AI_MOD                       END                                                  */
 /************************************************************************************************/
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/21/09                                jdog5000      */
-/*                                                                                              */
-/* Efficiency                                                                                   */
-/************************************************************************************************/
-	// Plot danger cache
-bool CvPlot::getActivePlayerNoDangerCache() const
-{
-	return m_bActivePlayerNoDangerCache;
-}
-
-void CvPlot::setActivePlayerNoDangerCache( bool bNewValue )
-{
-	m_bActivePlayerNoDangerCache = bNewValue;
-}
-
-// K-Mod. I've changed the purpose of this function - because this is the way it is always used...
+// K-Mod. (rewrite of a bbai function)
+// I've changed the purpose of this function - because this is the way it is always used.
 void CvPlot::invalidateBorderDangerCache()
 {
 	/* for( int iI = 0; iI < MAX_TEAMS; iI++ )
@@ -3187,9 +3172,7 @@ void CvPlot::invalidateBorderDangerCache()
 	}
 	//
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+// K-Mod end
 
 PlayerTypes CvPlot::calculateCulturalOwner() const
 {
@@ -9047,9 +9030,10 @@ void CvPlot::read(FDataStreamBase* pStream)
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	m_bActivePlayerNoDangerCache = false;
+	//m_iActivePlayerNoBorderDangerCache = false;
 	//invalidateBorderDangerCache();
 	// K-Mod. I've changed the purpose of invalidateBorderDangerCache. It is no longer appropriate for this.
+	m_iActivePlayerSafeRangeCache = -1;
 	for (int i = 0; i < MAX_TEAMS; i++)
 	{
 		m_abBorderDangerCache[i] = false;

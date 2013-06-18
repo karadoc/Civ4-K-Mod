@@ -6107,7 +6107,8 @@ bool CvPlayer::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool
 
 	eUnitClass = ((UnitClassTypes)(GC.getUnitInfo(eUnit).getUnitClassType()));
 
-	FAssert(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eUnitClass) == eUnit);
+	// K-Mod note. This assert can fail if team games when checking whether this city can upgrade a unit to one of our team member's UUs.
+	//FAssert(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eUnitClass) == eUnit);
 	if (GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(eUnitClass) != eUnit)
 	{
 		return false;
@@ -10958,7 +10959,7 @@ void CvPlayer::setTurnActiveForPbem(bool bActive)
 		// Plot danger cache
 		//if( GC.getGameINLINE().getNumGameTurnActive() != 1 )
 		{
-			GC.getMapINLINE().invalidateIsActivePlayerNoDangerCache();
+			GC.getMapINLINE().invalidateActivePlayerSafeRangeCache();
 		}
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
@@ -11155,7 +11156,7 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 
 	gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 
-	GC.getMapINLINE().invalidateIsActivePlayerNoDangerCache();
+	GC.getMapINLINE().invalidateActivePlayerSafeRangeCache();
 }
 
 // K-Mod. The body of this function use to be part of setTurnActive.

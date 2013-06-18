@@ -1312,21 +1312,16 @@ int CvMap::calculatePathDistance(CvPlot *pSource, CvPlot *pDest)
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 // Plot danger cache
-void CvMap::invalidateIsActivePlayerNoDangerCache()
+void CvMap::invalidateActivePlayerSafeRangeCache()
 {
 	PROFILE_FUNC();
 
-	int iI;
-	CvPlot* pLoopPlot;
-
-	for( iI = 0; iI < numPlotsINLINE(); iI++ )
+	for (int iI = 0; iI < numPlotsINLINE(); iI++)
 	{
-		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
-		if( pLoopPlot != NULL )
-		{
-			pLoopPlot->setActivePlayerNoDangerCache(false);
-		}
+		if (pLoopPlot)
+			pLoopPlot->setActivePlayerSafeRangeCache(-1);
 	}
 }
 

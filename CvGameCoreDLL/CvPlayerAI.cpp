@@ -4141,6 +4141,12 @@ bool CvPlayerAI::AI_isCommercePlot(CvPlot* pPlot) const
 // K-Mod. The cache also needs to be reset when routes are destroyed, because distance 2 border danger only counts when there is a route.
 // (Actually, the cache doesn't need to be cleared when war is declared; because false negatives have no impact with this cache.)
 // (In general, I think this cache is a poorly planned idea. It's prone to subtle bugs if there are rule changes in seemingly independant parts of the games.)
+
+bool CvPlayerAI::isSafeRangeCacheValid() const
+{
+	return isTurnActive() && !GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS) && GC.getGameINLINE().getNumGameTurnActive() == 1;
+}
+
 bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves, bool bCheckBorder) const
 {
 	PROFILE_FUNC();
@@ -4150,13 +4156,17 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves,
 		iRange = DANGER_RANGE;
 	}
 
-	if( bTestMoves && isTurnActive() )
+	/* bbai if( bTestMoves && isTurnActive() )
 	{
 		if( (iRange <= DANGER_RANGE) && pPlot->getActivePlayerNoDangerCache() )
 		{
 			return false;
 		}
-	}
+	} */
+	// K-Mod
+	if (bTestMoves && isSafeRangeCacheValid() && iRange <= pPlot->getActivePlayerSafeRangeCache())
+		return false;
+	// K-Mod end
 
 	TeamTypes eTeam = getTeam();
 	//bool bCheckBorder = (!isHuman() && !pPlot->isCity());
@@ -4296,6 +4306,7 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves,
 	// value being true is only assumed to mean that the plot is safe in the
 	// test moves case.
 	//if( bTestMoves )
+	/* bbai code
 	{
 		if( isTurnActive() )
 		{
@@ -4304,7 +4315,12 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves,
 				pPlot->setActivePlayerNoDangerCache(true);
 			}
 		}
-	}
+	} */
+	// K-Mod. The above bbai code is flawed in that it flags the plot as safe regardless
+	// of what iRange is and then reports that the plot is safe for any iRange <= DANGER_RANGE.
+	if (isSafeRangeCacheValid() && iRange < pPlot->getActivePlayerSafeRangeCache())
+		pPlot->setActivePlayerSafeRangeCache(iRange);
+	// K-Mod end
 
 	return false;
 }
@@ -4333,13 +4349,18 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 		iRange = DANGER_RANGE;
 	}
 
+	/* bbai
 	if( bTestMoves && isTurnActive() )
 	{
 		if( (iRange <= DANGER_RANGE) && pPlot->getActivePlayerNoDangerCache() )
 		{
 			return 0;
 		}
-	}
+	} */
+	// K-Mod
+	if (bTestMoves && isSafeRangeCacheValid() && iRange <= pPlot->getActivePlayerSafeRangeCache())
+		return 0;
+	// K-Mod end
 
 	for (iDX = -(iRange); iDX <= iRange; iDX++)
 	{
@@ -4411,6 +4432,10 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 			}
 		}
 	}
+	// K-Mod
+	if (iCount == 0 && isSafeRangeCacheValid() && iRange < pPlot->getActivePlayerSafeRangeCache())
+		pPlot->setActivePlayerSafeRangeCache(iRange);
+	// K-Mod end
 
 	if (iBorderDanger > 0)
 	{

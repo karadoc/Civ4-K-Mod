@@ -268,7 +268,8 @@ public:
 /* Efficiency                                                                                   */
 /************************************************************************************************/
 	// Plot danger cache
-	void invalidateIsActivePlayerNoDangerCache();
+	//void invalidateIsActivePlayerNoDangerCache();
+	void invalidateActivePlayerSafeRangeCache(); // K-Mod version
 	void invalidateBorderDangerCache(TeamTypes eTeam);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
