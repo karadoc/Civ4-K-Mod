@@ -1780,8 +1780,8 @@ void CvUnitAI::AI_workerMove()
 	{
 		/* original bts code (is it just me, or did they get this backwards?)
 		if ((pCity->AI_getWorkersNeeded() > 0) && (plot()->isCity() || (pCity->AI_getWorkersNeeded() < ((1 + pCity->AI_getWorkersHave() * 2) / 3)))) */
-		// K-Mod
-		if (pCity->AI_getWorkersNeeded() > 0 && (plot()->isCity() || pCity->AI_getWorkersHave() < (1 + pCity->AI_getWorkersNeeded() * 2) / 3))
+		// K-Mod. Note: this worker is currently at pCity, and so we're probably counted in AI_getWorkersHave.
+		if (pCity->AI_getWorkersNeeded() > 0 && (plot()->isCity() || pCity->AI_getWorkersHave()-1 <= (1 + pCity->AI_getWorkersNeeded() * 2) / 3))
 		// K-Mod end
 		{
 			if (AI_improveCity(pCity))
@@ -1790,12 +1790,13 @@ void CvUnitAI::AI_workerMove()
 			}
 		}
 	}
-	
+
+	/* original bts code
 	if (AI_improveLocalPlot(2, pCity))
 	{
 		return;		
-	}
-	
+	} */ // Moved by K-Mod
+
 	bool bBuildFort = false;
 
 	if (GC.getGame().getSorenRandNum(5, "AI Worker build Fort with Priority"))
@@ -1815,7 +1816,7 @@ void CvUnitAI::AI_workerMove()
 		bBuildFort = true;
 	}
 
-	
+
 	if (bCanRoute && isBarbarian())
 	{
 		if (AI_connectCity())
@@ -1854,7 +1855,7 @@ void CvUnitAI::AI_workerMove()
 			return;
 		}
 	} */ // K-Mod
-		
+
 	if (pCity != NULL)
 	{
 		if (AI_improveCity(pCity))
@@ -1862,6 +1863,10 @@ void CvUnitAI::AI_workerMove()
 			return;
 		}
 	}
+	// K-Mod. (moved from higher up)
+	if (AI_improveLocalPlot(2, pCity))
+		return;
+	//
 
 	if (!bNextCity)
 	{
@@ -1956,10 +1961,10 @@ void CvUnitAI::AI_workerMove()
 /************************************************************************************************/
 		}
 	}
-	
+
 	if (AI_improveLocalPlot(3, NULL))
 	{
-		return;		
+		return;
 	}
 
 	if (!(isHuman()) && (AI_getUnitAIType() == UNITAI_WORKER))
@@ -1971,8 +1976,8 @@ void CvUnitAI::AI_workerMove()
 		// K-Mod
 		if (GC.getGameINLINE().getElapsedGameTurns() > GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent()/6)
 		{
-			if (kOwner.AI_totalUnitAIs(UNITAI_WORKER) > kOwner.getNumCities() &&
-				area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) > kOwner.AI_neededWorkers(area()))
+			if (kOwner.AI_totalUnitAIs(UNITAI_WORKER) > std::max(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities(), kOwner.getNumCities()*3/2) &&
+				area()->getNumAIUnits(getOwnerINLINE(), UNITAI_WORKER) > kOwner.AI_neededWorkers(area())*3/2)
 		// K-Mod end
 			{
 				if (kOwner.calculateUnitCost() > 0)
@@ -18920,79 +18925,79 @@ bool CvUnitAI::AI_improveLocalPlot(int iRange, CvCity* pIgnoreCity)
 		for (iY = -iRange; iY <= iRange; iY++)
 		{
 			CvPlot* pLoopPlot = plotXY(getX_INLINE(), getY_INLINE(), iX, iY);
-			if ((pLoopPlot != NULL) && (pLoopPlot->isCityRadius()))
+			// K-Mod note: I've turn the all-encompassing if blocks into !if continues.
+			if (pLoopPlot == NULL || !pLoopPlot->isCityRadius())
+				continue;
+
+			CvCity* pCity = pLoopPlot->getWorkingCity();
+			if (pCity == NULL || pCity->getOwnerINLINE() != getOwnerINLINE())
+				continue;
+
+			if (pIgnoreCity != NULL && pCity == pIgnoreCity)
+				continue;
+
+			if (!AI_plotValid(pLoopPlot))
+				continue;
+
+			int iIndex = pCity->getCityPlotIndex(pLoopPlot);
+			if (iIndex == CITY_HOME_PLOT || pCity->AI_getBestBuild(iIndex) == NO_BUILD)
+				continue;
+
+			if (pIgnoreCity != NULL && pCity->AI_getWorkersHave()-(plot()->getWorkingCity() == pCity ? 1 : 0) >= (1 + pCity->AI_getWorkersNeeded() * 2) / 3)
+				continue;
+			// K-Mod note. This was the original condition for the rest of the block:
+			//if (((NULL == pIgnoreCity) || ((pCity->AI_getWorkersNeeded() > 0) && (pCity->AI_getWorkersHave() < (1 + pCity->AI_getWorkersNeeded() * 2 / 3)))) && (pCity->AI_getBestBuild(iIndex) != NO_BUILD))
+
+			if (!canBuild(pLoopPlot, pCity->AI_getBestBuild(iIndex)))
+				continue;
+
+			if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
 			{
-				CvCity* pCity = pLoopPlot->getWorkingCity();
-				if ((NULL != pCity) && (pCity->getOwnerINLINE() == getOwnerINLINE()))
+				if (pLoopPlot->getImprovementType() != NO_IMPROVEMENT && pLoopPlot->getImprovementType() != GC.getDefineINT("RUINS_IMPROVEMENT"))
+					continue;
+			}
+
+			/* original bts code
+			if (bAllowed)
+			{
+				if (pLoopPlot->getImprovementType() != NO_IMPROVEMENT && GC.getBuildInfo(pCity->AI_getBestBuild(iIndex)).getImprovement() != NO_IMPROVEMENT)
 				{
-					if ((NULL == pIgnoreCity) || (pCity != pIgnoreCity))
+					bAllowed = false;
+				}
+			} */ // K-Mod. I don't think it's a good idea to disallow improvement changes here. So I'm changing it to have a cutoff value instead.
+			if (pCity->AI_getBestBuildValue(iIndex) <= 1)
+				continue;
+			//
+
+			int iValue = pCity->AI_getBestBuildValue(iIndex);
+			int iPathTurns;
+			if (generatePath(pLoopPlot, 0, true, &iPathTurns))
+			{
+				int iMaxWorkers = 1;
+				if (plot() == pLoopPlot)
+				{
+					iValue *= 3;
+					iValue /= 2;
+				}
+				else if (getPathLastNode()->m_iData1 == 0)
+				{
+					iPathTurns++;
+				}
+				else if (iPathTurns <= 1)
+				{
+					iMaxWorkers = AI_calculatePlotWorkersNeeded(pLoopPlot, pCity->AI_getBestBuild(iIndex));
+				}
+
+				if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD, getGroup()) < iMaxWorkers)
+				{
+					iValue *= 1000;
+					iValue /= 1 + iPathTurns;
+
+					if (iValue > iBestValue)
 					{
-						if (AI_plotValid(pLoopPlot))
-						{
-							int iIndex = pCity->getCityPlotIndex(pLoopPlot);
-							if (iIndex != CITY_HOME_PLOT)
-							{
-								if (((NULL == pIgnoreCity) || ((pCity->AI_getWorkersNeeded() > 0) && (pCity->AI_getWorkersHave() < (1 + pCity->AI_getWorkersNeeded() * 2 / 3)))) && (pCity->AI_getBestBuild(iIndex) != NO_BUILD))
-								{
-									if (canBuild(pLoopPlot, pCity->AI_getBestBuild(iIndex)))
-									{
-										bool bAllowed = true;
-
-										if (GET_PLAYER(getOwnerINLINE()).isOption(PLAYEROPTION_SAFE_AUTOMATION))
-										{
-											if (pLoopPlot->getImprovementType() != NO_IMPROVEMENT && pLoopPlot->getImprovementType() != GC.getDefineINT("RUINS_IMPROVEMENT"))
-											{
-												bAllowed = false;
-											}
-										}
-
-										if (bAllowed)
-										{
-											if (pLoopPlot->getImprovementType() != NO_IMPROVEMENT && GC.getBuildInfo(pCity->AI_getBestBuild(iIndex)).getImprovement() != NO_IMPROVEMENT)
-											{
-												bAllowed = false;
-											}
-										}
-
-										if (bAllowed)
-										{
-											int iValue = pCity->AI_getBestBuildValue(iIndex);
-											int iPathTurns;
-											if (generatePath(pLoopPlot, 0, true, &iPathTurns))
-											{
-												int iMaxWorkers = 1;
-												if (plot() == pLoopPlot)
-												{
-													iValue *= 3;
-													iValue /= 2;
-												}
-												else if (getPathLastNode()->m_iData1 == 0)
-												{
-													iPathTurns++;
-												}
-												else if (iPathTurns <= 1)
-												{
-													iMaxWorkers = AI_calculatePlotWorkersNeeded(pLoopPlot, pCity->AI_getBestBuild(iIndex));											
-												}
-
-												if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_BUILD, getGroup()) < iMaxWorkers)
-												{
-													iValue *= 1000;
-													iValue /= 1 + iPathTurns;
-
-													if (iValue > iBestValue)
-													{
-														iBestValue = iValue;
-														pBestPlot = pLoopPlot;
-														eBestBuild = pCity->AI_getBestBuild(iIndex);											
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
+						iBestValue = iValue;
+						pBestPlot = pLoopPlot;
+						eBestBuild = pCity->AI_getBestBuild(iIndex);
 					}
 				}
 			}
