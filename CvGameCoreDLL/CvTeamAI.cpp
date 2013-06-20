@@ -2647,28 +2647,10 @@ DenialTypes CvTeamAI::AI_vassalTrade(TeamTypes eTeam) const
 
 				// K-Mod. New rule: AI civs won't accept a vassal if it would mean joining a war they would never otherwise join.
 				// Note: the following denials actually come from kMasterTeam, not this team. This is just the only way to do it.
-				if (!kMasterTeam.isHuman())
-				{
-					AttitudeTypes eAttitude = kMasterTeam.AI_getAttitude(i);
+				if (kMasterTeam.AI_refuseWar(i))
+					return DENIAL_ATTITUDE_THEM;
 
-					if (kMasterTeam.AI_noWarAttitudeProb(eAttitude) >= 100)
-					{
-						// ok, so we wouldn't independantly choose this war, but could we be bought into it?
-						// If any of our team would refuse, then the team refuses. (cf. AI_declareWarTrade)
-						for (PlayerTypes j = (PlayerTypes)0; j < MAX_CIV_PLAYERS; j=(PlayerTypes)(j+1))
-						{
-							const CvPlayerAI& kLoopPlayer = GET_PLAYER(j);
-							if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() == getID())
-							{
-								if (eAttitude > GC.getLeaderHeadInfo(kLoopPlayer.getPersonalityType()).getDeclareWarThemRefuseAttitudeThreshold())
-								{
-									return DENIAL_ATTITUDE_THEM;
-								}
-							}
-						}
-					}
-					// (note: if we're concerned about AI_startWarVal, then that should be checked in the trade value part; not the trade denial part.)
-				}
+				// (if we're concerned about AI_startWarVal, then that should be checked in the trade value part; not the trade denial part.)
 			}
 			//
 		}
@@ -3292,6 +3274,34 @@ bool CvTeamAI::AI_refusePeace(TeamTypes ePeaceTeam) const
 	{
 		return true;
 	}
+	return false;
+}
+
+bool CvTeamAI::AI_refuseWar(TeamTypes eWarTeam) const
+{
+	if (isHuman())
+		return false;
+
+	AttitudeTypes eAttitude = AI_getAttitude(eWarTeam);
+
+	if (AI_noWarAttitudeProb(eAttitude) >= 100)
+	{
+		// ok, so we wouldn't independantly choose this war, but could we be bought into it?
+		// If any of our team would refuse, then the team refuses. (cf. AI_declareWarTrade)
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
+		{
+			const CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+			if (kLoopPlayer.isAlive() && kLoopPlayer.getTeam() == getID())
+			{
+				if (eAttitude > GC.getLeaderHeadInfo(kLoopPlayer.getPersonalityType()).getDeclareWarThemRefuseAttitudeThreshold())
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	// otherwise, war is acceptable
 	return false;
 }
 // K-Mod end
