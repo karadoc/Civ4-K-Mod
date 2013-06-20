@@ -87,7 +87,7 @@ public:
 	// K-Mod end
 
 	//int AI_startWarVal(TeamTypes eTeam) const;
-	int AI_startWarVal(TeamTypes eTarget, WarPlanTypes ePlan) const; // K-Mod
+	int AI_startWarVal(TeamTypes eTarget, WarPlanTypes eWarPlan) const; // K-Mod
 	int AI_endWarVal(TeamTypes eTeam) const;
 
 	int CvTeamAI::AI_knownTechValModifier(TechTypes eTech) const; // K-Mod

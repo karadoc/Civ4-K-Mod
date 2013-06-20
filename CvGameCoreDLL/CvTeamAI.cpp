@@ -1564,6 +1564,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 
 	bool bTotalWar = eWarPlan == WARPLAN_TOTAL || eWarPlan == WARPLAN_PREPARING_TOTAL;
 	bool bAttackWar = bTotalWar || (eWarPlan == WARPLAN_DOGPILE && kTargetMasterTeam.getAtWarCount(true) + (isAtWar(eTarget) ? 0 : 1) > 1);
+	bool bPendingDoW = !isAtWar(eTarget) && eWarPlan != WARPLAN_ATTACKED && eWarPlan != WARPLAN_ATTACKED_RECENT;
 
 	int iTotalCost = 0;
 
@@ -1589,7 +1590,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 
 				// note: this still doesn't count vassal siblings. (ie. if the target is a vassal, this will not count the master's other vassals.)
 				// also, the vassals of defensive pact civs are currently not counted either.
-				if (isAtWar(i) || i == eTargetMaster || kLoopTeam.isDefensivePact(eTargetMaster) || kLoopTeam.isVassal(eTargetMaster))
+				if (isAtWar(i) || i == eTargetMaster || kLoopTeam.isVassal(eTargetMaster) || (bPendingDoW && kLoopTeam.isDefensivePact(eTargetMaster)))
 				{
 					// the + power is meant to account for the fact that the target may get stronger while we are planning for war - especially early in the game.
 					// use a slightly reduced value if we're actually not intending to attack this target. (full weight to all enemies in defensive wars)
@@ -1609,6 +1610,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 			int iOurTotalProduction = iOurProduction * 100;
 			int iEnemyTotalProduction = 0;
 			const int iVassalFactor = 60; // only count some reduced percentage of vassal production.
+			// Note: I've chosen not to count the production of the target's other enemies.
 
 			for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 			{
@@ -1622,7 +1624,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 					iEnemyTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * 100;
 				else if (kLoopTeam.isVassal(eTargetMaster))
 					iEnemyTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * iVassalFactor;
-				else if (isAtWar(i) || kLoopTeam.isDefensivePact(eTargetMaster))
+				else if (isAtWar(i) || (bPendingDoW && kLoopTeam.isDefensivePact(eTargetMaster)))
 					iEnemyTotalProduction += kLoopTeam.AI_estimateTotalYieldRate(YIELD_PRODUCTION) * 100;
 			}
 
@@ -1733,7 +1735,7 @@ int CvTeamAI::AI_warCommitmentCost(TeamTypes eTarget, WarPlanTypes eWarPlan) con
 	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 	{
 		const CvTeamAI& kLoopTeam = GET_TEAM(i);
-		if (kLoopTeam.isAlive() && (i == eTargetMaster || kLoopTeam.isVassal(eTargetMaster)))
+		if (kLoopTeam.isAlive() && (i == eTargetMaster || kLoopTeam.isVassal(eTargetMaster)  || (bPendingDoW && kLoopTeam.isDefensivePact(eTargetMaster))))
 			iTotalWw += getWarWeariness(i, true)/100;
 	}
 	// note: getWarWeariness has units of anger per 100,000 population, and it is customary to divide it by 100 immediately
@@ -1844,10 +1846,11 @@ int CvTeamAI::AI_warDiplomacyCost(TeamTypes eTarget) const
 /// to pick the best target.
 
 // K-Mod. Complete remake of the function.
-int CvTeamAI::AI_startWarVal(TeamTypes eTarget, WarPlanTypes ePlan) const
+int CvTeamAI::AI_startWarVal(TeamTypes eTarget, WarPlanTypes eWarPlan) const
 {
 	TeamTypes eTargetMaster = GET_TEAM(eTarget).getMasterTeam(); // we need this for checking defensive pacts.
-	int iTotalValue = AI_warSpoilsValue(eTarget, ePlan) - AI_warCommitmentCost(eTarget, ePlan) - AI_warDiplomacyCost(eTarget);
+	bool bPendingDoW = !isAtWar(eTarget) && eWarPlan != WARPLAN_ATTACKED && eWarPlan != WARPLAN_ATTACKED_RECENT;
+	int iTotalValue = AI_warSpoilsValue(eTarget, eWarPlan) - AI_warCommitmentCost(eTarget, eWarPlan) - (bPendingDoW ? AI_warDiplomacyCost(eTarget) : 0);
 
 	// Call AI_warSpoilsValue for each additional enemy team involved in this war.
 	// NOTE: a single call to AI_warCommitmentCost should include the cost of fighting all of these enemies.
@@ -1858,14 +1861,14 @@ int CvTeamAI::AI_startWarVal(TeamTypes eTarget, WarPlanTypes ePlan) const
 
 		const CvTeam& kLoopTeam = GET_TEAM(i);
 
-		if (!kLoopTeam.isAlive() || kLoopTeam.isVassal(getID()))
+		if (!kLoopTeam.isAlive() || kLoopTeam.isVassal(getID()) || isAtWar(i))
 			continue;
 
 		if (kLoopTeam.isVassal(eTarget) || GET_TEAM(eTarget).isVassal(i))
 		{
-			iTotalValue += AI_warSpoilsValue(i, WARPLAN_DOGPILE) - AI_warDiplomacyCost(i);
+			iTotalValue += AI_warSpoilsValue(i, WARPLAN_DOGPILE) - (bPendingDoW ? AI_warDiplomacyCost(i) : 0);
 		}
-		else if (kLoopTeam.isDefensivePact(eTargetMaster))
+		else if (bPendingDoW && kLoopTeam.isDefensivePact(eTargetMaster))
 		{
 			FAssert(!isAtWar(eTarget));
 			iTotalValue += AI_warSpoilsValue(i, WARPLAN_ATTACKED); // note: no diplo cost for this b/c it isn't us declaring war.
@@ -1874,148 +1877,6 @@ int CvTeamAI::AI_startWarVal(TeamTypes eTarget, WarPlanTypes ePlan) const
 	return iTotalValue;
 }
 // K-Mod end
-#if 0 // Original / BBAI code, disabled by K-Mod.
-int CvTeamAI::AI_startWarVal(TeamTypes eTeam) const
-{
-	PROFILE_FUNC();
-
-	int iValue;
-
-	iValue = AI_calculatePlotWarValue(eTeam);
-
-	iValue += (3 * AI_calculateCapitalProximity(eTeam)) / ((iValue > 0) ? 2 : 3);
-	
-	int iClosenessValue = AI_teamCloseness(eTeam);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      05/16/10                                jdog5000      */
-/*                                                                                              */
-/* War Strategy AI, Victory Strategy AI                                                         */
-/************************************************************************************************/
-/* original code
-	if (iClosenessValue == 0)
-	{
-		iValue /= 4;
-	}
-	iValue += iClosenessValue / 4;
-*/
-	// Dividing iValue by 4 is a drastic move, will result in more backstabbing between friendly neighbors
-	// which is appropriate for Aggressive
-	// Closeness values are much smaller after the fix to CvPlayerAI::AI_playerCloseness, no need to divide by 4
-	if (iClosenessValue == 0)
-	{
-		iValue /= (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 4 : 2);
-	}
-	iValue += iClosenessValue;
-
-	iValue += AI_calculateBonusWarValue(eTeam);
-	
-	// Target other teams close to victory
-	if( GET_TEAM(eTeam).AI_isAnyMemberDoVictoryStrategyLevel3() )
-	{
-		iValue += 10;
-
-		bool bAggressive = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
-		bool bConq4 = AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST4);
-
-		// Prioritize targets closer to victory
-		if( bConq4 || bAggressive )
-		{
-			iValue *= 3;
-			iValue /= 2;
-		}
-
-		if( GET_TEAM(eTeam).AI_isAnyMemberDoVictoryStrategyLevel4() )
-		{
-			if( GET_TEAM(eTeam).AI_getLowestVictoryCountdown() >= 0 )
-			{
-				iValue += 50;
-			}
-
-			iValue *= 2;
-
-			if( bConq4 || bAggressive )
-			{
-				iValue *= 4;
-			}
-			else if( AI_isAnyMemberDoVictoryStrategyLevel3() )
-			{
-				iValue *= 2;
-			}
-		}
-	}
-
-	// This adapted legacy code just makes us more willing to enter a war in a trade deal 
-	// as boost applies to all rivals
-	if( AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_DOMINATION3) )
-	{
-		iValue *= (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI) ? 3 : 2);
-	}
-
-	// If occupied or conquest inclined and early/not strong, value weak opponents
-	if( getAnyWarPlanCount(true) > 0 || 
-		(AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST2) && !(AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CONQUEST3))) )
-	{
-		int iMultiplier = (75 * getPower(false))/std::max(1, GET_TEAM(eTeam).getDefensivePower(getID()));
-
-		iValue *= range(iMultiplier, 50, 400);
-		iValue /= 100;
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-	switch (AI_getAttitude(eTeam))
-	{
-	case ATTITUDE_FURIOUS:
-		iValue *= 16;
-		break;
-
-	case ATTITUDE_ANNOYED:
-		iValue *= 8;
-		break;
-
-	case ATTITUDE_CAUTIOUS:
-		iValue *= 4;
-		break;
-
-	case ATTITUDE_PLEASED:
-		iValue *= 2;
-		break;
-
-	case ATTITUDE_FRIENDLY:
-		iValue *= 1;
-		break;
-
-	default:
-		FAssert(false);
-		break;
-	}
-	
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/21/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-	// Make it harder to bribe player to start a war
-	if ( AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE4))
-	{
-		iValue /= 8;
-	}
-	else if ( AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_SPACE4))
-	{
-		iValue /= 4;
-	}
-	else if ( AI_isAnyMemberDoVictoryStrategy(AI_VICTORY_CULTURE3))
-	{
-		iValue /= 3;
-	}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
-	return iValue;
-}
-#endif // (end of disabled code)
 
 // XXX this should consider area power...
 int CvTeamAI::AI_endWarVal(TeamTypes eTeam) const
