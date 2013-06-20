@@ -1349,8 +1349,8 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 		if( GC.shiftKey() )
 		{
 			// Warning: use of this is not multiplayer compatible
-// K-Mod, karadoc: since it isn't MP compatible, I'm going to disable it in multiplayer mode...
-			if (!GC.getGameINLINE().isGameMultiPlayer()) // K-Mod
+			// K-Mod, since this it isn't MP compatible, I'm going to disable it for the time being.
+			if (false && !GC.getGameINLINE().isGameMultiPlayer())
 			{
 				if (GET_TEAM(GC.getGameINLINE().getActiveTeam()).canDeclareWar(eWidgetTeam))
 				{
@@ -1365,7 +1365,7 @@ void CvDLLWidgetData::doContactCiv(CvWidgetDataStruct &widgetDataStruct)
 					gDLL->getInterfaceIFace()->setDirty(Score_DIRTY_BIT, true);
 				}
 			}
-// K-Mod end
+			// K-Mod end
 		}
 		else
 		{
