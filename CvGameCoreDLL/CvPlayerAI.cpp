@@ -18302,11 +18302,13 @@ void CvPlayerAI::write(FDataStreamBase* pStream)
 	pStream->Write(MAX_PLAYERS, &m_aiCloseBordersAttitudeCache[0]); // K-Mod
 }
 
-
+// (K-Mod note: this should be roughly in units of commerce.)
 int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTriggeredData) const
 {
 	CvEventTriggerInfo& kTrigger = GC.getEventTriggerInfo(kTriggeredData.m_eTrigger);
 	CvEventInfo& kEvent = GC.getEventInfo(eEvent);
+
+	CvTeamAI& kTeam = GET_TEAM(getTeam()); // K-Mod
 
 	int iNumCities = getNumCities();
 	CvCity* pCity = getCity(kTriggeredData.m_iCityId);
@@ -18327,6 +18329,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 		aiCommerceYields[iI] = 0;
 	}
 
+	/* original bts code
 	if (NO_PLAYER != kTriggeredData.m_eOtherPlayer)
 	{
 		if (kEvent.isDeclareWar())
@@ -18347,7 +18350,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 				break;
 			}
 		}
-	}
+	} */ // this is handled later.
 
 	//Proportional to #turns in the game...
 	//(AI evaluation will generally assume proper game speed scaling!)
@@ -18361,7 +18364,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 
 	if (kEvent.getTech() != NO_TECH)
 	{
-		iValue += (GET_TEAM(getTeam()).getResearchCost((TechTypes)kEvent.getTech()) * kEvent.getTechPercent()) / 100;
+		iValue += (kTeam.getResearchCost((TechTypes)kEvent.getTech()) * kEvent.getTechPercent()) / 100;
 	}
 
 	if (kEvent.getUnitClass() != NO_UNITCLASS)
@@ -18456,7 +18459,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 
 	if (eBestTech != NO_TECH)
 	{
-		iValue += (GET_TEAM(getTeam()).getResearchCost(eBestTech) * kEvent.getTechPercent()) / 100;
+		iValue += (kTeam.getResearchCost(eBestTech) * kEvent.getTechPercent()) / 100;
 	}
 
 	if (kEvent.isGoldenAge())
@@ -18742,7 +18745,7 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 			
 			if (NO_TEAM != eWorstEnemy && eWorstEnemy != getTeam())
 			{
-			int iThirdPartyAttitudeWeight = GET_TEAM(getTeam()).AI_getAttitudeWeight(eWorstEnemy);
+			int iThirdPartyAttitudeWeight = kTeam.AI_getAttitudeWeight(eWorstEnemy);
 			
 			//If we like both teams, we want them to get along.
 			//If we like otherPlayer but not enemy (or vice-verca), we don't want them to get along.
@@ -18770,10 +18773,17 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 		
 		if (NO_BONUS != kEvent.getBonusGift())
 		{
+			/* original bts code
 			int iBonusValue = -AI_bonusVal((BonusTypes)kEvent.getBonusGift(), -1);
 			iBonusValue += (iOtherPlayerAttitudeWeight - 40) * kOtherPlayer.AI_bonusVal((BonusTypes)kEvent.getBonusGift(), +1);
 			//Positive for friends, negative for enemies.
-			iDiploValue += (iBonusValue * GC.getDefineINT("PEACE_TREATY_LENGTH")) / 60;
+			iDiploValue += (iBonusValue * GC.getDefineINT("PEACE_TREATY_LENGTH")) / 60; */
+
+			// K-Mod. The original code undervalued our loss of bonus by a factor of 100.
+			iValue -= AI_bonusVal((BonusTypes)kEvent.getBonusGift(), -1) * GC.getDefineINT("PEACE_TREATY_LENGTH") / 4;
+			int iGiftValue = kOtherPlayer.AI_bonusVal((BonusTypes)kEvent.getBonusGift(), +1) * (iOtherPlayerAttitudeWeight - 40) / 100;
+			iDiploValue += iGiftValue * GC.getDefineINT("PEACE_TREATY_LENGTH") / 4;
+			// K-Mod end
 		}
 		
 		if (GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI))
@@ -18795,6 +18805,16 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 
 		if (kEvent.isDeclareWar())
 		{
+			// K-Mod. Veto declare war events which are against our character.
+			// (This is moved from the start of this function, and rewritten.)
+			TeamTypes eOtherTeam = GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam();
+			if (kEvent.isDeclareWar() && kTriggeredData.m_eOtherPlayer != NO_PLAYER)
+			{
+				if (kTeam.AI_refuseWar(eOtherTeam))
+					return INT_MIN/100; // Note: the divide by 100 is just to avoid an overflow later on.
+			}
+			// K-Mod end
+
 			/* original bts code
 			int iWarValue = GET_TEAM(getTeam()).getDefensivePower(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam())
 				- GET_TEAM(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam()).getPower(true);// / std::max(1, GET_TEAM(getTeam()).getDefensivePower());
@@ -18802,10 +18822,11 @@ int CvPlayerAI::AI_eventValue(EventTypes eEvent, const EventTriggeredData& kTrig
 
 			// K-Mod. Note: the original code doesn't touch iValue.
 			// So whatever I do here is completely new.
-			// TODO: if I ever get around to writing code for evalutating potential war targets, I should use that here!
-			int iOurPower = GET_TEAM(getTeam()).getDefensivePower(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam());
-			int iTheirPower = GET_TEAM(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam()).getPower(true);
-			int iWarValue = 300 * (iOurPower - iTheirPower) / std::max(1, iOurPower + iTheirPower) - 25;// / std::max(1, GET_TEAM(getTeam()).getDefensivePower())
+
+			// Note: the event will make the other team declare war on us.
+			// Also, I've decided nto to multiply this by number of turns or anything like that.
+			// The war evaluation is rough, and optimistic... and besides, we can always declare war ourselves if we want to.
+			int iWarValue = kTeam.AI_startWarVal(GET_PLAYER(kTriggeredData.m_eOtherPlayer).getTeam(), WARPLAN_ATTACKED);
 
 			iValue += iWarValue;
 			// K-Mod end
@@ -18875,12 +18896,14 @@ EventTypes CvPlayerAI::AI_chooseEvent(int iTriggeredId) const
 
 	CvEventTriggerInfo& kTrigger = GC.getEventTriggerInfo(pTriggeredData->m_eTrigger);
 
-	int iBestValue = -MAX_INT;
+	//int iBestValue = -MAX_INT;
+	int iBestValue = INT_MIN; // K-Mod
 	EventTypes eBestEvent = NO_EVENT;
 
 	for (int i = 0; i < kTrigger.getNumEvents(); i++)
 	{
-		int iValue = -MAX_INT;
+		//int iValue = -MAX_INT;
+		int iValue = INT_MIN; // K-Mod
 		if (kTrigger.getEvent(i) != NO_EVENT)
 		{
 			CvEventInfo& kEvent = GC.getEventInfo((EventTypes)kTrigger.getEvent(i));
