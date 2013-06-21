@@ -2078,7 +2078,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 		int iMoveCost = pToPlot->movementCost(::getUnit(pUnitNode->m_data), pFromPlot);
 		bool bUniformCost = true;
 
-		for (pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode); pUnitNode && (bNewTurn || bUniformCost); pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
+		for (pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode); pUnitNode && bUniformCost; pUnitNode = pSelectionGroup->nextUnitNode(pUnitNode))
 		{
 			CvUnit* pLoopUnit = ::getUnit(pUnitNode->m_data);
 
@@ -2089,7 +2089,7 @@ int pathAdd(FAStarNode* parent, FAStarNode* node, int data, const void* pointer,
 			}
 		}
 
-		if (bNewTurn || bUniformCost)
+		if (bUniformCost)
 		{
 			// the simple, normal case
 			iMoves = std::max(0, iStartMoves - iMoveCost);

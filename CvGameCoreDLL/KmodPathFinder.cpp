@@ -357,12 +357,11 @@ bool KmodPathFinder::ProcessNode()
 				FAssert(parent_node->m_iNumChildren < NUM_DIRECTION_TYPES);
 				parent_node->m_apChildren[parent_node->m_iNumChildren] = child_node.get();
 				parent_node->m_iNumChildren++;
+				child_node->m_pParent = parent_node.get();
 
 				// update the new (reduced) costs for all the grandchildren.
 				FAssert(child_node->m_iNumChildren == 0 || !bNewNode);
 				ForwardPropagate(child_node.get(), cost_delta);
-
-				child_node->m_pParent = parent_node.get();
 
 				FAssert(child_node->m_iKnownCost > parent_node->m_iKnownCost);
 
