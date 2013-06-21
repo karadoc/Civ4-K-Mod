@@ -2955,7 +2955,8 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 		{
 			iTakenTiles++;
 		}
-		else if (pLoopPlot->isCityRadius() || abCitySiteRadius[iI])
+		//else if (pLoopPlot->isCityRadius() || abCitySiteRadius[iI])
+		else if (iI != CITY_HOME_PLOT && (pLoopPlot->isCityRadius() || abCitySiteRadius[iI])) // K-Mod
 		{
 			iTakenTiles++;
 
