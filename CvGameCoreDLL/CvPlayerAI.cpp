@@ -6947,8 +6947,8 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 
 				case UNITAI_ATTACK_AIR:
 					//iMilitaryValue += ((bWarPlan) ? 1200 : 800);
-					// K-Mod, I've decreased the value here but added something extra a bit lower down.
-					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 10 : 6) * (100 + kLoopUnit.getCollateralDamage()/2) * iWeight / 100);
+					// K-Mod
+					iOffenceValue = std::max(iOffenceValue, (bWarPlan ? 10 : 5) * (100 + kLoopUnit.getCollateralDamage()*std::min(5, kLoopUnit.getCollateralDamageMaxUnits())/5) * iWeight / 100);
 					break;
 
 				case UNITAI_DEFENSE_AIR:
@@ -7054,12 +7054,6 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				}
 			}
 
-			// K-Mod
-			if (kLoopUnit.getDomainType() == DOMAIN_AIR)
-			{
-				iMilitaryValue += (bWarPlan? 600 : 400) * GC.getGameINLINE().AI_combatValue(eLoopUnit)/100;
-			}
-
 			if (iNavalValue > 0)
 			{
 				if (getCapitalCity() != NULL)
@@ -7159,13 +7153,13 @@ int CvPlayerAI::AI_techUnitValue(TechTypes eTech, int iPathLength, bool& bEnable
 				int iMultiplier = 100;
 				if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST1 | AI_VICTORY_DOMINATION2) || AI_isDoStrategy(AI_STRATEGY_ALERT1))
 				{
-					iMultiplier += 30;
+					iMultiplier += 25;
 					if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST2 | AI_VICTORY_DOMINATION3))
 					{
-						iMultiplier += 30;
+						iMultiplier += 25;
 						if (AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3 | AI_VICTORY_DOMINATION4))
 						{
-							iMultiplier += 40;
+							iMultiplier += 25;
 						}
 					}
 				}
