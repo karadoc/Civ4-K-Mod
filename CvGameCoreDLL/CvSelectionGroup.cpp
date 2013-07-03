@@ -201,8 +201,7 @@ void CvSelectionGroup::doTurn()
 		{
 			setForceUpdate(false); // K-Mod. (this should do nothing, unless we're coming out of autoplay or something like that.)
 
-			//if (getActivityType() == ACTIVITY_MISSION)
-			if (getActivityType() == ACTIVITY_MISSION && headMissionQueueNode() && !(headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER)) // K-Mod
+			if (getActivityType() == ACTIVITY_MISSION)
 			{
 				bool bNonSpy = false;
 				for (CLLNode<IDInfo>* pUnitNode = headUnitNode(); pUnitNode != NULL; pUnitNode = nextUnitNode(pUnitNode))
@@ -215,11 +214,15 @@ void CvSelectionGroup::doTurn()
 					}
 				}
 
+				// K-Mod
+				bool bBrave = headMissionQueueNode() && !(headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER);
+				// Originally I used "MOVE_IGNORE_DANGER" to actually skip the danger tests complete, but I've found that
+				// sometimes produces unintuitive results in some situations. So now 'ignore danger' only ignores range==2.
+
 				//if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot(), 2) > 0)
-				if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2, true, false)) // K-Mod
-				{
+				if (bNonSpy && GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), bBrave ? 1 : 2, true, false))
 					clearMissionQueue();
-				}
+				// K-Mod end
 			}
 		}
 
