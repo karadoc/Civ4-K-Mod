@@ -1,6 +1,32 @@
-This is K-Mod version 1.40.
+This is K-Mod version 1.41.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.41 changelist
+
+Game
+
++ Increased the production cost of Incan quechuas from 15 to 20.
++ Fixed a bug which could cause the game to crash when a human player becomes the vassal of an AI in a multiplayer game.
++ Corrected a problem from bts which caused XML comments to not be ignored inside arrays
++ Fixed two rare path-finding bugs.
+
+UI
+
++ Added Spanish translation for BUG & K-Mod text, by Rual.
++ Fixed a bug which caused the declare war move popup to appear twice.
++ The standard unhealthiness from power is now included in the mouse-over text for buildings that produce power.
++ Tweaked the condition for workers being interrupted when in danger.
+
+AI
+
++ Fixed a problem which sometimes caused AI workers to get confused and waste turns.
++ Adjusted the AI's evaluation of choices for some random events.
++ Adjusted the tech value of air units
++ Reduced the conquest strategy tech value multiplier for military units
++ Fixed a rare bug in the evaluation of city sites
++ Fixed another rare bug in the danger cache from the bbai mod.
+
+--
 v1.40 changelist
 
 UI
