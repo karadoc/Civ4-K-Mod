@@ -9521,7 +9521,12 @@
 				<iCommerce>20</iCommerce>
 			</CommerceHappinesses>
 			<ReligionChanges/>
-			<SpecialistCounts/>
+			<SpecialistCounts>
+				<SpecialistCount>
+					<SpecialistType>SPECIALIST_ARTIST</SpecialistType>
+					<iSpecialistCount>2</iSpecialistCount>
+				</SpecialistCount>
+			</SpecialistCounts>
 			<FreeSpecialistCounts/>
 			<CommerceFlexibles/>
 			<CommerceChangeOriginalOwners/>
