@@ -14708,7 +14708,7 @@ ReligionTypes CvPlayerAI::AI_bestReligion() const
 		return NO_RELIGION;
 	} */ // disabled by K-Mod
 	// K-Mod. Don't instantly convert to the first religion avaiable, unless it is your own religion.
-	int iSpread = getHasReligionCount(eBestReligion) * 100 / std::max(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities(), getNumCities()+1);
+	int iSpread = getHasReligionCount(eBestReligion) * 100 / std::min(GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities()*3/2+1, getNumCities()+1);
 	if (getStateReligion() == NO_RELIGION && iSpread < 29 - AI_getFlavorValue(FLAVOR_RELIGION)
 		&& (GC.getGameINLINE().getHolyCity(eBestReligion) == NULL || GC.getGameINLINE().getHolyCity(eBestReligion)->getTeam() != getTeam()))
 	{
