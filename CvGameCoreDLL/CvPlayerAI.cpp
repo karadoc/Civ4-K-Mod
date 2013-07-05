@@ -10635,16 +10635,22 @@ int CvPlayerAI::AI_cityTradeVal(CvCity* pCity) const
 
 		if (pLoopPlot != NULL)
 		{
+			/* original bts code
 			if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
 			{
-				//iValue += (AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true) * 10);
-				// K-Mod
-				int iBonusValue = AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true);
+				iValue += (AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true) * 10);
+			} */
+			// K-Mod. Use average of our value for gaining the bonus, and their value for losing it.
+			int iBonusValue = 0;
+
+			if (pLoopPlot->getBonusType(getTeam()) != NO_BONUS)
+				iBonusValue += AI_bonusVal(pLoopPlot->getBonusType(getTeam()), 1, true);
+			if (pLoopPlot->getBonusType(pCity->getTeam()) != NO_BONUS)
 				iBonusValue += GET_PLAYER(pCity->getOwnerINLINE()).AI_bonusVal(pLoopPlot->getBonusType(pCity->getTeam()), -1, true);
-				iBonusValue *= plotDistance(pLoopPlot, pCity->plot()) <= 1 ? 5 : 4;
-				iValue += iBonusValue;
-				// K-Mod end
-			}
+
+			iBonusValue *= plotDistance(pLoopPlot, pCity->plot()) <= 1 ? 5 : 4;
+			iValue += iBonusValue;
+			// K-Mod end
 		}
 	}
 
