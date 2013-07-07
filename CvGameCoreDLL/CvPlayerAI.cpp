@@ -4319,7 +4319,7 @@ bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves,
 	} */
 	// K-Mod. The above bbai code is flawed in that it flags the plot as safe regardless
 	// of what iRange is and then reports that the plot is safe for any iRange <= DANGER_RANGE.
-	if (isSafeRangeCacheValid() && iRange < pPlot->getActivePlayerSafeRangeCache())
+	if (isSafeRangeCacheValid() && iRange > pPlot->getActivePlayerSafeRangeCache())
 		pPlot->setActivePlayerSafeRangeCache(iRange);
 	// K-Mod end
 
@@ -4434,7 +4434,7 @@ int CvPlayerAI::AI_getPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves) con
 		}
 	}
 	// K-Mod
-	if (iCount == 0 && isSafeRangeCacheValid() && iRange < pPlot->getActivePlayerSafeRangeCache())
+	if (iCount == 0 && isSafeRangeCacheValid() && iRange > pPlot->getActivePlayerSafeRangeCache())
 		pPlot->setActivePlayerSafeRangeCache(iRange);
 	// K-Mod end
 
