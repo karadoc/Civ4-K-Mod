@@ -5497,14 +5497,15 @@ bool CvUnitAI::AI_greatPersonMove()
 	BuildingTypes eBestBuilding = NO_BUILDING;
 	int iBestValue = 1;
 	int iBestPathTurns = MAX_INT; // just used as a tie-breaker.
+	int iMoveFlags = alwaysInvisible() ? 0 : MOVE_NO_ENEMY_TERRITORY;
 
 	int iLoop;
 	for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
 	{
-		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()) && !pLoopCity->plot()->isVisibleEnemyUnit(this))
+		if (pLoopCity->area() == area())
 		{
 			int iPathTurns;
-			if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns) && !kPlayer.AI_getAnyPlotDanger(pLoopCity->plot(), 2))
+			if (generatePath(pLoopCity->plot(), iMoveFlags, true, &iPathTurns))
 			{
 				// Join
 				for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -5783,7 +5784,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 					else
 					{
-						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), alwaysInvisible() ? 0 : MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_JOIN_CITY);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iMoveFlags, false, false, MISSIONAI_JOIN_CITY);
 						return true;
 					}
 				}
@@ -5822,7 +5823,7 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 					else
 					{
-						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), alwaysInvisible() ? 0 : MOVE_NO_ENEMY_TERRITORY, false, false, eMissionAI);
+						getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iMoveFlags, false, false, eMissionAI);
 						return true;
 					}
 				}
