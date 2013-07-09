@@ -2955,7 +2955,9 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	{
 		aiUnitAIVal[UNITAI_SETTLE] = 0;
 		aiUnitAIVal[UNITAI_WORKER] = 0;
+		aiUnitAIVal[UNITAI_WORKER_SEA] = 0;
 		aiUnitAIVal[UNITAI_EXPLORE] = 0;
+		aiUnitAIVal[UNITAI_EXPLORE_SEA] = 0;
 		aiUnitAIVal[UNITAI_ATTACK_CITY] /= 3;
 		aiUnitAIVal[UNITAI_COLLATERAL] /= 2;
 	}
