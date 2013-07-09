@@ -12953,7 +12953,7 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 	//const double iB = log((double)iOuterRatio)/iCultureRange;
 
 	// free culture bonus for cities
-	iCultureRateTimes100+=(bCityCulture && iCultureRateTimes100 > 0)?600 :0;
+	iCultureRateTimes100+= bCityCulture ? 400 : 0;
 
 	// note, original code had "if (getCultureTimes100(ePlayer) > 0)". I took that part out.
 	if (eCultureLevel != NO_CULTURELEVEL &&	(std::abs(iCultureRateTimes100*iScale) >= 100 || bCityCulture))
