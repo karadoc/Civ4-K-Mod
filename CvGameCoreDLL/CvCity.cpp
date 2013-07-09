@@ -15386,53 +15386,69 @@ PlayerTypes CvCity::getLiberationPlayer(bool bConquest) const
 	int iBestValue = 0;
 
 	int iTotalCultureTimes100 = countTotalCultureTimes100();
+	// K-Mod - Base culture which is added to dilute the true culture values
+	const int iBaseCulture = GC.getNumCultureLevelInfos() > 1
+		? 50 * GC.getCultureLevelInfo((CultureLevelTypes)1).getSpeedThreshold(GC.getGameINLINE().getGameSpeedType())
+		: 100;
+	// K-Mod end
 
-	for (int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; ++iPlayer)
+	// K-Mod. I've flattened the if blocks into if! continue conditions.
+	// and I've changed the type of the iterator of the loop, from int to PlayerTypes
+
+	//for (int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; ++iPlayer)
+	for (PlayerTypes ePlayer = (PlayerTypes)0; ePlayer < MAX_CIV_PLAYERS; ePlayer = (PlayerTypes)(ePlayer+1))
 	{
-		CvPlayer& kLoopPlayer = GET_PLAYER((PlayerTypes)iPlayer);
+		CvPlayerAI& kLoopPlayer = GET_PLAYER(ePlayer);
 
-		if (kLoopPlayer.isAlive())
+		if (!kLoopPlayer.isAlive())
+			continue;
+
+		if (!kLoopPlayer.canReceiveTradeCity())
+			continue;
+
+		CvCity* pCapital = kLoopPlayer.getCapitalCity();
+		if (pCapital == NULL)
+			continue;
+
+		int iCapitalDistance = ::plotDistance(getX_INLINE(), getY_INLINE(), pCapital->getX_INLINE(), pCapital->getY_INLINE());
+		if (area() != pCapital->area())
 		{
-			if (kLoopPlayer.canReceiveTradeCity())
+			iCapitalDistance *= 2;
+		}
+
+		//int iCultureTimes100 = getCultureTimes100(ePlayer);
+		int iCultureTimes100 = iBaseCulture + getCultureTimes100(ePlayer);// K-Mod
+
+		if (bConquest)
+		{
+			if (iPlayer == getOriginalOwner())
 			{
-				CvCity* pCapital = kLoopPlayer.getCapitalCity();
-				if (NULL != pCapital)
-				{
-					int iCapitalDistance = ::plotDistance(getX_INLINE(), getY_INLINE(), pCapital->getX_INLINE(), pCapital->getY_INLINE());
-					if (area() != pCapital->area())
-					{
-						iCapitalDistance *= 2;
-					}
-
-					int iCultureTimes100 = getCultureTimes100((PlayerTypes)iPlayer);
-
-					if (bConquest)
-					{
-						if (iPlayer == getOriginalOwner())
-						{
-							iCultureTimes100 *= 3;
-							iCultureTimes100 /= 2;
-						}
-					}
-
-					if (GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getTeam() 
-						|| GET_TEAM(GET_PLAYER((PlayerTypes)iPlayer).getTeam()).isVassal(getTeam()) 
-						|| GET_TEAM(getTeam()).isVassal(GET_PLAYER((PlayerTypes)iPlayer).getTeam()))
-					{
-						// K-Mod: I don't see why the total culture should be used in this way. (I haven't changed anything)
-						iCultureTimes100 *= 2;
-						iCultureTimes100 = (iCultureTimes100 + iTotalCultureTimes100) / 2;
-					}
-
-					int iValue = std::max(100, iCultureTimes100) / std::max(1, iCapitalDistance);
-
-					if (iValue > iBestValue)
-					{
-						iBestValue = iValue;
-						eBestPlayer = (PlayerTypes)iPlayer;
-					}
-				}
+				iCultureTimes100 *= 3;
+				iCultureTimes100 /= 2;
 			}
+		}
+
+		if (kLoopPlayer.getTeam() == getTeam()
+			|| GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam())
+			|| GET_TEAM(getTeam()).isVassal(kLoopPlayer.getTeam()))
+		{
+			// K-Mod: I don't see why the total culture should be used in this way. (I haven't changed anything)
+			iCultureTimes100 *= 2;
+			iCultureTimes100 = (iCultureTimes100 + iTotalCultureTimes100) / 2;
+		}
+
+		// K-Mod - adjust culture score based on plot ownership.
+		iCultureTimes100 *= 100 + plot()->calculateTeamCulturePercent(kLoopPlayer.getTeam());
+		iCultureTimes100 /= 100;
+		// K-Mod end
+
+		//int iValue = std::max(100, iCultureTimes100) / std::max(1, iCapitalDistance);
+		int iValue = iCultureTimes100 / std::max(1, iCapitalDistance); // K-Mod (minimum culture moved higher up)
+
+		if (iValue > iBestValue)
+		{
+			iBestValue = iValue;
+			eBestPlayer = ePlayer;
 		}
 	}
 
