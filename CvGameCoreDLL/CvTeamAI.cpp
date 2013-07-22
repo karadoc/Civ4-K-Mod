@@ -5147,229 +5147,230 @@ void CvTeamAI::AI_doWar()
 	int iEnemyPowerPercent = AI_getEnemyPowerPercent();
 
 	// K-Mod note: This first section also used for vassals, and for human players.
-	for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+	for (TeamTypes eLoopTeam = (TeamTypes)0; eLoopTeam < MAX_CIV_TEAMS; eLoopTeam=(TeamTypes)(eLoopTeam+1))
 	{
-		if (GET_TEAM((TeamTypes)iI).isAlive() && isHasMet((TeamTypes)iI))
+		if (!GET_TEAM(eLoopTeam).isAlive())
+			continue;
+		if (!isHasMet(eLoopTeam))
+			continue;
+		if (AI_getWarPlan(eLoopTeam) == NO_WARPLAN)
+			continue;
+
+		int iTimeModifier = 100;
+
+		int iAbandonTimeModifier = 100;
+		iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+		iAbandonTimeModifier /= 150;
+		if (!isAtWar(eLoopTeam)) // K-Mod. time / abandon modifiers are only relevant for war preparations. We don't need them if we are already at war.
 		{
-			if (AI_getWarPlan((TeamTypes)iI) != NO_WARPLAN)
+			int iThreshold = (80*AI_maxWarNearbyPowerRatio())/100;
+
+			if( iEnemyPowerPercent < iThreshold )
 			{
-				int iTimeModifier = 100;
+				iTimeModifier *= iEnemyPowerPercent;
+				iTimeModifier /= iThreshold;
+			}
+			// K-Mod
+			// intercontinental wars need more prep time
+			if (!AI_hasCitiesInPrimaryArea(eLoopTeam))
+			{
+				iTimeModifier *= 5;
+				iTimeModifier /= 4;
+				iAbandonTimeModifier *= 5;
+				iAbandonTimeModifier /= 4;
+				// maybe in the future I'll count the number of local cities and the number of overseas cities
+				// and use it to make a more appropriate modifier... but not now.
+			}
+			else
+			{
+				//with crush strategy, use just 2/3 of the prep time.
+				int iCrushMembers = AI_countMembersWithStrategy(AI_STRATEGY_CRUSH);
+				iTimeModifier *= 3 * (getNumMembers()-iCrushMembers) + 2 * iCrushMembers;
+				iTimeModifier /= 3;
+			}
+			// K-Mod end
 
-				int iAbandonTimeModifier = 100;
-				iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
-				iAbandonTimeModifier /= 150;
-				if (!isAtWar((TeamTypes)iI)) // K-Mod. time / abandon modifiers are only relevant for war preparations. We don't need them if we are already at war.
+			iTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+			iTimeModifier /= 150;
+
+			FAssert(iTimeModifier >= 0);
+		}
+
+		bool bEnemyVictoryLevel4 = GET_TEAM(eLoopTeam).AI_isAnyMemberDoVictoryStrategyLevel4();
+
+		if (AI_getWarPlan(eLoopTeam) == WARPLAN_ATTACKED_RECENT)
+		{
+			FAssert(isAtWar(eLoopTeam));
+
+			if (AI_getAtWarCounter(eLoopTeam) > ((GET_TEAM(eLoopTeam).AI_isLandTarget(getID())) ? 9 : 3))
+			{
+				if( gTeamLogLevel >= 1 )
 				{
-					int iThreshold = (80*AI_maxWarNearbyPowerRatio())/100;
+					logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from ATTACKED_RECENT to ATTACKED with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), iEnemyPowerPercent );
+				}
+				AI_setWarPlan((eLoopTeam), WARPLAN_ATTACKED);
+			}
+		}
+		else if (AI_getWarPlan(eLoopTeam) == WARPLAN_PREPARING_LIMITED)
+		{
+			FAssert(canEventuallyDeclareWar(eLoopTeam));
 
-					if( iEnemyPowerPercent < iThreshold )
+			if (AI_getWarPlanStateCounter(eLoopTeam) > ((5 * iTimeModifier) / (bEnemyVictoryLevel4 ? 400 : 100)))
+			{
+				if (AI_startWarVal(eLoopTeam, WARPLAN_LIMITED) > 0) // K-Mod. Last chance to change our mind if circumstances have changed
+				{
+					if( gTeamLogLevel >= 1 )
 					{
-						iTimeModifier *= iEnemyPowerPercent;
-						iTimeModifier /= iThreshold;
+						logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from PREPARING_LIMITED to LIMITED after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
 					}
-					// K-Mod
-					// intercontinental wars need more prep time
-					if (!AI_hasCitiesInPrimaryArea((TeamTypes)iI))
+					AI_setWarPlan(eLoopTeam, WARPLAN_LIMITED);
+				}
+				// K-Mod
+				else
+				{
+					if (gTeamLogLevel >= 1)
 					{
-						iTimeModifier *= 5;
-						iTimeModifier /= 4;
-						iAbandonTimeModifier *= 5;
-						iAbandonTimeModifier /= 4;
-						// maybe in the future I'll count the number of local cities and the number of overseas cities
-						// and use it to make a more appropriate modifier... but not now.
+						logBBAI("      Team %d (%S) abandoning WARPLAN_LIMITED against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
 					}
-					else
-					{
-						//with crush strategy, use just 2/3 of the prep time.
-						int iCrushMembers = AI_countMembersWithStrategy(AI_STRATEGY_CRUSH);
-						iTimeModifier *= 3 * (getNumMembers()-iCrushMembers) + 2 * iCrushMembers;
-						iTimeModifier /= 3;
-					}
-					// K-Mod end
+				}
+				// K-Mod end
+			}
+		}
+		else if (AI_getWarPlan(eLoopTeam) == WARPLAN_LIMITED || AI_getWarPlan(eLoopTeam) == WARPLAN_DOGPILE)
+		{
+			if( !isAtWar(eLoopTeam) )
+			{
+				FAssert(canEventuallyDeclareWar(eLoopTeam));
 
-					iTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
-					iTimeModifier /= 150;
-
-					FAssert(iTimeModifier >= 0);
+				bool bActive = false;
+				for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
+				{
+					if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID() )
+					{
+						if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions(eLoopTeam) > 0 )
+						{
+							bActive = true;
+							break;
+						}
+					}
 				}
 
-				bool bEnemyVictoryLevel4 = GET_TEAM((TeamTypes)iI).AI_isAnyMemberDoVictoryStrategyLevel4();
-
-				if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_ATTACKED_RECENT)
+				if( !bActive )
 				{
-					FAssert(isAtWar((TeamTypes)iI));
-
-					if (AI_getAtWarCounter((TeamTypes)iI) > ((GET_TEAM((TeamTypes)iI).AI_isLandTarget(getID())) ? 9 : 3))
+					if (AI_getWarPlanStateCounter(eLoopTeam) > ((15 * iAbandonTimeModifier) / (100)))
 					{
 						if( gTeamLogLevel >= 1 )
 						{
-							logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from ATTACKED_RECENT to ATTACKED with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), iEnemyPowerPercent );
+							logBBAI("      Team %d (%S) abandoning WARPLAN_LIMITED or WARPLAN_DOGPILE against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
 						}
-						AI_setWarPlan(((TeamTypes)iI), WARPLAN_ATTACKED);
+						AI_setWarPlan(eLoopTeam, NO_WARPLAN);
 					}
 				}
-				else if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_PREPARING_LIMITED)
-				{
-					FAssert(canEventuallyDeclareWar((TeamTypes)iI));
 
-					if (AI_getWarPlanStateCounter((TeamTypes)iI) > ((5 * iTimeModifier) / (bEnemyVictoryLevel4 ? 400 : 100)))
+				if( AI_getWarPlan(eLoopTeam) == WARPLAN_DOGPILE )
+				{
+					if( GET_TEAM(eLoopTeam).getAtWarCount(true) == 0 )
 					{
-						if (AI_startWarVal((TeamTypes)iI, WARPLAN_LIMITED) > 0) // K-Mod. Last chance to change our mind if circumstances have changed
+						if( gTeamLogLevel >= 1 )
 						{
-							if( gTeamLogLevel >= 1 )
-							{
-								logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from PREPARING_LIMITED to LIMITED after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-							}
-							AI_setWarPlan(((TeamTypes)iI), WARPLAN_LIMITED);
+							logBBAI("      Team %d (%S) abandoning WARPLAN_DOGPILE against team %d (%S) after %d turns because enemy has no war with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
 						}
-						// K-Mod
-						else
-						{
-							if (gTeamLogLevel >= 1)
-							{
-								logBBAI("      Team %d (%S) abandoning WARPLAN_LIMITED against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-							}
-						}
-						// K-Mod end
+						AI_setWarPlan(eLoopTeam, NO_WARPLAN);
 					}
 				}
-				else if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_LIMITED || AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE)
+			}
+		}
+		else if (AI_getWarPlan(eLoopTeam) == WARPLAN_PREPARING_TOTAL)
+		{
+			FAssert(canEventuallyDeclareWar(eLoopTeam));
+
+			if (AI_getWarPlanStateCounter(eLoopTeam) > ((10 * iTimeModifier) / (bEnemyVictoryLevel4 ? 400 : 100)))
+			{
+				bool bAreaValid = false;
+				bool bShareValid = false;
+
+				int iLoop;
+				for(CvArea* pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
 				{
-					if( !isAtWar((TeamTypes)iI) )
+					if (AI_isPrimaryArea(pLoopArea))
 					{
-						FAssert(canEventuallyDeclareWar((TeamTypes)iI));
-
-						bool bActive = false;
-						for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
+						if (GET_TEAM(eLoopTeam).countNumCitiesByArea(pLoopArea) > 0)
 						{
-							if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID() )
-							{
-								if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions((TeamTypes)iI) > 0 )
-								{
-									bActive = true;
-									break;
-								}
-							}
-						}
+							bShareValid = true;
 
-						if( !bActive )
-						{
-							if (AI_getWarPlanStateCounter((TeamTypes)iI) > ((15 * iAbandonTimeModifier) / (100)))
-							{
-								if( gTeamLogLevel >= 1 )
-								{
-									logBBAI("      Team %d (%S) abandoning WARPLAN_LIMITED or WARPLAN_DOGPILE against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-								}
-								AI_setWarPlan(((TeamTypes)iI), NO_WARPLAN);
-							}
-						}
+							AreaAITypes eAreaAI = AI_calculateAreaAIType(pLoopArea, true);
 
-						if( AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE )
-						{
-							if( GET_TEAM((TeamTypes)iI).getAtWarCount(true) == 0 )
+							/* BBAI code
+							if ( eAreaAI == AREAAI_DEFENSIVE)
 							{
-								if( gTeamLogLevel >= 1 )
-								{
-									logBBAI("      Team %d (%S) abandoning WARPLAN_DOGPILE against team %d (%S) after %d turns because enemy has no war with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-								}
-								AI_setWarPlan(((TeamTypes)iI), NO_WARPLAN);
+								bAreaValid = false;
 							}
+							else if( eAreaAI == AREAAI_OFFENSIVE )
+							{
+								bAreaValid = true;
+							} */
+							// K-Mod. Doing it that way means the order the areas are checked is somehow important...
+							if (eAreaAI == AREAAI_OFFENSIVE)
+							{
+								bAreaValid = true; // require at least one offense area
+							}
+							else if (eAreaAI == AREAAI_DEFENSIVE)
+							{
+								bAreaValid = false;
+								break; // false if there are _any_ defence areas
+							}
+							// K-Mod end
 						}
 					}
 				}
-				else if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_PREPARING_TOTAL)
+
+				if (((bAreaValid && iEnemyPowerPercent < 140) || (!bShareValid && iEnemyPowerPercent < 110) || GET_TEAM(eLoopTeam).AI_getLowestVictoryCountdown() >= 0) &&
+					AI_startWarVal(eLoopTeam, WARPLAN_TOTAL) > 0) // K-Mod. Last chance to change our mind if circumstances have changed
 				{
-					FAssert(canEventuallyDeclareWar((TeamTypes)iI));
-
-					if (AI_getWarPlanStateCounter((TeamTypes)iI) > ((10 * iTimeModifier) / (bEnemyVictoryLevel4 ? 400 : 100)))
+					if( gTeamLogLevel >= 1 )
 					{
-						bool bAreaValid = false;
-						bool bShareValid = false;
+						logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from PREPARING_TOTAL to TOTAL after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
+					}
+					AI_setWarPlan(eLoopTeam, WARPLAN_TOTAL);
+				}
+				else if (AI_getWarPlanStateCounter(eLoopTeam) > ((20 * iAbandonTimeModifier) / 100))
+				{
+					if( gTeamLogLevel >= 1 )
+					{
+						logBBAI("      Team %d (%S) abandoning WARPLAN_TOTAL_PREPARING against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
+					}
+					AI_setWarPlan(eLoopTeam, NO_WARPLAN);
+				}
+			}
+		}
+		else if (AI_getWarPlan(eLoopTeam) == WARPLAN_TOTAL)
+		{
+			if( !isAtWar(eLoopTeam) )
+			{
+				FAssert(canEventuallyDeclareWar(eLoopTeam));
 
-						int iLoop;
-						for(CvArea* pLoopArea = GC.getMapINLINE().firstArea(&iLoop); pLoopArea != NULL; pLoopArea = GC.getMapINLINE().nextArea(&iLoop))
+				bool bActive = false;
+				for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
+				{
+					if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID() )
+					{
+						if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions(eLoopTeam) > 0 )
 						{
-							if (AI_isPrimaryArea(pLoopArea))
-							{
-								if (GET_TEAM((TeamTypes)iI).countNumCitiesByArea(pLoopArea) > 0)
-								{
-									bShareValid = true;
-
-									AreaAITypes eAreaAI = AI_calculateAreaAIType(pLoopArea, true);
-
-									/* BBAI code
-									if ( eAreaAI == AREAAI_DEFENSIVE)
-									{
-										bAreaValid = false;
-									}
-									else if( eAreaAI == AREAAI_OFFENSIVE )
-									{
-										bAreaValid = true;
-									} */
-									// K-Mod. Doing it that way means the order the areas are checked is somehow important...
-									if (eAreaAI == AREAAI_OFFENSIVE)
-									{
-										bAreaValid = true; // require at least one offense area
-									}
-									else if (eAreaAI == AREAAI_DEFENSIVE)
-									{
-										bAreaValid = false;
-										break; // false if there are _any_ defence areas
-									}
-									// K-Mod end
-								}
-							}
-						}
-
-						if (((bAreaValid && iEnemyPowerPercent < 140) || (!bShareValid && iEnemyPowerPercent < 110) || GET_TEAM((TeamTypes)iI).AI_getLowestVictoryCountdown() >= 0) &&
-							AI_startWarVal((TeamTypes)iI, WARPLAN_TOTAL) > 0) // K-Mod. Last chance to change our mind if circumstances have changed
-						{
-							if( gTeamLogLevel >= 1 )
-							{
-								logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from PREPARING_TOTAL to TOTAL after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-							}
-							AI_setWarPlan(((TeamTypes)iI), WARPLAN_TOTAL);
-						}
-						else if (AI_getWarPlanStateCounter((TeamTypes)iI) > ((20 * iAbandonTimeModifier) / 100))
-						{
-							if( gTeamLogLevel >= 1 )
-							{
-								logBBAI("      Team %d (%S) abandoning WARPLAN_TOTAL_PREPARING against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-							}
-							AI_setWarPlan(((TeamTypes)iI), NO_WARPLAN);
+							bActive = true;
+							break;
 						}
 					}
 				}
-				else if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_TOTAL)
+
+				if( !bActive )
 				{
-					if( !isAtWar((TeamTypes)iI) )
+					if (AI_getWarPlanStateCounter(eLoopTeam) > ((25 * iAbandonTimeModifier) / (100)))
 					{
-						FAssert(canEventuallyDeclareWar((TeamTypes)iI));
-
-						bool bActive = false;
-						for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
+						if( gTeamLogLevel >= 1 )
 						{
-							if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID() )
-							{
-								if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions((TeamTypes)iI) > 0 )
-								{
-									bActive = true;
-									break;
-								}
-							}
+							logBBAI("      Team %d (%S) abandoning WARPLAN_TOTAL against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter(eLoopTeam), iEnemyPowerPercent );
 						}
-
-						if( !bActive )
-						{
-							if (AI_getWarPlanStateCounter((TeamTypes)iI) > ((25 * iAbandonTimeModifier) / (100)))
-							{
-								if( gTeamLogLevel >= 1 )
-								{
-									logBBAI("      Team %d (%S) abandoning WARPLAN_TOTAL against team %d (%S) after %d turns with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), iI, GET_PLAYER(GET_TEAM((TeamTypes)iI).getLeaderID()).getCivilizationDescription(0), AI_getWarPlanStateCounter((TeamTypes)iI), iEnemyPowerPercent );
-								}
-								AI_setWarPlan(((TeamTypes)iI), NO_WARPLAN);
-							}
-						}
+						AI_setWarPlan(eLoopTeam, NO_WARPLAN);
 					}
 				}
 			}
@@ -5382,13 +5383,15 @@ void CvTeamAI::AI_doWar()
 		return;
 	// K-Mod end
 
-	for (iI = 0; iI < MAX_CIV_PLAYERS; iI++)
+	for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
 	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+
+		if (kLoopPlayer.isAlive())
 		{
-			if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+			if (kLoopPlayer.getTeam() == getID())
 			{
-				GET_PLAYER((PlayerTypes)iI).AI_doPeace();
+				kLoopPlayer.AI_doPeace();
 			}
 		}
 	}
@@ -5419,13 +5422,13 @@ void CvTeamAI::AI_doWar()
 	bool bTotalWarPlan = false;
 	bool bAnyWarPlan = false;
 	bool bLocalWarPlan = false;
-	for (int i = 0; i < MAX_CIV_TEAMS; i++)
+	for (TeamTypes eLoopTeam = (TeamTypes)0; eLoopTeam < MAX_CIV_TEAMS; eLoopTeam=(TeamTypes)(eLoopTeam+1))
 	{
-		if (GET_TEAM((TeamTypes)i).isAlive() && !GET_TEAM((TeamTypes)i).isMinorCiv())
+		if (GET_TEAM(eLoopTeam).isAlive() && !GET_TEAM(eLoopTeam).isMinorCiv())
 		{
-			bAtWar = bAtWar || isAtWar((TeamTypes)i);
+			bAtWar = bAtWar || isAtWar(eLoopTeam);
 
-			switch (AI_getWarPlan((TeamTypes)i))
+			switch (AI_getWarPlan(eLoopTeam))
 			{
 			case NO_WARPLAN:
 				break;
@@ -5433,7 +5436,7 @@ void CvTeamAI::AI_doWar()
 			case WARPLAN_TOTAL:
 				bTotalWarPlan = true;
 			default: // all other warplans
-				bLocalWarPlan = bLocalWarPlan || AI_isLandTarget((TeamTypes)i);
+				bLocalWarPlan = bLocalWarPlan || AI_isLandTarget(eLoopTeam);
 				bAnyWarPlan = true;
 				break;
 			}
@@ -5442,110 +5445,104 @@ void CvTeamAI::AI_doWar()
 	// K-Mod end
 
 	// if at war, check for making peace
-	//if (getAtWarCount(true) > 0) // XXX
-	if (bAtWar) // K-Mod
+	// Note: this section relates to automatic peace deals for inactive wars.
+	if (bAtWar && GC.getGameINLINE().getSorenRandNum(AI_makePeaceRand(), "AI Make Peace") == 0)
 	{
-		if (GC.getGameINLINE().getSorenRandNum(AI_makePeaceRand(), "AI Make Peace") == 0)
+		for (TeamTypes eLoopTeam = (TeamTypes)0; eLoopTeam < MAX_CIV_TEAMS; eLoopTeam=(TeamTypes)(eLoopTeam+1))
 		{
-			for (int iI = 0; iI < MAX_CIV_TEAMS; iI++)
+			if (!GET_TEAM(eLoopTeam).isAlive())
+				continue;
+			if (eLoopTeam == getID())
+				continue;
+			if (GET_TEAM(eLoopTeam).isHuman())
+				continue;
+
+			if (!isAtWar(eLoopTeam))
+				continue;
+			if (!AI_isChosenWar(eLoopTeam))
+				continue;
+			if (!canContact(eLoopTeam, true))
+				continue;
+
+			FAssert(!(GET_TEAM(eLoopTeam).isMinorCiv()));
+
+			if( AI_getAtWarCounter(eLoopTeam) > std::max(10, (14 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent())/100) )
 			{
-				if (GET_TEAM((TeamTypes)iI).isAlive())
+				// If nothing is happening in war
+				if( AI_getWarSuccess(eLoopTeam) + GET_TEAM(eLoopTeam).AI_getWarSuccess(getID()) < 2*GC.getDefineINT("WAR_SUCCESS_ATTACKING") )
 				{
-					if (iI != getID())
+					if( (GC.getGameINLINE().getSorenRandNum(8, "AI Make Peace 1") == 0) )
 					{
-						if (!(GET_TEAM((TeamTypes)iI).isHuman()))
+						bool bValid = true;
+
+						for (PlayerTypes i = (PlayerTypes)0; i < MAX_CIV_PLAYERS; i=(PlayerTypes)(i+1))
 						{
-							if (canContact((TeamTypes)iI, true))
+							CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+							if (kLoopPlayer.getTeam() == getID())
 							{
-								FAssert(!(GET_TEAM((TeamTypes)iI).isMinorCiv()));
-
-								if (isAtWar((TeamTypes)iI))
+								if( kLoopPlayer.AI_enemyTargetMissions(eLoopTeam) > 0 )
 								{
-									if (AI_isChosenWar((TeamTypes)iI))
-									{
-										if( AI_getAtWarCounter((TeamTypes)iI) > std::max(10, (14 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent())/100) )
-										{
-											// If nothing is happening in war
-											if( AI_getWarSuccess((TeamTypes)iI) + GET_TEAM((TeamTypes)iI).AI_getWarSuccess(getID()) < 2*GC.getDefineINT("WAR_SUCCESS_ATTACKING") )
-											{
-												if( (GC.getGameINLINE().getSorenRandNum(8, "AI Make Peace 1") == 0) )
-												{
-													bool bValid = true;
-
-													for( int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++ )
-													{
-														if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == getID() )
-														{
-															if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions((TeamTypes)iI) > 0 )
-															{
-																bValid = false;
-																break;
-															}
-														}
-
-														if( GET_PLAYER((PlayerTypes)iPlayer).getTeam() == iI )
-														{
-															//MissionAITypes eMissionAI = MISSIONAI_ASSAULT;
-															if( GET_PLAYER((PlayerTypes)iPlayer).AI_enemyTargetMissions(getID()) > 0 )
-															{
-																bValid = false;
-																break;
-															}
-														}
-													}
-
-													if( bValid )
-													{
-														makePeace((TeamTypes)iI);
-
-														if( gTeamLogLevel >= 1 )
-														{
-															logBBAI("  Team %d (%S) making peace due to time and no fighting", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0) );
-														}
-
-														break;
-													}
-												}
-											}
-
-											// Fought to a long draw
-											if (AI_getAtWarCounter((TeamTypes)iI) > ((((AI_getWarPlan((TeamTypes)iI) == WARPLAN_TOTAL) ? 40 : 30) * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent())/100) )
-											{
-												int iOurValue = AI_endWarVal((TeamTypes)iI);
-												int iTheirValue = GET_TEAM((TeamTypes)iI).AI_endWarVal(getID());
-												if ((iOurValue > (iTheirValue / 2)) && (iTheirValue > (iOurValue / 2)))
-												{
-													if( gTeamLogLevel >= 1 )
-													{
-														logBBAI("  Team %d (%S) making peace due to time and endWarVal %d vs their %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0) , iOurValue, iTheirValue );
-													}
-													makePeace((TeamTypes)iI);
-													break;
-												}
-											}
-
-											// All alone in what we thought was a dogpile
-											if (AI_getWarPlan((TeamTypes)iI) == WARPLAN_DOGPILE)
-											{
-												if (GET_TEAM((TeamTypes)iI).getAtWarCount(true) == 1)
-												{
-													int iOurValue = AI_endWarVal((TeamTypes)iI);
-													int iTheirValue = GET_TEAM((TeamTypes)iI).AI_endWarVal(getID());
-													if ((iTheirValue > (iOurValue / 2)))
-													{
-														if( gTeamLogLevel >= 1 )
-														{
-															logBBAI("  Team %d (%S) making peace due to being only dog-piler left", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0) );
-														}
-														makePeace((TeamTypes)iI);
-														break;
-													}
-												}
-											}
-										}
-									}
+									bValid = false;
+									break;
 								}
 							}
+
+							if (kLoopPlayer.getTeam() == eLoopTeam)
+							{
+								//MissionAITypes eMissionAI = MISSIONAI_ASSAULT;
+								if (kLoopPlayer.AI_enemyTargetMissions(getID()) > 0)
+								{
+									bValid = false;
+									break;
+								}
+							}
+						}
+
+						if( bValid )
+						{
+							makePeace(eLoopTeam);
+
+							if( gTeamLogLevel >= 1 )
+							{
+								logBBAI("  Team %d (%S) making peace due to time and no fighting", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0) );
+							}
+
+							break;
+						}
+					}
+				}
+
+				// Fought to a long draw
+				if (AI_getAtWarCounter(eLoopTeam) > ((((AI_getWarPlan(eLoopTeam) == WARPLAN_TOTAL) ? 40 : 30) * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent())/100) )
+				{
+					int iOurValue = AI_endWarVal(eLoopTeam);
+					int iTheirValue = GET_TEAM(eLoopTeam).AI_endWarVal(getID());
+					if ((iOurValue > (iTheirValue / 2)) && (iTheirValue > (iOurValue / 2)))
+					{
+						if( gTeamLogLevel >= 1 )
+						{
+							logBBAI("  Team %d (%S) making peace due to time and endWarVal %d vs their %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0) , iOurValue, iTheirValue );
+						}
+						makePeace(eLoopTeam);
+						break;
+					}
+				}
+
+				// All alone in what we thought was a dogpile
+				if (AI_getWarPlan(eLoopTeam) == WARPLAN_DOGPILE)
+				{
+					if (GET_TEAM(eLoopTeam).getAtWarCount(true) == 1)
+					{
+						int iOurValue = AI_endWarVal(eLoopTeam);
+						int iTheirValue = GET_TEAM(eLoopTeam).AI_endWarVal(getID());
+						if ((iTheirValue > (iOurValue / 2)))
+						{
+							if( gTeamLogLevel >= 1 )
+							{
+								logBBAI("  Team %d (%S) making peace due to being only dog-piler left", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0) );
+							}
+							makePeace(eLoopTeam);
+							break;
 						}
 					}
 				}
@@ -5562,26 +5559,28 @@ void CvTeamAI::AI_doWar()
 		int iFinancialTroubleCount = 0;
 		int iDaggerCount = 0;
 		int iGetBetterUnitsCount = 0;
-		for (iI = 0; iI < MAX_PLAYERS; iI++)
+		for (PlayerTypes i = (PlayerTypes)0; i < MAX_PLAYERS; i=(PlayerTypes)(i+1))
 		{
-			if (GET_PLAYER((PlayerTypes)iI).isAlive())
+			CvPlayerAI& kLoopPlayer = GET_PLAYER(i);
+
+			if (kLoopPlayer.isAlive())
 			{
-				if (GET_PLAYER((PlayerTypes)iI).getTeam() == getID())
+				if (kLoopPlayer.getTeam() == getID())
 				{
-					if ( GET_PLAYER((PlayerTypes)iI).AI_isDoStrategy(AI_STRATEGY_DAGGER)
-						|| GET_PLAYER((PlayerTypes)iI).AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3)
-						|| GET_PLAYER((PlayerTypes)iI).AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION4) )
+					if ( kLoopPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER)
+						|| kLoopPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CONQUEST3)
+						|| kLoopPlayer.AI_isDoVictoryStrategy(AI_VICTORY_DOMINATION4) )
 					{
 						iDaggerCount++;
 						bAggressive = true;
 					}
 
-					if (GET_PLAYER((PlayerTypes)iI).AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS))
+					if (kLoopPlayer.AI_isDoStrategy(AI_STRATEGY_GET_BETTER_UNITS))
 					{
 						iGetBetterUnitsCount++;
 					}
 					
-					if (GET_PLAYER((PlayerTypes)iI).AI_isFinancialTrouble())
+					if (kLoopPlayer.AI_isFinancialTrouble())
 					{
 						iFinancialTroubleCount++;
 					}
