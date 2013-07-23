@@ -572,4 +572,43 @@
 		<Spanish>El calentamiento del planeta puede levantar nivel del mar.</Spanish>
 	</TEXT>
 	[end of unused tags] -->
+
+	<!-- New diplomacy text -->
+	<TEXT>
+		<Tag>USER_DIPLO_WARPLAN_1</Tag>
+		<English>Join us in preparing for war...</English>
+		<French>Rejoignez-nous dans la préparation de la guerre...</French>
+		<German>Begleiten Sie uns bei der Vorbereitung für den Krieg...</German>
+		<Italian>Unitevi a noi nella preparazione per la guerra...</Italian>
+		<Spanish>Únase a nosotros en la preparación para la guerra...</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>USER_DIPLO_WARPLAN_CANCEL_1</Tag>
+		<English>Your war preparations are no longer required.</English>
+		<French>Vos préparatifs de guerre ne sont plus nécessaires.</French>
+		<German>Ihre Kriegsvorbereitungen sind nicht mehr erforderlich.</German>
+		<Italian>I vostri preparativi di guerra non sono più necessari.</Italian>
+		<Spanish>Ya no se requieren sus preparativos de guerra.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>AI_DIPLO_WARPLAN_CANCEL_1</Tag>
+		<English>OK, we'll cancel our war preparations.</English>
+		<French>D'accord, nous allons annuler notre préparatifs de guerre.</French>
+		<German>Okay, wir kündigen unsere Kriegsvorbereitungen.</German>
+		<Italian>Ok, provvederemo ad annullare i nostri preparativi di guerra.</Italian>
+		<Spanish>Bueno, no cancelaremos nuestros preparativos para la guerra.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>AI_DIPLO_WARPLAN_1</Tag>
+		<English>Against whom?</English>
+		<French>Contre qui?</French>
+		<German>Gegen wen?</German>
+		<Italian>Contro chi?</Italian>
+		<Spanish>Contra quién?</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>USER_DIPLO_WARPLAN_TARGET_1</Tag>
+		<English>%s1.</English>
+		<!-- same for all languages -->
+	</TEXT>
 </Civ4GameText>

@@ -255,6 +255,16 @@ class CvDiplomacy:
 			# K-Mod end
 				self.addUserComment("USER_DIPLOCOMMENT_TARGET", -1, -1)
 
+			# K-Mod. Allow masters to tell their vassals to prepare for war
+			if (gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).getAtWarCount(true) == 0 and
+			    (gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).isVassal(gc.getGame().getActiveTeam()) or
+			     gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam() == gc.getGame().getActiveTeam())):
+				if (gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).getAnyWarPlanCount(true) > 0):
+					self.addUserComment("USER_DIPLOCOMMENT_WARPLAN_CANCEL", -1, -1)
+				else:
+					self.addUserComment("USER_DIPLOCOMMENT_WARPLAN", -1, -1)
+			# K-Mod end
+
 			self.addUserComment("USER_DIPLOCOMMENT_NEVERMIND", -1, -1)
 			self.addUserComment("USER_DIPLOCOMMENT_EXIT", -1, -1)
 
@@ -294,6 +304,18 @@ class CvDiplomacy:
 
 			self.addUserComment("USER_DIPLOCOMMENT_SOMETHING_ELSE", -1, -1)
 			self.addUserComment("USER_DIPLOCOMMENT_EXIT", -1, -1)
+
+		# K-Mod
+		elif (self.isComment(eComment, "AI_DIPLOCOMMENT_WARPLAN")):
+			for i in range(gc.getMAX_CIV_TEAMS()):
+				#if (gc.getTeam(i).isAlive() and i != gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam() and gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(i) and gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).isHasMet(i) and not gc.getTeam(i).isAtWar(gc.getGame().getActiveTeam()) and gc.getTeam(gc.getGame().getActiveTeam()).canEventuallyDeclareWar()):
+				if (gc.getTeam(i).isAlive() and gc.getTeam(gc.getGame().getActiveTeam()).isHasMet(i) and gc.getTeam(gc.getPlayer(self.diploScreen.getWhoTradingWith()).getTeam()).isHasMet(i)
+					and not gc.getTeam(i).isAtWar(gc.getGame().getActiveTeam()) and gc.getTeam(gc.getGame().getActiveTeam()).canEventuallyDeclareWar(i)):
+						self.addUserComment("USER_DIPLOCOMMENT_WARPLAN_TARGET", i, WarPlanTypes.WARPLAN_PREPARING_TOTAL, gc.getTeam(i).getName())
+
+			self.addUserComment("USER_DIPLOCOMMENT_SOMETHING_ELSE", -1, -1)
+			self.addUserComment("USER_DIPLOCOMMENT_EXIT", -1, -1)
+		# K-Mod end
 
 		# The default...
 		else:
@@ -713,6 +735,19 @@ class CvDiplomacy:
 		elif (self.isComment(eComment, "USER_DIPLOCOMMENT_TARGET_CITY")):
 			diploScreen.diploEvent(DiploEventTypes.DIPLOEVENT_TARGET_CITY, iData1, iData2)
 			self.setAIComment(self.getCommentID("AI_DIPLOCOMMENT_TARGET_CITY"))
+
+		# K-Mod
+		elif (self.isComment(eComment, "USER_DIPLOCOMMENT_WARPLAN")):
+			self.setAIComment(self.getCommentID("AI_DIPLOCOMMENT_WARPLAN"))
+
+		elif (self.isComment(eComment, "USER_DIPLOCOMMENT_WARPLAN_TARGET")):
+			diploScreen.diploEvent(DiploEventTypes.DIPLOEVENT_SET_WARPLAN, iData1, iData2)
+			self.setAIComment(self.getCommentID("AI_DIPLOCOMMENT_WARPLAN_ACKNOWLEDGE"))
+
+		elif (self.isComment(eComment, "USER_DIPLOCOMMENT_WARPLAN_CANCEL")):
+			diploScreen.diploEvent(DiploEventTypes.DIPLOEVENT_SET_WARPLAN, TeamTypes.NO_TEAM, WarPlanTypes.NO_WARPLAN)
+			self.setAIComment(self.getCommentID("AI_DIPLOCOMMENT_WARPLAN_CANCEL"))
+		# K-Mod end
 
 		else:
 			diploScreen.closeScreen()

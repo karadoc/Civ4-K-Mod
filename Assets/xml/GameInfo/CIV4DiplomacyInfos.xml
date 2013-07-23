@@ -9840,5 +9840,91 @@
 				</Response>
 			</Responses>
 		</DiplomacyInfo>
+		<!-- K-Mod -->
+		<DiplomacyInfo>
+			<Type>USER_DIPLOCOMMENT_WARPLAN</Type>
+			<Responses>
+				<Response>
+					<Civilizations/>
+					<Leaders/>
+					<Attitudes/>
+					<DiplomacyPowers/>
+					<DiplomacyText>
+						<Text>USER_DIPLO_WARPLAN_1</Text>
+					</DiplomacyText>
+				</Response>
+			</Responses>
+		</DiplomacyInfo>
+		<DiplomacyInfo>
+			<Type>USER_DIPLOCOMMENT_WARPLAN_TARGET</Type>
+			<Responses>
+				<Response>
+					<Civilizations/>
+					<Leaders/>
+					<Attitudes/>
+					<DiplomacyPowers/>
+					<DiplomacyText>
+						<Text>USER_DIPLO_WARPLAN_TARGET_1</Text>
+					</DiplomacyText>
+				</Response>
+			</Responses>
+		</DiplomacyInfo>
+		<DiplomacyInfo>
+			<Type>USER_DIPLOCOMMENT_WARPLAN_CANCEL</Type>
+			<Responses>
+				<Response>
+					<Civilizations/>
+					<Leaders/>
+					<Attitudes/>
+					<DiplomacyPowers/>
+					<DiplomacyText>
+						<Text>USER_DIPLO_WARPLAN_CANCEL_1</Text>
+					</DiplomacyText>
+				</Response>
+			</Responses>
+		</DiplomacyInfo>
+		<DiplomacyInfo>
+			<Type>AI_DIPLOCOMMENT_WARPLAN</Type>
+			<Responses>
+				<Response>
+					<Civilizations/>
+					<Leaders/>
+					<Attitudes/>
+					<DiplomacyPowers/>
+					<DiplomacyText>
+						<Text>AI_DIPLO_WARPLAN_1</Text>
+					</DiplomacyText>
+				</Response>
+			</Responses>
+		</DiplomacyInfo>
+		<DiplomacyInfo>
+			<Type>AI_DIPLOCOMMENT_WARPLAN_ACKNOWLEDGE</Type>
+			<Responses>
+				<Response>
+					<Civilizations/>
+					<Leaders/>
+					<Attitudes/>
+					<DiplomacyPowers/>
+					<DiplomacyText>
+						<Text>AI_DIPLO_TARGET_CITY_1</Text> <!-- "we'll do our best" -->
+					</DiplomacyText>
+				</Response>
+			</Responses>
+		</DiplomacyInfo>
+		<DiplomacyInfo>
+			<Type>AI_DIPLOCOMMENT_WARPLAN_CANCEL</Type>
+			<Responses>
+				<Response>
+					<Civilizations/>
+					<Leaders/>
+					<Attitudes/>
+					<DiplomacyPowers/>
+					<DiplomacyText>
+						<Text>AI_DIPLO_WARPLAN_CANCEL_1</Text>
+					</DiplomacyText>
+				</Response>
+			</Responses>
+		</DiplomacyInfo>
+		<!-- K-Mod end -->
 	</DiplomacyInfos>
 </Civ4DiplomacyInfos>

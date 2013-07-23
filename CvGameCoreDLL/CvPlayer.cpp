@@ -4602,6 +4602,25 @@ void CvPlayer::handleDiploEvent(DiploEventTypes eDiploEvent, PlayerTypes ePlayer
 			GET_PLAYER(getID()).AI_setCityTargetTimer(GC.getDefineINT("PEACE_TREATY_LENGTH")); // K-Mod. (I'd make it a virtual function, but that causes problems.)
 		}
 		break;
+	// K-Mod
+	case DIPLOEVENT_SET_WARPLAN:
+	{
+		CvTeamAI& kOurTeam = GET_TEAM(getTeam());
+		FAssert(kOurTeam.getAtWarCount(true) == 0);
+		if (iData1 == NO_TEAM)
+		{
+			FAssert(iData2 == NO_WARPLAN);
+			for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
+			{
+				if (!kOurTeam.isAtWar(i))
+					kOurTeam.AI_setWarPlan(i, NO_WARPLAN, false);
+			}
+		}
+		else
+			kOurTeam.AI_setWarPlan((TeamTypes)iData1, (WarPlanTypes)iData2, false);
+		break;
+	}
+	// K-Mod end
 
 	default:
 		FAssert(false);
