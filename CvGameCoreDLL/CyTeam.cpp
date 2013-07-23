@@ -31,6 +31,13 @@ bool CyTeam::canDeclareWar(int /*TeamTypes*/ eTeam)
 	return m_pTeam ? m_pTeam->canDeclareWar((TeamTypes)eTeam) : false;
 }
 
+// K-Mod
+bool CyTeam::canEventuallyDeclareWar(int /*TeamTypes*/ eTeam)
+{
+	return m_pTeam ? m_pTeam->canEventuallyDeclareWar((TeamTypes)eTeam) : false;
+}
+// K-Mod end
+
 void CyTeam::declareWar(int /*TeamTypes*/ eTeam, bool bNewDiplo, int /*WarPlanTypes*/ eWarPlan)
 {
 	if (m_pTeam)
