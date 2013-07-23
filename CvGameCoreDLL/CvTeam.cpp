@@ -1340,7 +1340,8 @@ void CvTeam::declareWar(TeamTypes eTeam, bool bNewDiplo, WarPlanTypes eWarPlan, 
 	FAssert(!(AI_isSneakAttackPreparing(eTeam)));
 	if ((AI_getWarPlan(eTeam) == NO_WARPLAN) || AI_isSneakAttackPreparing(eTeam))
 	{
-		if (isHuman())
+		//if (isHuman())
+		if (isHuman() || AI_getWarPlan(eTeam) == WARPLAN_PREPARING_TOTAL) // K-Mod. (for vassals that have been told to prepare for war)
 		{
 			AI_setWarPlan(eTeam, WARPLAN_TOTAL);
 		}

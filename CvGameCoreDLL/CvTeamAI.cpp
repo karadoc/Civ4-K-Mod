@@ -5156,11 +5156,61 @@ void CvTeamAI::AI_doWar()
 		if (AI_getWarPlan(eLoopTeam) == NO_WARPLAN)
 			continue;
 
-		int iTimeModifier = 100;
-
-		int iAbandonTimeModifier = 100;
+		int iTimeModifier = 100; // preperation time modifier
+		int iAbandonTimeModifier = 100; // deadline for attack modifier
 		iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
 		iAbandonTimeModifier /= 150;
+		// (more adjustments to the time modifiers will come later)
+
+		if (AI_getWarPlan(eLoopTeam) == WARPLAN_ATTACKED_RECENT)
+		{
+			FAssert(isAtWar(eLoopTeam));
+
+			if (AI_getAtWarCounter(eLoopTeam) > ((GET_TEAM(eLoopTeam).AI_isLandTarget(getID())) ? 9 : 3))
+			{
+				if( gTeamLogLevel >= 1 )
+				{
+					logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from ATTACKED_RECENT to ATTACKED with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), iEnemyPowerPercent );
+				}
+				AI_setWarPlan(eLoopTeam, WARPLAN_ATTACKED);
+			}
+		}
+
+		// K-Mod
+		if (isHuman() || isAVassal())
+		{
+			CvTeamAI& kOurMaster = GET_TEAM(getMasterTeam());
+			if (!isAtWar(eLoopTeam))
+			{
+				FAssert(AI_getWarPlan(eLoopTeam) == WARPLAN_PREPARING_TOTAL || AI_getWarPlan(eLoopTeam) == WARPLAN_LIMITED);
+				if (isHuman() || kOurMaster.isHuman())
+				{
+					if (AI_getWarPlanStateCounter(eLoopTeam) > 20 * iAbandonTimeModifier / 100)
+					{
+						if (gTeamLogLevel >= 1)
+						{
+							logBBAI("      Team %d (%S) abandoning WARPLANS against team %d (%S) due to human / vassal timeout", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0));
+						}
+						AI_setWarPlan(eLoopTeam, NO_WARPLAN);
+					}
+				}
+				else
+				{
+					if (kOurMaster.AI_getWarPlan(eLoopTeam) == NO_WARPLAN)
+					{
+						if (gTeamLogLevel >= 1)
+						{
+							logBBAI("      Team %d (%S) abandoning WARPLANS against team %d (%S) due to AI master's warplan cancelation", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0));
+						}
+						AI_setWarPlan(eLoopTeam, NO_WARPLAN);
+					}
+				}
+			}
+
+			continue; // Nothing else required for vassals and human players
+		}
+		// K-Mod
+
 		if (!isAtWar(eLoopTeam)) // K-Mod. time / abandon modifiers are only relevant for war preparations. We don't need them if we are already at war.
 		{
 			int iThreshold = (80*AI_maxWarNearbyPowerRatio())/100;
@@ -5198,20 +5248,7 @@ void CvTeamAI::AI_doWar()
 
 		bool bEnemyVictoryLevel4 = GET_TEAM(eLoopTeam).AI_isAnyMemberDoVictoryStrategyLevel4();
 
-		if (AI_getWarPlan(eLoopTeam) == WARPLAN_ATTACKED_RECENT)
-		{
-			FAssert(isAtWar(eLoopTeam));
-
-			if (AI_getAtWarCounter(eLoopTeam) > ((GET_TEAM(eLoopTeam).AI_isLandTarget(getID())) ? 9 : 3))
-			{
-				if( gTeamLogLevel >= 1 )
-				{
-					logBBAI("      Team %d (%S) switching WARPLANS against team %d (%S) from ATTACKED_RECENT to ATTACKED with enemy power percent %d", getID(), GET_PLAYER(getLeaderID()).getCivilizationDescription(0), eLoopTeam, GET_PLAYER(GET_TEAM(eLoopTeam).getLeaderID()).getCivilizationDescription(0), iEnemyPowerPercent );
-				}
-				AI_setWarPlan((eLoopTeam), WARPLAN_ATTACKED);
-			}
-		}
-		else if (AI_getWarPlan(eLoopTeam) == WARPLAN_PREPARING_LIMITED)
+		if (AI_getWarPlan(eLoopTeam) == WARPLAN_PREPARING_LIMITED)
 		{
 			FAssert(canEventuallyDeclareWar(eLoopTeam));
 
