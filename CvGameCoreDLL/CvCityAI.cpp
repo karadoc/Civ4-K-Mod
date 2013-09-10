@@ -4491,14 +4491,14 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 							int iCanBuildPrereq = 0;
 							for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 							{
-								if (canConstruct(eBuilding) && getProductionBuilding() != eBuilding)
+								if (pLoopCity->canConstruct(eBuilding) && pLoopCity->getProductionBuilding() != eBuilding)
 									iCanBuildPrereq++;
 							}
 							if (iCanBuildPrereq >= iPrereqBuildings)
 							{
 								for (pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
 								{
-									if (canConstruct(eLoopBuilding, false, true) && getProductionBuilding() != eLoopBuilding)
+									if (pLoopCity->canConstruct(eLoopBuilding, false, true) && pLoopCity->getProductionBuilding() != eLoopBuilding)
 										iHighestValue = std::max(pLoopCity->AI_buildingValue(eLoopBuilding, 0, 0, bConstCache, false), iHighestValue);
 								}
 
