@@ -237,13 +237,18 @@ class AIAutoPlay :
     def onBeginGameTurn( self, argsList):
         'Called at the beginning of the end of each turn'
         iGameTurn = argsList[0]
-        if( game.getAIAutoPlay() == 0 ) :
-            CvTopCivs.CvTopCivs().turnChecker(iGameTurn)
+#        if( game.getAIAutoPlay() == 0 ) :
+#            CvTopCivs.CvTopCivs().turnChecker(iGameTurn)
+        # K-Mod. This should be handled by the original onBeginGameTurn event.
+        if (game.getAIAutoPlay() == 0):
+            self.customEM.onBeginGameTurn(argsList)
+        # K-Mod end
 
     def onCityBuilt(self, argsList):
         'City Built'
         city = argsList[0]
-        if (city.getOwner() == CyGame().getActivePlayer() and game.getAIAutoPlay() == 0 ):
+        #if (city.getOwner() == CyGame().getActivePlayer() and game.getAIAutoPlay() == 0 ):
+        if (game.getAIAutoPlay() == 0): # K-Mod. Some mods may use the event for other player's cities too.
                 self.customEM.onCityBuilt(argsList)
         else :
                 try :
