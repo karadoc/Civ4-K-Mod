@@ -5122,6 +5122,8 @@ void CvTeamAI::AI_doWar()
 {
 	PROFILE_FUNC();
 
+	CvGame& kGame = GC.getGameINLINE(); // K-Mod
+
 	/* FAssert(!isHuman());
 	FAssert(!isBarbarian());
 	FAssert(!isMinorCiv());
@@ -5158,7 +5160,7 @@ void CvTeamAI::AI_doWar()
 
 		int iTimeModifier = 100; // preperation time modifier
 		int iAbandonTimeModifier = 100; // deadline for attack modifier
-		iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+		iAbandonTimeModifier *= 50 + GC.getGameSpeedInfo(kGame.getGameSpeedType()).getTrainPercent();
 		iAbandonTimeModifier /= 150;
 		// (more adjustments to the time modifiers will come later)
 
@@ -5240,7 +5242,7 @@ void CvTeamAI::AI_doWar()
 			}
 			// K-Mod end
 
-			iTimeModifier *= 50 + GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getTrainPercent();
+			iTimeModifier *= 50 + GC.getGameSpeedInfo(kGame.getGameSpeedType()).getTrainPercent();
 			iTimeModifier /= 150;
 
 			FAssert(iTimeModifier >= 0);
@@ -5483,7 +5485,7 @@ void CvTeamAI::AI_doWar()
 
 	// if at war, check for making peace
 	// Note: this section relates to automatic peace deals for inactive wars.
-	if (bAtWar && GC.getGameINLINE().getSorenRandNum(AI_makePeaceRand(), "AI Make Peace") == 0)
+	if (bAtWar && kGame.getSorenRandNum(AI_makePeaceRand(), "AI Make Peace") == 0)
 	{
 		for (TeamTypes eLoopTeam = (TeamTypes)0; eLoopTeam < MAX_CIV_TEAMS; eLoopTeam=(TeamTypes)(eLoopTeam+1))
 		{
@@ -5503,12 +5505,12 @@ void CvTeamAI::AI_doWar()
 
 			FAssert(!(GET_TEAM(eLoopTeam).isMinorCiv()));
 
-			if( AI_getAtWarCounter(eLoopTeam) > std::max(10, (14 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent())/100) )
+			if( AI_getAtWarCounter(eLoopTeam) > std::max(10, (14 * GC.getGameSpeedInfo(kGame.getGameSpeedType()).getVictoryDelayPercent())/100) )
 			{
 				// If nothing is happening in war
 				if( AI_getWarSuccess(eLoopTeam) + GET_TEAM(eLoopTeam).AI_getWarSuccess(getID()) < 2*GC.getDefineINT("WAR_SUCCESS_ATTACKING") )
 				{
-					if( (GC.getGameINLINE().getSorenRandNum(8, "AI Make Peace 1") == 0) )
+					if( (kGame.getSorenRandNum(8, "AI Make Peace 1") == 0) )
 					{
 						bool bValid = true;
 
@@ -5550,7 +5552,7 @@ void CvTeamAI::AI_doWar()
 				}
 
 				// Fought to a long draw
-				if (AI_getAtWarCounter(eLoopTeam) > ((((AI_getWarPlan(eLoopTeam) == WARPLAN_TOTAL) ? 40 : 30) * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent())/100) )
+				if (AI_getAtWarCounter(eLoopTeam) > ((((AI_getWarPlan(eLoopTeam) == WARPLAN_TOTAL) ? 40 : 30) * GC.getGameSpeedInfo(kGame.getGameSpeedType()).getVictoryDelayPercent())/100) )
 				{
 					int iOurValue = AI_endWarVal(eLoopTeam);
 					int iTheirValue = GET_TEAM(eLoopTeam).AI_endWarVal(getID());
@@ -5588,10 +5590,21 @@ void CvTeamAI::AI_doWar()
 	}
 
 	// if no war plans, consider starting one!
+
 	//if (getAnyWarPlanCount(true) == 0 || iEnemyPowerPercent < 45)
-	if (!bAnyWarPlan || (iEnemyPowerPercent < 45 && !(bLocalWarPlan && bTotalWarPlan) && AI_getWarSuccessRating() > (bTotalWarPlan ? 40 : 15))) // K-Mod
+	// K-Mod. Some more nuance to the conditions for considering war
+	// First condition: only consider a new war if there are no current wars that need more attention. (local total war, or a war we aren't winning)
+	bool bConsiderWar = !bAnyWarPlan || (iEnemyPowerPercent < 45 && !(bLocalWarPlan && bTotalWarPlan) && AI_getWarSuccessRating() > (bTotalWarPlan ? 40 : 15));
+	// Second condition: don't consider war very early in the game. It would be unfair on human players to rush them with our extra starting units and techs!
+	bConsiderWar = bConsiderWar &&
+		(kGame.isOption(GAMEOPTION_AGGRESSIVE_AI) ||
+		 kGame.getElapsedGameTurns() >= GC.getGameSpeedInfo(kGame.getGameSpeedType()).getBarbPercent() * 30 / 100 ||
+		 kGame.getNumCivCities() > GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities() * kGame.countCivPlayersAlive()/2);
+	// (Perhaps the no-war turn threshold should depend on the game difficulty level; but I don't think it would make much difference.)
+	if (bConsiderWar)
+	// K-mod end
 	{
-		bool bAggressive = GC.getGameINLINE().isOption(GAMEOPTION_AGGRESSIVE_AI);
+		bool bAggressive = kGame.isOption(GAMEOPTION_AGGRESSIVE_AI);
 
 		int iFinancialTroubleCount = 0;
 		int iDaggerCount = 0;
@@ -5678,7 +5691,7 @@ void CvTeamAI::AI_doWar()
 			if (bFinancialProWar || !bFinancesOpposeWar)
 			{
 				// random overall war chance (at noble+ difficulties this is 100%)
-				if (GC.getGameINLINE().getSorenRandNum(100, "AI Declare War 1") < GC.getHandicapInfo(GC.getGameINLINE().getHandicapType()).getAIDeclareWarProb())
+				if (kGame.getSorenRandNum(100, "AI Declare War 1") < GC.getHandicapInfo(kGame.getHandicapType()).getAIDeclareWarProb())
 				{
 					bMakeWarChecks = true;
 				}
@@ -5699,9 +5712,9 @@ void CvTeamAI::AI_doWar()
 			iOurPower /= 100;
 
 			if ((bFinancesProTotalWar || !bFinancesOpposeWar) &&
-				(GC.getGameINLINE().getSorenRandNum(iTotalWarRand, "AI Maximum War") <= iTotalWarThreshold))
+				(kGame.getSorenRandNum(iTotalWarRand, "AI Maximum War") <= iTotalWarThreshold))
 			{
-				int iNoWarRoll = GC.getGameINLINE().getSorenRandNum(100, "AI No War");
+				int iNoWarRoll = kGame.getSorenRandNum(100, "AI No War");
 				iNoWarRoll = range(iNoWarRoll + (bAggressive ? 10 : 0) + (bFinancesProTotalWar ? 10 : 0) - (20*iGetBetterUnitsCount)/iNumMembers, 0, 99);
 
 				int iBestValue = 10; // K-Mod. I've set the starting value above zero just as a buffer against close-calls which end up being negative value in the near future.
@@ -5771,12 +5784,12 @@ void CvTeamAI::AI_doWar()
 /* Bugfix                                                                                       */
 /************************************************************************************************/
 			else if ((bFinancesProLimitedWar || !bFinancesOpposeWar) &&
-				(GC.getGameINLINE().getSorenRandNum(iLimitedWarRand, "AI Limited War") <= iLimitedWarThreshold))
+				(kGame.getSorenRandNum(iLimitedWarRand, "AI Limited War") <= iLimitedWarThreshold))
 /************************************************************************************************/
 /* UNOFFICIAL_PATCH                        END                                                  */
 /************************************************************************************************/
 			{
-				int iNoWarRoll = GC.getGameINLINE().getSorenRandNum(100, "AI No War") - 10;
+				int iNoWarRoll = kGame.getSorenRandNum(100, "AI No War") - 10;
 				iNoWarRoll = range(iNoWarRoll + (bAggressive ? 10 : 0) + (bFinancesProLimitedWar ? 10 : 0), 0, 99);
 
 				int iBestValue = 0;
@@ -5828,9 +5841,9 @@ void CvTeamAI::AI_doWar()
 				}
 			}
 			else if ((bFinancesProDogpileWar || !bFinancesOpposeWar) &&
-				(GC.getGameINLINE().getSorenRandNum(iDogpileWarRand, "AI Dogpile War") <= iDogpileWarThreshold))
+				(kGame.getSorenRandNum(iDogpileWarRand, "AI Dogpile War") <= iDogpileWarThreshold))
 			{
-				int iNoWarRoll = GC.getGameINLINE().getSorenRandNum(100, "AI No War") - 20;
+				int iNoWarRoll = kGame.getSorenRandNum(100, "AI No War") - 20;
 				iNoWarRoll = range(iNoWarRoll + (bAggressive ? 10 : 0) + (bFinancesProDogpileWar ? 10 : 0), 0, 99);
 
 				int iBestValue = 0;
