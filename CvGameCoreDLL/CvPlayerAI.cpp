@@ -10093,12 +10093,7 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 	{
 		PROFILE("CvPlayerAI::AI_baseBonusVal::recalculate");
 
-		UnitTypes eLoopUnit;
-		BuildingTypes eLoopBuilding;
-		int iDiff;
 		int iValue = 0;
-		int iTempValue;
-		int iI, iJ;
 
 		if (!GET_TEAM(getTeam()).isBonusObsolete(eBonus))
 		{
@@ -10139,22 +10134,23 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 			}
 
 
-			for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+			for (int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
 			{
-				eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
+				UnitTypes eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
 
 				if (eLoopUnit != NO_UNIT)
 				{
 					CvUnitInfo& kLoopUnit = GC.getUnitInfo(eLoopUnit);
 
-					iTempValue = 0;
+					/* original bts code
+					int iTempValue = 0;
 
 					if (kLoopUnit.getPrereqAndBonus() == eBonus)
 					{
 						iTempValue += 50;
 					}
 
-					for (iJ = 0; iJ < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); iJ++)
+					for (int iJ = 0; iJ < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); iJ++)
 					{
 						if (kLoopUnit.getPrereqOrBonuses(iJ) == eBonus)
 						{
@@ -10194,7 +10190,7 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 
 						if (kLoopUnit.getPrereqAndTech() != NO_TECH)
 						{
-							iDiff = abs(GC.getTechInfo((TechTypes)(kLoopUnit.getPrereqAndTech())).getEra() - getCurrentEra());
+							int iDiff = abs(GC.getTechInfo((TechTypes)(kLoopUnit.getPrereqAndTech())).getEra() - getCurrentEra());
 
 							if (iDiff == 0)
 							{
@@ -10208,26 +10204,102 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 						}
 
 						iValue += iTempValue;
+					}*/
+					// K-Mod. Similar, but much better. (maybe)
+					const int iBaseValue = 30;
+					int iUnitValue = 0;
+					if (kLoopUnit.getPrereqAndBonus() == eBonus)
+					{
+						iUnitValue = iBaseValue;
 					}
+					else
+					{
+						int iOrBonuses = 0;
+						int iOrBonusesWeHave = 0; // excluding eBonus itself. (disabled for now. See comments below.)
+						bool bIsOrBonus = false; // is eBonus one of the OrBonuses for this unit.
+
+						for (int iJ = 0; iJ < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); iJ++)
+						{
+							if (kLoopUnit.getPrereqOrBonuses(iJ) != NO_BONUS)
+							{
+								iOrBonuses++;
+								//iOrBonusesWeHave += (iJ != eBonus && getNumAvailableBonuses((BonusTypes)kLoopUnit.getPrereqOrBonuses(iJ))) ? 1 : 0;
+								// @*#!  It occurs to me that using state-dependant stuff such as NumAvailableBonuses here could result in OOS errors.
+								// This is because the code here can be trigged by local UI events, and then the value could be cached...
+								// It's very frustrating - because including the effect from iOrBonusesWeHave was going to be a big improvment.
+								// The only way I can think of working around this is to add a 'bConstCache' argument to this function...
+								bIsOrBonus = bIsOrBonus || iJ == eBonus;
+							}
+						}
+						if (bIsOrBonus)
+						{
+							// 1: 1, 2: 2/3, 3: 1/2, ...
+							iUnitValue = iBaseValue * 2 / (1+iOrBonuses+2*iOrBonusesWeHave);
+						}
+					}
+					bool bCanTrain = false;
+					if (iUnitValue > 0)
+					{
+						// devalue the unit if we wouldn't be able to build it anyway
+						if (canTrain(eLoopUnit))
+						{
+							// is it a water unit and no coastal cities or our coastal city cannot build because its obsolete
+							if ((kLoopUnit.getDomainType() == DOMAIN_SEA && (pCoastalCity == NULL || pCoastalCity->allUpgradesAvailable(eLoopUnit) != NO_UNIT)) ||
+								// or our capital cannot build because its obsolete (we can already build all its upgrades)
+								(pCapital != NULL && pCapital->allUpgradesAvailable(eLoopUnit) != NO_UNIT))
+							{
+								// its worthless
+								iUnitValue = 0;
+							}
+							bCanTrain = true;
+						}
+						else
+						{
+							// there is some other reason why we can't build it. (maybe the unit is maxed out, or maybe we don't have the techs)
+							iUnitValue /= 2;
+						}
+					}
+					if (iUnitValue > 0)
+					{
+						// devalue units for which we already have a better replacement.
+						UnitAITypes eDefaultAI = (UnitAITypes)kLoopUnit.getDefaultUnitAIType();
+						int iNewTypeValue = AI_unitValue(eLoopUnit, eDefaultAI, 0);
+						int iBestTypeValue = AI_bestAreaUnitAIValue(eDefaultAI, 0);
+						if (iBestTypeValue > 0)
+						{
+							int iNewValue = AI_unitValue(eLoopUnit, eDefaultAI, 0);
+							iUnitValue = iUnitValue * std::max(0, std::min(100, 120*iNewValue / iBestTypeValue - 20)) / 100;
+						}
+
+						// devalue units which are related to our current era. (but not if it is still our best unit!)
+						if (kLoopUnit.getPrereqAndTech() != NO_TECH)
+						{
+							int iDiff = GC.getTechInfo((TechTypes)(kLoopUnit.getPrereqAndTech())).getEra() - getCurrentEra();
+							if (iDiff > 0 || !bCanTrain || iNewTypeValue < iBestTypeValue)
+								iUnitValue = iUnitValue * 2/(2 + std::abs(iDiff));
+						}
+						iValue += iUnitValue;
+					}
+					// K-Mod end
 				}
 			}
 
-			for (iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+			for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
 			{
-				eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
+				BuildingTypes eLoopBuilding = ((BuildingTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationBuildings(iI)));
 
 				if (eLoopBuilding != NO_BUILDING)
 				{
 					CvBuildingInfo& kLoopBuilding = GC.getBuildingInfo(eLoopBuilding);
 					
-					iTempValue = 0;
+					int iTempValue = 0;
 
 					if (kLoopBuilding.getPrereqAndBonus() == eBonus)
 					{
 						iTempValue += 30;
 					}
 
-					for (iJ = 0; iJ < GC.getNUM_BUILDING_PREREQ_OR_BONUSES(); iJ++)
+					for (int iJ = 0; iJ < GC.getNUM_BUILDING_PREREQ_OR_BONUSES(); iJ++)
 					{
 						if (kLoopBuilding.getPrereqOrBonuses(iJ) == eBonus)
 						{
@@ -10242,7 +10314,7 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 						iTempValue += 60;
 					}
 					
-					for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+					for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 					{
 						iTempValue += kLoopBuilding.getBonusYieldModifier(eBonus, iJ) / 2;
 						if (kLoopBuilding.getPowerBonus() == eBonus)
@@ -10297,7 +10369,7 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 
 						if (kLoopBuilding.getPrereqAndTech() != NO_TECH)
 						{
-							iDiff = abs(GC.getTechInfo((TechTypes)(kLoopBuilding.getPrereqAndTech())).getEra() - getCurrentEra());
+							int iDiff = abs(GC.getTechInfo((TechTypes)(kLoopBuilding.getPrereqAndTech())).getEra() - getCurrentEra());
 
 							if (iDiff == 0)
 							{
@@ -10315,11 +10387,11 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 				}
 			}
 
-			for (iI = 0; iI < GC.getNumProjectInfos(); iI++)
+			for (int iI = 0; iI < GC.getNumProjectInfos(); iI++)
 			{
 				ProjectTypes eProject = (ProjectTypes) iI;
 				CvProjectInfo& kLoopProject = GC.getProjectInfo(eProject);
-				iTempValue = 0;
+				int iTempValue = 0;
 
 				iTempValue += kLoopProject.getBonusProductionModifier(eBonus) / 10;
 
@@ -10339,7 +10411,7 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 
 					if (kLoopProject.getTechPrereq() != NO_TECH)
 					{
-						iDiff = abs(GC.getTechInfo((TechTypes)(kLoopProject.getTechPrereq())).getEra() - getCurrentEra());
+						int iDiff = abs(GC.getTechInfo((TechTypes)(kLoopProject.getTechPrereq())).getEra() - getCurrentEra());
 
 						if (iDiff == 0)
 						{
@@ -10357,18 +10429,18 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 			}
 
 			RouteTypes eBestRoute = getBestRoute();
-			for (iI = 0; iI < GC.getNumBuildInfos(); iI++)
+			for (int iI = 0; iI < GC.getNumBuildInfos(); iI++)
 			{
 				RouteTypes eRoute = (RouteTypes)(GC.getBuildInfo((BuildTypes)iI).getRoute());
 
 				if (eRoute != NO_ROUTE)
 				{
-					iTempValue = 0;
+					int iTempValue = 0;
 					if (GC.getRouteInfo(eRoute).getPrereqBonus() == eBonus)
 					{
 						iTempValue += 80;
 					}
-					for (iJ = 0; iJ < GC.getNUM_ROUTE_PREREQ_OR_BONUSES(); iJ++)
+					for (int iJ = 0; iJ < GC.getNUM_ROUTE_PREREQ_OR_BONUSES(); iJ++)
 					{
 						if (GC.getRouteInfo(eRoute).getPrereqOrBonus(iJ) == eBonus)
 						{
