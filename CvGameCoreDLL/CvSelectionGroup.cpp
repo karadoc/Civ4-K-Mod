@@ -215,7 +215,7 @@ void CvSelectionGroup::doTurn()
 				}
 
 				// K-Mod
-				bool bBrave = headMissionQueueNode() && !(headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER);
+				bool bBrave = headMissionQueueNode() && (headMissionQueueNode()->m_data.iFlags & MOVE_IGNORE_DANGER);
 				// Originally I used "MOVE_IGNORE_DANGER" to actually skip the danger tests complete, but I've found that
 				// sometimes produces unintuitive results in some situations. So now 'ignore danger' only ignores range==2.
 
