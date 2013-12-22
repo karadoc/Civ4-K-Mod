@@ -594,8 +594,14 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 
 			if (eDomainType == NO_DOMAIN || pLoopUnit->getDomainType() == eDomainType)
 			{
-				strSum += pLoopUnit->currEffectiveStr(pAttackedPlot, pLoopUnit);
-				// K-Mod estimate the attack power of collateral units. (cf with calculation in AI_localAttackStrength)
+				// strSum += pLoopUnit->currEffectiveStr(pAttackedPlot, pLoopUnit);
+
+				// K-Mod estimate the value of first strike, and the attack power of collateral units.
+				// (cf with calculation in CvPlayerAI::AI_localAttackStrength)
+				int iUnitStr = pLoopUnit->currEffectiveStr(pAttackedPlot, pLoopUnit);
+				iUnitStr *= 100 + 4 * pLoopUnit->firstStrikes() + 2 * pLoopUnit->chanceFirstStrikes();
+				iUnitStr /= 100;
+
 				if (bCountCollateral && pLoopUnit->collateralDamage() > 0)
 				{
 					int iPossibleTargets = pLoopUnit->collateralDamageMaxUnits();
@@ -607,9 +613,10 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 					{
 						// collateral damage is not trivial to calculate. This estimate is pretty rough.
 						// (Note: collateralDamage() and iBaseCollateral both include factors of 100.)
-						strSum += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 10000;
+						iUnitStr += pLoopUnit->baseCombatStr() * iBaseCollateral * pLoopUnit->collateralDamage() * iPossibleTargets / 10000;
 					}
 				}
+				strSum += iUnitStr;
 				// K-Mod end
 			}
 		}
