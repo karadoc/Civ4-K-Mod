@@ -15161,7 +15161,10 @@ CvCity* CvUnitAI::AI_pickTargetCity(int iFlags, int iMaxPathTurns, bool bHuntBar
 									iEnemyDefence *= 130;
 									iEnemyDefence /= 130 + (bombardRate() > 0 ? pLoopCity->getDefenseModifier(false) : 0);
 									WarPlanTypes eWarPlan = GET_TEAM(kOwner.getTeam()).AI_getWarPlan(pLoopCity->getTeam());
+									// If we aren't fully committed to the war, then focus on taking easy cities - but try not to be completely predictable.
 									bool bCherryPick = eWarPlan == WARPLAN_LIMITED || eWarPlan == WARPLAN_PREPARING_LIMITED || eWarPlan == WARPLAN_DOGPILE;
+									bCherryPick = bCherryPick && (AI_unitBirthmarkHash(GC.getGameINLINE().getElapsedGameTurns()/4) % 4);
+
 									int iBase = bCherryPick ? 100 : 110;
 									if (100 * iEnemyDefence > iBase * iTotalOffence) // an uneven comparison, just in case we can get some air support or other help somehow.
 									{
