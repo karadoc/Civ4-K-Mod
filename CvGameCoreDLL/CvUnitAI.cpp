@@ -17120,14 +17120,43 @@ bool CvUnitAI::AI_foundFollow()
 
 	return false;
 }
+
+// K-Mod. helper function for AI_assaultSeaTransport. (just to avoid code duplication)
+static int estimateAndCacheCityDefence(CvPlayerAI& kPlayer, CvCity* pCity, std::map<CvCity*, int>& city_defence_cache)
+{
+	// calculate the city's defences, or read from the cache if we've already done it.
+	std::map<CvCity*, int>::iterator city_it = city_defence_cache.find(pCity);
+	int iDefenceStrength = -1;
+	if (city_it == city_defence_cache.end())
+	{
+		if (pCity->plot()->isVisible(kPlayer.getTeam(), false))
+		{
+			iDefenceStrength = kPlayer.AI_localDefenceStrength(pCity->plot(), NO_TEAM);
+		}
+		else
+		{
+			// If we don't have vision of the city, we should try to estimate its strength based the expected number of defenders.
+			int iUnitStr = GET_PLAYER(pCity->getOwnerINLINE()).getTypicalUnitValue(UNITAI_CITY_DEFENSE, DOMAIN_LAND) * GC.getGameINLINE().getBestLandUnitCombat() / 100;
+			iDefenceStrength = std::max(GET_TEAM(kPlayer.getTeam()).AI_getStrengthMemory(pCity->plot()), pCity->AI_neededDefenders()*iUnitStr);
+		}
+		city_defence_cache[pCity] = iDefenceStrength;
+	}
+	else
+	{
+		// use the cached value
+		iDefenceStrength = city_it->second;
+	}
+	return iDefenceStrength;
+}
 // K-Mod end
 
 // Returns true if a mission was pushed...
+// This fucntion has been mostly rewritten for K-Mod.
 bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 {
 	PROFILE_FUNC();
 
-	bool bIsAttackCity = (getUnitAICargo(UNITAI_ATTACK_CITY) > 0);
+	//bool bIsAttackCity = (getUnitAICargo(UNITAI_ATTACK_CITY) > 0);
 
 	FAssert(getGroup()->hasCargo());
 	//FAssert(bIsAttackCity || getGroup()->getUnitAICargo(UNITAI_ATTACK) > 0);
@@ -17137,6 +17166,15 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 	{
 		return false;
 	} */ // disabled by K-Mod. (this is now checked in AI_assaultGoTo)
+
+	CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	int iLimitedAttackers = 0;
+	int iAmphibiousAttackers = 0;
+	int iAmphibiousAttackStrength = 0;
+	int iLandedAttackStrength = 0;
+	int iCollateralDamageScale = estimateCollateralWeight(0, NO_TEAM);
+	std::map<CvCity*, int> city_defence_cache;
 
 	std::vector<CvUnit*> aGroupCargo;
 	CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
@@ -17148,254 +17186,276 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 		if (pTransport != NULL && pTransport->getGroup() == getGroup())
 		{
 			aGroupCargo.push_back(pLoopUnit);
+			// K-Mod. Gather some data for later...
+			iLimitedAttackers += (pLoopUnit->combatLimit() < 100 ? 1 : 0);
+			iAmphibiousAttackers += (pLoopUnit->isAmphib() ? 1 : 0);
+
+			// Estimate attack strength, both for landed assaults and amphibious assaults.
+			//
+			// Unfortunately, we can't use AI_localAttackStrength because that may miscount
+			// depending on whether there is another group on this plot and things like that,
+			// and we can't use AI_sumStrength because that currently only works for groups.
+			// What we have here is a list of cargo units rather than a group.
+			if (pLoopUnit->canAttack())
+			{
+				int iUnitStr = pLoopUnit->currEffectiveStr(NULL, NULL);
+
+				iUnitStr *= 100 + 4 * pLoopUnit->firstStrikes() + 2 * pLoopUnit->chanceFirstStrikes();
+				iUnitStr /= 100;
+
+				if (pLoopUnit->collateralDamage() > 0)
+					iUnitStr += pLoopUnit->baseCombatStr() * iCollateralDamageScale * pLoopUnit->collateralDamage() * pLoopUnit->collateralDamageMaxUnits() / 10000;
+
+				iLandedAttackStrength += iUnitStr;
+
+				if (pLoopUnit->combatLimit() >= 100 && pLoopUnit->canMove() && (!pLoopUnit->isMadeAttack() || pLoopUnit->isBlitz()))
+				{
+					if (!pLoopUnit->isAmphib())
+						iUnitStr += iUnitStr * GC.getAMPHIB_ATTACK_MODIFIER() / 100;
+
+					iAmphibiousAttackStrength += iUnitStr;
+				}
+			}
+			// K-Mod end
 		}
 	}
 
 	int iFlags = MOVE_AVOID_ENEMY_WEIGHT_3 | MOVE_DECLARE_WAR; // K-Mod
 	int iCargo = getGroup()->getCargo();
+	FAssert(iCargo > 0);
 	int iBestValue = 0;
 	CvPlot* pBestPlot = NULL;
 	CvPlot* pBestAssaultPlot = NULL;
 
+	// K-Mod note: I've restructured and rewritten this section for efficiency, clarity, and sometimes even to improve the AI!
+	// Most of the original code has been deleted.
 	for (int iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
 		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
-		//if (pLoopPlot->isCoastalLand())
-		if (pLoopPlot->isRevealed(getTeam(), false) && pLoopPlot->isCoastalLand()) // K-Mod
+		if (!pLoopPlot->isRevealed(getTeam(), false))
+			continue;
+		if (!pLoopPlot->isOwned())
+			continue;
+		if (!bAttackBarbs && pLoopPlot->isBarbarian() && !kOwner.isMinorCiv())
+			continue;
+		if (!pLoopPlot->isCoastalLand())
+			continue;
+		if (!isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
+			continue;
+
+		// Note: currently these condtions mean we will never land to invade land-locked enemies
+
+		int iTargetCities = pLoopPlot->area()->getCitiesPerPlayer(pLoopPlot->getOwnerINLINE());
+		if (iTargetCities == 0)
+			continue;
+
+		int iPathTurns;
+		if (!generatePath(pLoopPlot, iFlags, true, &iPathTurns))
+			continue;
+
+		CvCity* pCity = pLoopPlot->getPlotCity();
+		// If the plot can't be seen, then just roughly estimate what the AI might think is there...
+		int iEnemyDefenders = (pLoopPlot->isVisible(getTeam(), false) || GET_TEAM(getTeam()).AI_getStrengthMemory(pLoopPlot))
+			? pLoopPlot->getNumVisiblePotentialEnemyDefenders(this)
+			: (pCity ? pCity->AI_neededDefenders() : 0);
+
+		int iBaseValue = 10 + std::min(9, 3*iTargetCities);
+		int iValueMultiplier = 100;
+
+		// if there are defenders, we should decide whether or not it is worth attacking them amphibiously.
+		if (iEnemyDefenders > 0)
 		{
-			if (pLoopPlot->isOwned())
+			if ((iLimitedAttackers > 0 || iAmphibiousAttackers < iCargo/2) && iEnemyDefenders*3 > 2*(iCargo-iLimitedAttackers))
+				continue;
+
+			int iDefenceStrength = -1;
+			if (pCity)
+				iDefenceStrength = estimateAndCacheCityDefence(kOwner, pCity, city_defence_cache);
+			else
+				iDefenceStrength = pLoopPlot->isVisible(getTeam(), false) ? kOwner.AI_localDefenceStrength(pLoopPlot, NO_TEAM) : GET_TEAM(kOwner.getTeam()).AI_getStrengthMemory(pLoopPlot);
+			// Note: the amphibious attack modifier is already taken into account by AI_localAttackStrength,
+			// but I'm going to apply a similar penality again just to discourage the AI from attacking amphibiously when they don't need to.
+			iDefenceStrength -= iDefenceStrength * GC.getAMPHIB_ATTACK_MODIFIER() * (iCargo - iAmphibiousAttackers) / (100*iCargo);
+
+			if (iAmphibiousAttackStrength < iDefenceStrength) // && (iAmphibiousAttackers < iCargo || their_best_defender_is_stronger_than_our_attackers)
+				continue;
+
+			if (pCity == NULL)
+				iValueMultiplier = iValueMultiplier * (iAmphibiousAttackStrength - iDefenceStrength*std::min(iCargo-iLimitedAttackers, iEnemyDefenders)/iEnemyDefenders) / iAmphibiousAttackStrength;
+		}
+
+		if (pCity == NULL)
+		{
+			// consider landing on strategic resources
+			iBaseValue += AI_pillageValue(pLoopPlot, 15);
+
+			// prefer to land on a defensive plot, but not with a river between us and the city
+			int iModifier = 0;
+			if (pCity && pLoopPlot->isRiverCrossing(directionXY(pLoopPlot, pCity->plot())))
+				iModifier += GC.getRIVER_ATTACK_MODIFIER()/10;
+
+			iModifier += pLoopPlot->defenseModifier(getTeam(), false) / 10;
+
+			iValueMultiplier = (100+iModifier)*iValueMultiplier / 100;
+
+			// Look look for adjacent cities.
+			for (DirectionTypes dir = (DirectionTypes)0; dir < NUM_DIRECTION_TYPES; dir=(DirectionTypes)(dir+1))
 			{
-				//if (((bBarbarian || !pLoopPlot->isBarbarian())) || GET_PLAYER(getOwnerINLINE()).isMinorCiv())
-				if ((bAttackBarbs || !pLoopPlot->isBarbarian()) || GET_PLAYER(getOwnerINLINE()).isMinorCiv())
+				CvPlot* pAdjacentPlot = plotDirection(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), dir);
+				if (pAdjacentPlot == NULL)
+					continue;
+
+				pCity = pAdjacentPlot->getPlotCity();
+
+				if (pCity != NULL)
 				{
-					if (isPotentialEnemy(pLoopPlot->getTeam(), pLoopPlot))
-					{
-						int iTargetCities = pLoopPlot->area()->getCitiesPerPlayer(pLoopPlot->getOwnerINLINE());
-						if (iTargetCities > 0)
-						{
-							bool bCanCargoAllUnload = true;
-							//int iEnemyDefenders = pLoopPlot->getNumVisibleEnemyDefenders(this);
-							// K-Mod (a small step up from the original code, but still not good.)
-							int iEnemyDefenders = (pLoopPlot->isVisible(getTeam(), false) || !pLoopPlot->isCity())
-								? pLoopPlot->getNumVisiblePotentialEnemyDefenders(this)
-								: pLoopPlot->getPlotCity()->AI_neededDefenders();
-							// K-Mod end
-
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      11/30/08                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
-							if (iEnemyDefenders > 0 || pLoopPlot->isCity())
-							{
-								for (uint i = 0; i < aGroupCargo.size(); ++i)
-								{
-									CvUnit* pAttacker = aGroupCargo[i];
-									if( iEnemyDefenders > 0 )
-									{
-										CvUnit* pDefender = pLoopPlot->getBestDefender(NO_PLAYER, pAttacker->getOwnerINLINE(), pAttacker, true);
-										if (pDefender == NULL || !pAttacker->canAttack(*pDefender))
-										{
-											bCanCargoAllUnload = false;
-											break;
-										}
-									}
-									else if( pLoopPlot->isCity() && !(pLoopPlot->isVisible(getTeam(),false)) )
-									{
-										// Assume city is defended, artillery can't naval invade
-										if( pAttacker->combatLimit() < 100 )
-										{
-											bCanCargoAllUnload = false;
-											break;
-										}
-									}
-								}
-							}
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
-
-							if (bCanCargoAllUnload)
-							{
-								int iPathTurns;
-								if (generatePath(pLoopPlot, iFlags, true, &iPathTurns))
-								{
-									int iValue = 1;
-
-									if (!bIsAttackCity)
-									{
-										iValue += (AI_pillageValue(pLoopPlot, 15) * 10);
-									}
-
-									int iAssaultsHere = GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup());
-
-									iValue += (iAssaultsHere * 100);
-
-									CvCity* pCity = pLoopPlot->getPlotCity();
-
-									if (pCity == NULL)
-									{
-										for (int iJ = 0; iJ < NUM_DIRECTION_TYPES; iJ++)
-										{
-											CvPlot* pAdjacentPlot = plotDirection(pLoopPlot->getX_INLINE(), pLoopPlot->getY_INLINE(), ((DirectionTypes)iJ));
-
-											if (pAdjacentPlot != NULL)
-											{
-												pCity = pAdjacentPlot->getPlotCity();
-
-												if (pCity != NULL)
-												{
-													if (pCity->getOwnerINLINE() == pLoopPlot->getOwnerINLINE())
-													{
-														break;
-													}
-													else
-													{
-														pCity = NULL;
-													}
-												}
-											}
-										}
-									}
-
-									if (pCity != NULL)
-									{
-										FAssert(isPotentialEnemy(pCity->getTeam(), pLoopPlot));
-
-										if (!(pLoopPlot->isRiverCrossing(directionXY(pLoopPlot, pCity->plot()))))
-										{
-											iValue += (50 * -(GC.getRIVER_ATTACK_MODIFIER()));
-										}
-
-										//iValue += 15 * (pLoopPlot->defenseModifier(getTeam(), false));
-										iValue += pLoopPlot == pCity->plot() ? 0 : 15 * (pLoopPlot->defenseModifier(getTeam(), false)); // K-Mod
-										iValue += 1000;
-										iValue += (GET_PLAYER(getOwnerINLINE()).AI_adjacentPotentialAttackers(pCity->plot()) * 200);
-
-										// BBAI / K-Mod
-										// Continue attacking in area we have already captured cities
-										if (pCity->area()->getCitiesPerPlayer(getOwnerINLINE()) > 0)
-										{
-											if (bLocal || pCity->AI_playerCloseness(getOwnerINLINE()) > 5)
-											{
-												iValue *= 3;
-												iValue /= 2;
-											}
-										}
-										else if (bLocal)
-										{
-											iValue *= 2;
-											iValue /= 3;
-										}
-										// BBAI / K-Mod end
-
-										if (iPathTurns == 1)
-										{
-											iValue += GC.getGameINLINE().getSorenRandNum(50, "AI Assault");
-										}
-									}
-									// K-Mod note: I really want to use the pathfinder here
-									// to make sure we aren't landing a long way from any enemy cities.
-									// But unfortunately, the pathfinder is global.. so if I use it for our cargo,
-									// it will clear the cache for our transports and thus make this whole process much slower.
-									// The bad news is that because of this, the AI can get into a loop of contantly dropping
-									// off units which just walk back to the city to be dropped off again...
-
-									FAssert(iPathTurns > 0);
-
-									if (iPathTurns == 1)
-									{
-										if (pCity != NULL)
-										{
-											if (pCity->area()->getNumCities() > 1)
-											{
-												iValue *= 2;
-											}
-										}
-									}
-
-									iValue *= 1000;
-
-									if (iTargetCities <= iAssaultsHere)
-									{
-										iValue /= 2;
-									}
-
-									if (iTargetCities == 1)
-									{
-										if (iCargo > 7)
-										{
-											iValue *= 3;
-											iValue /= iCargo - 4;
-										}
-									}
-
-									if (pLoopPlot->isCity())
-									{
-										if (iEnemyDefenders * 3 > iCargo)
-										{
-											iValue /= 10;
-										}
-										else
-										{
-											iValue *= iCargo;
-											iValue /= std::max(1, (iEnemyDefenders * 3));
-										}
-									}
-									else
-									{
-										if (0 == iEnemyDefenders)
-										{
-											iValue *= 4;
-											iValue /= 3;
-										}
-										else
-										{
-											iValue /= iEnemyDefenders;
-										}
-									}
-
-									// if more than 3 turns to get there, then put some randomness into our preference of distance
-									// +/- 33%
-									/* original bts code
-									if (iPathTurns > 3)
-									{
-										int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
-
-										iPathTurns *= 66 + iPathAdjustment;
-										iPathTurns /= 100;
-									}
-
-									iValue /= (iPathTurns + 1); */
-									// K-Mod. A bit of randomness is good, but if it's random every turn then it will lead to inconsistent decisions.
-									// So.. if we're already en-route somewhere, try to keep going there.
-									if (pCity && getGroup()->AI_getMissionAIPlot() && stepDistance(getGroup()->AI_getMissionAIPlot(), pCity->plot()) <= 1)
-									{
-										iValue *= 150;
-										iValue /= 100;
-									}
-									else if (iPathTurns > 2)
-									{
-										//iValue *= 60 + GC.getGameINLINE().getSorenRandNum(81, "AI Assault Target");
-										iValue *= 60 + (AI_unitPlotHash(pLoopPlot, getGroup()->getNumUnits()) % 81);
-										iValue /= 100;
-									}
-									iValue /= (iPathTurns + 2);
-									// K-Mod end
-
-									if (iValue > iBestValue)
-									{
-										iBestValue = iValue;
-										pBestPlot = getPathEndTurnPlot();
-										pBestAssaultPlot = pLoopPlot;
-									}
-								}
-							}
-						}
-					}
+					if (pCity->getOwnerINLINE() == pLoopPlot->getOwnerINLINE())
+						break;
+					else
+						pCity = NULL;
 				}
 			}
+		}
+
+
+		if (pCity != NULL)
+		{
+			int iDefenceStrength = estimateAndCacheCityDefence(kOwner, pCity, city_defence_cache);
+
+			FAssert(isPotentialEnemy(pCity->getTeam(), pLoopPlot));
+			iBaseValue += kOwner.AI_targetCityValue(pCity, false, false); // maybe false, true?
+
+			if (pCity->plot() == pLoopPlot)
+				iValueMultiplier*=pLoopPlot->isVisible(getTeam(), false) ? 5 : 2; // apparently we can take the city amphibiously
+			else
+			{
+				// prefer to join existing assaults. (maybe we should calculate the actual attack strength here and roll it into the strength comparison modifier below)
+				int iModifier = std::min(kOwner.AI_plotTargetMissionAIs(pLoopPlot, MISSIONAI_ASSAULT, getGroup()) + kOwner.AI_adjacentPotentialAttackers(pCity->plot()), 2*iCargo) * 100 / iCargo;
+				iValueMultiplier = (100+iModifier)*iValueMultiplier / 100;
+
+				// Prefer to target cities that we can defeat.
+				// However, keep in mind that if we often won't be able to see the city to gauge their defenses.
+
+
+				if (iDefenceStrength > 0 || pLoopPlot->isVisible(getTeam(), false)) // otherwise, assume we have no idea what's there.
+				{
+					if (pLoopPlot->isVisible(getTeam(), false))
+						iModifier = std::min(100, 125*iLandedAttackStrength / std::max(1, iDefenceStrength) - 25);
+					else
+						iModifier = std::min(50, 75*iLandedAttackStrength / std::max(1, iDefenceStrength) - 25);
+				}
+
+				iValueMultiplier = (100+iModifier)*iValueMultiplier / 100;
+			}
+		}
+
+		// Continue attacking in area we have already captured cities
+		if (pLoopPlot->area()->getCitiesPerPlayer(getOwnerINLINE()) > 0)
+		{
+			if (pCity != NULL && (bLocal || pCity->AI_playerCloseness(getOwnerINLINE()) > 5))
+			{
+				iValueMultiplier = iValueMultiplier*3/2;
+			}
+		}
+		else if (bLocal)
+		{
+			iValueMultiplier = iValueMultiplier*2/3;
+		}
+
+		// K-Mod note: It would be nice to use the pathfinder again here
+		// to make sure we aren't landing a long way from any enemy cities;
+		// otherwise the AI might get into a loop of contantly dropping
+		// off units which just walk back to the city to be dropped off again.
+		// (maybe some other time)
+
+		FAssert(iPathTurns > 0);
+
+		/* some old bts code. The ideas here are worth remembering, but the execution is not suitable.
+		if (iPathTurns == 1)
+		{
+			if (pCity != NULL)
+			{
+				if (pCity->area()->getNumCities() > 1)
+				{
+					iValue *= 2;
+				}
+			}
+		}
+
+		iValue *= 1000;
+
+		if (iTargetCities <= iAssaultsHere)
+		{
+			iValue /= 2;
+		}
+
+		if (iTargetCities == 1)
+		{
+			if (iCargo > 7)
+			{
+				iValue *= 3;
+				iValue /= iCargo - 4;
+			}
+		}
+
+		if (pLoopPlot->isCity())
+		{
+			if (iEnemyDefenders * 3 > iCargo)
+			{
+				iValue /= 10;
+			}
+			else
+			{
+				iValue *= iCargo;
+				iValue /= std::max(1, (iEnemyDefenders * 3));
+			}
+		}
+		else
+		{
+			if (0 == iEnemyDefenders)
+			{
+				iValue *= 4;
+				iValue /= 3;
+			}
+			else
+			{
+				iValue /= iEnemyDefenders;
+			}
+		}
+
+		// if more than 3 turns to get there, then put some randomness into our preference of distance
+		// +/- 33%
+		if (iPathTurns > 3)
+		{
+			int iPathAdjustment = GC.getGameINLINE().getSorenRandNum(67, "AI Assault Target");
+
+			iPathTurns *= 66 + iPathAdjustment;
+			iPathTurns /= 100;
+		}
+
+		iValue /= (iPathTurns + 1); */
+		// K-Mod. A bit of randomness is good, but if it's random every turn then it will lead to inconsistent decisions.
+		// So.. if we're already en-route somewhere, try to keep going there.
+		if (pCity && getGroup()->AI_getMissionAIPlot() && stepDistance(getGroup()->AI_getMissionAIPlot(), pCity->plot()) <= 1)
+		{
+			iValueMultiplier *= 150;
+			iValueMultiplier /= 100;
+		}
+		else if (iPathTurns > 2)
+		{
+			//iValue *= 60 + GC.getGameINLINE().getSorenRandNum(81, "AI Assault Target");
+			iValueMultiplier *= 60 + (AI_unitPlotHash(pLoopPlot, getGroup()->getNumUnits()) % 81);
+			iValueMultiplier /= 100;
+		}
+		int iValue = iBaseValue * iValueMultiplier / (iPathTurns +2);
+		// K-Mod end
+
+		if (iValue > iBestValue)
+		{
+			iBestValue = iValue;
+			pBestPlot = getPathEndTurnPlot();
+			pBestAssaultPlot = pLoopPlot;
 		}
 	}
 
@@ -24246,16 +24306,22 @@ int CvUnitAI::AI_getWeightedOdds(CvPlot* pPlot, bool bPotentialEnemy)
 
 	return range(iAdjustedOdds, 1, 99);
 }
-// K-Mod end
 
-// K-Mod. A simple hash of the unit's birthmark and the plot position
-// used for getting a 'random' number which depends on the unit and the plot, but which does not vary from turn to turn.
-unsigned CvUnitAI::AI_unitPlotHash(const CvPlot* pPlot, int iExtra) const
+// A simple hash of the unit's birthmark.
+// This is to be used for getting a 'random' number which depends on the unit but which does not vary from turn to turn.
+unsigned CvUnitAI::AI_unitBirthmarkHash(int iExtra) const
 {
-	unsigned iHash = AI_getBirthmark() + GC.getMapINLINE().plotNumINLINE(pPlot->getX_INLINE(), pPlot->getY_INLINE()) + iExtra;
+	unsigned iHash = AI_getBirthmark() + iExtra;
 	iHash *= 2654435761; // golden ratio of 2^32;
 	return iHash;
 }
+
+// another 'random' hash, but which depends on a particular plot
+unsigned CvUnitAI::AI_unitPlotHash(const CvPlot* pPlot, int iExtra) const
+{
+	return AI_unitBirthmarkHash(GC.getMapINLINE().plotNumINLINE(pPlot->getX_INLINE(), pPlot->getY_INLINE()) + iExtra);
+}
+// K-Mod end
 
 int CvUnitAI::AI_stackOfDoomExtra() const
 {
