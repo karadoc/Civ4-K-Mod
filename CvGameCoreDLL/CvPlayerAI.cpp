@@ -6370,7 +6370,7 @@ int CvPlayerAI::AI_techBuildingValue(TechTypes eTech, bool bConstCache, bool& bE
 
 			if (relevant_cities.empty())
 			{
-				FAssertMsg(false, "No revelent cities in AI_techBuildingValue");
+				FAssertMsg(isBarbarian(), "No revelent cities in AI_techBuildingValue");
 				return 0;
 			}
 		}
