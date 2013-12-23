@@ -4140,12 +4140,18 @@ bool CvPlayerAI::AI_isCommercePlot(CvPlot* pPlot) const
 // changes.
 
 // K-Mod. The cache also needs to be reset when routes are destroyed, because distance 2 border danger only counts when there is a route.
-// (Actually, the cache doesn't need to be cleared when war is declared; because false negatives have no impact with this cache.)
-// (In general, I think this cache is a poorly planned idea. It's prone to subtle bugs if there are rule changes in seemingly independant parts of the games.)
+// Actually, the cache doesn't need to be cleared when war is declared; because false negatives have no impact with this cache.
+// The safe plot cache can be invalid if we kill an enemy unit. Currently this is unaccounted for, and so the cache doesn't always match the true state.
+// In general, I think this cache is a poorly planned idea. It's prone to subtle bugs if there are rule changes in seemingly independant parts of the games.
+//
+// I've done a bit of speed profiling and found that although the safe plot cache does shortcut around 50% of calls to AI_getAnyPlotDanger,
+// that only ends up saving a few milliseconds each turn anyway. I don't really think that's worth risking of getting problems from bad cache.
+// So even though I've put a bit of work into make the cache work better, I'm not just going to disable it.
 
 bool CvPlayerAI::isSafeRangeCacheValid() const
 {
-	return isTurnActive() && !GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS) && GC.getGameINLINE().getNumGameTurnActive() == 1;
+	return false; // Cache disabled. See comments above.
+	//return isTurnActive() && !GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS) && GC.getGameINLINE().getNumGameTurnActive() == 1;
 }
 
 bool CvPlayerAI::AI_getAnyPlotDanger(CvPlot* pPlot, int iRange, bool bTestMoves, bool bCheckBorder) const
