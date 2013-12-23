@@ -15,12 +15,11 @@ K-Mod
 Usually it is sufficient to just unzip the new version of K-Mod into the same directory as the old version - but if you want to be super sure that it's going to work correctly, uninstall the old version first. Save games from previous version of K-Mod will still work with the new version unless explicitly specified in the changelog, so feel free to upgrade K-Mod mid-game.
 
 == Donations ==
-If you like the work that I've done and feel compelled to send money to me, you may do so.
+If you like the work that I've done and feel compelled to send money to me, you may do so. I appreciate the support.
 Paypal: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=55FEBSZPPXJHQ
-Bitcoin: 15kzyE5fvQvicfg2rtXppqKYD63t4rFCSt
 
 == Introduction ==
-I originally intended for this mod to be extremely minimalistic, and for personal use only. My original intended changes were just to buff serfdom, protective, and aggressive, and to introduce some features to make automated workers a bit more friendly. The plan was that my mod would be basically the same as the unmodded game, but with a few of the obviously game elements improved. But as I read the game code to learn how to implement my changes, and as I browsed the change-lists of other mods (such as the PIG mod) to see what other minor changes I could make, I started to realise that unmodded BtS isn't anywhere near as planned and polished as I had thought. I use to think that all the mechanics and numbers were a result of careful calculations and thinking and testing, but I learned that many of the features in the game are completely arbitrary and sometimes poorly designed or obviously unfinished. So the scope of my mod has widened dramatically to include pretty much everything that I thought was not as it should be.
+I originally intended for this mod to be extremely minimalistic, and for personal use only. My original intended changes were just to buff serfdom, protective, and aggressive, and to introduce some features to make automated workers a bit more friendly. The plan was that my mod would be basically the same as the unmodded game, but with a few of the obviously game elements improved. But as I read the game code to learn how to implement my changes, and as I browsed the change-lists of other mods (such as the PIG mod) to see what other minor changes I could make, I started to realise that unmodded Beyond the Sword (BtS) isn't anywhere near as planned and polished as I had thought. I use to think that all the mechanics and numbers were a result of careful calculations and thinking and testing, but I learned that many of the features in the game are completely arbitrary and sometimes poorly designed or obviously unfinished. So the scope of my mod has widened dramatically to include pretty much everything that I thought was not as it should be.
 
 I now think of K-Mod as an kind of 'unofficial content & balance patch'. The mod is intended to be played as a replacement for standard BtS. Many of the changes are 'under-the-hood' things that a casual player probably wouldn't notice, but I think the changes will enhance their enjoyment of the game nonetheless.
 
@@ -32,8 +31,8 @@ Here I'll list a few significant features. See changelog.txt for a more complete
  + "unofficial patch" (well known bugfixes)
 
 == Technical improvements ==
- + K-Mod includes many optimisations to the way the game runs. Although many of the calculations in K-Mod are more complex, the game actually runs a lot faster than standard BtS. In many cases, the time spent waiting between turns is _halved_.
- + Special care has been taken to make sure K-Mod works correctly in multiplayer mode. Due to various bug-fixes and back-end changes, K-Mod has fewer OOS problems than standard BtS. (In fact, if you see _any_ OOS errors at all, please tell me about it. I suspect that OOS may have been completely eliminated.)
+ + K-Mod includes many optimisations to the way the game runs. Although many of the calculations in K-Mod are more complex, the game actually runs a lot faster than standard BtS. In many cases, the time spent waiting between turns is halved compared to the unmodded BtS.
+ + Special care has been taken to make sure K-Mod works correctly in multiplayer mode. Due to various bug-fixes and back-end changes, K-Mod has fewer out-of-sync (OOS) problems than standard BtS. (In fact, if you see _any_ OOS errors at all, please tell me about it. I suspect that OOS may have been completely eliminated.)
  + K-Mod includes many bug fixes to the controls and user-interface of the game. For example, units will no longer automatically attack when they are ordered into an unseen enemy unit in the fog-of-war; using the diplomacy screen to suggest peace will now bring up possible peace-trade deal rather than simply ending the war without negotiations; grouping and ungrouping units behaves more predictably; and so on. There are many such minor improvements like these.
 
 == Better AI ==

@@ -1,6 +1,37 @@
-This is K-Mod version 1.41.
+This is K-Mod version 1.42.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.42 changelist
+
+Game
+
++ Human players can now tell their AI allies start war preparations, via the diplomacy screen.
++ Byzantine hippodromes now allow two artists.
++ The free culture which applied to plots in the area of a city is now granted even for cities with zero culture rate.
++ Reduced free city culture from 6 per turn, to 4 per turn.
++ Added some plot culture dependence to CvCity::getLiberationPlayer. (This affects the availability of the option to liberate a city.)
++ Fixed a rare bug in AI_cityTradeVal which could cause a seg-fault.
++ Changed the way AIAutoPlay disables popups, so that it is likely to break other mods.
+
+AI
+
++ The AI will no longer start planning for war in less than 30 turns (scaled by game speed) unless a certain number of cities have been built (based on map size and number of players).
++ Fixed a bug which prevented AI players with few cities from choosing to convert to foreign religions.
++ Taught the AI how to do amphibious attack landings on non-city plots.
++ Changed the AI's evaluation of amphibious attacks to use stack strength estimates rather than just counting the number of units.
++ The AI will now consider amphibious attacks even if some of its cargo cannot attack. (eg. siege units)
++ Fixed a bug which often messed up the AI's evaluation of prerequisite buildings.
++ Made some minor changes the AI's evaluation of resource values. (I intended to change this a lot more, but there were some technical problems.)
++ Made the AI a bit more resistant to human manipulation in limited wars.
++ Fixed a minor bug which prevented the AI from making peace deals with multiple other AI players in the same turn.
++ Fixed a bug which could sometimes cause great spies to get stuck.
+
+UI
+
++ Fixed a bug which caused the danger checks for interrupting actions use the wrong range in most cases.
++ Blocked city governors from considering 'worker_sea' and 'explore_sea' when choosing to build an arbitrary unit. (They'll still build work-boats when needed.)
+
+--
 v1.41 changelist
 
 Game
