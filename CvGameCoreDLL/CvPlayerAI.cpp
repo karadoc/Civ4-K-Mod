@@ -10226,15 +10226,17 @@ int CvPlayerAI::AI_baseBonusVal(BonusTypes eBonus) const
 
 						for (int iJ = 0; iJ < GC.getNUM_UNIT_PREREQ_OR_BONUSES(); iJ++)
 						{
-							if (kLoopUnit.getPrereqOrBonuses(iJ) != NO_BONUS)
+							BonusTypes ePrereqBonus = (BonusTypes)kLoopUnit.getPrereqOrBonuses(iJ);
+
+							if (ePrereqBonus != NO_BONUS)
 							{
 								iOrBonuses++;
-								//iOrBonusesWeHave += (iJ != eBonus && getNumAvailableBonuses((BonusTypes)kLoopUnit.getPrereqOrBonuses(iJ))) ? 1 : 0;
+								//iOrBonusesWeHave += (ePrereqBonus != eBonus && getNumAvailableBonuses(ePrereqBonus)) ? 1 : 0;
 								// @*#!  It occurs to me that using state-dependant stuff such as NumAvailableBonuses here could result in OOS errors.
 								// This is because the code here can be trigged by local UI events, and then the value could be cached...
 								// It's very frustrating - because including the effect from iOrBonusesWeHave was going to be a big improvment.
 								// The only way I can think of working around this is to add a 'bConstCache' argument to this function...
-								bIsOrBonus = bIsOrBonus || iJ == eBonus;
+								bIsOrBonus = bIsOrBonus || ePrereqBonus == eBonus;
 							}
 						}
 						if (bIsOrBonus)
