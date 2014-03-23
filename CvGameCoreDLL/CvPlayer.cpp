@@ -23187,15 +23187,21 @@ void CvPlayer::getCultureLayerColors(std::vector<NiColorA>& aColors, std::vector
 
 		// how many people own this plot?
 		std::vector < std::pair<int,int> > plot_owners;
-		int iNumNonzeroOwners = 0;
+		//int iNumNonzeroOwners = 0;
+		// K-Mod
+		int iTotalCulture = pLoopPlot->countTotalCulture();
+		if (iTotalCulture == 0)
+			continue;
+		// K-Mod end
 		for (int iPlayer = 0; iPlayer < MAX_CIV_PLAYERS; iPlayer++)
 		{
 			if (GET_PLAYER((PlayerTypes)iPlayer).isAlive())
 			{
 				int iCurCultureAmount = pLoopPlot->getCulture((PlayerTypes)iPlayer);
-				if (iCurCultureAmount != 0)
+				//if (iCurCultureAmount != 0)
+				if (iCurCultureAmount * 100 / iTotalCulture >= 20) // K-Mod (to reduce visual spam from small amounts of culture)
 				{
-					iNumNonzeroOwners ++;
+					//iNumNonzeroOwners ++;
 					plot_owners.push_back(std::pair<int,int>(iCurCultureAmount, iPlayer));
 				}
 			}
