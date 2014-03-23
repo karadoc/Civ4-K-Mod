@@ -1,4 +1,4 @@
-This is K-Mod version 1.42.
+This is K-Mod version 1.42b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
 v1.42 changelist
@@ -30,6 +30,10 @@ UI
 
 + Fixed a bug which caused the danger checks for interrupting actions use the wrong range in most cases.
 + Blocked city governors from considering 'worker_sea' and 'explore_sea' when choosing to build an arbitrary unit. (They'll still build work-boats when needed.)
+
+v1.42b
++ Fixed a bug in the AI's evaluation of resource value.
++ Reduced visual clutter in the culture overlay of the zoomed-out world map.
 
 --
 v1.41 changelist
