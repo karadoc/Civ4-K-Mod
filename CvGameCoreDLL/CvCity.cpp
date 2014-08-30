@@ -15421,7 +15421,7 @@ PlayerTypes CvCity::getLiberationPlayer(bool bConquest) const
 
 		if (bConquest)
 		{
-			if (iPlayer == getOriginalOwner())
+			if (ePlayer == getOriginalOwner())
 			{
 				iCultureTimes100 *= 3;
 				iCultureTimes100 /= 2;
