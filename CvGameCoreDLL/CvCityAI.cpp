@@ -2020,18 +2020,20 @@ void CvCityAI::AI_chooseProduction()
 				kPlayer.AI_bestCityUnitAIValue(UNITAI_ATTACK_SEA, this, &eBestAttackSeaUnit);
 				if (eBestAttackSeaUnit != NO_UNIT)
 				{
-					int iDivisor = 2;
-					if (GC.getUnitInfo(eBestAttackSeaUnit).getBombardRate() == 0)
-					{
-						iDivisor = 5;
-					}
-
+					// (tweaked for K-Mod)
 					int iAttackSea = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_ATTACK_SEA);
 					iAttackSea += kPlayer.AI_totalAreaUnitAIs(pAssaultWaterArea, UNITAI_ATTACK_SEA);
+
+					int iDesiredAttackSea = 1 + 4*iTransports / (GC.getUnitInfo(eBestAttackSeaUnit).getBombardRate() == 0 ? 10 : 3);
 						
-					if ((iAttackSea < ((1 + 2 * iTransports) / iDivisor)))
+					if (iAttackSea < iDesiredAttackSea)
 					{
-						if (AI_chooseUnit(UNITAI_ATTACK_SEA, (iUnitSpending < iMaxUnitSpending) ? 50 : 20))
+						int iOdds = 20 + 50 * (iDesiredAttackSea - iAttackSea)/iDesiredAttackSea;
+						if (iUnitSpending > iMaxUnitSpending)
+							iOdds /= 3;
+						// Note: there is a hard limit condition on iUnitSpending earlier in the code.
+
+						if (GC.getGameINLINE().getSorenRandNum(100, "Build AttackSea") < iOdds && AI_chooseUnit(eBestAttackSeaUnit, UNITAI_ATTACK_SEA))
 						{
 							AI_chooseBuilding(BUILDINGFOCUS_DOMAINSEA, 12);
 							return;
@@ -2041,7 +2043,11 @@ void CvCityAI::AI_chooseProduction()
 				
 				if (iUnitsToTransport > iTransportCapacity)
 				{
-					if ((iUnitSpending < iMaxUnitSpending) || (iUnitsToTransport > 2*iTransportCapacity))
+					//if ((iUnitSpending < iMaxUnitSpending) || (iUnitsToTransport > 2*iTransportCapacity))
+					// K-Mod
+					if (iUnitSpending < iMaxUnitSpending ||
+						GC.getGameINLINE().getSorenRandNum(100, "Build Transport") < 100 * (iUnitsToTransport - iTransportCapacity) / std::max(1, iTransportCapacity))
+					// K-Mod end
 					{
 						if (AI_chooseUnit(UNITAI_ASSAULT_SEA))
 						{
@@ -2896,6 +2902,7 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 
 				if (bWarPossible)
 				{
+					// K-Mod note: this is bogus. TODO: change it so that it scales properly with map size.
 					aiUnitAIVal[UNITAI_ATTACK_SEA] += std::min((pWaterArea->getNumTiles() / 150), ((((iCoastalCities * 2) + (iMilitaryWeight / 9)) / ((bAssault) ? 4 : 6)) + ((bPrimaryArea) ? 1 : 0)));
 					aiUnitAIVal[UNITAI_RESERVE_SEA] += std::min((pWaterArea->getNumTiles() / 200), ((((iCoastalCities * 2) + (iMilitaryWeight / 7)) / 5) + ((bPrimaryArea) ? 1 : 0)));
 					aiUnitAIVal[UNITAI_ESCORT_SEA] += (kOwner.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_ASSAULT_SEA) + (kOwner.AI_totalWaterAreaUnitAIs(pWaterArea, UNITAI_CARRIER_SEA) * 2));
