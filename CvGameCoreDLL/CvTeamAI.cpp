@@ -3281,7 +3281,7 @@ bool CvTeamAI::AI_acceptSurrender( TeamTypes eSurrenderTeam ) const
 				// K-Mod. Note. my new functions are not quite the same as the old.
 				// a) this will not count vassals in "our power". b) it will only count forces that can been seen by the player calling the function.
 				const CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
-				int iOwnerPower = kLoopPlayer.AI_localDefenceStrength(pLoopCity->plot(), kLoopPlayer.getTeam(), DOMAIN_LAND, 2);
+				int iOwnerPower = kLoopPlayer.AI_localDefenceStrength(pLoopCity->plot(), kLoopPlayer.getTeam(), DOMAIN_LAND, 2, true, false, true);
 				int iOurPower = GET_PLAYER(getLeaderID()).AI_localAttackStrength(pLoopCity->plot(), getID());
 				int iOtherPower = kLoopPlayer.AI_localAttackStrength(pLoopCity->plot(), NO_TEAM) - iOurPower;
 				// K-Mod end

@@ -1676,7 +1676,7 @@ int pathCost(FAStarNode* parent, FAStarNode* node, int data, const void* pointer
 
 		if (pToPlot->isVisible(eTeam, false))
 		{
-			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM);
+			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType(), 0, true, false, pSelectionGroup->isHuman());
 		}
 		else
 		{
@@ -1955,7 +1955,7 @@ int pathValid_source(FAStarNode* parent, CvSelectionGroup* pSelectionGroup, int 
 		int iEnemyDefence;
 		if (pFromPlot->isVisible(pSelectionGroup->getHeadTeam(), false))
 		{
-			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType());
+			iEnemyDefence = GET_PLAYER(pSelectionGroup->getOwnerINLINE()).AI_localDefenceStrength(pToPlot, NO_TEAM, pSelectionGroup->getDomainType(), 0, true, false, pSelectionGroup->isHuman());
 		}
 		else
 		{
