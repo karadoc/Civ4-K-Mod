@@ -5697,10 +5697,10 @@ bool CvUnitAI::AI_greatPersonMove()
 		GP_TRADE
 	};
 	std::vector<std::pair<int, int> > missions;
-	missions.push_back(std::make_pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
-	missions.push_back(std::make_pair<int, int>(iTradeValue, GP_TRADE));
-	missions.push_back(std::make_pair<int, int>(iSlowValue, GP_SLOW));
-	missions.push_back(std::make_pair<int, int>(iDiscoverValue, GP_DISCOVER));
+	missions.push_back(std::pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
+	missions.push_back(std::pair<int, int>(iTradeValue, GP_TRADE));
+	missions.push_back(std::pair<int, int>(iSlowValue, GP_SLOW));
+	missions.push_back(std::pair<int, int>(iDiscoverValue, GP_DISCOVER));
 
 	std::sort(missions.begin(), missions.end(), std::greater<std::pair<int, int> >());
 	std::vector<std::pair<int, int> >::iterator it;
