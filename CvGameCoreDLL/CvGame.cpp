@@ -8044,10 +8044,8 @@ int CvGame::calculateSyncChecksum()
 {
 	PROFILE_FUNC();
 
-	CvUnit* pLoopUnit;
 	int iMultiplier;
 	int iValue;
-	int iLoop;
 	int iI, iJ;
 
 	iValue = 0;
@@ -8068,7 +8066,8 @@ int CvGame::calculateSyncChecksum()
 		{
 			iMultiplier = getPlayerScore((PlayerTypes)iI);
 
-			switch (getTurnSlice() % 4)
+			//switch (getTurnSlice() % 4)
+			switch (getTurnSlice() % 8) // K-Mod
 			{
 			case 0:
 				iMultiplier += (GET_PLAYER((PlayerTypes)iI).getTotalPopulation() * 543271);
@@ -8123,6 +8122,10 @@ int CvGame::calculateSyncChecksum()
 				break;
 
 			case 3:
+			{
+				CvUnit* pLoopUnit;
+				int iLoop;
+
 				for (pLoopUnit = GET_PLAYER((PlayerTypes)iI).firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = GET_PLAYER((PlayerTypes)iI).nextUnit(&iLoop))
 				{
 					iMultiplier += (pLoopUnit->getX_INLINE() * 876543);
@@ -8133,6 +8136,83 @@ int CvGame::calculateSyncChecksum()
 				}
 				break;
 			}
+			// K-Mod - new checks.
+			case 4:
+				// attitude cache
+				for (iJ = 0; iJ < MAX_PLAYERS; iJ++)
+				{
+					iMultiplier += GET_PLAYER((PlayerTypes)iI).AI_getAttitudeVal((PlayerTypes)iJ, false) << iJ;
+				}
+				// strategy hash
+				//iMultiplier += GET_PLAYER((PlayerTypes)iI).AI_getStrategyHash() * 367291;
+				break;
+			case 5:
+			{
+				// city religions and corporations
+				CvCity* pLoopCity;
+				int iLoop;
+
+				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+				{
+					for (iJ = 0; iJ < GC.getNumReligionInfos(); iJ++)
+					{
+						if (pLoopCity->isHasReligion((ReligionTypes)iJ))
+							iMultiplier += pLoopCity->getID() * (iJ+1);
+					}
+					for (iJ = 0; iJ < GC.getNumCorporationInfos(); iJ++)
+					{
+						if (pLoopCity->isHasCorporation((CorporationTypes)iJ))
+							iMultiplier += (pLoopCity->getID()+1) * (iJ+1);
+					}
+				}
+				break;
+			}
+			case 6:
+			{
+				// city production
+				/* CvCity* pLoopCity;
+				int iLoop;
+
+				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+				{
+					CLLNode<OrderData>* pOrderNode = pLoopCity->headOrderQueueNode();
+					if (pOrderNode != NULL)
+					{
+						iMultiplier += pLoopCity->getID()*(pOrderNode->m_data.eOrderType+2*pOrderNode->m_data.iData1+3*pOrderNode->m_data.iData2+6);
+					}
+				}
+				break; */
+				// city health and happiness
+				CvCity* pLoopCity;
+				int iLoop;
+
+				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+				{
+					iMultiplier += pLoopCity->goodHealth() * 876543;
+					iMultiplier += pLoopCity->badHealth() * 985310;
+					iMultiplier += pLoopCity->happyLevel() * 736373;
+					iMultiplier += pLoopCity->unhappyLevel() * 820622;
+					iMultiplier += pLoopCity->getFood() * 367291;
+				}
+				break;
+			}
+			case 7:
+			{
+				// city event history
+				CvCity* pLoopCity;
+				int iLoop;
+
+				for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
+				{
+					for (iJ = 0; iJ < GC.getNumEventInfos(); iJ++)
+					{
+						iMultiplier += (iJ+1)*pLoopCity->isEventOccured((EventTypes)iJ);
+					}
+				}
+				break;
+			}
+			// K-Mod end
+			} // end TimeSlice switch
 
 			if (iMultiplier != 0)
 			{

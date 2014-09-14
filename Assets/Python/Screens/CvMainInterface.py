@@ -5164,7 +5164,7 @@ class CvMainInterface:
 													scores.setNetStats(szTempBuffer)
 											
 											if (gc.getPlayer(ePlayer).isHuman() and CyInterface().isOOSVisible()):
-												szTempBuffer = u" <color=255,0,0>* %s *</color>" %(CyGameTextMgr().getOOSSeeds(ePlayer))
+												szTempBuffer = u" <color=255,0,0>* %s *</color> (%d)" %(CyGameTextMgr().getOOSSeeds(ePlayer), CyGame().getTurnSlice()%8) # K-Mod, added TurnSlice
 												szBuffer = szBuffer + szTempBuffer
 												if (bAlignIcons):
 													scores.setNetStats(szTempBuffer)
