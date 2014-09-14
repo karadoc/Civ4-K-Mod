@@ -3082,18 +3082,11 @@ UnitTypes CvCityAI::AI_bestUnit(bool bAsync, AdvisorTypes eIgnoreAdvisor, UnitAI
 	return eBestUnit;
 }
 
-
+// Choose the best unit to build for the given AI type.
+// Note: a lot of this function has been restructured / rewritten for K-Mod
 UnitTypes CvCityAI::AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync, AdvisorTypes eIgnoreAdvisor)
 {
-	UnitTypes eLoopUnit;
-	UnitTypes eBestUnit;
-	int iValue;
-	int iBestValue;
-	int iOriginalValue;
-	int iBestOriginalValue;
-	int iI, iJ, iK;
-	
-
+	PROFILE_FUNC();
 	FAssertMsg(eUnitAI != NO_UNITAI, "UnitAI is not assigned a valid value");
 
 	bool bGrowMore = false;
@@ -3134,193 +3127,230 @@ UnitTypes CvCityAI::AI_bestUnitAI(UnitAITypes eUnitAI, bool bAsync, AdvisorTypes
 		}
 		// K-Mod end
 	}
-	iBestOriginalValue = 0;
 
-	for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+
+	std::vector<std::pair<int, UnitTypes> > candidates;
+	int iBestBaseValue = 0;
+
+	for (int i = 0; i < GC.getNumUnitClassInfos(); i++)
 	{
-		eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
+		UnitTypes eLoopUnit = (UnitTypes)GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(i);
 
-		if (eLoopUnit != NO_UNIT)
+		if (eLoopUnit == NO_UNIT)
+			continue;
+
+		if (eIgnoreAdvisor != NO_ADVISOR && GC.getUnitInfo(eLoopUnit).getAdvisorType() == eIgnoreAdvisor)
+			continue;
+
+		if (bGrowMore && isFoodProduction(eLoopUnit))
+			continue;
+
+		if (!canTrain(eLoopUnit))
+			continue;
+
+		int iValue = GET_PLAYER(getOwnerINLINE()).AI_unitValue(eLoopUnit, eUnitAI, area());
+		if (iValue > 0)
 		{
-			if ((eIgnoreAdvisor == NO_ADVISOR) || (GC.getUnitInfo(eLoopUnit).getAdvisorType() != eIgnoreAdvisor))
-			{
-				//if (!isHuman() || (GC.getUnitInfo(eLoopUnit).getDefaultUnitAIType() == eUnitAI)) // disabled by K-Mod
-				{
-					if (!(bGrowMore && isFoodProduction(eLoopUnit)))
-					{
-						if (canTrain(eLoopUnit))
-						{
-							iOriginalValue = GET_PLAYER(getOwnerINLINE()).AI_unitValue(eLoopUnit, eUnitAI, area());
-
-							if (iOriginalValue > iBestOriginalValue)
-							{
-								iBestOriginalValue = iOriginalValue;
-							}
-						}
-					}
-				}
-			}
+			candidates.push_back(std::make_pair(iValue, eLoopUnit));
+			if (iValue > iBestBaseValue)
+				iBestBaseValue = iValue;
 		}
 	}
 
-	iBestValue = 0;
-	eBestUnit = NO_UNIT;
+	int iBestValue = 0;
+	UnitTypes eBestUnit = NO_UNIT;
 
-	for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+	for (size_t i = 0; i < candidates.size(); i++)
 	{
-		eLoopUnit = ((UnitTypes)(GC.getCivilizationInfo(getCivilizationType()).getCivilizationUnits(iI)));
+		UnitTypes eLoopUnit = candidates[i].second;
+		int iValue = candidates[i].first;
 
-		if (eLoopUnit != NO_UNIT)
-		{
-			if ((eIgnoreAdvisor == NO_ADVISOR) || (GC.getUnitInfo(eLoopUnit).getAdvisorType() != eIgnoreAdvisor))
+		if (iValue < iBestBaseValue*2/3 || (eUnitAI == UNITAI_EXPLORE && iValue < iBestBaseValue))
+			continue;
+
+		const CvUnitInfo& kUnitInfo = GC.getUnitInfo(eLoopUnit);
+
+		iValue *= (getProductionExperience(eLoopUnit) + 10);
+		iValue /= 10;
+
+		// Take into account free promotions, and avaiable promotions that suit the AI type.
+		// Note: it might be better if this was in AI_unitValue rather than here, but the
+		// advantage of doing it here is that we can check city promotions at the same time.
+        int iPromotionValue = 0;
+		bool bHasGoodPromotion = false; // check that appropriate non-free promotions are available
+        for (PromotionTypes p = (PromotionTypes)0; p < GC.getNumPromotionInfos(); p=(PromotionTypes)(p+1))
+        {
+			bool bFree = kUnitInfo.getFreePromotions(p);
+			const CvPromotionInfo& kPromotionInfo = GC.getPromotionInfo(p);
+
+            if (!bFree && isFreePromotion(p))
 			{
-				//if (!isHuman() || (GC.getUnitInfo(eLoopUnit).getDefaultUnitAIType() == eUnitAI)) // disabled by K-Mod
+				if (kUnitInfo.getUnitCombatType() != NO_UNITCOMBAT && kPromotionInfo.getUnitCombat(kUnitInfo.getUnitCombatType()))
+                {
+					bFree = true;
+                }
+            }
+
+			if (!bFree)
+			{
+				for (TraitTypes t = (TraitTypes)0; t < GC.getNumTraitInfos(); t=(TraitTypes)(t+1))
 				{
-					if (!(bGrowMore && isFoodProduction(eLoopUnit)))
+					if (hasTrait(t) && GC.getTraitInfo(t).isFreePromotion(p))
 					{
-						if (canTrain(eLoopUnit))
+						if (kUnitInfo.getUnitCombatType() != NO_UNITCOMBAT && GC.getTraitInfo(t).isFreePromotionUnitCombat(kUnitInfo.getUnitCombatType()))
 						{
-							iValue = GET_PLAYER(getOwnerINLINE()).AI_unitValue(eLoopUnit, eUnitAI, area());
-
-							if ((iValue > ((iBestOriginalValue * 2) / 3)) && ((eUnitAI != UNITAI_EXPLORE) || (iValue >= iBestOriginalValue)))
-							{
-								iValue *= (getProductionExperience(eLoopUnit) + 10);
-								iValue /= 10;
-
-                                //free promotions. slow?
-                                //only 1 promotion per source is counted (ie protective isn't counted twice)
-                                int iPromotionValue = 0;
-                                //buildings
-                                for (iJ = 0; iJ < GC.getNumPromotionInfos(); iJ++)
-                                {
-                                    if (isFreePromotion((PromotionTypes)iJ) && !GC.getUnitInfo(eLoopUnit).getFreePromotions((PromotionTypes)iJ))
-                                    {
-                                        if ((GC.getUnitInfo(eLoopUnit).getUnitCombatType() != NO_UNITCOMBAT) && GC.getPromotionInfo((PromotionTypes)iJ).getUnitCombat(GC.getUnitInfo(eLoopUnit).getUnitCombatType()))
-                                        {
-                                            iPromotionValue += 15;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                //special to the unit
-                                for (iJ = 0; iJ < GC.getNumPromotionInfos(); iJ++)
-                                {
-                                    if (GC.getUnitInfo(eLoopUnit).getFreePromotions(iJ))
-                                    {
-                                        iPromotionValue += 15;
-                                        break;
-                                    }
-                                }
-
-                                //traits
-                                for (iJ = 0; iJ < GC.getNumTraitInfos(); iJ++)
-                                {
-                                    if (hasTrait((TraitTypes)iJ))
-                                    {
-                                        for (iK = 0; iK < GC.getNumPromotionInfos(); iK++)
-                                        {
-                                            if (GC.getTraitInfo((TraitTypes) iJ).isFreePromotion(iK))
-                                            {
-                                                if ((GC.getUnitInfo(eLoopUnit).getUnitCombatType() != NO_UNITCOMBAT) && GC.getTraitInfo((TraitTypes) iJ).isFreePromotionUnitCombat(GC.getUnitInfo(eLoopUnit).getUnitCombatType()))
-                                                {
-                                                    iPromotionValue += 15;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                iValue *= (iPromotionValue + 100);
-                                iValue /= 100;
-
-								if (bAsync)
-								{
-									iValue *= (GC.getASyncRand().get(50, "AI Best Unit ASYNC") + 100);
-									iValue /= 100;
-								}
-								else
-								{
-									iValue *= (GC.getGameINLINE().getSorenRandNum(50, "AI Best Unit") + 100);
-									iValue /= 100;
-								}
-
-
-								int iBestHappy = 0;
-								for (int iHurry = 0; iHurry < GC.getNumHurryInfos(); ++iHurry)
-								{
-									if (canHurryUnit((HurryTypes)iHurry, eLoopUnit, true))
-									{
-										int iHappy = AI_getHappyFromHurry((HurryTypes)iHurry, eLoopUnit, true);
-										if (iHappy > iBestHappy)
-										{
-											iBestHappy = iHappy;
-										}
-									}
-								}
-
-								if (0 == iBestHappy)
-								{
-									iValue += getUnitProduction(eLoopUnit);
-								}
-
-								/* original bts code
-								iValue *= (GET_PLAYER(getOwnerINLINE()).getNumCities() * 2);
-								iValue /= (GET_PLAYER(getOwnerINLINE()).getUnitClassCountPlusMaking((UnitClassTypes)iI) + GET_PLAYER(getOwnerINLINE()).getNumCities() + 1); */
-								// K-Mod
-								{
-									int iUnits = GET_PLAYER(getOwnerINLINE()).getUnitClassCountPlusMaking((UnitClassTypes)iI);
-									int iCities = GET_PLAYER(getOwnerINLINE()).getNumCities();
-
-									iValue *= 6 + iUnits + 4*iCities;
-									iValue /= 3 + 3*iUnits + 2*iCities;
-									// this is a factor between 1/3 and 2. It's equal to 1 roughly when iUnits == iCities.
-								}
-								// K-Mod end
-
-								FAssert((MAX_INT / 1000) > iValue);
-								iValue *= 1000;
-						
-								bool bIsSuicide = GC.getUnitInfo(eLoopUnit).isSuicide();
-								
-								if (bIsSuicide)
-								{
-									//much of this is compensated
-									iValue /= 3;
-								}
-
-								if (0 == iBestHappy)
-								{
-									//iValue /= std::max(1, (getProductionTurnsLeft(eLoopUnit, 0) + (GC.getUnitInfo(eLoopUnit).isSuicide() ? 1 : 4)));
-									// K-Mod. The number of turns is usually not so important. What's important is how much it is going to cost us to build this unit.
-									int iProductionNeeded = getProductionNeeded(eLoopUnit);
-									int iProductionModifier = getBaseYieldRateModifier(YIELD_PRODUCTION, getProductionModifier(eLoopUnit));
-									FAssert(iProductionNeeded > 0 && iProductionModifier > 0);
-
-									iValue *= iProductionModifier;
-									iValue /= iProductionNeeded + getBaseYieldRate(YIELD_PRODUCTION)*iProductionModifier/100; // a bit of dilution.
-									// maybe we should have a special bonus for building it in 1 turn?  ... maybe not.
-									// K-Mod end
-								}
-								else
-								{
-									iValue *= (2 + 3 * iBestHappy);
-									iValue /= 100;
-								}
-
-								iValue = std::max(1, iValue);
-
-								if (iValue > iBestValue)
-								{
-									iBestValue = iValue;
-									eBestUnit = eLoopUnit;
-								}
-							}
+							bFree = true;
 						}
 					}
 				}
 			}
+
+			// For simplicity, I'll assume that each promotion only gives one type of bonus.
+			// (eg. if the promotion gives + city defence, assume that it's a defensive promotion)
+			// This may not be true in general, but I think it's a good enough approximation.
+			if (!bHasGoodPromotion)
+			{
+				if (eUnitAI == UNITAI_ATTACK_CITY)
+				{
+					if (kPromotionInfo.getCityAttackPercent() > 0)
+					{
+						if (bFree || ::isPromotionValid(p, eLoopUnit, false))
+						{
+							bHasGoodPromotion = true;
+							iPromotionValue += 15;
+						}
+					}
+				}
+				else if (eUnitAI == UNITAI_CITY_DEFENSE)
+				{
+					if (kPromotionInfo.getCityDefensePercent() > 0)
+					{
+						if (bFree || ::isPromotionValid(p, eLoopUnit, false))
+						{
+							bHasGoodPromotion = true;
+							iPromotionValue += 12;
+						}
+					}
+				}
+			}
+
+			if (bFree)
+			{
+				// Note: in the original bts code, all free promotions were worth 15 points.
+				if (kPromotionInfo.getCityAttackPercent() > 0)
+				{
+					if (eUnitAI == UNITAI_CITY_DEFENSE)
+						iPromotionValue += 4;
+					else if (eUnitAI == UNITAI_ATTACK || eUnitAI == UNITAI_ATTACK_CITY)
+						iPromotionValue += 20;
+					else
+						iPromotionValue += 8;
+				}
+				else if (kPromotionInfo.isAmphib())
+				{
+					if (eUnitAI == UNITAI_CITY_DEFENSE)
+					{
+						iPromotionValue += 4;
+					}
+					else if (eUnitAI == UNITAI_ATTACK || eUnitAI == UNITAI_ATTACK_CITY)
+					{
+						AreaAITypes eAreaAI = area()->getAreaAIType(getTeam());
+						if (eAreaAI == AREAAI_ASSAULT_MASSING)
+							iPromotionValue += 35;
+						else if (eAreaAI == AREAAI_ASSAULT || eAreaAI == AREAAI_ASSAULT_ASSIST)
+							iPromotionValue += 20;
+						else
+							iPromotionValue += 12;
+					}
+					else
+					{
+						iPromotionValue += 8;
+					}
+				}
+				else if (kPromotionInfo.getCityDefensePercent() > 0)
+				{
+					if (eUnitAI == UNITAI_CITY_DEFENSE)
+						iPromotionValue += 15;
+					else if (eUnitAI == UNITAI_ATTACK || eUnitAI == UNITAI_ATTACK_CITY)
+						iPromotionValue += 4;
+					else
+						iPromotionValue += 8;
+				}
+				else if (kPromotionInfo.getSameTileHealChange())
+				{
+					if (eUnitAI == UNITAI_ATTACK_CITY)
+						iPromotionValue += 4;
+					else
+						iPromotionValue += 12;
+				}
+				else if (kPromotionInfo.getCombatPercent() > 0)
+					iPromotionValue += 15;
+				else
+					iPromotionValue += 12; // generic
+			}
+		}
+
+
+		iValue *= (iPromotionValue + 100);
+		iValue /= 100;
+
+		if (bAsync)
+		{
+			iValue *= (GC.getASyncRand().get(50, "AI Best Unit ASYNC") + 100);
+			iValue /= 100;
+		}
+		else
+		{
+			iValue *= (GC.getGameINLINE().getSorenRandNum(50, "AI Best Unit") + 100);
+			iValue /= 100;
+		}
+
+
+		// K-Mod note: I've removed the happy-from-hurry calculation, because it was inaccurate and difficult to fix.
+		// (int iBestHappy = 0; ...)
+
+		/* original bts code
+		iValue *= (GET_PLAYER(getOwnerINLINE()).getNumCities() * 2);
+		iValue /= (GET_PLAYER(getOwnerINLINE()).getUnitClassCountPlusMaking((UnitClassTypes)iI) + GET_PLAYER(getOwnerINLINE()).getNumCities() + 1); */
+		// K-Mod
+		{
+			int iUnits = GET_PLAYER(getOwnerINLINE()).getUnitClassCountPlusMaking((UnitClassTypes)kUnitInfo.getUnitClassType());
+			int iCities = GET_PLAYER(getOwnerINLINE()).getNumCities();
+
+			iValue *= 6 + iUnits + 4*iCities;
+			iValue /= 3 + 3*iUnits + 2*iCities;
+			// this is a factor between 1/3 and 2. It's equal to 1 roughly when iUnits == iCities.
+		}
+		// K-Mod end
+
+		FAssert((MAX_INT / 1000) > iValue);
+		iValue *= 1000;
+
+		bool bIsSuicide = GC.getUnitInfo(eLoopUnit).isSuicide();
+
+		if (bIsSuicide)
+		{
+			//much of this is compensated
+			iValue /= 3;
+		}
+
+		//iValue /= std::max(1, (getProductionTurnsLeft(eLoopUnit, 0) + (GC.getUnitInfo(eLoopUnit).isSuicide() ? 1 : 4)));
+		// K-Mod. The number of turns is usually not so important. What's important is how much it is going to cost us to build this unit.
+		int iProductionNeeded = getProductionNeeded(eLoopUnit) - getUnitProduction(eLoopUnit);
+		int iProductionModifier = getBaseYieldRateModifier(YIELD_PRODUCTION, getProductionModifier(eLoopUnit));
+		FAssert(iProductionNeeded > 0 && iProductionModifier > 0);
+
+		iValue *= iProductionModifier;
+		iValue /= iProductionNeeded + getBaseYieldRate(YIELD_PRODUCTION)*iProductionModifier/100; // a bit of dilution.
+		// maybe we should have a special bonus for building it in 1 turn?  ... maybe not.
+		// K-Mod end
+
+		iValue = std::max(1, iValue);
+
+		if (iValue > iBestValue)
+		{
+			iBestValue = iValue;
+			eBestUnit = eLoopUnit;
 		}
 	}
 
