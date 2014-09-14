@@ -11188,7 +11188,7 @@ int CvPlayerAI::AI_unitImpassableCount(UnitTypes eUnit) const
 	return iCount;
 }
 
-
+// K-Mod note: currently, unit promotions are considered in CvCityAI::AI_bestUnitAI rather than here.
 int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea) const
 {
 	PROFILE_FUNC();
@@ -11381,7 +11381,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			{
 				if (!(GC.getUnitInfo(eUnit).isNoDefensiveBonus()))
 				{
-					if (GC.getUnitInfo(eUnit).getCityDefenseModifier() > 0)
+					if (GC.getUnitInfo(eUnit).getCityDefenseModifier() > 0) // (K-Mod note: I'm considering removing this condition)
 					{
 						bValid = true;
 					}
@@ -11661,8 +11661,6 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 
 	iValue += GC.getUnitInfo(eUnit).getAIWeight();
 	
-	int iFastMoverMultiplier;
-
 	switch (eUnitAI)
 	{
 	case UNITAI_UNKNOWN:
@@ -11685,23 +11683,28 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		break;
 
 	case UNITAI_ATTACK:
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      06/12/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
-		iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 3 : 1;
 		
 		iValue += iCombatValue;
-		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 5); // K-Mod put in -1, and changed from /3 to /5
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
+
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 100);
 		if (GC.getUnitInfo(eUnit).getCombatLimit() < 100)
 		{
 			iValue -= (iCombatValue * (125 - GC.getUnitInfo(eUnit).getCombatLimit())) / 100;
 		}
+
+		// K-Mod
+		if (GC.getUnitInfo(eUnit).getMoves() > 1)
+		{
+			// (the bts / bbai bonus was too high)
+			int iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 3 : 1;
+			iValue += iCombatValue * iFastMoverMultiplier * GC.getUnitInfo(eUnit).getMoves() / 8;
+		}
+
+		if (GC.getUnitInfo(eUnit).isNoCapture())
+		{
+			iValue -= iCombatValue * 30 / 100;
+		}
+		// K-Mod end
 		
 		break;
 
@@ -11709,16 +11712,13 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 	{
 		PROFILE("AI_unitValue, UNITAI_ATTACK_CITY evaluation");
 		// Effect army composition to have more collateral/bombard units
-		iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 4 : 1;
 		
 		iTempValue = ((iCombatValue * iCombatValue) / 75) + (iCombatValue / 2);
 		iValue += iTempValue;
 		if (GC.getUnitInfo(eUnit).isNoDefensiveBonus())
 		{
-			iValue -= iTempValue / 2;
-			//iValue -= iTempValue / 4; // K-Mod. (I'd say knights, tanks, etc. are very good for city attack...)
-			// K-Mod note: I've reverted this back to the original code. Ideally, I'd use the reduced penalty, but
-			// also take into account which promotions are available to the unit. Eg. knights cannot get city raider.
+			//iValue -= iTempValue / 2;
+			iValue -= iTempValue / 3; // K-Mod
 		}
 		if (GC.getUnitInfo(eUnit).getDropRange() > 0)
 		{
@@ -11731,8 +11731,16 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		}
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCityAttackModifier()) / 75); // bbai (was 100).
 		// iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 400); // (moved)
-		iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getMoves()-1) * iFastMoverMultiplier) / 6); // K-Mod put in -1, and changed /4 to /6
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 150); // K-Mod (was 100)
+		// iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves() * iFastMoverMultiplier) / 4);
+		// K-Mod
+		if (GC.getUnitInfo(eUnit).getMoves() > 1)
+		{
+			int iFastMoverMultiplier = AI_isDoStrategy(AI_STRATEGY_FASTMOVERS) ? 4 : 1;
+			iValue += iCombatValue * iFastMoverMultiplier * GC.getUnitInfo(eUnit).getMoves() / 10;
+		}
+		// K-Mod end
+
 
 		/* if (!AI_isDoStrategy(AI_STRATEGY_AIR_BLITZ))
 		{
@@ -11851,13 +11859,6 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 	case UNITAI_RESERVE:
 		iValue += iCombatValue;
 		// iValue -= ((iCombatValue * GC.getUnitInfo(eUnit).getCollateralDamage()) / 200); // disabled by K-Mod (collateral damage is never 'bad')
-		iValue -= (GC.getUnitInfo(eUnit).isNoDefensiveBonus() ? iCombatValue / 4 : 0); // K-Mod
-		// K-Mod. Add some value for flanking attacks.
-		for (UnitClassTypes i = (UnitClassTypes)0; i < GC.getNumUnitClassInfos(); i=(UnitClassTypes)(i+1))
-		{
-			iValue += iCombatValue * GC.getUnitInfo(eUnit).getFlankingStrikeUnitClass(i) * AI_getUnitClassWeight(i) / 20000; // (this is pretty small)
-		}
-		// K-Mod end
 		for (iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
 		{
 //			int iCombatModifier = GC.getUnitInfo(eUnit).getUnitCombatModifier(iI);
@@ -11865,7 +11866,20 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 //			iValue += ((iCombatValue * iCombatModifier) / 100);
 			iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getUnitCombatModifier(iI) * AI_getUnitCombatWeight((UnitCombatTypes)iI)) / 12000);
 		}
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves()) / 2);
+		//iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves()) / 2);
+		// K-Mod
+		if (GC.getUnitInfo(eUnit).getMoves() > 1)
+		{
+			iValue += iCombatValue * GC.getUnitInfo(eUnit).getMoves() / (GC.getUnitInfo(eUnit).isNoDefensiveBonus() ? 7 : 5);
+		}
+
+		iValue -= (GC.getUnitInfo(eUnit).isNoDefensiveBonus() ? iCombatValue / 4 : 0);
+
+		for (UnitClassTypes i = (UnitClassTypes)0; i < GC.getNumUnitClassInfos(); i=(UnitClassTypes)(i+1))
+		{
+			iValue += iCombatValue * GC.getUnitInfo(eUnit).getFlankingStrikeUnitClass(i) * AI_getUnitClassWeight(i) / 20000; // (this is pretty small)
+		}
+		// K-Mod end
 		break;
 
 	case UNITAI_COUNTER:
@@ -11898,7 +11912,14 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			}
 		}
 
-		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves()) / 2);
+		//iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getMoves()) / 2);
+		// K-Mod
+		if (GC.getUnitInfo(eUnit).getMoves() > 1)
+		{
+			iValue += iCombatValue * GC.getUnitInfo(eUnit).getMoves() / 6;
+		}
+		// K-Mod end
+
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getWithdrawalProbability()) / 100);
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                      03/20/10                                jdog5000      */
@@ -11923,7 +11944,16 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 	case UNITAI_CITY_DEFENSE:
 		iValue += ((iCombatValue * 2) / 3);
 		iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getCityDefenseModifier()) / 75);
-		// K-Mod todo: iValue += GC.getUnitInfo(eUnit).getUnitCombatCollateralImmune ...  (maybe later)
+		// K-Mod. Value for collateral immunity
+		for (iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
+		{
+			if (GC.getUnitInfo(eUnit).getUnitCombatCollateralImmune(iI))
+			{
+				iValue += iCombatValue*30/100;
+				break;
+			}
+		}
+		// K-Mod end
 		break;
 
 	case UNITAI_CITY_COUNTER:
