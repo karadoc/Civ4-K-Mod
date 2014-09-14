@@ -246,14 +246,16 @@ void CvCityAI::AI_assignWorkingPlots()
 	} */ // K-Mod. that option would break a bunch of stuff.
 
 	// remove all assigned plots if we automated
-	/* original bts code
 	if (!isHuman() || isCitizensAutomated())
 	{
 		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
 		{
 			setWorkingPlot(iI, false);
 		}
-	} */ // Disabled by K-Mod (experimental change, for speed)
+	}
+	// K-Mod note: ideally we wouldn't need to remove assigned citizens; and it would be faster not to.
+	// But unfortunately the current citizen juggling method still doesn't produce as good results as
+	// doing a complete reassign.
 
 	//update the special yield multiplier to be current
 	AI_updateSpecialYieldMultiplier();
