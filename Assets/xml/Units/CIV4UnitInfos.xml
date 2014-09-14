@@ -16238,6 +16238,10 @@
 					<UnitAIType>UNITAI_CITY_SPECIAL</UnitAIType>
 					<bUnitAI>1</bUnitAI>
 				</UnitAI>
+				<UnitAI>
+					<UnitAIType>UNITAI_CITY_DEFENSE</UnitAIType>
+					<bUnitAI>1</bUnitAI>
+				</UnitAI>
 			</UnitAIs>
 			<NotUnitAIs/>
 			<Builds/>
