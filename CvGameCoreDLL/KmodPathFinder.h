@@ -2,7 +2,7 @@
 
 #include <hash_map>
 #include <boost/shared_ptr.hpp>
-#include <list>
+#include <vector>
 
 struct CvPathSettings
 {
@@ -24,7 +24,7 @@ public:
 
 	bool GeneratePath(int x1, int y1, int x2, int y2);
 	bool GeneratePath(const CvPlot* pToPlot); // just a wrapper for convenience
-	FAStarNode* GetEndNode() const { FAssert(end_node); return end_node.get(); }
+	FAStarNode* GetEndNode() const { FAssert(end_node); return end_node.get(); } // Note: the returned pointer becomes invalid if the pathfinder is destroyed.
 	int GetPathTurns() const;
 	CvPlot* GetPathFirstPlot() const;
 	void SetSettings(const CvPathSettings& new_settings);
@@ -37,7 +37,7 @@ protected:
 	bool ProcessNode();
 	void ForwardPropagate(FAStarNode* head, int cost_delta);
 	typedef stdext::hash_map<int, boost::shared_ptr<FAStarNode> > NodeMap_t;
-	typedef std::list<boost::shared_ptr<FAStarNode> > OpenList_t;
+	typedef std::vector<boost::shared_ptr<FAStarNode> > OpenList_t;
 
 	struct OpenList_sortPred
 	{
