@@ -2259,11 +2259,11 @@ void CvUnit::doCommand(CommandTypes eCommand, int iData1, int iData2)
 	getGroup()->doDelayedDeath();
 }
 
-
-FAStarNode* CvUnit::getPathLastNode() const
+// Disabled by K-Mod. (This function is deprecated.)
+/* FAStarNode* CvUnit::getPathLastNode() const
 {
 	return getGroup()->getPathLastNode();
-}
+} */
 
 
 CvPlot* CvUnit::getPathEndTurnPlot() const
@@ -2277,6 +2277,12 @@ bool CvUnit::generatePath(const CvPlot* pToPlot, int iFlags, bool bReuse, int* p
 	return getGroup()->generatePath(plot(), pToPlot, iFlags, bReuse, piPathTurns, iMaxPath);
 }
 
+// K-Mod. Return the standard pathfinder, for extracting path information.
+KmodPathFinder& CvUnit::getPathFinder() const
+{
+	return CvSelectionGroup::path_finder;
+}
+// K-Mod end
 
 bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage) const
 {

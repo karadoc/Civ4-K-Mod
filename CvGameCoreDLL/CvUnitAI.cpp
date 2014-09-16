@@ -988,8 +988,7 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 									// K-Mod. basically the same thing, but using pathFinder.
 									if (pathFinder.GeneratePath(pLoopPlot))
 									{
-										FAStarNode* pEndNode = pathFinder.GetEndNode();
-										int iPathTurns = pEndNode->m_iData2 + (pEndNode->m_iData1 == 0 ? 1 : 0);
+										int iPathTurns = pathFinder.GetPathTurns() + (pathFinder.GetFinalMoves() == 0 ? 1 : 0);
 										int iMaxWorkers = iPathTurns > 1 ? 1 : AI_calculatePlotWorkersNeeded(pLoopPlot, eBuild);
 										if (pUnit && pUnit->plot()->isCity() && iPathTurns == 1)
 											iMaxWorkers += 10;
@@ -1043,8 +1042,7 @@ bool CvUnitAI::AI_bestCityBuild(CvCity* pCity, CvPlot** ppBestPlot, BuildTypes* 
 				// K-Mod. basically the same thing, but using pathFinder.
 				if (pathFinder.GeneratePath(pBestPlot))
 				{
-					FAStarNode* pEndNode = pathFinder.GetEndNode();
-					int iPathTurns = pEndNode->m_iData2 + (pEndNode->m_iData1 == 0 ? 1 : 0);
+					int iPathTurns = pathFinder.GetPathTurns() + (pathFinder.GetFinalMoves() == 0 ? 1 : 0);
 					int iMaxWorkers = iPathTurns > 1 ? 1 : AI_calculatePlotWorkersNeeded(pBestPlot, eBestBuild);
 					if (pUnit && pUnit->plot()->isCity() && iPathTurns == 1)
 						iMaxWorkers += 10;
@@ -1278,7 +1276,7 @@ bool CvUnitAI::AI_considerDOW(CvPlot* pPlot)
 			{
 				if (gUnitLogLevel > 0) logBBAI("    %S declares war on %S with AI_considerDOW (%S - %S).", kOurTeam.getName().GetCString(), GET_TEAM(ePlotTeam).getName().GetCString(), getName(0).GetCString(), GC.getUnitAIInfo(AI_getUnitAIType()).getDescription());
 				kOurTeam.declareWar(ePlotTeam, true, NO_WARPLAN);
-				CvSelectionGroupAI::path_finder.Reset();
+				getPathFinder().Reset();
 				return true;
 			}
 		}
@@ -1304,7 +1302,7 @@ bool CvUnitAI::AI_considerPathDOW(CvPlot* pPlot, int iFlags)
 	}
 
 	bool bDOW = false;
-	FAStarNode* pNode = getPathLastNode();
+	FAStarNode* pNode = getPathFinder().GetEndNode(); // TODO: rewrite so that GetEndNode isn't used.
 	while (!bDOW && pNode)
 	{
 		// we need to check DOW even for moves several turns away - otherwise the actual move mission may fail to find a path.
@@ -11090,7 +11088,7 @@ bool CvUnitAI::AI_load(UnitAITypes eUnitAI, MissionAITypes eMissionAI, UnitAITyp
 													{
 														iPathTurns++;
 													}*/
-													iPathTurns = temp_finder.GetEndNode()->m_iData2 + (temp_finder.GetEndNode()->m_iData1 == 0 ? 1 : 0); // K-Mod
+													iPathTurns = temp_finder.GetPathTurns() + (temp_finder.GetFinalMoves() == 0 ? 1 : 0); // K-Mod
 
 													if( iPathTurns <= iMaxTransportPath )
 													{
@@ -15377,7 +15375,7 @@ bool CvUnitAI::AI_pillageAroundCity(CvCity* pTargetCity, int iBonusValueThreshol
                             {
                                 if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iMaxPathTurns))
                                 {
-                                    if (getPathLastNode()->m_iData1 == 0)
+									if (getPathFinder().GetFinalMoves() == 0)
                                     {
                                         iPathTurns++;
                                     }
@@ -16121,7 +16119,7 @@ bool CvUnitAI::AI_blockade()
 										if (iPathTurns == 1)
 										{
 											//Prefer to have movement remaining to Bombard + Plunder
-											iValue *= 1 + std::min(2, getPathLastNode()->m_iData1);
+											iValue *= 1 + std::min(2, getPathFinder().GetFinalMoves());
 										}
 
 										// if not at war with this plot owner, then devalue plot if we already inside this owner's borders
@@ -16329,7 +16327,7 @@ bool CvUnitAI::AI_pirateBlockade()
 							
 							iValue /= 16 + iBlockadedCount;
 							
-							bool bMove = ((getPathLastNode()->m_iData2 == 1) && getPathLastNode()->m_iData1 > 0);
+							bool bMove = getPathFinder().GetPathTurns() == 1 && getPathFinder().GetFinalMoves() > 0;
 							if (atPlot(pLoopPlot))
 							{
 								iValue *= 3;
@@ -16348,7 +16346,7 @@ bool CvUnitAI::AI_pirateBlockade()
 							}
 							else if (bIsInDanger && (iPathTurns <= 2) && (0 == iPopulationValue))
 							{
-								if (getPathLastNode()->m_iData1 == 0)
+								if (getPathFinder().GetFinalMoves() == 0)
 								{
 									if (!pLoopPlot->isAdjacentOwned())
 									{
@@ -16494,7 +16492,7 @@ bool CvUnitAI::AI_seaBombardRange(int iMaxRange)
 								if (iPathTurns == 1)
 								{
 									//Prefer to have movement remaining to Bombard + Plunder
-									iValue *= 1 + std::min(2, getPathLastNode()->m_iData1);
+									iValue *= 1 + std::min(2, getPathFinder().GetFinalMoves());
 								}
 
 								if (iValue > iBestValue)
@@ -16582,7 +16580,7 @@ bool CvUnitAI::AI_seaBombardRange(int iMaxRange)
 										if (iPathTurns == 1)
 										{
 											//Prefer to have movement remaining to Bombard + Plunder
-											iValue *= 1 + std::min(2, getPathLastNode()->m_iData1);
+											iValue *= 1 + std::min(2, getPathFinder().GetFinalMoves());
 										}
 
 										if (iValue > iBestValue)
@@ -16832,7 +16830,7 @@ bool CvUnitAI::AI_pillageRange(int iRange, int iBonusValueThreshold, int iFlags)
                                     {
                                         if (generatePath(pLoopPlot, iFlags, true, &iPathTurns, iRange))
                                         {
-                                            if (getPathLastNode()->m_iData1 == 0)
+											if (getPathFinder().GetFinalMoves() == 0)
                                             {
                                                 iPathTurns++;
                                             }
@@ -18940,7 +18938,7 @@ bool CvUnitAI::AI_improveCity(CvCity* pCity)
 		else
 		{
 			eMission = MISSION_MOVE_TO;
-			if (NULL != pBestPlot && generatePath(pBestPlot) && (getPathLastNode()->m_iData2 == 1) && (getPathLastNode()->m_iData1 == 0))
+			if (pBestPlot && generatePath(pBestPlot) && getPathFinder().GetPathTurns() == 1 && getPathFinder().GetFinalMoves() == 0)
 			{
 				if (pBestPlot->getRouteType() != NO_ROUTE)
 				{
@@ -19043,7 +19041,7 @@ bool CvUnitAI::AI_improveLocalPlot(int iRange, CvCity* pIgnoreCity)
 					iValue *= 3;
 					iValue /= 2;
 				}
-				else if (getPathLastNode()->m_iData1 == 0)
+				else if (getPathFinder().GetFinalMoves() == 0)
 				{
 					iPathTurns++;
 				}
@@ -19086,7 +19084,7 @@ bool CvUnitAI::AI_improveLocalPlot(int iRange, CvCity* pIgnoreCity)
 		MissionTypes eMission = MISSION_MOVE_TO;
 
 		int iPathTurns;
-		if (generatePath(pBestPlot, 0, true, &iPathTurns) && (getPathLastNode()->m_iData2 == 1) && (getPathLastNode()->m_iData1 == 0))
+		if (generatePath(pBestPlot, 0, true, &iPathTurns) && getPathFinder().GetPathTurns() == 1 && getPathFinder().GetFinalMoves() == 0)
 		{
 			if (pBestPlot->getRouteType() != NO_ROUTE)
 			{
@@ -19727,7 +19725,7 @@ bool CvUnitAI::AI_improveBonus() // K-Mod. (all that junk wasn't being used anyw
 								{
 									//allow teaming.
 									iMaxWorkers = AI_calculatePlotWorkersNeeded(pLoopPlot, eBestTempBuild);
-									if (getPathLastNode()->m_iData1 == 0)
+									if (getPathFinder().GetFinalMoves() == 0)
 									{
 										iMaxWorkers = std::min((iMaxWorkers + 1) / 2, 1 + kOwner.AI_baseBonusVal(eNonObsoleteBonus) / 20);
 									}
@@ -22800,7 +22798,7 @@ bool CvUnitAI::AI_infiltrate()
 						{
 							FAssert(iPathTurns > 0);
 							
-							if (getPathLastNode()->m_iData1 == 0)
+							if (getPathFinder().GetFinalMoves() == 0)
 							{
 								iPathTurns++;
 							}
@@ -24905,7 +24903,7 @@ bool CvUnitAI::AI_solveBlockageProblem(CvPlot* pDestPlot, bool bDeclareWar)
 						CvPlot* pBestPlot = pStepPlot;
 						//To prevent puppeteering attempt to barge through
 						//if quite close
-						if (getPathLastNode()->m_iData2 > 3)
+						if (getPathFinder().GetPathTurns() > 3)
 						{
 							pBestPlot = getPathEndTurnPlot();
 						}

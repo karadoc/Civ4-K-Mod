@@ -3418,10 +3418,10 @@ bool CvSelectionGroup::groupPathTo(int iX, int iY, int iFlags)
 	{
 		//If the step we just took will make us change our path to something longer, then cancel the move.
 		// This prevents units from wasting all their moves by trying to walk around enemy units.
-		FAssert(final_path.GetEndNode());
-		std::pair<int, int> old_moves = std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1);
+		FAssert(final_path.IsPathComplete());
+		std::pair<int, int> old_moves = std::make_pair(final_path.GetPathTurns(), -final_path.GetFinalMoves());
 		if (!final_path.GeneratePath(pDestPlot)
-			|| std::make_pair(final_path.GetEndNode()->m_iData2, -final_path.GetEndNode()->m_iData1) > old_moves)
+			|| std::make_pair(final_path.GetPathTurns(), -final_path.GetFinalMoves()) > old_moves)
 		{
 			clearMissionQueue();
 		}
@@ -4261,71 +4261,23 @@ void CvSelectionGroup::setAutomateType(AutomateTypes eNewValue)
 	}
 }
 
-
-FAStarNode* CvSelectionGroup::getPathLastNode() const
+// Disabled by K-Mod. (This function is deprecated.)
+/* FAStarNode* CvSelectionGroup::getPathLastNode() const
 {
-#ifdef KMOD_PATH_FINDER
-	return path_finder.GetEndNode();
-#else
-	return gDLL->getFAStarIFace()->GetLastNode(&GC.getPathFinder());
-#endif
-}
+	//return path_finder.GetEndNode();
+	//return gDLL->getFAStarIFace()->GetLastNode(&GC.getPathFinder());
+} */
 
 
 CvPlot* CvSelectionGroup::getPathFirstPlot() const
 {
-	FAStarNode* pNode;
-
-	pNode = getPathLastNode();
-
-	if (pNode->m_pParent == NULL)
-	{
-		return GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY);
-	}
-
-	while (pNode != NULL)
-	{
-		if (pNode->m_pParent->m_pParent == NULL)
-		{
-			return GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY);
-		}
-
-		pNode = pNode->m_pParent;
-	}
-
-	FAssert(false);
-
-	return NULL;
+	return path_finder.GetPathFirstPlot();
 }
 
 
 CvPlot* CvSelectionGroup::getPathEndTurnPlot() const
 {
-	FAStarNode* pNode;
-
-	pNode = getPathLastNode();
-
-	if (NULL != pNode)
-	{
-		if ((pNode->m_pParent == NULL) || (pNode->m_iData2 == 1))
-		{
-			return GC.getMapINLINE().plotSorenINLINE(pNode->m_iX, pNode->m_iY);
-		}
-
-		while (pNode->m_pParent != NULL)
-		{
-			if (pNode->m_pParent->m_iData2 == 1)
-			{
-				return GC.getMapINLINE().plotSorenINLINE(pNode->m_pParent->m_iX, pNode->m_pParent->m_iY);
-			}
-
-			pNode = pNode->m_pParent;
-		}
-	}
-
-	FAssert(false);
-
-	return NULL;
+	return path_finder.GetPathEndTurnPlot();
 }
 
 
@@ -4341,7 +4293,6 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 	if (pFromPlot == NULL || pToPlot == NULL)
 		return false;
 
-#ifdef KMOD_PATH_FINDER
 	/*if (!bReuse)
 		path_finder.Reset();*/
 	path_finder.SetSettings(this, iFlags, iMaxPath);
@@ -4357,16 +4308,6 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 		}
 	}
 	*/
-#else
-	gDLL->getFAStarIFace()->SetData(&GC.getPathFinder(), this);
-
-	static CvSelelectionGroup* lastPathGeneratedFor = 0;
-	if (lastPathGeneratedFor && lastPathGeneratedFor != this)
-		resetPath();
-	lastPathGeneratedFor = this;
-
-	bool bSuccess = gDLL->getFAStarIFace()->GeneratePath(&GC.getPathFinder(), pFromPlot->getX_INLINE(), pFromPlot->getY_INLINE(), pToPlot->getX_INLINE(), pToPlot->getY_INLINE(), false, iFlags, bReuse);
-#endif
 
 	if (piPathTurns != NULL)
 	{
@@ -4374,17 +4315,7 @@ bool CvSelectionGroup::generatePath( const CvPlot* pFromPlot, const CvPlot* pToP
 
 		if (bSuccess)
 		{
-			FAStarNode* pNode = getPathLastNode();
-
-			if (pNode != NULL)
-			{
-				*piPathTurns = pNode->m_iData2;
-#ifdef KMOD_PATH_FINDER
-				FAssert(iMaxPath <= 0 || iMaxPath >= pNode->m_iData2);
-#else
-				bSuccess = iMaxPath <= 0 || iMaxPath >= pNode->m_iData2;
-#endif
-			}
+			*piPathTurns = path_finder.GetPathTurns();
 		}
 	}
 

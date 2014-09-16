@@ -136,6 +136,12 @@ int KmodPathFinder::GetPathTurns() const
 	return end_node ? end_node->m_iData2 : 0;
 }
 
+int KmodPathFinder::GetFinalMoves() const
+{
+	FAssert(end_node);
+	return end_node ? end_node->m_iData1 : 0;
+}
+
 CvPlot* KmodPathFinder::GetPathFirstPlot() const
 {
 	FAssert(end_node);
@@ -153,6 +159,22 @@ CvPlot* KmodPathFinder::GetPathFirstPlot() const
 	}
 
 	return GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY);
+}
+
+CvPlot* KmodPathFinder::GetPathEndTurnPlot() const
+{
+	FAssert(end_node);
+
+	FAStarNode* node = end_node.get();
+
+	FAssert(!node || node->m_iData2 == 1 || node->m_pParent);
+
+	while (node && node->m_iData2 > 1)
+	{
+		node = node->m_pParent;
+	}
+	FAssert(node);
+	return node ? GC.getMapINLINE().plotSorenINLINE(node->m_iX, node->m_iY) : NULL;
 }
 
 void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)

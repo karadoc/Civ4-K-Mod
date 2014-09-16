@@ -168,7 +168,7 @@ public:
 	bool isAutomated() const; // Exposed to Python
 	void setAutomateType(AutomateTypes eNewValue);																											// Exposed to Python
 
-	FAStarNode* getPathLastNode() const;
+	// FAStarNode* getPathLastNode() const; // disabled by K-Mod. Use path_finder methods instead.
 	CvPlot* getPathFirstPlot() const;																																		// Exposed to Python
 	CvPlot* getPathEndTurnPlot() const;																																	// Exposed to Python
 	bool generatePath(const CvPlot* pFromPlot, const CvPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL, int iMaxPath = -1) const; // Exposed to Python (K-mod added iMaxPath)

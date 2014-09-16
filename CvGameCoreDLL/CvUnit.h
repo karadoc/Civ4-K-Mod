@@ -15,8 +15,9 @@ class CvPlot;
 class CvArea;
 class CvUnitInfo;
 class CvSelectionGroup;
-class FAStarNode;
+//class FAStarNode;
 class CvArtInfoUnit;
+class KmodPathFinder;
 
 struct DllExport CombatDetails					// Exposed to Python
 {
@@ -96,9 +97,10 @@ public:
 	bool canDoCommand(CommandTypes eCommand, int iData1, int iData2, bool bTestVisible = false, bool bTestBusy = true);	// Exposed to Python
 	void doCommand(CommandTypes eCommand, int iData1, int iData2);																// Exposed to Python
 
-	FAStarNode* getPathLastNode() const;
+	//FAStarNode* getPathLastNode() const; // disabled by K-Mod
 	CvPlot* getPathEndTurnPlot() const;																																						// Exposed to Python
 	bool generatePath(const CvPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL, int iMaxPath = -1) const; // Exposed to Python (K-Mod added iMaxPath)
+	KmodPathFinder& getPathFinder() const; // K-Mod
 
 	bool canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage = false) const;						// Exposed to Python
 	bool canEnterArea(TeamTypes eTeam, const CvArea* pArea, bool bIgnoreRightOfPassage = false) const;						// Exposed to Python
