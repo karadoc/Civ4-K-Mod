@@ -1366,12 +1366,22 @@ void CvUnit::updateCombat(bool bQuick)
 		setCombatUnit(NULL);
 
 		//getGroup()->groupMove(pPlot, true, ((canAdvance(pPlot, 0)) ? this : NULL));
-		getGroup()->groupMove(pPlot, true, canAdvance(pPlot, 0) ? this : NULL, true); // K-Mod
+		// K-Mod
+		if (bFinish)
+		{
+			FAssertMsg(false, "Cannot 'finish' combat with NULL defender");
+			return;
+		}
+		else
+			getGroup()->groupMove(pPlot, true, canAdvance(pPlot, 0) ? this : NULL, true);
+		// K-Mod end
 
 		getGroup()->clearMissionQueue();
 
 		return;
 	}
+
+	FAssert(pDefender->getAttackPlot() == NULL); // K-Mod
 
 	//check if quick combat
 	if (!bQuick)
@@ -1410,6 +1420,7 @@ void CvUnit::updateCombat(bool bQuick)
 			setCombatUnit(pDefender, true);
 			pDefender->setCombatUnit(this, false);
 
+			pDefender->setAttackPlot(NULL, false); // K-Mod (to prevent weirdness from simultanious attacks)
 			pDefender->getGroup()->clearMissionQueue();
 
 			bool bFocused = (bVisible && isCombatFocus() && gDLL->getInterfaceIFace()->isCombatFocus());
@@ -1476,6 +1487,7 @@ void CvUnit::updateCombat(bool bQuick)
 		{
 			resolveCombat(pDefender, pPlot, bVisible);
 
+			FAssert(!bVisible || getCombatTimer() > 0);
 			if (!bVisible)
 				bFinish = true;
 
