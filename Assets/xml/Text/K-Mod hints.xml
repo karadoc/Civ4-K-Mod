@@ -142,4 +142,8 @@
 	<English>Hold the 'X' key when issuing a command to temporarily suppress automatic unit cycling.</English>
 	<Spanish>Mantener la tecla 'X' presionada cuando das una órden para suprimir temporalmente el ciclo de unidades.</Spanish>
 </TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_15</Tag>
+	<English>Commerce sliders and espionage weights can be set to max/min quickly by right clicking their +/- buttons.</English>
+</TEXT>
 </Civ4GameText>

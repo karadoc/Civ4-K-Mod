@@ -472,5 +472,8 @@
 		<HintInfo>
 			<Description>TXT_KEY_KMOD_HINT_14</Description>
 		</HintInfo> <!-- suppress cycling -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_15</Description>
+		</HintInfo> <!-- right-click on +/- -->
 	</HintInfos>
 </Civ4Hints>
