@@ -245,55 +245,8 @@ void CvCityAI::AI_assignWorkingPlots()
 		return;
 	} */ // K-Mod. that option would break a bunch of stuff.
 
-	// remove all assigned plots if we automated
-	if (!isHuman() || isCitizensAutomated())
-	{
-		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
-		{
-			setWorkingPlot(iI, false);
-		}
-	}
-	// K-Mod note: ideally we wouldn't need to remove assigned citizens; and it would be faster not to.
-	// But unfortunately the current citizen juggling method still doesn't produce as good results as
-	// doing a complete reassign.
-
-	//update the special yield multiplier to be current
-	AI_updateSpecialYieldMultiplier();
-
 	// remove any plots we can no longer work for any reason
 	verifyWorkingPlots();
-
-	// if forcing specialists, try to make all future specialists of the same type
-	//bool bIsSpecialistForced = false;
-	bool bIsSpecialistForced = isSpecialistForced();
-	int iTotalForcedSpecialists = 0;
-
-	// make sure at least the forced amount of specialists are assigned
-	for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
-	{
-		int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
-		if (iForcedSpecialistCount > 0)
-		{
-			bIsSpecialistForced = true;
-			iTotalForcedSpecialists += iForcedSpecialistCount;
-		}
-
-		//if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
-		if (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
-		{
-			setSpecialistCount(((SpecialistTypes)iI), iForcedSpecialistCount);
-		}
-	}
-	// K-Mod. If we have forced specialists, then we need to clear away all specialists - because otherwise AI_juggleCitizens won't necessarily respect the force correctly.
-	if (bIsSpecialistForced && isCitizensAutomated())
-	{
-		FAssert(isHuman());
-		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i=(SpecialistTypes)(i+1))
-		{
-			setSpecialistCount(i, getForceSpecialistCount(i));
-		}
-	}
-	// K-Mod end
 
 	// if we have more specialists of any type than this city can have, reduce to the max
 	for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -341,6 +294,56 @@ void CvCityAI::AI_assignWorkingPlots()
 		return;
 	}
 	// K-Mod end
+
+	//update the special yield multiplier to be current
+	AI_updateSpecialYieldMultiplier();
+
+	// Remove all assigned plots before automatic assignment.
+	// K-Mod note: ideally we wouldn't need to remove assigned citizens; and it would be faster not to.
+	// But unfortunately the current citizen juggling method still doesn't produce as good results as
+	// doing a complete reassign.
+	/*if (!isHuman() || isCitizensAutomated())
+	{
+		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		{
+			setWorkingPlot(iI, false);
+		}
+	}*/
+
+	// if forcing specialists, try to make all future specialists of the same type
+	//bool bIsSpecialistForced = false;
+	bool bIsSpecialistForced = isSpecialistForced();
+	int iTotalForcedSpecialists = 0;
+
+	// make sure at least the forced amount of specialists are assigned
+	// K-Mod note: it's best if we don't clear all working specialists,
+	// because AI_specialistValue uses our current GPP rate in its evaluation.
+	for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+	{
+		int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
+		if (iForcedSpecialistCount > 0)
+		{
+			bIsSpecialistForced = true;
+			iTotalForcedSpecialists += iForcedSpecialistCount;
+		}
+
+		//if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
+		if (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
+		{
+			setSpecialistCount(((SpecialistTypes)iI), iForcedSpecialistCount);
+		}
+	}
+	// K-Mod. If we have forced specialists, then we need to clear away all specialists - because otherwise AI_juggleCitizens won't necessarily respect the force correctly.
+	if (bIsSpecialistForced && isCitizensAutomated())
+	{
+		FAssert(isHuman());
+		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i=(SpecialistTypes)(i+1))
+		{
+			setSpecialistCount(i, getForceSpecialistCount(i));
+		}
+	}
+	// K-Mod end
+
 
 	// do we have population unassigned
 	while (extraPopulation() > 0)
@@ -8817,6 +8820,7 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 // This function has been completely rewritten for K-Mod - original code deleted
 void CvCityAI::AI_juggleCitizens()
 {
+	PROFILE_FUNC();
 	//bool bAvoidGrowth = AI_avoidGrowth();
 	//bool bIgnoreGrowth = AI_ignoreGrowth();
 
@@ -9005,6 +9009,15 @@ void CvCityAI::AI_juggleCitizens()
 		}
 		iCycles++;
 	} while (!bDone);
+
+	// Record keeping, to test efficiency.
+#ifdef LOG_JUGGLE_CITIZENS
+	{
+		TCHAR message[20];
+		_snprintf(message, 20, "%d+%d : %d\n", getPopulation(), iTotalFreeSpecialists, iCycles);
+		gDLL->logMsg("juggle_log.txt", message ,false, false);
+	}
+#endif
 }
 
 // K-Mod. Estimate the cost of recovery after losing iQuantity number of citizens in this city.
@@ -9439,7 +9452,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 		//int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 		// approximate the food that can be gained by working other plots
-		int iAdjustedFoodPerTurn = iFoodPerTurn + (iExtraPopulationThatCanWork - (bReassign || bRemove ?1:0)) * std::min(iConsumtionPerPop, iFoodYield);
+		int iAdjustedFoodPerTurn = iFoodPerTurn + (iExtraPopulationThatCanWork - (bReassign ?1:0)) * std::min(iConsumtionPerPop, iFoodYield);
 
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
