@@ -5,32 +5,12 @@
 #ifndef CIV4_GLOBALS_H
 #define CIV4_GLOBALS_H
 
-/*
-** K-Mod, 8/dec/10, karadoc
-** Moved the following macro from CvInitCore.h to here (and modified it)
-*/
-#define FASSERT_BOUNDS(lower,upper,index,fnString)\
-	if (index < lower)\
-	{\
-		char acOut[256];\
-		snprintf(acOut, 256, "Index in %s expected to be >= %d. (value: %d)", fnString, lower, index);\
-		FAssertMsg(index >= lower, acOut);\
-	}\
-	else if (index >= upper)\
-	{\
-		char acOut[256];\
-		snprintf(acOut, 256, "Index in %s expected to be < %d. (value: %d)", fnString, upper, index);\
-		FAssertMsg(index < upper, acOut);\
-	}
-
-// Created the following function for rounded integer division
+// K-Mod. Created the following function for rounded integer division
 static inline int ROUND_DIVIDE(int a, int b)
 {
 	return (a+((a/b>0)?1:-1)*(b/2)) / b;
 }
-/*
-** K-Mod end
-*/
+// K-Mod end
 
 //#include "CvStructs.h"
 //

@@ -43,10 +43,26 @@ bool FAssertDlg( const char*, const char*, const char*, unsigned int, bool& );
 
 #endif
 
+// K-mod. moved the following macro from CvInitCore.h to here (and modified it)
+#define FASSERT_BOUNDS(lower,upper,index,fnString)\
+	if (index < lower)\
+	{\
+		char acOut[256];\
+		snprintf(acOut, 256, "Index in %s expected to be >= %d. (value: %d)", fnString, lower, index);\
+		FAssertMsg(index >= lower, acOut);\
+	}\
+	else if (index >= upper)\
+	{\
+		char acOut[256];\
+		snprintf(acOut, 256, "Index in %s expected to be < %d. (value: %d)", fnString, upper, index);\
+		FAssertMsg(index < upper, acOut);\
+	}
+// K-Mod end
 #else
 // FASSERT_ENABLE not defined
 #define FAssert( expr )
 #define FAssertMsg( expr, msg )
+#define FASSERT_BOUNDS(lower,upper,index,fnString) // K-Mod
 
 #endif
 
