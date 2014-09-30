@@ -1,7 +1,7 @@
 #pragma once
 
-#include <boost/multi_array.hpp>
 #include <vector>
+#include "FAStarNode.h"
 
 struct CvPathSettings
 {
@@ -22,6 +22,7 @@ public:
 	static int MinimumStepCost(int BaseMoves);
 
 	KmodPathFinder();
+	~KmodPathFinder();
 
 	bool ValidateNodeMap(); // Called when SetSettings is used.
 
@@ -42,7 +43,6 @@ protected:
 	void RecalculateHeuristics();
 	bool ProcessNode();
 	void ForwardPropagate(FAStarNode* head, int cost_delta);
-	typedef boost::multi_array<FAStarNode, 2> NodeMap_t;
 	typedef std::vector<FAStarNode*> OpenList_t;
 
 	struct OpenList_sortPred
@@ -50,13 +50,15 @@ protected:
 		bool operator()(const FAStarNode* &left, const FAStarNode* &right);
 	};
 
-	NodeMap_t node_map;
+	FAStarNode& GetNode(int x, int y) { return node_data[y*map_width+x]; }
+	FAStarNode* node_data;
 	OpenList_t open_list;
 
 	int dest_x, dest_y;
 	int start_x, start_y;
 	FAStarNode* end_node;
 	CvPathSettings settings;
+	int map_width, map_height;
 
 	static int admissible_scaled_weight;
 	static int admissible_base_weight;

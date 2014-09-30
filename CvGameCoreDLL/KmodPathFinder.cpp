@@ -2,7 +2,6 @@
 
 #include "CvGameCoreDLL.h"
 #include "KmodPathFinder.h"
-#include "FAStarNode.h"
 #include "CvGameCoreUtils.h"
 
 int KmodPathFinder::admissible_scaled_weight = 1;
@@ -46,8 +45,10 @@ bool KmodPathFinder::OpenList_sortPred::operator()(const FAStarNode* &left, cons
 
 //
 KmodPathFinder::KmodPathFinder() :
-	node_map(boost::extents[0][0]),
-	end_node(0)
+	end_node(0),
+	map_width(0),
+	map_height(0),
+	node_data(0)
 {
 	// Unfortunately, the pathfinder is constructed before the map width and height are determined.
 
@@ -57,14 +58,22 @@ KmodPathFinder::KmodPathFinder() :
 
 }
 
+KmodPathFinder::~KmodPathFinder()
+{
+	free(node_data);
+}
+
 bool KmodPathFinder::ValidateNodeMap()
 {
+	PROFILE_FUNC();
 	if (!GC.getGameINLINE().isFinalInitialized())
 		return false;
 
-	if (node_map.shape()[0] != GC.getMapINLINE().getGridWidthINLINE() || node_map.shape()[1] != GC.getMapINLINE().getGridHeightINLINE())
+	if (map_width != GC.getMapINLINE().getGridWidthINLINE() || map_height != GC.getMapINLINE().getGridHeightINLINE())
 	{
-		node_map.resize(boost::extents[GC.getMapINLINE().getGridWidthINLINE()][GC.getMapINLINE().getGridHeightINLINE()]);
+		map_width = GC.getMapINLINE().getGridWidthINLINE();
+		map_height = GC.getMapINLINE().getGridHeightINLINE();
+		node_data = (FAStarNode*)realloc(node_data, sizeof(*node_data)*map_width*map_height);
 		end_node = NULL;
 	}
 	return true;
@@ -74,10 +83,10 @@ bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 {
 	PROFILE_FUNC();
 
-	FASSERT_BOUNDS(0, (int)node_map.shape()[0] , x1, "GeneratePath");
-	FASSERT_BOUNDS(0, (int)node_map.shape()[1], y1, "GeneratePath");
-	FASSERT_BOUNDS(0, (int)node_map.shape()[0] , x2, "GeneratePath");
-	FASSERT_BOUNDS(0, (int)node_map.shape()[1], y2, "GeneratePath");
+	FASSERT_BOUNDS(0, map_width , x1, "GeneratePath");
+	FASSERT_BOUNDS(0, map_height, y1, "GeneratePath");
+	FASSERT_BOUNDS(0, map_width , x2, "GeneratePath");
+	FASSERT_BOUNDS(0, map_height, y2, "GeneratePath");
 
 	end_node = NULL;
 
@@ -105,20 +114,20 @@ bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 	dest_x = x2;
 	dest_y = y2;
 
-	if (node_map[x1][y1].m_bOnStack)
+	if (GetNode(x1, y1).m_bOnStack)
 	{
 		int iMoves = (settings.iFlags & MOVE_MAX_MOVES) ? settings.pGroup->maxMoves() : settings.pGroup->movesLeft();
-		if (iMoves != node_map[x1][y1].m_iData1)
+		if (iMoves != GetNode(x1,  y1).m_iData1)
 		{
 			Reset();
-			FAssert(!node_map[x1][y1].m_bOnStack);
+			FAssert(!GetNode(x1,  y1).m_bOnStack);
 		}
 		// Note: This condition isn't actually enough to catch all signifiant changes.
 		// We really need to check max moves /and/ moves left /and/ base moves.
 		// but I don't feel like doing all that at the moment.
 	}
 
-	if (!node_map[x1][y1].m_bOnStack)
+	if (!GetNode(x1,  y1).m_bOnStack)
 	{
 		AddStartNode();
 		bRecalcHeuristics = true;
@@ -126,8 +135,8 @@ bool KmodPathFinder::GeneratePath(int x1, int y1, int x2, int y2)
 	//else (not else. maybe start == dest)
 	{
 		// check if the end plot is already mapped.
-		if (node_map[x2][y2].m_bOnStack)
-			end_node = &node_map[x2][y2];
+		if (GetNode(x2,  y2).m_bOnStack)
+			end_node = &GetNode(x2,  y2);
 	}
 
 	if (bRecalcHeuristics)
@@ -252,7 +261,7 @@ void KmodPathFinder::SetSettings(const CvPathSettings& new_settings)
 
 void KmodPathFinder::Reset()
 {
-	memset(node_map.data(), 0, sizeof(NodeMap_t::element)*node_map.num_elements());
+	memset(&node_data[0], 0, sizeof(*node_data)*map_width*map_height);
 	open_list.clear();
 	end_node = NULL;
 	// settings is set separately.
@@ -260,11 +269,11 @@ void KmodPathFinder::Reset()
 
 void KmodPathFinder::AddStartNode()
 {
-	FASSERT_BOUNDS(0, (int)node_map.shape()[0], start_x, "KmodPathFinder::AddStartNode");
-	FASSERT_BOUNDS(0, (int)node_map.shape()[1], start_y, "KmodPathFinder::AddStartNode");
+	FASSERT_BOUNDS(0, map_width , start_x, "KmodPathFinder::AddStartNode");
+	FASSERT_BOUNDS(0, map_height, start_y, "KmodPathFinder::AddStartNode");
 
 	// add initial node.
-	FAStarNode* start_node = &node_map[start_x][start_y];
+	FAStarNode* start_node = &GetNode(start_x, start_y);
 	start_node->m_iX = start_x;
 	start_node->m_iY = start_y;
 	pathAdd(0, start_node, ASNC_INITIALADD, &settings, 0);
@@ -318,7 +327,7 @@ bool KmodPathFinder::ProcessNode()
 	open_list.erase(best_it);
 	parent_node->m_eFAStarListType = FASTARLIST_CLOSED;
 
-	FAssert(&node_map[parent_node->m_iX][parent_node->m_iY] == parent_node);
+	FAssert(&GetNode(parent_node->m_iX, parent_node->m_iY) == parent_node);
 
 	// open a new node for each direction coming off the chosen node.
 	for (int i = 0; i < NUM_DIRECTION_TYPES; i++)
@@ -336,7 +345,7 @@ bool KmodPathFinder::ProcessNode()
 		//int iPlotNum = GC.getMapINLINE().plotNumINLINE(x, y);
 		//FAssert(iPlotNum >= 0 && iPlotNum < GC.getMapINLINE().numPlotsINLINE());
 
-		FAStarNode* child_node = &node_map[x][y];
+		FAStarNode* child_node = &GetNode(x, y);
 		bool bNewNode = !child_node->m_bOnStack;
 
 		if (bNewNode)
