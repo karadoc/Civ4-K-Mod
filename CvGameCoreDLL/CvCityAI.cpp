@@ -8877,7 +8877,11 @@ void CvCityAI::AI_juggleCitizens()
 			}
 			else if (canWork(pLoopPlot))
 			{
-				int iValue = AI_plotValue(pLoopPlot, false, false, false, iGrowthValue);
+				int iValue = AI_plotValue(pLoopPlot, true, false, false, iGrowthValue);
+				// Note: the fact that I'm using 'bRemove = true' here is a hack to make the AI's food management
+				// work a bit better. It's ugly and it doesn't work perfectly, but it's good enough for now.
+				// Ideally, the yield of plots need to be compared directly rather than evaluated independantly.
+				// Otherwise it isn't possible to know if we'll have the right amount of food.
 				if (iValue > iUnworkedPlotValue)
 				{
 					iUnworkedPlot = i;
@@ -8901,7 +8905,7 @@ void CvCityAI::AI_juggleCitizens()
 			}
 			if (isSpecialistValid(i, 1))
 			{
-				int iValue = AI_specialistValue(i, false, false, iGrowthValue);
+				int iValue = AI_specialistValue(i, true, false, iGrowthValue);
 				int iForceValue = bForcedSpecialists ? getForceSpecialistCount(i) * 128 / iTotalForcedSpecialists - getSpecialistCount(i) * 128 / (getSpecialistPopulation()+1) : 0;
 				if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
 				{
@@ -9429,7 +9433,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 	int iFoodGrowthValue = 0;
 	int iFoodGPPValue = 0;
 
-	if (!bIgnoreFood && iFoodYield > 0)
+	if (!bIgnoreFood && iFoodYield != 0)
 	{
 		if (iGrowthValue < 0)
 			iGrowthValue = AI_growthValuePerFood();
@@ -9448,35 +9452,34 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
 		int iExtraPopulationThatCanWork = std::min(NUM_CITY_PLOTS-1 - getWorkingPopulation() + (bRemove?1:0), std::max(0, extraPopulation()+(bRemove?1:0)));
 		//bool bReassign = extraPopulation() <= 0;
-		bool bReassign = extraPopulation() == 0 && !bRemove; // K-Mod
+		bool bReassign = !bWorkerOptimization && !bRemove && extraPopulation() == 0; // K-Mod
 
 		//int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
 		// approximate the food that can be gained by working other plots
-		int iAdjustedFoodPerTurn = iFoodPerTurn + (iExtraPopulationThatCanWork - (bReassign ?1:0)) * std::min(iConsumtionPerPop, iFoodYield);
+		int iAdjustedFoodPerTurn = iFoodPerTurn + (iExtraPopulationThatCanWork - (bReassign ?1:0)) * std::min(iConsumtionPerPop, std::max(0, iFoodYield));
 
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
 		{
 			int iStarvingAllowance = 0;
-			if (AI_isEmphasizeAvoidGrowth() && !isHuman())
+			if (AI_isEmphasizeAvoidGrowth() || iHappinessLevel < (isHuman() ? 0 : 1))
 			{
-				iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((9 * iFoodToGrow) / 10))));
-			}
-
-			if (iStarvingAllowance < 1 && iFoodLevel > iFoodToGrow * 75 / 100 && (iHappinessLevel < 1 || iHealthLevel < 1))
-			{
-				iStarvingAllowance = 1;
+				iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((8 * iFoodToGrow) / 10))));
+				iStarvingAllowance /= 1
+					+ (iHappinessLevel+getEspionageHappinessCounter()/2 >= 0 ? 1 : 0)
+					+ (iHealthLevel+getEspionageHealthCounter() > 0 ? 1 : 0)
+					+ (isHuman() && !AI_isEmphasizeAvoidGrowth() ? 1 : 0);
 			}
 
 			// if still starving
-			if (iFoodPerTurn + (bRemove ? std::min(iFoodYield, iConsumtionPerPop) : 0) + iStarvingAllowance < 0)
+			if (iFoodPerTurn + iStarvingAllowance < 0)
 			{
 				// if working plots all like this one will save us from starving
 				//if (((bReassign?1:0)+iExtraPopulationThatCanWork+std::max(0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn)
-				if ((iExtraPopulationThatCanWork+std::max(bReassign?1:0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn + (bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0))
+				/*if ((iExtraPopulationThatCanWork+std::max(bReassign?1:0, getSpecialistPopulation() - totalFreeSpecialists())) * iFoodYield >= -iFoodPerTurn + (bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0))
 				{
 					iValue += 2048;
-				}
+				}*/
 
 				// value food high, but not forced
 				//iValue += 36 * std::min(iFoodYield, -iFoodPerTurn+(bReassign ? iConsumtionPerPop : 0));
