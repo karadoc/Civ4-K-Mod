@@ -585,14 +585,15 @@ void CvUnit::kill(bool bDelay, PlayerTypes ePlayer)
 	// XXX this is NOT a hack, without it, the game crashes.
 	gDLL->getEntityIFace()->RemoveUnitFromBattle(this);
 
-	FAssertMsg(!isCombat(), "isCombat did not return false as expected");
+	//FAssertMsg(!isCombat(), "isCombat did not return false as expected");
+	FAssert(!isFighting()); // K-Mod. With simultaneous turns, a unit can be captured while trying to execute an attack order. (eg. a bomber)
 
 	setTransportUnit(NULL);
 
 	setReconPlot(NULL);
 	setBlockading(false);
 
-	FAssertMsg(getAttackPlot() == NULL, "The current unit instance's attack plot is expected to be NULL");
+	//FAssertMsg(getAttackPlot() == NULL, "The current unit instance's attack plot is expected to be NULL");
 	FAssertMsg(getCombatUnit() == NULL, "The current unit instance's combat unit is expected to be NULL");
 
 	GET_TEAM(getTeam()).changeUnitClassCount((UnitClassTypes)m_pUnitInfo->getUnitClassType(), -1);
