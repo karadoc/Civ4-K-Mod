@@ -1264,31 +1264,32 @@ class CvVictoryScreen:
 						bEntriesFound = True
 					
 				if (victory.getCityCulture() != CultureLevelTypes.NO_CULTURELEVEL and victory.getNumCultureCities() > 0):
-					ourBestCities = self.getListCultureCities(self.iActivePlayer, victory)[0:victory.getNumCultureCities()]
+					ourBestCities = self.getListCultureCities(iActiveTeam, victory)
 					
-					iBestCulturePlayer = -1
+					# K-Mod - changed to loop through teams rather than players, to match actual victory conditions.
+					iBestCultureTeam = -1
 					bestCityCulture = 0
-# BUG - 3.19 Culture Threshold - start
-					maxCityCulture = GameUtil.getCultureThreshold(victory.getCityCulture())
-# BUG - 3.19 Culture Threshold - end
-					for iLoopPlayer in range(gc.getMAX_PLAYERS()):
-						if (gc.getPlayer(iLoopPlayer).isAlive() and not gc.getPlayer(iLoopPlayer).isMinorCiv() and not gc.getPlayer(iLoopPlayer).isBarbarian()):
-							if (iLoopPlayer != self.iActivePlayer and (activePlayer.getTeam().isHasMet(gc.getPlayer(iLoopPlayer).getTeam()) or gc.getGame().isDebugMode())):
-								theirBestCities = self.getListCultureCities(iLoopPlayer, victory)[0:victory.getNumCultureCities()]
-								
+					maxCityCulture = GameUtil.getCultureThreshold(victory.getCityCulture()) # BUG
+
+					for iLoopTeam in range(gc.getMAX_CIV_TEAMS()):
+						if (gc.getTeam(iLoopTeam).isAlive() and not gc.getTeam(iLoopTeam).isMinorCiv() and not gc.getTeam(iLoopTeam).isBarbarian()):
+							if (iLoopTeam != iActiveTeam and (activePlayer.getTeam().isHasMet(iLoopTeam) or gc.getGame().isDebugMode())):
+								theirBestCities = self.getListCultureCities(iLoopTeam, victory)
+
 								iTotalCulture = 0
 								for loopCity in theirBestCities:
 									if loopCity[0] >= maxCityCulture:
 										iTotalCulture += maxCityCulture
 									else:
 										iTotalCulture += loopCity[0]
-								
+
+								# Note: we could give more weight to the lower cities if we wanted a more accurate gauge of how close to victory the team is.
 								if (iTotalCulture >= bestCityCulture):
 									bestCityCulture = iTotalCulture
-									iBestCulturePlayer = iLoopPlayer
+									iBestCultureTeam = iLoopTeam
 
-					if (iBestCulturePlayer != -1):
-						theirBestCities = self.getListCultureCities(iBestCulturePlayer, victory)[0:(victory.getNumCultureCities())]
+					if (iBestCultureTeam != -1):
+						theirBestCities = self.getListCultureCities(iBestCultureTeam, victory)
 					else:
 						theirBestCities = []
 						
@@ -1356,38 +1357,39 @@ class CvVictoryScreen:
 		
 		self.drawTabs()
 
-# BUG Additions Start
 #	def getListCultureCities(self, iPlayer):
-	def getListCultureCities(self, iPlayer, victory):
+# rewritten for K-Mod
+	def getListCultureCities(self, iTeam, victory):
 		maxCityCulture = GameUtil.getCultureThreshold(victory.getCityCulture())
-# BUG Additions End
 
-		if iPlayer >= 0:
-			player = PyPlayer(iPlayer)
-			if player.isAlive():
-				cityList = player.getCityList()
-# BUG Additions Start
-#				listCultureCities = len(cityList) * [(0, 0)]
-				listCultureCities = len(cityList) * [(0, 0, 0)]
-# BUG Additions End
-				i = 0
-				for city in cityList:
-# BUG Additions Start
-					pCity = city.GetCy()
-					iRate = pCity.getCommerceRateTimes100(CommerceTypes.COMMERCE_CULTURE)
+		if iTeam < 0:
+			return []
+		# else continue
+
+		cultureCityList = [] # item format is (culture, city, turns to threshold)
+
+		for i in range(gc.getMAX_CIV_PLAYERS()):
+			loopPlayer = gc.getPlayer(i)
+			if (not loopPlayer.isAlive() or loopPlayer.getTeam() != iTeam):
+				continue
+			# otherwise, loop through their cities
+			(loopCity, iter) = loopPlayer.firstCity(false)
+			while(loopCity):
+				if (not loopCity.isNone() and loopCity.getTeam() == iTeam):
+					iRate = loopCity.getCommerceRateTimes100(CommerceTypes.COMMERCE_CULTURE)
 					if iRate == 0:
 						iTurns = -1
 					else:
-						iCultureLeftTimes100 = 100 * maxCityCulture - pCity.getCultureTimes100(city.getOwner())
+						iCultureLeftTimes100 = 100 * maxCityCulture - loopCity.getCultureTimes100(loopCity.getOwner())
 						iTurns = int((iCultureLeftTimes100 + iRate - 1) / iRate)
-					listCultureCities[i] = (city.getCulture(), city, iTurns)
-#					listCultureCities[i] = (city.getCulture(), city)
-# BUG Additions Start
-					i += 1
-				listCultureCities.sort()
-				listCultureCities.reverse()
-				return listCultureCities
-		return []
+					cultureCityList.append((loopCity.getCulture(loopCity.getOwner()), PyHelpers.PyCity(loopCity.getOwner(), loopCity.getID()), iTurns))
+					# I don't see the point of PyCity. But that's what's used elsewhere.
+				(loopCity, iter) = loopPlayer.nextCity(iter, false)
+
+		cultureCityList.sort()
+		cultureCityList.reverse()
+		return cultureCityList[0:victory.getNumCultureCities()]
+# K-Mod end
 
 # BUG Additions Start
 	def getVotesForWhichCandidate(self, iPlayer, iCand1, iCand2, iVote):
