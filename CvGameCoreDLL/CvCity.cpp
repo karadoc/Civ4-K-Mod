@@ -10824,7 +10824,7 @@ void CvCity::alterSpecialistCount(SpecialistTypes eIndex, int iChange)
 		{
 			changeForceSpecialistCount(eIndex, iChange);
 		}
-		else
+		//else // (K-Mod. Without the following block, extra care is needed inside AI_assignWorkingPlots.)
 		{
 			if (iChange > 0)
 			{
