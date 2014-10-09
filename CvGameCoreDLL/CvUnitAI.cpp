@@ -4945,25 +4945,6 @@ void CvUnitAI::AI_artistMove()
 {
 	PROFILE_FUNC();
 
-	// K-Mod (this is less than ideal. I'm sorry.)
-	if (AI_construct(MAX_INT, MAX_INT, 100))
-	{
-		return;
-	}
-
-	if (AI_artistCultureVictoryMove())
-	{
-	    return;
-	}
-
-	if (AI_greatWork())
-	{
-		return;
-	}
-
-	if (AI_greatPersonMove())
-		return;
-
 	/* original bts code
 	if (AI_artistCultureVictoryMove())
 	{
@@ -5026,13 +5007,19 @@ void CvUnitAI::AI_artistMove()
 	/* original bts code
 	if ((GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) ||
 		(getGameTurnCreated() < (GC.getGameINLINE().getGameTurn() - 25))) */
-	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2)) // K-Mod (there are good reasons for saving a great person)
+
+	// K-Mod
+	if (AI_greatPersonMove())
+		return;
+
+	if (GET_PLAYER(getOwnerINLINE()).AI_getAnyPlotDanger(plot(), 2))
 	{
 		if (AI_discover())
 		{
 			return;
 		}
 	}
+	// K-Mod end
 
 	if (AI_retreatToCity())
 	{
@@ -5488,7 +5475,18 @@ bool CvUnitAI::AI_greatPersonMove()
 {
 	const CvPlayerAI& kPlayer = GET_PLAYER(getOwnerINLINE());
 
-	bool bCanHurry = m_pUnitInfo->getBaseHurry() > 0 || m_pUnitInfo->getHurryMultiplier() > 0;
+	enum
+	{
+		GP_SLOW,
+		GP_DISCOVER,
+		GP_GOLDENAGE,
+		GP_TRADE,
+		GP_CULTURE
+	};
+	std::vector<std::pair<int, int> > missions; // (value, mission)
+	// 1) Add possible missions to the mission vector.
+	// 2) Sort them.
+	// 3) Attempt to carry out missions, starting with the highest value.
 
 	CvPlot* pBestPlot = NULL;
 	SpecialistTypes eBestSpecialist = NO_SPECIALIST;
@@ -5496,6 +5494,7 @@ bool CvUnitAI::AI_greatPersonMove()
 	int iBestValue = 1;
 	int iBestPathTurns = MAX_INT; // just used as a tie-breaker.
 	int iMoveFlags = alwaysInvisible() ? 0 : MOVE_NO_ENEMY_TERRITORY;
+	bool bCanHurry = m_pUnitInfo->getBaseHurry() > 0 || m_pUnitInfo->getHurryMultiplier() > 0;
 
 	int iLoop;
 	for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
@@ -5592,10 +5591,18 @@ bool CvUnitAI::AI_greatPersonMove()
 		} // end this area
 	} // end city loop.
 
-	int iGoldenAgeValue = (isGoldenAge()? (GET_PLAYER(getOwnerINLINE()).AI_calculateGoldenAgeValue() / (GET_PLAYER(getOwnerINLINE()).unitsRequiredForGoldenAge())) : 0);
-	iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
-	iGoldenAgeValue /= 100;
+	// Golden age
+	int iGoldenAgeValue = 0;
+	if (isGoldenAge())
+	{
+		iGoldenAgeValue = GET_PLAYER(getOwnerINLINE()).AI_calculateGoldenAgeValue() / GET_PLAYER(getOwnerINLINE()).unitsRequiredForGoldenAge();
+		iGoldenAgeValue *= (75 + kPlayer.AI_getStrategyRand(0) % 51);
+		iGoldenAgeValue /= 100;
+		missions.push_back(std::pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
+	}
+	//
 
+	// Discover ("bulb tech")
 	int iDiscoverValue = 0;
 	TechTypes eDiscoverTech = getDiscoveryTech();
 	if (eDiscoverTech != NO_TECH)
@@ -5622,6 +5629,7 @@ bool CvUnitAI::AI_greatPersonMove()
 
 		iDiscoverValue *= (75 + kPlayer.AI_getStrategyRand(3) % 51);
 		iDiscoverValue /= 100;
+		missions.push_back(std::pair<int, int>(iDiscoverValue, GP_DISCOVER));
 	}
 
 	// SlowValue is meant to be a rough estimation of how much value we'll get from doing the best join / build mission.
@@ -5662,44 +5670,44 @@ bool CvUnitAI::AI_greatPersonMove()
 			}
 		}
 		//if (gUnitLogLevel > 2) logBBAI("    %S GP slow modifier: %d, value: %d", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), range(30 + iModifier/2, 20, 80), iSlowValue);
+		iSlowValue *= (75 + kPlayer.AI_getStrategyRand(6) % 51);
+		iSlowValue /= 100;
+		missions.push_back(std::pair<int, int>(iSlowValue, GP_SLOW));
 	}
-	iSlowValue *= (75 + kPlayer.AI_getStrategyRand(6) % 51);
-	iSlowValue /= 100;
 
+	// Trade mission
 	CvPlot* pBestTradePlot;
 	int iTradeValue = AI_tradeMissionValue(pBestTradePlot, iDiscoverValue / 2);
 	// make it roughly comparable to research points
-	iTradeValue *= kPlayer.AI_commerceWeight(COMMERCE_GOLD);
-	iTradeValue /= 100;
-	iTradeValue *= kPlayer.AI_averageCommerceMultiplier(COMMERCE_RESEARCH);
-	iTradeValue /= kPlayer.AI_averageCommerceMultiplier(COMMERCE_GOLD);
-	// gold can be targeted where it is needed, but it's benefits typically aren't instant. (cf AI_knownTechValModifier)
-	iTradeValue *= 130;
-	iTradeValue /= 100;
-	if (getGroup()->AI_getMissionAIType() == MISSIONAI_TRADE && plot()->getOwner() != getOwner())
+	if (pBestTradePlot != NULL)
 	{
-		// if we are part way through a trade mission, prefer not to turn back.
-		iTradeValue *= 120;
+		iTradeValue *= kPlayer.AI_commerceWeight(COMMERCE_GOLD);
 		iTradeValue /= 100;
+		iTradeValue *= kPlayer.AI_averageCommerceMultiplier(COMMERCE_RESEARCH);
+		iTradeValue /= kPlayer.AI_averageCommerceMultiplier(COMMERCE_GOLD);
+		// gold can be targeted where it is needed, but it's benefits typically aren't instant. (cf AI_knownTechValModifier)
+		iTradeValue *= 130;
+		iTradeValue /= 100;
+		if (getGroup()->AI_getMissionAIType() == MISSIONAI_TRADE && plot()->getOwner() != getOwner())
+		{
+			// if we are part way through a trade mission, prefer not to turn back.
+			iTradeValue *= 120;
+			iTradeValue /= 100;
+		}
+		iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
+		iTradeValue /= 100;
+		missions.push_back(std::pair<int, int>(iTradeValue, GP_TRADE));
 	}
-	iTradeValue *= (75 + kPlayer.AI_getStrategyRand(9) % 51);
-	iTradeValue /= 100;
 
-	//
-	enum
+	// Great works (culture bomb)
+	CvPlot* pBestCulturePlot;
+	int iCultureValue = AI_greatWorkValue(pBestCulturePlot, iDiscoverValue / 2);
+	if (pBestCulturePlot != 0)
 	{
-		GP_SLOW,
-		GP_FIRSTDISCOVER,
-		GP_DISCOVER,
-		GP_GOLDENAGE,
-		GP_TRADE
-	};
-	std::vector<std::pair<int, int> > missions;
-	missions.push_back(std::pair<int, int>(iGoldenAgeValue, GP_GOLDENAGE));
-	missions.push_back(std::pair<int, int>(iTradeValue, GP_TRADE));
-	missions.push_back(std::pair<int, int>(iSlowValue, GP_SLOW));
-	missions.push_back(std::pair<int, int>(iDiscoverValue, GP_DISCOVER));
+		missions.push_back(std::pair<int, int>(iCultureValue, GP_CULTURE));
+	}
 
+	// Sort the list!
 	std::sort(missions.begin(), missions.end(), std::greater<std::pair<int, int> >());
 	std::vector<std::pair<int, int> >::iterator it;
 
@@ -5724,9 +5732,20 @@ bool CvUnitAI::AI_greatPersonMove()
 		case GP_TRADE:
 			{
 				MissionAITypes eOldMission = getGroup()->AI_getMissionAIType(); // just used for the log message below
-				if (AI_doTrade(pBestTradePlot))
+				if (AI_doTradeMission(pBestTradePlot))
 				{
 					if (gUnitLogLevel > 2) logBBAI("    %S %s 'trade mission' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), eOldMission == MISSIONAI_TRADE?"continues" :"chooses", getName(0).GetCString(), iTradeValue, iChoice);
+					return true;
+				}
+				break;
+			}
+
+		case GP_CULTURE:
+			{
+				MissionAITypes eOldMission = getGroup()->AI_getMissionAIType(); // just used for the log message below
+				if (AI_doGreatWork(pBestCulturePlot))
+				{
+					if (gUnitLogLevel > 2) logBBAI("    %S %s 'great work' with their %S (value: %d, choice #%d)", GET_PLAYER(getOwnerINLINE()).getCivilizationDescription(0), eOldMission == MISSIONAI_TRADE?"continues" :"chooses", getName(0).GetCString(), iCultureValue, iChoice);
 					return true;
 				}
 				break;
@@ -5826,6 +5845,9 @@ bool CvUnitAI::AI_greatPersonMove()
 					}
 				}
 			}
+			break;
+		default:
+			FAssertMsg(false, "Unhandled great person mission");
 			break;
 		}
 		iChoice++;
@@ -13834,6 +13856,7 @@ bool CvUnitAI::AI_hurry()
 
 
 // Returns true if a mission was pushed...
+/* disabled by K-Mod. obsolete.
 bool CvUnitAI::AI_greatWork()
 {
 	PROFILE_FUNC();
@@ -13851,16 +13874,8 @@ bool CvUnitAI::AI_greatWork()
 
 	for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 	{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
 		// BBAI efficiency: check same area
 		if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 		{
 			if (canGreatWork(pLoopCity->plot()))
 			{
@@ -13868,15 +13883,7 @@ bool CvUnitAI::AI_greatWork()
 				{
 					if (GET_PLAYER(getOwnerINLINE()).AI_plotTargetMissionAIs(pLoopCity->plot(), MISSIONAI_GREAT_WORK, getGroup()) == 0)
 					{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      04/03/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 						if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 						{
 							iValue = pLoopCity->AI_calculateCulturePressure(true);
 							iValue -= ((100 * pLoopCity->getCulture(pLoopCity->getOwnerINLINE())) / std::max(1, getGreatWorkCulture(pLoopCity->plot())));
@@ -13906,21 +13913,13 @@ bool CvUnitAI::AI_greatWork()
 		else
 		{
 			FAssert(!atPlot(pBestPlot));
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/09/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI                                                                                      */
-/************************************************************************************************/
 			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_GREAT_WORK, pBestGreatWorkPlot);
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			return true;
 		}
 	}
 
 	return false;
-}
+} */
 
 
 // Returns true if a mission was pushed...
@@ -22597,85 +22596,6 @@ bool CvUnitAI::AI_nukeRange(int iRange)
 }
 #endif // end old AI_nukeRnage code.
 
-bool CvUnitAI::AI_trade(int iValueThreshold)
-{
-	/* original bts code
-	CvCity* pLoopCity;
-	CvPlot* pBestPlot;
-	CvPlot* pBestTradePlot;
-
-	int iPathTurns;
-	int iValue;
-	int iBestValue;
-	int iLoop;
-	int iI;
-
-
-	iBestValue = 0;
-	pBestPlot = NULL;
-	pBestTradePlot = NULL;
-
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
-	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
-		{
-			for (pLoopCity = GET_PLAYER((PlayerTypes)iI).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER((PlayerTypes)iI).nextCity(&iLoop))
-			{
-				if (AI_plotValid(pLoopCity->plot()))
-				{
-                    if (getTeam() != pLoopCity->getTeam())
-				    {
-                        iValue = getTradeGold(pLoopCity->plot());
-
-                        if ((iValue >= iValueThreshold) && canTrade(pLoopCity->plot(), true))
-                        {
-                            if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
-                            {
-                                if (generatePath(pLoopCity->plot(), 0, true, &iPathTurns))
-                                {
-                                    FAssert(iPathTurns > 0);
-
-                                    iValue /= (4 + iPathTurns);
-
-                                    if (iValue > iBestValue)
-                                    {
-                                        iBestValue = iValue;
-                                        pBestPlot = getPathEndTurnPlot();
-                                        pBestTradePlot = pLoopCity->plot();
-                                    }
-                                }
-
-                            }
-                        }
-				    }
-				}
-			}
-		}
-	}
-
-	if ((pBestPlot != NULL) && (pBestTradePlot != NULL))
-	{
-		if (atPlot(pBestTradePlot))
-		{
-			getGroup()->pushMission(MISSION_TRADE);
-			return true;
-		}
-		else
-		{
-			FAssert(!atPlot(pBestPlot));
-			getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
-			return true;
-		}
-	}
-
-	return false; */
-
-	// K-Mod. I'm using my own function to do this, just to avoid code duplication.
-	CvPlot* pBestPlot;
-	AI_tradeMissionValue(pBestPlot, iValueThreshold);
-	return AI_doTrade(pBestPlot);
-}
-
 // K-Mod. Get the best trade mission value.
 // Note. The iThreshold parameter is only there to improve efficiency.
 int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
@@ -22722,7 +22642,7 @@ int CvUnitAI::AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold)
 }
 
 // K-Mod. Move to destination for a trade mission. (pTradePlot is either the target city, or the end-turn plot.)
-bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
+bool CvUnitAI::AI_doTradeMission(CvPlot* pTradePlot)
 {
 	if (pTradePlot != NULL)
 	{
@@ -22744,6 +22664,76 @@ bool CvUnitAI::AI_doTrade(CvPlot* pTradePlot)
 
 	return false;
 }
+
+// find the best place to do create a great work (culture bomb)
+int CvUnitAI::AI_greatWorkValue(CvPlot*& pBestPlot, int iThreshold)
+{
+	pBestPlot = NULL;
+
+	int iBestValue = 0;
+	int iBestPathTurns = INT_MAX;
+	int iLoop;
+
+	if (getUnitInfo().getGreatWorkCulture() == 0)
+		return 0;
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+	for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+	{
+		if (AI_plotValid(pLoopCity->plot()) && !pLoopCity->plot()->isVisibleEnemyUnit(this))
+		{
+			int iValue = getGreatWorkCulture(pLoopCity->plot()) * kOwner.AI_commerceWeight(COMMERCE_CULTURE, pLoopCity) / 100;
+			// commerceWeight takes into account culture pressure and cultural victory strategy.
+			// However, it is intended to be used for evaluating steady culture rates rather than bursts.
+			// Therefore the culture-pressure side of it is probably under-rated, and the cultural
+			// victory part is based on current culture rather than turns to legendary.
+			// Also, it doesn't take into account the possibility of flipping enemy cities.
+			// ... But it's a good start.
+			int iPathTurns;
+
+			if (iValue >= iThreshold && canGreatWork(pLoopCity->plot()))
+			{
+				if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
+				{
+					if (iValue / (4 + iPathTurns) > iBestValue / (4 + iBestPathTurns))
+					{
+						iBestValue = iValue;
+						iBestPathTurns = iPathTurns;
+						pBestPlot = getPathEndTurnPlot();
+						iThreshold = std::max(iThreshold, iBestValue * 4 / (4 + iBestPathTurns));
+					}
+				}
+			}
+		}
+	}
+
+	return iBestValue;
+}
+
+// create great work if we're at pCulturePlot, otherwise just move towards pCulturePlot.
+bool CvUnitAI::AI_doGreatWork(CvPlot* pCulturePlot)
+{
+	if (pCulturePlot != NULL)
+	{
+		if (atPlot(pCulturePlot))
+		{
+			FAssert(canGreatWork(pCulturePlot));
+			if (canGreatWork(pCulturePlot))
+			{
+				getGroup()->pushMission(MISSION_GREAT_WORK);
+				return true;
+			}
+		}
+		else
+		{
+			getGroup()->pushMission(MISSION_MOVE_TO, pCulturePlot->getX_INLINE(), pCulturePlot->getY_INLINE(), MOVE_NO_ENEMY_TERRITORY, false, false, MISSIONAI_GREAT_WORK);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 // K-Mod end
 
 bool CvUnitAI::AI_infiltrate()
@@ -24480,16 +24470,12 @@ bool CvUnitAI::AI_moveIntoCity(int iRange)
 
 //bolsters the culture of the weakest city.
 //returns true if a mission is pushed.
+/* disabled by K-Mod. (not currently used)
 bool CvUnitAI::AI_artistCultureVictoryMove()
 {
     bool bGreatWork = false;
     bool bJoin = true;
 
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
     if (!(GET_PLAYER(getOwnerINLINE()).AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1)))
     {
         return false;        
@@ -24500,9 +24486,6 @@ bool CvUnitAI::AI_artistCultureVictoryMove()
         //Great Work
         bGreatWork = true;
     }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 
 	int iCultureCitiesNeeded = GC.getGameINLINE().culturalVictoryNumCultureCities();
 	FAssertMsg(iCultureCitiesNeeded > 0, "CultureVictory Strategy should not be true");
@@ -24526,16 +24509,8 @@ bool CvUnitAI::AI_artistCultureVictoryMove()
 	{
 		for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 		{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Unit AI, Efficiency                                                                          */
-/************************************************************************************************/
 			// BBAI efficiency: check same area
 			if ((pLoopCity->area() == area()) && AI_plotValid(pLoopCity->plot()))
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
 			{
 				// instead of commerce rate rank should use the culture on tile...
 				if (pLoopCity->findCommerceRateRank(COMMERCE_CULTURE) == iTargetCultureRank)
@@ -24626,7 +24601,7 @@ bool CvUnitAI::AI_artistCultureVictoryMove()
         getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE());
         return true;
     }
-}    
+} */
 
 bool CvUnitAI::AI_poach()
 {

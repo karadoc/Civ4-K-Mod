@@ -1054,7 +1054,7 @@ public:
 	virtual int AI_cityValue() const = 0;
 	virtual int AI_clearFeatureValue(int iIndex) = 0;
 
-	virtual int AI_calculateCulturePressure(bool bGreatWork = false) const = 0;
+	//virtual int AI_calculateCulturePressure(bool bGreatWork = false) const = 0; // disabled by K-Mod
 	virtual int AI_calculateWaterWorldPercent() = 0;
 	virtual int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true) = 0;
 	virtual int AI_yieldMultiplier(YieldTypes eYield) const = 0;

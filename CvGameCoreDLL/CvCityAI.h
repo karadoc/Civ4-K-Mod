@@ -187,7 +187,7 @@ protected:
 	int AI_getHappyFromHurry(HurryTypes eHurry, BuildingTypes eBuilding, bool bIgnoreNew) const;
 	int AI_getHappyFromHurry(int iHurryPopulation) const;
 	bool AI_doPanic();
-	int AI_calculateCulturePressure(bool bGreatWork = false) const;
+	//int AI_calculateCulturePressure(bool bGreatWork = false) const; // disabled by K-Mod
 
 	bool AI_chooseUnit(UnitAITypes eUnitAI = NO_UNITAI, int iOdds = -1); // bbai added iOdds
 	bool AI_chooseUnit(UnitTypes eUnit, UnitAITypes eUnitAI);

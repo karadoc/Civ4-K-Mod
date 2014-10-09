@@ -10497,6 +10497,7 @@ bool CvCityAI::AI_doPanic()
 	return false;
 }
 
+/* disabled by K-Mod. (this function is buggy, and obsolete)
 int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
 {
 	PROFILE_FUNC();
@@ -10545,18 +10546,8 @@ int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
                     {
                         iTempValue += (GET_PLAYER(getOwnerINLINE()).AI_bonusVal(eNonObsoleteBonus, 0) * ((GET_PLAYER(getOwnerINLINE()).getNumTradeableBonuses(eNonObsoleteBonus) == 0) ? 4 : 2));
                     }
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       03/20/10                          denev & jdog5000    */
-/*                                                                                              */
-/* Bugfix                                                                                       */
-/************************************************************************************************/
-/* original bts code
-					if ((iTempValue > 80) && (pLoopPlot->getOwnerINLINE() == getID()))
-*/
-					if ((iTempValue > 80) && (pLoopPlot->getOwnerINLINE() == getOwnerINLINE()))
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+					//if ((iTempValue > 80) && (pLoopPlot->getOwnerINLINE() == getID()))
+					if ((iTempValue > 80) && (pLoopPlot->getOwnerINLINE() == getOwnerINLINE())) // unofficial_patch
                     {
                         //captured territory special case
                         iTempValue *= (100 - iTempValue);
@@ -10574,7 +10565,8 @@ int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
                         {
                             if (GET_PLAYER(getOwnerINLINE()).AI_getAttitude(pLoopPlot->getOwnerINLINE()) == ATTITUDE_FRIENDLY)
                             {
-                                iValue /= 10;
+                                //iValue /= 10;
+								iTempValue /= 10; // K-Mod
                             }
                         }
                     }
@@ -10586,7 +10578,7 @@ int CvCityAI::AI_calculateCulturePressure(bool bGreatWork) const
     }
 
     return iValue;
-}
+} */
 
 // K-Mod: I've completely butchered this function. ie. deleted the bulk of it, and rewritten it.
 void CvCityAI::AI_buildGovernorChooseProduction()

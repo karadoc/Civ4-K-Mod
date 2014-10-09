@@ -159,7 +159,7 @@ protected:
 	bool AI_construct(int iMaxCount = MAX_INT, int iMaxSingleBuildingCount = MAX_INT, int iThreshold = 15);
 	bool AI_switchHurry();
 	bool AI_hurry();
-	bool AI_greatWork();
+	//bool AI_greatWork(); // disabled by K-Mod
 	bool AI_offensiveAirlift();
 	bool AI_paradrop(int iRange);
 	bool AI_protect(int iOddsThreshold, int iFlags = 0, int iMaxPathTurns = MAX_INT);
@@ -267,9 +267,11 @@ protected:
 /************************************************************************************************/
 	bool AI_nuke();
 	bool AI_nukeRange(int iRange);
-	bool AI_trade(int iValueThreshold);
+	//bool AI_trade(int iValueThreshold); // deleted by K-Mod
 	int AI_tradeMissionValue(CvPlot*& pBestPlot, int iThreshold = 0); // K-Mod
-	bool AI_doTrade(CvPlot* pTradePlot); // K-Mod
+	bool AI_doTradeMission(CvPlot* pTradePlot); // K-Mod
+	int AI_greatWorkValue(CvPlot*& pBestPlot, int iThreshold = 0); // K-Mod
+	bool AI_doGreatWork(CvPlot* pCulturePlot); // K-Mod
 	bool AI_infiltrate();
 	bool AI_reconSpy(int iRange);
 /************************************************************************************************/
@@ -316,7 +318,7 @@ protected:
 
 	bool AI_groupMergeRange(UnitAITypes eUnitAI, int iRange, bool bBiggerOnly = true, bool bAllowRegrouping = false, bool bIgnoreFaster = false);
 	
-	bool AI_artistCultureVictoryMove();
+	//bool AI_artistCultureVictoryMove(); // disabled by K-Mod
 
 	bool AI_poach();
 	bool AI_choke(int iRange = 1, bool bDefensive = false, int iFlags = 0);
