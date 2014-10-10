@@ -8848,6 +8848,7 @@ void CvCityAI::AI_juggleCitizens()
 	do
 	{
 		int iGrowthValue = AI_growthValuePerFood(); // recalcuate on each cycle?
+		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption();
 		int iWorkedPlot = -1;
 		int iWorkedPlotValue = INT_MAX; // lowest value worked plot
 		SpecialistTypes eWorkedSpecialist = NO_SPECIALIST;
@@ -8868,7 +8869,7 @@ void CvCityAI::AI_juggleCitizens()
 
 			if (isWorkingPlot(i))
 			{
-				int iValue = AI_plotValue(pLoopPlot, true, false, false, iGrowthValue);
+				int iValue = AI_plotValue(pLoopPlot, true, false, iFoodPerTurn >= 0, iGrowthValue);
 				if (iValue < iWorkedPlotValue)
 				{
 					iWorkedPlot = i;
@@ -8877,7 +8878,7 @@ void CvCityAI::AI_juggleCitizens()
 			}
 			else if (canWork(pLoopPlot))
 			{
-				int iValue = AI_plotValue(pLoopPlot, true, false, false, iGrowthValue);
+				int iValue = AI_plotValue(pLoopPlot, false, false, iFoodPerTurn >= 0, iGrowthValue);
 				// Note: the fact that I'm using 'bRemove = true' here is a hack to make the AI's food management
 				// work a bit better. It's ugly and it doesn't work perfectly, but it's good enough for now.
 				// Ideally, the yield of plots need to be compared directly rather than evaluated independantly.
@@ -8905,7 +8906,7 @@ void CvCityAI::AI_juggleCitizens()
 			}
 			if (isSpecialistValid(i, 1))
 			{
-				int iValue = AI_specialistValue(i, true, false, iGrowthValue);
+				int iValue = AI_specialistValue(i, false, false, iGrowthValue);
 				int iForceValue = bForcedSpecialists ? getForceSpecialistCount(i) * 128 / iTotalForcedSpecialists - getSpecialistCount(i) * 128 / (getSpecialistPopulation()+1) : 0;
 				if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
 				{
@@ -8946,6 +8947,13 @@ void CvCityAI::AI_juggleCitizens()
 		//
 		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
 		{
+			int iCurrentFood = iWorkedPlotValue <= iWorkedSpecValue
+				? getCityIndexPlot(iWorkedPlot)->getYield(YIELD_FOOD)
+				: GET_PLAYER(getOwnerINLINE()).specialistYield(eWorkedSpecialist, YIELD_FOOD);
+			int iNextFood = iUnworkedPlotValue > iUnworkedSpecValue
+				? getCityIndexPlot(iUnworkedPlot)->getYield(YIELD_FOOD)
+				: GET_PLAYER(getOwnerINLINE()).specialistYield(eUnworkedSpecialist, YIELD_FOOD);
+
 			// check to see if we're trying to remove the same job we most recently assigned
 			if (iWorkedPlotValue <= iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
 			{
@@ -8959,17 +8967,60 @@ void CvCityAI::AI_juggleCitizens()
 				// That's usually a fair assumption, but it can sometimes cause loops.
 				// The upshot is that we should try to break on the high-food tile.
 				bDone = true;
-				int iCurrentFood = iWorkedPlotValue <= iWorkedSpecValue
-					? getCityIndexPlot(iWorkedPlot)->getYield(YIELD_FOOD)
-					: GET_PLAYER(getOwnerINLINE()).specialistYield(eWorkedSpecialist, YIELD_FOOD);
-				int iNextFood = iUnworkedPlotValue > iUnworkedSpecValue
-					? getCityIndexPlot(iUnworkedPlot)->getYield(YIELD_FOOD)
-					: GET_PLAYER(getOwnerINLINE()).specialistYield(eUnworkedSpecialist, YIELD_FOOD);
 				if (iCurrentFood >= iNextFood)
 					break; // ie. don't swap to the new job.
 				// otherwise, take the new job and then we're done. (bDone == true)
 			}
 
+			// direct food comparison food: subtract value from unworked jobs if switching would make us starve.
+			// (ad hoc kludge, with duplicated code from AI_yieldValue... but better than nothing.)
+			if (iFoodPerTurn >= 0 && iFoodPerTurn + iNextFood - iCurrentFood < 0)
+			{
+				FAssert(iCurrentFood > iNextFood);
+				int iFoodLoss = iCurrentFood - iNextFood;
+				//
+				int iConsumtionPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION();
+				int iFoodLevel = getFood();
+				int iFoodToGrow = growthThreshold();
+				int iHappinessLevel = happyLevel() - unhappyLevel(0);
+
+				int iStarvingAllowance = 0;
+				if (AI_isEmphasizeAvoidGrowth() || iHappinessLevel < (isHuman() ? 0 : 1))
+				{
+					iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((7 * iFoodToGrow) / 10))));
+					iStarvingAllowance /= (iHappinessLevel+getEspionageHappinessCounter()/2 >= 0 ? 2 : 1);
+				}
+
+				int iStarvationCost = std::max(iGrowthValue*2, 52) * std::min(iFoodLoss, std::max(0, -(iFoodPerTurn-iFoodLoss + iStarvingAllowance)));;
+				FAssert(iStarvationCost >= 0);
+				// iStarvationCost units are 4x commerce. cf. AI_yieldValue.
+
+				// After subtracting the starvation cost from the best unworked job,
+				// the other unworked job might become the highest value one.
+				// So we should repeat the starvation calculation for that job too.
+				int& iBestUnworkedValue = (iUnworkedPlotValue > iUnworkedSpecValue) ? iUnworkedPlotValue : iUnworkedSpecValue;
+				iBestUnworkedValue -= iStarvationCost * 100;
+
+				int& iNextBestUnworkedValue = (iUnworkedPlotValue > iUnworkedSpecValue) ? iUnworkedPlotValue : iUnworkedSpecValue;
+				if (&iNextBestUnworkedValue != &iBestUnworkedValue && iNextBestUnworkedValue > std::min(iWorkedPlotValue, iWorkedSpecValue))
+				{
+					iNextFood = iUnworkedPlotValue > iUnworkedSpecValue
+						? getCityIndexPlot(iUnworkedPlot)->getYield(YIELD_FOOD)
+						: GET_PLAYER(getOwnerINLINE()).specialistYield(eUnworkedSpecialist, YIELD_FOOD);
+
+					iFoodLoss = iCurrentFood - iNextFood;
+
+					iStarvationCost = std::max(iGrowthValue*2, 52) * std::min(iFoodLoss, std::max(0, -(iFoodPerTurn-iFoodLoss + iStarvingAllowance)));
+					FAssert(iStarvationCost >= 0);
+
+					iNextBestUnworkedValue -= iStarvationCost * 100;
+				}
+				// (No need to check again, because there are only two possibilities for best unworked job.)
+			}
+		}
+		// Check again, now that starvation value has been taken into account.
+		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
+		{
 			// remove lowest value job
 			if (iWorkedPlotValue <= iWorkedSpecValue)
 			{
