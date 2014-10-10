@@ -9407,7 +9407,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 				for (HurryTypes i = (HurryTypes)0; !bAnyHurry && i < GC.getNumHurryInfos(); i=(HurryTypes)(i+1))
 					bAnyHurry = kOwner.canHurry(i);
 
-				if (!bAnyHurry && foodDifference(false) >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
+				if (!bAnyHurry && foodDifference(false)-(bRemove ? iFoodYield : 0) >= GC.getFOOD_CONSUMPTION_PER_POPULATION())
 				{
 					/*if (getYieldRate(YIELD_PRODUCTION) - (bRemove ? iProductionTimes100/100 : 0)  < 1 + getPopulation()/3)
 					{
@@ -9464,11 +9464,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 			int iStarvingAllowance = 0;
 			if (AI_isEmphasizeAvoidGrowth() || iHappinessLevel < (isHuman() ? 0 : 1))
 			{
-				iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((8 * iFoodToGrow) / 10))));
+				iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((7 * iFoodToGrow) / 10))));
 				iStarvingAllowance /= 1
 					+ (iHappinessLevel+getEspionageHappinessCounter()/2 >= 0 ? 1 : 0)
-					+ (iHealthLevel+getEspionageHealthCounter() > 0 ? 1 : 0)
-					+ (isHuman() && !AI_isEmphasizeAvoidGrowth() ? 1 : 0);
+					+ (iHealthLevel+getEspionageHealthCounter() > 0 ? 1 : 0);
 			}
 
 			// if still starving
@@ -9483,7 +9482,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 				// value food high, but not forced
 				//iValue += 36 * std::min(iFoodYield, -iFoodPerTurn+(bReassign ? iConsumtionPerPop : 0));
-				iValue += std::max(iGrowthValue, iBaseProductionValue*3) * std::min(iFoodYield, -iFoodPerTurn + (bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0));
+				iValue += (iHappinessLevel >= 0 ? 2: 1)*std::max(iGrowthValue, iBaseProductionValue*3) * std::min(iFoodYield, -(iFoodPerTurn + iStarvingAllowance));
 				// note. iGrowthValue only counts unworked plots - so it isn't entirely suitable for this. Hence the arbitrary minimum value.
 			}
 		}
@@ -9573,7 +9572,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					}
 
 					//bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
-					bool bBarFull = iFoodLevel + iAdjustedFoodPerTurn > iFoodToGrow * 85 / 100;
+					bool bBarFull = iFoodLevel + iAdjustedFoodPerTurn > iFoodToGrow * 80 / 100;
 
 					int iPopToGrow = std::max(0, iHappinessLevel+iFutureHappy);
 					int iGoodTiles = AI_countGoodTiles(iHealthLevel > 0, true, 50, true);
@@ -9582,8 +9581,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 					if (!bEmphasizeFood)
 					{
-						//iPopToGrow = std::min(iPopToGrow, iGoodTiles + ((bRemove) ? 1 : 0));
-						iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
+						iPopToGrow = std::min(iPopToGrow, iGoodTiles + (bRemove || bWorkerOptimization ? 1 : 0));
+						//iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
 						if (AI_isEmphasizeYield(YIELD_PRODUCTION))
 							iPopToGrow = std::min(iPopToGrow, 2); // K-Mod (replacing the food devaluation in the original code)
 						else if (AI_isEmphasizeYield(YIELD_COMMERCE))
@@ -9596,7 +9595,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					{
 						if (!bBarFull)
 						{
-							if (AI_specialYieldMultiplier(YIELD_PRODUCTION) < 50)
+							//if (AI_specialYieldMultiplier(YIELD_PRODUCTION) < 50)
 							{
 								bFillingBar = true;
 							}
