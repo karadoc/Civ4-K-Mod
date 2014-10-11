@@ -14056,33 +14056,9 @@ void CvGameTextMgr::getAttitudeString(CvWStringBuffer& szBuffer, PlayerTypes ePl
 
 	szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_TOWARDS", GC.getAttitudeInfo(kPlayer.AI_getAttitude(eTargetPlayer)).getTextKeyWide(), GET_PLAYER(eTargetPlayer).getNameKey()));
 
-	for (int iTeam = 0; iTeam < MAX_TEAMS; iTeam++)
-	{
-		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
-		if (kLoopTeam.isAlive())
-		{
-			if (NO_PLAYER != eTargetPlayer)
-			{
-				CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam());
-				if (kTargetTeam.isHasMet((TeamTypes)iTeam))
-				{
-					if (kTeam.isVassal((TeamTypes)iTeam))
-					{
-						szBuffer.append(NEWLINE);
-						szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_VASSAL_OF", kLoopTeam.getName().GetCString()));
+	// (K-Mod note: vassal information has been moved from here to a new function)
 
-						setVassalRevoltHelp(szBuffer, (TeamTypes)iTeam, kTeam.getID());
-					}
-					else if (kLoopTeam.isVassal(kTeam.getID()))
-					{
-						szBuffer.append(NEWLINE);
-						szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_MASTER_OF", kLoopTeam.getName().GetCString()));
-					}
-				}
-			}
-		}
-	}
-
+	// Attitude breakdown
 	for (iPass = 0; iPass < 2; iPass++)
 	{
 		iAttitudeChange = kPlayer.AI_getCloseBordersAttitude(eTargetPlayer);
@@ -14238,6 +14214,39 @@ void CvGameTextMgr::getAttitudeString(CvWStringBuffer& szBuffer, PlayerTypes ePl
 }
 
 // K-Mod
+void CvGameTextMgr::getVassalInfoString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer)
+{
+	FAssert(ePlayer != NO_PLAYER);
+
+	const CvTeam& kTeam = GET_TEAM(GET_PLAYER(ePlayer).getTeam());
+	//CvTeam& kTargetTeam = GET_TEAM(GET_PLAYER(eTargetPlayer).getTeam());
+
+	for (TeamTypes i = (TeamTypes)0; i < MAX_TEAMS; i=(TeamTypes)(i+1))
+	{
+		const CvTeam& kLoopTeam = GET_TEAM(i);
+		if (kLoopTeam.isAlive())
+		{
+			//if (kTargetTeam.isHasMet(i))
+
+			if (kTeam.isVassal(i))
+			{
+				szBuffer.append(NEWLINE);
+				szBuffer.append(CvWString::format(SETCOLR, TEXT_COLOR("COLOR_LIGHT_GREY")));
+				szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_VASSAL_OF", kLoopTeam.getName().GetCString()));
+				setVassalRevoltHelp(szBuffer, i, kTeam.getID());
+				szBuffer.append(ENDCOLR);
+			}
+			else if (kLoopTeam.isVassal(kTeam.getID()))
+			{
+				szBuffer.append(NEWLINE);
+				szBuffer.append(CvWString::format(SETCOLR, TEXT_COLOR("COLOR_LIGHT_GREY")));
+				szBuffer.append(gDLL->getText("TXT_KEY_ATTITUDE_MASTER_OF", kLoopTeam.getName().GetCString()));
+				szBuffer.append(ENDCOLR);
+			}
+		}
+	}
+}
+
 void CvGameTextMgr::getWarWearinessString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer, PlayerTypes eTargetPlayer) const
 {
 	FAssert(ePlayer != NO_PLAYER);
@@ -15141,6 +15150,7 @@ void CvGameTextMgr::parseLeaderHeadHelp(CvWStringBuffer &szBuffer, PlayerTypes e
 
 		if (kThisTeam.isHasMet(eOtherTeam)) // K-Mod. Allow the "other relations string" to display even if eOtherPlayer == eThisPlayer. It's useful info.
 		{
+			getVassalInfoString(szBuffer, eThisPlayer); // K-Mod
 			//getEspionageString(szBuffer, eThisPlayer, eOtherPlayer); // disabled by K-Mod. (The player should not be told exactly how many espionage points everyone has.)
 
 			if (eOtherPlayer != eThisPlayer)
