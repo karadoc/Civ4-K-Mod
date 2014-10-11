@@ -16040,7 +16040,7 @@ void CvPlayerAI::AI_doCommerce()
 		}
 	}
 
-	// K-Mod, partially based on the changes made by BETTER_BTS_AI_MOD
+	// K-Mod - evaluate potential espionage missions to determine espionage weights, even if espionage isn't flexible. (loosely based on bbai)
 	if (!GC.getGameINLINE().isOption(GAMEOPTION_NO_ESPIONAGE) && kTeam.getHasMetCivCount(true) > 0 && (isCommerceFlexible(COMMERCE_ESPIONAGE) || getCommerceRate(COMMERCE_ESPIONAGE) > 0))
 	{
 		int iEspionageTargetRate = 0;
@@ -16284,14 +16284,10 @@ void CvPlayerAI::AI_doCommerce()
 		}
 		// K-Mod end
 
-		//if economy is weak, neglect espionage spending.
-		//instead invest hammers into espionage via spies/builds
-		if (bFinancialTrouble || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || bFirstTech || !isCommerceFlexible(COMMERCE_ESPIONAGE)) // K-Mod
-		{
-			//can still get trickle espionage income
-			iEspionageTargetRate = 0;
-		}
-		else
+		// K-Mod. Only try to control espionage rate if we can also control research,
+		// and if we don't need our commerce for more important things.
+		if (isCommerceFlexible(COMMERCE_ESPIONAGE) && isCommerceFlexible(COMMERCE_RESEARCH)
+			&& !bFinancialTrouble && !bFirstTech && !AI_isDoVictoryStrategy(AI_VICTORY_CULTURE4))
 		{
 			if (!bCheapTechSteal) // K-Mod
 			{
@@ -16302,7 +16298,6 @@ void CvPlayerAI::AI_doCommerce()
 			iEspionageTargetRate *= GC.getLeaderHeadInfo(getLeaderType()).getEspionageWeight();
 			iEspionageTargetRate /= 100;
 
-			// K-Mod
 			int iCap = AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? 20 : 10;
 			iCap += bCheapTechSteal || AI_avoidScience() ? 50 : 0;
 
