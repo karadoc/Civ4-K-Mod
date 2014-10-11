@@ -11461,6 +11461,11 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] -= 10;
 		}
 
+		if (kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1 | AI_VICTORY_SPACE1))
+		{
+			m_aiSpecialYieldMultiplier[YIELD_COMMERCE] += 5;
+		}
+
 		if (kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION) > 0)
 		{
 			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += 5 + 2*kPlayer.AI_getFlavorValue(FLAVOR_PRODUCTION);
@@ -11488,7 +11493,7 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 			} */
 			// K-Mod. Don't sacrifice lots of commerce unless we're on the defensive, or this is 'total war'.
 			m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += kPlayer.AI_isDoStrategy(AI_STRATEGY_DAGGER | AI_STRATEGY_CRUSH | AI_STRATEGY_TURTLE) ? 20 : 10;
-			if (eAreaAIType != AREAAI_NEUTRAL && !kPlayer.AI_isFinancialTrouble())
+			if (eAreaAIType != AREAAI_NEUTRAL && !kPlayer.AI_isFinancialTrouble() && !kPlayer.AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS | AI_STRATEGY_GET_BETTER_UNITS))
 			{
 				const CvTeamAI& kTeam = GET_TEAM(kPlayer.getTeam());
 				bool bSeriousWar = eAreaAIType == AREAAI_DEFENSIVE || kPlayer.isBarbarian();
