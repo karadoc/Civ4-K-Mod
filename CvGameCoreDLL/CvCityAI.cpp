@@ -8881,17 +8881,15 @@ void CvCityAI::AI_juggleCitizens()
 
 			if (isWorkingPlot(i))
 			{
-				int iValue = AI_plotValue(pLoopPlot, true, false, iFoodPerTurn >= 0, iGrowthValue);
+				int iValue = AI_plotValue(pLoopPlot, false, false, iFoodPerTurn >= 0, iGrowthValue);
 				worked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(false, i)));
+				// Note: the juggling process works better if worked and unworked plots are compared in the same way.
+				// So I'm using 'bRemove = false' here even though we would be removing this worker.
 			}
 			else if (canWork(pLoopPlot))
 			{
-				int iValue = AI_plotValue(pLoopPlot, true, false, iFoodPerTurn >= 0, iGrowthValue);
+				int iValue = AI_plotValue(pLoopPlot, false, false, iFoodPerTurn >= 0, iGrowthValue);
 				unworked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(false, i)));
-				// Note: the fact that I'm using 'bRemove = true' here is a hack to make the AI's food management
-				// work a bit better. It's ugly and it doesn't work perfectly, but it's good enough for now.
-				// Ideally, the yield of plots need to be compared directly rather than evaluated independantly.
-				// Otherwise it isn't possible to know if we'll have the right amount of food.
 			}
 		}
 
@@ -9450,14 +9448,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		int iHealthLevel = goodHealth() - badHealth();
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
-		//int iExtraPopulationThatCanWork = std::min(iPopulation - range(-iHappinessLevel, 0, iPopulation) + std::min(0, extraFreeSpecialists()) , NUM_CITY_PLOTS) - getWorkingPopulation() + (bRemove ? 1 : 0);
-		int iExtraPopulationThatCanWork = std::min(NUM_CITY_PLOTS-1 - getWorkingPopulation() + (bRemove?1:0), std::max(0, extraPopulation()+(bRemove?1:0)));
-		//bool bReassign = extraPopulation() <= 0;
-		bool bReassign = !bWorkerOptimization && !bRemove && extraPopulation() == 0; // K-Mod
 
-		//int iAdjustedFoodDifference = getYieldRate(YIELD_FOOD) - (bRemove? iFoodYield : 0) + std::min(0, iHealthLevel) - (iPopulation + std::min(0, iHappinessLevel)) * iConsumtionPerPop;
-		// approximate the food that can be gained by working other plots
-		int iAdjustedFoodPerTurn = iFoodPerTurn + (iExtraPopulationThatCanWork - (bReassign ?1:0)) * std::min(iConsumtionPerPop, std::max(0, iFoodYield));
+		int iAdjustedFoodPerTurn = iFoodPerTurn - (!bWorkerOptimization && !bRemove ? std::min(iConsumtionPerPop, std::max(0, iFoodYield)) : 0);
 
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
@@ -9521,7 +9513,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						if (iHappinessLevel + kMaxHappyIncrease > 0)
 						{
 							//int iNewFoodPerTurn = iFoodPerTurn + iFoodYield - (bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0);
-							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield;
+							int iNewFoodPerTurn = iAdjustedFoodPerTurn + iFoodYield;
 							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel + iNewFoodPerTurn-1) / iNewFoodPerTurn) : MAX_INT;
 
 							// do we have hurry anger?
@@ -9531,7 +9523,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 								int iTurnsUntilAngerIsReduced = iHurryAngerTimer % flatHurryAngerLength();
 								
 								// angry population is bad but if we'll recover by the time we grow...
-								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
+								if (iTurnsUntilAngerIsReduced < iApproxTurnsToGrow)
 								{
 									iFutureHappy++;
 								}
@@ -9544,7 +9536,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 								int iTurnsUntilAngerIsReduced = iConscriptAngerTimer % flatConscriptAngerLength();
 								
 								// angry population is bad but if we'll recover by the time we grow...
-								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
+								if (iTurnsUntilAngerIsReduced < iApproxTurnsToGrow)
 								{
 									iFutureHappy++;
 								}
@@ -9557,7 +9549,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 								int iTurnsUntilAngerIsReduced = iDefyResolutionAngerTimer % flatDefyResolutionAngerLength();
 
 								// angry population is bad but if we'll recover by the time we grow...
-								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
+								if (iTurnsUntilAngerIsReduced < iApproxTurnsToGrow)
 								{
 									iFutureHappy++;
 								}
@@ -9634,9 +9626,9 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 						// rescale iGrowthValue
 						if (bFillingBar)
-							iGrowthValue = iGrowthValue * iFoodToGrow / std::max(1, 2*(iFoodToGrow + iFoodLevel + iAdjustedFoodPerTurn));
-						else if (iPopToGrow < 5)
-							iGrowthValue = iGrowthValue * (15 + 2 * iPopToGrow)/25;
+							iGrowthValue = iGrowthValue * iFoodToGrow / std::max(1, 2*iFoodToGrow + iFoodLevel + iAdjustedFoodPerTurn);
+						else if (iPopToGrow < 4)
+							iGrowthValue = iGrowthValue * (17 + 2 * iPopToGrow)/25;
 
 						if (iHealthLevel < (bFillingBar ? 0 : 1))
 							iGrowthValue = iGrowthValue * iFoodYield / (iFoodYield + 1);
@@ -9942,7 +9934,9 @@ int CvCityAI::AI_growthValuePerFood() const
 		jobs.push_back(0);
 	std::partial_sort(jobs.begin(), jobs.begin() + 3, jobs.end(), std::greater<int>());
 
-	return 2 + (jobs[0]*4 + jobs[1]*2 + jobs[2]*1) * 2 / (850 * (iConsumtionPerPop+1));
+	return 2 + (jobs[0]*4 + jobs[1]*2 + jobs[2]*1) * 2 / (700 * (iConsumtionPerPop+1));
+	// Why divide by iConsumptionPerPop+1 rather than just iConsumptionPerPop? I guess it's just an arbitrary scaling factor...
+	// (I wouldn't expect this to work well for modded values of iConsumptionPerPop anyway.)
 }
 // K-Mod end
 
