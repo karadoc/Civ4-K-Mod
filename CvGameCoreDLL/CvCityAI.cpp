@@ -1776,7 +1776,7 @@ void CvCityAI::AI_chooseProduction()
 		int iNumSpies = kPlayer.AI_totalAreaUnitAIs(pArea, UNITAI_SPY) + kPlayer.AI_getNumTrainAIUnits(UNITAI_SPY);
 		int iNeededSpies = iNumCitiesInArea / 3;
 		iNeededSpies += bPrimaryArea ? (kPlayer.getCommerceRate(COMMERCE_ESPIONAGE)+50)/100 : 0;
-		iNeededSpies *= kPlayer.AI_getEspionageWeight();
+		iNeededSpies *= GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getEspionageWeight();
 		iNeededSpies /= 100;
 		{
 			const CvCity* pCapitalCity = kPlayer.getCapitalCity();

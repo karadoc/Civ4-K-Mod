@@ -153,7 +153,8 @@ void CvPlayerAI::AI_init()
 	{
 		FAssert(getPersonalityType() != NO_LEADER);
 		AI_setPeaceWeight(GC.getLeaderHeadInfo(getPersonalityType()).getBasePeaceWeight() + GC.getGameINLINE().getSorenRandNum(GC.getLeaderHeadInfo(getPersonalityType()).getPeaceWeightRand(), "AI Peace Weight"));
-		AI_setEspionageWeight(GC.getLeaderHeadInfo(getPersonalityType()).getEspionageWeight());
+		//AI_setEspionageWeight(GC.getLeaderHeadInfo(getPersonalityType()).getEspionageWeight());
+		AI_setEspionageWeight(GC.getLeaderHeadInfo(getPersonalityType()).getEspionageWeight()*GC.getCommerceInfo(COMMERCE_ESPIONAGE).getAIWeightPercent()/100); // K-Mod. (I've changed the meaning of this value)
 		//AI_setCivicTimer(((getMaxAnarchyTurns() == 0) ? (GC.getDefineINT("MIN_REVOLUTION_TURNS") * 2) : CIVIC_CHANGE_DELAY) / 2);
 		AI_setReligionTimer(1);
 		AI_setCivicTimer((getMaxAnarchyTurns() == 0) ? 1 : 2);
@@ -2371,86 +2372,7 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		break;
 	case COMMERCE_ESPIONAGE:
 		{
-			// K-Mod version, based loosely on BBAI code.
-			int iEspBehindWeight = 0;
-			int iEspAttackWeight = 0;
-			int iAllTeamTotalPoints = 0;
-			int iTeamCount = 0;
-			int iLocalTeamCount = 0;
-			int iTotalUnspent = 0;
-			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
-			{
-				CvTeamAI& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
-
-				if (kLoopTeam.isAlive() && iTeam != getTeam() && GET_TEAM(getTeam()).isHasMet((TeamTypes)iTeam) && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
-				{
-					iAllTeamTotalPoints += kLoopTeam.getEspionagePointsEver();
-					iTeamCount++;
-
-					int iTheirPoints = kLoopTeam.getEspionagePointsAgainstTeam(getTeam());
-					int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
-					iTotalUnspent += iOurPoints;
-					int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
-					iTheirPoints -= (iTheirPoints*iAttitude)/(2*12);
-
-					if (iTheirPoints > iOurPoints && (!isHuman() || getEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam) > 0))
-					{
-						iEspBehindWeight += 1;
-						if (kLoopTeam.AI_getAttitude(getTeam()) <= ATTITUDE_CAUTIOUS
-							&& GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
-						{
-							iEspBehindWeight += 1;
-						}
-					}
-					if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
-					{
-						iLocalTeamCount++;
-						if (GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
-							|| GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
-						{
-							iEspAttackWeight += 1;
-						}
-						if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_PLAYER(kLoopTeam.getLeaderID()).getTechScore() > getTechScore())
-						{
-							iEspAttackWeight += 1;
-						}
-					}
-				}
-			}
-			if (iTeamCount == 0)
-				return iWeight / 10; // can't put points on anyone - but accumulating "total points ever" is still better than nothing.
-
-			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
-			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 16*GC.getGame().getGameTurn(), 5*iAllTeamTotalPoints);
-			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
-			// lower weight if we have spent less than a third of our total points
-			if (getCommercePercent(COMMERCE_ESPIONAGE) == 0) // ...only if we aren't explicitly trying to get espionage.
-			{
-				iWeight *= 100 - 270*std::max(iTotalUnspent - std::max(2*GET_TEAM(getTeam()).getEspionagePointsEver()/3, 8*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
-				iWeight /= 100;
-			}
-			//
-			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
-			{
-				iWeight *= 3;
-				iWeight /= 2;
-			}
-			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 2;
-
-			iWeight *= isHuman() ? 100 : AI_getEspionageWeight();
-			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 2;
-			iWeight /= 100;
-
-			if (AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || (isHuman() && getCommercePercent(COMMERCE_ESPIONAGE) >= 60))
-			{
-				iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
-			}
-			else
-			{
-				iWeight *= 100 + 2*getCommercePercent(COMMERCE_ESPIONAGE);
-				iWeight /= 110;
-			}
-			// K-Mod end
+			iWeight = AI_getEspionageWeight(); // K-Mod. (Note: AI_getEspionageWeight use to mean something else.)
 		}
 		break;
 		
@@ -2464,11 +2386,14 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 // K-Mod.
 // Commerce weight is used a lot for AI decisions, and some commerce weights calculations are quite long.
 // Some I'm going to cache some of the values and update them at the start of each turn.
-// (For now, I'm just caching city-based culture weights. Note: some calculations are still done in AI_commerceWeight)
+// Currently this function caches culture weight for each city, and espionage weight for the player.
 void CvPlayerAI::AI_updateCommerceWeights()
 {
 	PROFILE_FUNC();
 
+	//
+	// City culture weight.
+	//
 	int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
 	int iVictoryCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
 
@@ -2596,7 +2521,98 @@ void CvPlayerAI::AI_updateCommerceWeights()
 		// Note: value bonus for the first few points of culture is determined elsewhere
 		// so that we don't screw up the evaluation of limited culture bonuses such as national wonders.
 		pCity->AI_setCultureWeight(iWeight);
-	}
+	} // end culture
+
+	//
+	// Espionage weight
+	//
+	{
+		int iWeight = GC.getCommerceInfo(COMMERCE_ESPIONAGE).getAIWeightPercent();
+
+		int iEspBehindWeight = 0;
+		int iEspAttackWeight = 0;
+		int iAllTeamTotalPoints = 0;
+		int iTeamCount = 0;
+		int iLocalTeamCount = 0;
+		int iTotalUnspent = 0;
+		for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
+		{
+			CvTeamAI& kLoopTeam = GET_TEAM((TeamTypes)iTeam);
+
+			if (kLoopTeam.isAlive() && iTeam != getTeam() && GET_TEAM(getTeam()).isHasMet((TeamTypes)iTeam) && !kLoopTeam.isVassal(getTeam()) && !GET_TEAM(getTeam()).isVassal((TeamTypes)iTeam))
+			{
+				iAllTeamTotalPoints += kLoopTeam.getEspionagePointsEver();
+				iTeamCount++;
+
+				int iTheirPoints = kLoopTeam.getEspionagePointsAgainstTeam(getTeam());
+				int iOurPoints = GET_TEAM(getTeam()).getEspionagePointsAgainstTeam((TeamTypes)iTeam);
+				iTotalUnspent += iOurPoints;
+				int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
+				iTheirPoints -= (iTheirPoints*iAttitude)/(2*12);
+
+				if (iTheirPoints > iOurPoints && (!isHuman() || getEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam) > 0))
+				{
+					iEspBehindWeight += 1;
+					if (kLoopTeam.AI_getAttitude(getTeam()) <= ATTITUDE_CAUTIOUS
+						&& GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
+					{
+						iEspBehindWeight += 1;
+					}
+				}
+				if (GET_TEAM(getTeam()).AI_hasCitiesInPrimaryArea((TeamTypes)iTeam))
+				{
+					iLocalTeamCount++;
+					if (GET_TEAM(getTeam()).AI_getAttitude((TeamTypes)iTeam) <= ATTITUDE_ANNOYED
+						|| GET_TEAM(getTeam()).AI_getWarPlan((TeamTypes)iTeam) != NO_WARPLAN)
+					{
+						iEspAttackWeight += 1;
+					}
+					if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) && GET_PLAYER(kLoopTeam.getLeaderID()).getTechScore() > getTechScore())
+					{
+						iEspAttackWeight += 1;
+					}
+				}
+			}
+		}
+		if (iTeamCount == 0)
+		{
+			iWeight /= 10; // can't put points on anyone - but accumulating "total points ever" is still better than nothing.
+		}
+		else
+		{
+			iAllTeamTotalPoints /= std::max(1, iTeamCount); // Get the average total points
+			iWeight *= std::min(GET_TEAM(getTeam()).getEspionagePointsEver() + 3*iAllTeamTotalPoints + 16*GC.getGame().getGameTurn(), 5*iAllTeamTotalPoints);
+			iWeight /= std::max(1, 4 * iAllTeamTotalPoints);
+			// lower weight if we have spent less than a third of our total points
+			if (getCommercePercent(COMMERCE_ESPIONAGE) == 0) // ...only if we aren't explicitly trying to get espionage.
+			{
+				iWeight *= 100 - 270*std::max(iTotalUnspent - std::max(2*GET_TEAM(getTeam()).getEspionagePointsEver()/3, 8*GC.getGame().getGameTurn()), 0)/std::max(1, GET_TEAM(getTeam()).getEspionagePointsEver());
+				iWeight /= 100;
+			}
+			//
+			if (AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE))
+			{
+				iWeight *= 3;
+				iWeight /= 2;
+			}
+			iWeight *= 2*(iEspBehindWeight+iEspAttackWeight) + 3*iTeamCount/4 + 2;
+
+			iWeight *= isHuman() ? 100 : GC.getLeaderHeadInfo(getPersonalityType()).getEspionageWeight();
+			iWeight /= (iLocalTeamCount + iTeamCount)/2 + 2;
+			iWeight /= 100;
+
+			if (AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY) || (isHuman() && getCommercePercent(COMMERCE_ESPIONAGE) >= 60))
+			{
+				iWeight = std::max(iWeight, GC.getCommerceInfo(COMMERCE_RESEARCH).getAIWeightPercent());
+			}
+			else
+			{
+				iWeight *= 100 + 2*getCommercePercent(COMMERCE_ESPIONAGE);
+				iWeight /= 110;
+			}
+		}
+		AI_setEspionageWeight(iWeight);
+	} // end espionage
 }
 // K-Mod
 

@@ -6114,7 +6114,7 @@ void CvUnitAI::AI_spyMove()
 		iAttackChance /= kTeam.getAnyWarPlanCount(true) == 0 ? 3 : 1;
 		iAttackChance /= plot()->area()->getAreaAIType(getTeam()) == AREAAI_DEFENSIVE ? 2 : 1;
 		iAttackChance /= (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_SPACE4) || kOwner.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3)) ? 2 : 1;
-		iAttackChance *= kOwner.AI_getEspionageWeight();
+		iAttackChance *= GC.getLeaderHeadInfo(kOwner.getPersonalityType()).getEspionageWeight();
 		iAttackChance /= 100;
 		// scale for game speed
 		iAttackChance *= 100;
