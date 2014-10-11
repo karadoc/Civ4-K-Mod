@@ -867,9 +867,6 @@ void CvCityAI::AI_chooseProduction()
 	int iNeededSeaWorkers = (bMaybeWaterArea) ? AI_neededSeaWorkers() : 0;
 	int iExistingSeaWorkers = (waterArea(true) != NULL) ? kPlayer.AI_totalWaterAreaUnitAIs(waterArea(true), UNITAI_WORKER_SEA) : 0;
 
-
-	int iTargetCulturePerTurn = AI_calculateTargetCulturePerTurn();
-
 	int iAreaBestFoundValue;
 	int iNumAreaCitySites = kPlayer.AI_getNumAreaCitySites(getArea(), iAreaBestFoundValue);
 
@@ -991,7 +988,7 @@ void CvCityAI::AI_chooseProduction()
 	if( gCityLogLevel >= 3 ) logBBAI("      City %S pop %d considering new production: iProdRank %d, iBuildUnitProb %d%s, iBestBuildingValue %d", getName().GetCString(), getPopulation(), iProductionRank, iBuildUnitProb, bUnitExempt?"*":"", iBestBuildingValue);
 
 	// if we need to pop borders, then do that immediately if we have drama and can do it
-	if ((iTargetCulturePerTurn > 0) && (getCultureLevel() <= (CultureLevelTypes) 1))
+	if (getCultureLevel() <= 1)
 	{
 		// K-Mod. If our best building is a cultural building, just start building it.
 		if (eBestBuilding != NO_BUILDING && AI_countGoodTiles(true, false) > 0)
@@ -1122,7 +1119,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
     
-	if (((iTargetCulturePerTurn > 0) || (getPopulation() > 5)) && (getCommerceRate(COMMERCE_CULTURE) == 0))
+	if (getPopulation() > 5 && getCommerceRate(COMMERCE_CULTURE) == 0)
 	{
 		if( !(kPlayer.AI_isDoStrategy(AI_STRATEGY_TURTLE)) )
 		{
@@ -1503,7 +1500,7 @@ void CvCityAI::AI_chooseProduction()
 		}
 	}
 
-	if	(!bLandWar && !bAssault && (iTargetCulturePerTurn > getCommerceRate(COMMERCE_CULTURE)))
+	if	(!bLandWar && !bAssault && getCommerceRate(COMMERCE_CULTURE) == 0)
 	{
 		if (AI_chooseBuilding(BUILDINGFOCUS_CULTURE, bAggressiveAI ? 10 : 20, 0, bAggressiveAI ? 33 : 50))
 		{
@@ -5298,7 +5295,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					iTempValue += (kBuilding.getObsoleteSafeCommerceChange(COMMERCE_ESPIONAGE) * 3);
 				}
 
-				if ((getCommerceRate(COMMERCE_CULTURE) == 0) && (AI_calculateTargetCulturePerTurn() == 1))
+				//if ((getCommerceRate(COMMERCE_CULTURE) == 0) && (AI_calculateTargetCulturePerTurn() == 1))
+				if (getCommerceRate(COMMERCE_CULTURE) == 0)
 				{
 					if (iTempValue >= 3)
 					{
@@ -11116,9 +11114,10 @@ int CvCityAI::AI_countGoodTiles(bool bHealthy, bool bUnworkedOnly, int iThreshol
 	return iCount;
 }
 
+/* disabled by K-Mod. (this function always returns 1, so I've decided not to use it at all)
 int CvCityAI::AI_calculateTargetCulturePerTurn() const
 {
-	/*
+	**
 	int iTarget = 0;
 	
 	bool bAnyGoodPlotUnowned = false;
@@ -11153,9 +11152,9 @@ int CvCityAI::AI_calculateTargetCulturePerTurn() const
 		iTarget += getCommerceRate(COMMERCE_CULTURE) + 1;
 	}
 	return iTarget;
-	*/
+	**
 	return 1;
-}
+} */
 	
 int CvCityAI::AI_countGoodSpecialists(bool bHealthy) const
 {
@@ -11425,6 +11424,7 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 		}
 		m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += std::max(-25, GC.getBuildingInfo(eProductionBuilding).getFoodKept());
 		
+		/* original bts code
 		if ((GC.getBuildingInfo(eProductionBuilding).getCommerceChange(COMMERCE_CULTURE) > 0)
 			|| (GC.getBuildingInfo(eProductionBuilding).getObsoleteSafeCommerceChange(COMMERCE_CULTURE) > 0))
 		{
@@ -11440,7 +11440,7 @@ void CvCityAI::AI_updateSpecialYieldMultiplier()
 					m_aiSpecialYieldMultiplier[YIELD_PRODUCTION] += 20;					
 				}
 			}
-		}
+		} */ // emphasising production to get culture is nice, but not if it slows growth
 	}
 	
 	// non-human production value increase

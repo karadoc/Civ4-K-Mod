@@ -227,7 +227,7 @@ protected:
 	int AI_getPlotMagicValue(CvPlot* pPlot, bool bHealthy, bool bWorkerOptimization = false) const;
 	int AI_countGoodTiles(bool bHealthy, bool bUnworkedOnly, int iThreshold = 50, bool bWorkerOptimization = false) const;
 	int AI_countGoodSpecialists(bool bHealthy) const;
-	int AI_calculateTargetCulturePerTurn() const;
+	//int AI_calculateTargetCulturePerTurn() const; // disabled by K-Mod
 
 	void AI_stealPlots();
 
