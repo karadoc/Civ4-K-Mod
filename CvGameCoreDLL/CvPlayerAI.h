@@ -71,6 +71,7 @@ public:
 
 	int AI_yieldWeight(YieldTypes eYield, const CvCity* pCity = 0) const; // K-Mod added city argument
 	int AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity = NULL) const;
+	void AI_updateCommerceWeights(); // K-Mod
 
 	short AI_foundValue(int iX, int iY, int iMinRivalRange = -1, bool bStartingLoc = false) const;
 	// K-Mod. (note, I also changed AI_foundValue to return short instead of int)

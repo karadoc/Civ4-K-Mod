@@ -126,6 +126,8 @@ public:
 	int AI_yieldMultiplier(YieldTypes eYield) const;
 	void AI_updateSpecialYieldMultiplier();
 	int AI_specialYieldMultiplier(YieldTypes eYield) const;
+	int AI_getCultureWeight() const { return m_iCultureWeight; } // K-Mod
+	void AI_setCultureWeight(int iWeight) { m_iCultureWeight = iWeight; } // K-Mod
 
 	int AI_countNumBonuses(BonusTypes eBonus, bool bIncludeOurs, bool bIncludeNeutral, int iOtherCultureThreshold, bool bLand = true, bool bWater = true);
 	int AI_countNumImprovableBonuses( bool bIncludeNeutral, TechTypes eExtraTech = NO_TECH, bool bLand = true, bool bWater = false ); // BBAI
@@ -178,6 +180,7 @@ protected:
 	int m_iWorkersHave;
 
 	std::vector<int> m_aiConstructionValue; // K-Mod. (cache)
+	int m_iCultureWeight; // K-Mod
 
 	void AI_doDraft(bool bForce = false);
 	void AI_doHurry(bool bForce = false);

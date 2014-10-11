@@ -11986,6 +11986,10 @@ bool CvPlayer::setCommercePercent(CommerceTypes eIndex, int iNewValue, bool bFor
 		return false;
 
 	updateCommerce();
+	// K-Mod. For human players, update commerce weight immediately so that they can see effects on working plots, etc.
+	if (isHuman() && isTurnActive())
+		GET_PLAYER(getID()).AI_updateCommerceWeights();
+	// K-Mod end
 
 	AI_makeAssignWorkDirty();
 

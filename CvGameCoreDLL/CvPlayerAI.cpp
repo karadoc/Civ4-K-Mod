@@ -361,7 +361,9 @@ void CvPlayerAI::AI_doTurnPre()
 	//   for efficiency, I've put AI_updateCloseBorderAttitudeCache in CvTeam::doTurn rather than here.
 
 	AI_updateBonusValue();
-	// K-Mod. GP weights can take a little bit of time, so lets only do it once every 3 turns.
+	// K-Mod. Update commerce weight before calculating great person weight
+	AI_updateCommerceWeights(); // (perhaps this should be done again after AI_doCommerce, or when sliders change?)
+	// GP weights can take a little bit of time, so lets only do it once every 3 turns.
 	if (!isHuman() && (GC.getGameINLINE().getGameTurn() + AI_getStrategyRand(0))%3 == 0)
 		AI_updateGreatPersonWeights();
 	// K-Mod end
@@ -2328,101 +2330,11 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		//
 		break;
 	case COMMERCE_CULTURE:
-		// COMMERCE_CULTURE AIWeightPercent is 25% in default xml
-		// (significantly changed by bbai & K-Mod)
 		if (pCity != NULL)
 		{
-			// K-Mod
-			int iPressureFactor = pCity->culturePressureFactor();
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
-				iPressureFactor = std::min(300, iPressureFactor); // don't let culture pressure dominate our decision making about where to put our culture.
-			int iPressureWeight = iWeight * (iPressureFactor-100) / 100;
-			// K-Mod end
-
-			if (pCity->getCultureTimes100(getID()) >= 100 * GC.getGameINLINE().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1)))
-			{
-				iWeight /= 10; // was 50
-			}
-			// Slider check works for detection of whether human player is going for cultural victory
-			// (all weights changed for K-Mod)
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 60)
-			{
-				int iCultureRateRank = pCity->findCommerceRateRank(COMMERCE_CULTURE);
-				int iCulturalVictoryNumCultureCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
-				bool bC3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >= 80; // K-Mod
-				
-				// if one of the currently best cities, then focus hard
-				if (iCultureRateRank <= iCulturalVictoryNumCultureCities)
-				{
-					if (bC3)
-					{
-						// culture3
-						iWeight *= 2 + 2*iCultureRateRank + (iCultureRateRank == iCulturalVictoryNumCultureCities ? 1 : 0);
-					}
-					else
-					{
-						// culture2
-						iWeight *= 6 + iCultureRateRank;
-						iWeight /= 2;
-					}
-				}
-				// if one of the 3 close to the top, then still emphasize culture some
-				else if (iCultureRateRank <= iCulturalVictoryNumCultureCities + 3)
-				{
-					//iWeight *= bC3 ? 4 : 3;
-					iWeight *= 3;
-				}
-				else
-				{
-					iWeight *= 2;
-				}
-			}
-			else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 30)
-			{
-				iWeight *= 2;
-			}
-			// K-Mod. Devalue culture in cities which really have no use for it.
-			else if (iPressureFactor < 110)
-			{
-				// if we're not running a culture victory strategy
-				// and if we're well into the game, and this city has ample culture, and we don't have any culture pressure...
-				// then culture probably isn't worth much to us at all.
-
-				// don't reduce the value if we are still on-track for a potential cultural victory.
-				if (getCurrentEra() > GC.getNumEraInfos()/2 && pCity->getCultureLevel() >= 3)
-				{
-					int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
-					int iCultureProgress = pCity->getCultureTimes100(getID()) / std::max(1, iLegendaryCulture);
-					int iTimeProgress = 100*GC.getGameINLINE().getGameTurn() / GC.getGameINLINE().getEstimateEndTurn();
-					iTimeProgress *= iTimeProgress;
-					iTimeProgress /= 100;
-
-					if (iTimeProgress > iCultureProgress)
-					{
-						int iReductionFactor = 100 + std::min(10, 110 - iPressureFactor) * (iTimeProgress - iCultureProgress) / 2;
-						FAssert(iReductionFactor >= 100 && iReductionFactor <= 100 + 10 * 100/2);
-						iWeight *= 100;
-						iWeight /= iReductionFactor;
-					}
-				}
-			}
-			// K-Mod end
-
-			// K-Mod
-			//iWeight += (100 - pCity->plot()->calculateCulturePercent(getID()));
-			iWeight += iPressureWeight;
-			// K-Mod end
-			
-			/* original bts code
-			if (pCity->getCultureLevel() <= (CultureLevelTypes) 1)
-			{
-				iWeight = std::max(iWeight, 800);
-			} */
-			// Disabled by K-Mod. This massive weight boost messes up the evaluation of national wonders.
-			// We can have this kind of adjustment elsewhere.
-			// What we really want is a high value for having non-zero culture - the actual quantity of culture is less important.
+			iWeight = pCity->AI_getCultureWeight(); // K-Mod
+			FAssert(iWeight >= 0);
 		}
-		// pCity == NULL
 		else
 		{
 			// weight multipliers changed for K-Mod
@@ -2440,21 +2352,22 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 			}
 			iWeight *= AI_averageCulturePressure();
 			iWeight /= 100;
-		}
-		// K-Mod
-		if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
-		{
-			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
+
+			// K-Mod
+			if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
 			{
-				iWeight *= 2;
-				iWeight /= 3;
+				if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
+				{
+					iWeight *= 2;
+					iWeight /= 3;
+				}
+				else
+				{
+					iWeight /= 2;
+				}
 			}
-			else
-			{
-				iWeight /= 2;
-			}
+			// K-Mod end
 		}
-		// K-Mod end
 		break;
 	case COMMERCE_ESPIONAGE:
 		{
@@ -2547,6 +2460,145 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 
 	return iWeight;
 }
+
+// K-Mod.
+// Commerce weight is used a lot for AI decisions, and some commerce weights calculations are quite long.
+// Some I'm going to cache some of the values and update them at the start of each turn.
+// (For now, I'm just caching city-based culture weights. Note: some calculations are still done in AI_commerceWeight)
+void CvPlayerAI::AI_updateCommerceWeights()
+{
+	PROFILE_FUNC();
+
+	int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
+	int iVictoryCities = GC.getGameINLINE().culturalVictoryNumCultureCities();
+
+	// Use culture slider to decide whether a human player is going for cultural victory
+	bool bUseCultureRank = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) || getCommercePercent(COMMERCE_CULTURE) >= 40;
+	bool bC3 = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || getCommercePercent(COMMERCE_CULTURE) >= 70;
+	bool bWarPlans = GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0;
+
+	std::vector<std::pair<int,int> > city_countdown_list; // (turns, city id)
+	{
+		int iLoop;
+		CvCity* pLoopCity;
+		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			int iCountdown = -1;
+			if (bUseCultureRank)
+			{
+				//if (pLoopCity->getBaseCommerceRate(COMMERCE_CULTURE) > 100)
+				// K-Mod. Try to tell us what the culture would be like if we were to turn up the slider...
+				int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
+				iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+				iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+				iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
+			}
+			city_countdown_list.push_back(std::make_pair(iCountdown, pLoopCity->getID()));
+		}
+	}
+	std::sort(city_countdown_list.begin(), city_countdown_list.end());
+
+	FAssert(city_countdown_list.size() == getNumCities());
+	for (size_t i = 0; i < city_countdown_list.size(); i++)
+	{
+		CvCity* pCity = getCity(city_countdown_list[i].second);
+
+		// COMMERCE_CULTURE AIWeightPercent is set to 30% in the current xml.
+		int iWeight = GC.getCommerceInfo(COMMERCE_CULTURE).getAIWeightPercent();
+
+		int iPressureFactor = pCity->culturePressureFactor();
+		if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2))
+			iPressureFactor = std::min(300, iPressureFactor); // don't let culture pressure dominate our decision making about where to put our culture.
+		int iPressureWeight = iWeight * (iPressureFactor-100) / 100;
+
+		if (pCity->getCulture(getID()) >= iLegendaryCulture)
+		{
+			iWeight /= 10;
+		}
+		else if (bUseCultureRank)
+		{
+			int iCultureRateRank = i+1; // an alias, used for clarity.
+
+			// if one of the currently best cities, then focus hard
+			if (iCultureRateRank <= iVictoryCities)
+			{
+				if (bC3)
+				{
+					// culture3
+					iWeight *= 2 + 2*iCultureRateRank + (iCultureRateRank == iVictoryCities ? 1 : 0);
+				}
+				else
+				{
+					// culture2
+					iWeight *= 6 + iCultureRateRank;
+					iWeight /= 2;
+				}
+				// scale the weight, just in case we're playing on a mod with a different number of culture cities.
+				iWeight *= 3;
+				iWeight /= iVictoryCities;
+			}
+			// if one of the 3 close to the top, then still emphasize culture some
+			else if (iCultureRateRank <= iVictoryCities + 3)
+			{
+				//iWeight *= bC3 ? 4 : 3;
+				iWeight *= 3;
+			}
+			else
+			{
+				iWeight *= 2;
+			}
+		}
+		else if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) || getCommercePercent(COMMERCE_CULTURE) >= 30)
+		{
+			iWeight *= 2;
+		}
+		// K-Mod. Devalue culture in cities which really have no use for it.
+		else if (iPressureFactor < 110)
+		{
+			// if we're not running a culture victory strategy
+			// and if we're well into the game, and this city has ample culture, and we don't have any culture pressure...
+			// then culture probably isn't worth much to us at all.
+
+			// don't reduce the value if we are still on-track for a potential cultural victory.
+			if (getCurrentEra() > GC.getNumEraInfos()/2 && pCity->getCultureLevel() >= 3)
+			{
+				int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
+				int iCultureProgress = pCity->getCultureTimes100(getID()) / std::max(1, iLegendaryCulture);
+				int iTimeProgress = 100*GC.getGameINLINE().getGameTurn() / GC.getGameINLINE().getEstimateEndTurn();
+				iTimeProgress *= iTimeProgress;
+				iTimeProgress /= 100;
+
+				if (iTimeProgress > iCultureProgress)
+				{
+					int iReductionFactor = 100 + std::min(10, 110 - iPressureFactor) * (iTimeProgress - iCultureProgress) / 2;
+					FAssert(iReductionFactor >= 100 && iReductionFactor <= 100 + 10 * 100/2);
+					iWeight *= 100;
+					iWeight /= iReductionFactor;
+				}
+			}
+		}
+
+		if (bWarPlans)
+		{
+			if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
+			{
+				iWeight *= 2;
+				iWeight /= 3;
+			}
+			else
+			{
+				iWeight /= 2;
+			}
+		}
+
+		iWeight += iPressureWeight;
+
+		// Note: value bonus for the first few points of culture is determined elsewhere
+		// so that we don't screw up the evaluation of limited culture bonuses such as national wonders.
+		pCity->AI_setCultureWeight(iWeight);
+	}
+}
+// K-Mod
 
 // K-Mod: I've moved the bulk of this function into AI_foundValue_bulk...
 short CvPlayerAI::AI_foundValue(int iX, int iY, int iMinRivalRange, bool bStartingLoc) const

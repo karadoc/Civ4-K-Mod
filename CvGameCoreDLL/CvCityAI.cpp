@@ -154,6 +154,7 @@ void CvCityAI::AI_reset()
 		m_aiPlayerCloseness[iI] = 0;
 	}
 	AI_ClearConstructionValueCache(); // K-Mod
+	m_iCultureWeight = 30; // K-Mod
 
 	m_iCachePlayerClosenessTurn = -1;
 	m_iCachePlayerClosenessDistance = -1;
@@ -12290,6 +12291,10 @@ void CvCityAI::read(FDataStreamBase* pStream)
 		FAssert(m_aiConstructionValue.size() == GC.getNumBuildingClassInfos());
 		pStream->Read(GC.getNumBuildingClassInfos(), &m_aiConstructionValue[0]);
 	}
+	if (uiFlag >= 2)
+	{
+		pStream->Read(&m_iCultureWeight);
+	}
 	// K-Mod end
 }
 
@@ -12300,7 +12305,7 @@ void CvCityAI::write(FDataStreamBase* pStream)
 {
 	CvCity::write(pStream);
 
-	uint uiFlag=1;
+	uint uiFlag=2;
 	pStream->Write(uiFlag);		// flag for expansion
 
 	pStream->Write(m_iEmphasizeAvoidGrowthCount);
@@ -12327,6 +12332,7 @@ void CvCityAI::write(FDataStreamBase* pStream)
 	pStream->Write(m_iWorkersHave);
 	// K-Mod (note: cache needs to be saved, otherwise players who join mid-turn might go out of sync when the cache is used)
 	pStream->Write(GC.getNumBuildingClassInfos(), &m_aiConstructionValue[0]); // uiFlag >= 1
+	pStream->Write(m_iCultureWeight); // uiFlag >= 2
 	// K-Mod end
 }
 

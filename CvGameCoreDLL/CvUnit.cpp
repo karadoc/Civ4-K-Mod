@@ -6532,6 +6532,7 @@ bool CvUnit::greatWork()
 		}
 		*/
 		pCity->changeCultureTimes100(getOwnerINLINE(), iCultureToAdd, true, true);
+		GET_PLAYER(getOwnerINLINE()).AI_updateCommerceWeights(); // significant culture change may cause signficant weight changes.
 /**
 *** K-Mod end
 **/
