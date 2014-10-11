@@ -8821,13 +8821,11 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 void CvCityAI::AI_juggleCitizens()
 {
 	PROFILE_FUNC();
-	//bool bAvoidGrowth = AI_avoidGrowth();
-	//bool bIgnoreGrowth = AI_ignoreGrowth();
 
 	int iTotalFreeSpecialists = totalFreeSpecialists();
 
 	// count the total forced specialists
-	int iTotalForcedSpecialists = 0;
+	/* int iTotalForcedSpecialists = 0;
 	bool bForcedSpecialists = false;
 	for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 	{
@@ -8838,28 +8836,43 @@ void CvCityAI::AI_juggleCitizens()
 			iTotalForcedSpecialists += iForcedSpecialistCount;
 		}
 	}
+	FAssert(!bForcedSpecialists || iTotalForcedSpecialists > 0); */
+
+	// work out how much food deficit would be acceptable
+	int iStarvingAllowance = 0;
+	{
+		int iFoodLevel = getFood();
+		int iFoodToGrow = growthThreshold();
+		int iHappinessLevel = happyLevel() - unhappyLevel(0);
+
+		if (AI_isEmphasizeAvoidGrowth() || iHappinessLevel < (isHuman() ? 0 : 1))
+		{
+			iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((7 * iFoodToGrow) / 10))));
+			iStarvingAllowance /= (iHappinessLevel+getEspionageHappinessCounter()/2 >= 0 ? 2 : 1);
+		}
+	}
+
+	//
+
+	typedef std::pair<int, std::pair<bool, int> > PotentialJob_t; // (value, (isSpecialist, plot/specialist index))
+	// I'd like to use std::tuple<int, bool, int>, but it isn't supported by this version of C++
+	std::vector<PotentialJob_t> worked_jobs;
+	std::vector<PotentialJob_t> unworked_jobs;
+	std::vector<std::pair<bool, int> > new_jobs; // jobs assigned by this juggling process
 
 	bool bDone = false;
 	int iCycles = 0;
-
-	int iLatestPlot = -1;
-	SpecialistTypes eLatestSpecialist = NO_SPECIALIST;
-
 	do
 	{
 		int iGrowthValue = AI_growthValuePerFood(); // recalcuate on each cycle?
 		int iFoodPerTurn = getYieldRate(YIELD_FOOD) - foodConsumption();
-		int iWorkedPlot = -1;
-		int iWorkedPlotValue = INT_MAX; // lowest value worked plot
-		SpecialistTypes eWorkedSpecialist = NO_SPECIALIST;
-		int iWorkedSpecValue = INT_MAX; // lowest value worked specialist
 
-		int iUnworkedPlot = -1;
-		int iUnworkedPlotValue = 0; // highest value unworked plot
-		SpecialistTypes eUnworkedSpecialist = NO_SPECIALIST;
-		int iUnworkedSpecValue = 0; // highest value unworked specialist
-		int iUnworkedSpecForce = INT_MIN; // (force value can be negative)
+		worked_jobs.clear();
+		unworked_jobs.clear();
 
+		bool bForcedSpecAvailable = false;
+
+		// populate jobs lists.
 		for (int i = 1; i < NUM_CITY_PLOTS; i++)
 		{
 			CvPlot* pLoopPlot = getCityIndexPlot(i);
@@ -8870,197 +8883,135 @@ void CvCityAI::AI_juggleCitizens()
 			if (isWorkingPlot(i))
 			{
 				int iValue = AI_plotValue(pLoopPlot, true, false, iFoodPerTurn >= 0, iGrowthValue);
-				if (iValue < iWorkedPlotValue)
-				{
-					iWorkedPlot = i;
-					iWorkedPlotValue = iValue;
-				}
+				worked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(false, i)));
 			}
 			else if (canWork(pLoopPlot))
 			{
-				int iValue = AI_plotValue(pLoopPlot, false, false, iFoodPerTurn >= 0, iGrowthValue);
+				int iValue = AI_plotValue(pLoopPlot, true, false, iFoodPerTurn >= 0, iGrowthValue);
+				unworked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(false, i)));
 				// Note: the fact that I'm using 'bRemove = true' here is a hack to make the AI's food management
 				// work a bit better. It's ugly and it doesn't work perfectly, but it's good enough for now.
 				// Ideally, the yield of plots need to be compared directly rather than evaluated independantly.
 				// Otherwise it isn't possible to know if we'll have the right amount of food.
-				if (iValue > iUnworkedPlotValue)
-				{
-					iUnworkedPlot = i;
-					iUnworkedPlotValue = iValue;
-				}
 			}
 		}
-
-		FAssert(!bForcedSpecialists || iTotalForcedSpecialists > 0); // otherwise we will divide by zero soon...
 
 		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
 		{
 			if (getSpecialistCount(i) > getForceSpecialistCount(i))
 			{
 				int iValue = AI_specialistValue(i, true, false, iGrowthValue);
-				if (iValue <= iWorkedSpecValue)
-				{
-					eWorkedSpecialist = i;
-					iWorkedSpecValue = iValue;
-				}
+				worked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(true, i)));
 			}
 			if (isSpecialistValid(i, 1))
 			{
 				int iValue = AI_specialistValue(i, false, false, iGrowthValue);
-				int iForceValue = bForcedSpecialists ? getForceSpecialistCount(i) * 128 / iTotalForcedSpecialists - getSpecialistCount(i) * 128 / (getSpecialistPopulation()+1) : 0;
-				if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
-				{
-					eUnworkedSpecialist = i;
-					iUnworkedSpecValue = iValue;
-					iUnworkedSpecForce = iForceValue;
-				}
-			}
-		}
-		// if values are equal - prefer to work the specialist job. (perhaps a different city can use the plot)
+				unworked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(true, i)));
 
-		// make sure our free specialists get the best jobs, regardless of plot value,
-		// and don't let us reassign our free specialists onto plots
-		if (getSpecialistPopulation() <= iTotalFreeSpecialists && iWorkedSpecValue < iWorkedPlotValue)
-		{
-			if (iUnworkedSpecValue > iWorkedSpecValue && eUnworkedSpecialist != eLatestSpecialist)
-			{
-				int iWorkedForce = bForcedSpecialists && eWorkedSpecialist != NO_SPECIALIST
-					? getForceSpecialistCount(eWorkedSpecialist) * 128 / iTotalForcedSpecialists - getSpecialistCount(eWorkedSpecialist) * 128 / (getSpecialistPopulation()+1)
-					: 0;
-				if (iWorkedForce >= iUnworkedSpecForce)
-				{
-					iUnworkedSpecValue = INT_MAX; // force specialist swap
-				}
-			}
-
-			if (iUnworkedPlotValue > iUnworkedSpecValue)
-			{
-				iWorkedSpecValue = INT_MAX; // block spec removal
+				//int iForceValue = bForcedSpecialists ? getForceSpecialistCount(i) * 128 / iTotalForcedSpecialists - getSpecialistCount(i) * 128 / (getSpecialistPopulation()+1) : 0;
+				//if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
+				if (getForceSpecialistCount(i) > 0)
+					bForcedSpecAvailable = true;
 			}
 		}
 
-		if (iWorkedSpecValue < iWorkedPlotValue && iUnworkedPlotValue > iUnworkedSpecValue &&
-			getSpecialistPopulation() <= iTotalFreeSpecialists)
-		{
-			iWorkedSpecValue = INT_MAX; // block spec removal
-		}
 		//
-		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
+		std::sort(worked_jobs.begin(), worked_jobs.end());
+		std::sort(unworked_jobs.begin(), unworked_jobs.end(), std::greater<PotentialJob_t>());
+		// if values are equal - prefer to work the specialist job. (perhaps a different city can use the plot)
+		// Note: PotentialJob_t is (value, (bSpecialist, index)), and bSpecialist == true is a higher value than bSpecialist == false.
+
+		std::vector<PotentialJob_t>::iterator worked_it = worked_jobs.begin();
+		std::vector<PotentialJob_t>::iterator unworked_it = unworked_jobs.begin();
+		bool bTakeNewJob = false;
+
+		while (!bTakeNewJob && worked_it != worked_jobs.end() && unworked_it != unworked_jobs.end()
+			&& unworked_it->first > worked_it->first)
 		{
-			int iCurrentFood = iWorkedPlotValue <= iWorkedSpecValue
-				? getCityIndexPlot(iWorkedPlot)->getYield(YIELD_FOOD)
-				: GET_PLAYER(getOwnerINLINE()).specialistYield(eWorkedSpecialist, YIELD_FOOD);
-			int iNextFood = iUnworkedPlotValue > iUnworkedSpecValue
-				? getCityIndexPlot(iUnworkedPlot)->getYield(YIELD_FOOD)
-				: GET_PLAYER(getOwnerINLINE()).specialistYield(eUnworkedSpecialist, YIELD_FOOD);
+			bTakeNewJob = true; // default position is the take the new job.
 
-			// check to see if we're trying to remove the same job we most recently assigned
-			if (iWorkedPlotValue <= iWorkedSpecValue ? iWorkedPlot == iLatestPlot : eWorkedSpecialist == eLatestSpecialist)
+			// Don't take the job if it would make us starve
+			int iCurrentFood = worked_it->second.first
+				? GET_PLAYER(getOwnerINLINE()).specialistYield((SpecialistTypes)worked_it->second.second, YIELD_FOOD)
+				: getCityIndexPlot(worked_it->second.second)->getYield(YIELD_FOOD);
+
+			int iNextFood = unworked_it->second.first
+				? GET_PLAYER(getOwnerINLINE()).specialistYield((SpecialistTypes)unworked_it->second.second, YIELD_FOOD)
+				: getCityIndexPlot(unworked_it->second.second)->getYield(YIELD_FOOD);
+
+			if (iFoodPerTurn >= 0 && iFoodPerTurn + iNextFood - iCurrentFood + iStarvingAllowance < 0)
 			{
-				// ... that suggests we should break now to avoid getting into an endless loop.
-
-				//FAssertMsg(false, "circuit break"); // (for testing)
-				PROFILE("juggle citizen circuit break"); // testing... (I want to know how often this happens)
-
-				// Note: what tends to happen is that when the city evaluates stopping work on a food tile,
-				// it assumes that the citizen will go on to work some other 2-food plot.
-				// That's usually a fair assumption, but it can sometimes cause loops.
-				// The upshot is that we should try to break on the high-food tile.
-				bDone = true;
-				if (iCurrentFood >= iNextFood)
-					break; // ie. don't swap to the new job.
-				// otherwise, take the new job and then we're done. (bDone == true)
+				bTakeNewJob = false;
+			}
+			// block removal of free specialists
+			else if (worked_it->second.first && !unworked_it->second.first &&
+				getSpecialistPopulation() <= iTotalFreeSpecialists)
+			{
+				bTakeNewJob = false;
+			}
+			// if forced specialists are still available, don't allow non-forced specialists.
+			else if (bForcedSpecAvailable && unworked_it->second.first && getForceSpecialistCount((SpecialistTypes)unworked_it->second.second) == 0)
+			{
+				bTakeNewJob = false;
+			}
+			// don't remove jobs that were assigned by the juggling process, unless they are lower food.
+			else if (iCurrentFood >= iNextFood && std::find(new_jobs.begin(), new_jobs.end(), worked_it->second) != new_jobs.end())
+			{
+				bTakeNewJob = false;
 			}
 
-			// direct food comparison food: subtract value from unworked jobs if switching would make us starve.
-			// (ad hoc kludge, with duplicated code from AI_yieldValue... but better than nothing.)
-			if (iFoodPerTurn >= 0 && iFoodPerTurn + iNextFood - iCurrentFood < 0)
+			// If we can't do this job switch, check another option. Loop through worked jobs first, then unworked jobs.
+			if (!bTakeNewJob)
 			{
-				FAssert(iCurrentFood > iNextFood);
-				int iFoodLoss = iCurrentFood - iNextFood;
-				//
-				int iConsumtionPerPop = GC.getFOOD_CONSUMPTION_PER_POPULATION();
-				int iFoodLevel = getFood();
-				int iFoodToGrow = growthThreshold();
-				int iHappinessLevel = happyLevel() - unhappyLevel(0);
-
-				int iStarvingAllowance = 0;
-				if (AI_isEmphasizeAvoidGrowth() || iHappinessLevel < (isHuman() ? 0 : 1))
+				++worked_it;
+				if (worked_it == worked_jobs.end() || worked_it->first >= unworked_it->first)
 				{
-					iStarvingAllowance = std::max(0, (iFoodLevel - std::max(1, ((7 * iFoodToGrow) / 10))));
-					iStarvingAllowance /= (iHappinessLevel+getEspionageHappinessCounter()/2 >= 0 ? 2 : 1);
+					worked_it = worked_jobs.begin();
+					++unworked_it;
 				}
-
-				int iStarvationCost = std::max(iGrowthValue*2, 52) * std::min(iFoodLoss, std::max(0, -(iFoodPerTurn-iFoodLoss + iStarvingAllowance)));;
-				FAssert(iStarvationCost >= 0);
-				// iStarvationCost units are 4x commerce. cf. AI_yieldValue.
-
-				// After subtracting the starvation cost from the best unworked job,
-				// the other unworked job might become the highest value one.
-				// So we should repeat the starvation calculation for that job too.
-				int& iBestUnworkedValue = (iUnworkedPlotValue > iUnworkedSpecValue) ? iUnworkedPlotValue : iUnworkedSpecValue;
-				iBestUnworkedValue -= iStarvationCost * 100;
-
-				int& iNextBestUnworkedValue = (iUnworkedPlotValue > iUnworkedSpecValue) ? iUnworkedPlotValue : iUnworkedSpecValue;
-				if (&iNextBestUnworkedValue != &iBestUnworkedValue && iNextBestUnworkedValue > std::min(iWorkedPlotValue, iWorkedSpecValue))
-				{
-					iNextFood = iUnworkedPlotValue > iUnworkedSpecValue
-						? getCityIndexPlot(iUnworkedPlot)->getYield(YIELD_FOOD)
-						: GET_PLAYER(getOwnerINLINE()).specialistYield(eUnworkedSpecialist, YIELD_FOOD);
-
-					iFoodLoss = iCurrentFood - iNextFood;
-
-					iStarvationCost = std::max(iGrowthValue*2, 52) * std::min(iFoodLoss, std::max(0, -(iFoodPerTurn-iFoodLoss + iStarvingAllowance)));
-					FAssert(iStarvationCost >= 0);
-
-					iNextBestUnworkedValue -= iStarvationCost * 100;
-				}
-				// (No need to check again, because there are only two possibilities for best unworked job.)
 			}
+			// else we're done.
 		}
-		// Check again, now that starvation value has been taken into account.
-		if (std::max(iUnworkedPlotValue, iUnworkedSpecValue) > std::min(iWorkedPlotValue, iWorkedSpecValue))
+
+		if (!bTakeNewJob)
 		{
-			// remove lowest value job
-			if (iWorkedPlotValue <= iWorkedSpecValue)
-			{
-				FAssert(iWorkedPlot != -1);
-				setWorkingPlot(iWorkedPlot, false);
-			}
-			else
-			{
-				FAssert(eWorkedSpecialist != NO_SPECIALIST);
-				changeSpecialistCount(eWorkedSpecialist, -1);
-			}
-
-			// assign highest value job
-			// remember which job we are assigning, to use in the above check on the next cycle.
-			if (iUnworkedPlotValue > iUnworkedSpecValue)
-			{
-				FAssert(iUnworkedPlot != -1);
-				setWorkingPlot(iUnworkedPlot, true);
-
-				iLatestPlot = iUnworkedPlot;
-				eLatestSpecialist  = NO_SPECIALIST;
-			}
-			else
-			{
-				FAssert(eUnworkedSpecialist != NO_SPECIALIST);
-				changeSpecialistCount(eUnworkedSpecialist, 1);
-
-				iLatestPlot = -1;
-				eLatestSpecialist = eUnworkedSpecialist;
-			}
+			bDone = true; // no more job swaps. So we're finished.
 		}
 		else
-			bDone = true;
+		{
+			// remove the current job
+			if (worked_it->second.first)
+			{
+				FAssert(getSpecialistCount((SpecialistTypes)worked_it->second.second) > 0);
+				changeSpecialistCount((SpecialistTypes)worked_it->second.second, -1);
+			}
+			else
+			{
+				FAssert(isWorkingPlot(worked_it->second.second));
+				setWorkingPlot(worked_it->second.second, false);
+			}
+
+			// assign the new job
+			if (unworked_it->second.first)
+			{
+				FAssert(isSpecialistValid((SpecialistTypes)unworked_it->second.second, 1));
+				changeSpecialistCount((SpecialistTypes)unworked_it->second.second, 1);
+			}
+			else
+			{
+				FAssert(!isWorkingPlot(unworked_it->second.second));
+				setWorkingPlot(unworked_it->second.second, true);
+			}
+			// add the new job to the new jobs list
+			new_jobs.push_back(unworked_it->second);
+		}
 
 		if (iCycles > getPopulation() + iTotalFreeSpecialists)
 		{
 			// This isn't a serious problem. I just want to know how offen it happens.
 			//FAssertMsg(false, "juggle citizens failed to find a stable solution.");
 			PROFILE("juggle citizen failure");
-			break;
+			bDone = true;
 		}
 		iCycles++;
 	} while (!bDone);
