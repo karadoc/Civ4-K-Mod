@@ -232,7 +232,7 @@ void CvCityAI::AI_doTurn()
 	AI_doEmphasize();
 }
 
-
+// (Most of this function has been rewritten for K-Mod)
 void CvCityAI::AI_assignWorkingPlots()
 {
 	PROFILE_FUNC();
@@ -258,6 +258,10 @@ void CvCityAI::AI_assignWorkingPlots()
 			{
 				setSpecialistCount(((SpecialistTypes)iI), getMaxSpecialistCount((SpecialistTypes)iI));
 			}
+			// K-Mod. Apply the cap to forced specialist count as well.
+			if (getForceSpecialistCount((SpecialistTypes)iI) > getMaxSpecialistCount((SpecialistTypes)iI))
+				setForceSpecialistCount((SpecialistTypes)iI, getMaxSpecialistCount((SpecialistTypes)iI));
+
 			FAssert(isSpecialistValid((SpecialistTypes)iI));
 		}
 	}
@@ -282,7 +286,7 @@ void CvCityAI::AI_assignWorkingPlots()
 	// extraSpecialists() is less than extraPopulation()
 	FAssertMsg(extraSpecialists() >= 0, "extraSpecialists() is expected to be non-negative (invalid Index)");
 
-	// K-Mod. If the city is in disorder, nothing we do really matters.
+	// K-Mod. If the city is in disorder, then citizen assignment doesn't matter.
 	if (isDisorder())
 	{
 		FAssert((getWorkingPopulation() + getSpecialistPopulation()) <= (totalFreeSpecialists() + getPopulation()));
@@ -294,15 +298,11 @@ void CvCityAI::AI_assignWorkingPlots()
 		}
 		return;
 	}
-	// K-Mod end
 
 	//update the special yield multiplier to be current
 	AI_updateSpecialYieldMultiplier();
 
 	// Remove all assigned plots before automatic assignment.
-	// K-Mod note: ideally we wouldn't need to remove assigned citizens; and it would be faster not to.
-	// But unfortunately the current citizen juggling method still doesn't produce as good results as
-	// doing a complete reassign.
 	/*if (!isHuman() || isCitizensAutomated())
 	{
 		for (iI = 0; iI < NUM_CITY_PLOTS; iI++)
@@ -311,40 +311,34 @@ void CvCityAI::AI_assignWorkingPlots()
 		}
 	}*/
 
-	// if forcing specialists, try to make all future specialists of the same type
-	//bool bIsSpecialistForced = false;
-	bool bIsSpecialistForced = isSpecialistForced();
-	int iTotalForcedSpecialists = 0;
-
 	// make sure at least the forced amount of specialists are assigned
 	// K-Mod note: it's best if we don't clear all working specialists,
 	// because AI_specialistValue uses our current GPP rate in its evaluation.
+	bool bNewlyForcedSpecialists = false;
 	for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
 	{
 		int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
-		if (iForcedSpecialistCount > 0)
-		{
-			bIsSpecialistForced = true;
-			iTotalForcedSpecialists += iForcedSpecialistCount;
-		}
 
-		//if (!isHuman() || isCitizensAutomated() || (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount))
-		if (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount) // K-Mod
+		if (getSpecialistCount((SpecialistTypes)iI) < iForcedSpecialistCount)
 		{
-			setSpecialistCount(((SpecialistTypes)iI), iForcedSpecialistCount);
+			setSpecialistCount((SpecialistTypes)iI, iForcedSpecialistCount);
+			bNewlyForcedSpecialists = true;
+			FAssert(isSpecialistValid((SpecialistTypes)iI));
 		}
 	}
-	// K-Mod. If we have forced specialists, then we need to clear away all specialists - because otherwise AI_juggleCitizens won't necessarily respect the force correctly.
-	if (bIsSpecialistForced && isCitizensAutomated())
+
+	// If we added new specialists, we might need to remove something else.
+	if (bNewlyForcedSpecialists)
 	{
-		FAssert(isHuman());
-		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i=(SpecialistTypes)(i+1))
+		while (extraPopulation() < 0)
 		{
-			setSpecialistCount(i, getForceSpecialistCount(i));
+			if (!AI_removeWorstCitizen())
+			{
+				FAssertMsg(false, "failed to remove extra population");
+				break;
+			}
 		}
 	}
-	// K-Mod end
-
 
 	// do we have population unassigned
 	while (extraPopulation() > 0)
@@ -357,45 +351,6 @@ void CvCityAI::AI_assignWorkingPlots()
 		}
 	}
 
-	// if forcing specialists, assign any other specialists that we must place based on forced specialists
-	int iInitialExtraSpecialists = extraSpecialists();
-	int iExtraSpecialists = iInitialExtraSpecialists;
-	if (bIsSpecialistForced && iExtraSpecialists > 0)
-	{
-		FAssertMsg(iTotalForcedSpecialists > 0, "zero or negative total forced specialists");
-		for (iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
-		{
-			if (isSpecialistValid((SpecialistTypes)iI, 1))
-			{
-				int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
-				if (iForcedSpecialistCount > 0)
-				{
-					int iSpecialistCount = getSpecialistCount((SpecialistTypes)iI);
-					int iMaxSpecialistCount = getMaxSpecialistCount((SpecialistTypes)iI);
-
-					int iSpecialistsToAdd = ((iInitialExtraSpecialists * iForcedSpecialistCount) + (iTotalForcedSpecialists/2)) / iTotalForcedSpecialists;
-					if (iExtraSpecialists < iSpecialistsToAdd)
-					{
-						iSpecialistsToAdd = iExtraSpecialists;
-					}
-					
-					iSpecialistCount += iSpecialistsToAdd;
-					iExtraSpecialists -= iSpecialistsToAdd;
-
-					// if we cannot fit that many, then add as many as we can
-					if (iSpecialistCount > iMaxSpecialistCount && !GET_PLAYER(getOwnerINLINE()).isSpecialistValid((SpecialistTypes)iI))
-					{
-						iExtraSpecialists += iSpecialistCount - iMaxSpecialistCount;
-						iSpecialistCount = iMaxSpecialistCount;
-					}
-
-					setSpecialistCount((SpecialistTypes)iI, iSpecialistCount);
-				}
-			}
-		}
-	}
-	FAssertMsg(iExtraSpecialists >= 0, "added too many specialists");
-
 	// if we still have population to assign, assign specialists
 	while (extraSpecialists() > 0)
 	{
@@ -405,6 +360,8 @@ void CvCityAI::AI_assignWorkingPlots()
 			break;
 		}
 	}
+
+	FAssertMsg(extraSpecialists() >= 0, "added too many specialists");
 
 	// if automated, look for better choices than the current ones
 	if (!isHuman() || isCitizensAutomated())
