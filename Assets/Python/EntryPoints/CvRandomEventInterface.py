@@ -1094,8 +1094,6 @@ def canTriggerElectricCompany(argsList):
 	
 	player = gc.getPlayer(kTriggeredData.ePlayer)
 	
-	player = gc.getPlayer(kTriggeredData.ePlayer)
-
 	(loopCity, iter) = player.firstCity(false)
 
 	while(loopCity):
