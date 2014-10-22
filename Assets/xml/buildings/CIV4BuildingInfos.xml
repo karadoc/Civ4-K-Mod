@@ -5575,7 +5575,10 @@
 			<SeaPlotYieldChanges/>
 			<RiverPlotYieldChanges/>
 			<GlobalSeaPlotYieldChanges/>
-			<YieldChanges/>
+			<YieldChanges>
+				<iYield>0</iYield>
+				<iYield>2</iYield>
+			</YieldChanges>
 			<YieldModifiers>
 				<iYield>0</iYield>
 				<iYield>25</iYield>
