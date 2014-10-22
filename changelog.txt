@@ -1,6 +1,42 @@
 This is K-Mod version 1.42b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.43 changelist
+
+Game
++ Forest preserves now give +1 commerce (in addition to their previous effects).
++ German assembly plants now give +2 production (in addition to previous effects).
++ Restored the Representation civic to 'medium' upkeep.
+
++ Fixed a rare bug which sometimes caused units to get bumped off their plot when simultaneously attacking and defending (in simultaneous turns mode).
++ Fixed bug which allowed cities to momentarily exceed their specialist cap.
++ Fixed a bug which caused original ownership to be ignored when deciding whether a city can be 'liberated'.
+
++ Added bNoCache argument to AI_localDefenceStrength. This is to protect against potential OOS bugs.
++ AI_commerceWeight for culture and espionage is now cached.
++ Improved the speed of the path-finding system.
+
+AI
++ Completely redesigned the automatic assigning of worked plots and specialists in cities. (This will be an improvement for AI and for automated cities.)
++ Improved the AI's identification of culture cities aiming for a cultural victory.
++ Great artists now use the updated culture evaluation to choose when/where to create a great work (culture bombs).
++ AI espionage spending is now turned off by AI_VICTORY_CULTURE4 rather than by AI_VICTORY_CULTURE3.
++ The AI will now consider using machine guns for city defence.
++ The AI will now build assault units, transports, and attack ships are built at a more even rate, rather than focusing on one type of unit before starting the next.
++ Redesigned some sections of how the AI evaluates which units to build.
+  + There is now some basic consideration of potential promotions.
+  + Units which can't capture cities are now less likely to be built as attack units (eg. gunships).
+  + Evaluation of unit speed has been adjusted.
+  + Collateral damage immunity is now taken into account for city defenders.
+
+UI
++ The victory conditions screen now shows culture cities by team rather than by player (to match the actual conditions for victory).
++ Fixed vassal / master relationship information of humans being hidden.
++ Tweaked the format of vassal/master relationship information.
++ Added loading hint about right clicking on +/- commerce buttons.
+
+
+--
 v1.42 changelist
 
 Game
@@ -11,7 +47,7 @@ Game
 + Reduced free city culture from 6 per turn, to 4 per turn.
 + Added some plot culture dependence to CvCity::getLiberationPlayer. (This affects the availability of the option to liberate a city.)
 + Fixed a rare bug in AI_cityTradeVal which could cause a seg-fault.
-+ Changed the way AIAutoPlay disables popups, so that it is likely to break other mods.
++ Changed the way AIAutoPlay disables popups, so that it is less likely to break other mods.
 
 AI
 
