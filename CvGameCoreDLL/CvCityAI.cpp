@@ -9469,8 +9469,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						// if happy is large enough so that it will be over zero after we do the checks
 						if (iHappinessLevel + kMaxHappyIncrease > 0)
 						{
-							//int iNewFoodPerTurn = iFoodPerTurn + iFoodYield - (bReassign ? std::min(iFoodYield, iConsumtionPerPop) : 0);
-							int iNewFoodPerTurn = iAdjustedFoodPerTurn + iFoodYield;
+							int iNewFoodPerTurn = iFoodPerTurn + iFoodYield; // not including reassignment penalty, because it's better to overestimate food here.
 							int iApproxTurnsToGrow = (iNewFoodPerTurn > 0) ? ((iFoodToGrow - iFoodLevel + iNewFoodPerTurn-1) / iNewFoodPerTurn) : MAX_INT;
 
 							// do we have hurry anger?
@@ -9480,7 +9479,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 								int iTurnsUntilAngerIsReduced = iHurryAngerTimer % flatHurryAngerLength();
 								
 								// angry population is bad but if we'll recover by the time we grow...
-								if (iTurnsUntilAngerIsReduced < iApproxTurnsToGrow)
+								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
 								{
 									iFutureHappy++;
 								}
@@ -9493,7 +9492,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 								int iTurnsUntilAngerIsReduced = iConscriptAngerTimer % flatConscriptAngerLength();
 								
 								// angry population is bad but if we'll recover by the time we grow...
-								if (iTurnsUntilAngerIsReduced < iApproxTurnsToGrow)
+								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
 								{
 									iFutureHappy++;
 								}
@@ -9506,7 +9505,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 								int iTurnsUntilAngerIsReduced = iDefyResolutionAngerTimer % flatDefyResolutionAngerLength();
 
 								// angry population is bad but if we'll recover by the time we grow...
-								if (iTurnsUntilAngerIsReduced < iApproxTurnsToGrow)
+								if (iTurnsUntilAngerIsReduced <= iApproxTurnsToGrow)
 								{
 									iFutureHappy++;
 								}
@@ -9521,20 +9520,18 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						iFutureHappy += 2;
 					}
 
-					//bool bBarFull = (iFoodLevel + iFoodPerTurn /*+ aiYields[YIELD_FOOD]*/ > ((90 * iFoodToGrow) / 100));
 					bool bBarFull = iFoodLevel + iAdjustedFoodPerTurn > iFoodToGrow * 80 / 100;
 
 					int iPopToGrow = std::max(0, iHappinessLevel+iFutureHappy);
 					int iGoodTiles = AI_countGoodTiles(iHealthLevel > 0, true, 50, true);
 					iGoodTiles += AI_countGoodSpecialists(iHealthLevel > 0);
-					//iGoodTiles += bBarFull ? 0 : 1;
 
 					if (!bEmphasizeFood)
 					{
 						iPopToGrow = std::min(iPopToGrow, iGoodTiles + (bRemove || bWorkerOptimization ? 1 : 0));
 						//iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
-						if (AI_isEmphasizeYield(YIELD_PRODUCTION))
-							iPopToGrow = std::min(iPopToGrow, 2); // K-Mod (replacing the food devaluation in the original code)
+						if (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeGreatPeople())
+							iPopToGrow = std::min(iPopToGrow, 2);
 						else if (AI_isEmphasizeYield(YIELD_COMMERCE))
 							iPopToGrow = std::min(iPopToGrow, 3);
 					}
@@ -9552,35 +9549,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						}
 					}
 
-					/*if (getPopulation() < 3)
-					{
-						iPopToGrow = std::max(iPopToGrow, 3 - getPopulation());
-						iPopToGrow += 2;
-					}*/
-
 					// if we want to grow
 					// don't count growth value for tiles with nothing else to contribute.
 					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 || iCommerceValue > 0))
 					{
-						/* original bts code
-						// (range 1-25) - we want to grow more if we have a lot of growth to do
-						// factor goes up like this: 0:1, 1:8, 2:9, 3:10, 4:11, 5:13, 6:14, 7:15, 8:16, 9:17, ... 17:25
-						int iFactorPopToGrow;
-
-						if (iPopToGrow < 1 || bFillingBar)
-							iFactorPopToGrow = 20 - (10 * (iFoodLevel + iFoodPerTurn + aiYields[YIELD_FOOD])) / iFoodToGrow;
-						else if (iPopToGrow < 7)
-							iFactorPopToGrow = 17 + 3 * iPopToGrow;
-						else
-							iFactorPopToGrow = 41; */
-						// K-Mod, reduced the scale to match the building evaluation code.
-						/*if (bFillingBar)
-							iFactorPopToGrow = 11 * iFoodToGrow / std::max(1, iFoodToGrow + 2*iFoodLevel + iFoodPerTurn);
-						else if (iPopToGrow < 5)
-							iFactorPopToGrow = 11 + 2 * iPopToGrow;
-						else
-							iFactorPopToGrow = 21; */
-
 						// rescale iGrowthValue
 						if (bFillingBar)
 							iGrowthValue = iGrowthValue * iFoodToGrow / std::max(1, 2*iFoodToGrow + iFoodLevel + iAdjustedFoodPerTurn);
@@ -9597,10 +9569,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						{
 							if (bFillingBar)
 								iDevalueRate = 25 + 15 * (iFoodLevel + iAdjustedFoodPerTurn) / iFoodToGrow;
-							else if (AI_isEmphasizeGreatPeople())
-								iDevalueRate = 15;
 							else
-								iDevalueRate = 15 - std::min(5, iPopToGrow)*3/2 + (AI_isEmphasizeYield(YIELD_COMMERCE) || AI_isEmphasizeYield(YIELD_PRODUCTION) ? 2 : 0);
+								iDevalueRate = 20 - std::min(5, iPopToGrow)*2 + (AI_isEmphasizeGreatPeople() || AI_isEmphasizeYield(YIELD_COMMERCE) || AI_isEmphasizeYield(YIELD_PRODUCTION) ? 3 : 0);
 						}
 						int iBestFoodYield = std::max(0, std::min(iFoodYield, 100/std::max(1, iDevalueRate) - iAdjustedFoodPerTurn)); // maximum value for this amount of food.
 						iFoodGrowthValue = iBestFoodYield * iGrowthValue * (100 - iDevalueRate*iAdjustedFoodPerTurn) / 100;
