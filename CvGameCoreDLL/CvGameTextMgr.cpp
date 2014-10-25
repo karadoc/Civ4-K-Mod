@@ -17217,6 +17217,7 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 	//szBuffer.assign(kMission.getDescription());
 
 	int iMissionCost = kPlayer.getEspionageMissionBaseCost(eMission, eTargetPlayer, pPlot, iExtraData, pSpyUnit);
+	iMissionCost *= GET_TEAM(kPlayer.getTeam()).getNumMembers(); // K-Mod
 
 	if (kMission.isDestroyImprovement())
 	{
