@@ -4146,7 +4146,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 			if (kBuilding.getNoBonus() != NO_BONUS)
 			{
 				//iValue -= kOwner.AI_bonusVal((BonusTypes)kBuilding.getNoBonus());
-				iValue -= kOwner.AI_bonusVal((BonusTypes)kBuilding.getNoBonus(), -1); // K-Mod
+				iValue -= kOwner.AI_bonusVal((BonusTypes)kBuilding.getNoBonus(), 0); // K-Mod
 			}
 
 			if (kBuilding.getFreePromotion() != NO_PROMOTION)
