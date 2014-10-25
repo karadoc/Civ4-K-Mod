@@ -12,6 +12,7 @@
 import CvUtil
 from CvPythonExtensions import *
 from EventSigns import placeLandmark # K-Mod
+from operator import itemgetter # K-Mod (used to avoid OOS when sorting)
 
 gc = CyGlobalContext()
 localText = CyTranslator()
@@ -973,9 +974,9 @@ def applySaltpeter(argsList):
 	# EventSigns start -- Add landmark for initial plot, if there is still a yield change
 	placeLandmark(plot, sEventType, iFood, iProd, iComm, True, -1)
 	# EventSigns end
-		
+
 	iForest = gc.getInfoTypeForString('FEATURE_FOREST')
-	
+
 	listPlots = []
 	for i in range(map.numPlots()):
 		loopPlot = map.plotByIndex(i)
@@ -984,8 +985,9 @@ def applySaltpeter(argsList):
 			if iDistance > 0:
 				listPlots.append((iDistance, loopPlot))
 
-	listPlots.sort()
-	
+	#listPlots.sort()
+	listPlots.sort(key=itemgetter(0)) # K-Mod. Sorting by pointers can cause OOS.
+
 	iCount = getSaltpeterNumExtraPlots()
 	for loopPlot in listPlots:
 		if iCount == 0:
@@ -1157,12 +1159,13 @@ def applyInfluenza2(argsList):
 			if iDistance > 0:
 				listCities.append((iDistance, loopCity))
 		(loopCity, iter) = player.nextCity(iter, false)
-		
-	listCities.sort()
-	
+
+	#listCities.sort()
+	listCities.sort(key=itemgetter(0)) # K-Mod. Sorting by pointers can cause OOS.
+
 	if iNumCities > len(listCities): 
 		iNumCities = len(listCities)
-				
+
 	for i in range(iNumCities):
 		(iDist, loopCity) = listCities[i]
 		loopCity.changePopulation(-2)
@@ -1558,10 +1561,10 @@ def applyEarthDay2(argsList):
 	iEvent = argsList[0]
 	kTriggeredData = argsList[1]
 	player = gc.getPlayer(kTriggeredData.ePlayer)
-	
+
 	iCivic = CvUtil.findInfoTypeNum(gc.getCivicInfo,gc.getNumCivicInfos(),'CIVIC_ENVIRONMENTALISM')
 	iCivicOption = CvUtil.findInfoTypeNum(gc.getCivicOptionInfo,gc.getNumCivicOptionInfos(),'CIVICOPTION_ECONOMY')
-	
+
 	listPlayers = []
 	for iPlayer in range(gc.getMAX_CIV_PLAYERS()):			
 		loopPlayer = gc.getPlayer(iPlayer)
@@ -1574,12 +1577,13 @@ def applyEarthDay2(argsList):
 				if loopPlayer.canTradeItem(kTriggeredData.ePlayer, tradeData, False):
 					if (loopPlayer.getTradeDenial(kTriggeredData.ePlayer, tradeData) == DenialTypes.NO_DENIAL):
 						listPlayers.append((-loopPlayer.AI_civicValue(iCivic), iPlayer))
-						
-	listPlayers.sort()	
-	
+
+	#listPlayers.sort()
+	listPlayers.sort(key=itemgetter(0)) # K-Mod. For consistent usage of 'sort', ignore the player id.
+
 	if len(listPlayers) > 3:
 		listPlayers = listPlayers[:2]
-	
+
 	for (iValue, iPlayer) in listPlayers:
 		gc.getPlayer(iPlayer).setCivics(iCivicOption, iCivic)
 		
@@ -3117,13 +3121,14 @@ def applyCrusadeDone3(argsList):
 				if (not loopCity.isHasReligion(kTriggeredData.eReligion)):
 					iDistance = plotDistance(holyCity.getX(), holyCity.getY(), loopCity.getX(), loopCity.getY())
 					listCities.append((iDistance, loopCity))
-						
+
 				(loopCity, iter) = loopPlayer.nextCity(iter, false)
-	
-	listCities.sort()
-	
+
+	#listCities.sort()
+	listCities.sort(key=itemgetter(0)) # K-Mod. Sorting by pointers can cause OOS.
+
 	iNumCities = min(gc.getWorldInfo(gc.getMap().getWorldSize()).getDefaultPlayers(), len(listCities))
-	
+
 	for i in range(iNumCities):
 		iDistance, loopCity = listCities[i]
 		loopCity.setHasReligion(kTriggeredData.eReligion, true, true, true)	
