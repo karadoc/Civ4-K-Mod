@@ -12938,10 +12938,7 @@ bool CvUnitAI::AI_spreadCorporation()
 			if (kLoopPlayer.isAlive() && canEnterTerritory(kLoopPlayer.getTeam()) && area()->getCitiesPerPlayer((PlayerTypes)iI) > 0)
 			{
 				AttitudeTypes eAttitude = GET_TEAM(getTeam()).AI_getAttitude(kLoopPlayer.getTeam());
-				if (iI == eTargetPlayer || getTeam() == kLoopPlayer.getTeam())// || (!isHuman() && GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam())) ||
-					//(bHasHQ && kLoopPlayer.countCorporations(eCorporation) > 0 && (eAttitude >= ATTITUDE_PLEASED || kLoopPlayer.AI_corporationValue(eCorporation) <= 0)) ||
-					//(bHasHQ && (eAttitude >= ATTITUDE_FRIENDLY || kLoopPlayer.AI_corporationValue(eCorporation) <= 0)))
-					// (let eTargetPlayer decide whether it is a good idea to spread to other players)
+				if (iI == eTargetPlayer || getTeam() == kLoopPlayer.getTeam())
 				{
 					int iLoop;
 					for (CvCity* pLoopCity = kLoopPlayer.firstCity(&iLoop); pLoopCity; pLoopCity = kLoopPlayer.nextCity(&iLoop))
@@ -12956,7 +12953,7 @@ bool CvUnitAI::AI_spreadCorporation()
 							int iPathTurns;
 							if (generatePath(pLoopCity->plot(), MOVE_NO_ENEMY_TERRITORY, true, &iPathTurns))
 							{
-								int iValue = 10 + pLoopCity->getPopulation() * 2;
+								int iValue = 0;
 								iValue += bHasHQ ? 1000 : 0; // we should probably calculate the true HqValue, but I couldn't be bothered right now.
 								if (pLoopCity->getTeam() == getTeam())
 								{
@@ -12972,15 +12969,11 @@ bool CvUnitAI::AI_spreadCorporation()
 										}
 									}
 								}
+								if (iValue < 0)
+									continue;
 
-								/* if (iI == eTargetPlayer)
-									iValue *= 15;
-								else if (kLoopPlayer.getTeam() == getTeam())
-									iValue *= 10;
-								else if (GET_TEAM(kLoopPlayer.getTeam()).isVassal(getTeam()))
-									iValue *= 5;
-								else if (eAttitude >= ATTITUDE_FRIENDLY)
-									iValue *= 2; */
+								iValue += 10 + pLoopCity->getPopulation() * 2; // bigger are expected to spread corps faster, I guess.
+
 								if (iI == eTargetPlayer)
 									iValue *= 2;
 

@@ -1581,7 +1581,7 @@ void CvCityAI::AI_chooseProduction()
 	{
 		iSpreadUnitThreshold += 800 - 10*iWarSuccessRating;
 	}
-	iSpreadUnitThreshold += 300*plot()->plotCount(PUF_isUnitAIType, UNITAI_MISSIONARY, -1, getOwnerINLINE());
+	iSpreadUnitThreshold += 1000*plot()->plotCount(PUF_isUnitAIType, UNITAI_MISSIONARY, -1, getOwnerINLINE());
 
 	UnitTypes eBestSpreadUnit = NO_UNIT;
 	int iBestSpreadUnitValue = -1;
@@ -10692,9 +10692,9 @@ void CvCityAI::AI_buildGovernorChooseProduction()
 		//spread
 		int iSpreadUnitOdds = std::max(0, 80 - iBestBuildingValue*2);
 
-		int iSpreadUnitThreshold = 1200 + (bWar ? 800: 0) + iBestBuildingValue * 10;
+		int iSpreadUnitThreshold = 1200 + (bWar ? 800: 0) + iBestBuildingValue * 25;
 		// is it wrong to use UNITAI values for human players?
-		iSpreadUnitThreshold += kOwner.AI_totalAreaUnitAIs(area(), UNITAI_MISSIONARY) * 500;
+		iSpreadUnitThreshold += kOwner.AI_totalAreaUnitAIs(area(), UNITAI_MISSIONARY) * 1000;
 
 		UnitTypes eBestSpreadUnit = NO_UNIT;
 		int iBestSpreadUnitValue = -1;

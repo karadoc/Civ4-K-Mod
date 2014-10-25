@@ -13037,7 +13037,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 	int iExistingExecs = 0;
 	if (pArea)
 	{
-		iExistingExecs += bSpreadOnly ? 0 : countCorporationSpreadUnits(pArea, eCorporation, true) - 1;
+		iExistingExecs += bSpreadOnly ? 0 : std::max(0, countCorporationSpreadUnits(pArea, eCorporation, true) - 1);
 		// K-Mod note, -1 just so that we can build a spare, perhaps to airlift to another area. ("-1" execs is ok.)
 		// bSpreadOnly means that we are not calculating the value of building a new exec. Just the value of spreading.
 	}
@@ -13089,7 +13089,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 					int iCorpValue = kLoopPlayer.AI_corporationValue(eCorporation);
 					int iValue = iSpreadExternalValue;
 					iValue += (iCorpValue * iAttitudeWeight)/100;
-					if (iValue > 0 && iCorpValue > 0 && iCitiesHave == 0)
+					if (iValue > 0 && iCorpValue > 0 && iCitiesHave == 0 && iExistingExecs == 0)
 					{
 						// if the player will spread the corp themselves, then that's good for us.
 						if (iAttitudeWeight >= 50)
@@ -13111,7 +13111,7 @@ int CvPlayerAI::AI_executiveValue(CvArea* pArea, CorporationTypes eCorporation, 
 							{
 								int iExtra = kLoopPlayer.countCorporations((CorporationTypes)iCorp, pArea);
 
-								if (iExtra > 0 && iCorpValue > kLoopPlayer.AI_corporationValue((CorporationTypes)iCorp))
+								if (iExtra > 0 && iCorpValue > kLoopPlayer.AI_corporationValue((CorporationTypes)iCorp)*4/3) // (ideally, hq should be considered too)
 									iExtra /= 2;
 
 								iCitiesHave += iExtra;
