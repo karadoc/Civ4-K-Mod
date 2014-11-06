@@ -8509,83 +8509,37 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 {
 	PROFILE_FUNC();
 
-	//bool bAvoidGrowth = AI_avoidGrowth();
-	//bool bIgnoreGrowth = AI_ignoreGrowth();
 	int iGrowthValue = AI_growthValuePerFood(); // K-Mod
-	bool bIsSpecialistForced = false;
 
-	int iBestSpecialistValue = 0;
+	int iBestValue = -1;
 	SpecialistTypes eBestSpecialist = NO_SPECIALIST;
-	SpecialistTypes eBestForcedSpecialist = NO_SPECIALIST;
 
 	if (bSpecialists)
 	{
-		// count the total forced specialists
-		int iTotalForcedSpecialists = 0;
-		for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+		// K-Mod. I've deleted a lot of original BtS code for handling forced specialists and replaced it with a simpler method.
+		// We allow specialists only if they are either a forced type, or there are no forced types available.
+		// (the original code attempted to assign specialists in the same proportions to their force counts.)
+		bool bForcedSpecAvailable = false;
+		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
 		{
-			int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
-			if (iForcedSpecialistCount > 0)
-			{
-				bIsSpecialistForced = true;
-				iTotalForcedSpecialists += iForcedSpecialistCount;
-			}
+			if (getForceSpecialistCount(i) > 0 && isSpecialistValid(i, 1))
+				bForcedSpecAvailable = true;
 		}
-		
-		// if forcing any specialists, find the best one that we can still assign
-		if (bIsSpecialistForced)
-		{
-			int iBestForcedValue = MIN_INT;
-			
-			int iTotalSpecialists = 1 + getSpecialistPopulation();
-			for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
-			{
-				if (isSpecialistValid((SpecialistTypes)iI, 1))
-				{
-					int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
-					if (iForcedSpecialistCount > 0)
-					{
-						int iSpecialistCount = getSpecialistCount((SpecialistTypes)iI);
 
-						// the value is based on how close we are to our goal ratio forced/total
-						int iForcedValue = ((iForcedSpecialistCount * 128) / iTotalForcedSpecialists) -  ((iSpecialistCount * 128) / iTotalSpecialists);
-						if (iForcedValue >= iBestForcedValue)
-						{
-							int iSpecialistValue = AI_specialistValue((SpecialistTypes)iI, false, false, iGrowthValue);
-							
-							// if forced value larger, or if equal, does this specialist have a higher value
-							if (iForcedValue > iBestForcedValue || iSpecialistValue > iBestSpecialistValue)
-							{					
-								iBestForcedValue = iForcedValue;
-								iBestSpecialistValue = iSpecialistValue;
-								eBestForcedSpecialist = ((SpecialistTypes)iI);
-								eBestSpecialist = eBestForcedSpecialist;
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		// if we do not have a best specialist yet, then just find the one with the best value
-		if (eBestSpecialist == NO_SPECIALIST)
+		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
 		{
-			for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
+			if (isSpecialistValid(i, 1) && (!bForcedSpecAvailable || getForceSpecialistCount(i) > 0))
 			{
-				if (isSpecialistValid((SpecialistTypes)iI, 1))
+				int iValue = AI_specialistValue(i, false, false, iGrowthValue);
+				if (iValue > iBestValue)
 				{
-					int iValue = AI_specialistValue((SpecialistTypes)iI, false, false, iGrowthValue);
-					if (iValue >= iBestSpecialistValue)
-					{
-						iBestSpecialistValue = iValue;
-						eBestSpecialist = ((SpecialistTypes)iI);
-					}
+					iBestValue = iValue;
+					eBestSpecialist = i;
 				}
 			}
 		}
 	}
 
-	int iBestPlotValue = 0;
 	int iBestPlot = -1;
 	if (bWorkers)
 	{
@@ -8603,26 +8557,16 @@ bool CvCityAI::AI_addBestCitizen(bool bWorkers, bool bSpecialists, int* piBestPl
 						{
 							int iValue = AI_plotValue(pLoopPlot, false, false, false, iGrowthValue);
 
-							if (iValue > iBestPlotValue)
+							if (iValue > iBestValue)
 							{
-								iBestPlotValue = iValue;
+								iBestValue = iValue;
 								iBestPlot = iI;
+								eBestSpecialist = NO_SPECIALIST;
 							}
 						}
 					}
 				}
 			}
-		}
-	}
-	
-	// if we found a plot to work
-	if (iBestPlot != -1)
-	{
-		// if the best plot value is better than the best specialist, or if we forcing and we could not assign a forced specialst
-		if (iBestPlotValue > iBestSpecialistValue || (bIsSpecialistForced && eBestForcedSpecialist == NO_SPECIALIST))
-		{
-			// do not work the specialist
-			eBestSpecialist = NO_SPECIALIST;
 		}
 	}
 	
