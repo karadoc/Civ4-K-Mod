@@ -8764,6 +8764,10 @@ bool CvCityAI::AI_removeWorstCitizen(SpecialistTypes eIgnoreSpecialist)
 	if (eWorstSpecialist != NO_SPECIALIST)
 	{
 		changeSpecialistCount(eWorstSpecialist, -1);
+		// K-Mod. If we had to remove a forced specialist, reduce the force count to match what we did.
+		if (getSpecialistCount(eWorstSpecialist) < getForceSpecialistCount(eWorstSpecialist))
+			setForceSpecialistCount(eWorstSpecialist, getSpecialistCount(eWorstSpecialist));
+		//
 		return true;
 	}
 
