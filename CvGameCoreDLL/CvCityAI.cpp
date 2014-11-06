@@ -8724,20 +8724,7 @@ void CvCityAI::AI_juggleCitizens()
 	PROFILE_FUNC();
 
 	int iTotalFreeSpecialists = totalFreeSpecialists();
-
-	// count the total forced specialists
-	/* int iTotalForcedSpecialists = 0;
-	bool bForcedSpecialists = false;
-	for (int iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
-	{
-		int iForcedSpecialistCount = getForceSpecialistCount((SpecialistTypes)iI);
-		if (iForcedSpecialistCount > 0)
-		{
-			bForcedSpecialists = true;
-			iTotalForcedSpecialists += iForcedSpecialistCount;
-		}
-	}
-	FAssert(!bForcedSpecialists || iTotalForcedSpecialists > 0); */
+	bool bAnyForcedSpecs = isSpecialistForced();
 
 	// work out how much food deficit would be acceptable
 	int iStarvingAllowance = 0;
@@ -8771,9 +8758,8 @@ void CvCityAI::AI_juggleCitizens()
 		worked_jobs.clear();
 		unworked_jobs.clear();
 
-		bool bForcedSpecAvailable = false;
-
 		// populate jobs lists.
+		// evaluate plots
 		for (int i = 1; i < NUM_CITY_PLOTS; i++)
 		{
 			CvPlot* pLoopPlot = getCityIndexPlot(i);
@@ -8795,20 +8781,35 @@ void CvCityAI::AI_juggleCitizens()
 			}
 		}
 
+		// check if it is still possible to assign new specialists of types that are forced
+		bool bForcedSpecAvailable = false;
+		if (bAnyForcedSpecs)
+		{
+			for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
+			{
+				if (getForceSpecialistCount(i) > 0 && isSpecialistValid(i, 1))
+					bForcedSpecAvailable = true;
+			}
+		}
+
+		// evaluate specialists
 		for (SpecialistTypes i = (SpecialistTypes)0; i < GC.getNumSpecialistInfos(); i = (SpecialistTypes)(i+1))
 		{
 			if (getSpecialistCount(i) > getForceSpecialistCount(i))
 			{
-				int iValue = AI_specialistValue(i, true, false, iGrowthValue);
+				// don't allow unforced specialists unless none of the forced type are available
+				int iValue = bForcedSpecAvailable && getForceSpecialistCount(i) == 0
+					? 0
+					: AI_specialistValue(i, false, false, iGrowthValue);
 				worked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(true, i)));
 			}
 			if (isSpecialistValid(i, 1))
 			{
-				int iValue = AI_specialistValue(i, false, false, iGrowthValue);
+				int iValue = bForcedSpecAvailable && getForceSpecialistCount(i) == 0
+					? 0
+					: AI_specialistValue(i, false, false, iGrowthValue);
 				unworked_jobs.push_back(PotentialJob_t(iValue, std::make_pair(true, i)));
 
-				//int iForceValue = bForcedSpecialists ? getForceSpecialistCount(i) * 128 / iTotalForcedSpecialists - getSpecialistCount(i) * 128 / (getSpecialistPopulation()+1) : 0;
-				//if (iForceValue > iUnworkedSpecForce || (iForceValue >= iUnworkedSpecForce && iValue > iUnworkedSpecValue))
 				if (getForceSpecialistCount(i) > 0)
 					bForcedSpecAvailable = true;
 			}
