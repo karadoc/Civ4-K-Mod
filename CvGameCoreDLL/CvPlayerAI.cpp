@@ -3220,7 +3220,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				{
 					//iPlotValue += 10; // (original)
 					// K-Mod
-					iPlotValue += (kSet.bFinancial || kSet.bStartingLoc) ? 25 : 5;
+					iPlotValue += (kSet.bFinancial || kSet.bStartingLoc) ? 30 : 10;
 					iPlotValue += (pPlot->isRiver() ? 15 : 0);
 				}
 				if (pLoopPlot->canHavePotentialIrrigation())
@@ -3480,6 +3480,7 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 							iTempValue += pLoopPlot->getYield(YIELD_FOOD) * 9;
 							iTempValue += pLoopPlot->getYield(YIELD_PRODUCTION) * 5;
 							iTempValue += pLoopPlot->getYield(YIELD_COMMERCE) * 3;
+							iTempValue += pLoopPlot->isRiver() ? 1 : 0;
 							iTempValue += pLoopPlot->isWater() ? -2 : 0;
 							iValue += iTempValue;
 							if (iTempValue < 13)
@@ -3534,8 +3535,8 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 					iTypes += std::min(100, 100 * pArea->getNumBonuses(i) / std::max(2, iPlayers + 1));
 				}
 			}
-			// bonus for resources per player on the continent
-			iValue = iValue * (100 + 2 * iBonuses/100 + 8 * iTypes/100) / 100;
+			// bonus for resources per player on the continent. (capped to avoid overflow)
+			iValue = iValue * std::min(400, 100 + 2 * iBonuses/100 + 8 * iTypes/100) / 130;
 
 			// strong penality for a solo start. bonus for pairing with an existing solo start. penality for highly populated islands
 			iValue = iValue * (10 + std::max(-2, iPlayers ? 2 - iPlayers : -2)) / 10;
@@ -3643,8 +3644,6 @@ short CvPlayerAI::AI_foundValue_bulk(int iX, int iY, const CvFoundSettings& kSet
 				iValue *= iMinDistanceFactor;
 				iValue /= 1000;
 			}
-
-			//iValue /= 10; // (disabled by K-Mod)
 
 			if (pPlot->getBonusType() != NO_BONUS)
 			{
