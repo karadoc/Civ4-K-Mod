@@ -11896,7 +11896,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			iLimitedUnits -= range(AI_totalUnitAIs(UNITAI_COLLATERAL) - iNoLimitCollateral / 2, 0, iLimitedUnits);
 			FAssert(iLimitedUnits >= 0);
 			int iAttackUnits = std::max(1, AI_totalUnitAIs(UNITAI_ATTACK) + AI_totalUnitAIs(UNITAI_ATTACK_CITY)); // floor value is just to avoid divide-by-zero
-			FAssert(iAttackUnits >= iLimitedUnits); // this is not strictly guarenteed, but I expect it to always be true under normal playing conditions.
+			FAssert(iAttackUnits >= iLimitedUnits || iLimitedUnits <= 3); // this is not strictly guarenteed, but I expect it to always be true under normal playing conditions.
 
 			iValue *= std::max(1, iAttackUnits - iLimitedUnits);
 			iValue /= iAttackUnits;
