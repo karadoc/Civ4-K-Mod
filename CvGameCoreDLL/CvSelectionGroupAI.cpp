@@ -564,7 +564,7 @@ int CvSelectionGroupAI::AI_sumStrength(const CvPlot* pAttackedPlot, DomainTypes 
 	pUnitNode = headUnitNode();
 
 	int iBaseCollateral = bCountCollateral
-		? iBaseCollateral = estimateCollateralWeight(pAttackedPlot, pAttackedPlot->getTeam() == getTeam() ? NO_TEAM : pAttackedPlot->getTeam())
+		? estimateCollateralWeight(pAttackedPlot, pAttackedPlot->getTeam() == getTeam() ? NO_TEAM : pAttackedPlot->getTeam())
 		: 0;
 
 	while (pUnitNode != NULL)
