@@ -8724,8 +8724,14 @@ void CvCityAI::AI_juggleCitizens()
 			{
 				bTakeNewJob = false;
 			}
-			// don't remove jobs that were assigned by the juggling process, unless they are lower food.
-			else if (iCurrentFood >= iNextFood && std::find(new_jobs.begin(), new_jobs.end(), worked_it->second) != new_jobs.end())
+			// don't remove jobs that were assigned by the juggling process
+			else if (std::find(new_jobs.begin(), new_jobs.end(), worked_it->second) != new_jobs.end())
+			{
+				bTakeNewJob = false;
+			}
+			// finally, don't take the new job of a direct comparison shows that it is not more valuable than the old job.
+			// (exception, switching away from zero-value jobs, such as unwanted specialists)
+			else if (worked_it->first > 0 && AI_jobChangeValue(unworked_it->second, worked_it->second, false, false, iGrowthValue) <= 0)
 			{
 				bTakeNewJob = false;
 			}
