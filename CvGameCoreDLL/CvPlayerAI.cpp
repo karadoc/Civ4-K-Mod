@@ -365,7 +365,7 @@ void CvPlayerAI::AI_doTurnPre()
 	// K-Mod. Update commerce weight before calculating great person weight
 	AI_updateCommerceWeights(); // (perhaps this should be done again after AI_doCommerce, or when sliders change?)
 	// GP weights can take a little bit of time, so lets only do it once every 3 turns.
-	if (!isHuman() && (GC.getGameINLINE().getGameTurn() + AI_getStrategyRand(0))%3 == 0)
+	if ((GC.getGameINLINE().getGameTurn() + AI_getStrategyRand(0))%3 == 0)
 		AI_updateGreatPersonWeights();
 	// K-Mod end
 	
@@ -21210,6 +21210,9 @@ void CvPlayerAI::AI_updateGreatPersonWeights()
 	int iLoop;
 
 	m_GreatPersonWeights.clear();
+
+	if (isHuman())
+		return; // Humans can use their own reasoning for choosing specialists
 
 	for (int i = 0; i < GC.getNumSpecialistInfos(); i++)
 	{

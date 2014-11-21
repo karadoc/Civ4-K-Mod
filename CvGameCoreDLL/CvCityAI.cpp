@@ -402,148 +402,18 @@ bool CvCityAI::AI_ignoreGrowth()
 	return false;
 }
 
-// (this function has been edited heavily for K-Mod)
 // units of ~400x commerce
 int CvCityAI::AI_specialistValue(SpecialistTypes eSpecialist, bool bRemove, bool bIgnoreFood, int iGrowthValue) const
 {
-	PROFILE_FUNC();
-
-	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
-
-	short aiYields[NUM_YIELD_TYPES];
-	int iNumCities = kOwner.getNumCities();
-
-	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	// K-Mod. To reduce code duplication, this function now uses AI_jobChangeValue. (original code deleted)
+	if (bRemove)
 	{
-		aiYields[iI] = kOwner.specialistYield(eSpecialist, ((YieldTypes)iI));
-	}
-
-	short int aiCommerceYields[NUM_COMMERCE_TYPES];
-
-	for (int iI = 0; iI < NUM_COMMERCE_TYPES; iI++)
-	{
-		aiCommerceYields[iI] = kOwner.specialistCommerce(eSpecialist, (CommerceTypes)iI);
-	}
-
-	int iValue = AI_yieldValue(aiYields, aiCommerceYields, bRemove, bIgnoreFood, false, false, iGrowthValue) * 100;
-
-	int iGreatPeopleRate = GC.getSpecialistInfo(eSpecialist).getGreatPeopleRateChange(); // note: this will gain a factor of 100 in the next block
-
-	int iEmphasisCount = 0;
-	if (iGreatPeopleRate != 0)
-	{
-		int iGPPValue = 4;
-		if (AI_isEmphasizeGreatPeople())
-		{
-			//iGPPValue = isHuman() ? 30 : 20;
-			iGPPValue = 12; // K-Mod
-		}
-		else
-		{
-			if (AI_isEmphasizeYield(YIELD_COMMERCE))
-			{
-				iGPPValue = 3; // was 2
-				iEmphasisCount++;
-			}
-			if (AI_isEmphasizeYield(YIELD_FOOD))
-			{
-				iGPPValue = 3; // was 1
-				iEmphasisCount++;
-			}
-			if (AI_isEmphasizeYield(YIELD_PRODUCTION))
-			{
-				iGPPValue = 1; // was 1
-				iEmphasisCount++;
-			}
-			// note: each point of iEmphasisCount reduces the value at the end.
-		}
-
-		iGreatPeopleRate *= getTotalGreatPeopleRateModifier(); // O(100)
-		int iTempValue = iGreatPeopleRate * iGPPValue;
-
-		if (!isHuman() || AI_isEmphasizeGreatPeople())
-		{
-			int iProgress = getGreatPeopleProgress();
-			if (iProgress > 0)
-			{
-				int iThreshold = kOwner.greatPeopleThreshold();
-				//iTempValue += 100*(iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress * iProgress) / (iThreshold * iThreshold);
-				// K-Mod. The original code overflows the int when iProgress is big.
-				int iCloseBonus = iGreatPeopleRate * (isHuman() ? 1 : 4) * iGPPValue * iProgress / iThreshold;
-				iCloseBonus *= iProgress;
-				iCloseBonus /= iThreshold;
-				iTempValue += iCloseBonus;
-				// K-Mod end
-			}
-		}
-
-		// K-Mod: I've replaced the above code with a new method for targeting particular great person types.
-		if (!isHuman())
-		{
-			iTempValue *= kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass());
-			iTempValue /= 100;
-		}
-
-		// Scale based on how often this city will actually get a great person.
-		if (!AI_isEmphasizeGreatPeople())
-		{
-			int iCityRate = getGreatPeopleRate() + (bRemove ? 0 : iGreatPeopleRate/100);
-			int iHighestRate = 0;
-			int iLoop;
-			for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
-			{
-				iHighestRate = std::max(iHighestRate, pLoopCity->getGreatPeopleRate());
-			}
-			if (iHighestRate > iCityRate)
-			{
-				iTempValue *= 100;
-				iTempValue /= (2*100*(iHighestRate+8))/(iCityRate+8) - 100; // the +8 is just so that we don't block ourselves from assigning the first couple of specialists.
-			}
-			// each successive great person costs more points. So the points are effectively worth less...
-			// (note: I haven't tried to match this value decrease with the actual cost increase,
-			// because the value of the great people changes as well.)
-			iTempValue *= 100;
-			iTempValue /= 90 + 7 * kOwner.getGreatPeopleCreated(); // it would be nice if we had a flavour modifier for this.
-			//iTempValue /= 90 + kOwner.getGreatPeopleCreated() * 900/std::max(10, kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo(eSpecialist).getGreatPeopleUnitClass()));
-		}
-
-		//iTempValue /= kOwner.AI_averageGreatPeopleMultiplier();
-		// K-Mod note: ultimately, I don't think the value should be divided by the average multiplier.
-		// because more great people points is always better, regardless of what the average multiplier is.
-		// However, because of the flawed way that food is currently evaluated, I need to dilute the value of GPP
-		// so that specialists don't get value more highly than food tiles. (I hope to correct this later.)
-		iTempValue *= 100;
-		iTempValue /= (300 + kOwner.AI_averageGreatPeopleMultiplier())/4;
-
-		iTempValue /= (1 + iEmphasisCount);
-		iValue += iTempValue;
+		return -AI_jobChangeValue(std::make_pair(false, -1), std::make_pair(true, eSpecialist), bIgnoreFood, false, iGrowthValue);
 	}
 	else
 	{
-		SpecialistTypes eGenericCitizen = (SpecialistTypes) GC.getDefineINT("DEFAULT_SPECIALIST");
-
-		// are we the generic specialist?
-		if (eSpecialist == eGenericCitizen)
-		{
-			iValue *= 80; // was 60
-			iValue /= 100;
-		}
+		return AI_jobChangeValue(std::make_pair(true, eSpecialist), std::make_pair(false, -1), bIgnoreFood, false, iGrowthValue);
 	}
-
-	int iExperience = GC.getSpecialistInfo(eSpecialist).getExperience();
-	if (0 != iExperience)
-	{
-		int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
-
-		iValue += 100 * iExperience * 4;
-		if (iProductionRank <= iNumCities/2 + 1)
-		{
-			iValue += 100 * iExperience *  4;
-		}
-		iValue += (getMilitaryProductionModifier() * iExperience * 8);
-	}
-
-	return iValue;
 }
 
 // K-Mod. The value of a long-term specialist, for use in calculating great person value, and value of free specialists from buildings.
@@ -9357,7 +9227,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
 
-		int iAdjustedFoodPerTurn = iFoodPerTurn - (!bWorkerOptimization && !bRemove ? std::min(iConsumtionPerPop, std::max(0, iFoodYield)) : 0);
+		const int iAdjustedFoodPerTurn = iFoodPerTurn; // (I've stopped trying to do anything tricky with this since writing AI_jobChangeValue.)
 
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
@@ -9680,42 +9550,17 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 // units of 400x commerce
 int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool bIgnoreStarvation, int iGrowthValue) const
 {
-	PROFILE_FUNC();
-
-	short aiYields[NUM_YIELD_TYPES];
-
-	int iValue = 0;
-	int iTotalDiff = 0;
-
-	for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
+	// K-Mod. To reduce code duplication, this function now uses AI_jobChangeValue. (original code deleted)
+	FAssert(pPlot);
+	FAssert(getCityPlotIndex(pPlot) < NUM_CITY_PLOTS);
+	if (bRemove)
 	{
-		aiYields[iI] = pPlot->getYield((YieldTypes)iI);
+		return -AI_jobChangeValue(std::make_pair(false, -1), std::make_pair(false, getCityPlotIndex(pPlot)), bIgnoreFood, bIgnoreStarvation, iGrowthValue);
 	}
-
-	int iYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
-
-	// K-Mod. If the yields will change over time, that that into account.
-	// (The original bts code was similar in function.)
-	if (AI_finalImprovementYieldDifference(pPlot, aiYields))
+	else
 	{
-		int iFinalYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
-		
-		if (iFinalYieldValue > iYieldValue)
-		{
-			iYieldValue = (40 * iYieldValue + 60 * iFinalYieldValue) / 100;
-		}
-		else
-		{
-			iYieldValue = (60 * iYieldValue + 40 * iFinalYieldValue) / 100;
-		}
+		return AI_jobChangeValue(std::make_pair(false, getCityPlotIndex(pPlot)), std::make_pair(false, -1), bIgnoreFood, bIgnoreStarvation, iGrowthValue);
 	}
-	// K-Mod end
-
-	iValue += iYieldValue;
-
-	iValue += AI_specialPlotImprovementValue(pPlot);
-
-	return iValue;
 }
 
 // K-Mod. value gained by working new_job, and stopping work of old_job.
