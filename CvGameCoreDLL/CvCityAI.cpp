@@ -9692,27 +9692,12 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool b
 		aiYields[iI] = pPlot->getYield((YieldTypes)iI);
 	}
 
-	ImprovementTypes eCurrentImprovement = pPlot->getImprovementType();
-	ImprovementTypes eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
-
 	int iYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
 
-	//if (eFinalImprovement != NO_IMPROVEMENT)
-	if (eFinalImprovement != NO_IMPROVEMENT && eFinalImprovement != eCurrentImprovement) // K-Mod
+	// K-Mod. If the yields will change over time, that that into account.
+	// (The original bts code was similar in function.)
+	if (AI_finalImprovementYieldDifference(pPlot, aiYields))
 	{
-		const CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE()); // K-Mod
-		for (YieldTypes i = (YieldTypes)0; i < NUM_YIELD_TYPES; i=(YieldTypes)(i+1))
-		{
-			int iYieldDiff = pPlot->calculateImprovementYieldChange(eFinalImprovement, i, getOwnerINLINE()) - pPlot->calculateImprovementYieldChange(eCurrentImprovement, i, getOwnerINLINE());
-			// K-Mod. Try to count the 'extra yield', for financial civs. (Don't bother with golden-age bonuses.)
-			if (kOwner.getExtraYieldThreshold(i) > 0)
-			{
-				iYieldDiff += (aiYields[i] >= kOwner.getExtraYieldThreshold(i) ? -GC.getEXTRA_YIELD() : 0) + (aiYields[i]+iYieldDiff >= kOwner.getExtraYieldThreshold(i) ? GC.getEXTRA_YIELD() : 0);
-			}
-			// K-Mod end
-
-			aiYields[i] += iYieldDiff;
-		}
 		int iFinalYieldValue = AI_yieldValue(aiYields, NULL, bRemove, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue) * 100;
 		
 		if (iFinalYieldValue > iYieldValue)
@@ -9724,42 +9709,11 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool b
 			iYieldValue = (60 * iYieldValue + 40 * iFinalYieldValue) / 100;
 		}
 	}
-	// unless we are emph food (and also food not production)
-	/* if (!(AI_isEmphasizeYield(YIELD_FOOD) && !isFoodProduction()))
-		// if this plot is super bad (less than 2 food and less than combined 2 prod/commerce
-		if (!AI_potentialPlot(aiYields))
-			// undervalue it even more!
-			iYieldValue /= 16; */ // disabled by K-Mod. (what is the point of this?)
+	// K-Mod end
+
 	iValue += iYieldValue;
 
-	if (eCurrentImprovement != NO_IMPROVEMENT)
-	{
-		if (pPlot->getBonusType(getTeam()) == NO_BONUS) // XXX double-check CvGame::doFeature that the checks are the same...
-		{
-			for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
-			{
-				if (GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo((BonusTypes) iI).getTechReveal())))
-				{
-					if (GC.getImprovementInfo(eCurrentImprovement).getImprovementBonusDiscoverRand(iI) > 0)
-					{
-						//iValue += 35;
-						iValue += 20; // K-Mod (rescaling to match new yield values)
-					}
-				}
-			}
-		}
-	}
-
-	if ((eCurrentImprovement != NO_IMPROVEMENT) && (GC.getImprovementInfo(pPlot->getImprovementType()).getImprovementUpgrade() != NO_IMPROVEMENT))
-	{
-		/* original bts code
-		iValue += 200;
-		iValue -= pPlot->getUpgradeTimeLeft(eCurrentImprovement, NO_PLAYER); */
-		// K-Mod. Note: this is still just an ugly kludge, just rescaled to match the new yield value.
-		// (the goal of this is to prefer plots that are close to upgrading, but not over immediate yield differences.)
-		iValue += 100 * pPlot->getUpgradeProgress() / std::max(1, GC.getGameINLINE().getImprovementUpgradeTime(eCurrentImprovement));
-		// K-Mod
-	}
+	iValue += AI_specialPlotImprovementValue(pPlot);
 
 	return iValue;
 }
