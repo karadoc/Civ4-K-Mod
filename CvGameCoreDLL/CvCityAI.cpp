@@ -9239,6 +9239,11 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 	bool bFoodIsProduction = isFoodProduction();
 	//bool bCanPopRush = GET_PLAYER(getOwnerINLINE()).canPopRush();
 
+	// a kludge to handle the NULL yields easily.
+	short aiZeroYields[NUM_YIELD_TYPES] = {};
+	if (piYields == NULL)
+		piYields = aiZeroYields;
+
 	int iBaseProductionModifier = getBaseYieldRateModifier(YIELD_PRODUCTION);
 	int iExtraProductionModifier = getProductionModifier();
 	int iProductionTimes100 = piYields[YIELD_PRODUCTION] * (iBaseProductionModifier + iExtraProductionModifier);
@@ -9756,6 +9761,311 @@ int CvCityAI::AI_plotValue(CvPlot* pPlot, bool bRemove, bool bIgnoreFood, bool b
 		// K-Mod
 	}
 
+	return iValue;
+}
+
+// K-Mod. value gained by working new_job, and stopping work of old_job.
+// jobs are (bIsSpecialist, iIndex) pairs. iIndex < 0 indicates "no job".
+// Return value is roughly 400x commerce per turn.
+// This function replaces AI_plotValue and AI_specialistValue.
+int CvCityAI::AI_jobChangeValue(std::pair<bool, int> new_job, std::pair<bool, int> old_job, bool bIgnoreFood, bool bIgnoreStarvation, int iGrowthValue) const
+{
+	PROFILE_FUNC();
+
+	FAssert(new_job.second < 0 || (new_job.first ? new_job.second < GC.getNumSpecialistInfos() : getCityIndexPlot(new_job.second)));
+	FAssert(old_job.second < 0 || (old_job.first ? old_job.second < GC.getNumSpecialistInfos() : getCityIndexPlot(old_job.second)));
+
+	const CvPlayerAI& kOwner = GET_PLAYER(getOwnerINLINE());
+
+	int iTotalValue = 0;
+
+	// Calculate and evaluate direct changes in yields
+	short aiYieldGained[NUM_YIELD_TYPES] = {};
+	short aiYieldLost[NUM_YIELD_TYPES] = {};
+
+	for (YieldTypes i = (YieldTypes)0; i < NUM_YIELD_TYPES; i=(YieldTypes)(i+1))
+	{
+		int iYield = 0;
+		if (new_job.second >= 0)
+		{
+			iYield += new_job.first
+				? kOwner.specialistYield((SpecialistTypes)new_job.second, i)
+				: getCityIndexPlot(new_job.second)->getYield(i);
+		}
+
+		if (old_job.second >= 0)
+		{
+			iYield -= old_job.first
+				? kOwner.specialistYield((SpecialistTypes)old_job.second, i)
+				: getCityIndexPlot(old_job.second)->getYield(i);
+		}
+
+		if (iYield >= 0)
+			aiYieldGained[i] = iYield;
+		else
+			aiYieldLost[i] = -iYield;
+	}
+	int iYieldValue = 0;
+	iYieldValue += 100 * AI_yieldValue(aiYieldGained, NULL, false, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
+	iYieldValue -= 100 * AI_yieldValue(aiYieldLost, NULL, true, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
+
+	// Check whether either the old job or the new job involves an upgradable improvement. (eg. a cottage)
+	// Note, AI_finalImprovementYieldDifference will update the yield vectors.
+	bool bUpgradeYields = false;
+	if (new_job.second >= 0 && !new_job.first && AI_finalImprovementYieldDifference(getCityIndexPlot(new_job.second), aiYieldGained))
+		bUpgradeYields = true;
+
+	if (old_job.second >= 0 && !old_job.first && AI_finalImprovementYieldDifference(getCityIndexPlot(old_job.second), aiYieldLost))
+		bUpgradeYields = true;
+
+	if (bUpgradeYields)
+	{
+		for (int i = 0; i < NUM_YIELD_TYPES; i++)
+		{
+			int iYield = aiYieldGained[i] - aiYieldLost[i];
+			if (iYield >= 0)
+			{
+				aiYieldGained[i] = iYield;
+				aiYieldLost[i] = 0;
+			}
+			else
+			{
+				aiYieldGained[i] = 0;
+				aiYieldLost[i] = -iYield;
+			}
+		}
+		// Combine the old and new values in the same way as AI_plotValue. (cf. AI_plotValue)
+		int iFinalYieldValue = 0;
+		iFinalYieldValue += 100 * AI_yieldValue(aiYieldGained, NULL, false, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
+		iFinalYieldValue -= 100 * AI_yieldValue(aiYieldLost, NULL, true, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
+
+		if (iFinalYieldValue > iYieldValue)
+			iYieldValue = (40 * iYieldValue + 60 * iFinalYieldValue) / 100;
+		else
+			iYieldValue = (60 * iYieldValue + 40 * iFinalYieldValue) / 100;
+	}
+
+	iTotalValue += iYieldValue;
+	// (end of yield value)
+
+	// Special consideration of plot improvements.
+	int iImprovementsValue = 0;
+	if (new_job.second >= 0 && !new_job.first)
+	{
+		iImprovementsValue += AI_specialPlotImprovementValue(getCityIndexPlot(new_job.second));
+	}
+	if (old_job.second >= 0 && !old_job.first)
+	{
+		iImprovementsValue -= AI_specialPlotImprovementValue(getCityIndexPlot(old_job.second));
+	}
+	iTotalValue += iImprovementsValue;
+
+	// Specialst extras
+	if (new_job.first || old_job.first)
+	{
+		// Raw commerce value
+		// (plots don't give raw commerce)
+		short aiCommerceGained[NUM_COMMERCE_TYPES] = {};
+		short aiCommerceLost[NUM_COMMERCE_TYPES] = {};
+
+		for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i=(CommerceTypes)(i+1))
+		{
+			int iCommerce = 0;
+
+			if (new_job.second >= 0 && new_job.first)
+				iCommerce += kOwner.specialistCommerce((SpecialistTypes)new_job.second, i);
+
+			if (old_job.second >= 0 && old_job.first)
+				iCommerce -= kOwner.specialistCommerce((SpecialistTypes)old_job.second, i);
+
+			if (iCommerce >= 0)
+				aiCommerceGained[i] = iCommerce;
+			else
+				aiCommerceLost[i] = iCommerce;
+		}
+		iTotalValue += 100 * AI_yieldValue(NULL, aiCommerceGained, false, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
+		iTotalValue -= 100 * AI_yieldValue(NULL, aiCommerceLost, true, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
+
+		int iGPPGained = 0;
+		int iGPPLost = 0;
+		if (new_job.second >= 0 && new_job.first)
+			iGPPGained += GC.getSpecialistInfo((SpecialistTypes)new_job.second).getGreatPeopleRateChange();
+		if (old_job.second >= 0 && old_job.first)
+			iGPPLost += GC.getSpecialistInfo((SpecialistTypes)old_job.second).getGreatPeopleRateChange();
+
+		if (iGPPGained || iGPPLost)
+		{
+			int iEmphasisCount = AI_isEmphasizeYield(YIELD_COMMERCE) + AI_isEmphasizeYield(YIELD_FOOD) + AI_isEmphasizeYield(YIELD_PRODUCTION);
+
+			int iBaseValue = AI_isEmphasizeGreatPeople()
+				? 12
+				: (iEmphasisCount > 0)
+					? 3
+					: 4;
+			// note: each point of iEmphasisCount reduces the value at the end.
+
+			int iGPPValue = 0;
+
+			// Value for GPP, dependant on great person type. (Note: currently for humans, great person weights are all 100.)
+			if (iGPPGained)
+				iGPPValue += iGPPGained * iBaseValue * kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo((SpecialistTypes)new_job.second).getGreatPeopleUnitClass());
+			if (iGPPLost)
+				iGPPValue -= iGPPLost * iBaseValue * kOwner.AI_getGreatPersonWeight((UnitClassTypes)GC.getSpecialistInfo((SpecialistTypes)old_job.second).getGreatPeopleUnitClass());
+
+			iGPPValue *= getTotalGreatPeopleRateModifier();
+			iGPPValue /= 100;
+
+			// Bonus value for GPP when we're close to getting another great person
+			if (!isHuman() || AI_isEmphasizeGreatPeople())
+			{
+				int iProgress = getGreatPeopleProgress();
+				if (iProgress > 0)
+				{
+					int iThreshold = kOwner.greatPeopleThreshold();
+					int iCloseBonus = (iGPPGained - iGPPLost) * (isHuman() ? 1 : 4) * iBaseValue * iProgress / iThreshold;
+					iCloseBonus *= iProgress;
+					iCloseBonus /= iThreshold;
+					iGPPValue += iCloseBonus;
+				}
+			}
+
+			// Scale based on how often this city will actually get a great person.
+			if (!AI_isEmphasizeGreatPeople())
+			{
+				int iCityRate = getGreatPeopleRate() + iGPPGained - iGPPLost;
+				int iHighestRate = 0;
+				int iLoop;
+				for (CvCity* pLoopCity = kOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kOwner.nextCity(&iLoop))
+				{
+					iHighestRate = std::max(iHighestRate, pLoopCity->getGreatPeopleRate());
+				}
+				if (iHighestRate > iCityRate)
+				{
+					iGPPValue *= 100;
+					iGPPValue /= (2*100*(iHighestRate+8))/(iCityRate+8) - 100; // the +8 is just so that we don't block ourselves from assigning the first couple of specialists.
+				}
+				// each successive great person costs more points. So the points are effectively worth less...
+				// (note: I haven't tried to match this value decrease with the actual cost increase,
+				//  because the value of the great people changes as well.)
+				iGPPValue *= 100;
+				iGPPValue /= 90 + 7 * kOwner.getGreatPeopleCreated(); // it would be nice if we had a flavour modifier for this.
+			}
+
+			//iTempValue /= kOwner.AI_averageGreatPeopleMultiplier();
+			// K-Mod note: ultimately, I don't think the value should be divided by the average multiplier.
+			// because more great people points is always better, regardless of what the average multiplier is.
+			// However, because of the flawed way that food is currently evaluated, I need to dilute the value of GPP
+			// so that specialists don't get value more highly than food tiles. (I hope to correct this later.)
+			iGPPValue *= 100;
+			iGPPValue /= (300 + kOwner.AI_averageGreatPeopleMultiplier())/4;
+
+			iGPPValue /= (1 + iEmphasisCount);
+
+			iTotalValue += iGPPValue;
+
+			// Evaluate military experience from specialists
+			int iExperience = 0;
+			if (new_job.second >= 0 && new_job.first)
+				iExperience += GC.getSpecialistInfo((SpecialistTypes)new_job.second).getExperience();
+			if (old_job.second >= 0 && old_job.first)
+				iExperience += GC.getSpecialistInfo((SpecialistTypes)old_job.second).getExperience();
+
+			if (iExperience != 0)
+			{
+				int iProductionRank = findYieldRateRank(YIELD_PRODUCTION);
+
+				int iExperienceValue = 100 * iExperience * 4;
+				if (iProductionRank <= kOwner.getNumCities()/2 + 1)
+				{
+					iExperienceValue += 100 * iExperience *  4;
+				}
+				iExperienceValue += (getMilitaryProductionModifier() * iExperience * 8);
+
+				iTotalValue += iExperienceValue;
+			}
+		}
+
+		// Devalue generic citizens (for no specific reason). (cf. AI_specialistValue)
+		/* if (no gpp)
+		{
+			SpecialistTypes eGenericCitizen = (SpecialistTypes) GC.getDefineINT("DEFAULT_SPECIALIST");
+
+			if (eGenericCitizen != NO_SPECIALIST)
+			{
+				if (new_job.first && new_job.second == eGenericCitizen)
+					iTotalValue = iTotalValue * 80 / 100;
+				if (old_job.first && old_job.second == eGenericCitizen)
+					iTotalValue = iTotalValue * 100 / 80;
+			}
+		} */
+	}
+
+	return iTotalValue;
+}
+
+// K-Mod. Difference between current yields and yields after plot improvement reaches final upgrade.
+// piYields will have final yields added to it, and current yields subtracted.
+// Return true iff any yields are changed.
+bool CvCityAI::AI_finalImprovementYieldDifference(CvPlot* pPlot, short* piYields) const
+{
+	FAssert(pPlot);
+	FAssert(piYields);
+
+	const CvPlayer& kOwner = GET_PLAYER(getOwnerINLINE());
+	bool bAnyChange = false;
+
+	ImprovementTypes eCurrentImprovement = pPlot->getImprovementType();
+	ImprovementTypes eFinalImprovement = finalImprovementUpgrade(eCurrentImprovement);
+	if (eFinalImprovement != NO_IMPROVEMENT && eFinalImprovement != eCurrentImprovement)
+	{
+		for (YieldTypes i = (YieldTypes)0; i < NUM_YIELD_TYPES; i=(YieldTypes)(i+1))
+		{
+			int iYieldDiff = pPlot->calculateImprovementYieldChange(eFinalImprovement, i, getOwnerINLINE()) - pPlot->calculateImprovementYieldChange(eCurrentImprovement, i, getOwnerINLINE());
+			if (kOwner.getExtraYieldThreshold(i) > 0)
+				iYieldDiff += (pPlot->getYield(i) >= kOwner.getExtraYieldThreshold(i) ? -GC.getEXTRA_YIELD() : 0) + (pPlot->getYield(i)+iYieldDiff >= kOwner.getExtraYieldThreshold(i) ? GC.getEXTRA_YIELD() : 0);
+
+			if (iYieldDiff != 0)
+			{
+				bAnyChange = true;
+				piYields[i] += iYieldDiff;
+			}
+		}
+	}
+	return bAnyChange;
+}
+
+// K-Mod. Value for working a plot in addition to its yields.
+// (Returns ~400x commerce per turn.)
+int CvCityAI::AI_specialPlotImprovementValue(CvPlot* pPlot) const
+{
+	FAssert(pPlot);
+	int iValue = 0;
+
+	ImprovementTypes eImprovement = pPlot->getImprovementType();
+
+	if (eImprovement != NO_IMPROVEMENT)
+	{
+		if (GC.getImprovementInfo(eImprovement).getImprovementUpgrade() != NO_IMPROVEMENT)
+		{
+			// Prefer plots that are close to upgrading, but not over immediate yield differences. (kludge)
+			iValue += 100 * pPlot->getUpgradeProgress() / std::max(1, GC.getGameINLINE().getImprovementUpgradeTime(eImprovement));
+		}
+
+		// small value bonus for the possibility of popping new resources. (cf. CvGame::doFeature)
+		if (pPlot->getBonusType(getTeam()) == NO_BONUS)
+		{
+			for (BonusTypes i = (BonusTypes)0; i < GC.getNumBonusInfos(); i=(BonusTypes)(i+1))
+			{
+				if (GET_TEAM(getTeam()).isHasTech((TechTypes)(GC.getBonusInfo(i).getTechReveal())))
+				{
+					if (GC.getImprovementInfo(eImprovement).getImprovementBonusDiscoverRand(i) > 0)
+					{
+						iValue += 20;
+					}
+				}
+			}
+		}
+	}
 	return iValue;
 }
 
