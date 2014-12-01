@@ -2132,7 +2132,7 @@ int CvTeam::getAtWarCount(bool bIgnoreMinors, bool bIgnoreVassals) const
 					if (isAtWar((TeamTypes)iI))
 					{
 						FAssert(iI != getID());
-						FAssert(!(AI_isSneakAttackPreparing((TeamTypes)iI)));
+						FAssert(!(AI_isSneakAttackPreparing((TeamTypes)iI))); // K-Mod note. This assert can fail when in the process of declaring war
 						iCount++;
 					}
 				}
@@ -4428,7 +4428,7 @@ TeamTypes CvTeam::getMasterTeam() const
 {
 	for (TeamTypes i = (TeamTypes)0; i < MAX_CIV_TEAMS; i=(TeamTypes)(i+1))
 	{
-		if (isVassal(i))
+		if (isVassal(i) && GET_TEAM(i).isAlive())
 			return i;
 	}
 	return getID();

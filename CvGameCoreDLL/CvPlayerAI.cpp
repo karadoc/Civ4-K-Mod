@@ -9911,7 +9911,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 				if (iGoldData > 0)
 				{
 					pGoldNode->m_data.m_iData = iGoldData;
-					iValueForThem += (iGoldData * AI_goldTradeValuePercent()) / 100;
+					iValueForThem += (iGoldData * iGoldValuePercent) / 100;
 					pOurCounter->insertAtEnd(pGoldNode->m_data);
 					pGoldNode = NULL;
 				}
@@ -11448,7 +11448,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 			{
 				if (!(GC.getUnitInfo(eUnit).isNoDefensiveBonus()))
 				{
-					if (GC.getUnitInfo(eUnit).getCityDefenseModifier() > 0) // (K-Mod note: I'm considering removing this condition)
+					if (GC.getUnitInfo(eUnit).getCityDefenseModifier() > 0)
 					{
 						bValid = true;
 					}
