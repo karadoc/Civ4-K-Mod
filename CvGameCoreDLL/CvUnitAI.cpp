@@ -1987,15 +1987,15 @@ void CvUnitAI::AI_workerMove()
 		}
 	}
 
-	/*if (AI_retreatToCity(false, true))
-	{
-		return;
-	}*/ // disabled by K-Mod (redundant)
-
-	if (AI_retreatToCity())
+	if (AI_retreatToCity(false, true))
 	{
 		return;
 	}
+
+	/*if (AI_retreatToCity())
+	{
+		return;
+	}*/ // disabled by K-Mod (redundant)
 
 	// K-Mod
 	if (AI_handleStranded())
@@ -4837,7 +4837,8 @@ void CvUnitAI::AI_missionaryMove()
 		}
 	}
 
-	if (AI_retreatToCity())
+	//if (AI_retreatToCity())
+	if (AI_retreatToCity(false, true)) // K-Mod
 	{
 		return;
 	}
