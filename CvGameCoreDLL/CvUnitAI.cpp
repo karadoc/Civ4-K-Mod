@@ -3837,6 +3837,14 @@ void CvUnitAI::AI_pillageMove()
 		return;
 	}*/
 
+	// K-Mod. Pillage units should focus on pillaging, when possible.
+	// note: having 2 moves doesn't necessarily mean we can move & pillage in the same turn, but it's a good enough approximation.
+	if (AI_pillageRange(getGroup()->maxMoves() > 1 ? 1 : 0, 11))
+	{
+		return;
+	}
+	// K-Mod end
+
 	if (AI_anyAttack(1, 65))
 	{
 		return;
