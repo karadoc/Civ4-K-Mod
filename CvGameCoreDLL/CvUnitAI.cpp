@@ -20416,22 +20416,15 @@ bool CvUnitAI::AI_travelToUpgradeCity()
 }
 
 // Returns true if a mission was pushed...
-bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
+// K-Mod. The bAirlift parameter now means that airlift cities will be priotised, but other cities are still accepted.
+bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bPrioritiseAirlift, int iMaxPath)
 {
 	PROFILE_FUNC();
 
-	CvCity* pCity;
-	CvCity* pLoopCity;
-	CvPlot* pBestPlot = NULL;
-	int iPathTurns;
-	int iValue;
-	int iBestValue = MAX_INT;
-	int iPass;
-	int iLoop;
-	int iCurrentDanger = GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot());
+	//int iCurrentDanger = GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot());
+	int iCurrentDanger = getGroup()->alwaysInvisible() ? 0 : GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(plot()); // K-Mod
 
-	pCity = plot()->getPlotCity();
-
+	CvCity* pCity = plot()->getPlotCity();
 
 	if (0 == iCurrentDanger)
 	{
@@ -20441,9 +20434,9 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 			{
 				if (!bPrimary || GET_PLAYER(getOwnerINLINE()).AI_isPrimaryArea(pCity->area()))
 				{
-					if (!bAirlift || (pCity->getMaxAirlift() > 0))
+					if (!bPrioritiseAirlift || (pCity->getMaxAirlift() > 0))
 					{
-						if (!(pCity->plot()->isVisibleEnemyUnit(this)))
+						//if (!(pCity->plot()->isVisibleEnemyUnit(this)))
 						{
 							getGroup()->pushMission(MISSION_SKIP);
 							return true;
@@ -20460,73 +20453,60 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 	// I've changed it so that if the unit can fight, the pass 0 just skipped (because it's the same as the pass 1)
 	// and pass 2 is always skipped because it's a useless test.
 	// -- and I've renumbered the passes.
-	for (iPass = (getGroup()->canDefend() ? 1 : 0) ; iPass < 3; iPass++)
+	CvPlot* pBestPlot = NULL;
+	int iShortestPath = MAX_INT;
+
+	for (int iPass = (getGroup()->canDefend() ? 1 : 0) ; iPass < 3; iPass++)
 	{
-		for (pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
+		int iLoop;
+		bool bNeedsAirlift = false;
+		for (CvCity* pLoopCity = GET_PLAYER(getOwnerINLINE()).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwnerINLINE()).nextCity(&iLoop))
 		{
-			if (AI_plotValid(pLoopCity->plot()))
+			if (!AI_plotValid(pLoopCity->plot()))
+				continue;
+
+			if (bPrimary && !GET_PLAYER(getOwnerINLINE()).AI_isPrimaryArea(pLoopCity->area()))
+				continue;
+
+			if (bNeedsAirlift && pLoopCity->getMaxAirlift() == 0)
+				continue;
+
+			int iPathTurns;
+			if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), (iPass >= 2 ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, iMaxPath)) // was iPass >= 3
 			{
-				if (!bPrimary || GET_PLAYER(getOwnerINLINE()).AI_isPrimaryArea(pLoopCity->area()))
+				if (iPathTurns <= iMaxPath)
 				{
-					if (!bAirlift || (pLoopCity->getMaxAirlift() > 0))
+					// Water units can't defend a city
+					// Any unthreatened city acceptable on 0th pass, solves problem where sea units
+					// would oscillate in and out of threatened city because they had iCurrentDanger = 0
+					// on turns outside city
+
+					bool bCheck = (iPass > 0) || (getGroup()->canDefend());
+					if( !bCheck )
 					{
-						if (!(pLoopCity->plot()->isVisibleEnemyUnit(this)))
+						int iLoopDanger = GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pLoopCity->plot());
+						bCheck = (iLoopDanger == 0) || (iLoopDanger < iCurrentDanger);
+					}
+
+					if( bCheck )
+					{
+						/* iValue = iPathTurns;
+
+						if (AI_getUnitAIType() == UNITAI_SETTLER_SEA)
 						{
-							// BBAI efficiency: check area for land units before generating path
-							if( !bAirlift && (getDomainType() == DOMAIN_LAND) && (pLoopCity->area() != area()) && !(getGroup()->canMoveAllTerrain()) )
-							{
-								continue;
-							}
+							iValue *= 1 + std::max(0, GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(pLoopCity->area(), UNITAI_SETTLE) - GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(pLoopCity->area(), UNITAI_SETTLER_SEA));
+						} */ // disabled by K-Mod. This was backwards, and it's a bit kludgish having it in here anyway.
 
-							if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), (iPass >= 2 ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, iMaxPath)) // was iPass >= 3
+						if (iPathTurns < iShortestPath)
+						{
+							iShortestPath = iPathTurns;
+							bNeedsAirlift = bPrioritiseAirlift && (bNeedsAirlift || pLoopCity->getMaxAirlift() > 0);
+							pBestPlot = getPathEndTurnPlot();
+							if (atPlot(pBestPlot))
 							{
-								if (iPathTurns <= iMaxPath)
-								{
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      08/19/09                                jdog5000      */
-/*                                                                                              */
-/* Naval AI                                                                                     */
-/************************************************************************************************/
-/* original bts code
-									if ((iPass > 0) || (getGroup()->canFight() || GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pLoopCity->plot()) < iCurrentDanger))
-*/
-									// Water units can't defend a city
-									// Any unthreatened city acceptable on 0th pass, solves problem where sea units
-									// would oscillate in and out of threatened city because they had iCurrentDanger = 0
-									// on turns outside city
-									
-									bool bCheck = (iPass > 0) || (getGroup()->canDefend());
-									if( !bCheck )
-									{
-										int iLoopDanger = GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pLoopCity->plot());
-										bCheck = (iLoopDanger == 0) || (iLoopDanger < iCurrentDanger);
-									}
-									
-									if( bCheck )
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/		
-									{
-										iValue = iPathTurns;
-										
-										if (AI_getUnitAIType() == UNITAI_SETTLER_SEA)
-										{
-											iValue *= 1 + std::max(0, GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(pLoopCity->area(), UNITAI_SETTLE) - GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(pLoopCity->area(), UNITAI_SETTLER_SEA));
-										}
-
-										if (iValue < iBestValue)
-										{
-											iBestValue = iValue;
-											pBestPlot = getPathEndTurnPlot();
-											if (atPlot(pBestPlot))
-											{
-												FAssertMsg(false, "already at best retreat plot?");
-												pBestPlot = getGroup()->getPathFirstPlot();
-												FAssert(!atPlot(pBestPlot));
-											}
-										}
-									}
-								}
+								FAssertMsg(false, "already at best retreat plot?");
+								pBestPlot = getGroup()->getPathFirstPlot();
+								FAssert(!atPlot(pBestPlot));
 							}
 						}
 					}
@@ -20546,13 +20526,10 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bAirlift, int iMaxPath)
 				{
 					if (!bPrimary || GET_PLAYER(getOwnerINLINE()).AI_isPrimaryArea(pCity->area()))
 					{
-						if (!bAirlift || (pCity->getMaxAirlift() > 0))
+						if (!bNeedsAirlift || pCity->getMaxAirlift() > 0)
 						{
-							if (!(pCity->plot()->isVisibleEnemyUnit(this)))
-							{
-								getGroup()->pushMission(MISSION_SKIP);
-								return true;
-							}
+							getGroup()->pushMission(MISSION_SKIP);
+							return true;
 						}
 					}
 				}
