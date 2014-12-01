@@ -9233,7 +9233,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		int iHappinessLevel = (isNoUnhappiness() ? std::max(3, iHealthLevel + 5) : happyLevel() - unhappyLevel(0));
 		int iPopulation = getPopulation();
 
-		const int iAdjustedFoodPerTurn = iFoodPerTurn; // (I've stopped trying to do anything tricky with this since writing AI_jobChangeValue.)
+		const int iAdjustedFoodPerTurn = iFoodPerTurn; // (currently unused)
+		// (I'd like to lower this when evaluating plots we might switch to - but currently there is no way to know we're doing that.)
 
 		// if we not human, allow us to starve to half full if avoiding growth
 		if (!bIgnoreStarvation)
@@ -9355,8 +9356,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 					if (!bEmphasizeFood)
 					{
-						iPopToGrow = std::min(iPopToGrow, iGoodTiles + (bRemove || bWorkerOptimization ? 1 : 0));
-						//iPopToGrow = std::min(iPopToGrow, iGoodTiles + 1); // testing
+						iPopToGrow = std::min(iPopToGrow, iGoodTiles + (bWorkerOptimization ? 1 : 0));
 						if (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeGreatPeople())
 							iPopToGrow = std::min(iPopToGrow, 2);
 						else if (AI_isEmphasizeYield(YIELD_COMMERCE))
@@ -9376,9 +9376,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						}
 					}
 
-					// if we want to grow
-					// don't count growth value for tiles with nothing else to contribute.
-					if ((iPopToGrow > 0 || bFillingBar) && (iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 || iCommerceValue > 0))
+					// We don't want to count growth value for tiles with nothing else to contribute.
+					// But since AI_yieldValue is used for AI_jobChangeValue, we can't assume that we're evaluating a plot.
+					const bool bRelativeComparison = true; // (placeholder, just in case we restore this kind of check in the future)
+					if ((iPopToGrow > 0 || bFillingBar) && (bRelativeComparison || iFoodYield - iConsumtionPerPop > 0 || iProductionValue > 0 || iCommerceValue > 0))
 					{
 						// rescale iGrowthValue
 						if (bFillingBar)
