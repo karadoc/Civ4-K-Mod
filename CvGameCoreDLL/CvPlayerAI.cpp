@@ -2404,18 +2404,20 @@ void CvPlayerAI::AI_updateCommerceWeights()
 
 	std::vector<std::pair<int,int> > city_countdown_list; // (turns, city id)
 	{
+		int iGoldCommercePercent = bUseCultureRank ? AI_estimateBreakEvenGoldPercent() : getCommercePercent(COMMERCE_GOLD);
+		// Note: we only need the gold commerce percent if bUseCultureRank;
+		// but I figure that I might as well put in a useful placeholder value just in case.
+
 		int iLoop;
-		CvCity* pLoopCity;
-		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 		{
 			int iCountdown = -1;
 			if (bUseCultureRank)
 			{
-				//if (pLoopCity->getBaseCommerceRate(COMMERCE_CULTURE) > 100)
-				// K-Mod. Try to tell us what the culture would be like if we were to turn up the slider...
+				// K-Mod. Try to tell us what the culture would be like if we were to turn up the slider. (cf. AI_calculateCultureVictoryStage)
+				// (current culture rate, minus what we're current getting from raw commerce, plus what we would be getting from raw commerce at maximum percentage.)
 				int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
-				iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
-				iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+				iEstimatedRate += (100 - iGoldCommercePercent - getCommercePercent(COMMERCE_CULTURE)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
 				iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
 			}
 			city_countdown_list.push_back(std::make_pair(iCountdown, pLoopCity->getID()));
@@ -19259,6 +19261,8 @@ void CvPlayerAI::AI_doCheckFinancialTrouble()
 // heavily edited by K-Mod and bbai
 int CvPlayerAI::AI_calculateCultureVictoryStage() const
 {
+	PROFILE_FUNC();
+
 	if( GC.getDefineINT("BBAI_VICTORY_STRATEGY_CULTURE") <= 0 )
 	{
 		return 0;
@@ -19289,20 +19293,20 @@ int CvPlayerAI::AI_calculateCultureVictoryStage() const
 	iHighCultureMark *= GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getVictoryDelayPercent();
 	iHighCultureMark /= 100;
 
+	int iGoldCommercePercent = AI_estimateBreakEvenGoldPercent();
+
 	std::vector<int> countdownList;
 	// K-Mod end
 
 	int iLoop;
-	CvCity* pLoopCity;
-	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
 		if (pLoopCity->getCultureLevel() >= (GC.getGameINLINE().culturalVictoryCultureLevel() - 1))
 		{
-			//if (pLoopCity->getBaseCommerceRate(COMMERCE_CULTURE) > 100)
-			// K-Mod. Try to tell us what the culture would be like if we were to turn up the slider...
+			// K-Mod. Try to tell us what the culture would be like if we were to turn up the slider. (cf. AI_updateCommerceWeights)
+			// (current culture rate, minus what we're current getting from raw commerce, plus what we would be getting from raw commerce at maximum percentage.)
 			int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
-			iEstimatedRate -= getCommercePercent(COMMERCE_CULTURE) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
-			iEstimatedRate += (100 - getCommercePercent(COMMERCE_GOLD)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+			iEstimatedRate += (100 - iGoldCommercePercent - getCommercePercent(COMMERCE_CULTURE)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
 			int iCountdown = (iLegendaryCulture - pLoopCity->getCulture(getID())) / std::max(1, iEstimatedRate);
 			countdownList.push_back(iCountdown);
 			if (iCountdown < iHighCultureMark)
@@ -21552,6 +21556,27 @@ void CvPlayerAI::AI_updateAvailableIncome()
 	m_iAvailableIncome = iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) / 100;
 	m_iAvailableIncome += std::max(0, getGoldPerTurn());
 	m_iAvailableIncome += getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
+}
+
+// Estimate what percentage of commerce is needed on gold to cover our expenses
+int CvPlayerAI::AI_estimateBreakEvenGoldPercent() const
+{
+	PROFILE_FUNC();
+	//int iGoldCommerceRate = kPlayer.getCommercePercent(COMMERCE_GOLD); // (rough approximation)
+
+	// (detailed approximation)
+	int iTotalRaw = calculateTotalYield(YIELD_COMMERCE);
+	int iExpenses = calculateInflatedCosts() * 12 / 10; // (20% increase to approximate other costs)
+
+	// estimate how much gold we get from specialists & buildings by taking our current gold rate and subtracting what it would be from raw commerce alone.
+	iExpenses -= getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
+
+	// divide what's left to determine what our gold slider would need to be to break even.
+	int iGoldCommerceRate = 10000 * iExpenses / (iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD));
+
+	iGoldCommerceRate = range(iGoldCommerceRate, 0, 100); // (perhaps it would be useful to just return the unbounded value?)
+
+	return iGoldCommerceRate;
 }
 // K-Mod end
 

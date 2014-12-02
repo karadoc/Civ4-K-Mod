@@ -369,6 +369,7 @@ public:
 	void AI_updateGoldToUpgradeAllUnits();
 	inline int AI_getAvailableIncome() const { return m_iAvailableIncome; }
 	void AI_updateAvailableIncome();
+	int AI_estimateBreakEvenGoldPercent() const;
 	// K-Mod end
 
 	int AI_goldTradeValuePercent() const;
