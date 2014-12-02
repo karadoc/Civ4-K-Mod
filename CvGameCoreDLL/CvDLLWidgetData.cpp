@@ -3730,7 +3730,35 @@ void CvDLLWidgetData::parseScoreboardCheatText(CvWidgetDataStruct &widgetDataStr
         szTempBuffer.Format(L"Diplo4, ");
         szBuffer.append(szTempBuffer);
     }
-	
+
+	// List the top 3 culture cities (by culture value weight).
+	//if (kPlayer.AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
+	{
+		szBuffer.append(CvWString::format(L"\n\nTop %c cities by weight:", GC.getCommerceInfo(COMMERCE_CULTURE).getChar()));
+		int iLegendaryCulture = GC.getGame().getCultureThreshold((CultureLevelTypes)(GC.getNumCultureLevelInfos() - 1));
+		std::vector<std::pair<int,int> > city_list; // (weight, city id)
+
+		int iLoop;
+		for (CvCity* pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+			city_list.push_back(std::make_pair(kPlayer.AI_commerceWeight(COMMERCE_CULTURE, pLoopCity), pLoopCity->getID()));
+
+		int iListCities = std::min((int)city_list.size(), 3);
+		std::partial_sort(city_list.begin(), city_list.begin()+iListCities, city_list.end(), std::greater<std::pair<int,int> >());
+
+		int iGoldCommercePercent = kPlayer.AI_estimateBreakEvenGoldPercent();
+
+		for (int i = 0; i < iListCities; i++)
+		{
+			CvCity* pLoopCity = kPlayer.getCity(city_list[i].second);
+			int iEstimatedRate = pLoopCity->getCommerceRate(COMMERCE_CULTURE);
+			iEstimatedRate += (100 - iGoldCommercePercent - kPlayer.getCommercePercent(COMMERCE_CULTURE)) * pLoopCity->getYieldRate(YIELD_COMMERCE) * pLoopCity->getTotalCommerceRateModifier(COMMERCE_CULTURE) / 10000;
+			int iCountdown = (iLegendaryCulture - pLoopCity->getCulture(kPlayer.getID())) / std::max(1, iEstimatedRate);
+
+			szBuffer.append(CvWString::format(L"\n  %s:\t%d%%, %d turns", pLoopCity->getName().GetCString(), city_list[i].first, iCountdown));
+		}
+		szBuffer.append(CvWString::format(L"\n(assuming %d%% gold)", iGoldCommercePercent));
+	}
+
 	// skip a line
 	szBuffer.append(NEWLINE);
 	szBuffer.append(NEWLINE);
