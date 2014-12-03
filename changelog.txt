@@ -1,6 +1,40 @@
-This is K-Mod version 1.42b.
+This is K-Mod version 1.44.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.44 changelist
+
+Game
+
++ Fixed OOS bugs in some random events.
+
+UI
+
++ Modified the space-ship screen and the multi-player launch space-ship popup so that travel time and success probability are always visible.
++ Corrected espionage costs displayed in spy mission popups when in a permanent alliance.
++ Added debug/cheat information for commerce weights and culture cities.
+
+Automation / AI
+
++ Forced specialist count can no longer exceed total population. (This corrects a problem where the "remove specialist" buttons seems to have no effect when the number of forced specialists was still too high.)
++ Corrected some inconsistencies in the way forced specialists are handled by automated city governors. (The governor will not assign any specialists of non-forced type unless all the forced types are full. For example, if the player forces 1 merchant specialist, then the city will not use any scientists until all the merchant slots are full.)
++ AI_juggleCitizens now directly compares jobs before switching, to ensure the accuracy of evaluations.
++ Reduced the number of executives built by automated cities.
+
+AI
+
++ Changed the evaluation of executives so that the value of spreading to foreign civs is only counted when more execs are needed.
++ Tightened the conditions on deciding to replace existing corporations.
++ Increased tendency for settler and missionary transports to wait in cities, so that they can be used when needed.
++ Fixed some minor issues with the AI's calculations when loading units into transports.
++ AI missionaries and workers now prefer waiting in cities with air-lift when they have no work to do.
++ Refined the AI's calculations for cultural victory decisions.
++ Pillage units now prioritise pillaging strategic resources they are standing on over attacking nearby enemies.
++ Increased the AI's evaluation of river plots in AI_foundValue.
++ Tweaked the area-based resources modifier for starting positions, to avoid overflow bugs on very large maps.
++ Fixed a minor mistake in the evaluation of buildings which remove resources (eg. National Park).
+
+
+--
 v1.43 changelist
 
 Game
