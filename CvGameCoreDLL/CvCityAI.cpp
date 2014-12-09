@@ -9693,7 +9693,7 @@ int CvCityAI::AI_jobChangeValue(std::pair<bool, int> new_job, std::pair<bool, in
 			if (iCommerce >= 0)
 				aiCommerceGained[i] = iCommerce;
 			else
-				aiCommerceLost[i] = iCommerce;
+				aiCommerceLost[i] = -iCommerce;
 		}
 		iTotalValue += 100 * AI_yieldValue(NULL, aiCommerceGained, false, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
 		iTotalValue -= 100 * AI_yieldValue(NULL, aiCommerceLost, true, bIgnoreFood, bIgnoreStarvation, false, iGrowthValue);
