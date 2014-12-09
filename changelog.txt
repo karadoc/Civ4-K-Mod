@@ -1,5 +1,10 @@
-This is K-Mod version 1.44.
+This is K-Mod version 1.44b.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
+
+v1.44b changelist
+
++ Fixed a bug which caused existing specialists to be overvalued by AI_jobChangeValue.
++ Tweaked the evaluation of food, to avoid problems caused by overvalued food.
 
 v1.44 changelist
 
