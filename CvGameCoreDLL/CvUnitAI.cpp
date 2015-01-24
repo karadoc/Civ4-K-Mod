@@ -17283,7 +17283,7 @@ bool CvUnitAI::AI_assaultSeaTransport(bool bAttackBarbs, bool bLocal)
 			// but I'm going to apply a similar penality again just to discourage the AI from attacking amphibiously when they don't need to.
 			iDefenceStrength -= iDefenceStrength * GC.getAMPHIB_ATTACK_MODIFIER() * (iCargo - iAmphibiousAttackers) / (100*iCargo);
 
-			if (iAmphibiousAttackStrength < iDefenceStrength) // && (iAmphibiousAttackers < iCargo || their_best_defender_is_stronger_than_our_attackers)
+			if (iAmphibiousAttackStrength * 100 < iDefenceStrength * GC.getBBAI_ATTACK_CITY_STACK_RATIO())
 				continue;
 
 			if (pCity == NULL)
