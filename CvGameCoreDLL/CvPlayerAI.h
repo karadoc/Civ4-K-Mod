@@ -133,7 +133,6 @@ public:
 	int AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost, bool bAsync, int* paiBonusClassRevealed, int* paiBonusClassUnrevealed, int* paiBonusClassHave ) const;
 	int AI_obsoleteBuildingPenalty(TechTypes eTech, bool bConstCache) const; // K-Mod
 	int AI_techBuildingValue(TechTypes eTech, bool bConstCache, bool& bEnablesWonder) const; // Rewritten for K-Mod
-	int AI_techBuildingValue_old( TechTypes eTech, int iPathLength, bool &bEnablesWonder ) const;
 	int AI_techUnitValue( TechTypes eTech, int iPathLength, bool &bEnablesUnitWonder ) const;
 /************************************************************************************************/
 /* BETTER_BTS_AI_MOD                       END                                                  */
