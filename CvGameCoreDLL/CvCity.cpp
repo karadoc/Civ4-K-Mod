@@ -6148,7 +6148,11 @@ int CvCity::calculateCorporationMaintenanceTimes100(CorporationTypes eCorporatio
 	iMaintenance *= std::max(0, (GET_PLAYER(getOwnerINLINE()).getCorporationMaintenanceModifier() + 100));
 	iMaintenance /= 100;
 
-	int iInflation = GET_PLAYER(getOwnerINLINE()).calculateInflationRate() + 100;
+	// K-Mod note. This division by inflation effectively cancels with the inflation factor in calculateInflatedCosts.
+	// I'm not sure I agree with having corp mainenance be free of inflation.
+	// Corp output gets boosted as cities' yield multiplayers improve, so perhaps the costs should inflate...
+	// But I'll leave it as is for now.
+	int iInflation = GET_PLAYER(getOwnerINLINE()).getInflationRate() + 100;
 	if (iInflation > 0)
 	{
 		iMaintenance *= 100;

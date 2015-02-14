@@ -4897,7 +4897,7 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 		}
 		if (iSpreadCost > 0)
 		{
-			iSpreadCost *= 100 + calculateInflationRate();
+			iSpreadCost *= 100 + getInflationRate();
 			iSpreadCost /= 100;
 			iGold += iSpreadCost;
 		}
@@ -12333,7 +12333,7 @@ int CvPlayerAI::AI_unitCostPerMil() const
 	// If iUnitCostPercentage is calculated as above, decreasing maintenance will actually decrease the max units.
 	// If a builds a courthouse or switches to state property, it would then think it needs to get rid of units!
 	// It makes no sense, and civs with a surplus of cash still won't want to build units. So lets try it another way...
-	int iUnitCost = calculateUnitCost() * std::max(0, calculateInflationRate() + 100) / 100;
+	int iUnitCost = calculateUnitCost() * std::max(0, getInflationRate() + 100) / 100;
 	if (iUnitCost <= getNumCities()/2) // cf with the final line
 		return 0;
 
@@ -13566,7 +13566,7 @@ int CvPlayerAI::AI_civicValue(CivicTypes eCivic) const
 	// K-Mod note. max war rand is between 50 and 400, so I've renamed the above number from iWarmongerPercent to iWarmongerFactor.
 	// I don't know what it is meant to be a percentage of. It's a number roughly between 56 and 167.
 
-	int iMaintenanceFactor =  AI_commerceWeight(COMMERCE_GOLD) * std::max(0, calculateInflationRate() + 100) / 100; // K-Mod
+	int iMaintenanceFactor =  AI_commerceWeight(COMMERCE_GOLD) * std::max(0, getInflationRate() + 100) / 100; // K-Mod
 
 	int iValue = (iCities * 6);
 

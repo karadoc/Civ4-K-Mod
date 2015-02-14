@@ -521,9 +521,10 @@ int CyPlayer::calculatePreInflatedCosts()
 	return m_pPlayer ? m_pPlayer->calculatePreInflatedCosts() : -1;
 }
 
-int CyPlayer::calculateInflationRate()
+//int CyPlayer::calculateInflationRate()
+int CyPlayer::getInflationRate()
 {
-	return m_pPlayer ? m_pPlayer->calculateInflationRate() : -1;
+	return m_pPlayer ? m_pPlayer->getInflationRate() : -1;
 }
 
 int CyPlayer::calculateInflatedCosts()

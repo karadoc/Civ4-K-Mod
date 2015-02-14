@@ -14525,7 +14525,7 @@ void CvGameTextMgr::buildFinanceInflationString(CvWStringBuffer& szBuffer, Playe
 	}
 	CvPlayer& kPlayer = GET_PLAYER(ePlayer);
 
-	int iInflationRate = kPlayer.calculateInflationRate();
+	int iInflationRate = kPlayer.getInflationRate();
 	if (iInflationRate != 0)
 	{
 		int iPreInflation = kPlayer.calculatePreInflatedCosts();
