@@ -13361,7 +13361,7 @@ void CvCity::doReligion()
 							iDivisor /= 100;
 
 							// now iDivisor is in the range [1, 1+iDistanceFactor] * iDivisorBase
-							// this is approximately in the range [4, 60], depending on what the xml value are. (the value currently being tested and tuned.)
+							// this is approximately in the range [5, 50], depending on what the xml value are. (the value currently being tested and tuned.)
 							iSpread /= iDivisor;
 							// K-Mod end
 
@@ -13377,6 +13377,17 @@ void CvCity::doReligion()
 		// scale for game speed
 		iRandThreshold *= 100;
 		iRandThreshold /= GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent();
+
+		// K-Mod. Give a bonus for the first few cities.
+		/* {
+			int iReligionCities = GC.getGameINLINE().countReligionLevels(eLoopReligion);
+			if (iReligionCities < 3)
+			{
+				iRandThreshold *= 2 + iReligionCities;
+				iRandThreshold /= 1 + iReligionCities;
+			}
+		} */
+		//
 
 		if (GC.getGameINLINE().getSorenRandNum(GC.getDefineINT("RELIGION_SPREAD_RAND"), "Religion Spread") < iRandThreshold)
 		{

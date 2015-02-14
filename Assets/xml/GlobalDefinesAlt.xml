@@ -119,7 +119,7 @@
 	</Define>
 	<Define>
 		<DefineName>RELIGION_SPREAD_DISTANCE_FACTOR</DefineName>
-		<iDefineIntVal>11</iDefineIntVal>
+		<iDefineIntVal>9</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_POPULATION_WEIGHT</DefineName>
