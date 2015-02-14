@@ -6069,7 +6069,7 @@ void CvUnitAI::AI_spyMove()
 				else
 				{
 					// If we think we'll get caught soon, then do the mission early.
-					int iInterceptChance = getSpyInterceptPercent(plot()->getTeam());
+					int iInterceptChance = getSpyInterceptPercent(plot()->getTeam(), false);
 					iInterceptChance *= 100 + (GET_TEAM(getTeam()).isOpenBorders(plot()->getTeam())
 						? GC.getDefineINT("ESPIONAGE_SPY_NO_INTRUDE_INTERCEPT_MOD")
 						: GC.getDefineINT("ESPIONAGE_SPY_INTERCEPT_MOD"));
