@@ -74,11 +74,11 @@
 	<!-- global warming threshold is # land plots * resistance. -->
 	<Define>
 		<DefineName>GLOBAL_WARMING_RESISTANCE</DefineName>
-		<iDefineIntVal>10</iDefineIntVal>
+		<iDefineIntVal>9</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>GLOBAL_WARMING_INDEX_PER_CHANCE</DefineName>
-		<iDefineIntVal>450</iDefineIntVal>
+		<iDefineIntVal>500</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>GLOBAL_WARMING_BASE_ANGER_PERCENT</DefineName>
