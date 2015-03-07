@@ -2593,13 +2593,20 @@ bool CvUnit::canMoveInto(const CvPlot* pPlot, bool bAttack, bool bDeclareWar, bo
 
 	if (isNoCapture())
 	{
-		if (!bAttack)
+		/* if (!bAttack)
 		{
 			if (pPlot->isEnemyCity(*this))
 			{
 				return false;
 			}
+		} */
+		// K-Mod. Don't let noCapture units attack defenceless cities. (eg. cities with a worker in them)
+		if (pPlot->isEnemyCity(*this))
+		{
+			if (!bAttack || !pPlot->isVisibleEnemyDefender(this))
+				return false;
 		}
+		// K-Mod end
 	}
 
 /************************************************************************************************/
