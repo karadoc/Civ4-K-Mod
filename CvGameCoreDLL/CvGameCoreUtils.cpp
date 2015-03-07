@@ -988,7 +988,7 @@ int getEspionageModifier(TeamTypes eOurTeam, TeamTypes eTargetTeam)
 	int iTargetPoints = 10 * kTargetTeam.getEspionagePointsEver() / std::max(1, iPopScale + kTargetTeam.getTotalPopulation(false));
 	int iOurPoints = 10 * kOurTeam.getEspionagePointsEver() / std::max(1, iPopScale + kOurTeam.getTotalPopulation(false));
 
-	return GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * (2 * iTargetPoints + iOurPoints) / std::max(1, iTargetPoints + 2 * iOurPoints);
+	return GC.getDefineINT("ESPIONAGE_SPENDING_MULTIPLIER") * std::max(1, 2 * iTargetPoints + iOurPoints) / std::max(1, iTargetPoints + 2 * iOurPoints);
 	// K-Mod end
 }
 
