@@ -5250,10 +5250,12 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	if (kTechInfo.getTradeRoutes() != 0)
 	{
 		int iConnectedForeignCities = AI_countPotentialForeignTradeCities(true, AI_getFlavorValue(FLAVOR_GOLD) == 0);
-		iValue += (2*iCityCount*kTechInfo.getTradeRoutes() + 4*range(iConnectedForeignCities-2*getNumCities(), 0, iCityCount*kTechInfo.getTradeRoutes())) * (bFinancialTrouble ? 6 : 4);
+		int iAddedCommerce = (2*iCityCount*kTechInfo.getTradeRoutes() + 4*range(iConnectedForeignCities-2*getNumCities(), 0, iCityCount*kTechInfo.getTradeRoutes()));
+		iValue += iAddedCommerce * (bFinancialTrouble ? 6 : 4) * AI_averageYieldMultiplier(YIELD_COMMERCE)/100;
+		//iValue += (2*iCityCount*kTechInfo.getTradeRoutes() + 4*range(iConnectedForeignCities-2*getNumCities(), 0, iCityCount*kTechInfo.getTradeRoutes())) * (bFinancialTrouble ? 6 : 4);
 	}
 	// K-Mod end
-	
+
 
 	if (kTechInfo.getHealth() != 0)
 	{
@@ -5314,6 +5316,8 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 
 					int iNewOverseasRoutes = std::max(0, AI_countPotentialForeignTradeCities(false, AI_getFlavorValue(FLAVOR_GOLD) == 0, pCapitalCity->area()) - iCurrentForeignRoutes);
 					int iLocalRoutes = std::max(0, iCityCount*3 - iCurrentForeignRoutes);
+
+					// TODO: multiply by average commerce multiplier?
 
 					// 4 for upgrading local to foreign. 2 for upgrading to overseas. Divide by 3 if we don't have coastal cities.
 					iValue += (std::min(iLocalRoutes, iNewForeignRoutes) * 16  + std::min(iNewOverseasRoutes, iCityCount*3) * 8) / (iCoastalCities > 0 ? 1 : 3);
@@ -5639,10 +5643,10 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		{
 			int iRevealValue = 8;
 			iRevealValue += AI_bonusVal((BonusTypes)iJ, 1, true) * iCityCount * 2/3;
-			
+
 			BonusClassTypes eBonusClass = (BonusClassTypes)GC.getBonusInfo((BonusTypes)iJ).getBonusClassType();
 			int iBonusClassTotal = (paiBonusClassRevealed[eBonusClass] + paiBonusClassUnrevealed[eBonusClass]);
-			
+
 			//iMultiplier is basically a desperation value
 			//it gets larger as the AI runs out of options
 			//Copper after failing to get horses is +66%
@@ -5658,10 +5662,10 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
                 iMultiplier *= (paiBonusClassRevealed[eBonusClass] + 1);
                 iMultiplier /= ((paiBonusClassHave[eBonusClass] * iBonusClassTotal) + 1);
 			}
-			
+
 			iMultiplier *= std::min(3, getNumCities());
 			iMultiplier /= 3;
-			
+
 			iRevealValue *= 100 + iMultiplier;
 			iRevealValue /= 100;
 
@@ -5717,14 +5721,14 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 	// K-Mod. Scale the random wonder bonus based on leader personality.
 	if (bEnablesWonder && iPathLength <= 1 && getTotalPopulation() > 5)
 	{
-		const int iBaseRand = 336;
+		const int iBaseRand = 300;
 		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(iBaseRand, "AI Research Wonder Building ASYNC") : GC.getGameINLINE().getSorenRandNum(iBaseRand, "AI Research Wonder Building"));
 		int iFactor = 10 + GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(); // note: highest value of iWonderConstructRand 50 in the default xml.
 		iFactor += AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) ? 15 : 0;
 		iFactor += AI_isDoVictoryStrategy(AI_VICTORY_CULTURE2) ? 10 : 0;
 		iFactor /= bAdvancedStart ? 4 : 1;
 		iFactor = iFactor * std::min(iCityCount, iCityTarget) / std::max(1, iCityTarget);
-		iValue += (224 + iWonderRandom) * iFactor / 100;
+		iValue += (200 + iWonderRandom) * iFactor / 100;
 
 		iRandomMax += iBaseRand * iFactor / 100;
 		iRandomFactor += iWonderRandom * iFactor / 100;
@@ -6028,7 +6032,7 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 				{
 					if (!(GC.getGameINLINE().isReligionSlotTaken((ReligionTypes)iJ)))
 					{
-						int iRoll = 672;
+						int iRoll = 400;
 
 						if (!GC.getGame().isOption(GAMEOPTION_PICK_RELIGION))
 						{
@@ -6058,11 +6062,11 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			{
 				if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
 				{
-					iReligionValue += 112;
+					iReligionValue += 100;
 
 					if (countHolyCities() < 1)
 					{
-						iReligionValue += 224;
+						iReligionValue += 200;
 					}
 				}
 				else
@@ -6084,10 +6088,11 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 					}
 					if (!bNeighbouringReligions)
 					{
+						iReligionValue += 20;
 						if (AI_getFlavorValue(FLAVOR_RELIGION))
 							iReligionValue += 28 + 4 * AI_getFlavorValue(FLAVOR_RELIGION);
-						if (GC.getGameINLINE().getElapsedGameTurns() >= 26 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent() / 100)
-							iReligionValue += 70;
+						if (GC.getGameINLINE().getElapsedGameTurns() >= 32 * GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getResearchPercent() / 100)
+							iReligionValue += 60;
 						if (AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1))
 							iReligionValue += 84;
 					}
@@ -6131,15 +6136,15 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 			// K-Mod
 			if (kTechInfo.getFirstFreeTechs() > 0)
 			{
-				int iRoll = 1680;
-				iRoll *= 200 + iRaceModifier;
+				int iRoll = 1600;
+				iRoll *= 200 + iRaceModifier + (AI_getFlavorValue(FLAVOR_SCIENCE) ? 50 : 0);
 				iRoll /= 200;
-				if (iRaceModifier > 30 && iRaceModifier < 100 && AI_getFlavorValue(FLAVOR_SCIENCE) > 0) // save the free tech if we have no competition!
+				if (iRaceModifier > 30 && iRaceModifier < 100) // save the free tech if we have no competition!
 					iValue += iRoll * (iRaceModifier-20) / 400; // this is potentially big.
 
 				int iTempValue = (iRaceModifier >= 0 ? 196 : 98) + (bCapitalAlone ? 28 : 0); // some value regardless of race or random.
 
-				iTempValue += bAsync ? GC.getASyncRand().get(1680, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(1680, "AI Research Free Tech");
+				iTempValue += bAsync ? GC.getASyncRand().get(iRoll, "AI Research Free Tech ASYNC") : GC.getGameINLINE().getSorenRandNum(iRoll, "AI Research Free Tech");
 				iValue += iTempValue * kTechInfo.getFirstFreeTechs();
 				iRandomMax += iRoll * kTechInfo.getFirstFreeTechs();
 			}
@@ -6434,6 +6439,9 @@ int CvPlayerAI::AI_techBuildingValue(TechTypes eTech, bool bConstCache, bool& bE
 				}
 				int iScale = 15 * (3 + getCurrentEra()); // hammers (ideally this would be based on the average city yield or something like that.)
 				iScale += AI_isCapitalAreaAlone() ? 30 : 0; // can afford to spend more on infrastructure if we are alone.
+				// decrease when at war
+				if (GET_TEAM(getTeam()).getAnyWarPlanCount(true) > 0)
+					iScale = iScale * 2/3;
 				// increase scale for limited wonders, because they don't need to be built in every city.
 				if (isLimitedWonderClass(eClass))
 					iScale *= std::min((int)relevant_cities.size(), GC.getWorldInfo(GC.getMapINLINE().getWorldSize()).getTargetNumCities());
@@ -6450,13 +6458,13 @@ int CvPlayerAI::AI_techBuildingValue(TechTypes eTech, bool bConstCache, bool& bE
 		}
 	}
 
-	int iScale = AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 240 : 140;
+	int iScale = AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 180 : 100;
 
 	if (getNumCities() == 1 && getCurrentEra() == GC.getGameINLINE().getStartEra())
-		iScale = iScale*2/3; // I expect we'll want to be building mostly units until we get a second city.
+		iScale/=2; // I expect we'll want to be building mostly units until we get a second city.
 
 	iTotalValue *= iScale;
-	iTotalValue /= 250;
+	iTotalValue /= 120;
 
 	return iTotalValue;
 }
