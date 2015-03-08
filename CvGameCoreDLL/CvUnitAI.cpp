@@ -20475,41 +20475,25 @@ bool CvUnitAI::AI_retreatToCity(bool bPrimary, bool bPrioritiseAirlift, int iMax
 			int iPathTurns;
 			if (!atPlot(pLoopCity->plot()) && generatePath(pLoopCity->plot(), (iPass >= 2 ? MOVE_IGNORE_DANGER : 0), true, &iPathTurns, iMaxPath)) // was iPass >= 3
 			{
-				if (iPathTurns <= iMaxPath)
-				{
-					// Water units can't defend a city
-					// Any unthreatened city acceptable on 0th pass, solves problem where sea units
-					// would oscillate in and out of threatened city because they had iCurrentDanger = 0
-					// on turns outside city
+				// Water units can't defend a city
+				// Any unthreatened city acceptable on 0th pass, solves problem where sea units
+				// would oscillate in and out of threatened city because they had iCurrentDanger = 0
+				// on turns outside city
 
-					bool bCheck = (iPass > 0) || (getGroup()->canDefend());
-					if( !bCheck )
+				if (iPass > 0 || GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pLoopCity->plot()) <= iCurrentDanger)
+				{
+					// If this is the first viable air-lift city, then reset iShortestPath.
+					if (bPrioritiseAirlift && !bNeedsAirlift && pLoopCity->getMaxAirlift() > 0)
 					{
-						int iLoopDanger = GET_PLAYER(getOwnerINLINE()).AI_getPlotDanger(pLoopCity->plot());
-						bCheck = (iLoopDanger == 0) || (iLoopDanger < iCurrentDanger);
+						bNeedsAirlift = true;
+						iShortestPath = MAX_INT;
 					}
 
-					if( bCheck )
+					if (iPathTurns < iShortestPath)
 					{
-						/* iValue = iPathTurns;
-
-						if (AI_getUnitAIType() == UNITAI_SETTLER_SEA)
-						{
-							iValue *= 1 + std::max(0, GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(pLoopCity->area(), UNITAI_SETTLE) - GET_PLAYER(getOwnerINLINE()).AI_totalAreaUnitAIs(pLoopCity->area(), UNITAI_SETTLER_SEA));
-						} */ // disabled by K-Mod. This was backwards, and it's a bit kludgish having it in here anyway.
-
-						if (iPathTurns < iShortestPath)
-						{
-							iShortestPath = iPathTurns;
-							bNeedsAirlift = bPrioritiseAirlift && (bNeedsAirlift || pLoopCity->getMaxAirlift() > 0);
-							pBestPlot = getPathEndTurnPlot();
-							if (atPlot(pBestPlot))
-							{
-								FAssertMsg(false, "already at best retreat plot?");
-								pBestPlot = getGroup()->getPathFirstPlot();
-								FAssert(!atPlot(pBestPlot));
-							}
-						}
+						iShortestPath = iPathTurns;
+						pBestPlot = getPathEndTurnPlot();
+						FAssert(!atPlot(pBestPlot));
 					}
 				}
 			}
