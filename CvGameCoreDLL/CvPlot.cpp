@@ -2798,10 +2798,12 @@ int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 	// K-Mod. Why let the AI cheat this?
 	if (!isRevealed(pUnit->getTeam(), false))
 	{
-		if (!pFromPlot->isRevealed(pUnit->getTeam(), false))
+		/*if (!pFromPlot->isRevealed(pUnit->getTeam(), false))
 			return pUnit->maxMoves();
 		else
 			return GC.getMOVE_DENOMINATOR() + 1;
+		*/ // (further weight adjustments are now done in the pathfinder's moveCost function.)
+		return GC.getMOVE_DENOMINATOR();
 	}
 	// K-Mod end
 
