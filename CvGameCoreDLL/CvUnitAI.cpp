@@ -9425,7 +9425,7 @@ void CvUnitAI::AI_defenseAirMove()
 
 	if (!plot()->isCity(true))
 	{
-		FAssertMsg(false, "defenseAir units are expected to stay in cities/forts");
+		//FAssertMsg(GC.getGame().getGameTurn() - getGameTurnCreated() > 1, "defenseAir units are expected to stay in cities/forts");
 		if (AI_airDefensiveCity())
 			return;
 	}
