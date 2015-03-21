@@ -1,0 +1,157 @@
+<!-- edited with XMLSPY v2004 rel. 2 U (http://www.xmlspy.com) by Alex Mantzaris (Firaxis Games) -->
+<!-- Sid Meier's Civilization 4 -->
+<!-- Copyright Firaxis Games 2005 -->
+<!-- -->
+<!-- Tech Schema -->
+<Schema xmlns="urn:schemas-microsoft-com:xml-data" xmlns:dt="urn:schemas-microsoft-com:datatypes">
+	<ElementType name="Type" content="textOnly"/>
+	<ElementType name="Description" content="textOnly"/>
+	<ElementType name="Civilopedia" content="textOnly"/>
+	<ElementType name="Help" content="textOnly"/>
+	<ElementType name="Strategy" content="textOnly"/>
+	<ElementType name="Advisor" content="textOnly"/>
+	<ElementType name="iAIWeight" content="textOnly" dt:type="int"/>
+	<ElementType name="iAITradeModifier" content="textOnly" dt:type="int"/>
+	<ElementType name="iCost" content="textOnly" dt:type="int"/>
+	<ElementType name="iAdvancedStartCost" content="textOnly" dt:type="int"/>
+	<ElementType name="iAdvancedStartCostIncrease" content="textOnly" dt:type="int"/>
+	<ElementType name="Era" content="textOnly"/>
+	<ElementType name="FirstFreeUnitClass" content="textOnly"/>
+	<ElementType name="iFeatureProductionModifier" content="textOnly" dt:type="int"/>
+	<ElementType name="iWorkerSpeedModifier" content="textOnly" dt:type="int"/>
+	<ElementType name="iTradeRoutes" content="textOnly" dt:type="int"/>
+	<ElementType name="iHealth" content="textOnly" dt:type="int"/>
+	<ElementType name="iHappiness" content="textOnly" dt:type="int"/>
+	<ElementType name="iFirstFreeTechs" content="textOnly" dt:type="int"/>
+	<ElementType name="iAsset" content="textOnly" dt:type="int"/>
+	<ElementType name="iPower" content="textOnly" dt:type="int"/>
+	<ElementType name="bRepeat" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bTrade" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bDisable" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bGoodyTech" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bExtraWaterSeeFrom" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bMapCentering" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bMapVisible" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bMapTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bTechTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bGoldTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bOpenBordersTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bDefensivePactTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bPermanentAllianceTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bVassalTrading" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bBridgeBuilding" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bIrrigation" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bIgnoreIrrigation" content="textOnly" dt:type="boolean"/>
+	<ElementType name="bWaterWork" content="textOnly" dt:type="boolean"/>
+	<ElementType name="iGridX" content="textOnly" dt:type="int"/>
+	<ElementType name="iGridY" content="textOnly" dt:type="int"/>
+	<ElementType name="DomainType" content="textOnly"/>
+	<ElementType name="iExtraMoves" content="textOnly" dt:type="int"/>
+	<ElementType name="DomainExtraMove" content="eltOnly">
+		<element type="DomainType"/>
+		<element type="iExtraMoves"/>
+	</ElementType>
+	<ElementType name="DomainExtraMoves" content="eltOnly">
+		<element type="DomainExtraMove" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="bFlexible" content="textOnly" dt:type="boolean"/>
+	<ElementType name="CommerceFlexible" content="eltOnly">
+		<element type="bFlexible" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="bRiverTrade" content="textOnly" dt:type="boolean"/>
+	<ElementType name="TerrainType" content="textOnly"/>
+	<ElementType name="bTerrainTrade" content="textOnly" dt:type="boolean"/>
+	<ElementType name="TerrainTrade" content="eltOnly">
+		<element type="TerrainType"/>
+		<element type="bTerrainTrade"/>
+	</ElementType>
+	<ElementType name="TerrainTrades" content="eltOnly">
+		<element type="TerrainTrade" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="SpecialBuildingType" content="textOnly"/>
+	<ElementType name="bSpecialBuilding" content="textOnly" dt:type="boolean"/>
+	<ElementType name="SpecialBuilding" content="eltOnly">
+		<element type="SpecialBuildingType"/>
+		<element type="bSpecialBuilding"/>
+	</ElementType>
+	<ElementType name="FlavorType" content="textOnly"/>
+	<ElementType name="iFlavor" content="textOnly" dt:type="int"/>
+	<ElementType name="Flavor" content="eltOnly">
+		<element type="FlavorType"/>
+		<element type="iFlavor"/>
+	</ElementType>
+	<ElementType name="Flavors" content="eltOnly">
+		<element type="Flavor" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="PrereqTech" content="textOnly"/>
+	<ElementType name="OrPreReqs" content="eltOnly">
+		<element type="PrereqTech" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="AndPreReqs" content="eltOnly">
+		<element type="PrereqTech" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="Quote" content="textOnly"/>
+	<ElementType name="Sound" content="textOnly"/>
+	<ElementType name="SoundMP" content="textOnly"/>
+	<ElementType name="Button" content="textOnly"/>
+	<ElementType name="TechInfo" content="eltOnly">
+		<element type="Type"/>
+		<element type="Description"/>
+		<element type="Civilopedia"/>
+		<element type="Help"/>
+		<element type="Strategy"/>
+		<element type="Advisor"/>
+		<element type="iAIWeight"/>
+		<element type="iAITradeModifier"/>
+		<element type="iCost"/>
+		<element type="iAdvancedStartCost"/>
+		<element type="iAdvancedStartCostIncrease"/>
+		<element type="Era"/>
+		<element type="FirstFreeUnitClass"/>
+		<element type="iFeatureProductionModifier" minOccurs="0"/>
+		<element type="iWorkerSpeedModifier"/>
+		<element type="iTradeRoutes"/>
+		<element type="iHealth"/>
+		<element type="iHappiness"/>
+		<element type="iFirstFreeTechs"/>
+		<element type="iAsset"/>
+		<element type="iPower"/>
+		<element type="bRepeat"/>
+		<element type="bTrade"/>
+		<element type="bDisable"/>
+		<element type="bGoodyTech"/>
+		<element type="bExtraWaterSeeFrom"/>
+		<element type="bMapCentering"/>
+		<element type="bMapVisible"/>
+		<element type="bMapTrading"/>
+		<element type="bTechTrading"/>
+		<element type="bGoldTrading"/>
+		<element type="bOpenBordersTrading"/>
+		<element type="bDefensivePactTrading"/>
+		<element type="bPermanentAllianceTrading"/>
+		<element type="bVassalTrading"/>
+		<element type="bBridgeBuilding"/>
+		<element type="bIrrigation"/>
+		<element type="bIgnoreIrrigation"/>
+		<element type="bWaterWork"/>
+		<element type="iGridX"/>
+		<element type="iGridY"/>
+		<element type="DomainExtraMoves"/>
+		<element type="CommerceFlexible"/>
+		<element type="TerrainTrades"/>
+		<element type="bRiverTrade"/>
+		<element type="Flavors"/>
+		<element type="OrPreReqs"/>
+		<element type="AndPreReqs"/>
+		<element type="Quote"/>
+		<element type="Sound"/>
+		<element type="SoundMP"/>
+		<element type="Button"/>
+	</ElementType>
+	<ElementType name="TechInfos" content="eltOnly">
+		<element type="TechInfo" maxOccurs="*"/>
+	</ElementType>
+	<ElementType name="Civ4TechInfos" content="eltOnly">
+		<element type="TechInfos" minOccurs="0" maxOccurs="*"/>
+	</ElementType>
+</Schema>
