@@ -574,10 +574,8 @@ void CvDLLWidgetData::parseHelp(CvWStringBuffer &szBuffer, CvWidgetDataStruct &w
 	case WIDGET_COMMERCE_MOD_HELP:
 		parseCommerceModHelp(widgetDataStruct, szBuffer);
 		break;
-/*
-** K-Mod, 5/jan/11, karadoc
-** environmental advisor widgets
-*/
+
+	// K-Mod. Environmental advisor widgets.
 	case WIDGET_HELP_POLLUTION_OFFSETS:
 		parsePollutionOffsetsHelp(widgetDataStruct, szBuffer);
 		break;
@@ -596,9 +594,11 @@ void CvDLLWidgetData::parseHelp(CvWStringBuffer &szBuffer, CvWidgetDataStruct &w
 	case WIDGET_HELP_GW_UNHAPPY:
 		szBuffer.assign(gDLL->getText("TXT_KEY_GW_UNHAPPY_HELP"));
 		break;
-/*
-** K-Mod end
-*/
+	// K-Mod. Extra specialist commerce
+	case WIDGET_HELP_EXTRA_SPECIALIST_COMMERCE:
+		GAMETEXT.setCommerceChangeHelp(szBuffer, L"", L"", gDLL->getText("TXT_KEY_CIVIC_PER_SPECIALIST").GetCString(), GC.getTechInfo((TechTypes)(widgetDataStruct.m_iData1)).getSpecialistExtraCommerceArray(), false, false);
+		break;
+	//K-Mod end
 	}
 }
 

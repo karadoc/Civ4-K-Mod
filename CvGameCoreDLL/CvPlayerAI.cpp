@@ -5288,6 +5288,36 @@ int CvPlayerAI::AI_techValue( TechTypes eTech, int iPathLength, bool bIgnoreCost
 		iValue += kTechInfo.getDomainExtraMoves(iJ) * (iJ == DOMAIN_LAND ? 16 : 6) * iCityCount;
 	}
 
+	// K-Mod. Extra specialist commerce. (Based on my civic evaluation code)
+	bool bSpecialistCommerce = false;
+	for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i=(CommerceTypes)(i+1))
+	{
+		bSpecialistCommerce = kTechInfo.getSpecialistExtraCommerce(i) != 0;
+	}
+
+	if (bSpecialistCommerce)
+	{
+		int iTotalBonusSpecialists = 0;
+		int iTotalCurrentSpecialists = 0;
+
+		int iLoop;
+		CvCity* pLoopCity;
+		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			iTotalBonusSpecialists += pLoopCity->getNumGreatPeople();
+			iTotalBonusSpecialists += pLoopCity->totalFreeSpecialists();
+
+			iTotalCurrentSpecialists += pLoopCity->getNumGreatPeople();
+			iTotalCurrentSpecialists += pLoopCity->getSpecialistPopulation();
+		}
+
+		for (CommerceTypes i = (CommerceTypes)0; i < NUM_COMMERCE_TYPES; i=(CommerceTypes)(i+1))
+		{
+			iValue += 4*AI_averageCommerceMultiplier(i)*(kTechInfo.getSpecialistExtraCommerce(i) * std::max((getTotalPopulation()+12*iTotalBonusSpecialists) / 12, iTotalCurrentSpecialists));
+		}
+	}
+	// K-Mod end
+
 	for (int iJ = 0; iJ < NUM_COMMERCE_TYPES; iJ++)
 	{
 		if (kTechInfo.isCommerceFlexible(iJ))

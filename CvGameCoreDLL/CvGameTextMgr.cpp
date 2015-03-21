@@ -7758,6 +7758,9 @@ void CvGameTextMgr::setTechHelp(CvWStringBuffer &szBuffer, TechTypes eTech, bool
 		buildDomainExtraMovesString(szBuffer, eTech, iI, true, bPlayerContext);
 	}
 
+	//	K-Mod. Extra specialist commerce
+	setCommerceChangeHelp(szBuffer, L"", L"", gDLL->getText("TXT_KEY_CIVIC_PER_SPECIALIST").GetCString(), GC.getTechInfo(eTech).getSpecialistExtraCommerceArray());
+
 	//	Adjusting culture, science, etc
 	for (iI = 0; iI < NUM_COMMERCE_TYPES; ++iI)
 	{
