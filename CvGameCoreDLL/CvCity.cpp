@@ -5848,7 +5848,8 @@ int CvCity::getSavedMaintenanceTimes100ByBuilding(BuildingTypes eBuilding) const
 	if (iModifier != 0 && !isDisorder() && !isWeLoveTheKingDay() && (getPopulation() > 0))
 	{
 		int iNewMaintenance = calculateBaseMaintenanceTimes100() * std::max(0, getMaintenanceModifier() + iModifier + 100) / 100;
-		return getMaintenanceTimes100() - iNewMaintenance;
+		//return getMaintenanceTimes100() - iNewMaintenance;
+		return ROUND_DIVIDE((getMaintenanceTimes100() - iNewMaintenance)*(100+GET_PLAYER(getOwnerINLINE()).getInflationRate()), 100); // K-Mod
 	}
 
 	return 0;

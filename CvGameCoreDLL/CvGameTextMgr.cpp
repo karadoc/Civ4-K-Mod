@@ -5770,7 +5770,8 @@ void CvGameTextMgr::setCityBarHelp(CvWStringBuffer &szString, CvCity* pCity)
 
 	szString.append(NEWLINE);
 	szString.append(gDLL->getText("INTERFACE_CITY_MAINTENANCE"));
-	int iMaintenance = pCity->getMaintenanceTimes100();
+	//int iMaintenance = pCity->getMaintenanceTimes100();
+	int iMaintenance = pCity->getMaintenanceTimes100() * (100+GET_PLAYER(pCity->getOwnerINLINE()).getInflationRate()) / 100; // K-Mod
 	szString.append(CvWString::format(L" -%d.%02d %c", iMaintenance/100, iMaintenance%100, GC.getCommerceInfo(COMMERCE_GOLD).getChar()));
 
 	bFirst = true;
@@ -7550,13 +7551,14 @@ void CvGameTextMgr::parseCivicInfo(CvWStringBuffer &szHelpText, CivicTypes eCivi
 		}
 	}
 
+	float fInflationFactor = bPlayerContext ? (float)(100 + GET_PLAYER(GC.getGameINLINE().getActivePlayer()).getInflationRate())/100 : 1.0f; // K-Mod
 	//	Gold cost per unit
 	if (GC.getCivicInfo(eCivic).getGoldPerUnit() != 0)
 	{
 		/* szHelpText.append(NEWLINE);
 		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_SUPPORT_COSTS", (GC.getCivicInfo(eCivic).getGoldPerUnit() > 0), GC.getCommerceInfo(COMMERCE_GOLD).getChar())); */
-		// K-Mod
-		szHelpText.append(CvWString::format(L"\n%c%+.2f%c %s", gDLL->getSymbolID(BULLET_CHAR), (float)GC.getCivicInfo(eCivic).getGoldPerUnit()/100, GC.getCommerceInfo(COMMERCE_GOLD).getChar(),
+		// K-Mod.
+		szHelpText.append(CvWString::format(L"\n%c%+.2f%c %s", gDLL->getSymbolID(BULLET_CHAR), (float)GC.getCivicInfo(eCivic).getGoldPerUnit()*fInflationFactor/100, GC.getCommerceInfo(COMMERCE_GOLD).getChar(),
 			gDLL->getText("TXT_KEY_CIVIC_SUPPORT_COSTS").GetCString()));
 		// K-Mod end
 	}
@@ -7567,7 +7569,7 @@ void CvGameTextMgr::parseCivicInfo(CvWStringBuffer &szHelpText, CivicTypes eCivi
 		/* szHelpText.append(NEWLINE);
 		szHelpText.append(gDLL->getText("TXT_KEY_CIVIC_MILITARY_SUPPORT_COSTS", (GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit() > 0), GC.getCommerceInfo(COMMERCE_GOLD).getChar())); */
 		// K-Mod
-		szHelpText.append(CvWString::format(L"\n%c%+.2f%c %s", gDLL->getSymbolID(BULLET_CHAR), (float)GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit()/100, GC.getCommerceInfo(COMMERCE_GOLD).getChar(),
+		szHelpText.append(CvWString::format(L"\n%c%+.2f%c %s", gDLL->getSymbolID(BULLET_CHAR), (float)GC.getCivicInfo(eCivic).getGoldPerMilitaryUnit()*fInflationFactor/100, GC.getCommerceInfo(COMMERCE_GOLD).getChar(),
 			gDLL->getText("TXT_KEY_CIVIC_MILITARY_SUPPORT_COSTS").GetCString()));
 		// K-Mod end
 	}
@@ -7589,13 +7591,13 @@ void CvGameTextMgr::setTechHelp(CvWStringBuffer &szBuffer, TechTypes eTech, bool
 	UnitTypes eLoopUnit;
 	bool bFirst;
 	int iI;
-	
+
 	// show debug info if cheat level > 0 and alt down
 	bool bAlt = GC.altKey();
     if (bAlt && (gDLL->getChtLvl() > 0))
     {
 		szBuffer.clear();
-		
+
 		for (int iI = 0; iI < MAX_PLAYERS; ++iI)
 		{
 			CvPlayerAI* playerI = &GET_PLAYER((PlayerTypes)iI);
@@ -12951,6 +12953,7 @@ void CvGameTextMgr::setCorporationHelpCity(CvWStringBuffer &szBuffer, Corporatio
 		iMaintenance += pCity->calculateCorporationMaintenanceTimes100(eCorporation);
 		iMaintenance *= 100 + pCity->getMaintenanceModifier();
 		iMaintenance /= 100;
+		iMaintenance = (100+GET_PLAYER(pCity->getOwnerINLINE()).getInflationRate())*iMaintenance / 100; // K-Mod
 	}
 
 	if (0 != iMaintenance)
@@ -14529,7 +14532,7 @@ void CvGameTextMgr::buildFinanceInflationString(CvWStringBuffer& szBuffer, Playe
 	CvPlayer& kPlayer = GET_PLAYER(ePlayer);
 
 	int iInflationRate = kPlayer.getInflationRate();
-	if (iInflationRate != 0)
+	//if (iInflationRate != 0)
 	{
 		int iPreInflation = kPlayer.calculatePreInflatedCosts();
 		szBuffer.append(NEWLINE);
@@ -14556,6 +14559,13 @@ void CvGameTextMgr::buildFinanceUnitCostString(CvWStringBuffer& szBuffer, Player
 	int iExtraCost = 0;
 	int iCost = player.calculateUnitCost(iFreeUnits, iFreeMilitaryUnits, iPaidUnits, iPaidMilitaryUnits, iUnitCost, iMilitaryCost, iExtraCost);
 	int iHandicap = iCost-iUnitCost-iMilitaryCost-iExtraCost;
+
+	// K-Mod include inflation
+	iCost = ROUND_DIVIDE(iCost*(100+player.getInflationRate()), 100);
+	iUnitCost = ROUND_DIVIDE(iUnitCost*(100+player.getInflationRate()), 100);
+	iMilitaryCost = ROUND_DIVIDE(iMilitaryCost*(100+player.getInflationRate()), 100);
+	iHandicap = ROUND_DIVIDE(iHandicap*(100+player.getInflationRate()), 100);
+	// K-Mod end
 
 	szBuffer.append(NEWLINE);
 	//szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_UNIT_COST", iPaidUnits, iFreeUnits, iBaseUnitCost));
@@ -14592,6 +14602,12 @@ void CvGameTextMgr::buildFinanceAwaySupplyString(CvWStringBuffer& szBuffer, Play
 	int iBaseCost = 0;
 	int iCost = player.calculateUnitSupply(iPaidUnits, iBaseCost);
 	int iHandicap = iCost - iBaseCost;
+
+	// K-Mod include inflation
+	iCost = ROUND_DIVIDE(iCost*(100+player.getInflationRate()), 100);
+	iBaseCost = ROUND_DIVIDE(iBaseCost*(100+player.getInflationRate()), 100);
+	iHandicap = ROUND_DIVIDE(iHandicap*(100+player.getInflationRate()), 100);
+	// K-Mod end
 
 	CvWString szHandicap;
 	if (iHandicap != 0)
@@ -14631,22 +14647,26 @@ void CvGameTextMgr::buildFinanceCityMaintString(CvWStringBuffer& szBuffer, Playe
 		*/
 		if (!pLoopCity->isDisorder() && !pLoopCity->isWeLoveTheKingDay() && (pLoopCity->getPopulation() > 0))
 		{
-			iDistanceMaint += (pLoopCity->calculateDistanceMaintenanceTimes100() * std::max(0, (pLoopCity->getMaintenanceModifier() + 100))) / 100;
-			iColonyMaint += (pLoopCity->calculateColonyMaintenanceTimes100() * std::max(0, (pLoopCity->getMaintenanceModifier() + 100))) / 100;
-			iCorporationMaint += (pLoopCity->calculateCorporationMaintenanceTimes100() * std::max(0, (pLoopCity->getMaintenanceModifier() + 100))) / 100;
+			iDistanceMaint += (pLoopCity->calculateDistanceMaintenanceTimes100() * std::max(0, (pLoopCity->getMaintenanceModifier() + 100))+50) / 100;
+			iColonyMaint += (pLoopCity->calculateColonyMaintenanceTimes100() * std::max(0, (pLoopCity->getMaintenanceModifier() + 100))+50) / 100;
+			iCorporationMaint += (pLoopCity->calculateCorporationMaintenanceTimes100() * std::max(0, (pLoopCity->getMaintenanceModifier() + 100))+50) / 100;
 		}
 /**
 *** K-Mod end
 **/
 	}
-	iDistanceMaint /= 100;
-	iColonyMaint /= 100;
-	iCorporationMaint /= 100;
 
-	int iNumCityMaint = player.getTotalMaintenance() - iDistanceMaint - iColonyMaint - iCorporationMaint;
+	// K-Mod. Changed to include the effects of inflation.
+	int iInflationFactor = player.getInflationRate()+100;
+
+	iDistanceMaint = ROUND_DIVIDE(iDistanceMaint * iInflationFactor, 10000);
+	iColonyMaint = ROUND_DIVIDE(iColonyMaint * iInflationFactor, 10000);
+	iCorporationMaint = ROUND_DIVIDE(iCorporationMaint * iInflationFactor, 10000); // Note: currently, calculateCorporationMaintenanceTimes100 includes the inverse of this factor.
+
+	int iNumCityMaint = ROUND_DIVIDE(player.getTotalMaintenance() * iInflationFactor, 100) - iDistanceMaint - iColonyMaint - iCorporationMaint;
 
 	szBuffer.append(NEWLINE);
-	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_CITY_MAINT_COST", iDistanceMaint, iNumCityMaint, iColonyMaint, iCorporationMaint, player.getTotalMaintenance()));
+	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_CITY_MAINT_COST", iDistanceMaint, iNumCityMaint, iColonyMaint, iCorporationMaint, player.getTotalMaintenance()*iInflationFactor/100));
 }
 
 void CvGameTextMgr::buildFinanceCivicUpkeepString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer)
@@ -14663,13 +14683,15 @@ void CvGameTextMgr::buildFinanceCivicUpkeepString(CvWStringBuffer& szBuffer, Pla
 		if (NO_CIVIC != eCivic)
 		{
 			CvWString szTemp;
-			szTemp.Format(L"%d%c: %s", player.getSingleCivicUpkeep(eCivic), GC.getCommerceInfo(COMMERCE_GOLD).getChar(),  GC.getCivicInfo(eCivic).getDescription());
+			//szTemp.Format(L"%d%c: %s", player.getSingleCivicUpkeep(eCivic), GC.getCommerceInfo(COMMERCE_GOLD).getChar(),  GC.getCivicInfo(eCivic).getDescription());
+			szTemp.Format(L"%d%c: %s", ROUND_DIVIDE(player.getSingleCivicUpkeep(eCivic)*(100+player.getInflationRate()),100), GC.getCommerceInfo(COMMERCE_GOLD).getChar(),  GC.getCivicInfo(eCivic).getDescription()); // K-Mod
 			szCivicOptionCosts += NEWLINE + szTemp;
 		}
 	}
 
 	szBuffer.append(NEWLINE);
-	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_CIVIC_UPKEEP_COST", szCivicOptionCosts.GetCString(), player.getCivicUpkeep()));
+	//szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_CIVIC_UPKEEP_COST", szCivicOptionCosts.GetCString(), player.getCivicUpkeep()));
+	szBuffer.append(gDLL->getText("TXT_KEY_FINANCE_ADVISOR_CIVIC_UPKEEP_COST", szCivicOptionCosts.GetCString(), ROUND_DIVIDE(player.getCivicUpkeep()*(100+player.getInflationRate()),100))); // K-Mod
 }
 
 void CvGameTextMgr::buildFinanceForeignIncomeString(CvWStringBuffer& szBuffer, PlayerTypes ePlayer)

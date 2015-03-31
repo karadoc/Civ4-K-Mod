@@ -133,10 +133,13 @@ class EconomicsAdvisor:
 
 		numCities = player.getNumCities()	
 
-		totalUnitCost = player.calculateUnitCost()
-		totalUnitSupply = player.calculateUnitSupply()
-		totalMaintenance = player.getTotalMaintenance()
-		totalCivicUpkeep = player.getCivicUpkeep([], False)
+		# K-Mod - I've changed these costs to include inflation.
+		inflationFactor = 100+player.getInflationRate()
+		totalUnitCost = (player.calculateUnitCost() * inflationFactor + 50)/100
+		totalUnitSupply = (player.calculateUnitSupply() * inflationFactor + 50)/100
+		totalMaintenance = (player.getTotalMaintenance() * inflationFactor + 50)/100
+		totalCivicUpkeep = (player.getCivicUpkeep([], False) * inflationFactor + 50)/100
+
 		totalPreInflatedCosts = player.calculatePreInflatedCosts()
 		totalInflatedCosts = player.calculateInflatedCosts()
 		goldCommerce = player.getCommerceRate(CommerceTypes.COMMERCE_GOLD)
@@ -458,16 +461,17 @@ class EconomicsAdvisor:
 			screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(-goldFromCivs) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_FINANCE_FOREIGN_INCOME, self.iActiveLeader, 1)
 			iExpenses -= goldFromCivs
 
-		yLocation += self.Y_SPACING
-		iInflation = totalInflatedCosts - totalPreInflatedCosts
-		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_FINANCIAL_ADVISOR_INFLATION", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_FINANCE_INFLATED_COSTS, self.iActiveLeader, 1)
-		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iInflation) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_FINANCE_INFLATED_COSTS, self.iActiveLeader, 1)
-		iExpenses += iInflation
+		# yLocation += self.Y_SPACING
+		# iInflation = totalInflatedCosts - totalPreInflatedCosts
+		# screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>(" + localText.getText("TXT_KEY_FINANCIAL_ADVISOR_INFLATION", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_FINANCE_INFLATED_COSTS, self.iActiveLeader, 1)
+		# screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iInflation) + ")</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_FINANCE_INFLATED_COSTS, self.iActiveLeader, 1)
+		# iExpenses += iInflation
 
 		yLocation += 1.5 * self.Y_SPACING
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_FINANCIAL_ADVISOR_EXPENSES", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_RIGHT_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
-		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iExpenses) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
-		
+		#screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(iExpenses) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
+		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(totalInflatedCosts) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_RIGHT_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_FINANCE_INFLATED_COSTS, self.iActiveLeader, 1 )		
+
 		return 0
 
 	def drawEnvironment(self):
