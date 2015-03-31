@@ -3830,6 +3830,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 
 				int iTempValue = (iExistingUpkeep - iNewUpkeep) / 22; // slightly more then 4x savings, just to acomodate growth.
 
+				iTempValue = iTempValue * (100+kOwner.getInflationRate()) / 100; // We want absolute savings, including inflation.
+
 				/* iTempValue *= kOwner.AI_commerceWeight(COMMERCE_GOLD, 0); // (note, not just for this particular city - because this isn't direct gold production)
 				iTempValue /= 100; */
 
@@ -9388,7 +9390,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 						if (bFillingBar)
 							iGrowthValue = iGrowthValue * iFoodToGrow / std::max(1, 2*iFoodToGrow + iFoodLevel + iAdjustedFoodPerTurn);
 
-
 						if (iHealthLevel < (bFillingBar ? 0 : 1))
 							iGrowthValue = iGrowthValue * 2/3;
 
@@ -10416,6 +10417,8 @@ int CvCityAI::AI_cityValue() const
 	iValue += getCommerceRateTimes100(COMMERCE_GOLD);
 
 	int iCosts = calculateColonyMaintenanceTimes100() + 2*getMaintenanceTimes100()/3;
+	iCosts = iCosts * (100+kOwner.getInflationRate()) / 100;
+
 	// slightly encourage empire split when aiming for a diplomatic victory
 	if (kOwner.AI_isDoVictoryStrategy(AI_VICTORY_DIPLOMACY3) && kOwner.getCommercePercent(COMMERCE_GOLD) > 0)
 	{
