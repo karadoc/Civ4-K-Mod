@@ -3278,7 +3278,7 @@ int CvCity::getProductionDifference(int iProductionNeeded, int iProduction, int 
 		return 0;
 	}
 
-	int iFoodProduction = ((bFoodProduction) ? std::max(0, (getYieldRate(YIELD_FOOD) - foodConsumption(true))) : 0);
+	int iFoodProduction = bFoodProduction ? std::max(0, getYieldRate(YIELD_FOOD) - foodConsumption()) : 0;
 
 	int iOverflow = ((bOverflow) ? (getOverflowProduction() + getFeatureProduction()) : 0);
 
@@ -6149,9 +6149,10 @@ int CvCity::calculateCorporationMaintenanceTimes100(CorporationTypes eCorporatio
 	iMaintenance /= 100;
 
 	// K-Mod note. This division by inflation effectively cancels with the inflation factor in calculateInflatedCosts.
-	// I'm not sure I agree with having corp mainenance be free of inflation.
-	// Corp output gets boosted as cities' yield multiplayers improve, so perhaps the costs should inflate...
-	// But I'll leave it as is for now.
+	// However, since city maintenance is cached and is only updated in particular situations; this adjustment
+	// may result in corporation maintenance sometimes being higher than it should be - as inflation grows and
+	// the correction factor to counter inflation remains unchanged.
+	// This is obviously a bug; but I'm not going to worry about it right now.
 	int iInflation = GET_PLAYER(getOwnerINLINE()).getInflationRate() + 100;
 	if (iInflation > 0)
 	{

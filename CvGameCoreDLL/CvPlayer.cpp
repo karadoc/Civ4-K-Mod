@@ -7397,7 +7397,7 @@ void CvPlayer::updateInflationRate()
 		iTurns = std::min(GC.getGameINLINE().getMaxTurns(), iTurns);
 	}
 
-	// K-Mod. Advance the effective turn proportionally to have many techs have been discovered;
+	// K-Mod. Advance the effective turn proportionally with total techs discovered;
 	// so that games which lots of tech trading will still have a reasonable inflation rate.
 	// Note. This is an experimental change. I might have to revise it in the future.
 	{
