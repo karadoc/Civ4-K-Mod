@@ -15,8 +15,16 @@
 	</Define>
 	<Define>
 		<DefineName>BASE_REVOLT_OCCUPATION_TURNS</DefineName>
-		<iDefineIntVal>3</iDefineIntVal> <!-- increased from 2, because of changes that I've made to its usage -->
+		<iDefineIntVal>2</iDefineIntVal> <!-- same as original value -->
 	</Define>
+	<Define>
+		<DefineName>REVOLT_TEST_PROB</DefineName>
+		<iDefineIntVal>15</iDefineIntVal>
+	</Define> <!-- increased from 10 -->
+	<Define>
+		<DefineName>NUM_WARNING_REVOLTS</DefineName>
+		<iDefineIntVal>2</iDefineIntVal>
+	</Define> <!-- increased from 1 -->
 	<Define>
 		<DefineName>EVENT_MESSAGE_STAGGER_TIME</DefineName>
 		<iDefineIntVal>2</iDefineIntVal> <!-- decreased from 3 -->
