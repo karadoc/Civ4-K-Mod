@@ -9417,8 +9417,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 
 				//Slavery Override
 				//if (bCanPopRush && (iHappinessLevel > 0))
-				if (kOwner.canPopRush() && getHurryAngerTimer() <= std::max(6-getPopulation(), 0)
-					&& iHappinessLevel >= (getPopulation()%2 == 0 ? 1 : 0)) // K-Mod
+				if (kOwner.canPopRush() && getHurryAngerTimer() <= std::min(3,getPopulation()/2)+2*iHappinessLevel) // K-Mod
 				{
 					//iSlaveryValue = 30 * 14 * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0));
 					// K-Mod. Rescaled values.
