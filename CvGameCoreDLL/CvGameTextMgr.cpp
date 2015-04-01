@@ -581,7 +581,7 @@ void CvGameTextMgr::setUnitHelp(CvWStringBuffer &szString, const CvUnit* pUnit, 
 	{
 		if (pUnit->isHasPromotion((PromotionTypes)iI))
 		{
-			szTempBuffer.Format(L"<img=%S size=16></img>", GC.getPromotionInfo((PromotionTypes)iI).getButton());
+			szTempBuffer.Format(L"<img=%S size=16 />", GC.getPromotionInfo((PromotionTypes)iI).getButton());
 			szString.append(szTempBuffer);
 		}
 	}
@@ -1230,7 +1230,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 						PromotionTypes ePromotion = (PromotionTypes)iPromotionIndex;
 						if (pHeadUnit->isHasPromotion(ePromotion))
 						{
-							szString.append(CvWString::format(L"<img=%S size=16></img>", GC.getPromotionInfo(ePromotion).getButton()));
+							szString.append(CvWString::format(L"<img=%S size=16 />", GC.getPromotionInfo(ePromotion).getButton()));
 						}
 					}
 
@@ -1405,7 +1405,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 									PromotionTypes ePromotion = (PromotionTypes)iPromotionIndex;
 									if (pCargoUnit->isHasPromotion(ePromotion))
 									{
-										szString.append(CvWString::format(L"<img=%S size=16></img>", GC.getPromotionInfo(ePromotion).getButton()));
+										szString.append(CvWString::format(L"<img=%S size=16 />", GC.getPromotionInfo(ePromotion).getButton()));
 									}
 								}
 							}
@@ -1434,7 +1434,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 									PromotionTypes ePromotion = (PromotionTypes)iPromotionIndex;
 									if (pUnit->isHasPromotion(ePromotion))
 									{
-										szString.append(CvWString::format(L"<img=%S size=16></img>", GC.getPromotionInfo(ePromotion).getButton()));
+										szString.append(CvWString::format(L"<img=%S size=16 />", GC.getPromotionInfo(ePromotion).getButton()));
 									}
 								}
 
@@ -1458,7 +1458,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 											PromotionTypes ePromotion = (PromotionTypes)iPromotionIndex;
 											if (pCargoUnit->isHasPromotion(ePromotion))
 											{
-												szString.append(CvWString::format(L"<img=%S size=16></img>", GC.getPromotionInfo(ePromotion).getButton()));
+												szString.append(CvWString::format(L"<img=%S size=16 />", GC.getPromotionInfo(ePromotion).getButton()));
 											}
 										}
 									}
@@ -1808,7 +1808,7 @@ void CvGameTextMgr::setPlotListHelp(CvWStringBuffer &szString, CvPlot* pPlot, bo
 						{
 							if (m_apbPromotion[iIndex][iK] > 0)
 							{
-								szString.append(CvWString::format(L"%d<img=%S size=16></img>", m_apbPromotion[iIndex][iK], GC.getPromotionInfo((PromotionTypes)iK).getButton()));
+								szString.append(CvWString::format(L"%d<img=%S size=16 />", m_apbPromotion[iIndex][iK], GC.getPromotionInfo((PromotionTypes)iK).getButton()));
 							}
 						}
 
