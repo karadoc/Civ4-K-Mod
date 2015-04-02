@@ -4610,7 +4610,11 @@ CvSelectionGroup* CvSelectionGroup::splitGroup(int iSplitSize, CvUnit* pNewHeadU
 
 		int x = (aiTotalAIs[i] * iSplitSize + iGroupSize/2 + iCarry) / iGroupSize;
 
+		// In rare situations x can be rounded up above the maximum,
+		// because iCarry may oversized if one of the original head units is reserved.
+		x = std::min(x, aiTotalAIs[i]);
 		FAssert(x >= 0 && x <= aiTotalAIs[i]);
+
 		iCarry += aiTotalAIs[i] * iSplitSize - x * iGroupSize;
 		aiNewGroupAIs[i] = x;
 		FAssert(iCarry >= -iGroupSize && iCarry <= iGroupSize);
