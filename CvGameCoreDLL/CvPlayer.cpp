@@ -7413,9 +7413,10 @@ void CvPlayer::updateInflationRate()
 					!kLoopPlayer.isMinorCiv() &&
 					kLoopPlayer.canEverResearch(eTech))
 				{
-					iPotentialTech+=kLoopPlayer.getTotalPopulation();
+					int iWeight = kLoopPlayer.getTotalPopulation() * (kLoopPlayer.getTeam() == getTeam() ? 2 : 1);
+					iPotentialTech+=iWeight;
 					if (GET_TEAM(kLoopPlayer.getTeam()).isHasTech(eTech))
-						iCurrentTech+=kLoopPlayer.getTotalPopulation();
+						iCurrentTech+=iWeight;
 				}
 			}
 		}
