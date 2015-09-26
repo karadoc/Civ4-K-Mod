@@ -900,7 +900,7 @@ void CvTeam::shareCounters(TeamTypes eTeam)
 		if (iDelta > 0)
 		{
 			changeProjectCount(eProject, iDelta);
-			// don't count the additional projects that have been added in thiw way
+			// don't count the additional projects that have been added in this way
 			GC.getGameINLINE().incrementProjectCreatedCount(eProject, -iDelta);
 		}
 		//else
@@ -959,6 +959,16 @@ void CvTeam::shareCounters(TeamTypes eTeam)
 		//	kShareTeam.setNoTradeTech((eTech), false);
 		//
 	}
+
+	// K-Mod. Share extra moves.
+	// Note: there is no reliable way to do this. We can't tell if the bonus is from something unique- such as circumnavigation,
+	//       or from something that is already taken into account - such as refrigeration.
+	for (DomainTypes t = (DomainTypes)0; t < NUM_DOMAIN_TYPES; t=(DomainTypes)(t+1))
+	{
+		if (kShareTeam.getExtraMoves(t) > getExtraMoves(t))
+			changeExtraMoves(t, kShareTeam.getExtraMoves(t)-getExtraMoves(t));
+	}
+	// K-Mod end
 }
 
 
