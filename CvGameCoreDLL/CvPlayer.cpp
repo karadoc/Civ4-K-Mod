@@ -14473,11 +14473,11 @@ int CvPlayer::getEspionageMissionCost(EspionageMissionTypes eMission, PlayerType
 		return -1;
 	}
 
-	iMissionCost *= getEspionageMissionCostModifier(eMission, eTargetPlayer, pPlot, iExtraData, pSpyUnit);
-	iMissionCost /= 100;
-
 	// Multiply cost of mission * number of team members
 	iMissionCost *= GET_TEAM(getTeam()).getNumMembers();
+
+	iMissionCost *= getEspionageMissionCostModifier(eMission, eTargetPlayer, pPlot, iExtraData, pSpyUnit);
+	iMissionCost /= 100;
 
 	return std::max(0, iMissionCost);
 }
