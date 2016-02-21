@@ -11,6 +11,9 @@ void CyMessageControlInterface()
 		.def("sendPushOrder", &CyMessageControl::sendPushOrder, "void (int iCityID, int eOrder, int iData, bool bAlt, bool bShift, bool bCtrl)")
 		.def("sendDoTask", &CyMessageControl::sendDoTask, "void (int iCity, int eTask, int iData1, int iData2, bool bOption, bool bAlt, bool bShift, bool bCtrl)")
 		.def("sendTurnComplete", &CyMessageControl::sendTurnComplete, "void () - allows you to force a turn to end")
+		// PB Mod begin
+		.def("sendTurnCompleteAll", &CyMessageControl::sendTurnCompleteAll, "void () - allows you to force a turn to end for all players")
+		// PB Mod end
 		.def("sendUpdateCivics", &CyMessageControl::sendUpdateCivics, "void (list iCivics)")
 		.def("sendResearch", &CyMessageControl::sendResearch, "void (int eTech, bool bShift)")
 		.def("sendPlayerOption", &CyMessageControl::sendPlayerOption, "void (int /*PlayerOptionTypes*/ eOption, bool bValue)")

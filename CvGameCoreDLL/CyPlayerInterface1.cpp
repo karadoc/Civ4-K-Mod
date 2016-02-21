@@ -51,6 +51,9 @@ void CyPlayerPythonInterface1(python::class_<CyPlayer>& x)
 		.def("isHuman", &CyPlayer::isHuman, "bool ()")
 		.def("isBarbarian", &CyPlayer::isBarbarian, "bool () - returns True if player is a Barbarian")
 		.def("getName", &CyPlayer::getName, "str ()")
+		// PB Mod begin
+		.def("setName", &CyPlayer::setName, "void (TCHAR szNewValue) - sets the name to szNewValue")
+		// PB Mod end
 		.def("getNameForm", &CyPlayer::getNameForm, "str ()")
 		.def("getNameKey", &CyPlayer::getNameKey, "str ()")
 		.def("getCivilizationDescription", &CyPlayer::getCivilizationDescription, "str() - returns the Civilization Description String")
@@ -354,6 +357,9 @@ void CyPlayerPythonInterface1(python::class_<CyPlayer>& x)
 		.def("getPlayerTextColorG", &CyPlayer::getPlayerTextColorG, "int ()")
 		.def("getPlayerTextColorB", &CyPlayer::getPlayerTextColorB, "int ()")
 		.def("getPlayerTextColorA", &CyPlayer::getPlayerTextColorA, "int ()")
+		// PB Mod begin
+		.def("setPlayerColor", &CyPlayer::setPlayerColor, "void (PlayerColorTypes eColor) - set the color ID of the player")
+		// PB Mod end
 
 		.def("getSeaPlotYield", &CyPlayer::getSeaPlotYield, "int (YieldTypes eIndex)")
 		.def("getYieldRateModifier", &CyPlayer::getYieldRateModifier, "int (YieldTypes eIndex)")

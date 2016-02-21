@@ -131,6 +131,9 @@ public:
 private:
 	CvDllPythonEvents m_kPythonEventMgr;
 	CvStatistics m_kStatistics;
+	// PB Mod begin
+	CvWString m_pauseString;
+	// PB Mod end
 };
 
 // helper

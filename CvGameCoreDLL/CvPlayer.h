@@ -113,6 +113,9 @@ public:
 	// K-Mod note: I've changed getName, getCivilizationDescription, and getCivilizationShortDescription to only give accurate information if the active player has met this player.
 	// The "key" versions of those functions are unchanged. This is important because getNameKey and so on are used to create messages for the replay.
 	DllExport const wchar* getName(uint uiForm = 0) const;																											// Exposed to Python
+	// PB Mod begin
+	void setName(const wchar* szNewValue);		// Exposed to Python
+	// PB Mod end
 	const wchar* getReplayName(uint uiForm = 0) const; // K-Mod. Player name to be used in replay
 	DllExport const wchar* getNameKey() const;																																	// Exposed to Python
 	DllExport const wchar* getCivilizationDescription(uint uiForm = 0) const;																		// Exposed to Python
@@ -726,7 +729,11 @@ public:
 	DllExport int getPlayerTextColorR() const;																												// Exposed to Python								
 	DllExport int getPlayerTextColorG() const;																												// Exposed to Python									
 	DllExport int getPlayerTextColorB() const;																												// Exposed to Python									
-	DllExport int getPlayerTextColorA() const;																												// Exposed to Python									
+	DllExport int getPlayerTextColorA() const;																												// Exposed to Python	
+
+	// PB Mod begin
+	void setPlayerColor(PlayerColorTypes color);
+	// PB Mod end
 																																									
 	int getSeaPlotYield(YieldTypes eIndex) const;																											// Exposed to Python
 	void changeSeaPlotYield(YieldTypes eIndex, int iChange);
