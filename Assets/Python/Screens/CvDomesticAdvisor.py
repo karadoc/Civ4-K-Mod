@@ -66,11 +66,6 @@ class CvDomesticAdvisor:
 		# Here we set the background widget and exit button, and we show the screen
 		screen.addPanel( "DomesticAdvisorBG", u"", u"", True, False, 0, 0, self.nScreenWidth, self.nScreenHeight, PanelStyles.PANEL_STYLE_MAIN )
 		screen.setText("DomesticExit", "Background", localText.getText("TXT_KEY_PEDIA_SCREEN_EXIT", ()).upper(), CvUtil.FONT_RIGHT_JUSTIFY, self.nScreenWidth - 25, self.nScreenHeight - 45, -0.1, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_CLOSE_SCREEN, -1, -1 )
-		
-		# PB Mod begin
-		# Unpause MOD
-		screen.setText("DomesticUnpause", "Background", localText.getText("TXT_KEY_MOD_UNPAUSE", ()).upper(), CvUtil.FONT_LEFT_JUSTIFY, 25, self.nScreenHeight - 45, -0.1, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, 301311, 2013 )
-		# PB Mod end
 
 		bCanLiberate = false
 		(loopCity, iter) = player.firstCity(false)
@@ -390,17 +385,6 @@ class CvDomesticAdvisor:
 			if (inputClass.getFunctionName() == "DomesticSplit"):
 				screen = CyGInterfaceScreen( "DomesticAdvisor", CvScreenEnums.DOMESTIC_ADVISOR )
 				screen.hideScreen()
-			# PB Mod begin
-			# Remove Pause
-			if (inputClass.getData1() == 301311):
-				if( gc.getGame().isPaused() and not CyGame().isPitbossHost() ):
-					# Cause crash on PB server is host os is Linux
-					#gc.sendPause(-1)
-					# Workaround.
-					gc.sendChat("RemovePause", ChatTargetTypes.CHATTARGET_ALL)
-					screen = CyGInterfaceScreen( "DomesticAdvisor", CvScreenEnums.DOMESTIC_ADVISOR )
-					screen.hideScreen()
-			# PB Mod end
 			
 		return 0
 	

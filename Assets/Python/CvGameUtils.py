@@ -9,7 +9,9 @@ import CvEventInterface
 
 # globals
 gc = CyGlobalContext()
+#PB Mod begin
 localText = CyTranslator()
+#PB Mod end
 
 class CvGameUtils:
 	"Miscellaneous game functions"
@@ -392,8 +394,10 @@ class CvGameUtils:
 		
 	def getWidgetHelp(self, argsList):
 		eWidgetType, iData1, iData2, bOption = argsList
+		#PB Mod begin
 		if (iData1 == 302016):
 			return localText.getText("TXT_KEY_MOD_UNPAUSE_DESC", ())
+		#PB Mod end
 		return u""
 		
 	def getUpgradePriceOverride(self, argsList):
