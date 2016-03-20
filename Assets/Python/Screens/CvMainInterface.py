@@ -1301,7 +1301,7 @@ class CvMainInterface:
 		if self.diploScreenDirty:
 			self.diploScreenDirty = False
 			if gc.getGame().isPaused() and CyGame().isDiploScreenUp():
-				screen.setButtonGFC("DiploScreenUnpauseBtn", localText.getText("TXT_KEY_MOD_UNPAUSE", ()), "",
+				screen.setButtonGFC("DiploScreenUnpauseBtn", localText.getText("TXT_KEY_MOD_UNPAUSE_MAIN", ()), "",
 						screen.centerX(512)-100, screen.centerY(384)+370, 200, 20, WidgetTypes.WIDGET_GENERAL,
 						302016, -1, ButtonStyles.BUTTON_STYLE_LABEL )
 			else:

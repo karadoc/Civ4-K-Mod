@@ -3993,6 +3993,34 @@ int CvPlayer::calculateScore(bool bFinal, bool bVictory) const
 }
 
 
+// DarkLunaPhantom begin
+int CvPlayer::calculateTechScore(bool bFinal, bool bVictory) const
+{
+	PROFILE_FUNC();
+
+	if (!isAlive())
+	{
+		return 0;
+	}
+
+	if (GET_TEAM(getTeam()).getNumMembers() == 0)
+	{
+		return 0;
+	}
+
+	long lScore = 0;
+
+	CyArgsList argsList;
+	argsList.add((int) getID());
+	argsList.add(bFinal);
+	argsList.add(bVictory);
+	gDLL->getPythonIFace()->callFunction(PYGameModule, "calculateTechScore", argsList.makeFunctionArgs(), &lScore);
+
+	return ((int)lScore);
+}
+//DarkLunaPhantom end
+
+
 int CvPlayer::findBestFoundValue() const
 {
 	CvArea* pLoopArea;

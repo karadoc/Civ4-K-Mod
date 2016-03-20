@@ -247,6 +247,16 @@ class CvGameUtils:
 		iWondersScore = CvUtil.getScoreComponent(gc.getPlayer(ePlayer).getWondersScore(), gc.getGame().getInitWonders(), gc.getGame().getMaxWonders(), gc.getDefineINT("SCORE_WONDER_FACTOR"), False, bFinal, bVictory)
 		return int(iPopulationScore + iLandScore + iWondersScore + iTechScore)
 
+	# begin DarkLunaPhantom
+	def calculateTechScore(self,argsList):
+		ePlayer = argsList[0]
+		bFinal = argsList[1]
+		bVictory = argsList[2]
+		
+		iTechScore = CvUtil.getScoreComponent(gc.getPlayer(ePlayer).getTechScore(), gc.getGame().getInitTech(), gc.getGame().getMaxTech(), gc.getDefineINT("SCORE_TECH_FACTOR"), True, bFinal, bVictory)
+		return int(iTechScore)	
+	# end DarkLunaPhantom
+
 	def doHolyCity(self):
 		return False
 

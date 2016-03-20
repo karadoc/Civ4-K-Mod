@@ -173,6 +173,9 @@ public:
 	DllExport void chooseTech(int iDiscover = 0, CvWString szText = "", bool bFront = false);				// Exposed to Python
 
 	int calculateScore(bool bFinal = false, bool bVictory = false) const;
+	// DarkLunaPhantom begin
+	int calculateTechScore(bool bFinal = false, bool bVictory = false) const;
+	// DarkLunaPhantom end
 
 	int findBestFoundValue() const;																																				// Exposed to Python
 

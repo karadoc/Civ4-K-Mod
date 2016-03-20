@@ -677,7 +677,34 @@ void CvTeam::addTeam(TeamTypes eTeam)
 	}
 	// K-Mod end
 
+	// DarkLunaPhantom begin
+	// Preserving circumnavigation bonus. Maybe needs to be changed for mod compatibility.
+	for (iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
+	{
+		changeExtraMoves(((DomainTypes)iI), std::max(0, GET_TEAM(eTeam).getExtraMoves((DomainTypes)iI) - getExtraMoves((DomainTypes)iI)));
+	}
+	// Fix for the bug with espionage where team permanently gets espionage visibility that the added player currently has.
 	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	{
+		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+		if (pLoopPlot->isCity())
+		{
+			pLoopPlot->getPlotCity()->setEspionageVisibility(getID(), std::max(pLoopPlot->getPlotCity()->getEspionageVisibility(getID()), pLoopPlot->getPlotCity()->getEspionageVisibility((TeamTypes)eTeam)), false);
+		}
+		
+		pLoopPlot->changeVisibilityCount(getID(), std::max(0, pLoopPlot->getVisibilityCount(eTeam) - pLoopPlot->getVisibilityCount(getID())), NO_INVISIBLE, false);
+
+		for (iJ = 0; iJ < GC.getNumInvisibleInfos(); iJ++)
+		{
+			pLoopPlot->changeInvisibleVisibilityCount(getID(), ((InvisibleTypes)iJ), std::max(0, pLoopPlot->getInvisibleVisibilityCount(eTeam, ((InvisibleTypes)iJ)) - pLoopPlot->getInvisibleVisibilityCount(getID(), ((InvisibleTypes)iJ))));
+		}
+
+		if (pLoopPlot->isRevealed(eTeam, false))
+		{
+			pLoopPlot->setRevealed(getID(), true, false, eTeam, false);
+		}
+	}
+	/*for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
 		pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 
@@ -692,7 +719,9 @@ void CvTeam::addTeam(TeamTypes eTeam)
 		{
 			pLoopPlot->setRevealed(getID(), true, false, eTeam, false);
 		}
-	}
+	}*/
+	// DarkLunaPhantom end - The above loop could change visibility count to 2 while CvCity::getEspionageVisibility is true,
+	// or to 1 while it is false, both of which would mean permanent visibility bug because of the way CvCity::setEspionageVisibility works.
 
 	GC.getGameINLINE().updatePlotGroups();
 

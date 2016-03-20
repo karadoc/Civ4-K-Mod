@@ -4,11 +4,19 @@
 	<!-- PB Mod begin -->
 	<TEXT>
 		<Tag>TXT_KEY_MOD_UNPAUSE</Tag>
-		<English>Unfreeze screen</English>
-		<French>Unfreeze screen</French>
+		<English>Unfreeze Screen</English>
+		<French>Unfreeze Screen</French>
 		<German>Pause aufheben</German>
-		<Italian>Unfreeze screen</Italian>
-		<Spanish>Unfreeze screen</Spanish>
+		<Italian>Unfreeze Screen</Italian>
+		<Spanish>Unfreeze Screen</Spanish>
+	</TEXT>
+		<TEXT>
+		<Tag>TXT_KEY_MOD_UNPAUSE_MAIN</Tag>
+		<English>Go to F1 screen to unfreeze.</English>
+		<French>Go to F1 screen to unfreeze.</French>
+		<German>Go to F1 screen to unfreeze.</German>
+		<Italian>Go to F1 screen to unfreeze.</Italian>
+		<Spanish>Go to F1 screen to unfreeze.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_MOD_UNPAUSE_DESC</Tag>

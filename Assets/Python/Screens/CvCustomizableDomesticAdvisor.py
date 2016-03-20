@@ -869,7 +869,7 @@ class CvCustomizableDomesticAdvisor:
 		
 		# PB Mod begin
 		# Unpause MOD
-		screen.setText("DomesticUnpause", "Background", localText.getText("TXT_KEY_MOD_UNPAUSE", ()).upper(), CvUtil.FONT_LEFT_JUSTIFY, 25, self.nScreenLength - 45, -0.1, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, 301311, 2013 )
+		screen.setText("DomesticUnpause", "Background", localText.getText("TXT_KEY_MOD_UNPAUSE", ()).upper(), CvUtil.FONT_LEFT_JUSTIFY, 25, self.nScreenLength - 70, -0.1, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, 301311, 2013 )
 		# PB Mod end
 		
 # BUG - Colony Split - start
