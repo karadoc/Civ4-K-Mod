@@ -13,6 +13,9 @@ public:
 	void sendPushOrder(int iCityID, int eOrder, int iData, bool bAlt, bool bShift, bool bCtrl); // K-Mod note: the arguments here no longer match CvMessageControl::sendPushOrder.  Sorry about that.
 	void sendDoTask(int iCity, int eTask, int iData1, int iData2, bool bOption, bool bAlt, bool bShift, bool bCtrl);
 	void sendTurnComplete();
+	// PB Mod begin
+	void sendTurnCompleteAll();
+	// PB Mod end
 	void sendUpdateCivics(boost::python::list& iCivics);
 	void sendResearch(int eTech, bool bShift);
 	void sendPlayerOption (int /*PlayerOptionTypes*/ eOption, bool bValue);

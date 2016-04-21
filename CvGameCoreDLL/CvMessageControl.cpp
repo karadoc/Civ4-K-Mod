@@ -33,6 +33,19 @@ void CvMessageControl::sendTurnComplete()
 	}
 }
 
+// PB Mod begin
+void CvMessageControl::sendTurnCompleteAll()
+{
+	//Finish turn for all players
+	for (int iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive()){
+			gDLL->sendMessageData(new CvNetTurnComplete((PlayerTypes)iI));
+		}
+	}
+}
+// PB Mod end
+
 //void CvMessageControl::sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bAlt, bool bShift, bool bCtrl)
 void CvMessageControl::sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bSave, bool bPop, int iPosition)
 {

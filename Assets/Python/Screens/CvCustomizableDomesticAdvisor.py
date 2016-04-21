@@ -867,6 +867,11 @@ class CvCustomizableDomesticAdvisor:
 		# Draw the table and the rest based on the mode
 		self.drawScreen (self.currentPage)
 		
+		# PB Mod begin
+		# Unpause MOD
+		screen.setText("DomesticUnpause", "Background", localText.getText("TXT_KEY_MOD_UNPAUSE", ()).upper(), CvUtil.FONT_LEFT_JUSTIFY, 25, self.nScreenLength - 70, -0.1, FontTypes.TITLE_FONT, WidgetTypes.WIDGET_GENERAL, 301311, 2013 )
+		# PB Mod end
+		
 # BUG - Colony Split - start
 
 		player = gc.getActivePlayer()
@@ -2415,6 +2420,17 @@ class CvCustomizableDomesticAdvisor:
 				popupInfo.setButtonPopupType(ButtonPopupTypes.BUTTONPOPUP_PYTHON_SCREEN)
 				popupInfo.setText(u"showDomesticAdvisor")
 				popupInfo.addPopup(inputClass.getData1())
+			# PB Mod begin
+			# Remove Pause
+			if (inputClass.getData1() == 301311):
+				if( gc.getGame().isPaused() and not CyGame().isPitbossHost() ):
+					# Cause crash on PB server is host os is Linux
+					#gc.sendPause(-1)
+					# Workaround.
+					gc.sendChat("RemovePause", ChatTargetTypes.CHATTARGET_ALL)
+					screen = CyGInterfaceScreen( "DomesticAdvisor", CvScreenEnums.DOMESTIC_ADVISOR )
+					screen.hideScreen()
+			# PB Mod end
 
 # BUG - Colony Split - start
 
