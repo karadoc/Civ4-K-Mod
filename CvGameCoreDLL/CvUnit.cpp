@@ -1005,7 +1005,9 @@ void CvUnit::updateAirCombat(bool bQuick)
 	{
 		if (!isFighting())
 		{
-			if (plot()->isFighting() || pPlot->isFighting())
+			//if (plot()->isFighting() || pPlot->isFighting())
+			// K-Mod. I don't think it matters if the plot we're on is fighting already - but the interceptor needs to be available to fight!
+			if (pPlot->isFighting() || pInterceptor->isFighting())
 			{
 				return;
 			}
