@@ -15314,6 +15314,7 @@ bool CvUnitAI::AI_goToTargetCity(int iFlags, int iMaxPathTurns, CvCity* pTargetC
 		if (pBestPlot != NULL)
 		{
 			FAssert(!(pTargetCity->at(pEndTurnPlot)) || 0 != (iFlags & MOVE_THROUGH_ENEMY)); // no suicide missions...
+			// K-Mod note: it may be possible for this assert to fail if the city is so weak that ATTACK_STACK_MOVE would choose to just walk through it.
 			if (!atPlot(pEndTurnPlot))
 			{
 				//getGroup()->pushMission(MISSION_MOVE_TO, pBestPlot->getX_INLINE(), pBestPlot->getY_INLINE(), iFlags);
@@ -15574,6 +15575,7 @@ bool CvUnitAI::AI_cityAttack(int iRange, int iOddsThreshold, int iFlags, bool bF
 
 // Returns true if a mission was pushed...
 // This function has been been writen for K-Mod. (it started getting messy, so I deleted most of the old code)
+// bFollow implies AI_follow conditions - ie. not everyone in the group can move, and this unit might not be the group leader.
 bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMinStack, bool bAllowCities, bool bFollow)
 {
 	PROFILE_FUNC();
@@ -15640,8 +15642,7 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 		}
 		if (bFollow && pBestPlot->getNumVisiblePotentialEnemyDefenders(this) == 0)
 		{
-			FAssert(pBestPlot->getPlotCity() != 0);
-			// we need to ungroup this unit so that we can move into the city.
+			// we need to ungroup to capture the undefended unit / city. (because not everyone in our group can move)
 			joinGroup(0);
 			bFollow = false;
 		}
@@ -15652,10 +15653,6 @@ bool CvUnitAI::AI_anyAttack(int iRange, int iOddsThreshold, int iFlags, int iMin
 
 	return false;
 }
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-
 
 // Returns true if a mission was pushed...
 bool CvUnitAI::AI_rangeAttack(int iRange)
