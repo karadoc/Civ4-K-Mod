@@ -837,10 +837,10 @@ void CvSelectionGroup::startMission()
 						iPriority--;
 					if (pLoopUnit->isMadeAttack())
 						iPriority++;
+					if (pLoopUnit->isHurt() && !pLoopUnit->hasMoved())
+						iPriority--;
 
 					iPriority = (3 + iPriority)*pLoopUnit->movesLeft() / 3;
-					iPriority *= pLoopUnit->currHitPoints();
-					iPriority /= std::max(1, pLoopUnit->maxHitPoints());
 					unit_list.push_back(std::make_pair(iPriority, pLoopUnit->getID()));
 				}
 			}
@@ -850,6 +850,7 @@ void CvSelectionGroup::startMission()
 			for (size_t i = 0; i < unit_list.size(); i++)
 			{
 				CvUnit* pLoopUnit = kOwner.getUnit(unit_list[i].second);
+				FAssert(pLoopUnit);
 
 				if (pLoopUnit->pillage())
 				{
@@ -1293,7 +1294,8 @@ bool CvSelectionGroup::continueMission_bulk(int iSteps)
 		return false;
 	}
 
-	FAssert(bDone || !(headMissionQueueNode()->m_data.iFlags & MOVE_DIRECT_ATTACK)); // K-Mod. ('direct attack' should be used for attack commands only)
+	// K-Mod. 'direct attack' should be used for attack commands only. (But in simultaneous turns mode, the defenders might have already left.)
+	FAssert(bDone || !(headMissionQueueNode()->m_data.iFlags & MOVE_DIRECT_ATTACK) || GC.getGameINLINE().isMPOption(MPOPTION_SIMULTANEOUS_TURNS));
 
 	if (!bDone)
 	{
