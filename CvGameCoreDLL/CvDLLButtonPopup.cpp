@@ -2636,6 +2636,11 @@ bool CvDLLButtonPopup::launchLaunchPopup(CvPopup* pPopup, CvPopupInfo &info)
 
 	CvTeam& kTeam = GET_TEAM(GET_PLAYER(ePlayer).getTeam());
 
+	// K-Mod. Cancel the popup if something has happened to prevent the launch.
+	if (!kTeam.canLaunch(eVictory))
+		return false;
+	// K-Mod end
+
 	if (kTeam.getVictoryCountdown(eVictory) > 0 || GC.getGameINLINE().getGameState() != GAMESTATE_ON)
 	{
 		return false;
