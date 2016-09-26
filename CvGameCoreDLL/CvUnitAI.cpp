@@ -1261,14 +1261,17 @@ int CvUnitAI::AI_sacrificeValue(const CvPlot* pPlot) const
 
 // Protected Functions...
 
-// K-Mod - test if we should declare war become moving to the target plot.
+// K-Mod - test if we should declare war before moving to the target plot.
 // (originally, DOW were made inside the unit movement mechanics. To me, that seems like a really dumb idea.)
 bool CvUnitAI::AI_considerDOW(CvPlot* pPlot)
 {
 	CvTeamAI& kOurTeam = GET_TEAM(getTeam());
 	TeamTypes ePlotTeam = pPlot->getTeam();
 
-	if (!canEnterArea(ePlotTeam, pPlot->area(), true))
+	// Note: We might be a transport ship which ignores borders, but with escorts and cargo who don't ignore borders.
+	// So, we should check that the whole group can enter the borders. (There are be faster ways to check, but this is good enough.)
+	// If it's an amphibious landing, lets just assume that our cargo will need a DoW!
+	if (!getGroup()->canEnterArea(ePlotTeam, pPlot->area(), true) || getGroup()->isAmphibPlot(pPlot))
 	{
 		if (ePlotTeam != NO_TEAM && kOurTeam.AI_isSneakAttackReady(ePlotTeam))
 		{
