@@ -8734,7 +8734,7 @@ void CvCityAI::AI_juggleCitizens()
 			{
 				bTakeNewJob = false;
 			}
-			// finally, don't take the new job of a direct comparison shows that it is not more valuable than the old job.
+			// finally, don't take the new job if a direct comparison shows that it is not more valuable than the old job.
 			// (exception, switching away from zero-value jobs, such as unwanted specialists)
 			else if (worked_it->first > 0 && AI_jobChangeValue(unworked_it->second, worked_it->second, false, false, iGrowthValue) <= 0)
 			{
@@ -9415,24 +9415,25 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					}
 				}
 
-				//Slavery Override
-				//if (bCanPopRush && (iHappinessLevel > 0))
-				if (kOwner.canPopRush() && getHurryAngerTimer() <= std::min(3,getPopulation()/2)+2*iHappinessLevel) // K-Mod
+				// Slavery evaluation
+				// K-Mod. Rescaled values and conditions.
+				if (!bWorkerOptimization && isProduction() && kOwner.canPopRush() && getHurryAngerTimer() <= std::min(3,getPopulation()/2)+2*iHappinessLevel) // K-Mod
 				{
 					//iSlaveryValue = 30 * 14 * std::max(0, aiYields[YIELD_FOOD] - ((iHealthLevel < 0) ? 1 : 0));
-					// K-Mod. Rescaled values.
 					int iProductionPerPop = 0;
 					for (HurryTypes eHurry = (HurryTypes)0; eHurry < GC.getNumHurryInfos(); eHurry = (HurryTypes)(eHurry+1))
 					{
 						if (kOwner.canHurry(eHurry))
 						{
-							iProductionPerPop = std::max(iProductionPerPop, GC.getGameINLINE().getProductionPerPopulation(eHurry) * iBaseProductionModifier / 100);
+							//iProductionPerPop = std::max(iProductionPerPop, GC.getGameINLINE().getProductionPerPopulation(eHurry) * iBaseProductionModifier / 100);
+							iProductionPerPop = std::max(iProductionPerPop, GC.getGameINLINE().getProductionPerPopulation(eHurry)); // Don't use modifiers weights, because slavery usage is erratic.
 						}
 					}
 					FAssert(iProductionPerPop > 0);
-					iSlaveryValue = iProductionPerPop * iBaseProductionValue * std::max(0, iFoodYield - ((iHealthLevel < 0) ? 1 : 0)); // K-Mod
-					// K-Mod end
-					iSlaveryValue /= std::max(10, (growthThreshold() * (100 - getMaxFoodKeptPercent())));
+					// Note: '80' means that we're only counting 90% of the potential production, because slavery require careful micromangement to get 100% of the value.
+					// Ideally, we'd try to take our infrastructure needs into account. (ie. how much do we still need to build.)
+					iSlaveryValue = 80 * iProductionPerPop * iBaseProductionValue * std::max(0, iFoodYield - ((iHealthLevel < 0) ? 1 : 0));
+					iSlaveryValue /= std::max(10*100, (growthThreshold() * (100 - getMaxFoodKeptPercent())));
 
 					iSlaveryValue *= 100;
 					iSlaveryValue /= getHurryCostModifier(true);
@@ -9446,21 +9447,10 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 	}
 
 
-	//int iMaxFoodValue = 3 * (eProcess == NO_PROCESS ? iBaseProductionValue : iBaseCommerceValue) - 1;
-	//int iFoodValue = std::min(iFoodGrowthValue, iMaxFoodValue * iFoodYield);
+	// Note: iSlaveryValue use to be counted in the production section. (There are argument for and against - but this is easier.)
 	int iFoodValue = iFoodGrowthValue;
-
-	//Slavery translation
-	if ((iSlaveryValue > 0) && (iSlaveryValue > iFoodValue))
-	{
-		//treat the food component as production
-		iFoodValue = 0;
-	}
-	else
-	{
-		//treat it as just food
-		iSlaveryValue = 0;
-	}
+	if (iSlaveryValue > iFoodGrowthValue)
+		iFoodValue = (iSlaveryValue + iFoodGrowthValue)/2; // Use the average - to account for the fact that we won't always be making use of slavery.
 
 	//Lets have some fun with the multipliers, this basically bluntens the impact of
 	//massive bonuses.....
@@ -9496,8 +9486,6 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		{
 			iFoodValue *= 130;
 			iFoodValue /= 100;
-			iSlaveryValue *= 130;
-			iSlaveryValue /= 100;
 		}
 	}
 	/* else if (iFoodValue > 0 && (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeYield(YIELD_COMMERCE)))
@@ -9531,7 +9519,7 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 			iProductionValue *= iBaseProductionModifier;
 			iProductionValue /= (iBaseProductionModifier + iExtraProductionModifier);
 
-			iProductionValue += iSlaveryValue;
+			// Note: iSlaveryValue use to be added here. Now it is counted as food value instead.
 			iProductionValue *= (100 + (bWorkerOptimization ? 0 : AI_specialYieldMultiplier(YIELD_PRODUCTION)));
 
 			iProductionValue /= kOwner.AI_averageYieldMultiplier(YIELD_PRODUCTION);
