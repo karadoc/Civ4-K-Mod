@@ -144,15 +144,19 @@
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_DISTANCE_WEIGHT</DefineName>
-		<iDefineIntVal>40</iDefineIntVal>
+		<iDefineIntVal>50</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_TIME_WEIGHT</DefineName>
-		<iDefineIntVal>70</iDefineIntVal>
+		<iDefineIntVal>60</iDefineIntVal>
+	</Define>
+	<Define>
+		<DefineName>RELIGION_INFLUENCE_TIME_SCALE</DefineName>
+		<iDefineIntVal>50</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_SHRINE_WEIGHT</DefineName>
-		<iDefineIntVal>15</iDefineIntVal>
+		<iDefineIntVal>20</iDefineIntVal>
 	</Define>
 	<Define>
 		<DefineName>RELIGION_INFLUENCE_STATE_RELIGION_WEIGHT</DefineName>
