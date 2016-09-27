@@ -702,6 +702,16 @@ class CvTechChooser:
 		j = 0
 		k = 0
 
+		# K-Mod. Commerce modifiers
+		for j in range(CommerceTypes.NUM_COMMERCE_TYPES):
+			if (gc.getTechInfo(i).getCommerceModifier(j) > 0):
+				szCommerceModifierButton = self.getNextWidgetName("CommerceModifierButton")
+				screen.addDDSGFCAt( szCommerceModifierButton, szTechRecord, gc.getCommerceInfo(j).getButton(), iX + fX, iY + Y_ROW, TEXTURE_SIZE, TEXTURE_SIZE, WidgetTypes.WIDGET_HELP_GLOBAL_COMMERCE_MODIFIER, i, j, False )
+				fX += X_INCREMENT
+
+		j = 0
+		k = 0
+
 		# K-Mod. Extra specialist commerce
 		for j in range(CommerceTypes.NUM_COMMERCE_TYPES):
 			if (gc.getTechInfo(i).getSpecialistExtraCommerce(j) > 0):

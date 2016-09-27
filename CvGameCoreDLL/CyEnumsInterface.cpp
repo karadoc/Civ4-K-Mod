@@ -397,7 +397,8 @@ void CyEnumsPythonInterface()
 		.value("WIDGET_HELP_GW_INDEX", WIDGET_HELP_GW_INDEX)
 		.value("WIDGET_HELP_GW_UNHAPPY", WIDGET_HELP_GW_UNHAPPY)
 
-		// Extra specialist commerce (from tech)
+		// Extra specialist commerce, and commerce modifers (from tech)
+		.value("WIDGET_HELP_GLOBAL_COMMERCE_MODIFIER", WIDGET_HELP_GLOBAL_COMMERCE_MODIFIER)
 		.value("WIDGET_HELP_EXTRA_SPECIALIST_COMMERCE", WIDGET_HELP_EXTRA_SPECIALIST_COMMERCE)
 		// K-Mod end
 		.value("NUM_WIDGET_TYPES", NUM_WIDGET_TYPES)

@@ -356,6 +356,8 @@ public:
 	int getPrereqOrTechs(int i) const;		// Exposed to Python
 	int getPrereqAndTechs(int i) const;		// Exposed to Python
 
+	int getCommerceModifier(int i) const; // K-Mod, Exposed to Python
+	int* getCommerceModifierArray() const; // K-Mod
 	int getSpecialistExtraCommerce(int i) const; // K-Mod, Exposed to Python
 	int* getSpecialistExtraCommerceArray() const; // K-Mod
 	bool isCommerceFlexible(int i) const;	// Exposed to Python
@@ -423,6 +425,7 @@ protected:
 	int* m_piPrereqOrTechs;
 	int* m_piPrereqAndTechs;
 
+	int* m_piCommerceModifier; // K-Mod
 	int* m_piSpecialistExtraCommerce; // K-Mod
 	bool* m_pbCommerceFlexible;
 	bool* m_pbTerrainTrade;

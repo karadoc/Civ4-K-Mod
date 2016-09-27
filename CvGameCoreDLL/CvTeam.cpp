@@ -6472,9 +6472,10 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 			kLoopPlayer.changeAssets(GC.getTechInfo(eTech).getAssetValue() * iChange);
 			kLoopPlayer.changePower(GC.getTechInfo(eTech).getPowerValue() * iChange);
 			kLoopPlayer.changeTechScore(getTechScore(eTech) * iChange);
-			// K-Mod. Extra commerce for specialist (new xml field)
+			// K-Mod. Processing for new xml fields
 			for (CommerceTypes eCommerce = (CommerceTypes)0; eCommerce < NUM_COMMERCE_TYPES; eCommerce=(CommerceTypes)(eCommerce+1))
 			{
+				kLoopPlayer.changeCommerceRateModifier(eCommerce, GC.getTechInfo(eTech).getCommerceModifier(eCommerce) * iChange);
 				kLoopPlayer.changeSpecialistExtraCommerce(eCommerce, GC.getTechInfo(eTech).getSpecialistExtraCommerce(eCommerce) * iChange);
 			}
 			// K-Mod end

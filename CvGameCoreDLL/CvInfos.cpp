@@ -1011,6 +1011,7 @@ m_piDomainExtraMoves(NULL),
 m_piFlavorValue(NULL), 
 m_piPrereqOrTechs(NULL),
 m_piPrereqAndTechs(NULL),
+m_piCommerceModifier(NULL), // K-Mod
 m_piSpecialistExtraCommerce(NULL), // K-Mod
 m_pbCommerceFlexible(NULL),
 m_pbTerrainTrade(NULL)
@@ -1030,6 +1031,7 @@ CvTechInfo::~CvTechInfo()
 	SAFE_DELETE_ARRAY(m_piFlavorValue);
 	SAFE_DELETE_ARRAY(m_piPrereqOrTechs);
 	SAFE_DELETE_ARRAY(m_piPrereqAndTechs);
+	SAFE_DELETE_ARRAY(m_piCommerceModifier); // K-Mod
 	SAFE_DELETE_ARRAY(m_piSpecialistExtraCommerce); // K-Mod
 	SAFE_DELETE_ARRAY(m_pbCommerceFlexible);
 	SAFE_DELETE_ARRAY(m_pbTerrainTrade);
@@ -1275,6 +1277,19 @@ int CvTechInfo::getPrereqAndTechs(int i) const
 }
 
 // K-Mod
+int CvTechInfo::getCommerceModifier(int i) const
+{
+	FAssertMsg(m_piCommerceModifier, "Tech info not initialised");
+	FASSERT_BOUNDS(0, NUM_COMMERCE_TYPES, i, "CvTechInfo::getCommerceModifier");
+
+	return m_piCommerceModifier ? m_piCommerceModifier[i] : 0;
+}
+
+int* CvTechInfo::getCommerceModifierArray() const
+{
+	return m_piCommerceModifier;
+}
+
 int CvTechInfo::getSpecialistExtraCommerce(int i) const
 {
 	FAssertMsg(m_piSpecialistExtraCommerce, "Tech info not initialised");
@@ -1362,6 +1377,12 @@ void CvTechInfo::read(FDataStreamBase* stream)
 	stream->Read(GC.getNUM_AND_TECH_PREREQS(), m_piPrereqAndTechs);
 
 	// K-Mod
+	if (uiFlag >= 2)
+	{
+		SAFE_DELETE_ARRAY(m_piCommerceModifier)
+		m_piCommerceModifier = new int[NUM_COMMERCE_TYPES];
+		stream->Read(NUM_COMMERCE_TYPES, m_piCommerceModifier);
+	}
 	if (uiFlag >= 1)
 	{
 		SAFE_DELETE_ARRAY(m_piSpecialistExtraCommerce)
@@ -1387,7 +1408,7 @@ void CvTechInfo::write(FDataStreamBase* stream)
 {
 	CvInfoBase::write(stream);
 
-	uint uiFlag=1;
+	uint uiFlag=2;
 	stream->Write(uiFlag);		// flag for expansion
 
 	stream->Write(m_iAdvisorType);
@@ -1432,6 +1453,7 @@ void CvTechInfo::write(FDataStreamBase* stream)
 	stream->Write(GC.getNumFlavorTypes(), m_piFlavorValue);
 	stream->Write(GC.getNUM_OR_TECH_PREREQS(), m_piPrereqOrTechs);
 	stream->Write(GC.getNUM_AND_TECH_PREREQS(), m_piPrereqAndTechs);
+	stream->Write(NUM_COMMERCE_TYPES, m_piCommerceModifier); // K-Mod. uiFlag >= 2
 	stream->Write(NUM_COMMERCE_TYPES, m_piSpecialistExtraCommerce); // K-Mod. uiFlag >= 1
 	stream->Write(NUM_COMMERCE_TYPES, m_pbCommerceFlexible);
 	stream->Write(GC.getNumTerrainInfos(), m_pbTerrainTrade);
@@ -1495,6 +1517,16 @@ bool CvTechInfo::read(CvXMLLoadUtility* pXML)
 	pXML->GetChildXmlValByName(&m_iGridY, "iGridY");
 
 	// K-Mod
+	if (gDLL->getXMLIFace()->SetToChildByTagName(pXML->GetXML(),"CommerceModifiers"))
+	{
+		pXML->SetCommerce(&m_piCommerceModifier);
+		gDLL->getXMLIFace()->SetToParent(pXML->GetXML());
+	}
+	else
+	{
+		pXML->InitList(&m_piCommerceModifier, NUM_COMMERCE_TYPES);
+	}
+
 	if (gDLL->getXMLIFace()->SetToChildByTagName(pXML->GetXML(),"SpecialistExtraCommerces"))
 	{
 		pXML->SetCommerce(&m_piSpecialistExtraCommerce);

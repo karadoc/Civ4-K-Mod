@@ -595,6 +595,9 @@ void CvDLLWidgetData::parseHelp(CvWStringBuffer &szBuffer, CvWidgetDataStruct &w
 		szBuffer.assign(gDLL->getText("TXT_KEY_GW_UNHAPPY_HELP"));
 		break;
 	// K-Mod. Extra specialist commerce
+	case WIDGET_HELP_GLOBAL_COMMERCE_MODIFIER:
+		GAMETEXT.setCommerceChangeHelp(szBuffer, L"", L"", gDLL->getText("TXT_KEY_CIVIC_IN_ALL_CITIES").GetCString(), GC.getTechInfo((TechTypes)(widgetDataStruct.m_iData1)).getCommerceModifierArray(), true, false);
+		break;
 	case WIDGET_HELP_EXTRA_SPECIALIST_COMMERCE:
 		GAMETEXT.setCommerceChangeHelp(szBuffer, L"", L"", gDLL->getText("TXT_KEY_CIVIC_PER_SPECIALIST").GetCString(), GC.getTechInfo((TechTypes)(widgetDataStruct.m_iData1)).getSpecialistExtraCommerceArray(), false, false);
 		break;
