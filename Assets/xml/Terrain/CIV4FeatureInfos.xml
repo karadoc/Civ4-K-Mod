@@ -133,7 +133,7 @@
 			<iDisappearance>0</iDisappearance>
 			<iGrowth>16</iGrowth>
 			<iTurnDamage>0</iTurnDamage>
-			<iWarmingDefense>15</iWarmingDefense><!-- GWMod new XML field M.A. -->
+			<iWarmingDefense>10</iWarmingDefense><!-- GWMod new XML field M.A. -->
 			<bNoCoast>0</bNoCoast>
 			<bNoRiver>0</bNoRiver>
 			<bNoAdjacent>0</bNoAdjacent>
@@ -478,7 +478,7 @@
 			<iDisappearance>0</iDisappearance>
 			<iGrowth>8</iGrowth>
 			<iTurnDamage>0</iTurnDamage>
-			<iWarmingDefense>15</iWarmingDefense>
+			<iWarmingDefense>10</iWarmingDefense>
 			<bNoCoast>0</bNoCoast>
 			<bNoRiver>0</bNoRiver>
 			<bNoAdjacent>0</bNoAdjacent>

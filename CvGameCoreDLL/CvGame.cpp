@@ -6425,6 +6425,11 @@ void CvGame::doGlobalWarming()
 		}
 	}
 	updateGwPercentAnger();
+
+	if (getGlobalWarmingIndex() > 0)
+	{
+		changeGlobalWarmingIndex(-getGlobalWarmingIndex()*GC.getDefineINT("GLOBAL_WARMING_RESTORATION_RATE", 0)/100);
+	}
 }
 
 // Choose the best plot for global warming to strike from a set of iPool random plots
