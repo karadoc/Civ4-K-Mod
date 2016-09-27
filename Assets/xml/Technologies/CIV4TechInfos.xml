@@ -3284,11 +3284,11 @@
 			<iGridX>13</iGridX>
 			<iGridY>9</iGridY>
 			<DomainExtraMoves/>
-			<SpecialistExtraCommerces>
+			<CommerceModifiers>
 				<iCommerce>0</iCommerce>
-				<iCommerce>1</iCommerce>
+				<iCommerce>10</iCommerce>
 				<iCommerce>0</iCommerce>
-			</SpecialistExtraCommerces>
+			</CommerceModifiers>
 			<CommerceFlexible/>
 			<TerrainTrades/>
 			<bRiverTrade>0</bRiverTrade>
@@ -6336,6 +6336,11 @@
 			<iGridX>17</iGridX>
 			<iGridY>11</iGridY>
 			<DomainExtraMoves/>
+			<SpecialistExtraCommerces>
+				<iCommerce>0</iCommerce>
+				<iCommerce>1</iCommerce>
+				<iCommerce>0</iCommerce>
+			</SpecialistExtraCommerces>
 			<CommerceFlexible/>
 			<TerrainTrades/>
 			<bRiverTrade>0</bRiverTrade>
