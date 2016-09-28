@@ -3443,21 +3443,13 @@ void CvDLLWidgetData::parseContactCivHelp(CvWidgetDataStruct &widgetDataStruct, 
 
 			if( !szWorstEnemyString.isEmpty() )
 			{
-				CvWString szTempBuffer;
-
-				szTempBuffer.assign(gDLL->getText(L"TXT_KEY_WORST_ENEMY_OF", szWorstEnemyString));
-
 				szBuffer.append(NEWLINE);
-				szBuffer.append(szTempBuffer);
+				szBuffer.append(gDLL->getText(L"TXT_KEY_WORST_ENEMY_OF", szWorstEnemyString.getCString()));
 			}
 			if( !szWarWithString.isEmpty() )
 			{
-				CvWString szTempBuffer;
-
-				szTempBuffer.assign(gDLL->getText(L"TXT_KEY_AT_WAR_WITH", szWarWithString));
-
 				szBuffer.append(NEWLINE);
-				szBuffer.append(szTempBuffer);
+				szBuffer.append(gDLL->getText(L"TXT_KEY_AT_WAR_WITH", szWarWithString.getCString()));
 			}
 
 			if( !(kActiveTeam.isAtWar(eTeam)))
@@ -5633,7 +5625,7 @@ void CvDLLWidgetData::parseDescriptionHelp(CvWidgetDataStruct &widgetDataStruct,
 	case CIVILOPEDIA_PAGE_CONCEPT_NEW:
 		{
 			NewConceptTypes eConcept = (NewConceptTypes)widgetDataStruct.m_iData2;
-			if (NO_CONCEPT != eConcept)
+			if (NO_NEW_CONCEPT != eConcept)
 			{
 				szBuffer.assign(GC.getNewConceptInfo(eConcept).getDescription());
 			}

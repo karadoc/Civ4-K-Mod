@@ -6504,9 +6504,9 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 		{
 			if (GC.getBuildInfo((BuildTypes) iI).getRoute() != NO_ROUTE)
 			{
-				for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+				for (iJ = 0; iJ < GC.getMapINLINE().numPlotsINLINE(); iJ++)
 				{
-					pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
+					pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iJ);
 
 					pCity = pLoopPlot->getPlotCity();
 

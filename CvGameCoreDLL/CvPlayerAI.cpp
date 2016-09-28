@@ -2706,7 +2706,7 @@ CvPlayerAI::CvFoundSettings::CvFoundSettings(const CvPlayerAI& kPlayer, bool bSt
 			{
 				BuildingTypes eCivBuilding = (BuildingTypes)GC.getCivilizationInfo(kPlayer.getCivilizationType()).getCivilizationBuildings(iI);
 				BuildingTypes eDefaultBuilding = (BuildingTypes)GC.getBuildingClassInfo((BuildingClassTypes)iI).getDefaultBuildingIndex();
-				if (eCivBuilding != NO_UNIT && eCivBuilding != eDefaultBuilding)
+				if (eCivBuilding != NO_BUILDING && eCivBuilding != eDefaultBuilding)
 				{
 					if (GC.getBuildingInfo(eCivBuilding).isWater())
 					{
@@ -9097,7 +9097,6 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	int iGoldWeight;
 	int iWeight;
 	int iBestWeight;
-	int iValue;
 	int iBestValue;
 
 	bool bTheirGoldDeal = AI_goldDeal(pTheirList);
@@ -9210,7 +9209,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 								if (iWeight > 0)
 								{
-									iValue = AI_targetCityValue(pCity, false);
+									int iValue = AI_targetCityValue(pCity, false);
 
 									if (iValue > iBestValue)
 									{
@@ -9505,7 +9504,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 								if (iWeight > 0)
 								{
-									iValue = GET_PLAYER(ePlayer).AI_targetCityValue(pCity, false);
+									int iValue = GET_PLAYER(ePlayer).AI_targetCityValue(pCity, false);
 
 									if (iValue > iBestValue)
 									{
@@ -14873,7 +14872,7 @@ int CvPlayerAI::AI_espionageVal(PlayerTypes eTargetPlayer, EspionageMissionTypes
 					}*/
 					// K-Mod. AI_unitValue is a relative rating value. It shouldn't be used for this.
 					// (The espionage mission is not enabled anyway, so I'm not going to put a lot of effort into it.)
-					iValue += GC.getUnitInfo(eUnit).getProductionCost() * canTrain(eUnit) ? 4 : 8;
+					iValue += GC.getUnitInfo(eUnit).getProductionCost() * (canTrain(eUnit) ? 4 : 8);
 					//
 				}
 			}
@@ -22974,7 +22973,6 @@ int CvPlayerAI::AI_getMinFoundValue() const
 	
 void CvPlayerAI::AI_updateCitySites(int iMinFoundValueThreshold, int iMaxSites)
 {
-	std::vector<int>::iterator it;
 	int iValue;
 	int iI;
 
@@ -23058,7 +23056,7 @@ bool CvPlayerAI::AI_isPlotCitySite(CvPlot* pPlot) const
 	std::vector<int>::const_iterator it;
 	int iPlotIndex = GC.getMapINLINE().plotNumINLINE(pPlot->getX_INLINE(), pPlot->getY_INLINE());
 	
-	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
+	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); ++it)
 	{
 		if ((*it) == iPlotIndex)
 		{
@@ -23074,7 +23072,7 @@ int CvPlayerAI::AI_getNumAreaCitySites(int iAreaID, int& iBestValue) const
 	int iCount = 0;
 	iBestValue = 0;
 	
-	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
+	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); ++it)
 	{
 		CvPlot* pCitySitePlot = GC.getMapINLINE().plotByIndex((*it));
 		if (pCitySitePlot->getArea() == iAreaID)
@@ -23092,7 +23090,7 @@ int CvPlayerAI::AI_getNumAdjacentAreaCitySites(int iWaterAreaID, int iExcludeAre
 	int iCount = 0;
 	iBestValue = 0;
 
-	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
+	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); ++it)
 	{
 		CvPlot* pCitySitePlot = GC.getMapINLINE().plotByIndex((*it));
 		if (pCitySitePlot->getArea() != iExcludeArea)
@@ -23113,7 +23111,7 @@ int CvPlayerAI::AI_getNumPrimaryAreaCitySites(int iMinimumValue) const
 	int iCount = 0;
 
 	std::vector<int>::const_iterator it;
-	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); it++)
+	for (it = m_aiAICitySites.begin(); it != m_aiAICitySites.end(); ++it)
 	{
 		CvPlot* pCitySitePlot = GC.getMapINLINE().plotByIndex((*it));
 		if (AI_isPrimaryArea(pCitySitePlot->area()) && pCitySitePlot->getFoundValue(getID()) >= iMinimumValue)

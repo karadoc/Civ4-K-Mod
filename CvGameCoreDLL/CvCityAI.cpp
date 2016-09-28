@@ -8121,7 +8121,7 @@ bool CvCityAI::AI_chooseLeastRepresentedUnit(UnitTypeWeightArray &allowedTypes, 
  	std::multimap<int, UnitAITypes, std::greater<int> >::iterator best_it; */
 	std::vector<std::pair<int, UnitAITypes> > bestTypes; // K-Mod
  
-	for (it = allowedTypes.begin(); it != allowedTypes.end(); it++)
+	for (it = allowedTypes.begin(); it != allowedTypes.end(); ++it)
 	{
 		iValue = it->second;
 		iValue *= 750 + GC.getGameINLINE().getSorenRandNum(250, "AI choose least represented unit");
@@ -8134,7 +8134,7 @@ bool CvCityAI::AI_chooseLeastRepresentedUnit(UnitTypeWeightArray &allowedTypes, 
 	std::sort(bestTypes.begin(), bestTypes.end(), std::greater<std::pair<int, UnitAITypes> >());
 	std::vector<std::pair<int, UnitAITypes> >::iterator best_it;
 	// K-Mod end
- 	for (best_it = bestTypes.begin(); best_it != bestTypes.end(); best_it++)
+	for (best_it = bestTypes.begin(); best_it != bestTypes.end(); ++best_it)
  	{
 		if (AI_chooseUnit(best_it->second, iOdds))
 		{

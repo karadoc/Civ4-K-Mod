@@ -6539,7 +6539,7 @@ void CvGameTextMgr::parseFreeSpecialistHelp(CvWStringBuffer &szHelpString, const
 
 			if (GC.getSpecialistInfo(eSpecialist).getExperience() > 0)
 			{
-				if (!szYield.isEmpty() || !szYield.isEmpty())
+				if (!szYield.isEmpty() || !szCommerceString.isEmpty())
 				{
 					szHelpString.append(L", ");
 				}
@@ -9101,7 +9101,7 @@ void CvGameTextMgr::setUnitHelp(CvWStringBuffer &szBuffer, UnitTypes eUnit, bool
 			}
 			else
 			{
-				szTempBuffer.Format(L"%s%c", NEWLINE, gDLL->getSymbolID(BULLET_CHAR), szTempBuffer);
+				szTempBuffer.Format(L"%s%c", NEWLINE, gDLL->getSymbolID(BULLET_CHAR), szTempBuffer.GetCString());
 				szBuffer.append(szTempBuffer);
 			}
 			if (GC.getUnitInfo(eUnit).getBonusProductionModifier(iI) == 100)
@@ -10553,7 +10553,7 @@ void CvGameTextMgr::setBuildingHelpActual(CvWStringBuffer &szBuffer, BuildingTyp
 				}
 				else
 				{
-					szTempBuffer.Format(L"\n%c", gDLL->getSymbolID(BULLET_CHAR), szTempBuffer);
+					szTempBuffer.Format(L"\n%c", gDLL->getSymbolID(BULLET_CHAR), szTempBuffer.GetCString());
 					szBuffer.append(szTempBuffer);
 				}
 				if (kBuilding.getBonusProductionModifier(iI) == 100)
@@ -11213,7 +11213,7 @@ void CvGameTextMgr::setProjectHelp(CvWStringBuffer &szBuffer, ProjectTypes eProj
 			}
 			else
 			{
-				szTempBuffer.Format(L"%s%c", NEWLINE, gDLL->getSymbolID(BULLET_CHAR), szTempBuffer);
+				szTempBuffer.Format(L"%s%c", NEWLINE, gDLL->getSymbolID(BULLET_CHAR), szTempBuffer.GetCString());
 				szBuffer.append(szTempBuffer);
 			}
 			if (kProject.getBonusProductionModifier(iI) == 100)
@@ -15322,7 +15322,7 @@ void CvGameTextMgr::getOtherRelationsString(CvWStringBuffer& szString, PlayerTyp
 	{
 		CvWString szTempBuffer;
 
-		szTempBuffer.assign(gDLL->getText(L"TXT_KEY_WORST_ENEMY_OF", szWorstEnemyString));
+		szTempBuffer.assign(gDLL->getText(L"TXT_KEY_WORST_ENEMY_OF", szWorstEnemyString.getCString()));
 
 		szString.append(NEWLINE);
 		szString.append(szTempBuffer);
@@ -15331,7 +15331,7 @@ void CvGameTextMgr::getOtherRelationsString(CvWStringBuffer& szString, PlayerTyp
 	{
 		CvWString szTempBuffer;
 
-		szTempBuffer.assign(gDLL->getText(L"TXT_KEY_AT_WAR_WITH", szWarWithString));
+		szTempBuffer.assign(gDLL->getText(L"TXT_KEY_AT_WAR_WITH", szWarWithString.getCString()));
 
 		szString.append(NEWLINE);
 		szString.append(szTempBuffer);
@@ -17427,7 +17427,7 @@ void CvGameTextMgr::setEspionageCostHelp(CvWStringBuffer &szBuffer, EspionageMis
 		if (NO_PLAYER != eTargetPlayer)
 		{
 			//int iNumTotalGold = (GET_PLAYER(eTargetPlayer).getGold() * kMission.getStealTreasuryTypes()) / 100;
-			int iNumTotalGold;
+			int iNumTotalGold = 0;
 
 			if (NULL != pPlot)
 			{

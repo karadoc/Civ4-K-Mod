@@ -1675,7 +1675,7 @@ bool CvDLLButtonPopup::launchChangeCivicsPopup(CvPopup* pPopup, CvPopupInfo &inf
 		gDLL->getInterfaceIFace()->popupLaunch(pPopup, false, POPUPSTATE_MINIMIZED);
 	}
 
-	SAFE_DELETE(paeNewCivics);
+	SAFE_DELETE_ARRAY(paeNewCivics);
 
 	return (bValid);
 }
