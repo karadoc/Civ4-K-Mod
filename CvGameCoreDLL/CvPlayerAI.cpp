@@ -9086,18 +9086,14 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 	return (iTheirValue >= iOurValue);
 }
 
+// K-Mod. Helper fuction for AI_counterPropose. (lambas would be really nice here, but we can't have nice things.)
+bool maxValueCompare(const std::pair<TradeData*, int>& a, const std::pair<TradeData*, int>& b)
+{
+	return a.second > b.second;
+}
 
 bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeData>* pTheirList, const CLinkList<TradeData>* pOurList, CLinkList<TradeData>* pTheirInventory, CLinkList<TradeData>* pOurInventory, CLinkList<TradeData>* pTheirCounter, CLinkList<TradeData>* pOurCounter) const
 {
-	// K-Mod todo: perhaps this whole function should be restructured in the following way:
-	// - Make a list of everything both players are willing to trade, along with their value.
-	// - Sort the lists by value
-	// - Go through the lists in order of value, adding the highest value items first to achieve a balanced deal
-	//
-	// Currently, items are added in whatever order they are found in. Adding items in order of values would work better.
-
-	CLLNode<TradeData>* pNode;
-
 	bool bTheirGoldDeal = AI_goldDeal(pTheirList);
 	bool bOurGoldDeal = AI_goldDeal(pOurList);
 
@@ -9105,11 +9101,6 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	{
 		return false;
 	}
-
-	std::vector<bool> vbBonusDeal(GC.getNumBonusInfos(), false);
-
-	CLLNode<TradeData>* pGoldPerTurnNode = NULL;
-	CLLNode<TradeData>* pGoldNode = NULL;
 
 	/* original bts code
 	iHumanDealWeight = AI_dealVal(ePlayer, pTheirList);
@@ -9130,12 +9121,12 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	{
 		// Check to see if there is already an end-war item on the table
 		bool bEndWar = false;
-		for (pNode = pTheirList->head(); !bEndWar && pNode; pNode = pTheirList->next(pNode))
+		for (CLLNode<TradeData>* pNode = pTheirList->head(); !bEndWar && pNode; pNode = pTheirList->next(pNode))
 		{
 			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
 				bEndWar = true;
 		}
-		for (pNode = pOurList->head(); !bEndWar && pNode; pNode = pOurList->next(pNode))
+		for (CLLNode<TradeData>* pNode = pOurList->head(); !bEndWar && pNode; pNode = pOurList->next(pNode))
 		{
 			if (CvDeal::isEndWar(pNode->m_data.m_eItemType))
 				bEndWar = true;
@@ -9180,193 +9171,182 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 			}
 		}
 	}
-	// K-Mod end
 
+	// When counterProposing, we want balance the deal - but if we can't balance it, we want to make sure it favours us; not them.
+	// So if their value is greater, we don't mind suggesting items which take them past balance.
+	// But if our value is greater, we will never suggest adding items which overshoot the balance.
 	if (iValueForThem > iValueForUs)
 	{
-		if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
+		// First, try to make up the difference with gold.
+		CLLNode<TradeData>* pGoldPerTurnNode = NULL;
+		CLLNode<TradeData>* pGoldNode = NULL;
+
+		if (!bOurGoldDeal)
 		{
-			int iBestValue = 0;
-			int iBestWeight = 0;
-			CLLNode<TradeData>* pBestNode = NULL;
-
-			for (pNode = pTheirInventory->head(); pNode && iValueForThem > iValueForUs; pNode = pTheirInventory->next(pNode))
+			for (CLLNode<TradeData>* pNode = pTheirInventory->head(); pNode; pNode = pTheirInventory->next(pNode))
 			{
-				if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
+				if (pNode->m_data.m_bOffering || pNode->m_data.m_bHidden)
+					continue;
+
+				if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) != NO_DENIAL)
+					continue;
+
+				FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
+
+				switch (pNode->m_data.m_eItemType)
 				{
-					if (pNode->m_data.m_eItemType == TRADE_CITIES)
+				case TRADE_GOLD:
+					pGoldNode = pNode;
+					break;
+				case TRADE_GOLD_PER_TURN:
+					pGoldPerTurnNode = pNode;
+					break;
+				}
+			}
+		}
+
+		if (pGoldNode)
+		{
+			int iGoldData = ((iValueForThem - iValueForUs) * 100 + (iGoldValuePercent - 1)) / iGoldValuePercent; // round up
+
+			if (GET_PLAYER(ePlayer).AI_maxGoldTrade(getID()) >= iGoldData)
+			{
+				pGoldNode->m_data.m_iData = iGoldData;
+				iValueForUs += (iGoldData * iGoldValuePercent) / 100;
+				pTheirCounter->insertAtEnd(pGoldNode->m_data);
+				pGoldNode = NULL;
+			}
+		}
+
+		if (iValueForThem > iValueForUs)
+		{
+			// We were unable to balance the trade with just gold. So lets look at all the other items.
+
+			// Exclude bonuses that we've already put on the table
+			std::vector<bool> vbBonusDeal(GC.getNumBonusInfos(), false);
+			for (CLLNode<TradeData>* pNode = pOurList->head(); pNode; pNode = pOurList->next(pNode))
+			{
+				FAssert(!(pNode->m_data.m_bHidden));
+
+				if (pNode->m_data.m_eItemType == TRADE_RESOURCES)
+					vbBonusDeal[pNode->m_data.m_iData] = true;
+			}
+
+			// We're only going to allow one city on the list. (For flavour reasons.)
+			int iBestCityValue = 0;
+			int iBestCityWeight = 0;
+			CLLNode<TradeData>* pBestCityNode = NULL;
+
+			// Evaluate everything they're willing to trade.
+			std::vector<std::pair<TradeData*, int> > item_value_list; // (item*, value)
+
+			for (CLLNode<TradeData>* pNode = pTheirInventory->head(); pNode; pNode = pTheirInventory->next(pNode))
+			{
+				if (pNode->m_data.m_bOffering || pNode->m_data.m_bHidden)
+					continue;
+
+				if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) != NO_DENIAL)
+					continue;
+
+				FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
+
+				int iItemValue = 0;
+
+				switch (pNode->m_data.m_eItemType)
+				{
+				case TRADE_MAPS:
+					iItemValue = GET_TEAM(getTeam()).AI_mapTradeVal(GET_PLAYER(ePlayer).getTeam());
+					break;
+				case TRADE_TECHNOLOGIES:
+					iItemValue = GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), GET_PLAYER(ePlayer).getTeam());
+					break;
+				case TRADE_RESOURCES:
+					if (!vbBonusDeal[pNode->m_data.m_iData])
 					{
-						FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
-
-						if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
+						// Don't ask for the last of a resource, or corporation resources; because we're not going to evaluate losses.
+						if (GET_PLAYER(ePlayer).getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 1)
 						{
-							CvCity* pCity = GET_PLAYER(ePlayer).getCity(pNode->m_data.m_iData);
-
-							if (pCity != NULL)
+							if (GET_PLAYER(ePlayer).AI_corporationBonusVal((BonusTypes)pNode->m_data.m_iData) == 0)
 							{
-								int iWeight = AI_targetCityValue(pCity, false);
+								iItemValue = AI_bonusTradeVal((BonusTypes)pNode->m_data.m_iData, ePlayer, 1);
+								vbBonusDeal[pNode->m_data.m_iData] = true;
+							}
+						}
+					}
+					break;
+				case TRADE_CITIES:
+					if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
+					{
+						CvCity* pCity = GET_PLAYER(ePlayer).getCity(pNode->m_data.m_iData);
 
-								if (iWeight > iBestWeight)
+						if (pCity != NULL)
+						{
+							int iWeight = AI_targetCityValue(pCity, false);
+
+							if (iWeight > iBestCityWeight)
+							{
+								int iValue = AI_cityTradeVal(pCity);
+
+								if (iValue > 0)
 								{
-									int iValue = AI_cityTradeVal(pCity);
-
-									if (iValue > 0)
-									{
-										iBestValue = iValue;
-										iBestWeight = iWeight;
-										pBestNode = pNode;
-									}
+									iBestCityValue = iValue;
+									iBestCityWeight = iWeight;
+									pBestCityNode = pNode;
 								}
 							}
 						}
 					}
+					break;
+				}
+
+				if (iItemValue > 0)
+				{
+					item_value_list.push_back(std::make_pair(&pNode->m_data, iItemValue));
 				}
 			}
 
-			if (pBestNode != NULL)
+			if (pBestCityNode != NULL)
 			{
-				iValueForUs += iBestValue;
-				pTheirCounter->insertAtEnd(pBestNode->m_data);
+				item_value_list.push_back(std::make_pair(&pBestCityNode->m_data, iBestCityValue));
 			}
-		}
 
-		for (pNode = pTheirInventory->head(); pNode && iValueForThem > iValueForUs; pNode = pTheirInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
+			// For this kind of trade, we want to prioritise items closest to the target, on either side.
+			// Find the best item, add it to the list; and repeat until we've closed the game in the trade values.
+			while (iValueForThem > iValueForUs && !item_value_list.empty())
 			{
-				FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
+				int value_gap = iValueForThem - iValueForUs;
 
-				if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
+				// find the best item. (Closest to the value gap, but highest value in the case of a tie.)
+				std::vector<std::pair<TradeData*, int> >::iterator it, best_it;
+				for (best_it = it = item_value_list.begin(); it != item_value_list.end(); ++it)
 				{
-					switch (pNode->m_data.m_eItemType)
+					if (
+						(std::abs(it->second - value_gap) < std::abs(best_it->second - value_gap)) ||
+						(std::abs(it->second - value_gap) == std::abs(best_it->second - value_gap) && it->second > best_it->second))
 					{
-					case TRADE_GOLD:
-						if (!bOurGoldDeal)
-						{
-							pGoldNode = pNode;
-						}
-						break;
-					case TRADE_GOLD_PER_TURN:
-						if (!bOurGoldDeal)
-						{
-							pGoldPerTurnNode = pNode;
-						}
-						break;
+						best_it = it;
 					}
 				}
+
+				// Only add the item if it will get us closer to balance.
+				if (best_it->second <= 2*(iValueForThem - iValueForUs))
+				{
+					pTheirCounter->insertAtEnd(*best_it->first);
+					iValueForUs += best_it->second;
+					item_value_list.erase(best_it);
+				}
+				else
+					break; // All the item items must be even higher value (or zero value). So lets just quit now.
 			}
 		}
 
-		int iValueDifference = iValueForThem - iValueForUs;
-
-		if (iValueDifference > 0)
+		// If their value is still higher, try one more time to make up the difference with gold.
+		// This time add the gold even if it isn't enough to balance the deal.
+		if (iValueForThem > iValueForUs)
 		{
 			if (pGoldNode)
 			{
-				int iGoldData = iValueDifference * 100;
-				iGoldData /= iGoldValuePercent;
-
-				if ((iGoldData * iGoldValuePercent) < iValueDifference * 100)
-				{
-					iGoldData++;
-				}
-				if (GET_PLAYER(ePlayer).AI_maxGoldTrade(getID()) >= iGoldData)
-				{
-					pGoldNode->m_data.m_iData = iGoldData;
-					iValueForUs += (iGoldData * iGoldValuePercent) / 100;
-					pTheirCounter->insertAtEnd(pGoldNode->m_data);
-					pGoldNode = NULL;
-				}
-			}
-		}
-
-		for (pNode = pOurList->head(); pNode; pNode = pOurList->next(pNode))
-		{
-			FAssert(!(pNode->m_data.m_bHidden));
-
-			switch (pNode->m_data.m_eItemType)
-			{
-			case TRADE_RESOURCES:
-				vbBonusDeal[pNode->m_data.m_iData] = true;
-				break;
-			}
-		}
-		
-		for (pNode = pTheirInventory->head(); pNode && iValueForThem > iValueForUs; pNode = pTheirInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-			{
-				FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
-
-				if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
-				{
-					int iValue = 0;
-
-					switch (pNode->m_data.m_eItemType)
-					{
-					case TRADE_TECHNOLOGIES:
-						iValue += GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), GET_PLAYER(ePlayer).getTeam());
-						break;
-					case TRADE_RESOURCES:
-						if (!vbBonusDeal[pNode->m_data.m_iData])
-						{
-							if (GET_PLAYER(ePlayer).getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 1)
-							{
-								if (GET_PLAYER(ePlayer).AI_corporationBonusVal((BonusTypes)(pNode->m_data.m_iData)) == 0)
-								{
-									iValue += AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), ePlayer, 1);
-									vbBonusDeal[pNode->m_data.m_iData] = true;
-								}
-							}
-						}
-						break;
-					}
-
-					if (iValue > 0)
-					{
-						iValueForUs += iValue;
-						pTheirCounter->insertAtEnd(pNode->m_data);
-					}
-				}
-			}
-		}
-
-		for (pNode = pTheirInventory->head(); pNode && iValueForThem > iValueForUs; pNode = pTheirInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-			{
-				if (pNode->m_data.m_eItemType == TRADE_MAPS)
-				{
-					FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
-
-					if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
-					{
-						int iValue = GET_TEAM(getTeam()).AI_mapTradeVal(GET_PLAYER(ePlayer).getTeam());
-
-						if (iValue > 0)
-						{
-							iValueForUs += iValue;
-							pTheirCounter->insertAtEnd(pNode->m_data);
-						}
-					}
-				}
-			}
-		}
-
-		iValueDifference = iValueForThem - iValueForUs;
-
-		if (iValueDifference > 0)
-		{
-			if (pGoldNode)
-			{
-				int iGoldData = iValueDifference * 100;
-				iGoldData /= iGoldValuePercent;
-				
-				if ((iValueDifference * 100) > (iGoldData * iGoldValuePercent))
-				{
-					iGoldData++;
-				}
-
+				int iGoldData = ((iValueForThem - iValueForUs) * 100 + (iGoldValuePercent - 1)) / iGoldValuePercent; // round up
 				iGoldData = std::min(iGoldData, GET_PLAYER(ePlayer).AI_maxGoldTrade(getID()));
 
 				if (iGoldData > 0)
@@ -9401,281 +9381,206 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 				}
 			}
 		}
-
-		for (pNode = pTheirInventory->head(); pNode && iValueForThem > iValueForUs; pNode = pTheirInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-			{
-				if (pNode->m_data.m_eItemType == TRADE_RESOURCES)
-				{
-					FAssert(GET_PLAYER(ePlayer).canTradeItem(getID(), pNode->m_data));
-
-					if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
-					{
-						int iValue = 0;
-
-						if (!vbBonusDeal[pNode->m_data.m_iData])
-						{
-							if (GET_PLAYER(ePlayer).getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 0)
-							{
-								iValue += AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), ePlayer, 1);
-								vbBonusDeal[pNode->m_data.m_iData] = true;
-							}
-						}
-
-						if (iValue > 0)
-						{
-							iValueForUs += iValue;
-							pTheirCounter->insertAtEnd(pNode->m_data);
-						}
-					}
-				}
-			}
-		}
 	}
 	else if (iValueForUs > iValueForThem)
 	{
-		if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
+		// First, try to make up the difference with gold.
+		CLLNode<TradeData>* pGoldPerTurnNode = NULL;
+		CLLNode<TradeData>* pGoldNode = NULL;
+
+		if (!bTheirGoldDeal)
 		{
-			/* original bts code
-			bool bSurrender = false;
-			for (pNode = pOurInventory->head(); pNode; pNode = pOurInventory->next(pNode))
+			for (CLLNode<TradeData>* pNode = pOurInventory->head(); pNode; pNode = pOurInventory->next(pNode))
 			{
-				if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-				{
-					if (pNode->m_data.m_eItemType == TRADE_SURRENDER)
-					{
-						if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
-						{
-							iValueForThem += GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_surrenderTradeVal(getTeam());
-							pOurCounter->insertAtEnd(pNode->m_data);
-							bSurrender = true;
-						}
-						break;
-					}
-				}
-			}
+				if (pNode->m_data.m_bOffering || pNode->m_data.m_bHidden)
+					continue;
 
-			if (!bSurrender)
-			{
-				for (pNode = pOurInventory->head(); pNode; pNode = pOurInventory->next(pNode))
-				{
-					if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-					{
-						if (pNode->m_data.m_eItemType == TRADE_PEACE_TREATY)
-						{
-							pOurCounter->insertAtEnd(pNode->m_data);
-							break;
-						}
-					}
-				}
-			} */ // Disabled by K-Mod. This is obsolete.
+				if (getTradeDenial(ePlayer, pNode->m_data) != NO_DENIAL)
+					continue;
 
-			int iBestValue = 0;
-			int iBestWeight = 0;
-			CLLNode<TradeData>* pBestNode = NULL;
-
-			for (pNode = pOurInventory->head(); pNode && iValueForUs > iValueForThem; pNode = pOurInventory->next(pNode))
-			{
-				if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-				{
-					if (pNode->m_data.m_eItemType == TRADE_CITIES)
-					{
-						FAssert(canTradeItem(ePlayer, pNode->m_data));
-
-						if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
-						{
-							CvCity* pCity = getCity(pNode->m_data.m_iData);
-
-							if (pCity != NULL)
-							{
-								int iWeight = GET_PLAYER(ePlayer).AI_targetCityValue(pCity, false);
-
-								if (iWeight > iBestWeight)
-								{
-									int iValue = GET_PLAYER(ePlayer).AI_cityTradeVal(pCity);
-
-									if (iValue > 0 && iValueForUs >= (iValueForThem + iValue))
-									{
-										iBestValue = iValue;
-										iBestWeight = iWeight;
-										pBestNode = pNode;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (pBestNode != NULL)
-			{
-				iValueForThem += iBestValue;
-				pOurCounter->insertAtEnd(pBestNode->m_data);
-			}
-		}
-
-		for (pNode = pOurInventory->head(); pNode && iValueForUs > iValueForThem; pNode = pOurInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-			{
 				FAssert(canTradeItem(ePlayer, pNode->m_data));
 
-				if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
+				switch (pNode->m_data.m_eItemType)
 				{
-					switch (pNode->m_data.m_eItemType)
-					{
-					case TRADE_GOLD:
-						if (!bTheirGoldDeal)
-						{
-							pGoldNode = pNode;
-						}
-						break;
-					case TRADE_GOLD_PER_TURN:
-						if (!bTheirGoldDeal)
-						{
-							pGoldPerTurnNode = pNode;
-						}
-						break;
-					}
+				case TRADE_GOLD:
+					pGoldNode = pNode;
+					break;
+				case TRADE_GOLD_PER_TURN:
+					pGoldPerTurnNode = pNode;
+					break;
 				}
 			}
 		}
 
-		int iValueDifference = iValueForUs - iValueForThem;
-
-		if (iValueDifference > 0)
+		if (pGoldNode)
 		{
-			if (pGoldNode)
+			int iGoldData = (iValueForUs - iValueForThem) * 100 / iGoldValuePercent; // round down
+
+			if (AI_maxGoldTrade(ePlayer) >= iGoldData)
 			{
-				int iGoldData = iValueDifference * 100;
-				iGoldData /= iGoldValuePercent;
-
-				if (AI_maxGoldTrade(ePlayer) >= iGoldData)
-				{
-					pGoldNode->m_data.m_iData = iGoldData;
-					iValueForThem += ((iGoldData * iGoldValuePercent) / 100);
-					pOurCounter->insertAtEnd(pGoldNode->m_data);
-					pGoldNode = NULL;
-				}
-			}
-		}
-
-		for (pNode = pTheirList->head(); pNode; pNode = pTheirList->next(pNode))
-		{
-			FAssert(!(pNode->m_data.m_bHidden));
-
-			switch (pNode->m_data.m_eItemType)
-			{
-			case TRADE_RESOURCES:
-				vbBonusDeal[pNode->m_data.m_iData] = true;
-				break;
-			}
-		}
-
-		for (pNode = pOurInventory->head(); pNode && iValueForUs > iValueForThem; pNode = pOurInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-			{
-				FAssert(canTradeItem(ePlayer, pNode->m_data));
-
-				if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
-				{
-					int iValue = 0;
-
-					switch (pNode->m_data.m_eItemType)
-					{
-					case TRADE_TECHNOLOGIES:
-						iValue += GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), getTeam());
-						break;
-					case TRADE_RESOURCES:
-						if (!vbBonusDeal[pNode->m_data.m_iData])
-						{
-							if (getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 1)
-							{
-								iValue += GET_PLAYER(ePlayer).AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), getID(), 1);
-								vbBonusDeal[pNode->m_data.m_iData] = true;
-							}
-						}
-						break;
-					}
-
-					if (iValue > 0)
-					{
-						if (iValueForUs >= (iValueForThem + iValue))
-						{
-							iValueForThem += iValue;
-							pOurCounter->insertAtEnd(pNode->m_data);
-						}
-					}
-				}
-			}
-		}
-
-		for (pNode = pOurInventory->head(); pNode && iValueForUs > iValueForThem; pNode = pOurInventory->next(pNode))
-		{
-			if (!pNode->m_data.m_bOffering && !pNode->m_data.m_bHidden)
-			{
-				if (pNode->m_data.m_eItemType == TRADE_MAPS)
-				{
-					FAssert(canTradeItem(ePlayer, pNode->m_data));
-
-					if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
-					{
-						int iValue = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_mapTradeVal(getTeam());
-
-						if (iValue > 0)
-						{
-							if (iValueForUs >= (iValueForThem + iValue))
-							{
-								iValueForThem += iValue;
-								pOurCounter->insertAtEnd(pNode->m_data);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		iValueDifference = iValueForUs - iValueForThem;
-		if (iValueDifference > 0)
-		{
-			if (pGoldNode)
-			{
-				int iGoldData = iValueDifference * 100;
-				iGoldData /= AI_goldTradeValuePercent();
-
-				iGoldData = std::min(iGoldData, AI_maxGoldTrade(ePlayer));
-
-				if (iGoldData > 0)
-				{
-					pGoldNode->m_data.m_iData = iGoldData;
-					iValueForThem += (iGoldData * iGoldValuePercent) / 100;
-					pOurCounter->insertAtEnd(pGoldNode->m_data);
-					pGoldNode = NULL;
-				}
+				pGoldNode->m_data.m_iData = iGoldData;
+				iValueForThem += ((iGoldData * iGoldValuePercent) / 100);
+				pOurCounter->insertAtEnd(pGoldNode->m_data);
+				pGoldNode = NULL;
 			}
 		}
 
 		if (iValueForUs > iValueForThem)
 		{
-			if (pGoldPerTurnNode)
+			// We were unable to balance the trade with just gold. So lets look at all the other items.
+
+			// Exclude bonuses that they've already put on the table
+			std::vector<bool> vbBonusDeal(GC.getNumBonusInfos(), false);
+			for (CLLNode<TradeData>* pNode = pTheirList->head(); pNode; pNode = pTheirList->next(pNode))
 			{
-				int iGoldData = 0;
+				FAssert(!(pNode->m_data.m_bHidden));
 
-				while (GET_PLAYER(ePlayer).AI_goldPerTurnTradeVal(iGoldData + 1) <= (iValueForUs - iValueForThem))
+				if (pNode->m_data.m_eItemType == TRADE_RESOURCES)
+					vbBonusDeal[pNode->m_data.m_iData] = true;
+			}
+
+			// We're only going to allow one city on the list. (For flavour reasons.)
+			int iBestCityValue = 0;
+			int iBestCityWeight = 0;
+			CLLNode<TradeData>* pBestCityNode = NULL;
+
+			// Build the value list!
+			std::vector<std::pair<TradeData*, int> > item_value_list; // (item*, value)
+			// Note: unlike the previous version, the numbers in this list are the actual values - not deltas.
+			// We want to balance the trade without letting their value get higher than ours.
+
+			for (CLLNode<TradeData>* pNode = pOurInventory->head(); pNode; pNode = pOurInventory->next(pNode))
+			{
+				if (pNode->m_data.m_bOffering || pNode->m_data.m_bHidden)
+					continue;
+
+				if (getTradeDenial(ePlayer, pNode->m_data) != NO_DENIAL)
+					continue;
+
+				FAssert(canTradeItem(ePlayer, pNode->m_data));
+
+				int iItemValue = 0;
+
+				switch (pNode->m_data.m_eItemType)
 				{
-					iGoldData++;
+				case TRADE_MAPS:
+					iItemValue = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_mapTradeVal(getTeam());
+					break;
+				case TRADE_TECHNOLOGIES:
+					iItemValue = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), getTeam());
+					break;
+				case TRADE_RESOURCES:
+					if (!vbBonusDeal[pNode->m_data.m_iData])
+					{
+						// Don't offer the last of a resource, or corporation resources; because we're not going to evaluate losses.
+						if (getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 1)
+						{
+							if (AI_corporationBonusVal((BonusTypes)pNode->m_data.m_iData) == 0)
+							{
+								iItemValue = GET_PLAYER(ePlayer).AI_bonusTradeVal((BonusTypes)pNode->m_data.m_iData, getID(), 1);
+								vbBonusDeal[pNode->m_data.m_iData] = true;
+							}
+						}
+					}
+					break;
+				case TRADE_CITIES:
+					if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
+					{
+						CvCity* pCity = getCity(pNode->m_data.m_iData);
+
+						if (pCity != NULL)
+						{
+							int iWeight = GET_PLAYER(ePlayer).AI_targetCityValue(pCity, false);
+							if (iWeight > iBestCityWeight)
+							{
+								int iValue = GET_PLAYER(ePlayer).AI_cityTradeVal(pCity);
+								if (iValue > 0 && iValueForUs >= (iValueForThem + iValue))
+								{
+									iBestCityValue = iValue;
+									iBestCityWeight = iWeight;
+									pBestCityNode = pNode;
+								}
+							}
+						}
+					}
+					break;
 				}
-
-				iGoldData = std::min(iGoldData, AI_maxGoldPerTurnTrade(ePlayer));
-
-				if (iGoldData > 0)
+				if (iItemValue > 0 && iValueForUs >= (iValueForThem + iItemValue))
 				{
-					pGoldPerTurnNode->m_data.m_iData = iGoldData;
-					iValueForThem += GET_PLAYER(ePlayer).AI_goldPerTurnTradeVal(pGoldPerTurnNode->m_data.m_iData);
-					pOurCounter->insertAtEnd(pGoldPerTurnNode->m_data);
-					pGoldPerTurnNode = NULL;
+					item_value_list.push_back(std::make_pair(&pNode->m_data, iItemValue));
+				}
+			}
+			if (pBestCityNode != NULL)
+			{
+				FAssert(iValueForUs >= (iValueForThem + iBestCityValue));
+				item_value_list.push_back(std::make_pair(&pBestCityNode->m_data, iBestCityValue));
+			}
+
+			// Sort the values from largest to smallest
+			std::sort(item_value_list.begin(), item_value_list.end(), maxValueCompare);
+
+			// Use the list to balance the trade.
+			for (std::vector<std::pair<TradeData*, int> >::iterator it = item_value_list.begin(); it != item_value_list.end() && iValueForUs > iValueForThem; ++it)
+			{
+				int iItemValue = it->second;
+
+				if (iValueForUs >= (iValueForThem + iItemValue))
+				{
+					pOurCounter->insertAtEnd(*it->first);
+					iValueForThem += iItemValue;
+				}
+			}
+		}
+
+		// If our value is still higher, try one more time to make up the difference with gold.
+		// This time add the gold even if it isn't enough to balance the deal.
+		// ... But first, consider the special case of a human player auto-counter-proposing a deal from an AI.
+		// Humans are picky with trades. They turn down most AI deals. So to increase the chance of the human
+		// ultimately accepting, lets see if the AI would allow the deal without any added gold. If the AI will
+		// accept, then we won't add the gold. And this will be a rare example of the AI favouring the human.
+		if (isHuman() && 100*iValueForThem >= GET_PLAYER(ePlayer).AI_tradeAcceptabilityThreshold(getID())*iValueForUs)
+		{
+			// The AI would accept! So lets not add any gold.
+		}
+		else // If we don't add some gold, there will be no deal.
+		{
+			if (iValueForUs > iValueForThem)
+			{
+				if (pGoldNode)
+				{
+					int iGoldData = (iValueForUs - iValueForThem) * 100 / AI_goldTradeValuePercent(); // round down
+					iGoldData = std::min(iGoldData, AI_maxGoldTrade(ePlayer));
+
+					if (iGoldData > 0)
+					{
+						pGoldNode->m_data.m_iData = iGoldData;
+						iValueForThem += (iGoldData * iGoldValuePercent) / 100;
+						pOurCounter->insertAtEnd(pGoldNode->m_data);
+						pGoldNode = NULL;
+					}
+				}
+			}
+
+			if (iValueForUs > iValueForThem)
+			{
+				if (pGoldPerTurnNode)
+				{
+					int iGoldData = 0;
+
+					while (GET_PLAYER(ePlayer).AI_goldPerTurnTradeVal(iGoldData + 1) <= (iValueForUs - iValueForThem))
+					{
+						iGoldData++;
+					}
+
+					iGoldData = std::min(iGoldData, AI_maxGoldPerTurnTrade(ePlayer));
+
+					if (iGoldData > 0)
+					{
+						pGoldPerTurnNode->m_data.m_iData = iGoldData;
+						iValueForThem += GET_PLAYER(ePlayer).AI_goldPerTurnTradeVal(pGoldPerTurnNode->m_data.m_iData);
+						pOurCounter->insertAtEnd(pGoldPerTurnNode->m_data);
+						pGoldPerTurnNode = NULL;
+					}
 				}
 			}
 		}
