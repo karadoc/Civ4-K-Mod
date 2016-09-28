@@ -9733,13 +9733,13 @@ int CvPlayerAI::AI_tradeAcceptabilityThreshold(PlayerTypes eTrader) const
 
 	// adjust for team rank.
 	int iRankDelta = GC.getGameINLINE().getTeamRank(GET_PLAYER(eTrader).getTeam()) - GC.getGameINLINE().getTeamRank(getTeam());
-	iDiscount += 5 * iRankDelta / std::max(6, GC.getGameINLINE().countCivTeamsAlive());
+	iDiscount += 10 * iRankDelta / std::max(6, GC.getGameINLINE().countCivTeamsAlive());
 
 	if (GET_PLAYER(eTrader).isHuman())
 	{
 		// note. humans get no discount for trades that they propose.
 		// The discount here only applies to deals that the AI offers to the human.
-		iDiscount /= 2;
+		iDiscount = iDiscount*2/3;
 	}
 	return 100 - iDiscount;
 }
