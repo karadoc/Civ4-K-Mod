@@ -9089,15 +9089,14 @@ bool CvPlayerAI::AI_considerOffer(PlayerTypes ePlayer, const CLinkList<TradeData
 
 bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeData>* pTheirList, const CLinkList<TradeData>* pOurList, CLinkList<TradeData>* pTheirInventory, CLinkList<TradeData>* pOurInventory, CLinkList<TradeData>* pTheirCounter, CLinkList<TradeData>* pOurCounter) const
 {
+	// K-Mod todo: perhaps this whole function should be restructured in the following way:
+	// - Make a list of everything both players are willing to trade, along with their value.
+	// - Sort the lists by value
+	// - Go through the lists in order of value, adding the highest value items first to achieve a balanced deal
+	//
+	// Currently, items are added in whatever order they are found in. Adding items in order of values would work better.
+
 	CLLNode<TradeData>* pNode;
-	CLLNode<TradeData>* pBestNode;
-	CLLNode<TradeData>* pGoldPerTurnNode;
-	CLLNode<TradeData>* pGoldNode;
-	int iGoldData;
-	int iGoldWeight;
-	int iWeight;
-	int iBestWeight;
-	int iBestValue;
 
 	bool bTheirGoldDeal = AI_goldDeal(pTheirList);
 	bool bOurGoldDeal = AI_goldDeal(pOurList);
@@ -9109,8 +9108,8 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 	std::vector<bool> vbBonusDeal(GC.getNumBonusInfos(), false);
 
-	pGoldPerTurnNode = NULL;
-	pGoldNode = NULL;
+	CLLNode<TradeData>* pGoldPerTurnNode = NULL;
+	CLLNode<TradeData>* pGoldNode = NULL;
 
 	/* original bts code
 	iHumanDealWeight = AI_dealVal(ePlayer, pTheirList);
@@ -9187,9 +9186,9 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 	{
 		if (atWar(getTeam(), GET_PLAYER(ePlayer).getTeam()))
 		{
-			iBestValue = 0;
-			iBestWeight = 0;
-			pBestNode = NULL;
+			int iBestValue = 0;
+			int iBestWeight = 0;
+			CLLNode<TradeData>* pBestNode = NULL;
 
 			for (pNode = pTheirInventory->head(); pNode && iValueForThem > iValueForUs; pNode = pTheirInventory->next(pNode))
 			{
@@ -9205,13 +9204,13 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 							if (pCity != NULL)
 							{
-								iWeight = AI_cityTradeVal(pCity);
+								int iWeight = AI_targetCityValue(pCity, false);
 
-								if (iWeight > 0)
+								if (iWeight > iBestWeight)
 								{
-									int iValue = AI_targetCityValue(pCity, false);
+									int iValue = AI_cityTradeVal(pCity);
 
-									if (iValue > iBestValue)
+									if (iValue > 0)
 									{
 										iBestValue = iValue;
 										iBestWeight = iWeight;
@@ -9226,7 +9225,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 			if (pBestNode != NULL)
 			{
-				iValueForUs += iBestWeight;
+				iValueForUs += iBestValue;
 				pTheirCounter->insertAtEnd(pBestNode->m_data);
 			}
 		}
@@ -9258,26 +9257,16 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 			}
 		}
 
-		int iGoldWeight = iValueForThem - iValueForUs;
+		int iValueDifference = iValueForThem - iValueForUs;
 
-		if (iGoldWeight > 0)
+		if (iValueDifference > 0)
 		{
 			if (pGoldNode)
 			{
-				iGoldData = iGoldWeight * 100;
+				int iGoldData = iValueDifference * 100;
 				iGoldData /= iGoldValuePercent;
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                       09/17/09                     dilandau & jdog5000      */
-/*                                                                                              */
-/* Bugfix				                                                                        */
-/************************************************************************************************/
-/* original bts code
-				if ((iGoldData * iGoldValuePercent) < iGoldWeight)
-*/
-				if ((iGoldData * iGoldValuePercent) < iGoldWeight * 100)
-/************************************************************************************************/
-/* UNOFFICIAL_PATCH                        END                                                  */
-/************************************************************************************************/
+
+				if ((iGoldData * iGoldValuePercent) < iValueDifference * 100)
 				{
 					iGoldData++;
 				}
@@ -9311,12 +9300,12 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 				if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
 				{
-					iWeight = 0;
+					int iValue = 0;
 
 					switch (pNode->m_data.m_eItemType)
 					{
 					case TRADE_TECHNOLOGIES:
-						iWeight += GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), GET_PLAYER(ePlayer).getTeam());
+						iValue += GET_TEAM(getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), GET_PLAYER(ePlayer).getTeam());
 						break;
 					case TRADE_RESOURCES:
 						if (!vbBonusDeal[pNode->m_data.m_iData])
@@ -9325,7 +9314,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 							{
 								if (GET_PLAYER(ePlayer).AI_corporationBonusVal((BonusTypes)(pNode->m_data.m_iData)) == 0)
 								{
-									iWeight += AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), ePlayer, 1);
+									iValue += AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), ePlayer, 1);
 									vbBonusDeal[pNode->m_data.m_iData] = true;
 								}
 							}
@@ -9333,9 +9322,9 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 						break;
 					}
 
-					if (iWeight > 0)
+					if (iValue > 0)
 					{
-						iValueForUs += iWeight;
+						iValueForUs += iValue;
 						pTheirCounter->insertAtEnd(pNode->m_data);
 					}
 				}
@@ -9352,11 +9341,11 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 					if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
 					{
-						iWeight = GET_TEAM(getTeam()).AI_mapTradeVal(GET_PLAYER(ePlayer).getTeam());
+						int iValue = GET_TEAM(getTeam()).AI_mapTradeVal(GET_PLAYER(ePlayer).getTeam());
 
-						if (iWeight > 0)
+						if (iValue > 0)
 						{
-							iValueForUs += iWeight;
+							iValueForUs += iValue;
 							pTheirCounter->insertAtEnd(pNode->m_data);
 						}
 					}
@@ -9364,16 +9353,16 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 			}
 		}
 
-		iGoldWeight = iValueForThem - iValueForUs;
+		iValueDifference = iValueForThem - iValueForUs;
 
-		if (iGoldWeight > 0)
+		if (iValueDifference > 0)
 		{
 			if (pGoldNode)
 			{
-				iGoldData = iGoldWeight * 100;
+				int iGoldData = iValueDifference * 100;
 				iGoldData /= iGoldValuePercent;
 				
-				if ((iGoldWeight * 100) > (iGoldData * iGoldValuePercent))
+				if ((iValueDifference * 100) > (iGoldData * iGoldValuePercent))
 				{
 					iGoldData++;
 				}
@@ -9394,7 +9383,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 		{
 			if (pGoldPerTurnNode)
 			{
-				iGoldData = 0;
+				int iGoldData = 0;
 
 				while (AI_goldPerTurnTradeVal(iGoldData) < (iValueForThem - iValueForUs))
 				{
@@ -9423,20 +9412,20 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 					if (GET_PLAYER(ePlayer).getTradeDenial(getID(), pNode->m_data) == NO_DENIAL)
 					{
-						iWeight = 0;
+						int iValue = 0;
 
 						if (!vbBonusDeal[pNode->m_data.m_iData])
 						{
 							if (GET_PLAYER(ePlayer).getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 0)
 							{
-								iWeight += AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), ePlayer, 1);
+								iValue += AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), ePlayer, 1);
 								vbBonusDeal[pNode->m_data.m_iData] = true;
 							}
 						}
 
-						if (iWeight > 0)
+						if (iValue > 0)
 						{
-							iValueForUs += iWeight;
+							iValueForUs += iValue;
 							pTheirCounter->insertAtEnd(pNode->m_data);
 						}
 					}
@@ -9482,9 +9471,9 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 				}
 			} */ // Disabled by K-Mod. This is obsolete.
 
-			iBestValue = 0;
-			iBestWeight = 0;
-			pBestNode = NULL;
+			int iBestValue = 0;
+			int iBestWeight = 0;
+			CLLNode<TradeData>* pBestNode = NULL;
 
 			for (pNode = pOurInventory->head(); pNode && iValueForUs > iValueForThem; pNode = pOurInventory->next(pNode))
 			{
@@ -9500,20 +9489,17 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 							if (pCity != NULL)
 							{
-								iWeight = GET_PLAYER(ePlayer).AI_cityTradeVal(pCity);
+								int iWeight = GET_PLAYER(ePlayer).AI_targetCityValue(pCity, false);
 
-								if (iWeight > 0)
+								if (iWeight > iBestWeight)
 								{
-									int iValue = GET_PLAYER(ePlayer).AI_targetCityValue(pCity, false);
+									int iValue = GET_PLAYER(ePlayer).AI_cityTradeVal(pCity);
 
-									if (iValue > iBestValue)
+									if (iValue > 0 && iValueForUs >= (iValueForThem + iValue))
 									{
-										if (iValueForUs >= (iValueForThem + iWeight))
-										{
-											iBestValue = iValue;
-											iBestWeight = iWeight;
-											pBestNode = pNode;
-										}
+										iBestValue = iValue;
+										iBestWeight = iWeight;
+										pBestNode = pNode;
 									}
 								}
 							}
@@ -9524,7 +9510,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 			if (pBestNode != NULL)
 			{
-				iValueForThem += iBestWeight;
+				iValueForThem += iBestValue;
 				pOurCounter->insertAtEnd(pBestNode->m_data);
 			}
 		}
@@ -9556,13 +9542,13 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 			}
 		}
 
-		iGoldWeight = iValueForUs - iValueForThem;
+		int iValueDifference = iValueForUs - iValueForThem;
 
-		if (iGoldWeight > 0)
+		if (iValueDifference > 0)
 		{
 			if (pGoldNode)
 			{
-				int iGoldData = iGoldWeight * 100;
+				int iGoldData = iValueDifference * 100;
 				iGoldData /= iGoldValuePercent;
 
 				if (AI_maxGoldTrade(ePlayer) >= iGoldData)
@@ -9595,30 +9581,30 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 				if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
 				{
-					iWeight = 0;
+					int iValue = 0;
 
 					switch (pNode->m_data.m_eItemType)
 					{
 					case TRADE_TECHNOLOGIES:
-						iWeight += GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), getTeam());
+						iValue += GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_techTradeVal((TechTypes)(pNode->m_data.m_iData), getTeam());
 						break;
 					case TRADE_RESOURCES:
 						if (!vbBonusDeal[pNode->m_data.m_iData])
 						{
 							if (getNumTradeableBonuses((BonusTypes)(pNode->m_data.m_iData)) > 1)
 							{
-								iWeight += GET_PLAYER(ePlayer).AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), getID(), 1);
+								iValue += GET_PLAYER(ePlayer).AI_bonusTradeVal(((BonusTypes)(pNode->m_data.m_iData)), getID(), 1);
 								vbBonusDeal[pNode->m_data.m_iData] = true;
 							}
 						}
 						break;
 					}
 
-					if (iWeight > 0)
+					if (iValue > 0)
 					{
-						if (iValueForUs >= (iValueForThem + iWeight))
+						if (iValueForUs >= (iValueForThem + iValue))
 						{
-							iValueForThem += iWeight;
+							iValueForThem += iValue;
 							pOurCounter->insertAtEnd(pNode->m_data);
 						}
 					}
@@ -9636,13 +9622,13 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 
 					if (getTradeDenial(ePlayer, pNode->m_data) == NO_DENIAL)
 					{
-						iWeight = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_mapTradeVal(getTeam());
+						int iValue = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).AI_mapTradeVal(getTeam());
 
-						if (iWeight > 0)
+						if (iValue > 0)
 						{
-							if (iValueForUs >= (iValueForThem + iWeight))
+							if (iValueForUs >= (iValueForThem + iValue))
 							{
-								iValueForThem += iWeight;
+								iValueForThem += iValue;
 								pOurCounter->insertAtEnd(pNode->m_data);
 							}
 						}
@@ -9651,12 +9637,12 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 			}
 		}
 
-		iGoldWeight = iValueForUs - iValueForThem;
-		if (iGoldWeight > 0)
+		iValueDifference = iValueForUs - iValueForThem;
+		if (iValueDifference > 0)
 		{
 			if (pGoldNode)
 			{
-				iGoldData = iGoldWeight * 100;
+				int iGoldData = iValueDifference * 100;
 				iGoldData /= AI_goldTradeValuePercent();
 
 				iGoldData = std::min(iGoldData, AI_maxGoldTrade(ePlayer));
@@ -9675,7 +9661,7 @@ bool CvPlayerAI::AI_counterPropose(PlayerTypes ePlayer, const CLinkList<TradeDat
 		{
 			if (pGoldPerTurnNode)
 			{
-				iGoldData = 0;
+				int iGoldData = 0;
 
 				while (GET_PLAYER(ePlayer).AI_goldPerTurnTradeVal(iGoldData + 1) <= (iValueForUs - iValueForThem))
 				{
