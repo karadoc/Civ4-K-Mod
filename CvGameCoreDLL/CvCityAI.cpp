@@ -7467,6 +7467,7 @@ void CvCityAI::AI_updateBestBuild()
 							aiYields[iJ] -= pLoopPlot->getYield((YieldTypes)iJ);
 						}
 						iValue += AI_yieldValue(aiYields, 0, false, false, true, true, iGrowthValue);
+						// Note: AI_yieldValue wasn't intended to be used with negative yields. But I think it will work; and it doesn't need to be perfectly accurate anyway.
 
 						// priority increase for chopping when we want to chop
 						if (bChop && pLoopPlot->getFeatureType() != NO_FEATURE && GC.getBuildInfo(m_aeBestBuild[iI]).isFeatureRemove(pLoopPlot->getFeatureType()))
@@ -9158,24 +9159,24 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 		iCommerceTimes100 *= getTotalCommerceRateModifier((CommerceTypes)iI);
 		iCommerceTimes100 /= 100;
 
-		FAssert(iCommerceTimes100 >= 0);
+		//FAssert(iCommerceTimes100 >= 0);
 
 		if (eProcess != NO_PROCESS)
 			iCommerceTimes100 += GC.getProcessInfo(getProductionProcess()).getProductionToCommerceModifier(iI) * iProductionTimes100 / 100;
 
 		if (iCommerceTimes100 != 0)
 		{
-			int iCommerceWeight = kOwner.AI_commerceWeight((CommerceTypes)iI, this);
+			int iCommerceWeight = kOwner.AI_commerceWeight((CommerceTypes)iI, this); // (Should we still use this with bWorkerOptimization?)
 			if (AI_isEmphasizeCommerce((CommerceTypes)iI))
 			{
 				iCommerceWeight *= 2;
 			}
-			if (iI == COMMERCE_CULTURE && getCultureLevel() <= (CultureLevelTypes)1)
+			if (!bWorkerOptimization && iI == COMMERCE_CULTURE && getCultureLevel() <= (CultureLevelTypes)1)
 			{
 				// bring on the artists
 				if (getCommerceRateTimes100(COMMERCE_CULTURE) - (bRemove ? iCommerceTimes100 : 0) < 100)
 				{
-					iCommerceValue += 20;
+					iCommerceValue += 20 * (iCommerceTimes100 > 0 ? 1 : -1);
 				}
 				iCommerceWeight = std::max(iCommerceWeight, 200);
 			}
