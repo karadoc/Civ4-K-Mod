@@ -6407,6 +6407,12 @@ int CvCityAI::AI_clearFeatureValue(int iIndex)
 	iValue += iHealthValue;
 
 	// K-Mod
+	// We don't want defensive features adjacent to our city
+	if (iIndex <= 8)
+	{
+		iValue -= kFeatureInfo.getDefenseModifier()/2;
+	}
+
 	if (GC.getGame().getGwEventTally() >= 0) // if GW Threshold has been reached
 	{
 		iValue += kFeatureInfo.getWarmingDefense() * (150 + 5 * GET_PLAYER(getOwner()).getGwPercentAnger()) / 100;
@@ -7453,17 +7459,25 @@ void CvCityAI::AI_updateBestBuild()
 
 						int iValue = AI_yieldValue(aiYields, 0, false, false, true, true, iGrowthValue);
 						aiValues[iI] = iValue;
-						/* original bts code
-						if ((iValue > 0) && (pLoopPlot->getRouteType() != NO_ROUTE))
-						{
-							iValue++;
-						} */
+
 						// K-Mod
+						// Also evaluate the _change_ in yield, so that we aren't always tinkering with our best plots.
+						for (int iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+						{
+							aiYields[iJ] -= pLoopPlot->getYield((YieldTypes)iJ);
+						}
+						iValue += AI_yieldValue(aiYields, 0, false, false, true, true, iGrowthValue);
+
 						// priority increase for chopping when we want to chop
 						if (bChop && pLoopPlot->getFeatureType() != NO_FEATURE && GC.getBuildInfo(m_aeBestBuild[iI]).isFeatureRemove(pLoopPlot->getFeatureType()))
 						{
 							CvCity* pCity;
-							iValue += pLoopPlot->getFeatureProduction(m_aeBestBuild[iI], getTeam(), &pCity) * 2;
+							int iChopProduction = pLoopPlot->getFeatureProduction(m_aeBestBuild[iI], getTeam(), &pCity);
+							if (iChopProduction > 0)
+							{
+								iValue += (iI <= 8 && GC.getFeatureInfo(pLoopPlot->getFeatureType()).getDefenseModifier() > 0) ? 20 : 10;
+								iValue += iChopProduction * 2;
+							}
 							// note: the scale of iValue here is roughly 4x commerce per turn. So a boost of 40 would be signficant.
 							FAssert(pCity == this);
 						}
