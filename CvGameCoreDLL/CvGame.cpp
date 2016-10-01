@@ -4292,19 +4292,18 @@ int CvGame::calculateGwSustainabilityThreshold(PlayerTypes ePlayer) const
 
 int CvGame::calculateGwSeverityRating() const
 {
-	// originally I wanted something like this:
-	// (1-(1-warming prob)^(rolls/map_size * max turns))
-	// (with some factor in the exponent to make it better...)
-	// but since that is impractical, I've just made an ad-hoc formula with a similar shape.
+	// Here are some of the properties I want from this function:
+	// - the severity should be a number between 0 and 100 (ie. a percentage value)
+	// - zero severity should mean zero global warming
+	// - the function should asymptote towards 100
+	//
+	// - It should be a function of the index divided by (total land area * game length).
 
-	// Note: watch out for integer overflow and rounding errors.
+	// I recommend looking at the graph of this function to get a sense of how it works.
 
-	// old version
-	// return 100-1000/(10+(GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()))));
-
-	// new version: lower at the start, higher at the end.
 	const long x = GC.getDefineINT("GLOBAL_WARMING_PROB") * GC.getGameINLINE().getGlobalWarmingIndex() / (std::max(1,4*GC.getGameSpeedInfo(GC.getGameINLINE().getGameSpeedType()).getVictoryDelayPercent()*GC.getMapINLINE().getLandPlots()));
-	return 100L - 12000L/(120L+x*x);
+	const long b = 70; // shape parameter. Lower values result in the function being steeper earlier.
+	return 100L - b*100L/(b+x*x);
 }
 /*
 ** K-mod end
