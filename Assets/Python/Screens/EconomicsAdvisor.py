@@ -499,9 +499,9 @@ class EconomicsAdvisor:
 		szText = localText.getText("TXT_KEY_GW_SEVERITY_RATING", ()).upper() + ": "
 
 		# hopefully the words for low, medium, and high for sealevel will be good enough for GW severity as well...
-		if (iSeverityRating < 26):
+		if (iSeverityRating < 30):
 			szText += localText.getColorText("TXT_KEY_SEALEVEL_LOW", (), gc.getInfoTypeForString ("COLOR_GREEN")).upper()
-		elif (iSeverityRating < 66):
+		elif (iSeverityRating < 75):
 			szText += localText.getColorText("TXT_KEY_SEALEVEL_MEDIUM", (), gc.getInfoTypeForString ("COLOR_YELLOW")).upper()
 		else:
 			szText += localText.getColorText("TXT_KEY_SEALEVEL_HIGH", (), gc.getInfoTypeForString ("COLOR_RED")).upper()
@@ -595,6 +595,7 @@ class EconomicsAdvisor:
 		
 		iGlobalDefence = game.calculateGwLandDefence(PlayerTypes.NO_PLAYER)
 		iThreshold = game.calculateGwSustainabilityThreshold(PlayerTypes.NO_PLAYER)
+		iChangeRate = iGlobalPollution-iGlobalDefence-iThreshold - iGlobalWarmingIndex*gc.getDefineINT("GLOBAL_WARMING_RESTORATION_RATE")/100
 
 		yLocation += 1.5 * self.Y_SPACING
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_ENVIRONMENT_TOTAL_POLLUTION", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_MIDDLE_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_HELP_POLLUTION_SOURCE, PollutionTypes.POLLUTION_ALL, -1 )
@@ -610,7 +611,7 @@ class EconomicsAdvisor:
 
 		yLocation += 1.5 * self.Y_SPACING
 		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + localText.getText("TXT_KEY_ENVIRONMENT_GW_CHANGE_RATE", ()) + "</font>", CvUtil.FONT_LEFT_JUSTIFY, self.X_MIDDLE_PANEL + self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
-		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(max(0, iGlobalPollution-iGlobalDefence-iThreshold)) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_MIDDLE_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
+		screen.setLabel(self.getNextWidgetName(), "Background", u"<font=3>" + unicode(max(0, iChangeRate)) + "</font>", CvUtil.FONT_RIGHT_JUSTIFY, self.X_MIDDLE_PANEL + self.PANE_WIDTH - self.TEXT_MARGIN, yLocation + self.TEXT_MARGIN, self.Z_CONTROLS + self.DZ, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1 )
 
 		#iResponsibility = (100*iLocalPollution*iThreshold) / (game.calculateGwSustainabilityThreshold(self.iActiveLeader) * iGlobalPollution)
 		iResponsibility = 100*(iLocalPollution - iLocalDefence)
