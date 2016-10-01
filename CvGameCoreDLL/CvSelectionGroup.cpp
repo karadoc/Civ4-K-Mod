@@ -155,9 +155,23 @@ void CvSelectionGroup::doTurn()
 	{
 		bool bCouldAllMove = canAllMove(); // K-Mod
 
-		bool bHurt = false;
+		// K-Mod. Wake spies when they reach max fortify turns in foreign territory. I'm only checking the head unit.
+		// Note: We only want to wake once. So this needs to be done before the fortify counter is increased.
+		if (isHuman() && getActivityType() == ACTIVITY_SLEEP)
+		{
+			CvUnit* pHeadUnit = getHeadUnit();
+			if (pHeadUnit && pHeadUnit->isSpy() && pHeadUnit->plot()->getTeam() != getTeam())
+			{
+				if (pHeadUnit->getFortifyTurns() == GC.getDefineINT("MAX_FORTIFY_TURNS")-1)
+				{
+					setActivityType(ACTIVITY_AWAKE); // time to wake up!
+				}
+			}
+		}
+		// K-Mod end
 
 		// do unit's turns (checking for damage)
+		bool bHurt = false;
 		{
 			CLLNode<IDInfo>* pUnitNode = headUnitNode();
 			while (pUnitNode != NULL)
