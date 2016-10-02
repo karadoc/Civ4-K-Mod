@@ -6661,7 +6661,7 @@ void CvUnitAI::AI_attackSeaMove()
 				return;
 			}
 
-			if (AI_shadow(UNITAI_ASSAULT_SEA, 4, 34, false, true, getMoves()))
+			if (AI_shadow(UNITAI_ASSAULT_SEA, 4, 34, false, true, baseMoves()))
 			{
 				return;
 			}
@@ -6911,7 +6911,7 @@ void CvUnitAI::AI_reserveSeaMove()
 				return;
 			}
 
-			if (AI_shadow(UNITAI_SETTLER_SEA, 2, -1, false, true, getMoves()))
+			if (AI_shadow(UNITAI_SETTLER_SEA, 2, -1, false, true, baseMoves()))
 			{
 				return;
 			}
@@ -7126,7 +7126,7 @@ void CvUnitAI::AI_escortSeaMove()
 				return;
 			}
 
-			if (AI_group(UNITAI_ASSAULT_SEA, -1, /*iMaxOwnUnitAI*/ 1, -1, /*bIgnoreFaster*/ true, false, false, /*iMaxPath*/ getMoves()))
+			if (AI_group(UNITAI_ASSAULT_SEA, -1, /*iMaxOwnUnitAI*/ 1, -1, /*bIgnoreFaster*/ true, false, false, /*iMaxPath*/ baseMoves()))
 			{
 				return;
 			}
@@ -8984,7 +8984,7 @@ void CvUnitAI::AI_missileCarrierSeaMove()
 
 		if (iEnemyOffense > iOurDefense/2) // was 1 vs 1/4
 		{
-			if (AI_shadow(UNITAI_ASSAULT_SEA, 1, 50, false, true, getMoves()))
+			if (AI_shadow(UNITAI_ASSAULT_SEA, 1, 50, false, true, baseMoves()))
 			{
 				return;
 			}
@@ -16182,6 +16182,7 @@ bool CvUnitAI::AI_blockade()
 
 
 // Returns true if a mission was pushed...
+// K-Mod todo: this function is very slow on large maps. Consider rewritting it!
 bool CvUnitAI::AI_pirateBlockade()
 {
 	PROFILE_FUNC();
@@ -16213,7 +16214,7 @@ bool CvUnitAI::AI_pirateBlockade()
 							{
 								if (pLoopUnit->currEffectiveStr(NULL, NULL, NULL) > currEffectiveStr(pLoopPlot, pLoopUnit, NULL))
 								{
-									iBestHostileMoves = std::max(iBestHostileMoves, pLoopUnit->getMoves());									
+									iBestHostileMoves = std::max(iBestHostileMoves, pLoopUnit->baseMoves());
 								}
 							}
 						}
