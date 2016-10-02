@@ -9867,6 +9867,57 @@ bool CvCityAI::AI_finalImprovementYieldDifference(CvPlot* pPlot, short* piYields
 	return bAnyChange;
 }
 
+// For improvements which upgrade when worked, this function calculates a time-weighted average of their yields.
+// The average is calculated with continous weighting such that ~63% of the weight is in the time from now until 'time_scale' turns have past.
+// (More precisely, the weight drops exponentially w.r.t. the number of turns, decreasing by a factor of `e` for each `time_scale` turns.)
+bool CvCityAI::AI_timeWeightedImprovementYields(CvPlot const* pPlot, ImprovementTypes eImprovement, int time_scale, std::vector<float>& weighted_yields) const
+{
+	PROFILE_FUNC();
+
+	FAssert(pPlot);
+	FAssert(time_scale > 0);
+
+	// This is an experimental function, designed to be 'the right way' to evaluate improvements which upgrade over time, with no concern for calculation speed.
+	// If it isn't too slow, I'll use it for lots of things.
+	// weighted yield = integral from 0 to inf. of (yield(t) * e^(-t/scale)), w.r.t.  t
+
+	weighted_yields.assign(NUM_YIELD_TYPES, 0);
+	std::set<ImprovementTypes> cited_improvements;
+	int iTotalTurns = 0;
+
+	while (eImprovement != NO_IMPROVEMENT && cited_improvements.insert(eImprovement).second)
+	{
+		const CvImprovementInfo& kImprovement = GC.getImprovementInfo(eImprovement);
+
+		// piecewise integration
+		// each piece is exp(-t0/T) - exp(t1/T)
+		const float value_factor = exp(-(float)iTotalTurns/time_scale) - (kImprovement.getImprovementUpgrade() != NO_IMPROVEMENT ? exp(-(float)(iTotalTurns+kImprovement.getUpgradeTime())/time_scale) : 0);
+
+		for (YieldTypes i = (YieldTypes)0; i < NUM_YIELD_TYPES; i=(YieldTypes)(i+1))
+		{
+			int iYieldDiff = pPlot->calculateImprovementYieldChange(eImprovement, i, getOwnerINLINE());
+			//if (kOwner.getExtraYieldThreshold(i) > 0) // todo: Extra yield for finacial civs (see AI_finalImprovementYieldDifference for guidence.)
+				// ;
+
+			weighted_yields[i] += iYieldDiff * value_factor;
+		}
+
+		iTotalTurns += kImprovement.getUpgradeTime();
+		eImprovement = (ImprovementTypes)kImprovement.getImprovementUpgrade();
+	}
+
+	if (eImprovement != NO_IMPROVEMENT)
+	{
+		// If we didn't reach final improvemnet; normalise the yield values based on what we've got so far.
+		for (size_t i = 0; i < NUM_YIELD_TYPES; ++i)
+		{
+			weighted_yields[i] /= (1-exp(-(float)iTotalTurns/time_scale));
+		}
+	}
+
+	return cited_improvements.size() > 1; // return true if the improvement had any upgrades
+}
+
 // K-Mod. Value for working a plot in addition to its yields.
 // (Returns ~400x commerce per turn.)
 int CvCityAI::AI_specialPlotImprovementValue(CvPlot* pPlot) const
