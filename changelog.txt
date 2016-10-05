@@ -1,6 +1,75 @@
-This is K-Mod version 1.44b.
+This is K-Mod version 1.45.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.45 changelist
+
+Game
++ Increased carrying capacity of all military boats by 1.
++ Scientific Method now gives +10% science in all cities.
++ Increased the research cost of Scientific Method.
++ Computers now gives +1 science to specialists.
++ Lumber mills are now unlocked with Guilds rather than Replaceable Parts.
++ Lumber mills and forest preserves now +1 commerce on the corner of rivers, just like the other improvements do.
++ Watermills now give 1 commerce (and 1 hammer) by default, but only gain 1 commerce from Electricity. (i.e. more commerce than before in the early game; but same in the late game.)
++ Submarines and Attack Submarines now get +25% attack (for coast and ocean plots).
++ Machine guns now get +10% vs mounted units
++ Adjusted cultural city revolt probability and properties.
++ Increased the base (maximum) chance of city cultural revolt from 10% to 15%
++ Decreased the duration of revolts from 3+2*(# of revolts) to 2+(# of revolts).
++ Cities will now flip on their 3rd cultural revolt rather than their second (if it is possible for them to flip). (The average number of turns to flip a city is the same; and the average number of turns spent in revolt is similar to before - but the chance of each revolt is a bit higher, and so it is less dependent on luck.)
++ Inflation rate now increases with global tech state. Previously inflation only depended on how many turns had past, and so if the global tech rate was very high (due to lots of tech trading), players would reach high end-game yields and still have very little inflation - which would increase the tech rate further. With this change, there will be higher inflation in games which have lots of tech trading. (And the inflation will be slightly higher for players with better tech!)
++ The global warming index now decreases exponentially by 1% each turn. (This will significantly decrease the effect of global warming in games where global warming is already very strong.)
++ Reduced the global warming offset of forests and jungles from 15 to 10.
++ Adjusted the 'severity rating' formula for global warming. 'Save the planet' anger will now be a bit stronger.
++ Increased the probability of natural spread of religions.
++ Reduced chance of spies being caught while exploring friendly land.
++ Tweaked religion "grip" values. (Distance and the shrine now have a relatively higher effect.)
++ Increased the maintenance cost of Civilized Jewelers. Decreased the maintenance cost of Standard Ethanol and Aluminium Co.
++ Fixed a bug which allowed 'no capture' units to captures cities that were only defended by non-combat units. (eg. a gunship could capture a city if the city only had a worker in it.)
++ Capitulation power is now determined after cities are reassigned, rather than before. This means that civs which give up a bunch of cities when they capitulate won't immediately be able to free themselves due to the lost cities they just traded away.
++ Many fixed memory leaks and logic mistakes, with help from alberts2 and DarkLunaPhantom.
++ Fixed potential crash in CvSelectionGroup::groupMove (again, thanks to DarkLunaPhantom for the idea)
++ Fixed air intercepts conflicting with combat in simultaneous turns. (This fixes potentially unpredictable behaviour; and it also allows air combat and interceptions can happen while the interceptor's plot is being attacked by someone else.)
++ Adjusted CvTeam::shareCounters to prevent lose of circumnavigation bonus when forming a permanant alliance.
+
+AI
++ Fixed a bug which prevented the AI from declaring war with transports that ignore borders (such as the East Indiaman).
++ Adjusted worker AI to better prioritise large yield increases rather than working on plots which already have good yields.
++ The AI now counts the defensive bonus of features as negative value if they are next to cities. (This makes the AI a bit more likely to chop forests adjacent to their city.)
++ Fixed a bug which discouraged the AI from chopping forests in most situations.
++ Fixed several problems with slavery evaluation in AI_yieldValue. (The AI should work more food plots when using slavery.)
++ Rewrote AI_counterPropose to get more balanced deals. (This mostly improves the way the AI negotiates with other AI players.)
++ Increased the maximum discount that AI players are willing to offer to human players in trade deals.
++ Tweaked the AI to increase the likelihood that they'll offer a discount deal to human. (Please do consider deals that the AI offers you. They may present a one-time offer with a significant discount.)
++ The AI now uses time-weighted averages when deciding whether to build cottages. The specific time-weighting depends on the AI's situation.
++ Rewrote AI_techValue to establish a common value scale, and hence provide more accurate evaluations.
++ Improved evaluation of free techs from buildings (ie. The Oracle)
++ The AI now takes collateral damage resistance into account when evaluating stack attacks.
++ Fixed a bug which caused the AI to move units needlessly back and forward between cities (usually corporation execs).
++ Fixed AI missing inflation in the AI's colony & building evaluations.
++ Fixed several AI bugs related to the misuse of "CvUnit::getMoves" (which doesn't do what it sounds like it does). This mostly affects naval AI.
++ The AI now ignore automation settings when taking over from human players in multiplayer games.
++ Adjusted the unit priority for group pillage missions. (Slightly better choices when deciding which wounded units should pillage - if any.)
++ AI amphibious attacks will now use the normal (situation specific) city attack threshold calculation rather than a flat threshold.
++ Adjusted pathfinding costs to help exploring units to not avoid unexplored plots.
+
+UI
++ Changed UI text to include inflation whenever displaying costs. (Previously the costs displayed were not the costs that the player will actually have to pay - because inflation was not being included.)
++ Spies in foreign territory now wake automatically when they reach their maximum fortification bonus.
++ Fixed a minor rounding problem in which sometimes made espionage costs inaccurate.
++ Removed duplicate gold commerce text from financial advisor screen.
++ Fixed launch spaceship popup sometimes appearing when it shouldn't.
++ Fixed the graphs screen sometimes showing the wrong thing on the pull-down menu.
+
+Modding
++ Added two new (optional) xml fields for TechInfos.xml.
+  + 'CommerceModifiers' allows techs to give a percentage bonus for each type of commerce in all cities.
+  + 'SpecialistExtraCommerces' allows techs to give commerce bonuses to all specialists.
+  These new effects are displayed in the Tech Chooser, the Civilopedia, the mouse-over text of relevant things in the city screen; and the effects are properly evaluated for AI decision making.
++ 'RiverSideYield' for improvements now applies when touching a river, even on the corner. Previously it only applied on the side of a river, like a watermill.
+
+
+--
 v1.44b changelist
 
 + Fixed a bug which caused existing specialists to be overvalued by AI_jobChangeValue.
