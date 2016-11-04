@@ -20,7 +20,7 @@
 		<Tag>TXT_KEY_BONUS_ON_PLOT</Tag>
 		<English>[SPACE]on plot</English>
 		<French>[SPACE]sur le case</French>
-		<German>[SPACE]auf geländefeld</German>
+		<German>[SPACE]auf Geländefeld</German>
 		<Italian>[SPACE]su casella</Italian>
 		<Spanish>[SPACE]en la casilla</Spanish>
 	</TEXT>
@@ -248,7 +248,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_DOMESTIC</Tag>
 		<English>Domestic</English>
 		<French>Domestic</French>
-		<German>Domestic</German>
+		<German>Inland</German>
 		<Italian>Domestic</Italian>
 		<Spanish>Nacional</Spanish>
 	</TEXT>
@@ -256,7 +256,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_GLOBAL</Tag>
 		<English>Global</English>
 		<French>Global</French>
-		<German>Global</German>
+		<German>Weltweit</German>
 		<Italian>Global</Italian>
 		<Spanish>Global</Spanish>
 	</TEXT>
@@ -264,7 +264,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_EFFECTS</Tag>
 		<English>Effects</English>
 		<French>Effects</French>
-		<German>Effects</German>
+		<German>Effekte</German>
 		<Italian>Effects</Italian>
 		<Spanish>Efectos</Spanish>
 	</TEXT>
@@ -272,7 +272,7 @@
 		<Tag>TXT_KEY_TOTAL</Tag>
 		<English>Total</English>
 		<French>Total</French>
-		<German>Total</German>
+		<German>Insgesamt</German>
 		<Italian>Total</Italian>
 		<Spanish>Total</Spanish>
 	</TEXT>
@@ -280,7 +280,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_IMPACT</Tag>
 		<English>Total Impact</English>
 		<French>Total Impact</French>
-		<German>Total Impact</German>
+		<German>Gesamteinfluss</German>
 		<Italian>Total Impact</Italian>
 		<Spanish>Impacto total</Spanish>
 	</TEXT>
@@ -288,7 +288,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_THRESHOLD</Tag>
 		<English>Sustainability Threshold</English>
 		<French>Sustainability Threshold</French>
-		<German>Sustainability Threshold</German>
+		<German>Nachhaltigkeitsgrenzwert</German>
 		<Italian>Il limite di sostenibilità</Italian>
 		<Spanish>Límite de sostenibilidad</Spanish>
 	</TEXT>
@@ -296,7 +296,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_LOCAL_THRESHOLD</Tag>
 		<English>Local Sustainability Threshold</English>
 		<French>Local Sustainability Threshold</French>
-		<German>Local Sustainability Threshold</German>
+		<German>Lokaler Nachhaltigkeitsgrenzwert</German>
 		<Italian>Local Sustainability Threshold</Italian>
 		<Spanish>Límite de sostenibilidad local</Spanish>
 	</TEXT>
@@ -304,7 +304,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_POLLUTION</Tag>
 		<English>Total Pollution</English>
 		<French>Total Pollution</French>
-		<German>Total Pollution</German>
+		<German>Gesamtverschmutzung</German>
 		<Italian>Total Pollution</Italian>
 		<Spanish>Polución total</Spanish>
 	</TEXT>
@@ -312,7 +312,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_TOTAL_OFFSETS</Tag>
 		<English>Total Offsets</English>
 		<French>Total Offsets</French>
-		<German>Total Offsets</German>
+		<German>Gesamtausgleich</German>
 		<Italian>Total Offsets</Italian>
 		<Spanish>Compensaciones totales</Spanish>
 	</TEXT>
@@ -320,7 +320,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_GW_CHANGE_RATE</Tag>
 		<English>Change Rate of GW Index</English>
 		<French>Change Rate of GW Index</French>
-		<German>Change Rate of GW Index</German>
+		<German>Änderungsrate des Erderwärmungsindexes</German>
 		<Italian>Change Rate of GW Index</Italian>
 		<Spanish>Cambio en el índice del CG</Spanish>
 	</TEXT>
@@ -328,7 +328,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_RELATIVE_CONTRIBUTION</Tag>
 		<English>Our Relative Contribution</English>
 		<French>Our Relative Contribution</French>
-		<German>Our Relative Contribution</German>
+		<German>Unser relativer Beitrag</German>
 		<Italian>Our Relative Contribution</Italian>
 		<Spanish>Nuestra contribución relativa</Spanish>
 	</TEXT>
@@ -336,7 +336,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_GW_INDEX</Tag>
 		<English>Global Warming Index</English>
 		<French>Global Warming Index</French>
-		<German>Global Warming Index</German>
+		<German>Erderwärmungsindex</German>
 		<Italian>Global Warming Index</Italian>
 		<Spanish>Índice del calentamiento global</Spanish>
 	</TEXT>
@@ -344,7 +344,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_EXPECTED_EVENTS</Tag>
 		<English>Expected Events per Turn</English>
 		<French>Expected Events per Turn</French>
-		<German>Expected Events per Turn</German>
+		<German>Erwartete Ereignisse pro Runde</German>
 		<Italian>Expected Events per Turn</Italian>
 		<Spanish>Eventos esperados por turno</Spanish>
 	</TEXT>
@@ -352,7 +352,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_EVENT_TALLY</Tag>
 		<English>Event Tally</English>
 		<French>Event Tally</French>
-		<German>Event Tally</German>
+		<German>Ereigniszähler</German>
 		<Italian>Event Tally</Italian>
 		<Spanish>Registro de eventos</Spanish>
 	</TEXT>
@@ -360,7 +360,7 @@
 		<Tag>TXT_KEY_ENVIRONMENT_LOCAL_ANGER_LEVEL</Tag>
 		<English>Local Anger Level</English>
 		<French>Local Anger Level</French>
-		<German>Local Anger Level</German>
+		<German>Lokales Unmutsniveau</German>
 		<Italian>Local Anger Level</Italian>
 		<Spanish>Nivel de enfado local</Spanish>
 	</TEXT>
@@ -368,7 +368,7 @@
 		<Tag>TXT_KEY_CHANCES</Tag>
 		<English>Chances</English>
 		<French>Chances</French>
-		<German>Chances</German>
+		<German>Wahrscheinlichkeiten</German>
 		<Italian>Chances</Italian>
 		<Spanish>Probabilidades</Spanish>
 	</TEXT>
@@ -377,7 +377,7 @@
 		<Tag>TXT_KEY_GW_INDEX_HELP</Tag>
 		<English>Total accumulated pollution above the sustainability threshold.</English>
 		<French>Total accumulated pollution above the sustainability threshold.</French>
-		<German>Total accumulated pollution above the sustainability threshold.</German>
+		<German>Gesamtverschmutzung oberhalb des Nachhaltigkeitsgrenzwertes</German>
 		<Italian>Inquinamento accumulato totale prima di oltrepassare il limite di sostenibilità.</Italian>
 		<Spanish>Polución acumulada total por encima del límite de sostenibilidad</Spanish>
 	</TEXT>
@@ -385,7 +385,7 @@
 		<Tag>TXT_KEY_GW_UNHAPPY_HELP</Tag>
 		<English>[ICON_UNHAPPY] due to global warming.</English>
 		<French>[ICON_UNHAPPY] due to global warming.</French>
-		<German>[ICON_UNHAPPY] due to global warming.</German>
+		<German>[ICON_UNHAPPY] aufgrund der Erderwärmung.</German>
 		<Italian>[ICON_UNHAPPY] a causa del riscaldamento globale.</Italian>
 		<Spanish>[ICON_UNHAPPY] debido al calentamiento global.</Spanish>
 	</TEXT>
@@ -393,7 +393,7 @@
 		<Tag>TXT_KEY_SUSTAINABILITY_THRESHOLD_HELP</Tag>
 		<English>The maximum rate of pollution that can be safely absorbed by the environment.</English>
 		<French>The maximum rate of pollution that can be safely absorbed by the environment.</French>
-		<German>The maximum rate of pollution that can be safely absorbed by the environment.</German>
+		<German>Höchste Verschmutzungsrate, die gefahrlos von der Umwelt absorbiert werden kann.</German>
 		<Italian>Il massimo livello di inquinamento che può essere assorbito dall'ambiente senza problemi.</Italian>
 		<Spanish>La tasa máxima de polución que puede ser absorbida con seguridad por el entorno.</Spanish>
 	</TEXT>
@@ -401,7 +401,7 @@
 		<Tag>TXT_KEY_GW_RELATIVE_CONTRIBUTION_HELP</Tag>
 		<English>Our pollution rate relative to the global average.</English>
 		<French>Our pollution rate relative to the global average.</French>
-		<German>Our pollution rate relative to the global average.</German>
+		<German>Unsere Verschmutzungsrate im Vergleich zum globalen Durchschnitt</German>
 		<Italian>Il nostro livello di inquinamento relativo alla media globale.</Italian>
 		<Spanish>Nuestra tasa de polución relativa a la media global.</Spanish>
 	</TEXT>
@@ -409,7 +409,7 @@
 		<Tag>TXT_KEY_GW_SEVERITY_RATING</Tag>
 		<English>Global warming severity rating</English>
 		<French>Évaluation globale sévérité du réchauffement</French>
-		<German>Schweregrad der globalen Erwärmung</German>
+		<German>Schweregrad der Erderwärmung</German>
 		<Italian>Riscaldamento globale livello di gravità</Italian>
 		<Spanish>Grado de gravedad del calentamiento global</Spanish>
 	</TEXT>
@@ -418,7 +418,7 @@
 		<Tag>TXT_KEY_POLLUTION_OFFSETS_HELP</Tag>
 		<English>Effective pollution reductions:</English>
 		<French>Effective pollution reductions:</French>
-		<German>Effective pollution reductions:</German>
+		<German>Effektive Gegenmaßnahmen:</German>
 		<Italian>Riduzioni effettive inquinamento:</Italian>
 		<Spanish>Reducciones de polución efectivas:</Spanish>
 	</TEXT>
@@ -476,7 +476,7 @@
 		<Tag>TXT_KEY_ANGER_GLOBAL_WARMING</Tag>
 		<English>+%d1_Change[ICON_UNHAPPY]: "Save the planet!"</English>
 		<French>+%d1_Change[ICON_UNHAPPY]: "Save the planet!"</French>
-		<German>+%d1_Change[ICON_UNHAPPY]: "Save the planet!"</German>
+		<German>+%d1_Change[ICON_UNHAPPY]: "Rettet die Erde!"</German>
 		<Italian>+%d1_Change[ICON_UNHAPPY]: "Salvare il pianeta!"</Italian>
 		<Spanish>+%d1_Change[ICON_UNHAPPY]: "¡Salvad el planeta!"</Spanish>
 	</TEXT>
@@ -493,7 +493,7 @@
 		<Tag>TXT_KEY_MISC_GLOBAL_WARMING_ACTIVE</Tag>
 		<English>Worldwide pollution has reached the sustainability threshold.</English>
 		<French>Worldwide pollution has reached the sustainability threshold.</French>
-		<German>Worldwide pollution has reached the sustainability threshold.</German>
+		<German>Weltweite Umweltverschmutzung hat den Nachhaltigkeitsgrenzwert überschritten.</German>
 		<Italian>L'inquinamento mondiale ha raggiunto il limite di sostenibilità.</Italian>
 		<Spanish>La polución mundial ha alcanzado el límite de sostenibilidad.</Spanish>
 	</TEXT>
@@ -501,7 +501,7 @@
 		<Tag>TXT_KEY_POPUP_ENVIRONMENTAL_ADVISOR</Tag>
 		<English>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</English>
 		<French>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</French>
-		<German>Our scientists have theorized that if worldwide pollution output continues to increase, we may be faced with irreversible climate change. See the Economics Advisor for further information.</German>
+		<German>Unsere Wissenschaftler haben errechnet, dass falls die weltweite Umweltverschmutzung weiter ansteigt, wir möglicherweise mit unumkehrbarem Klimawandel rechnen müssen. Mehr Informationen im Wirtschaftsbericht.</German>
 		<Italian>I nostri scenziati hanno teorizzato che se l'inquinamento mondiale continua a crescere, dovremmo fronteggiare cambiamenti climatici irreversibili. Consulta il Consigliere Finanziario per maggiori informazioni.</Italian>
 		<Spanish>Nuestros científicos han teorizado que si la producción de polución mundial continua aumentando, debemos enfrentarnos a un cambio climático irreversible. Mira el Consejero Económico para información adicional.</Spanish>
 	</TEXT>
@@ -518,6 +518,9 @@
 	<TEXT>
 		<Tag>TXT_KEY_PROMOTION_DISORGANIZED</Tag>
 		<English>Disorganized</English>
+		<French>Disorganized</French>
+		<German>Unorganisiert</German>
+		<Italian>Disorganized</Italian>
 		<Spanish>Desorganizado</Spanish>
 	</TEXT>
 
@@ -588,7 +591,7 @@
 		<Tag>USER_DIPLO_WARPLAN_1</Tag>
 		<English>Join us in preparing for war...</English>
 		<French>Rejoignez-nous dans la préparation de la guerre...</French>
-		<German>Begleiten Sie uns bei der Vorbereitung für den Krieg...</German>
+		<German>Bereiten Sie sich vor, auf Krieg...</German>
 		<Italian>Unitevi a noi nella preparazione per la guerra...</Italian>
 		<Spanish>Únase a nosotros en la preparación para la guerra...</Spanish>
 	</TEXT>
@@ -604,7 +607,7 @@
 		<Tag>AI_DIPLO_WARPLAN_CANCEL_1</Tag>
 		<English>OK, we'll cancel our war preparations.</English>
 		<French>D'accord, nous allons annuler notre préparatifs de guerre.</French>
-		<German>Okay, wir kündigen unsere Kriegsvorbereitungen.</German>
+		<German>Gut, wir beenden unsere Kriegsvorbereitungen.</German>
 		<Italian>Ok, provvederemo ad annullare i nostri preparativi di guerra.</Italian>
 		<Spanish>Bueno, no cancelaremos nuestros preparativos para la guerra.</Spanish>
 	</TEXT>

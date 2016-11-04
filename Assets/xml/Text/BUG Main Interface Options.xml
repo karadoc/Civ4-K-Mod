@@ -334,7 +334,7 @@
 		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__RAPIDUNITCYCLING_TEXT</Tag>
 		<English>Rapid Unit Cycling</English>
 		<French>Rapid Unit Cycling</French>
-		<German>Rapid Unit Cycling</German>
+		<German>Schneller Einheitenwechsel</German>
 		<Italian>Cicla rapidamente tra le unità</Italian>
 		<Spanish>Circulación de unidades rápida</Spanish>
 	</TEXT>
@@ -342,18 +342,24 @@
 		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__RAPIDUNITCYCLING_HOVER</Tag>
 		<English>When checked, automatic unit selection happens instantly rather than with a delay.</English>
 		<French>When checked, automatic unit selection happens instantly rather than with a delay.</French>
-		<German>When checked, automatic unit selection happens instantly rather than with a delay.</German>
+		<German>Lässt den automatischen Einheitenwechsel ohne Verzögerung passieren.</German>
 		<Italian>Quando è selezionato, la selezione automatica tra le unità è istantanea anzichè con ritardo.</Italian>
 		<Spanish>Activada, la selección de unidades automática ocurre instantáneamente más que con un retardo.</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__SIMPLESELECTION_TEXT</Tag>
 		<English>Simple [Shift] Unit Selection</English>
+		<French>Simple [Shift] Unit Selection</French>
+		<German>Einfache [Umschalt]-Einheitenauswahl</German>
+		<Italian>Simple [Shift] Unit Selection</Italian>
 		<Spanish>Selección de unidades simple [Mayús]</Spanish>
 	</TEXT>
 	<TEXT>
 		<Tag>TXT_KEY_BUG_OPT_MAININTERFACE__SIMPLESELECTION_HOVER</Tag>
 		<English>When checked, selecting units with the [Shift] key will only ever add a single unit at a time.</English>
+		<French>When checked, selecting units with the [Shift] key will only ever add a single unit at a time.</French>
+		<German>Beim Einheitenauswählen unter Gedrückthalten der [Umschalt]-Taste wird immer nur eine Einheit zusätzlich ausgewählt.</German>
+		<Italian>When checked, selecting units with the [Shift] key will only ever add a single unit at a time.</Italian>
 		<Spanish>Activada, seleccionando unidades con la tecla [Mayús] sólo añadir una unidad cada vez.</Spanish>
 	</TEXT>
 </Civ4GameText>

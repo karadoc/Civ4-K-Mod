@@ -335,7 +335,7 @@
 		<Tag>TXT_KEY_BUG_OPT_ADVISORS__NONZEROSTATSONLY_TEXT</Tag>
 		<English>Non-Zero Stats Only</English>
 		<French>Non-Zero Stats Only</French>
-		<German>Non-Zero Stats Only</German>
+		<German>Nur Nicht-Nullwerte</German>
 		<Italian>Solo statistiche maggiori di zero</Italian>
 		<Spanish>Solo estadísticas que no sean cero</Spanish>
 	</TEXT>
@@ -343,7 +343,7 @@
 		<Tag>TXT_KEY_BUG_OPT_ADVISORS__NONZEROSTATSONLY_HOVER</Tag>
 		<English>When checked, only non-zero entries are displayed in the Stats tab.</English>
 		<French>When checked, only non-zero entries are displayed in the Stats tab.</French>
-		<German>When checked, only non-zero entries are displayed in the Stats tab.</German>
+		<German>Wenn aktiviert, werden im Statistiken-Reiter nur von Null verschiedene Werte angezeigt.</German>
 		<Italian>Quando è selezionato, solo le statistiche maggiori di zero sono mostrate nella tabella Statistiche.</Italian>
 		<Spanish>Activada, sólo las entradas que no sean cero son mostradas en la pestaña 'Estadísticas'.</Spanish>
 	</TEXT>

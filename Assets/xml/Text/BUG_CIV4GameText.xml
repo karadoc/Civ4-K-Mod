@@ -778,7 +778,7 @@
 		<Tag>TXT_KEY_MILITARY_SITREP_WORST</Tag>
 		<English>Worst</English>
 		<French>Worst</French>
-		<German>Worst</German>
+		<German></German><!-- This is supposed to stay empty. -->
 		<Italian>Peggior</Italian>
 		<Spanish>Peor</Spanish>
 	</TEXT>

@@ -173,6 +173,9 @@
 	<TEXT>
 		<Tag>TXT_KEY_SIGN_EVENT_VOLCANO_1</Tag>
 		<English>volcanic ash</English>
+		<French>volcanic ash</French>
+		<German>vulkanische Asche</German>
+		<Italian>volcanic ash</Italian>
 		<Spanish>cenizas volcánicas</Spanish>
 	</TEXT>
 </Civ4GameText>
