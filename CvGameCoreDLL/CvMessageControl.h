@@ -8,6 +8,9 @@ public:
 	void sendExtendedGame();
 	void sendAutoMoves();
 	void sendTurnComplete();
+	// PB Mod begin
+	void sendTurnCompleteAll();
+	// PB Mod end
 	//void sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bAlt, bool bShift, bool bCtrl);
 	void sendPushOrder(int iCityID, OrderTypes eOrder, int iData, bool bSave, bool bPop, int iPosition); // K-Mod
 	void sendPopOrder(int iCity, int iNum);

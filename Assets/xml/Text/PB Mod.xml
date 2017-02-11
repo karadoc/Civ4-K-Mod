@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- edited with XMLSPY v2004 rel. 2 U (http://www.xmlspy.com) by lcollins (Firaxis Games) -->
+<Civ4GameText xmlns="http://www.firaxis.com">
+	<!-- PB Mod begin -->
+	<TEXT>
+		<Tag>TXT_KEY_MOD_UNPAUSE</Tag>
+		<English>Unfreeze Screen</English>
+		<French>Unfreeze Screen</French>
+		<German>Pause aufheben</German>
+		<Italian>Unfreeze Screen</Italian>
+		<Spanish>Unfreeze Screen</Spanish>
+	</TEXT>
+		<TEXT>
+		<Tag>TXT_KEY_MOD_UNPAUSE_MAIN</Tag>
+		<English>Go to F1 screen to unfreeze.</English>
+		<French>Go to F1 screen to unfreeze.</French>
+		<German>Go to F1 screen to unfreeze.</German>
+		<Italian>Go to F1 screen to unfreeze.</Italian>
+		<Spanish>Go to F1 screen to unfreeze.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_MOD_UNPAUSE_DESC</Tag>
+		<English>You're stuck in the diplomatic screen because the game is paused. Use this button to unpause the game.</English>
+		<French>You're stuck in the diplomatic screen because the game is paused. Use this button to unpause the game.</French>
+		<German>Das Diplomatiemen&#252; kann nicht geschlossen werden solange das Spiel pausiert ist. Das ist ein Bug von Civ4. Klicke hier um die Pause aufzuheben.</German>
+		<Italian>You're stuck in the diplomatic screen because the game is paused. Use this button to unpause the game.</Italian>
+		<Spanish>You're stuck in the diplomatic screen because the game is paused. Use this button to unpause the game.</Spanish>
+	</TEXT>
+	<TEXT>
+		<Tag>TXT_KEY_MOD_PAUSE_TIMER</Tag>
+		<English>Toggle pause</English>
+		<French>Toggle pause</French>
+		<German>Pause</German>
+		<Italian>Toggle pause</Italian>
+		<Spanish>Toggle pause</Spanish>
+	</TEXT>
+	<!-- PB Mod end -->
+</Civ4GameText>

@@ -4903,7 +4903,10 @@ void CvPlot::setOwner(PlayerTypes eNewValue, bool bCheckUnits, bool bUpdatePlotG
 						if (pLoopUnit->isEnemy(GET_PLAYER(eNewValue).getTeam(), this))
 						{
 							FAssert(pLoopUnit->getTeam() != GET_PLAYER(eNewValue).getTeam());
-							pLoopUnit->kill(false, eNewValue);
+							//DLP begin. Killing units is too severe, this will instead bump them (outside of enemy borders).
+							//pLoopUnit->kill(false, eNewValue);
+							pLoopUnit->jumpToNearestValidPlot();
+							//DLP end
 						}
 					}
 				}

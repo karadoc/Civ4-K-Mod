@@ -131,6 +131,14 @@ std::wstring CyPlayer::getName()
 	return m_pPlayer ? m_pPlayer->getName() : std::wstring();
 }
 
+// PB Mod begin
+void CyPlayer::setName(std::wstring szNewValue)
+{
+	if (m_pPlayer)
+		m_pPlayer->setName(CvWString(szNewValue));
+}
+// PB Mod end
+
 std::wstring CyPlayer::getNameForm(int iForm)
 {
 	return m_pPlayer ? m_pPlayer->getName((uint)iForm) : std::wstring();
@@ -1544,6 +1552,15 @@ int CyPlayer::getPlayerTextColorA()
 {
 	return m_pPlayer ? m_pPlayer->getPlayerTextColorA() : -1;
 }
+
+// PB Mod begin
+void CyPlayer::setPlayerColor(int /*PlayerColorTypes*/ eColor)
+{
+	if( m_pPlayer){
+		m_pPlayer->setPlayerColor((PlayerColorTypes)eColor);
+	}
+}
+// PB Mod end
 
 int CyPlayer::getSeaPlotYield(YieldTypes eIndex)
 {

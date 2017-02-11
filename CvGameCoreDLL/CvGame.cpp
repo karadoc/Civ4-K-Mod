@@ -2222,12 +2222,16 @@ void CvGame::update()
 }
 
 
+// DarkLunaPhantom - Changed so that research score is counted only once in team score.
 void CvGame::updateScore(bool bForce)
 {
 	bool abPlayerScored[MAX_CIV_PLAYERS];
 	bool abTeamScored[MAX_CIV_TEAMS];
 	int iScore;
 	int iBestScore;
+	// DarkLunaPhantom begin
+	int iTechScore[MAX_CIV_PLAYERS];
+	// DarkLunaPhantom end
 	PlayerTypes eBestPlayer;
 	TeamTypes eBestTeam;
 	int iI, iJ, iK;
@@ -2269,6 +2273,9 @@ void CvGame::updateScore(bool bForce)
 		setPlayerRank(eBestPlayer, iI);
 		setPlayerScore(eBestPlayer, iBestScore);
 		GET_PLAYER(eBestPlayer).updateScoreHistory(getGameTurn(), iBestScore);
+		// DarkLunaPhantom begin
+		iTechScore[iI] = GET_PLAYER((PlayerTypes)iI).calculateTechScore(false);
+		// DarkLunaPhantom end
 	}
 
 	for (iI = 0; iI < MAX_CIV_TEAMS; iI++)
@@ -2291,6 +2298,12 @@ void CvGame::updateScore(bool bForce)
 				{
 					if (GET_PLAYER((PlayerTypes)iK).getTeam() == iJ)
 					{
+						// DarkLunaPhantom begin. Subtracts tech score if it has already been add by some previous team memeber
+						if (iScore > 0)
+						{
+							iScore -= iTechScore[iK];
+						}
+						// DarkLunaPhantom end
 						iScore += getPlayerScore((PlayerTypes)iK);
 					}
 				}

@@ -95,6 +95,9 @@ void CyGamePythonInterface()
 		.def("getEstimateEndTurn", &CyGame::getEstimateEndTurn)
 		.def("setEstimateEndTurn", &CyGame::setEstimateEndTurn)
 		.def("getTurnSlice", &CyGame::getTurnSlice)
+		// PB Mod begin
+		.def("incrementTurnTimer", &CyGame::incrementTurnTimer,"void (int iNumTurnSlices) - Change turn timer slices")
+		// PB Mod end
 		.def("getMinutesPlayed", &CyGame::getMinutesPlayed, "Returns the number of minutes since the game began")
 		.def("getTargetScore", &CyGame::getTargetScore)
 		.def("setTargetScore", &CyGame::setTargetScore)
@@ -152,6 +155,10 @@ void CyGamePythonInterface()
 		.def("isHotSeat", &CyGame::isHotSeat, "bool ()")
 		.def("isPbem", &CyGame::isPbem, "bool ()")
 		.def("isPitboss", &CyGame::isPitboss, "bool ()")
+		// PB Mod begin
+		.def("isPitbossShortNames", &CyGame::isPitbossShortNames, "bool ()")
+		.def("setPitbossShortNames", &CyGame::setPitbossShortNames, "void (bool bShort, int maxLenName, int maxLenDesc )")
+		// PB Mod end
 		.def("isSimultaneousTeamTurns", &CyGame::isSimultaneousTeamTurns, "bool ()")
 
 		.def("isFinalInitialized", &CyGame::isFinalInitialized, "bool () - Returns whether or not the game initialization process has ended (game has started)")
@@ -159,6 +166,9 @@ void CyGamePythonInterface()
 		.def("getActivePlayer", &CyGame::getActivePlayer, "returns index of the active player")
 		.def("setActivePlayer", &CyGame::setActivePlayer, "void (int /*PlayerTypes*/ eNewValue, bool bForceHotSeat)")
 		.def("getPausePlayer", &CyGame::getPausePlayer, "int () - will get who paused us")
+		// PB Mod begin
+		.def("setPausePlayer", &CyGame::setPausePlayer, "void (int /*PlayerTypes*/ eNewValue)")
+		// PB Mod end
 		.def("isPaused", &CyGame::isPaused, "bool () - will say if the game is paused")
 		.def("getBestLandUnit", &CyGame::getBestLandUnit, "returns index of the best unit")
 		.def("getBestLandUnitCombat", &CyGame::getBestLandUnitCombat, "int ()")
@@ -279,6 +289,10 @@ void CyGamePythonInterface()
 
 		.def("isEventActive", &CyGame::isEventActive, "bool (int /*EventTriggerTypes*/ eTrigger)")
 		.def("doControl", &CyGame::doControl, "void (int /*ControlTypes*/ iControl)")
+		// PB Mod begin
+		.def("setCivPassword", &CyGame::setCivPassword, "void (int /*PlayerId*/, string, string) - Allows change of passwords over webinterface")
+		.def("isDiploScreenUp", &CyGame::isDiploScreenUp, "bool ()")
+		// PB Mod end
 		;
 
 	python::class_<CyDeal>("CyDeal")
