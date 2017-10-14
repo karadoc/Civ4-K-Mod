@@ -384,9 +384,10 @@
 		<HintInfo>
 			<Description>TXT_KEY_HINT_58</Description>
 		</HintInfo>
+<!-- Hint disabled by K-Mod: check the BtS concepts page
 		<HintInfo>
 			<Description>TXT_KEY_HINT_59</Description>
-		</HintInfo>
+		</HintInfo> -->
 		<HintInfo>
 			<Description>TXT_KEY_HINT_60</Description>
 		</HintInfo>
@@ -417,9 +418,10 @@
 		<HintInfo>
 			<Description>TXT_KEY_HINT_70</Description>
 		</HintInfo>
+<!-- Hint disabled by K-Mod: Improved naval AI in BtS
 		<HintInfo>
 			<Description>TXT_KEY_HINT_71</Description>
-		</HintInfo>
+		</HintInfo> -->
 		<HintInfo>
 			<Description>TXT_KEY_HINT_72</Description>
 		</HintInfo>
@@ -475,5 +477,23 @@
 		<HintInfo>
 			<Description>TXT_KEY_KMOD_HINT_15</Description>
 		</HintInfo> <!-- right-click on +/- -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_16</Description>
+		</HintInfo> <!-- focus espionage -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_17</Description>
+		</HintInfo> <!-- 90% is not 100% -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_18</Description>
+		</HintInfo> <!-- one-time AI trade offers -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_19</Description>
+		</HintInfo> <!-- diplo bonus for great person gift -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_20</Description>
+		</HintInfo> <!-- alt + wake to wake all -->
+		<HintInfo>
+			<Description>TXT_KEY_KMOD_HINT_21</Description>
+		</HintInfo> <!-- hints page in civilopedia -->
 	</HintInfos>
 </Civ4Hints>

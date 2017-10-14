@@ -7,6 +7,8 @@
 	<!-- Projects should be colored COLOR_PROJECT_TEXT (example: [COLOR_PROJECT_TEXT]SS Engine[COLOR_REVERT]) -->
 	<!-- Anything else official (that should be capitalized) should be colored COLOR_HIGHLIGHT_TEXT (example: [COLOR_HIGHLIGHT_TEXT]Trade Mission[COLOR_HIGHLIGHT_TEXT] or [COLOR_HIGHLIGHT_TEXT]Islam[COLOR_HIGHLIGHT_TEXT]) -->
 <Civ4GameText xmlns="http://www.firaxis.com">
+
+<!-- ** Rewritten hints ** -->
 <TEXT>
 	<Tag>TXT_KEY_BUG_HINT_INTERFACE_1</Tag>
 	<English>Press [ALT + CTRL + O] to open The BUG options screen.</English>
@@ -15,6 +17,26 @@
 	<Italian>Premi [ALT + CTRL + O] per accedere alla schermata di configurazione del BUG Mod.</Italian>
 	<Spanish>Presiona [ALT + CTRL + O] para abrir la pantalla de opciones de BUG.</Spanish>
 </TEXT>
+<!-- replacement text for the inaccurate barbarian tip (changed english and german only)-->
+<TEXT>
+	<Tag>TXT_KEY_HINT_12</Tag>
+	<English>Barbarians will not spawn within two steps of any player's units. With careful positioning of scouts you can completely block barbarian raiding parties from forming in your area.</English>
+	<French>Les barbares peuvent appara&#238;tre sur toutes les cases recouvertes par le brouillard de guerre. Vous ne saurez donc jamais ce qu'il y a sur celles qui sont invisibles, m&#234;me si vous avez d&#233;j&#224; v&#233;rifi&#233; au tour pr&#233;c&#233;dent !</French>
+	<German>Barbarische Einheiten entstehen nicht auf Geländefeldern, die zwei oder weniger Schritte von Einheiten anderer Spieler entfernt sind. Ein paar gut platzierte Einheiten können so oft ganze Bereiche von Barbaren frei halten.</German>
+	<Italian>I Barbari possono apparire in un qualsiasi spazio oscurato dalla nebbia di guerra. Non essere mai certo che uno spazio non visibile sia sicuro, anche se hai controllato durante il turno precedente!</Italian>
+	<Spanish>Los bárbaros no reaparecerán en dos pasos de cualquiera de las unidades. Con el posicionamiento cuidadoso de batidores puedes bloquear completamente grupos de pillaje que se formen en tu área.</Spanish>
+</TEXT>
+<!-- replacement text for the double-click tip, because I've changed the functionality of double-click -->
+<TEXT>
+	<Tag>TXT_KEY_HINT_INTERFACE_6</Tag>
+	<English>Double clicking on a stack of units will wake all of them.</English>
+	<French>Double clicking on a stack of units will wake all of them.</French>
+	<German>Ein Doppelklick auf einen Einheitenstapel weckt sie alle auf.</German>
+	<Italian>Double clicking on a stack of units will wake all of them.</Italian>
+	<Spanish>Doble click en una pila de unidades las despertará a todas.</Spanish>
+</TEXT>
+
+<!-- ** New hints ** -->
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_1</Tag>
 	<English>An aqueduct or a hospital will increase a city's health, but public transport or a recycling center will reduce its pollution...</English>
@@ -89,10 +111,10 @@
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_10</Tag>
-	<English>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</English>
-	<French>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</French>
+	<English>If a foreign leader is Pleased with you, they will not mind being asked for a small gift. Leaders are more likely to accept requests if you rarely ask.</English>
+	<French>If a foreign leader is Pleased with you, they will not mind being asked for a small gift. Leaders are more likely to accept requests if you rarely ask.</French>
 	<German>Zufriedene Anführer anderer Zivilisationen stört es nicht, wenn man sie um etwas bittet.</German>
-	<Italian>If a foreign leader is Pleased with you, they will not mind being asked for a small gift.</Italian>
+	<Italian>If a foreign leader is Pleased with you, they will not mind being asked for a small gift. Leaders are more likely to accept requests if you rarely ask.</Italian>
 	<Spanish>Si un leader extranjero está Amable contigo, no se opondrán a ser preguntados por un pequeño regalo.</Spanish>
 </TEXT>
 <TEXT>
@@ -119,31 +141,13 @@
 	<Italian>In the city build queue, use [CTRL] and [SHIFT] to move items up and down; and [ALT] to toggle whether or not items should repeat.</Italian>
 	<Spanish>En la cola de construcción, usa [CTRL] y [MAYÚS] para mover objetos arriba y abajo; y [ALT] para alternar si los objetos deben repetirse o no.</Spanish>
 </TEXT>
-<!-- replacement text for the inaccurate barbarian tip (changed english and german only)-->
-<TEXT>
-	<Tag>TXT_KEY_HINT_12</Tag>
-	<English>Barbarians will not spawn within two steps of any player's units. With careful positioning of scouts you can completely block barbarian raiding parties from forming in your area.</English>
-	<French>Les barbares peuvent appara&#238;tre sur toutes les cases recouvertes par le brouillard de guerre. Vous ne saurez donc jamais ce qu'il y a sur celles qui sont invisibles, m&#234;me si vous avez d&#233;j&#224; v&#233;rifi&#233; au tour pr&#233;c&#233;dent !</French>
-	<German>Barbarische Einheiten entstehen nicht auf Geländefeldern, die zwei oder weniger Schritte von Einheiten anderer Spieler entfernt sind. Ein paar gut platzierte Einheiten können so oft ganze Bereiche von Barbaren frei halten.</German>
-	<Italian>I Barbari possono apparire in un qualsiasi spazio oscurato dalla nebbia di guerra. Non essere mai certo che uno spazio non visibile sia sicuro, anche se hai controllato durante il turno precedente!</Italian>
-	<Spanish>Los bárbaros no reaparecerán en dos pasos de cualquiera de las unidades. Con el posicionamiento cuidadoso de batidores puedes bloquear completamente grupos de pillaje que se formen en tu área.</Spanish>
-</TEXT>
-<!-- replacement text for the double-click tip, because I've changed the functionality of double-click -->
-<TEXT>
-	<Tag>TXT_KEY_HINT_INTERFACE_6</Tag>
-	<English>Double clicking on a stack of units will wake them all up.</English>
-	<French>Double clicking on a stack of units will wake them all up.</French>
-	<German>Ein Doppelklick auf einen Einheitenstapel weckt sie alle auf.</German>
-	<Italian>Double clicking on a stack of units will wake them all up.</Italian>
-	<Spanish>Doble click en una pila de unidades las despertará a todas.</Spanish>
-</TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_14</Tag>
-	<English>Hold the 'X' key when issuing a command to temporarily suppress automatic unit cycling.</English>
-	<French>Hold the 'X' key when issuing a command to temporarily suppress automatic unit cycling.</French>
-	<German>Halte 'X' gedrückt um den automatischen Einheitenwechsel zu unterdrücken.</German>
-	<Italian>Hold the 'X' key when issuing a command to temporarily suppress automatic unit cycling.</Italian>
-	<Spanish>Mantener la tecla 'X' presionada cuando das una órden para suprimir temporalmente el ciclo de unidades.</Spanish>
+	<English>Hold the [X] key when issuing a command to temporarily suppress automatic unit cycling.</English>
+	<French>Hold the [X] key when issuing a command to temporarily suppress automatic unit cycling.</French>
+	<German>Halte [X] gedrückt um den automatischen Einheitenwechsel zu unterdrücken.</German>
+	<Italian>Hold the [X] key when issuing a command to temporarily suppress automatic unit cycling.</Italian>
+	<Spanish>Mantener la tecla [X] presionada cuando das una órden para suprimir temporalmente el ciclo de unidades.</Spanish>
 </TEXT>
 <TEXT>
 	<Tag>TXT_KEY_KMOD_HINT_15</Tag>
@@ -152,5 +156,29 @@
 	<German>Die Handelsraten und Spinonagegewichtungen können durch einen Rechtsklick auf die Plus- oder Minusknöpfe schnell maximiert beziehungsweise minimiert werden.</German>
 	<Italian>Commerce sliders and espionage weights can be set to max/min quickly by right clicking their +/- buttons.</Italian>
 	<Spanish>Commerce sliders and espionage weights can be set to max/min quickly by right clicking their +/- buttons.</Spanish>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_16</Tag>
+	<English>Right click the + button on the espionage screen to focus all your espionage points onto one rival. This will make it easier to steal technologies and gold.</English>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_17</Tag>
+	<English>90% odds don't mean a guarrenteed win! Expect to lose some battles. Have a backup plan to avoid frustration. Luck favours those who prepare.</English>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_18</Tag>
+	<English>When a foreign leader offers a trade deal, consider it carefully before asking to renegotiate. AI leaders will sometimes offer one-time deals that they are not willing to repeat!</English>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_19</Tag>
+	<English>The gift of a Great Person will always be appreciated by foreign leaders.</English>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_20</Tag>
+	<English>Hold [ALT] when clicking the 'wake' command to wake all units of the same type around the world.</English>
+</TEXT>
+<TEXT>
+	<Tag>TXT_KEY_KMOD_HINT_21</Tag>
+	<English>There are many useful shortcuts and tips listed on the "Hints" page of the Civilopedia.</English>
 </TEXT>
 </Civ4GameText>
