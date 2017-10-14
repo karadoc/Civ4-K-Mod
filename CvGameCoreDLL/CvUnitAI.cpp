@@ -2984,7 +2984,7 @@ void CvUnitAI::AI_attackCityMove()
 			iAdjustment += kOwner.AI_isDoStrategy(AI_STRATEGY_CRUSH) ? -10 : 0;
 			iAdjustment += iAdjustment >= 0 && pTargetCity == area()->getTargetCity(getOwnerINLINE()) ? -10 : 0;
 			iAdjustment += range((GET_TEAM(getTeam()).AI_getEnemyPowerPercent(true)-100)/12, -10, 0);
-			iAdjustment += iStepDistToTarget <= 1 && pTargetCity->isOccupation() ? range(-10, 110-(iAttackRatio+iAdjustment), 0) : 0;
+			iAdjustment += iStepDistToTarget <= 1 && pTargetCity->isOccupation() ? range(111-(iAttackRatio+iAdjustment), -10, 0) : 0;
 			iAttackRatio += iAdjustment;
 			iAttackRatioSkipBombard += iAdjustment;
 			FAssert(iAttackRatioSkipBombard >= iAttackRatio);
@@ -3445,7 +3445,7 @@ void CvUnitAI::AI_attackCityMove()
 					// Here's one way to account for that:
 					// iPathTurns = std::max(iPathTurns, getPathLastNode()->m_iTotalCost / (2000*GC.getMOVE_DENOMINATOR()));
 					// Unfortunately, that "2000"... well I think you know what the problem is. So maybe next time.
-					int iLoadTurns = std::min(4, iPathTurns/2 - 1);
+					int iLoadTurns = std::max(3, iPathTurns/3 - 1);
 					int iMaxTransportTurns = iPathTurns - iLoadTurns - 2;
 
 					if (AI_load(UNITAI_ASSAULT_SEA, MISSIONAI_LOAD_ASSAULT, NO_UNITAI, -1, -1, -1, -1, iMoveFlags, iLoadTurns, iMaxTransportTurns))
@@ -5626,7 +5626,7 @@ bool CvUnitAI::AI_greatPersonMove()
 			iDiscoverValue *= 2;
 			iDiscoverValue /= 3;
 		}
-		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding relgions / free techs / free great people
+		if (kPlayer.AI_isFirstTech(eDiscoverTech)) // founding religions / free techs / free great people
 		{
 			iDiscoverValue *= 2;
 		}
@@ -16193,7 +16193,7 @@ bool CvUnitAI::AI_pirateBlockade()
 	
 	std::vector<int> aiDeathZone(GC.getMapINLINE().numPlotsINLINE(), 0);
 	
-	for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
+	/* for (iI = 0; iI < GC.getMapINLINE().numPlotsINLINE(); iI++)
 	{
 		CvPlot* pLoopPlot = GC.getMapINLINE().plotByIndexINLINE(iI);
 		if (AI_plotValid(pLoopPlot) || (pLoopPlot->isCity() && pLoopPlot->isAdjacentToArea(area())))
@@ -16236,7 +16236,7 @@ bool CvUnitAI::AI_pirateBlockade()
 				}
 			}
 		}
-	}
+	} */
 	
 	bool bIsInDanger = aiDeathZone[GC.getMap().plotNumINLINE(getX_INLINE(), getY_INLINE())] > 0;
 	
