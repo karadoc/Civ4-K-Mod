@@ -2300,11 +2300,11 @@ int CvPlayerAI::AI_commerceWeight(CommerceTypes eCommerce, const CvCity* pCity) 
 		}
 		break;
 	case COMMERCE_GOLD:
-		if (getCommercePercent(COMMERCE_GOLD) > 80) // originally == 100
+		if (getCommercePercent(COMMERCE_GOLD) >= 80) // originally == 100
 		{
 			//avoid strikes
 			//if (getGoldPerTurn() < -getGold()/100)
-			if (calculateGoldRate() < -getGold()/100) // K-Mod
+			if (getGold()+80*calculateGoldRate() < 0) // K-Mod
 			{
 				iWeight += 15;
 			}
@@ -2529,6 +2529,26 @@ void CvPlayerAI::AI_updateCommerceWeights()
 	// Espionage weight
 	//
 	{
+		int iWeightThreshold = 0; // For human players, what amount of espionage weight indicates that we care about a civ?
+		if (isHuman())
+		{
+			int iTotalWeight = 0;
+			int iTeamCount = 0;
+			for (int iTeam = 0; iTeam < MAX_CIV_TEAMS; ++iTeam)
+			{
+				if (GET_TEAM(getTeam()).isHasMet((TeamTypes)iTeam) && GET_TEAM((TeamTypes)iTeam).isAlive())
+				{
+					iTotalWeight += getEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam);
+					iTeamCount++;
+				}
+			}
+
+			if (iTeamCount > 0)
+			{
+				iWeightThreshold = iTotalWeight / (iTeamCount +  8); // pretty arbitrary. But as an example, 90 points on 1 player out of 10 -> threshold is 5.
+			}
+		}
+
 		int iWeight = GC.getCommerceInfo(COMMERCE_ESPIONAGE).getAIWeightPercent();
 
 		int iEspBehindWeight = 0;
@@ -2552,7 +2572,7 @@ void CvPlayerAI::AI_updateCommerceWeights()
 				int iAttitude = range(GET_TEAM(getTeam()).AI_getAttitudeVal((TeamTypes)iTeam), -12, 12);
 				iTheirPoints -= (iTheirPoints*iAttitude)/(2*12);
 
-				if (iTheirPoints > iOurPoints && (!isHuman() || getEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam) > 0))
+				if (iTheirPoints > iOurPoints && (!isHuman() || getEspionageSpendingWeightAgainstTeam((TeamTypes)iTeam) > iWeightThreshold))
 				{
 					iEspBehindWeight += 1;
 					if (kLoopTeam.AI_getAttitude(getTeam()) <= ATTITUDE_CAUTIOUS
@@ -4222,7 +4242,7 @@ bool CvPlayerAI::AI_isCommercePlot(CvPlot* pPlot) const
 //
 // I've done a bit of speed profiling and found that although the safe plot cache does shortcut around 50% of calls to AI_getAnyPlotDanger,
 // that only ends up saving a few milliseconds each turn anyway. I don't really think that's worth risking of getting problems from bad cache.
-// So even though I've put a bit of work into make the cache work better, I'm not just going to disable it.
+// So even though I've put a bit of work into make the cache work better, I'm just going to disable it.
 
 bool CvPlayerAI::isSafeRangeCacheValid() const
 {
