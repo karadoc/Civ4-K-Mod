@@ -47,7 +47,7 @@ class BugScoreOptionsTab(BugOptionsTab.BugOptionsTab):
 		self.addLabel(screen, col3, "Scores_Icons", "Icons:")
 		self.addCheckbox(screen, col3, "Scores__Attitude")
 		self.addCheckbox(screen, col3, "Scores__WorstEnemy")
-		#self.addCheckbox(screen, col3, "Scores__WHEOOH") # disabled by K-Mod
+		self.addCheckbox(screen, col3, "Scores__WHEOOH")
 		self.addCheckbox(screen, col3, "Scores__Cities")
 		
 		screen.attachHSeparator(column, column + "Sep")
