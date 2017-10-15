@@ -11667,7 +11667,8 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		iValue += (iCombatValue / 2);
 		for (iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
 		{
-			iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getUnitClassAttackModifier(iI) * AI_getUnitClassWeight((UnitClassTypes)iI)) / 7500);
+			iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getUnitClassAttackModifier(iI) * AI_getUnitClassWeight((UnitClassTypes)iI)) / 10000); // was 7500
+			iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getUnitClassDefenseModifier(iI) * AI_getUnitClassWeight((UnitClassTypes)iI)) / 10000); // K-Mod
 			iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getTargetUnitClass(iI) ? 50 : 0)) / 100);
 		}
 		for (iI = 0; iI < GC.getNumUnitCombatInfos(); iI++)
@@ -11675,7 +11676,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 //			int iCombatModifier = GC.getUnitInfo(eUnit).getUnitCombatModifier(iI);
 //			iCombatModifier = (iCombatModifier < 40) ? iCombatModifier : (40 + (iCombatModifier - 40) / 2);
 //			iValue += ((iCombatValue * iCombatModifier) / 100);
-			iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getUnitCombatModifier(iI) * AI_getUnitCombatWeight((UnitCombatTypes)iI)) / 10000);
+			iValue += ((iCombatValue * GC.getUnitInfo(eUnit).getUnitCombatModifier(iI) * AI_getUnitCombatWeight((UnitCombatTypes)iI)) / 7500); // was 10000
 			iValue += ((iCombatValue * (GC.getUnitInfo(eUnit).getTargetUnitCombat(iI) ? 50 : 0)) / 100);
 		}
 		for (iI = 0; iI < GC.getNumUnitInfos(); iI++)
@@ -11697,7 +11698,7 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 		// K-Mod
 		if (GC.getUnitInfo(eUnit).getMoves() > 1)
 		{
-			iValue += iCombatValue * GC.getUnitInfo(eUnit).getMoves() / 6;
+			iValue += iCombatValue * GC.getUnitInfo(eUnit).getMoves() / 8;
 		}
 		// K-Mod end
 
@@ -11734,6 +11735,8 @@ int CvPlayerAI::AI_unitValue(UnitTypes eUnit, UnitAITypes eUnitAI, CvArea* pArea
 				break;
 			}
 		}
+		// Other bonuses
+		iValue += iCombatValue * GC.getUnitInfo(eUnit).getHillsDefenseModifier() / 200;
 		// K-Mod end
 		break;
 
