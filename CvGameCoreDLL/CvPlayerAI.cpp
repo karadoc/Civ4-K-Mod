@@ -21287,7 +21287,7 @@ int CvPlayerAI::AI_estimateBreakEvenGoldPercent() const
 	iExpenses -= getCommerceRate(COMMERCE_GOLD) - iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD) * getCommercePercent(COMMERCE_GOLD) / 10000;
 
 	// divide what's left to determine what our gold slider would need to be to break even.
-	int iGoldCommerceRate = 10000 * iExpenses / (iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD));
+	int iGoldCommerceRate = 10000 * iExpenses / std::max(1, iTotalRaw * AI_averageCommerceMultiplier(COMMERCE_GOLD));
 
 	iGoldCommerceRate = range(iGoldCommerceRate, 0, 100); // (perhaps it would be useful to just return the unbounded value?)
 
