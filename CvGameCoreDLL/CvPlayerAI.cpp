@@ -4928,20 +4928,17 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 }
 
 // edited by K-Mod and BBAI
-TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bIgnoreCost, bool bAsync, TechTypes eIgnoreTech, AdvisorTypes eIgnoreAdvisor) const
+TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsync, TechTypes eIgnoreTech, AdvisorTypes eIgnoreAdvisor) const
 {
 	PROFILE("CvPlayerAI::AI_bestTech");
 
-	int iValue;
-	int iBestValue = 0;
-	TechTypes eBestTech = NO_TECH;
-	int iPathLength;
 	CvTeam& kTeam = GET_TEAM(getTeam());
 
 	std::vector<int> viBonusClassRevealed(GC.getNumBonusClassInfos(), 0);
 	std::vector<int> viBonusClassUnrevealed(GC.getNumBonusClassInfos(), 0);
 	std::vector<int> viBonusClassHave(GC.getNumBonusClassInfos(), 0);
 
+	// Find make lists of which bonuses we have / don't have / can see. This is used for tech evaluation
 	for (int iI = 0; iI < GC.getNumBonusInfos(); iI++)
 	{
 	    TechTypes eRevealTech = (TechTypes)GC.getBonusInfo((BonusTypes)iI).getTechReveal();
@@ -4973,6 +4970,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bIgnoreCost, bool bAs
 	DEBUGLOG("AI_bestTech:%S\n", szPlayerName.GetCString());
 #endif
 
+	/* original code
 	for (int iI = 0; iI < GC.getNumTechInfos(); iI++)
 	{
 		if ((eIgnoreTech == NO_TECH) || (iI != eIgnoreTech))
@@ -5007,11 +5005,197 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bIgnoreCost, bool bAs
 				}
 			}
 		}
-	}
+	} */
+	// K-Mod
+	// Instead of choosing a tech anywhere inside the max path length with no adjustments for how deep the tech is,
+	// We'll evaluate all techs inside the max path length; but instead of just picking the highest value one irrespective of depth,
+	// well use the evaluatations to add value to the prereq techs, and then choose the best depth 1 tech at the end.
+	std::vector<TechTypes> techs;
+	std::vector<int> values; // each tech in `techs` has its value at the same index in `values`
+	std::vector<int> techs_to_depth; // cumulative number of techs for each depth of the search. (techs_to_depth[0] == 0)
 
-	if( gPlayerLogLevel >= 1 && eBestTech != NO_TECH )
+	int iTechCount = 0;
+	for (int iDepth = 0; iDepth < iMaxPathLength; ++iDepth)
 	{
-		logBBAI("  Player %d (%S) selects tech %S with value %d", getID(), getCivilizationDescription(0), GC.getTechInfo(eBestTech).getDescription(), iBestValue );
+		techs_to_depth.push_back(iTechCount);
+
+		for (TechTypes eTech = (TechTypes)0; eTech < GC.getNumTechInfos(); eTech=(TechTypes)(eTech+1))
+		{
+			const CvTechInfo& kTech = GC.getTechInfo(eTech);
+			const std::vector<TechTypes>::iterator tech_search_end = techs.begin()+techs_to_depth[iDepth]; // Evaluated techs before the current depth
+
+			if (eTech == eIgnoreTech)
+				continue;
+			if (eIgnoreAdvisor != NO_ADVISOR && kTech.getAdvisorType() == eIgnoreAdvisor)
+				continue;
+			if (!canEverResearch(eTech))
+				continue;
+			if (kTeam.isHasTech(eTech))
+				continue;
+
+			if (GC.getTechInfo(eTech).getEra() > (getCurrentEra() + 1))
+				continue; // too far in the future to consider. (This condition is only for efficiency.)
+
+			if (std::find(techs.begin(), tech_search_end, eTech) != tech_search_end)
+				continue; // already evaluated
+
+			// Check "or" prereqs
+			bool bMissingPrereq = false;
+			for (int p = 0; p < GC.getNUM_OR_TECH_PREREQS(); ++p)
+			{
+				TechTypes ePrereq = (TechTypes)kTech.getPrereqOrTechs(p);
+				if (ePrereq != NO_TECH)
+				{
+					if (kTeam.isHasTech(ePrereq) || std::find(techs.begin(), tech_search_end, ePrereq) != tech_search_end)
+					{
+						bMissingPrereq = false; // we have a prereq
+						break;
+					}
+					bMissingPrereq = true; // A prereq exists, and we don't have it.
+				}
+			}
+			if (bMissingPrereq)
+				continue; // We don't have any of the "or" prereqs
+
+			// Check "and" prereqs
+			for (int p = 0; p < GC.getNUM_AND_TECH_PREREQS(); ++p)
+			{
+				TechTypes ePrereq = (TechTypes)kTech.getPrereqAndTechs(p);
+				if (ePrereq != NO_TECH)
+				{
+					if (!GET_TEAM(getTeam()).isHasTech(ePrereq) && std::find(techs.begin(), tech_search_end, ePrereq) == tech_search_end)
+					{
+						bMissingPrereq = true;
+						break;
+					}
+				}
+			}
+			if (bMissingPrereq)
+				continue; // We're missing at least one "and" prereq
+			//
+
+			// Otherwise, all the prereqs are either researched, or on our list from lower depths.
+			// We're ready to evaluate this tech and add it to the list.
+			int iValue = AI_techValue(eTech, iDepth+1, iDepth == 0 && bFreeTech, bAsync, viBonusClassRevealed, viBonusClassUnrevealed, viBonusClassHave);
+
+			techs.push_back(eTech);
+			values.push_back(iValue);
+			++iTechCount;
+
+			if (iDepth == 0 && gPlayerLogLevel >= 3)
+			{
+				logBBAI("      Player %d (%S) consider tech %S with value %d", getID(), getCivilizationDescription(0), GC.getTechInfo(eTech).getDescription(), iValue );
+			}
+		}
+	}
+	techs_to_depth.push_back(iTechCount); // We need this to ensure techs_to_depth[1] exists.
+
+	FAssert(techs_to_depth.size() == iMaxPathLength+1);
+	FAssert(techs.size() == values.size());
+
+	bool bNewWays = true || getID() < GC.getGameINLINE().countCivPlayersEverAlive()/2; // testing (temp)
+
+	// Ok. All techs have been evaluated up to the given search depth. Now we just have to add a percentage the deep tech values to their prereqs.
+	// First, lets calculate what the percentage should be!
+	// Note: the fraction compounds for each depth level. eg. 1, 1/3, 1/9, 1/27, etc.
+	if (iMaxPathLength > 1 && iTechCount > techs_to_depth[1])
+	{
+		int iPrereqPercent = bNewWays ? 50 : 0;
+		iPrereqPercent += (AI_getFlavorValue(FLAVOR_SCIENCE) > 0) ? 5 + AI_getFlavorValue(FLAVOR_SCIENCE) : 0;
+		iPrereqPercent += AI_isDoStrategy(AI_STRATEGY_ECONOMY_FOCUS) ? 10 : 0;
+		iPrereqPercent += AI_isDoVictoryStrategy(AI_VICTORY_SPACE1) ? 5 : 0;
+		iPrereqPercent += AI_isDoVictoryStrategy(AI_VICTORY_SPACE2) ? 10 : 0;
+		iPrereqPercent += AI_isDoStrategy(AI_STRATEGY_BIG_ESPIONAGE) ? -5 : 0;
+		iPrereqPercent += kTeam.getAnyWarPlanCount(true) > 0 ? -10 : 0;
+		// more modifiers to come?
+
+		iPrereqPercent = range(iPrereqPercent, 0, 80);
+
+		// I figure that if I go through the techs in reverse order to add value to their prereqs, I don't double-count or miss anything.
+		// Is that correct?
+		int iDepth = iMaxPathLength-1;
+		for (int i = iTechCount-1; i >= techs_to_depth[1]; --i)
+		{
+			const CvTechInfo& kTech = GC.getTechInfo(techs[i]);
+
+			if (i < techs_to_depth[iDepth])
+			{
+				--iDepth;
+			}
+			FAssert(iDepth > 0);
+
+			// We only want to award points to the techs directly below this level.
+			// We don't want, for example, Chemestry getting points from Biology when we haven't researched scientific method.
+			const std::vector<TechTypes>::iterator prereq_search_begin = techs.begin()+techs_to_depth[iDepth-1];
+			const std::vector<TechTypes>::iterator prereq_search_end = techs.begin()+techs_to_depth[iDepth];
+
+			// Also; for the time being, I only want to add value to prereqs from the best following tech, rather than from all following techs.
+			// (The logic is that we will only research one thing at a time anyway; so although opening lots of options is good, we shouldn't overvalue it.)
+			std::vector<int> prereq_bonus(values.size(), 0);
+
+			for (int p = 0; p < GC.getNUM_OR_TECH_PREREQS(); ++p)
+			{
+				TechTypes ePrereq = (TechTypes)kTech.getPrereqOrTechs(p);
+				if (ePrereq != NO_TECH)
+				{
+					std::vector<TechTypes>::iterator tech_it = std::find(prereq_search_begin, prereq_search_end, ePrereq);
+					if (tech_it != prereq_search_end)
+					{
+						const size_t prereq_i = tech_it - techs.begin();
+						//values[index] += values[i]*iPrereqPercent/100;
+						prereq_bonus[prereq_i] = std::max(prereq_bonus[prereq_i], values[i]*iPrereqPercent/100);
+
+						if (gPlayerLogLevel >= 3)
+						{
+							logBBAI("      %S adds %d to %S (depth %d)", GC.getTechInfo(techs[i]).getDescription(), values[i]*iPrereqPercent/100, GC.getTechInfo(techs[prereq_i]).getDescription(), iDepth-1);
+						}
+					}
+				}
+			}
+			for (int p = 0; p < GC.getNUM_AND_TECH_PREREQS(); ++p)
+			{
+				TechTypes ePrereq = (TechTypes)kTech.getPrereqAndTechs(p);
+				if (ePrereq != NO_TECH)
+				{
+					std::vector<TechTypes>::iterator tech_it = std::find(prereq_search_begin, prereq_search_end, ePrereq);
+					if (tech_it != prereq_search_end)
+					{
+						const size_t prereq_i = tech_it - techs.begin();
+
+						//values[prereq_i] += values[i]*iPrereqPercent/100;
+						prereq_bonus[prereq_i] = std::max(prereq_bonus[prereq_i], values[i]*iPrereqPercent/100);
+
+						if (gPlayerLogLevel >= 3)
+						{
+							logBBAI("      %S adds %d to %S (depth %d)", GC.getTechInfo(techs[i]).getDescription(), values[i]*iPrereqPercent/100, GC.getTechInfo(techs[prereq_i]).getDescription(), iDepth-1);
+						}
+					}
+				}
+			}
+
+			// Apply the prereq_bonuses
+			for (size_t p = 0; p < prereq_bonus.size(); ++p)
+			{
+				// Kludge: Under this system, dead-end techs (such as rifling) can be avoided due to the high value of
+				// follow-on techs. So here's what we're going to do...
+				values[p] += std::max(prereq_bonus[p], (values[p] - 80)*iPrereqPercent*3/4);
+				// Note, the "-80" is meant to represent removing the random value bonus. cf. AI_techValue (divided by ~5 turns). (bonus is 0-80*cities)
+			}
+		}
+	}
+	// All the evaluations are now complete. Now we just have to find the best tech.
+	std::vector<int>::iterator value_it = std::max_element(values.begin(), (bNewWays ? values.begin()+techs_to_depth[1] : values.end()));
+	if (value_it == (bNewWays ? values.begin()+techs_to_depth[1] : values.end()))
+	{
+		FAssert(iTechCount == 0);
+		return NO_TECH;
+	}
+	TechTypes eBestTech = techs[value_it - values.begin()];
+	FAssert(canResearch(eBestTech));
+
+	if (gPlayerLogLevel >= 1)
+	{
+		logBBAI("  Player %d (%S) selects tech %S with value %d", getID(), getCivilizationDescription(0), GC.getTechInfo(eBestTech).getDescription(), *value_it );
 	}
 
 	return eBestTech;
@@ -7346,18 +7530,11 @@ void CvPlayerAI::AI_chooseResearch()
 
 		if (eBestTech == NO_TECH)
 		{
-			int iAIResearchDepth;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                      03/08/10                                jdog5000      */
-/*                                                                                              */
-/* Victory Strategy AI                                                                          */
-/************************************************************************************************/
-			iAIResearchDepth = AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) ? 1 : 3;
-/************************************************************************************************/
-/* BETTER_BTS_AI_MOD                       END                                                  */
-/************************************************************************************************/
-			
-			eBestTech = AI_bestTech((isHuman()) ? 1 : iAIResearchDepth);
+			int iResearchDepth = (isHuman() || isBarbarian() || AI_isDoVictoryStrategy(AI_VICTORY_CULTURE3) || AI_isDoStrategy(AI_STRATEGY_ESPIONAGE_ECONOMY))
+				? 1
+				: 3;
+
+			eBestTech = AI_bestTech(iResearchDepth);
 		}
 
 		if (eBestTech != NO_TECH)
