@@ -33,7 +33,7 @@
 			
 			<!-- Great Person Progress Bar by Impaler[WrG], EmperorFool -->
 			<option id="GPBar" key="GP Progress Bar" 
-					type="boolean" default="False" 
+					type="boolean" default="True"
 					get="isShowGPProgressBar" dirtyBit="GameData"/>
 			<list   id="GPBar_Types" key="GP Progress Bar Types" 
 					type="int" default="2" listType="string" 
@@ -46,7 +46,7 @@
 			
 			<!-- Great General Progress Bar by NeverMind -->
 			<option id="Combat_Counter" key="Combat Counter" 
-					type="boolean" default="False" 
+					type="boolean" default="True"
 					get="isShowGGProgressBar" dirtyBit="GameData"/>
 			
 			<!-- Min/Max Commerce Buttons by codewarrior -->
