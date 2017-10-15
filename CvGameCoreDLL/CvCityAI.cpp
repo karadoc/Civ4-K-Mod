@@ -4051,7 +4051,7 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 					{
 						if (!(kOwner.canDoCivics((CivicTypes)iI)))
 						{
-							iValue += (kOwner.AI_civicValue((CivicTypes)iI) / 10);
+							iValue += (kOwner.AI_civicValue((CivicTypes)iI) / 10); // Todo: compare to current civics!
 						}
 					}
 				}
@@ -4230,8 +4230,8 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				{
 					int iTechValue =  ((iTotalTechValue / iTechCount) + iMaxTechValue)/2;
 
-					// It's hard to measure an instant boost with units of commerce per turn... So I'm just going to divide it by 10.
-					iValue += iTechValue * 10 / GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getResearchPercent();
+					// It's hard to measure an instant boost with units of commerce per turn... So I'm just going to divide it by ~12.5, scaled by game speed.
+					iValue += iTechValue * 8 / GC.getGameSpeedInfo(GC.getGame().getGameSpeedType()).getResearchPercent();
 				}
 				// else: If there is nothing to research, a free tech is worthless.
 			}
@@ -4756,9 +4756,11 @@ int CvCityAI::AI_buildingValue(BuildingTypes eBuilding, int iFocusFlags, int iTh
 				// add value for a commerce modifier
 				int iCommerceModifier = kBuilding.getCommerceModifier(iI);
 				int iBaseCommerceRate = getBaseCommerceRate((CommerceTypes) iI);
-				// K-Mod. inflate the base commerce rate, to account for the fact that commerce multipliers give us flexibility.
+				// K-Mod
 				{
-					int x = std::max(5, kOwner.getCommercePercent((CommerceTypes)iI));
+					// inflate the base commerce rate, to account for the fact that commerce multipliers give us flexibility.
+					// But not for espionage. Because... reasons. (Espionage gets a priority bonus later. That's good enough.)
+					int x = std::max(iI == COMMERCE_ESPIONAGE ? 0 : 5, kOwner.getCommercePercent((CommerceTypes)iI));
 					if (iI == COMMERCE_CULTURE)
 					{
 						x += x <= 45 && bCulturalVictory1 ? 10 : 0;
