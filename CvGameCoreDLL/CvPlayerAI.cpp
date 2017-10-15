@@ -7601,15 +7601,25 @@ void CvPlayerAI::AI_updateAttitudeCache(PlayerTypes ePlayer)
 		return;
 	}
 
-	int iAttitude = GC.getLeaderHeadInfo(getPersonalityType()).getBaseAttitude();
+	// K-Mod. The AI sometimes likes to consider the attitude of their rivals when making decisions.
+	// For this reason, I'm going to make a few tweaks to the (perceived) attitude of human players.
+	int iAttitude = isHuman() ? -1 : GC.getLeaderHeadInfo(getPersonalityType()).getBaseAttitude();
 
-	iAttitude += GC.getHandicapInfo(kPlayer.getHandicapType()).getAttitudeChange();
-
-	if (!(kPlayer.isHuman()))
+	if (isHuman())
 	{
-		iAttitude += (4 - abs(AI_getPeaceWeight() - kPlayer.AI_getPeaceWeight()));
-		iAttitude += std::min(GC.getLeaderHeadInfo(getPersonalityType()).getWarmongerRespect(), GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getWarmongerRespect());
+		iAttitude += GC.getHandicapInfo(getHandicapType()).getAttitudeChange();
 	}
+	else
+	{
+		iAttitude += GC.getHandicapInfo(kPlayer.getHandicapType()).getAttitudeChange();
+
+		if (!kPlayer.isHuman())
+		{
+			iAttitude += (4 - abs(AI_getPeaceWeight() - kPlayer.AI_getPeaceWeight()));
+			iAttitude += std::min(GC.getLeaderHeadInfo(getPersonalityType()).getWarmongerRespect(), GC.getLeaderHeadInfo(kPlayer.getPersonalityType()).getWarmongerRespect());
+		}
+	}
+	//
 
 	iAttitude -= std::max(0, (GET_TEAM(kPlayer.getTeam()).getNumMembers() - GET_TEAM(getTeam()).getNumMembers()));
 
