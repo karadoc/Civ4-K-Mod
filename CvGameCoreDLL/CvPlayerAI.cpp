@@ -27,6 +27,10 @@
 
 #include "BetterBTSAI.h"
 
+#include <vector>
+#include <set>
+#include <queue>
+
 //#define GREATER_FOUND_RANGE			(5)
 #define CIVIC_CHANGE_DELAY			(20) // was 25
 #define RELIGION_CHANGE_DELAY		(15)
@@ -4927,7 +4931,30 @@ int CvPlayerAI::AI_goldTarget(bool bUpgradeBudgetOnly) const
 	return iGold + AI_getExtraGoldTarget();
 }
 
-// edited by K-Mod and BBAI
+// Functors used by AI_bestTech. (I wish we had lambdas.)
+template <typename A, typename B>
+struct PairSecondEq : public std::binary_function<std::pair<A, B>,std::pair<A, B>,bool>
+{
+	PairSecondEq(B t) : _target(t) {}
+
+    bool operator()(const std::pair<A, B>& o1)
+    {
+        return o1.second == _target;
+    }
+private:
+	B _target;
+};
+
+template <typename A, typename B>
+struct PairFirstLess : public std::binary_function<std::pair<A, B>,std::pair<A, B>,bool>
+{
+    bool operator()(const std::pair<A, B>& o1, const std::pair<A, B>& o2)
+    {
+        return o1.first < o2.first;
+    }
+};
+
+// Written for K-Mod
 TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsync, TechTypes eIgnoreTech, AdvisorTypes eIgnoreAdvisor) const
 {
 	PROFILE("CvPlayerAI::AI_bestTech");
@@ -5010,8 +5037,9 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 	// Instead of choosing a tech anywhere inside the max path length with no adjustments for how deep the tech is,
 	// We'll evaluate all techs inside the max path length; but instead of just picking the highest value one irrespective of depth,
 	// well use the evaluatations to add value to the prereq techs, and then choose the best depth 1 tech at the end.
-	std::vector<TechTypes> techs;
-	std::vector<int> values; // each tech in `techs` has its value at the same index in `values`
+	std::vector<std::pair<int, TechTypes> > techs; // (value, tech) pairs)
+	//std::vector<TechTypes> techs;
+	//std::vector<int> values;
 	std::vector<int> techs_to_depth; // cumulative number of techs for each depth of the search. (techs_to_depth[0] == 0)
 
 	int iTechCount = 0;
@@ -5022,7 +5050,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 		for (TechTypes eTech = (TechTypes)0; eTech < GC.getNumTechInfos(); eTech=(TechTypes)(eTech+1))
 		{
 			const CvTechInfo& kTech = GC.getTechInfo(eTech);
-			const std::vector<TechTypes>::iterator tech_search_end = techs.begin()+techs_to_depth[iDepth]; // Evaluated techs before the current depth
+			const std::vector<std::pair<int, TechTypes> >::iterator tech_search_end = techs.begin()+techs_to_depth[iDepth]; // Evaluated techs before the current depth
 
 			if (eTech == eIgnoreTech)
 				continue;
@@ -5036,7 +5064,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 			if (GC.getTechInfo(eTech).getEra() > (getCurrentEra() + 1))
 				continue; // too far in the future to consider. (This condition is only for efficiency.)
 
-			if (std::find(techs.begin(), tech_search_end, eTech) != tech_search_end)
+			if (std::find_if(techs.begin(), tech_search_end, PairSecondEq<int, TechTypes>(eTech)) != tech_search_end)
 				continue; // already evaluated
 
 			// Check "or" prereqs
@@ -5046,7 +5074,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 				TechTypes ePrereq = (TechTypes)kTech.getPrereqOrTechs(p);
 				if (ePrereq != NO_TECH)
 				{
-					if (kTeam.isHasTech(ePrereq) || std::find(techs.begin(), tech_search_end, ePrereq) != tech_search_end)
+					if (kTeam.isHasTech(ePrereq) || std::find_if(techs.begin(), tech_search_end, PairSecondEq<int, TechTypes>(ePrereq)) != tech_search_end)
 					{
 						bMissingPrereq = false; // we have a prereq
 						break;
@@ -5063,7 +5091,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 				TechTypes ePrereq = (TechTypes)kTech.getPrereqAndTechs(p);
 				if (ePrereq != NO_TECH)
 				{
-					if (!GET_TEAM(getTeam()).isHasTech(ePrereq) && std::find(techs.begin(), tech_search_end, ePrereq) == tech_search_end)
+					if (!GET_TEAM(getTeam()).isHasTech(ePrereq) && std::find_if(techs.begin(), tech_search_end, PairSecondEq<int, TechTypes>(ePrereq)) == tech_search_end)
 					{
 						bMissingPrereq = true;
 						break;
@@ -5078,8 +5106,9 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 			// We're ready to evaluate this tech and add it to the list.
 			int iValue = AI_techValue(eTech, iDepth+1, iDepth == 0 && bFreeTech, bAsync, viBonusClassRevealed, viBonusClassUnrevealed, viBonusClassHave);
 
-			techs.push_back(eTech);
-			values.push_back(iValue);
+			techs.push_back(std::make_pair(iValue, eTech));
+			//techs.push_back(eTech);
+			//values.push_back(iValue);
 			++iTechCount;
 
 			if (iDepth == 0 && gPlayerLogLevel >= 3)
@@ -5091,10 +5120,14 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 	techs_to_depth.push_back(iTechCount); // We need this to ensure techs_to_depth[1] exists.
 
 	FAssert(techs_to_depth.size() == iMaxPathLength+1);
-	FAssert(techs.size() == values.size());
+	//FAssert(techs.size() == values.size());
 
+#ifdef USE_OLD_TECH_STUFF
+	bool bPathways = false && getID() < GC.getGameINLINE().countCivPlayersEverAlive()/2; // testing (temp)
 	bool bNewWays = true || getID() < GC.getGameINLINE().countCivPlayersEverAlive()/2; // testing (temp)
 
+	if (!bPathways)
+	{
 	// Ok. All techs have been evaluated up to the given search depth. Now we just have to add a percentage the deep tech values to their prereqs.
 	// First, lets calculate what the percentage should be!
 	// Note: the fraction compounds for each depth level. eg. 1, 1/3, 1/9, 1/27, etc.
@@ -5116,7 +5149,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 		int iDepth = iMaxPathLength-1;
 		for (int i = iTechCount-1; i >= techs_to_depth[1]; --i)
 		{
-			const CvTechInfo& kTech = GC.getTechInfo(techs[i]);
+			const CvTechInfo& kTech = GC.getTechInfo(techs[i].second);
 
 			if (i < techs_to_depth[iDepth])
 			{
@@ -5126,28 +5159,30 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 
 			// We only want to award points to the techs directly below this level.
 			// We don't want, for example, Chemestry getting points from Biology when we haven't researched scientific method.
-			const std::vector<TechTypes>::iterator prereq_search_begin = techs.begin()+techs_to_depth[iDepth-1];
-			const std::vector<TechTypes>::iterator prereq_search_end = techs.begin()+techs_to_depth[iDepth];
+			const std::vector<std::pair<int, TechTypes> >::iterator prereq_search_begin = techs.begin()+techs_to_depth[iDepth-1];
+			const std::vector<std::pair<int, TechTypes> >::iterator prereq_search_end = techs.begin()+techs_to_depth[iDepth];
 
 			// Also; for the time being, I only want to add value to prereqs from the best following tech, rather than from all following techs.
 			// (The logic is that we will only research one thing at a time anyway; so although opening lots of options is good, we shouldn't overvalue it.)
-			std::vector<int> prereq_bonus(values.size(), 0);
+			std::vector<int> prereq_bonus(techs.size(), 0);
+
+			FAssert(techs[i].first*iPrereqPercent/100 > 0 && techs[i].first*iPrereqPercent/100 < 100000);
 
 			for (int p = 0; p < GC.getNUM_OR_TECH_PREREQS(); ++p)
 			{
 				TechTypes ePrereq = (TechTypes)kTech.getPrereqOrTechs(p);
 				if (ePrereq != NO_TECH)
 				{
-					std::vector<TechTypes>::iterator tech_it = std::find(prereq_search_begin, prereq_search_end, ePrereq);
+					std::vector<std::pair<int, TechTypes> >::iterator tech_it = std::find_if(prereq_search_begin, prereq_search_end, PairSecondEq<int, TechTypes>(ePrereq));
 					if (tech_it != prereq_search_end)
 					{
 						const size_t prereq_i = tech_it - techs.begin();
 						//values[index] += values[i]*iPrereqPercent/100;
-						prereq_bonus[prereq_i] = std::max(prereq_bonus[prereq_i], values[i]*iPrereqPercent/100);
+						prereq_bonus[prereq_i] = std::max(prereq_bonus[prereq_i], techs[i].first*iPrereqPercent/100);
 
 						if (gPlayerLogLevel >= 3)
 						{
-							logBBAI("      %S adds %d to %S (depth %d)", GC.getTechInfo(techs[i]).getDescription(), values[i]*iPrereqPercent/100, GC.getTechInfo(techs[prereq_i]).getDescription(), iDepth-1);
+							logBBAI("      %S adds %d to %S (depth %d)", GC.getTechInfo(techs[i].second).getDescription(), techs[i].first*iPrereqPercent/100, GC.getTechInfo(techs[prereq_i].second).getDescription(), iDepth-1);
 						}
 					}
 				}
@@ -5157,17 +5192,17 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 				TechTypes ePrereq = (TechTypes)kTech.getPrereqAndTechs(p);
 				if (ePrereq != NO_TECH)
 				{
-					std::vector<TechTypes>::iterator tech_it = std::find(prereq_search_begin, prereq_search_end, ePrereq);
+					std::vector<std::pair<int, TechTypes> >::iterator tech_it = std::find_if(prereq_search_begin, prereq_search_end, PairSecondEq<int, TechTypes>(ePrereq));
 					if (tech_it != prereq_search_end)
 					{
 						const size_t prereq_i = tech_it - techs.begin();
 
 						//values[prereq_i] += values[i]*iPrereqPercent/100;
-						prereq_bonus[prereq_i] = std::max(prereq_bonus[prereq_i], values[i]*iPrereqPercent/100);
+						prereq_bonus[prereq_i] = std::max(prereq_bonus[prereq_i], techs[i].first*iPrereqPercent/100);
 
 						if (gPlayerLogLevel >= 3)
 						{
-							logBBAI("      %S adds %d to %S (depth %d)", GC.getTechInfo(techs[i]).getDescription(), values[i]*iPrereqPercent/100, GC.getTechInfo(techs[prereq_i]).getDescription(), iDepth-1);
+							logBBAI("      %S adds %d to %S (depth %d)", GC.getTechInfo(techs[i].second).getDescription(), techs[i].first*iPrereqPercent/100, GC.getTechInfo(techs[prereq_i].second).getDescription(), iDepth-1);
 						}
 					}
 				}
@@ -5178,26 +5213,257 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 			{
 				// Kludge: Under this system, dead-end techs (such as rifling) can be avoided due to the high value of
 				// follow-on techs. So here's what we're going to do...
-				values[p] += std::max(prereq_bonus[p], (values[p] - 80)*iPrereqPercent*3/4);
+				techs[p].first += std::max(prereq_bonus[p], (techs[p].first - 80)*iPrereqPercent*3/400);
 				// Note, the "-80" is meant to represent removing the random value bonus. cf. AI_techValue (divided by ~5 turns). (bonus is 0-80*cities)
 			}
 		}
 	}
 	// All the evaluations are now complete. Now we just have to find the best tech.
-	std::vector<int>::iterator value_it = std::max_element(values.begin(), (bNewWays ? values.begin()+techs_to_depth[1] : values.end()));
-	if (value_it == (bNewWays ? values.begin()+techs_to_depth[1] : values.end()))
+	std::vector<std::pair<int, TechTypes> >::iterator tech_it = std::max_element(techs.begin(), (bNewWays ? techs.begin()+techs_to_depth[1] : techs.end()),PairFirstLess<int, TechTypes>());
+	if (tech_it == (bNewWays ? techs.begin()+techs_to_depth[1] : techs.end()))
 	{
 		FAssert(iTechCount == 0);
 		return NO_TECH;
 	}
-	TechTypes eBestTech = techs[value_it - values.begin()];
+	TechTypes eBestTech = tech_it->second;
 	FAssert(canResearch(eBestTech));
 
 	if (gPlayerLogLevel >= 1)
 	{
-		logBBAI("  Player %d (%S) selects tech %S with value %d", getID(), getCivilizationDescription(0), GC.getTechInfo(eBestTech).getDescription(), *value_it );
+		logBBAI("  Player %d (%S) selects tech %S with value %d", getID(), getCivilizationDescription(0), GC.getTechInfo(eBestTech).getDescription(), tech_it->first );
 	}
 
+	return eBestTech;
+	}
+#endif
+
+	// Yet another version!
+	// pathways version
+	// We've evaluated all the techs up to the given depth. Now we want to choose the highest value pathway.
+	// eg. suppose iMaxPathLength = 3; we will then look for the best three techs to research, in order.
+	// It could be three techs for which we already have all prereqs, or it could be techs leading to new techs.
+
+	// Algorithm:
+	// * Build list of techs at each depth.
+	// * Sort lists by value at each depth.
+	// We don't want to consider every possible set of three techs. Many combos can be disregarded easily.
+	// For explanation purposes, assume a depth of 3.
+	// * The 3rd highest value at depth = 0 is a threshold for the next depth.
+	//   No techs lower than the threshold need to be considered in any combo.
+	// * The max of the old threshold and the (max_depth-cur_depth)th value becomes the new threshold.
+	//   eg. at depth=1, the 2nd highest value becomes the new threshold (if it is higher than the old).
+	// * All techs above the threshold are viable end points.
+	// * For each end point, pick the highest value prereqs which allow us to reach the endpoint.
+	// * If there that doesn't fill all the full path, pick the highest value avaiable techs.
+	//  (eg. if our end-point is not a the max depth, we can pick an arbitrary tech at depth=0)
+
+
+	// Sort the techs at each depth:
+	FAssert(techs_to_depth[0] == 0); // No techs before depth 0.
+	FAssert(techs.size() == techs_to_depth[techs_to_depth.size()-1]); // max depth is after all techs
+	for (size_t i = 1; i < techs_to_depth.size(); ++i)
+	{
+		std::sort(techs.begin()+techs_to_depth[i-1], techs.begin()+techs_to_depth[i], std::greater<std::pair<int, TechTypes> >());
+	}
+
+	// First deal with the trivial cases...
+	// no Techs
+	if (techs.empty())
+		return NO_TECH;
+	// path length of 1.
+	if (iMaxPathLength < 2)
+	{
+		FAssert(techs.size() > 0);
+		return techs[0].second;
+	}
+	// ... and the case where there are not enough techs in the list.
+	if ((int)techs.size() < iMaxPathLength)
+	{
+		return techs[0].second;
+	}
+
+	// Create a list of possible tech paths.
+	std::vector<std::pair<int, std::vector<int> > > tech_paths; // (total_value, path)
+	// Note: paths are a vector of indices referring to `techs`.
+	// Paths are in reverse order, for convinence in constructive them. (ie. the first tech to research is at the end of the list.)
+
+	// Initial threshold
+	FAssert(techs_to_depth.size() > 1);
+	int iThreshold = techs[std::min(iMaxPathLength-1, (int)techs.size()-1)].first;
+	// Note: this works even if depth=0 isn't big enough.
+
+	double fDepthRate = 0.8;
+
+	for (int end_depth = 0; end_depth < iMaxPathLength; ++end_depth)
+	{
+		// Note: at depth == 0, there are no prereqs, so we only need to consider the best option.
+		for (int i = (end_depth == 0? iMaxPathLength-1 : techs_to_depth[end_depth]); i < techs_to_depth[end_depth+1]; ++i)
+		{
+			if (techs[i].first < iThreshold)
+				break; // Note: the techs are sorted, so if we're below the threshold, we're done.
+
+			// This is a valid end point. So start a new tech path.
+			tech_paths.push_back(std::make_pair(techs[i].first, std::vector<int>()));
+			tech_paths.back().second.push_back(i);
+			std::set<TechTypes> techs_in_path; // A set of techs that will be in our path
+			std::queue<TechTypes> techs_to_check; // A queue of techs that we still need to check prereqs for
+
+			techs_in_path.insert(techs[i].second);
+			if (end_depth != 0)
+			{
+				techs_to_check.push(techs[i].second);
+			}
+
+			while (!techs_to_check.empty() && (int)techs_in_path.size() < iMaxPathLength)
+			{
+				bool bMissingPrereq = false;
+
+				// AndTech prereqs:
+				for (int p = 0; p < GC.getNUM_AND_TECH_PREREQS() && !bMissingPrereq; ++p)
+				{
+					TechTypes ePrereq = (TechTypes)GC.getTechInfo(techs_to_check.front()).getPrereqAndTechs(p);
+					if (!kTeam.isHasTech(ePrereq) && techs_in_path.find(ePrereq) == techs_in_path.end())
+					{
+						bMissingPrereq = true;
+						// find the tech. (Lambda would be nice...)
+						//std::find_if(techs.begin(), techs.end(), [](std::pair<int, TechTypes> &t){return t.second == ePrereq;});
+						for (int j = 0; j < techs_to_depth[end_depth]; ++j) // really we should use current depth instead of end_depth; but that's harder...
+						{
+							if (techs[j].second == ePrereq)
+							{
+								// add it to the path.
+								tech_paths.back().first = (int)(fDepthRate * tech_paths.back().first);
+								tech_paths.back().first += techs[j].first;
+								tech_paths.back().second.push_back(i);
+								techs_in_path.insert(ePrereq);
+								techs_to_check.push(ePrereq);
+								bMissingPrereq = false;
+								break;
+							}
+						}
+					}
+				}
+				// OrTechs:
+				int iBestOrIndex = -1;
+				int iBestOrValue = -1;
+				for (int p = 0; p < GC.getNUM_OR_TECH_PREREQS(); ++p)
+				{
+					TechTypes ePrereq = (TechTypes)GC.getTechInfo(techs_to_check.front()).getPrereqOrTechs(p);
+					if (ePrereq == NO_TECH)
+						continue;
+
+					if (!kTeam.isHasTech(ePrereq) && techs_in_path.find(ePrereq) == techs_in_path.end())
+					{
+						bMissingPrereq = true;
+						// find the tech.
+						for (int j = 0; j < techs_to_depth[end_depth]; ++j)
+						{
+							if (techs[j].second == ePrereq)
+							{
+								if (techs[j].first > iBestOrValue)
+								{
+									iBestOrIndex = j;
+									iBestOrValue = techs[j].first;
+								}
+							}
+						}
+					}
+					else
+					{
+						// We have one of the orPreqs.
+						iBestOrIndex = -1;
+						iBestOrValue = -1;
+						bMissingPrereq = false;
+						break;
+					}
+				}
+				// Add the best OrPrereq to the path
+				if (iBestOrIndex >= 0)
+				{
+					FAssert(bMissingPrereq);
+
+					tech_paths.back().first = (int)(fDepthRate * tech_paths.back().first);
+					tech_paths.back().first += techs[iBestOrIndex].first;
+					tech_paths.back().second.push_back(iBestOrIndex);
+					techs_in_path.insert(techs[iBestOrIndex].second);
+					techs_to_check.push(techs[iBestOrIndex].second);
+					bMissingPrereq = false;
+				}
+
+				if (bMissingPrereq)
+				{
+					break; // failured to add prereqs to the path
+				}
+				else
+				{
+					techs_to_check.pop(); // prereqs are satisfied
+				}
+			} // end techs_to_check (prereqs loop)
+
+			// If we couldn't add all the prereqs (eg. too many), abort the path.
+			if ((int)techs_in_path.size() > iMaxPathLength || !techs_to_check.empty())
+			{
+				tech_paths.pop_back();
+				continue;
+			}
+
+			// If we haven't already filled the path with prereqs, fill the remaining slots with the highest value unused techs.
+			if (((int)techs_in_path.size() < iMaxPathLength))
+			{
+				// todo: consider backfilling the list with deeper techs if we've matched their prereqs already.
+				while ((int)techs_in_path.size() < iMaxPathLength)
+				{
+					for (int j = 0; j < techs_to_depth[1] && (int)techs_in_path.size() < iMaxPathLength; ++j)
+					{
+						if (techs_in_path.count(techs[j].second) == 0)
+						{
+							techs_in_path.insert(techs[j].second);
+							// Note: since this tech isn't a prereqs, it can go anywhere in our path. Try to research highest values first.
+							for (int k = 0; k < (int)tech_paths.back().second.size(); ++k)
+							{
+								if (techs[j].first < techs[tech_paths.back().second[k]].first)
+								{
+									// Note: we'll need to recalculate the total value.
+									tech_paths.back().second.insert(tech_paths.back().second.begin()+k, j);
+									break;
+								}
+							}
+							if (k == tech_paths.back().second.size())
+							{
+								// haven't added it yet
+								tech_paths.back().second.push_back(j);
+							}
+						}
+					}
+				}
+				// Recalculate total value;
+				tech_paths.back().first = 0;
+				for (int k = 0; k < (int)tech_paths.back().second.size(); ++k)
+				{
+					tech_paths.back().first = (int)(fDepthRate * tech_paths.back().first);
+					tech_paths.back().first += techs[tech_paths.back().second[k]].first;
+				}
+			}
+		} // end loop through techs at given end depth
+
+		// TODO: at this point we should update the threshold for the next depth...
+		// But I don't want to do that until the back-fill stage is fixed to consider deeper techs.
+	} // end loop through possible end depths
+
+	// Return the tech corresponding to the back (first step) of the tech path with the highest value.
+	if (tech_paths.empty())
+	{
+		FAssertMsg(0, "Failed to create any tech paths");
+		return NO_TECH;
+	}
+	std::vector<std::pair<int, std::vector<int> > >::iterator best_path_it = std::max_element(tech_paths.begin(), tech_paths.end(), PairFirstLess<int, std::vector<int> >());
+	TechTypes eBestTech = techs[best_path_it->second.back()].second;
+	if (gPlayerLogLevel >= 1)
+	{
+		logBBAI("  Player %d (%S) selects tech %S with value %d. (Aiming for %S)",
+			getID(), getCivilizationDescription(0), GC.getTechInfo(eBestTech).getDescription(), techs[best_path_it->second.back()].first, GC.getTechInfo(techs[best_path_it->second.front()].second).getDescription());
+	}
+	FAssert(canResearch(eBestTech, false, bFreeTech));
 	return eBestTech;
 }
 
@@ -5230,7 +5496,7 @@ int CvPlayerAI::AI_techValue(TechTypes eTech, int iPathLength, bool bFreeTech, b
 	int iRandomFactor = 0;// Amount of random value in the answer.
 	int iRandomMax = 0;   // Max random value. (These randomness trackers aren't actually used, and may not even be accurate.)
 
-	if (iPathLength <= 1) // K-Mod. Don't include random bonus for follow-on tech values.
+	//if (iPathLength <= 1) // K-Mod. Don't include random bonus for follow-on tech values.
 	{
 		iRandomFactor = ((bAsync) ? GC.getASyncRand().get(80*iCityCount, "AI Research ASYNC") : GC.getGameINLINE().getSorenRandNum(80*iCityCount, "AI Research"));
 		iRandomMax = 80*iCityCount;
@@ -5953,9 +6219,9 @@ int CvPlayerAI::AI_techValue(TechTypes eTech, int iPathLength, bool bFreeTech, b
 	bool bEnablesUnitWonder;
 	iValue += AI_techUnitValue( eTech, iPathLength, bEnablesUnitWonder );
 	
-	if (bEnablesUnitWonder && iPathLength <= 1 && getTotalPopulation() > 5)
+	if (bEnablesUnitWonder && getTotalPopulation() > 5)
 	{
-		const int iBaseRand = 80;
+		const int iBaseRand = std::max(10, 110-30*iPathLength); // 80, 50, 20, 10
 		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(iBaseRand, "AI Research Wonder Unit ASYNC") : GC.getGameINLINE().getSorenRandNum(iBaseRand, "AI Research Wonder Unit"));
 		int iFactor = 100 * std::min(iCityCount, iCityTarget) / std::max(1, iCityTarget);
 		iValue += (iWonderRandom + (bCapitalAlone ? 50 : 0)) * iFactor / 100;
@@ -5972,9 +6238,9 @@ int CvPlayerAI::AI_techValue(TechTypes eTech, int iPathLength, bool bFreeTech, b
 
 	// K-Mod. Scale the random wonder bonus based on leader personality.
 	// Note: the value of the building itself was already counted by AI_techBuildingValue. This extra value is just because we like wonders.
-	if (bEnablesWonder && iPathLength <= 1 && getTotalPopulation() > 5)
+	if (bEnablesWonder && getTotalPopulation() > 5)
 	{
-		const int iBaseRand = 80;
+		const int iBaseRand = std::max(10, 110-30*iPathLength); // 80, 50, 20, 10
 		int iWonderRandom = ((bAsync) ? GC.getASyncRand().get(iBaseRand, "AI Research Wonder Building ASYNC") : GC.getGameINLINE().getSorenRandNum(iBaseRand, "AI Research Wonder Building"));
 		int iFactor = 10 + GC.getLeaderHeadInfo(getPersonalityType()).getWonderConstructRand(); // note: highest value of iWonderConstructRand 50 in the default xml.
 		iFactor += AI_isDoVictoryStrategy(AI_VICTORY_CULTURE1) ? 15 : 0;
@@ -7349,7 +7615,7 @@ int CvPlayerAI::AI_techProjectValue(TechTypes eTech, int iPathLength, bool& bEna
 				}
 			}
 
-			if (iPathLength <= 1)
+			//if (iPathLength <= 1)
 			{
 				if (getTotalPopulation() > 5)
 				{
