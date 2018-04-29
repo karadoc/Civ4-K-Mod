@@ -5314,7 +5314,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 				techs_to_check.push(techs[i].second);
 			}
 
-			while (!techs_to_check.empty() && (int)techs_in_path.size() < iMaxPathLength)
+			while (!techs_to_check.empty() && (int)techs_in_path.size() <= iMaxPathLength)
 			{
 				bool bMissingPrereq = false;
 
@@ -5334,7 +5334,7 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 								// add it to the path.
 								tech_paths.back().first = (int)(fDepthRate * tech_paths.back().first);
 								tech_paths.back().first += techs[j].first;
-								tech_paths.back().second.push_back(i);
+								tech_paths.back().second.push_back(j);
 								techs_in_path.insert(ePrereq);
 								techs_to_check.push(ePrereq);
 								bMissingPrereq = false;
@@ -5343,6 +5343,11 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 						}
 					}
 				}
+				if (bMissingPrereq)
+				{
+					break; // This path is invalid, because we can't get the prereqs.
+				}
+
 				// OrTechs:
 				int iBestOrIndex = -1;
 				int iBestOrValue = -1;
