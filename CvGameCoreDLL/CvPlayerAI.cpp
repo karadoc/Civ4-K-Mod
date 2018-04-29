@@ -5411,28 +5411,25 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 			if (((int)techs_in_path.size() < iMaxPathLength))
 			{
 				// todo: consider backfilling the list with deeper techs if we've matched their prereqs already.
-				while ((int)techs_in_path.size() < iMaxPathLength)
+				for (int j = 0; j < techs_to_depth[1] && (int)techs_in_path.size() < iMaxPathLength; ++j)
 				{
-					for (int j = 0; j < techs_to_depth[1] && (int)techs_in_path.size() < iMaxPathLength; ++j)
+					if (techs_in_path.count(techs[j].second) == 0)
 					{
-						if (techs_in_path.count(techs[j].second) == 0)
+						techs_in_path.insert(techs[j].second);
+						// Note: since this tech isn't a prereqs, it can go anywhere in our path. Try to research highest values first.
+						for (int k = 0; k < (int)tech_paths.back().second.size(); ++k)
 						{
-							techs_in_path.insert(techs[j].second);
-							// Note: since this tech isn't a prereqs, it can go anywhere in our path. Try to research highest values first.
-							for (int k = 0; k < (int)tech_paths.back().second.size(); ++k)
+							if (techs[j].first < techs[tech_paths.back().second[k]].first)
 							{
-								if (techs[j].first < techs[tech_paths.back().second[k]].first)
-								{
-									// Note: we'll need to recalculate the total value.
-									tech_paths.back().second.insert(tech_paths.back().second.begin()+k, j);
-									break;
-								}
+								// Note: we'll need to recalculate the total value.
+								tech_paths.back().second.insert(tech_paths.back().second.begin()+k, j);
+								break;
 							}
-							if (k == tech_paths.back().second.size())
-							{
-								// haven't added it yet
-								tech_paths.back().second.push_back(j);
-							}
+						}
+						if (k == tech_paths.back().second.size())
+						{
+							// haven't added it yet
+							tech_paths.back().second.push_back(j);
 						}
 					}
 				}
@@ -5451,19 +5448,21 @@ TechTypes CvPlayerAI::AI_bestTech(int iMaxPathLength, bool bFreeTech, bool bAsyn
 	} // end loop through possible end depths
 
 	// Return the tech corresponding to the back (first step) of the tech path with the highest value.
-	if (tech_paths.empty())
+	std::vector<std::pair<int, std::vector<int> > >::iterator best_path_it = std::max_element(tech_paths.begin(), tech_paths.end(), PairFirstLess<int, std::vector<int> >());
+
+	if (best_path_it == tech_paths.end())
 	{
-		FAssertMsg(0, "Failed to create any tech paths");
+		FAssertMsg(0, "Failed to create a tech path.");
 		return NO_TECH;
 	}
-	std::vector<std::pair<int, std::vector<int> > >::iterator best_path_it = std::max_element(tech_paths.begin(), tech_paths.end(), PairFirstLess<int, std::vector<int> >());
+
 	TechTypes eBestTech = techs[best_path_it->second.back()].second;
 	if (gPlayerLogLevel >= 1)
 	{
 		logBBAI("  Player %d (%S) selects tech %S with value %d. (Aiming for %S)",
 			getID(), getCivilizationDescription(0), GC.getTechInfo(eBestTech).getDescription(), techs[best_path_it->second.back()].first, GC.getTechInfo(techs[best_path_it->second.front()].second).getDescription());
 	}
-	FAssert(canResearch(eBestTech, false, bFreeTech));
+	FAssert(!isResearch() || getAdvancedStartPoints() < 0 || canResearch(eBestTech, false, bFreeTech));
 	return eBestTech;
 }
 
