@@ -12954,12 +12954,14 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 	// (original bts code deleted)
 
 	// Experimental culture profile...
-	// Ae^(-bx). A = 10 (no effect), b = log(full_range_ratio)/range
+	// Ae^(-bx). A = 10 (no effect), b = log(full_range_ratio)/range, x = distance from centre
+	//
 	// (iScale-1)(iDistance - iRange)^2/(iRange^2) + 1   // This approximates the exponential pretty well
+	// In our case, 10^(-x/R), where x is distance, and R is max range. So it's 10 times culture at the centre compared to the edge.
 	const int iScale = 10;
 	const int iCultureRange = eCultureLevel + 3;
 
-	//const int iOuterRatio = 10;
+	//const int iOuterRatio = 10; // Ratio of culture added at centre vs culture added at max range.
 	//const double iB = log((double)iOuterRatio)/iCultureRange;
 
 	// free culture bonus for cities
@@ -12982,12 +12984,12 @@ void CvCity::doPlotCultureTimes100(bool bUpdate, PlayerTypes ePlayer, int iCultu
 					{
 						if (pLoopPlot->isPotentialCityWorkForArea(area()))
 						{
-							/* int iCultureToAdd =
-								(iInnerFactor * iCultureRange - iDistance * (iInnerFactor - iOuterFactor))
-								* iCultureRateTimes100 / (iCultureRange * 100); */
 							//int iCultureToAdd = (int)(iScale*iCultureRateTimes100*exp(-iB*iDistance)/100);
-							int iCultureToAdd =
-								iCultureRateTimes100*((iScale-1)*(iDistance-iCultureRange)*(iDistance-iCultureRange) + iCultureRange*iCultureRange)/(100*iCultureRange*iCultureRange);
+							// approxately = culture * ( (iScale-1)(iDistance - iRange)^2/(iRange^2) + 1 )
+
+							// Cast to double to avoid overflow. (The world-builder can add a lot of culture in one hit.)
+                            int delta = iDistance-iCultureRange;
+							int iCultureToAdd = static_cast<int>(iCultureRateTimes100 * static_cast<double>((iScale-1)*delta*delta + iCultureRange*iCultureRange) / (100.0*iCultureRange*iCultureRange));
 
 							pLoopPlot->changeCulture(ePlayer, iCultureToAdd, (bUpdate || !(pLoopPlot->isOwned())));
 						}
