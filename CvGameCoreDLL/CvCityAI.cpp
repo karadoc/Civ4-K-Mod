@@ -9362,6 +9362,8 @@ int CvCityAI::AI_yieldValue(short* piYields, short* piCommerceYields, bool bRemo
 					if (!bEmphasizeFood)
 					{
 						iPopToGrow = std::min(iPopToGrow, iGoodTiles + (bWorkerOptimization ? 1 : 0));
+						if (iPopulation < 3 && iHappinessLevel+iFutureHappy > 0)
+							iPopToGrow = std::max(iPopToGrow, 1);
 						if (AI_isEmphasizeYield(YIELD_PRODUCTION) || AI_isEmphasizeGreatPeople())
 							iPopToGrow = std::min(iPopToGrow, 2);
 						else if (AI_isEmphasizeYield(YIELD_COMMERCE))
