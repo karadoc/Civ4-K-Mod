@@ -1,6 +1,25 @@
-This is K-Mod version 1.45.
+This is K-Mod version 1.46.
 If you have any questions, comments, suggestions, bug reports, etc. Post here: http://forums.civfanatics.com/forumdisplay.php?f=470
 
+v1.46 changelist
+
+Game
++ Increased trade culture rate for lower levels. (This doesn't affect city culture. Only plot culture.)
++ Fixed overflow bug when adding large amounts of culture to a city.
++ Several miscellaneous bug fixes.
+
+AI
++ Major changes to the AI's tech evaluations. (Hopefully this will help the AI plan ahead a bit better.)
++ Improvements and bug-fixes for citizen job evaluations for AI and automated cities.
++ Several minor tweaks and changes to the AI.
+
+UI
++ Improved German language text. (by Zholef)
++ Added a couple of (useful) loading hints, and removed a couple of low-value hints.
++ Restored WHEOOHRN scoreboard indicator option.
+
+
+--
 v1.45 changelist
 
 Game
